@@ -83,6 +83,105 @@ npm test
 - @types/react: ^19.0.10
 - webpack-dev-server: 4.14.0
 
+## 📚 Adding Nodes and Categories
+
+### Node Categories
+To add a new node category:
+
+1. Update the `NodeCategoryType` type in your components definition:
+```typescript
+type NodeCategoryType = 'flow-control' | 'variables' | 'io' | 'math' | 'string' | 'functions' | 'your-new-category';
+```
+
+2. Add the category to `nodeCategories` in `src/services/NodeRegistry.ts`:
+```typescript
+export const nodeCategories = [
+  // ... existing categories ...
+  { id: 'your-new-category', label: 'Your Category Label' }
+];
+```
+
+### Adding New Nodes
+
+There are several ways to add new nodes:
+
+1. **Using Helper Functions**
+   - For mathematical operations:
+   ```typescript
+   // Binary operation node (two inputs)
+   const newMathNode = createBinaryMathNode(
+     'unique-type-id',
+     'Node Title',
+     'Node Description'
+   );
+
+   // Unary operation node (single input)
+   const newUnaryNode = createUnaryMathNode(
+     'unique-type-id',
+     'Node Title',
+     'Node Description'
+   );
+   ```
+
+2. **Custom Node Template**
+   ```typescript
+   const customNode: NodeTemplate = {
+     type: 'unique-type-id',
+     title: 'Node Title',
+     description: 'Node Description',
+     category: 'your-category',
+     defaultInputs: [
+       createExecPort('exec', 'Exec'),
+       createDataPort('input1', 'Input 1', 'string'),
+       // Add more inputs as needed
+     ],
+     defaultOutputs: [
+       createExecPort('exec', 'Exec', false),
+       createDataPort('output1', 'Output 1', 'number', false),
+       // Add more outputs as needed
+     ]
+   };
+   ```
+
+3. **Port Creation Helpers**
+   ```typescript
+   // Create an execution port
+   createExecPort('port-id', 'Port Label', isInput);
+
+   // Create a data port
+   createDataPort('port-id', 'Port Label', 'dataType', isInput);
+   ```
+
+### Adding Node to Registry
+
+After creating your node template, add it to the `nodeTemplates` array in `src/services/NodeRegistry.ts`:
+
+```typescript
+export const nodeTemplates: NodeTemplate[] = [
+  // ... existing nodes ...
+  yourNewNodeTemplate
+];
+```
+
+### Available Data Types
+
+The following data types are supported for node ports:
+- `'string'`
+- `'number'`
+- `'boolean'`
+- `'any'`
+- `'array'`
+- `'object'`
+
+### Best Practices
+
+1. Ensure unique type IDs for each node
+2. Provide clear, descriptive titles and descriptions
+3. Use appropriate categories for organization
+4. Include execution ports for flow control
+5. Follow consistent naming conventions for ports
+6. Document any special behavior or requirements
+
 ## 🤝 Contributing
 
 1. Fork the repository
