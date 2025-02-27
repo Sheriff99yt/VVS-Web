@@ -83,104 +83,161 @@ npm test
 - @types/react: ^19.0.10
 - webpack-dev-server: 4.14.0
 
-## 📚 Adding Nodes and Categories
+## 📝 Adding New Nodes and Categories
 
-### Node Categories
-To add a new node category:
+### Node Registration Steps
 
-1. Update the `NodeCategoryType` type in your components definition:
-```typescript
-type NodeCategoryType = 'flow-control' | 'variables' | 'io' | 'math' | 'string' | 'functions' | 'your-new-category';
-```
-
-2. Add the category to `nodeCategories` in `src/services/NodeRegistry.ts`:
-```typescript
-export const nodeCategories = [
-  // ... existing categories ...
-  { id: 'your-new-category', label: 'Your Category Label' }
-];
-```
-
-### Adding New Nodes
-
-There are several ways to add new nodes:
-
-1. **Using Helper Functions**
-   - For mathematical operations:
+1. **Add Node Type**
    ```typescript
-   // Binary operation node (two inputs)
-   const newMathNode = createBinaryMathNode(
-     'unique-type-id',
-     'Node Title',
-     'Node Description'
-   );
-
-   // Unary operation node (single input)
-   const newUnaryNode = createUnaryMathNode(
-     'unique-type-id',
-     'Node Title',
-     'Node Description'
-   );
-   ```
-
-2. **Custom Node Template**
-   ```typescript
-   const customNode: NodeTemplate = {
-     type: 'unique-type-id',
-     title: 'Node Title',
-     description: 'Node Description',
-     category: 'your-category',
-     defaultInputs: [
-       createExecPort('exec', 'Exec'),
-       createDataPort('input1', 'Input 1', 'string'),
-       // Add more inputs as needed
-     ],
-     defaultOutputs: [
-       createExecPort('exec', 'Exec', false),
-       createDataPort('output1', 'Output 1', 'number', false),
-       // Add more outputs as needed
-     ]
+   // In src/components/nodes/CustomNodes.tsx
+   export const nodeTypes = {
+     // ... existing types ...
+     yourNode: 'yourNode',
    };
    ```
 
-3. **Port Creation Helpers**
+2. **Create Node Implementation**
+   Choose one method:
    ```typescript
-   // Create an execution port
-   createExecPort('port-id', 'Port Label', isInput);
-
-   // Create a data port
-   createDataPort('port-id', 'Port Label', 'dataType', isInput);
+   // A. Use Helper Functions (Recommended for common patterns)
+   [nodeTypes.yourNode]: createUnaryStringNode('Your Node', 'Description')
+   
+   // B. Custom Implementation (For complex nodes)
+   [nodeTypes.yourNode]: memo((props: NodeProps<CustomNodeData>) => {
+     const data = useMemo(() => ({
+       title: 'Your Node',
+       description: 'Description',
+       category: 'your-category' as NodeCategory,
+       inputs: [
+         { id: 'exec', label: 'Exec', dataType: 'any' as DataType, isExec: true },
+         { id: 'input1', label: 'Input 1', dataType: 'your-type' as DataType }
+       ],
+       outputs: [
+         { id: 'exec', label: 'Exec', dataType: 'any' as DataType, isExec: true },
+         { id: 'output1', label: 'Output 1', dataType: 'your-type' as DataType }
+       ]
+     }), [props.data]);
+     return <BaseNode {...props} data={data} />;
+   })
    ```
 
-### Adding Node to Registry
+3. **Register Node**
+   ```typescript
+   // In src/components/nodes/CustomNodes.tsx
+   export const customNodes = {
+     // ... existing nodes ...
+     [nodeTypes.yourNode]: YOUR_NODE_IMPLEMENTATION
+   };
+   ```
 
-After creating your node template, add it to the `nodeTemplates` array in `src/services/NodeRegistry.ts`:
+4. **Add Category** (Optional - only if using a new category)
+   ```typescript
+   // A. Add to NodeCategory type
+   export type NodeCategory = 
+     | 'existing-categories'
+     | 'your-category';
 
-```typescript
-export const nodeTemplates: NodeTemplate[] = [
-  // ... existing nodes ...
-  yourNewNodeTemplate
-];
-```
+   // B. Add category styling in CustomNodes.css
+   .node.your-category {
+     background-color: #your-color;
+   }
+   ```
+
+### Available Helper Functions
+
+1. **String Operations**
+   - `createUnaryStringNode`: One string input → string output
+   - `createBinaryStringNode`: Two string inputs → string output
+   - `createStringToNumberNode`: String input → number output
+   - `createStringToBooleanNode`: String input → boolean output
+
+2. **Port Creation**
+   - `createExecPort`: Create execution flow ports
+   - `createDataPort`: Create data input/output ports
+
+### Node Features
+
+Each node includes:
+- Execution ports (input/output) for flow control
+- Data ports with type safety
+- Visual category styling
+- Tooltips with descriptions
+- Auto-generated titles
+- Category-based coloring
+- Port tooltips showing data types
+- Support for code generation
+
+### Node Categories
+
+Available categories include:
+- `flow-control`: Control flow nodes
+- `pure-function`: Pure functions (green)
+- `impure-function`: Impure functions (blue)
+- `variables`: Variable nodes
+- `event`: Event nodes
+- `comment`: Comment nodes
+- `math`: Mathematics operations
+- `string`: String operations
+- `logical`: Logical operations
+- `comparison`: Comparison operations
+- `io`: Input/Output operations
 
 ### Available Data Types
 
 The following data types are supported for node ports:
-- `'string'`
-- `'number'`
-- `'boolean'`
-- `'any'`
-- `'array'`
-- `'object'`
+```typescript
+type DataType = 
+  | 'number'      // Float
+  | 'integer'     // Integer
+  | 'boolean'     // Binary
+  | 'string'      // String
+  | 'vector'      // Vector
+  | 'transform'   // Transform
+  | 'rotator'     // Rotator
+  | 'color'       // Linear Color
+  | 'struct'      // Structure
+  | 'class'       // Class Reference
+  | 'array'       // Array type
+  | 'any'         // Wildcard
+```
+
+### Port Creation Helpers
+
+Use these helper functions to create node ports:
+```typescript
+// Create an execution port
+createExecPort('port-id', 'Port Label', isInput);
+
+// Create a data port
+createDataPort('port-id', 'Port Label', 'dataType', isInput);
+```
 
 ### Best Practices
 
-1. Ensure unique type IDs for each node
-2. Provide clear, descriptive titles and descriptions
-3. Use appropriate categories for organization
-4. Include execution ports for flow control
-5. Follow consistent naming conventions for ports
-6. Document any special behavior or requirements
+1. **Naming Conventions**
+   - Use descriptive, unique type IDs
+   - Follow consistent naming patterns
+   - Use clear, concise descriptions
+
+2. **Port Configuration**
+   - Include execution ports for flow control
+   - Use appropriate data types
+   - Provide clear port labels
+
+3. **Visual Design**
+   - Use distinct colors for different categories
+   - Maintain consistent styling
+   - Consider color accessibility
+
+4. **Type Safety**
+   - Use TypeScript types consistently
+   - Validate port connections
+   - Handle edge cases
+
+5. **Documentation**
+   - Document node purpose and behavior
+   - Include usage examples
+   - List any special requirements
 
 ## 🤝 Contributing
 
@@ -260,4 +317,149 @@ Made with ❤️ by the VVS Team
 
 [Website](To Be Updated) · [Documentation](To Be Updated) · [Blog](To Be Updated) · [Twitter](To Be Updated)
 
-</div> 
+</div>
+
+## 🔄 Adding Array Operations: A Complete Example
+
+This section provides a detailed walkthrough of how we added array operations to the Visual Visual Scripting system.
+
+### Step 1: Define Node Types
+
+First, we added array operation types to the `nodeTypes` object in `src/components/nodes/CustomNodes.tsx`:
+
+```typescript
+export const nodeTypes = {
+  // ... existing types ...
+  arrayLength: 'arrayLength',
+  arrayGet: 'arrayGet',
+  arraySet: 'arraySet',
+  arrayPush: 'arrayPush',
+  arrayPop: 'arrayPop',
+  arrayInsert: 'arrayInsert',
+  arrayRemove: 'arrayRemove',
+  arraySlice: 'arraySlice',
+  arrayConcat: 'arrayConcat',
+  arrayFind: 'arrayFind',
+  arrayFilter: 'arrayFilter',
+  arrayMap: 'arrayMap',
+  arrayReduce: 'arrayReduce',
+  arraySort: 'arraySort',
+  arrayReverse: 'arrayReverse',
+  arrayJoin: 'arrayJoin',
+  arrayIncludes: 'arrayIncludes',
+  arrayIndexOf: 'arrayIndexOf',
+  arrayLastIndexOf: 'arrayLastIndexOf',
+  arrayClear: 'arrayClear',
+  arrayIsEmpty: 'arrayIsEmpty'
+};
+```
+
+### Step 2: Add Array Category
+
+We added the 'array' category to the `NodeCategory` type:
+
+```typescript
+export type NodeCategory = 
+  // ... existing categories ...
+  | 'array'          // Array operations
+```
+
+### Step 3: Register Category in UI
+
+We added the array category to the categories list in `src/services/NodeRegistry.ts`:
+
+```typescript
+export const categories: { id: NodeCategory; label: string }[] = [
+  // ... existing categories ...
+  { id: 'array', label: 'Array' }
+];
+```
+
+### Step 4: Implement Array Nodes
+
+We implemented each array operation node using the memo pattern. Here's an example of how we implemented the arrayLength node:
+
+```typescript
+[nodeTypes.arrayLength]: memo((props: NodeProps<CustomNodeData>) => {
+  const data = useMemo(() => ({
+    title: 'Array Length',
+    description: 'Get the length of an array',
+    category: 'array' as NodeCategory,
+    inputs: [
+      { id: 'array', label: 'Array', dataType: 'array' as DataType }
+    ],
+    outputs: [
+      { id: 'length', label: 'Length', dataType: 'number' as DataType }
+    ]
+  }), [props.data]);
+  return <BaseNode {...props} data={data} />;
+})
+```
+
+### Step 5: Define Node Templates
+
+We added node templates in `src/services/NodeRegistry.ts` for each array operation:
+
+```typescript
+export const nodeTemplates: NodeTemplate[] = [
+  // ... existing templates ...
+  {
+    type: nodeTypes.arrayLength,
+    title: 'Array Length',
+    description: 'Get the length of an array',
+    category: 'array',
+    defaultInputs: [
+      createDataPort('array', 'Array', 'array')
+    ],
+    defaultOutputs: [
+      createDataPort('length', 'Length', 'number', false)
+    ]
+  },
+  // ... other array operation templates ...
+];
+```
+
+### Step 6: Implement Code Generation
+
+We added code generation support for array operations in the CodeGenerator class:
+
+```typescript
+class CodeGenerator {
+  generateArrayOperation(node: Node, language: Language): string {
+    switch (node.type) {
+      case nodeTypes.arrayLength:
+        return this.generateArrayLengthCode(node, language);
+      case nodeTypes.arrayPush:
+        return this.generateArrayPushCode(node, language);
+      // ... other array operations ...
+    }
+  }
+}
+```
+
+### Results
+
+After implementing these steps:
+1. Array operations appear in the node palette under the "Array" category
+2. Users can drag and drop array operations into their flow
+3. Each operation has proper type checking for array inputs/outputs
+4. Code generation supports all array operations across supported languages
+5. Operations maintain proper execution flow with exec pins
+6. Array operations support various data types through the 'any' type system
+
+### Available Array Operations
+
+The following array operations are now available:
+- Basic Operations: `length`, `get`, `set`
+- Modification: `push`, `pop`, `insert`, `remove`, `clear`
+- Transformation: `slice`, `concat`, `reverse`, `sort`
+- Search: `find`, `includes`, `indexOf`, `lastIndexOf`
+- Higher-order: `map`, `filter`, `reduce`
+- Utility: `join`, `isEmpty`
+
+Each operation includes:
+- Proper type definitions
+- Error handling
+- Clear documentation
+- Visual feedback
+- Execution flow control

@@ -57,9 +57,9 @@
   border: 1px solid #922B21;
 }
 
-.node.functions {
-  background-color: #7D6608;
-  border: 1px solid #B7950B;
+.node.array {
+  background-color: #1B5E20;
+  border: 1px solid #2E7D32;
 }
 
 .node.io {
@@ -99,6 +99,10 @@
 
 .node.logical .node-header {
   background-color: #922B21;
+}
+
+.node.array .node-header {
+  background-color: #2E7D32;
 }
 
 .node-content {

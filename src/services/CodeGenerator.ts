@@ -48,7 +48,82 @@ export class CodeGenerator {
         case 'print':
           code += this.generatePythonPrint(node);
           break;
-        // Add more node types here
+        
+        // Array Operations
+        case 'arrayLength':
+          code += `${node.id}_length = len(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayGet':
+          code += `${node.id}_element = ${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}]\n`;
+          break;
+        case 'arraySet':
+          code += `${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}] = ${node.data.inputs?.[2].id}\n`;
+          break;
+        case 'arrayPush':
+          code += `${node.data.inputs?.[0].id}.append(${node.data.inputs?.[1].id})\n`;
+          code += `${node.id}_length = len(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayPop':
+          code += `${node.id}_element = ${node.data.inputs?.[0].id}.pop()\n`;
+          break;
+        case 'arrayInsert':
+          code += `${node.data.inputs?.[0].id}.insert(${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id})\n`;
+          code += `${node.id}_length = len(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayRemove':
+          code += `${node.id}_element = ${node.data.inputs?.[0].id}.pop(${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arraySlice':
+          code += `${node.id}_result = ${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}:${node.data.inputs?.[2].id}]\n`;
+          break;
+        case 'arrayConcat':
+          code += `${node.id}_result = ${node.data.inputs?.[0].id} + ${node.data.inputs?.[1].id}\n`;
+          break;
+        case 'arrayFind':
+          code += `try:\n`;
+          code += `${this.indent}${node.id}_result = next(x for x in ${node.data.inputs?.[0].id} if ${node.data.inputs?.[1].id}(x))\n`;
+          code += `${this.indent}${node.id}_found = True\n`;
+          code += `except StopIteration:\n`;
+          code += `${this.indent}${node.id}_result = None\n`;
+          code += `${this.indent}${node.id}_found = False\n`;
+          break;
+        case 'arrayFilter':
+          code += `${node.id}_result = list(filter(${node.data.inputs?.[1].id}, ${node.data.inputs?.[0].id}))\n`;
+          break;
+        case 'arrayMap':
+          code += `${node.id}_result = list(map(${node.data.inputs?.[1].id}, ${node.data.inputs?.[0].id}))\n`;
+          break;
+        case 'arrayReduce':
+          code += `from functools import reduce\n`;
+          code += `${node.id}_result = reduce(${node.data.inputs?.[1].id}, ${node.data.inputs?.[0].id}, ${node.data.inputs?.[2].id})\n`;
+          break;
+        case 'arraySort':
+          code += `${node.id}_result = sorted(${node.data.inputs?.[0].id}, key=${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayReverse':
+          code += `${node.id}_result = ${node.data.inputs?.[0].id}[::-1]\n`;
+          break;
+        case 'arrayJoin':
+          code += `${node.id}_result = ${node.data.inputs?.[1].id}.join(map(str, ${node.data.inputs?.[0].id}))\n`;
+          break;
+        case 'arrayIncludes':
+          code += `${node.id}_result = ${node.data.inputs?.[1].id} in ${node.data.inputs?.[0].id}\n`;
+          break;
+        case 'arrayIndexOf':
+          code += `try:\n`;
+          code += `${this.indent}${node.id}_index = ${node.data.inputs?.[0].id}.index(${node.data.inputs?.[1].id})\n`;
+          code += `except ValueError:\n`;
+          code += `${this.indent}${node.id}_index = -1\n`;
+          break;
+        case 'arrayLastIndexOf':
+          code += `${node.id}_index = len(${node.data.inputs?.[0].id}) - 1 - ${node.data.inputs?.[0].id}[::-1].index(${node.data.inputs?.[1].id}) if ${node.data.inputs?.[1].id} in ${node.data.inputs?.[0].id} else -1\n`;
+          break;
+        case 'arrayClear':
+          code += `${node.data.inputs?.[0].id}.clear()\n`;
+          break;
+        case 'arrayIsEmpty':
+          code += `${node.id}_result = len(${node.data.inputs?.[0].id}) == 0\n`;
+          break;
       }
     });
 
@@ -75,7 +150,137 @@ export class CodeGenerator {
         case 'print':
           code += this.generateJavaScriptPrint(node);
           break;
-        // Add more node types here
+        
+        // String Operations
+        case 'stringLength':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.length;\n`;
+          break;
+        case 'concat':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id} + ${node.data.inputs?.[1].id};\n`;
+          break;
+        case 'substring':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.substring(${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id});\n`;
+          break;
+        case 'trim':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.trim();\n`;
+          break;
+        case 'toUpperCase':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.toUpperCase();\n`;
+          break;
+        case 'toLowerCase':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.toLowerCase();\n`;
+          break;
+        case 'replace':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.replace(${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id});\n`;
+          break;
+        case 'split':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.split(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'indexOf':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.indexOf(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'lastIndexOf':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.lastIndexOf(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'startsWith':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.startsWith(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'endsWith':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.endsWith(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'includes':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.includes(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'repeat':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.repeat(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'charAt':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.charAt(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'padStart':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.padStart(${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id});\n`;
+          break;
+        case 'padEnd':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.padEnd(${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id});\n`;
+          break;
+        case 'match':
+          code += `const ${node.id}_matches = ${node.data.inputs?.[0].id}.match(${node.data.inputs?.[1].id});\n`;
+          code += `const ${node.id}_success = ${node.id}_matches !== null;\n`;
+          break;
+        case 'search':
+          code += `const ${node.id}_index = ${node.data.inputs?.[0].id}.search(${node.data.inputs?.[1].id});\n`;
+          code += `const ${node.id}_found = ${node.id}_index !== -1;\n`;
+          break;
+        case 'format':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.replace(/\{(\d+)\}/g, (_, i) => ${node.data.inputs?.[1].id}[i]);\n`;
+          break;
+        
+        // Array Operations
+        case 'arrayLength':
+          code += `const ${node.id}_length = ${node.data.inputs?.[0].id}.length;\n`;
+          break;
+        case 'arrayGet':
+          code += `const ${node.id}_element = ${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}];\n`;
+          break;
+        case 'arraySet':
+          code += `${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}] = ${node.data.inputs?.[2].id};\n`;
+          break;
+        case 'arrayPush':
+          code += `const ${node.id}_length = ${node.data.inputs?.[0].id}.push(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayPop':
+          code += `const ${node.id}_element = ${node.data.inputs?.[0].id}.pop();\n`;
+          break;
+        case 'arrayInsert':
+          code += `${node.data.inputs?.[0].id}.splice(${node.data.inputs?.[1].id}, 0, ${node.data.inputs?.[2].id});\n`;
+          code += `const ${node.id}_length = ${node.data.inputs?.[0].id}.length;\n`;
+          break;
+        case 'arrayRemove':
+          code += `const ${node.id}_element = ${node.data.inputs?.[0].id}.splice(${node.data.inputs?.[1].id}, 1)[0];\n`;
+          break;
+        case 'arraySlice':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.slice(${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id});\n`;
+          break;
+        case 'arrayConcat':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.concat(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayFind':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.find(${node.data.inputs?.[1].id});\n`;
+          code += `const ${node.id}_found = ${node.id}_result !== undefined;\n`;
+          break;
+        case 'arrayFilter':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.filter(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayMap':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.map(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayReduce':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.reduce(${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id});\n`;
+          break;
+        case 'arraySort':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.sort(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayReverse':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.reverse();\n`;
+          break;
+        case 'arrayJoin':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.join(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayIncludes':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.includes(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayIndexOf':
+          code += `const ${node.id}_index = ${node.data.inputs?.[0].id}.indexOf(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayLastIndexOf':
+          code += `const ${node.id}_index = ${node.data.inputs?.[0].id}.lastIndexOf(${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayClear':
+          code += `${node.data.inputs?.[0].id}.length = 0;\n`;
+          break;
+        case 'arrayIsEmpty':
+          code += `const ${node.id}_result = ${node.data.inputs?.[0].id}.length === 0;\n`;
+          break;
       }
     });
 
@@ -84,7 +289,12 @@ export class CodeGenerator {
 
   private generateCppCode(nodes: Node<CustomNodeData>[], edges: Edge[]): string {
     let code = '// Generated by VVS\n\n';
-    code += '#include <iostream>\n\n';
+    code += '#include <iostream>\n';
+    code += '#include <vector>\n';
+    code += '#include <string>\n';
+    code += '#include <algorithm>\n';
+    code += '#include <numeric>\n';
+    code += '#include <iterator>\n\n';
     code += 'using namespace std;\n\n';
     
     // Generate function definitions
@@ -98,7 +308,88 @@ export class CodeGenerator {
         case 'print':
           code += this.generateCppPrint(node);
           break;
-        // Add more node types here
+        
+        // Array Operations
+        case 'arrayLength':
+          code += `size_t ${node.id}_length = ${node.data.inputs?.[0].id}.size();\n`;
+          break;
+        case 'arrayGet':
+          code += `auto ${node.id}_element = ${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}];\n`;
+          break;
+        case 'arraySet':
+          code += `${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}] = ${node.data.inputs?.[2].id};\n`;
+          break;
+        case 'arrayPush':
+          code += `${node.data.inputs?.[0].id}.push_back(${node.data.inputs?.[1].id});\n`;
+          code += `size_t ${node.id}_length = ${node.data.inputs?.[0].id}.size();\n`;
+          break;
+        case 'arrayPop':
+          code += `auto ${node.id}_element = ${node.data.inputs?.[0].id}.back();\n`;
+          code += `${node.data.inputs?.[0].id}.pop_back();\n`;
+          break;
+        case 'arrayInsert':
+          code += `${node.data.inputs?.[0].id}.insert(${node.data.inputs?.[0].id}.begin() + ${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id});\n`;
+          code += `size_t ${node.id}_length = ${node.data.inputs?.[0].id}.size();\n`;
+          break;
+        case 'arrayRemove':
+          code += `auto ${node.id}_element = ${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}];\n`;
+          code += `${node.data.inputs?.[0].id}.erase(${node.data.inputs?.[0].id}.begin() + ${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arraySlice':
+          code += `vector<auto> ${node.id}_result(${node.data.inputs?.[0].id}.begin() + ${node.data.inputs?.[1].id}, ${node.data.inputs?.[0].id}.begin() + ${node.data.inputs?.[2].id});\n`;
+          break;
+        case 'arrayConcat':
+          code += `vector<auto> ${node.id}_result = ${node.data.inputs?.[0].id};\n`;
+          code += `${node.id}_result.insert(${node.id}_result.end(), ${node.data.inputs?.[1].id}.begin(), ${node.data.inputs?.[1].id}.end());\n`;
+          break;
+        case 'arrayFind':
+          code += `auto ${node.id}_it = find_if(${node.data.inputs?.[0].id}.begin(), ${node.data.inputs?.[0].id}.end(), ${node.data.inputs?.[1].id});\n`;
+          code += `auto ${node.id}_found = ${node.id}_it != ${node.data.inputs?.[0].id}.end();\n`;
+          code += `auto ${node.id}_result = ${node.id}_found ? *${node.id}_it : decltype(${node.data.inputs?.[0].id}[0]){};\n`;
+          break;
+        case 'arrayFilter':
+          code += `vector<auto> ${node.id}_result;\n`;
+          code += `copy_if(${node.data.inputs?.[0].id}.begin(), ${node.data.inputs?.[0].id}.end(), back_inserter(${node.id}_result), ${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayMap':
+          code += `vector<auto> ${node.id}_result;\n`;
+          code += `transform(${node.data.inputs?.[0].id}.begin(), ${node.data.inputs?.[0].id}.end(), back_inserter(${node.id}_result), ${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayReduce':
+          code += `auto ${node.id}_result = accumulate(${node.data.inputs?.[0].id}.begin(), ${node.data.inputs?.[0].id}.end(), ${node.data.inputs?.[2].id}, ${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arraySort':
+          code += `vector<auto> ${node.id}_result = ${node.data.inputs?.[0].id};\n`;
+          code += `sort(${node.id}_result.begin(), ${node.id}_result.end(), ${node.data.inputs?.[1].id});\n`;
+          break;
+        case 'arrayReverse':
+          code += `vector<auto> ${node.id}_result = ${node.data.inputs?.[0].id};\n`;
+          code += `reverse(${node.id}_result.begin(), ${node.id}_result.end());\n`;
+          break;
+        case 'arrayJoin':
+          code += `string ${node.id}_result;\n`;
+          code += `for (size_t i = 0; i < ${node.data.inputs?.[0].id}.size(); ++i) {\n`;
+          code += `${this.indent}if (i > 0) ${node.id}_result += ${node.data.inputs?.[1].id};\n`;
+          code += `${this.indent}${node.id}_result += to_string(${node.data.inputs?.[0].id}[i]);\n`;
+          code += `}\n`;
+          break;
+        case 'arrayIncludes':
+          code += `bool ${node.id}_result = find(${node.data.inputs?.[0].id}.begin(), ${node.data.inputs?.[0].id}.end(), ${node.data.inputs?.[1].id}) != ${node.data.inputs?.[0].id}.end();\n`;
+          break;
+        case 'arrayIndexOf':
+          code += `auto ${node.id}_it = find(${node.data.inputs?.[0].id}.begin(), ${node.data.inputs?.[0].id}.end(), ${node.data.inputs?.[1].id});\n`;
+          code += `ptrdiff_t ${node.id}_index = ${node.id}_it != ${node.data.inputs?.[0].id}.end() ? distance(${node.data.inputs?.[0].id}.begin(), ${node.id}_it) : -1;\n`;
+          break;
+        case 'arrayLastIndexOf':
+          code += `auto ${node.id}_it = find_end(${node.data.inputs?.[0].id}.begin(), ${node.data.inputs?.[0].id}.end(), &${node.data.inputs?.[1].id}, &${node.data.inputs?.[1].id} + 1);\n`;
+          code += `ptrdiff_t ${node.id}_index = ${node.id}_it != ${node.data.inputs?.[0].id}.end() ? distance(${node.data.inputs?.[0].id}.begin(), ${node.id}_it) : -1;\n`;
+          break;
+        case 'arrayClear':
+          code += `${node.data.inputs?.[0].id}.clear();\n`;
+          break;
+        case 'arrayIsEmpty':
+          code += `bool ${node.id}_result = ${node.data.inputs?.[0].id}.empty();\n`;
+          break;
       }
     });
 
@@ -125,7 +416,74 @@ export class CodeGenerator {
         case 'print':
           code += this.generatePseudoPrint(node);
           break;
-        // Add more node types here
+        
+        // Array Operations
+        case 'arrayLength':
+          code += `${node.id}_length = LENGTH(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayGet':
+          code += `${node.id}_element = ${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}]\n`;
+          break;
+        case 'arraySet':
+          code += `${node.data.inputs?.[0].id}[${node.data.inputs?.[1].id}] = ${node.data.inputs?.[2].id}\n`;
+          break;
+        case 'arrayPush':
+          code += `APPEND ${node.data.inputs?.[1].id} TO ${node.data.inputs?.[0].id}\n`;
+          code += `${node.id}_length = LENGTH(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayPop':
+          code += `${node.id}_element = REMOVE_LAST(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayInsert':
+          code += `INSERT ${node.data.inputs?.[2].id} AT ${node.data.inputs?.[1].id} IN ${node.data.inputs?.[0].id}\n`;
+          code += `${node.id}_length = LENGTH(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayRemove':
+          code += `${node.id}_element = REMOVE_AT(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arraySlice':
+          code += `${node.id}_result = SLICE(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id})\n`;
+          break;
+        case 'arrayConcat':
+          code += `${node.id}_result = CONCATENATE(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayFind':
+          code += `${node.id}_result = FIND_FIRST(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          code += `${node.id}_found = ${node.id}_result IS NOT NULL\n`;
+          break;
+        case 'arrayFilter':
+          code += `${node.id}_result = FILTER(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayMap':
+          code += `${node.id}_result = MAP(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayReduce':
+          code += `${node.id}_result = REDUCE(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id}, ${node.data.inputs?.[2].id})\n`;
+          break;
+        case 'arraySort':
+          code += `${node.id}_result = SORT(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayReverse':
+          code += `${node.id}_result = REVERSE(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayJoin':
+          code += `${node.id}_result = JOIN(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayIncludes':
+          code += `${node.id}_result = CONTAINS(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayIndexOf':
+          code += `${node.id}_index = FIND_INDEX(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayLastIndexOf':
+          code += `${node.id}_index = FIND_LAST_INDEX(${node.data.inputs?.[0].id}, ${node.data.inputs?.[1].id})\n`;
+          break;
+        case 'arrayClear':
+          code += `CLEAR(${node.data.inputs?.[0].id})\n`;
+          break;
+        case 'arrayIsEmpty':
+          code += `${node.id}_result = IS_EMPTY(${node.data.inputs?.[0].id})\n`;
+          break;
       }
     });
 
