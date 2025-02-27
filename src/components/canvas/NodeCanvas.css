@@ -24,7 +24,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  pointer-events: none;
 }
 
 .canvas-content > * {
@@ -36,6 +35,9 @@
   border: 1px solid #3d3d3d;
   background-color: #2a2a2a;
   color: #fff;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
 }
 
 .react-flow__node.selected {

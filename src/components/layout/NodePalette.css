@@ -155,7 +155,7 @@
   border-left: 3px solid #2ac3de;
 }
 
-.node-category:nth-child(4) .category-header { /* Arithmetic */
+.node-category:nth-child(4) .category-header { /* Math */
   border-left: 3px solid #9ece6a;
 }
 
@@ -171,15 +171,7 @@
   border-left: 3px solid #e0af68;
 }
 
-.node-category:nth-child(8) .category-header { /* Bitwise */
-  border-left: 3px solid #7dcfff;
-}
-
-.node-category:nth-child(9) .category-header { /* Advanced Math */
-  border-left: 3px solid #73daca;
-}
-
-.node-category:nth-child(10) .category-header { /* Functions */
+.node-category:nth-child(8) .category-header { /* Functions */
   border-left: 3px solid #c0caf5;
 }
 
@@ -213,14 +205,6 @@
 }
 
 .node-category:nth-child(8) .node-template:hover {
-  border-color: #7dcfff;
-}
-
-.node-category:nth-child(9) .node-template:hover {
-  border-color: #73daca;
-}
-
-.node-category:nth-child(10) .node-template:hover {
   border-color: #c0caf5;
 }
 

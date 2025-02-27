@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { nodeTemplates } from '../layout/NodePalette';
+import { NodeRegistry, NodeTemplate } from '../../services/NodeRegistry';
 import './NodeContextMenu.css';
 
 interface NodeContextMenuProps {
@@ -114,27 +114,10 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
     });
   };
 
-  const categories = [
-    { id: 'flow-control', label: 'Flow Control' },
-    { id: 'variables', label: 'Variables' },
-    { id: 'io', label: 'Input/Output' },
-    { id: 'arithmetic', label: 'Arithmetic' },
-    { id: 'string', label: 'String' },
-    { id: 'comparison', label: 'Comparison' },
-    { id: 'logical', label: 'Logical' },
-    { id: 'bitwise', label: 'Bitwise' },
-    { id: 'math-advanced', label: 'Advanced Math' },
-    { id: 'functions', label: 'Functions' },
-  ] as const;
-
-  const filteredNodeTemplates = React.useMemo(() => {
-    if (!searchQuery) return nodeTemplates;
-    const query = searchQuery.toLowerCase();
-    return nodeTemplates.filter(template => 
-      template.title.toLowerCase().includes(query) || 
-      template.description.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
+  const categories = NodeRegistry.getAllCategories();
+  const filteredNodeTemplates = searchQuery 
+    ? NodeRegistry.searchNodes(searchQuery)
+    : NodeRegistry.getAllNodes();
 
   return (
     <div 
@@ -166,7 +149,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
       <div className="nodes-list">
         {categories.map(category => {
           const categoryNodes = filteredNodeTemplates.filter(
-            template => template.category === category.id
+            (template: NodeTemplate) => template.category === category.id
           );
           
           if (searchQuery && categoryNodes.length === 0) {
@@ -186,7 +169,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
                 )}
               </div>
               <div className={`category-items ${expandedCategories.has(category.id) || searchQuery ? 'expanded' : ''}`}>
-                {categoryNodes.map(template => (
+                {categoryNodes.map((template: NodeTemplate) => (
                   <div
                     key={template.type}
                     className="node-template"

@@ -1,5 +1,6 @@
 import { Node } from 'reactflow';
 import { CustomNodeData, nodeTypes, DataType, Port } from '../components/nodes/CustomNodes';
+import { v4 as uuidv4 } from 'uuid';
 
 let nodeIdCounter = 1;
 
@@ -106,6 +107,8 @@ export class NodeFactory {
     const numberType: DataType = 'number';
     const booleanType: DataType = 'boolean';
     const anyType: DataType = 'any';
+    const stringType: DataType = 'string';
+    const arrayType: DataType = 'array';
 
     // Helper functions for common node configurations
     const createBinaryMathOp = (operation: string) => ({
@@ -129,39 +132,6 @@ export class NodeFactory {
       operation
     });
 
-    const createComparisonOp = (operation: string) => ({
-      inputs: [
-        { id: 'a', label: 'A', dataType: numberType },
-        { id: 'b', label: 'B', dataType: numberType }
-      ],
-      outputs: [
-        { id: 'result', label: 'Result', dataType: booleanType }
-      ],
-      operation
-    });
-
-    const createLogicalOp = (operation: string) => ({
-      inputs: [
-        { id: 'a', label: 'A', dataType: booleanType },
-        { id: 'b', label: 'B', dataType: booleanType }
-      ],
-      outputs: [
-        { id: 'result', label: 'Result', dataType: booleanType }
-      ],
-      operation
-    });
-
-    const createBitwiseOp = (operation: string) => ({
-      inputs: [
-        { id: 'a', label: 'A', dataType: numberType },
-        { id: 'b', label: 'B', dataType: numberType }
-      ],
-      outputs: [
-        { id: 'result', label: 'Result', dataType: numberType }
-      ],
-      operation
-    });
-
     switch (type) {
       // Control Flow
       case nodeTypes.ifStatement:
@@ -172,7 +142,8 @@ export class NodeFactory {
           outputs: [
             { id: 'true', label: 'True', dataType: anyType },
             { id: 'false', label: 'False', dataType: anyType }
-          ]
+          ],
+          category: 'flow-control'
         };
 
       case nodeTypes.forLoop:
@@ -185,7 +156,8 @@ export class NodeFactory {
           outputs: [
             { id: 'body', label: 'Body', dataType: anyType },
             { id: 'index', label: 'Index', dataType: numberType }
-          ]
+          ],
+          category: 'flow-control'
         };
 
       // Output
@@ -194,7 +166,8 @@ export class NodeFactory {
           inputs: [
             { id: 'value', label: 'Value', dataType: anyType }
           ],
-          outputs: []
+          outputs: [],
+          category: 'io'
         };
 
       // Variables
@@ -206,56 +179,35 @@ export class NodeFactory {
           outputs: [
             { id: 'output', label: 'Value', dataType: anyType }
           ],
-          variableType: anyType
+          variableType: anyType,
+          category: 'variables'
         };
 
-      // Basic Math
+      // Math Operations
       case nodeTypes.add:
-        return createBinaryMathOp('add');
       case nodeTypes.subtract:
-        return createBinaryMathOp('subtract');
       case nodeTypes.multiply:
-        return createBinaryMathOp('multiply');
       case nodeTypes.divide:
-        return createBinaryMathOp('divide');
       case nodeTypes.power:
-        return createBinaryMathOp('power');
-      case nodeTypes.modulo:
-        return createBinaryMathOp('modulo');
       case nodeTypes.sqrt:
-        return createUnaryMathOp('sqrt');
       case nodeTypes.abs:
-        return createUnaryMathOp('abs');
-
-      // Trigonometry
+      case nodeTypes.modulo:
       case nodeTypes.sin:
-        return createUnaryMathOp('sin');
       case nodeTypes.cos:
-        return createUnaryMathOp('cos');
       case nodeTypes.tan:
-        return createUnaryMathOp('tan');
       case nodeTypes.asin:
-        return createUnaryMathOp('asin');
       case nodeTypes.acos:
-        return createUnaryMathOp('acos');
       case nodeTypes.atan:
-        return createUnaryMathOp('atan');
-
-      // Logarithmic
       case nodeTypes.ln:
-        return createUnaryMathOp('ln');
       case nodeTypes.log10:
-        return createUnaryMathOp('log10');
       case nodeTypes.exp:
-        return createUnaryMathOp('exp');
-
-      // Rounding
       case nodeTypes.floor:
-        return createUnaryMathOp('floor');
       case nodeTypes.ceil:
-        return createUnaryMathOp('ceil');
       case nodeTypes.round:
-        return createUnaryMathOp('round');
+        return {
+          ...createBinaryMathOp(type),
+          category: 'math'
+        };
 
       // Function
       case nodeTypes.function:
@@ -265,94 +217,12 @@ export class NodeFactory {
           ],
           outputs: [
             { id: 'return', label: 'Return', dataType: anyType }
-          ]
-        };
-
-      // Comparison Operators
-      case nodeTypes.equal:
-        return {
-          inputs: [
-            { id: 'a', label: 'A', dataType: anyType },
-            { id: 'b', label: 'B', dataType: anyType }
           ],
-          outputs: [
-            { id: 'result', label: 'Result', dataType: booleanType }
-          ],
-          operation: 'equal'
-        };
-      case nodeTypes.notEqual:
-        return {
-          inputs: [
-            { id: 'a', label: 'A', dataType: anyType },
-            { id: 'b', label: 'B', dataType: anyType }
-          ],
-          outputs: [
-            { id: 'result', label: 'Result', dataType: booleanType }
-          ],
-          operation: 'notEqual'
-        };
-      case nodeTypes.greaterThan:
-        return createComparisonOp('greaterThan');
-      case nodeTypes.lessThan:
-        return createComparisonOp('lessThan');
-      case nodeTypes.greaterEqual:
-        return createComparisonOp('greaterEqual');
-      case nodeTypes.lessEqual:
-        return createComparisonOp('lessEqual');
-
-      // Logical Operators
-      case nodeTypes.and:
-        return createLogicalOp('and');
-      case nodeTypes.or:
-        return createLogicalOp('or');
-      case nodeTypes.not:
-        return {
-          inputs: [
-            { id: 'value', label: 'Value', dataType: booleanType }
-          ],
-          outputs: [
-            { id: 'result', label: 'Result', dataType: booleanType }
-          ],
-          operation: 'not'
-        };
-      case nodeTypes.logicalXor:
-        return createLogicalOp('logicalXor');
-
-      // Bitwise Operators
-      case nodeTypes.bitwiseAnd:
-        return createBitwiseOp('bitwiseAnd');
-      case nodeTypes.bitwiseOr:
-        return createBitwiseOp('bitwiseOr');
-      case nodeTypes.bitwiseXor:
-        return createBitwiseOp('bitwiseXor');
-      case nodeTypes.leftShift:
-        return {
-          inputs: [
-            { id: 'value', label: 'Value', dataType: numberType },
-            { id: 'shift', label: 'Shift', dataType: numberType }
-          ],
-          outputs: [
-            { id: 'result', label: 'Result', dataType: numberType }
-          ],
-          operation: 'leftShift'
-        };
-      case nodeTypes.rightShift:
-        return {
-          inputs: [
-            { id: 'value', label: 'Value', dataType: numberType },
-            { id: 'shift', label: 'Shift', dataType: numberType }
-          ],
-          outputs: [
-            { id: 'result', label: 'Result', dataType: numberType }
-          ],
-          operation: 'rightShift'
+          category: 'functions'
         };
 
       default:
-        return {
-          inputs: [],
-          outputs: []
-        };
+        throw new Error(`Unknown node type: ${type}`);
     }
   }
 
@@ -375,5 +245,66 @@ export class NodeFactory {
     }
 
     return sourcePort.dataType === targetPort.dataType;
+  }
+
+  private createBaseNode(type: string): Node {
+    return {
+      id: uuidv4(),
+      type,
+      position: { x: 0, y: 0 },
+      data: {
+        title: type,
+        inputs: [],
+        outputs: []
+      }
+    };
+  }
+
+  public create(type: string): Node {
+    switch (type) {
+      // Control Flow
+      case nodeTypes.ifStatement:
+        return this.createBaseNode(type);
+      case nodeTypes.forLoop:
+        return this.createBaseNode(type);
+      
+      // Output
+      case nodeTypes.print:
+        return this.createBaseNode(type);
+      
+      // Variables
+      case nodeTypes.variable:
+        return this.createBaseNode(type);
+      
+      // Math Operations
+      case nodeTypes.add:
+      case nodeTypes.subtract:
+      case nodeTypes.multiply:
+      case nodeTypes.divide:
+      case nodeTypes.power:
+      case nodeTypes.sqrt:
+      case nodeTypes.abs:
+      case nodeTypes.modulo:
+      case nodeTypes.sin:
+      case nodeTypes.cos:
+      case nodeTypes.tan:
+      case nodeTypes.asin:
+      case nodeTypes.acos:
+      case nodeTypes.atan:
+      case nodeTypes.ln:
+      case nodeTypes.log10:
+      case nodeTypes.exp:
+      case nodeTypes.floor:
+      case nodeTypes.ceil:
+      case nodeTypes.round:
+        return this.createBaseNode(type);
+      
+      // Function
+      case nodeTypes.function:
+        return this.createBaseNode(type);
+
+      default:
+        throw new Error(`Unknown node type: ${type}`);
+    }
   }
 } 

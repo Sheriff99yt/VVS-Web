@@ -151,9 +151,7 @@ const Flow: React.FC<NodeCanvasProps> = ({
         onSelectionChange={handleSelectionChange}
         onInit={onInit}
         nodeTypes={customNodes}
-        fitView
-        snapToGrid
-        snapGrid={[20, 20]}
+        draggable={true}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         minZoom={0.1}
         maxZoom={2}
