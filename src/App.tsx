@@ -8,7 +8,8 @@ import { Node, Edge } from 'reactflow';
 import { CustomNodeData, nodeTypes } from './components/nodes/CustomNodes';
 import { HistoryService } from './services/HistoryService';
 import { ClipboardService } from './services/ClipboardService';
-import NodeContextMenu from './components/menu/NodeContextMenu';
+import { NodeContextMenu, GraphContextMenu } from './components/menu/NodeContextMenu';
+import { NodeFactory } from './services/NodeFactory';
 
 function App() {
   const [splitPosition, setSplitPosition] = useState(60); // percentage
@@ -48,7 +49,12 @@ function App() {
     }
   ]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    type: 'node' | 'graph';
+    x: number;
+    y: number;
+    flowPosition?: { x: number; y: number };
+  } | null>(null);
 
   // Initialize history service
   const historyServiceRef = useRef(new HistoryService({ nodes, edges }));
@@ -408,7 +414,18 @@ function App() {
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  // Add context menu handler
+  // Add node handler
+  const handleAddNode = useCallback((nodeType: string, position: { x: number, y: number }) => {
+    const newNode = NodeFactory.createNode({
+      type: nodeType,
+      position,
+    });
+    const updatedNodes = [...nodes, newNode];
+    handleStateChange(updatedNodes, edges, false, [], []);
+    setContextMenu(null);
+  }, [nodes, edges, handleStateChange]);
+
+  // Update context menu handler
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
     // Only show context menu if clicking in the graph pane
@@ -416,13 +433,15 @@ function App() {
       const target = event.target as HTMLElement;
       const nodeElement = target.closest('.react-flow__node');
       
+      // Get the flow position for the context menu
+      const flowPosition = reactFlowInstance?.screenToFlowPosition({
+        x: event.clientX - graphPaneRef.current.getBoundingClientRect().left,
+        y: event.clientY - graphPaneRef.current.getBoundingClientRect().top,
+      }) || { x: 0, y: 0 };
+
       // If we clicked on a node
       if (nodeElement) {
         const nodeId = nodeElement.getAttribute('data-id');
-        // If the node is already selected, don't show the context menu
-        if (nodeId && selectedNodes.some(n => n.id === nodeId)) {
-          return;
-        }
         // If no nodes are selected and we clicked on a node, select it
         if (selectedNodes.length === 0 && nodeId) {
           const node = nodes.find(n => n.id === nodeId);
@@ -436,11 +455,24 @@ function App() {
             setNodes(updatedNodes);
           }
         }
+        // Show node context menu
+        setContextMenu({ 
+          type: 'node',
+          x: event.clientX, 
+          y: event.clientY,
+          flowPosition: { x: flowPosition.x, y: flowPosition.y }
+        });
+      } else {
+        // Show graph context menu
+        setContextMenu({ 
+          type: 'graph',
+          x: event.clientX, 
+          y: event.clientY,
+          flowPosition: { x: flowPosition.x, y: flowPosition.y }
+        });
       }
-
-      setContextMenu({ x: event.clientX, y: event.clientY });
     }
-  }, [nodes, selectedNodes, setNodes, setSelectedNodes, setSelectedEdges]);
+  }, [nodes, selectedNodes, setNodes, setSelectedNodes, setSelectedEdges, reactFlowInstance]);
 
   // Close context menu when clicking outside
   const handleClick = useCallback((event: MouseEvent) => {
@@ -510,33 +542,42 @@ function App() {
               onSelectionChange={handleSelectionChange}
               onInit={setReactFlowInstance}
             />
-            {contextMenu && (
-              <NodeContextMenu
-                x={contextMenu.x}
-                y={contextMenu.y}
-                onCopy={() => {
-                  handleCopy();
-                  setContextMenu(null);
-                }}
-                onCut={() => {
-                  handleCut();
-                  setContextMenu(null);
-                }}
-                onPaste={() => {
-                  handlePaste();
-                  setContextMenu(null);
-                }}
-                onDuplicate={() => {
-                  handleDuplicate();
-                  setContextMenu(null);
-                }}
-                onDelete={() => {
-                  handleDelete();
-                  setContextMenu(null);
-                }}
-                canPaste={ClipboardService.hasData()}
-                hasSelection={selectedNodes.length > 0 || selectedEdges.length > 0}
-              />
+            {contextMenu && contextMenu.flowPosition && (
+              contextMenu.type === 'node' ? (
+                <NodeContextMenu
+                  x={contextMenu.x}
+                  y={contextMenu.y}
+                  onCopy={() => {
+                    handleCopy();
+                    setContextMenu(null);
+                  }}
+                  onCut={() => {
+                    handleCut();
+                    setContextMenu(null);
+                  }}
+                  onPaste={() => {
+                    handlePaste();
+                    setContextMenu(null);
+                  }}
+                  onDuplicate={() => {
+                    handleDuplicate();
+                    setContextMenu(null);
+                  }}
+                  onDelete={() => {
+                    handleDelete();
+                    setContextMenu(null);
+                  }}
+                  canPaste={ClipboardService.hasData()}
+                  hasSelection={selectedNodes.length > 0 || selectedEdges.length > 0}
+                />
+              ) : (
+                <GraphContextMenu
+                  x={contextMenu.x}
+                  y={contextMenu.y}
+                  onAddNode={handleAddNode}
+                  flowPosition={contextMenu.flowPosition}
+                />
+              )
             )}
           </div>
           <div 
