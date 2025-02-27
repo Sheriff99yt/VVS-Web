@@ -1,0 +1,135 @@
+.custom-node {
+  background-color: #2d2d2d;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  min-width: 150px;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.custom-node.selected {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+.node-header {
+  background-color: #3d3d3d;
+  padding: 8px 12px;
+  font-weight: bold;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  user-select: none;
+}
+
+.node-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.node-port {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  min-height: 24px;
+}
+
+.port-label {
+  font-size: 12px;
+  color: #cccccc;
+  padding: 0 8px;
+  user-select: none;
+}
+
+.node-inputs .port-label {
+  margin-left: 16px;
+}
+
+.node-outputs .port-label {
+  margin-right: 16px;
+}
+
+.node-handle {
+  width: 12px !important;
+  height: 12px !important;
+  background-color: #4d4d4d !important;
+  border: 2px solid #6d6d6d !important;
+  transition: all 0.2s ease !important;
+}
+
+.node-handle:hover {
+  background-color: #6d6d6d !important;
+  border-color: #8d8d8d !important;
+  transform: scale(1.2);
+}
+
+/* Data type specific colors */
+.node-handle-number {
+  background-color: #4caf50 !important;
+  border-color: #388e3c !important;
+}
+
+.node-handle-string {
+  background-color: #2196f3 !important;
+  border-color: #1976d2 !important;
+}
+
+.node-handle-boolean {
+  background-color: #ff9800 !important;
+  border-color: #f57c00 !important;
+}
+
+.node-handle-array {
+  background-color: #9c27b0 !important;
+  border-color: #7b1fa2 !important;
+}
+
+.node-handle-any {
+  background-color: #757575 !important;
+  border-color: #616161 !important;
+}
+
+/* Node type specific styles */
+.custom-node[data-type="variable"] .node-header {
+  background-color: #1976d2;
+}
+
+.custom-node[data-type="mathOp"] .node-header {
+  background-color: #388e3c;
+}
+
+.custom-node[data-type="forLoop"] .node-header {
+  background-color: #7b1fa2;
+}
+
+.custom-node[data-type="function"] .node-header {
+  background-color: #f57c00;
+}
+
+/* Connection validation styles */
+.react-flow__handle-connecting {
+  animation: pulse 1.5s infinite;
+}
+
+.react-flow__handle-valid {
+  background-color: #4caf50 !important;
+}
+
+.react-flow__handle-invalid {
+  background-color: #f44336 !important;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+} 

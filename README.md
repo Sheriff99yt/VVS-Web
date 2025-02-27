@@ -1,46 +1,164 @@
-# Getting Started with Create React App
+# Visual Visual Scripting (VVS)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern web-based visual scripting environment built with React and TypeScript. This application provides an intuitive node-based interface for creating and managing complex logic flows.
 
-## Available Scripts
+## 🛠️ Tech Stack
 
-In the project directory, you can run:
+- React 19.0.0
+- TypeScript 4.9.5
+- React Flow for node-based interface
+- Prism.js for code syntax highlighting
+- Testing Library for React components testing
 
-### `npm start`
+## 📋 Prerequisites
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- Node.js (v14.0.0 or higher)
+- npm (v6.0.0 or higher)
+- Modern web browser (Chrome, Firefox, Safari, or Edge)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 🚀 Getting Started
 
-### `npm test`
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/vvs-web.git
+   cd vvs-web
+   ```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### `npm run build`
+3. Start the development server:
+   ```bash
+   npm start
+   ```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+4. Open your browser and navigate to:
+   ```
+   http://localhost:3000
+   ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📁 Project Structure
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+vvs-web/
+├── src/
+│   ├── components/     # React components
+│   ├── services/       # Business logic and API services
+│   ├── App.tsx        # Main application component
+│   ├── App.css        # Application styles
+│   ├── index.tsx      # Application entry point
+│   └── index.css      # Global styles
+├── public/            # Static assets
+└── package.json       # Project dependencies and scripts
+```
 
-### `npm run eject`
+## 📜 Available Scripts
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- `npm start` - Runs the app in development mode
+- `npm test` - Launches the test runner
+- `npm run build` - Builds the app for production
+- `npm run eject` - Ejects from create-react-app
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🧪 Testing
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+The project uses React Testing Library for component testing. Run tests with:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```bash
+npm test
+```
 
-## Learn More
+## 📦 Dependencies
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Main Dependencies
+- react: ^19.0.0
+- react-dom: ^19.0.0
+- reactflow: ^11.11.4
+- prismjs: ^1.29.0
+- typescript: ^4.9.5
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Development Dependencies
+- @craco/craco: ^7.1.0
+- @types/react: ^19.0.10
+- webpack-dev-server: 4.14.0
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+```
+MIT License
+
+Copyright (c) 2024 VVS Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software...
+```
+
+## 👥 Authors
+
+- **Your Name** - *Initial work* - [YourGithub](https://github.com/yourusername)
+- **Contributor Name** - *Feature X* - [ContributorGithub](https://github.com/contributor)
+
+## 🙏 Acknowledgments
+
+- React Flow for the foundation of our node system
+- TypeScript team for the amazing type system
+- Our contributors and supporters
+- Open source community
+
+## 🔮 Future Plans
+
+### Short Term (Q2 2024)
+- [ ] Node grouping functionality
+- [ ] Custom node creation interface
+- [ ] Import/export capabilities
+- [ ] Basic cloud save integration
+
+### Medium Term (Q3-Q4 2024)
+- [ ] Real-time collaboration
+- [ ] Mobile responsiveness
+- [ ] Additional node categories
+- [ ] Performance optimizations
+
+### Long Term (2025)
+- [ ] AI-assisted node creation
+- [ ] Visual debugging tools
+- [ ] Community marketplace
+- [ ] Enterprise features
+
+## 📞 Support
+
+### Community Support
+- GitHub Issues: To Be Updated
+- Discord: To Be Updated
+
+### Professional Support
+- Email: To Be Updated
+- Twitter: To Be Updated
+- Commercial Support: To Be Updated
+
+### Documentation
+- [Official Docs] To Be Updated
+- [API Reference] To Be Updated
+- [Examples] To Be Updated
+- [Tutorials] To Be Updated
+
+---
+
+<div align="center">
+
+Made with ❤️ by the VVS Team
+
+[Website](To Be Updated) · [Documentation](To Be Updated) · [Blog](To Be Updated) · [Twitter](To Be Updated)
+
+</div> 
