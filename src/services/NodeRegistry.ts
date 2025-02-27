@@ -1,16 +1,27 @@
-import { CustomNodeData, nodeTypes, DataType, NodeCategory, Port } from '../components/nodes/CustomNodes';
+import { nodeTypes } from '../components/nodes/CustomNodes';
+import { Deprecated, DeprecatedMethod, DeprecationMetadata } from '../utils/deprecation';
+import { PortFactory } from '../core/utils/PortFactory';
+import { NodeCategory } from '../components/nodes/types';
+import { IPort, INodeTemplate } from '../core/NodeSystem';
+import { DataType } from '../core/NodeSystem';
 
-// Node template interface using shared types
+/**
+ * @deprecated Use INodeTemplate from new system instead
+ * Will be removed in version 2.0.0
+ */
 export interface NodeTemplate {
   type: string;
   title: string;
   description: string;
   category: NodeCategory;
-  defaultInputs: Port[];
-  defaultOutputs: Port[];
+  defaultInputs: IPort[];
+  defaultOutputs: IPort[];
 }
 
-// Node categories with proper typing
+/**
+ * @deprecated Use new category system instead
+ * Will be removed in version 2.0.0
+ */
 export const categories: { id: NodeCategory; label: string }[] = [
   { id: 'flow-control', label: 'Control Flow' },
   { id: 'variables', label: 'Variables' },
@@ -22,22 +33,27 @@ export const categories: { id: NodeCategory; label: string }[] = [
   { id: 'array', label: 'Array' }
 ];
 
-// Helper functions for creating common port configurations
-const createExecPort = (id: string, label: string, isInput = true): Port => ({
+/**
+ * @deprecated Use PortFactory from new system instead
+ * Will be removed in version 2.0.0
+ */
+const createExecPort = (id: string, label: string, isInput = true): IPort => ({
   id,
   label,
-  dataType: 'any', // Execution ports use 'any' type since they don't carry data
+  dataType: 'any',
   isExec: true,
-  isInput,
-  isOutput: !isInput
+  isInput
 });
 
-const createDataPort = (id: string, label: string, dataType: DataType, isInput = true): Port => ({
+/**
+ * @deprecated Use PortFactory from new system instead
+ * Will be removed in version 2.0.0
+ */
+const createDataPort = (id: string, label: string, dataType: DataType, isInput = true): IPort => ({
   id,
   label,
   dataType,
-  isInput,
-  isOutput: !isInput
+  isInput
 });
 
 // Helper functions for creating common node configurations
@@ -47,13 +63,13 @@ const createBinaryMathNode = (type: string, title: string, description: string):
   description,
   category: 'math',
   defaultInputs: [
-    createExecPort('exec', 'Exec'),
-    createDataPort('a', 'A', 'number'),
-    createDataPort('b', 'B', 'number')
+    PortFactory.createExecInput(),
+    PortFactory.createDataInput('a', 'A', 'number', true),
+    PortFactory.createDataInput('b', 'B', 'number', true)
   ],
   defaultOutputs: [
-    createExecPort('exec', 'Exec', false),
-    createDataPort('result', 'Result', 'number', false)
+    PortFactory.createExecOutput(),
+    PortFactory.createDataOutput('result', 'Result', 'number')
   ]
 });
 
@@ -63,12 +79,12 @@ const createUnaryMathNode = (type: string, title: string, description: string): 
   description,
   category: 'math',
   defaultInputs: [
-    createExecPort('exec', 'Exec'),
-    createDataPort('value', 'Value', 'number')
+    PortFactory.createExecInput(),
+    PortFactory.createDataInput('value', 'Value', 'number', true)
   ],
   defaultOutputs: [
-    createExecPort('exec', 'Exec', false),
-    createDataPort('result', 'Result', 'number', false)
+    PortFactory.createExecOutput(),
+    PortFactory.createDataOutput('result', 'Result', 'number')
   ]
 });
 
@@ -78,13 +94,13 @@ const createBinaryLogicNode = (type: string, title: string, description: string)
   description,
   category: 'logical',
   defaultInputs: [
-    createExecPort('exec', 'Exec'),
-    createDataPort('a', 'A', 'boolean'),
-    createDataPort('b', 'B', 'boolean')
+    PortFactory.createExecInput(),
+    PortFactory.createDataInput('a', 'A', 'boolean', true),
+    PortFactory.createDataInput('b', 'B', 'boolean', true)
   ],
   defaultOutputs: [
-    createExecPort('exec', 'Exec', false),
-    createDataPort('result', 'Result', 'boolean', false)
+    PortFactory.createExecOutput(),
+    PortFactory.createDataOutput('result', 'Result', 'boolean')
   ]
 });
 
@@ -94,12 +110,12 @@ const createUnaryLogicNode = (type: string, title: string, description: string):
   description,
   category: 'logical',
   defaultInputs: [
-    createExecPort('exec', 'Exec'),
-    createDataPort('value', 'Value', 'boolean')
+    PortFactory.createExecInput(),
+    PortFactory.createDataInput('value', 'Value', 'boolean', true)
   ],
   defaultOutputs: [
-    createExecPort('exec', 'Exec', false),
-    createDataPort('result', 'Result', 'boolean', false)
+    PortFactory.createExecOutput(),
+    PortFactory.createDataOutput('result', 'Result', 'boolean')
   ]
 });
 
@@ -109,18 +125,18 @@ const createComparisonNode = (type: string, title: string, description: string):
   description,
   category: 'comparison',
   defaultInputs: [
-    createExecPort('exec', 'Exec'),
-    createDataPort('a', 'A', 'any'),
-    createDataPort('b', 'B', 'any')
+    PortFactory.createExecInput(),
+    PortFactory.createDataInput('a', 'A', 'any', true),
+    PortFactory.createDataInput('b', 'B', 'any', true)
   ],
   defaultOutputs: [
-    createExecPort('exec', 'Exec', false),
-    createDataPort('result', 'Result', 'boolean', false)
+    PortFactory.createExecOutput(),
+    PortFactory.createDataOutput('result', 'Result', 'boolean')
   ]
 });
 
 // Helper function for creating array nodes
-const createArrayNode = (type: string, title: string, description: string, inputs: Port[], outputs: Port[]): NodeTemplate => ({
+const createArrayNode = (type: string, title: string, description: string, inputs: IPort[], outputs: IPort[]): NodeTemplate => ({
   type,
   title,
   description,
@@ -138,12 +154,12 @@ export const nodeTemplates: NodeTemplate[] = [
     description: 'Executes one of two branches based on a condition',
     category: 'flow-control',
     defaultInputs: [
-      createExecPort('exec', 'Exec'),
-      createDataPort('condition', 'Condition', 'boolean')
+      PortFactory.createExecInput(),
+      PortFactory.createDataInput('condition', 'Condition', 'boolean', true)
     ],
     defaultOutputs: [
-      createExecPort('true', 'True', false),
-      createExecPort('false', 'False', false)
+      PortFactory.createExecOutput('Then'),
+      PortFactory.createExecOutput('Else')
     ]
   },
   {
@@ -152,15 +168,15 @@ export const nodeTemplates: NodeTemplate[] = [
     description: 'Executes a block of nodes multiple times',
     category: 'flow-control',
     defaultInputs: [
-      createExecPort('exec', 'Exec'),
-      createDataPort('start', 'Start', 'number'),
-      createDataPort('end', 'End', 'number'),
-      createDataPort('step', 'Step', 'number')
+      PortFactory.createExecInput(),
+      PortFactory.createDataInput('start', 'Start', 'number', true),
+      PortFactory.createDataInput('end', 'End', 'number', true),
+      PortFactory.createDataInput('step', 'Step', 'number')
     ],
     defaultOutputs: [
-      createExecPort('loop', 'Loop', false),
-      createExecPort('completed', 'Completed', false),
-      createDataPort('index', 'Index', 'number', false)
+      PortFactory.createExecOutput('Body'),
+      PortFactory.createExecOutput('Done'),
+      PortFactory.createDataOutput('index', 'Index', 'number')
     ]
   },
 
@@ -171,12 +187,12 @@ export const nodeTemplates: NodeTemplate[] = [
     description: 'Stores and retrieves a value',
     category: 'variables',
     defaultInputs: [
-      createExecPort('exec', 'Exec'),
-      createDataPort('value', 'Value', 'any')
+      PortFactory.createExecInput(),
+      PortFactory.createDataInput('value', 'Value', 'any')
     ],
     defaultOutputs: [
-      createExecPort('exec', 'Exec', false),
-      createDataPort('value', 'Value', 'any', false)
+      PortFactory.createExecOutput(),
+      PortFactory.createDataOutput('value', 'Value', 'any')
     ]
   },
 
@@ -187,13 +203,13 @@ export const nodeTemplates: NodeTemplate[] = [
     description: 'Outputs text to the console',
     category: 'io',
     defaultInputs: [
-      createExecPort('exec', 'Exec'),
-      createDataPort('text', 'Text', 'string'),
-      createDataPort('color', 'Color', 'string'),
-      createDataPort('duration', 'Duration', 'number')
+      PortFactory.createExecInput(),
+      PortFactory.createDataInput('text', 'Text', 'string', true),
+      PortFactory.createDataInput('color', 'Color', 'string'),
+      PortFactory.createDataInput('duration', 'Duration', 'number')
     ],
     defaultOutputs: [
-      createExecPort('exec', 'Exec', false)
+      PortFactory.createExecOutput()
     ]
   },
 
@@ -204,12 +220,12 @@ export const nodeTemplates: NodeTemplate[] = [
     description: 'Get string length',
     category: 'string',
     defaultInputs: [
-      createExecPort('exec', 'Exec'),
-      createDataPort('string', 'String', 'string')
+      PortFactory.createExecInput(),
+      PortFactory.createDataInput('string', 'String', 'string', true)
     ],
     defaultOutputs: [
-      createExecPort('exec', 'Exec', false),
-      createDataPort('length', 'Length', 'number', false)
+      PortFactory.createExecOutput(),
+      PortFactory.createDataOutput('length', 'Length', 'number')
     ]
   },
   {
@@ -218,13 +234,13 @@ export const nodeTemplates: NodeTemplate[] = [
     description: 'Append strings together',
     category: 'string',
     defaultInputs: [
-      createExecPort('exec', 'Exec'),
-      createDataPort('a', 'A', 'string'),
-      createDataPort('b', 'B', 'string')
+      PortFactory.createExecInput(),
+      PortFactory.createDataInput('a', 'A', 'string', true),
+      PortFactory.createDataInput('b', 'B', 'string', true)
     ],
     defaultOutputs: [
-      createExecPort('exec', 'Exec', false),
-      createDataPort('result', 'Result', 'string', false)
+      PortFactory.createExecOutput(),
+      PortFactory.createDataOutput('result', 'Result', 'string')
     ]
   },
   {
@@ -233,6 +249,7 @@ export const nodeTemplates: NodeTemplate[] = [
     description: 'Get portion of string',
     category: 'string',
     defaultInputs: [
+      PortFactory.createExecInput(),
       createExecPort('exec', 'Exec'),
       createDataPort('string', 'String', 'string'),
       createDataPort('start', 'Start Index', 'number'),
@@ -832,12 +849,37 @@ export const nodeTemplates: NodeTemplate[] = [
   },
 ];
 
-// NodeRegistry class with improved type safety and organization
+/**
+ * @deprecated Use NodeFactory from new system instead
+ * Will be removed in version 2.0.0
+ */
+@Deprecated({
+  version: '1.0.0',
+  message: 'Use NodeFactory from new system instead',
+  removalVersion: '2.0.0',
+  alternatives: ['NodeFactory']
+})
 export class NodeRegistry {
+  /**
+   * @deprecated Use NodeFactory.createNode() instead
+   */
+  @DeprecatedMethod({
+    version: '1.0.0',
+    message: 'Use NodeFactory.createNode() instead',
+    removalVersion: '2.0.0'
+  })
   static getNodeTemplate(type: string): NodeTemplate | undefined {
     return nodeTemplates.find(template => template.type === type);
   }
 
+  /**
+   * @deprecated Use NodeFactory.getNodesByCategory() instead
+   */
+  @DeprecatedMethod({
+    version: '1.0.0',
+    message: 'Use NodeFactory.getNodesByCategory() instead',
+    removalVersion: '2.0.0'
+  })
   static getNodesByCategory(category: NodeCategory): NodeTemplate[] {
     return nodeTemplates.filter(template => template.category === category);
   }

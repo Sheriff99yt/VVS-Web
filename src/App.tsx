@@ -10,6 +10,9 @@ import { HistoryService } from './services/HistoryService';
 import { ClipboardService } from './services/ClipboardService';
 import { NodeContextMenu, GraphContextMenu } from './components/menu/NodeContextMenu';
 import { NodeFactory } from './services/NodeFactory';
+import { Box, AppBar, Toolbar, Typography, Button, Stack } from '@mui/material';
+import { Canvas } from './components/canvas/Canvas';
+import { ErrorProvider } from './contexts/ErrorContext';
 
 function App() {
   const [splitPosition, setSplitPosition] = useState(60); // percentage
@@ -509,91 +512,59 @@ function App() {
   ]);
 
   return (
-    <div className={`app ${isDragging ? 'resizing' : ''}`}>
-      <MenuBar 
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onCopy={handleCopy}
-        onPaste={handlePaste}
-        onCut={handleCut}
-        onDuplicate={handleDuplicate}
-        onSelectAll={handleSelectAll}
-        onDeselectAll={handleDeselectAll}
-        canUndo={historyServiceRef.current.canUndo()}
-        canRedo={historyServiceRef.current.canRedo()}
-        canCopy={selectedNodes.length > 0}
-        canPaste={ClipboardService.hasData()}
-        hasSelection={selectedNodes.length > 0 || selectedEdges.length > 0}
-      />
-      <div className="main-content">
-        <NodePalette onDragStart={handleNodeDragStart} />
-        <div className="split-view" ref={containerRef}>
-          <div 
-            className="split-pane graph-pane"
-            ref={graphPaneRef}
-            style={{ width: `${splitPosition}%` }}
-            onContextMenu={handleContextMenu}
-          >
-            <NodeCanvas 
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
-              onSelectionChange={handleSelectionChange}
-              onInit={setReactFlowInstance}
-            />
-            {contextMenu && contextMenu.flowPosition && (
-              contextMenu.type === 'node' ? (
-                <NodeContextMenu
-                  x={contextMenu.x}
-                  y={contextMenu.y}
-                  onCopy={() => {
-                    handleCopy();
-                    setContextMenu(null);
-                  }}
-                  onCut={() => {
-                    handleCut();
-                    setContextMenu(null);
-                  }}
-                  onPaste={() => {
-                    handlePaste();
-                    setContextMenu(null);
-                  }}
-                  onDuplicate={() => {
-                    handleDuplicate();
-                    setContextMenu(null);
-                  }}
-                  onDelete={() => {
-                    handleDelete();
-                    setContextMenu(null);
-                  }}
-                  canPaste={ClipboardService.hasData()}
-                  hasSelection={selectedNodes.length > 0 || selectedEdges.length > 0}
-                />
-              ) : (
-                <GraphContextMenu
-                  x={contextMenu.x}
-                  y={contextMenu.y}
-                  onAddNode={handleAddNode}
-                  flowPosition={contextMenu.flowPosition}
-                />
-              )
-            )}
-          </div>
-          <div 
-            className="split-handle"
-            onMouseDown={handleDragStart}
-            style={{ cursor: 'col-resize' }}
-          />
-          <div 
-            className="split-pane code-pane"
-            style={{ width: `${100 - splitPosition}%` }}
-          >
-            <CodePanel nodes={nodes} connections={edges} />
-          </div>
-        </div>
-      </div>
-    </div>
+    <ErrorProvider>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <AppBar position="static">
+          <Toolbar>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Node Editor MVP
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <Box sx={{ display: 'flex', flexGrow: 1 }}>
+          <Box sx={{ width: 200, p: 2, borderRight: 1, borderColor: 'divider' }}>
+            <Stack spacing={2}>
+              <Typography variant="h6">Add Node</Typography>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  const canvas = document.querySelector('.canvas-container');
+                  if (canvas) {
+                    const rect = canvas.getBoundingClientRect();
+                    const position = {
+                      x: rect.width / 2,
+                      y: rect.height / 2
+                    };
+                    // TODO: Add node at position
+                  }
+                }}
+              >
+                Input Node
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  // TODO: Add Math Node
+                }}
+              >
+                Math Node
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  // TODO: Add Output Node
+                }}
+              >
+                Output Node
+              </Button>
+            </Stack>
+          </Box>
+          <Box className="canvas-container" sx={{ flexGrow: 1, position: 'relative' }}>
+            <Canvas />
+          </Box>
+        </Box>
+      </Box>
+    </ErrorProvider>
   );
 }
 
