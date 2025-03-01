@@ -1,22 +1,26 @@
 import { Node, Edge } from 'reactflow';
-import { CustomNodeData } from '../components/nodes/CustomNodes';
+import { NodeData } from './NodeFactory';
 
 interface ClipboardData {
-  nodes: Node<CustomNodeData>[];
+  nodes: Node<NodeData>[];
   edges: Edge[];
 }
 
 export class ClipboardService {
-  private static clipboard: ClipboardData | null = null;
+  private static data: ClipboardData | null = null;
 
   /**
    * Copy nodes and edges to clipboard
    * @param nodes Nodes to copy
    * @param edges Edges to copy
    */
-  static copy(nodes: Node<CustomNodeData>[], edges: Edge[]): void {
-    this.clipboard = {
-      nodes: nodes.map(node => ({ ...node, data: { ...node.data } })), // Deep copy of node data
+  static copyToClipboard(nodes: Node<NodeData>[], edges: Edge[]) {
+    this.data = {
+      nodes: nodes.map(node => ({
+        ...node,
+        data: { ...node.data },
+        position: { ...node.position }
+      })),
       edges: edges.map(edge => ({ ...edge }))
     };
   }
@@ -27,10 +31,10 @@ export class ClipboardService {
    * @returns New nodes and edges with updated positions and IDs, or null if clipboard is empty
    */
   static createFromClipboard(targetPosition: { x: number; y: number }): ClipboardData | null {
-    if (!this.clipboard) return null;
+    if (!this.data) return null;
 
     // Calculate the bounding box of the clipboard nodes
-    const bounds = this.clipboard.nodes.reduce(
+    const bounds = this.data.nodes.reduce(
       (acc, node) => ({
         minX: Math.min(acc.minX, node.position.x),
         minY: Math.min(acc.minY, node.position.y),
@@ -48,7 +52,7 @@ export class ClipboardService {
     const idMap = new Map<string, string>();
 
     // Create new nodes with updated positions
-    const newNodes = this.clipboard.nodes.map(node => {
+    const newNodes = this.data.nodes.map(node => {
       const newId = `${node.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       idMap.set(node.id, newId);
 
@@ -69,7 +73,7 @@ export class ClipboardService {
     });
 
     // Create new edges with updated references
-    const newEdges = this.clipboard.edges
+    const newEdges = this.data.edges
       .filter(edge => idMap.has(edge.source) && idMap.has(edge.target))
       .map(edge => ({
         ...edge,
@@ -83,7 +87,11 @@ export class ClipboardService {
   }
 
   static hasData(): boolean {
-    return this.clipboard !== null;
+    return this.data !== null;
+  }
+
+  static clear() {
+    this.data = null;
   }
 
   /**
@@ -94,7 +102,7 @@ export class ClipboardService {
    * @returns New nodes and edges with unique IDs and updated positions
    */
   static duplicateElements(
-    nodes: Node<CustomNodeData>[],
+    nodes: Node<NodeData>[],
     edges: Edge[],
     targetPosition: { x: number; y: number }
   ): ClipboardData {
@@ -155,4 +163,6 @@ export class ClipboardService {
       edges: duplicatedEdges
     };
   }
-} 
+}
+
+export default ClipboardService; 

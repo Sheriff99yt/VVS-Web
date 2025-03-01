@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NodeRegistry, NodeTemplate } from '../../services/NodeRegistry';
 import './NodeContextMenu.css';
+import { NodeFactory } from '../../services/NodeFactory';
+import { NodeFunctionStructure } from '../../isolated/db/FunctionDB';
 
 interface NodeContextMenuProps {
   x: number;
@@ -17,8 +18,8 @@ interface NodeContextMenuProps {
 interface GraphContextMenuProps {
   x: number;
   y: number;
-  onAddNode: (nodeType: string, position: { x: number, y: number }) => void;
-  flowPosition: { x: number, y: number };
+  onAddNode: (type: string, position: { x: number; y: number }) => void;
+  flowPosition: { x: number; y: number };
 }
 
 export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
@@ -30,58 +31,24 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   onDuplicate,
   onDelete,
   canPaste,
-  hasSelection,
+  hasSelection
 }) => {
   return (
-    <div 
-      className="node-context-menu"
-      style={{
-        left: x,
-        top: y,
-      }}
-    >
-      <div className="context-menu-section">
-        <button 
-          className="context-menu-item"
-          onClick={onCopy}
-          disabled={!hasSelection}
-        >
-          Copy
-          <span className="shortcut">Ctrl+C</span>
-        </button>
-        <button 
-          className="context-menu-item"
-          onClick={onCut}
-          disabled={!hasSelection}
-        >
-          Cut
-          <span className="shortcut">Ctrl+X</span>
-        </button>
-        <button 
-          className="context-menu-item"
-          onClick={onPaste}
-          disabled={!canPaste}
-        >
-          Paste
-          <span className="shortcut">Ctrl+V</span>
-        </button>
-        <div className="context-menu-separator" />
-        <button 
-          className="context-menu-item"
-          onClick={onDuplicate}
-          disabled={!hasSelection}
-        >
-          Duplicate
-          <span className="shortcut">Ctrl+D</span>
-        </button>
-        <button 
-          className="context-menu-item delete"
-          onClick={onDelete}
-          disabled={!hasSelection}
-        >
-          Delete
-          <span className="shortcut">Del</span>
-        </button>
+    <div className="context-menu" style={{ left: x, top: y }}>
+      <div className="menu-item" onClick={onCopy} data-enabled={hasSelection}>
+        Copy
+      </div>
+      <div className="menu-item" onClick={onCut} data-enabled={hasSelection}>
+        Cut
+      </div>
+      <div className="menu-item" onClick={onPaste} data-enabled={canPaste}>
+        Paste
+      </div>
+      <div className="menu-item" onClick={onDuplicate} data-enabled={hasSelection}>
+        Duplicate
+      </div>
+      <div className="menu-item delete" onClick={onDelete} data-enabled={hasSelection}>
+        Delete
       </div>
     </div>
   );
@@ -93,12 +60,25 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   onAddNode,
   flowPosition
 }) => {
+  const [nodes, setNodes] = useState<NodeFunctionStructure[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Focus the search input when the menu opens
   useEffect(() => {
+    const loadNodes = async () => {
+      try {
+        const allNodes = await NodeFactory.getAllNodes();
+        setNodes(allNodes);
+      } catch (error) {
+        console.error('Failed to load nodes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNodes();
     searchInputRef.current?.focus();
   }, []);
 
@@ -114,75 +94,97 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
     });
   };
 
-  const categories = NodeRegistry.getAllCategories();
-  const filteredNodeTemplates = searchQuery 
-    ? NodeRegistry.searchNodes(searchQuery)
-    : NodeRegistry.getAllNodes();
+  // Group nodes by category
+  const nodesByCategory = nodes.reduce((acc, node) => {
+    if (!acc[node.category]) {
+      acc[node.category] = [];
+    }
+    acc[node.category].push(node);
+    return acc;
+  }, {} as Record<string, NodeFunctionStructure[]>);
+
+  // Filter nodes based on search
+  const filteredNodes = searchQuery
+    ? nodes.filter(node => 
+        node.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        node.description.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : nodes;
+
+  if (loading) {
+    return (
+      <div className="context-menu loading" style={{ left: x, top: y }}>
+        Loading nodes...
+      </div>
+    );
+  }
 
   return (
-    <div 
-      className="node-context-menu graph-context-menu"
-      style={{
-        left: x,
-        top: y,
-      }}
-    >
+    <div className="context-menu node-list" style={{ left: x, top: y }}>
       <div className="search-container">
         <input
           ref={searchInputRef}
           type="text"
+          className="search-input"
           placeholder="Search nodes..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
         />
         {searchQuery && (
-          <button 
+          <button
             className="clear-search"
             onClick={() => setSearchQuery('')}
-            aria-label="Clear search"
+            title="Clear search"
           >
             ×
           </button>
         )}
       </div>
-      <div className="nodes-list">
-        {categories.map(category => {
-          const categoryNodes = filteredNodeTemplates.filter(
-            (template: NodeTemplate) => template.category === category.id
-          );
-          
-          if (searchQuery && categoryNodes.length === 0) {
-            return null;
-          }
-
-          return (
-            <div key={category.id} className="node-category">
-              <div 
-                className={`category-header ${expandedCategories.has(category.id) ? 'expanded' : ''}`}
-                onClick={() => toggleCategory(category.id)}
+      
+      <div className="node-categories">
+        {searchQuery ? (
+          <div className="search-results">
+            {filteredNodes.map(node => (
+              <div
+                key={`${node.id}-${node.language}`}
+                className="menu-item"
+                onClick={() => onAddNode(node.id.toString(), flowPosition)}
               >
-                <span className="category-icon">{expandedCategories.has(category.id) ? '▼' : '▶'}</span>
-                {category.label}
-                {searchQuery && categoryNodes.length > 0 && (
-                  <span className="category-count">({categoryNodes.length})</span>
-                )}
+                <span className="node-name">{node.name}</span>
+                <span className="node-language">{node.language}</span>
               </div>
-              <div className={`category-items ${expandedCategories.has(category.id) || searchQuery ? 'expanded' : ''}`}>
-                {categoryNodes.map((template: NodeTemplate) => (
-                  <div
-                    key={template.type}
-                    className="node-template"
-                    onClick={() => onAddNode(template.type, flowPosition)}
-                  >
-                    <div className="template-title">{template.title}</div>
-                    <div className="template-description">{template.description}</div>
-                  </div>
-                ))}
+            ))}
+          </div>
+        ) : (
+          Object.entries(nodesByCategory).map(([category, categoryNodes]) => (
+            <div key={category} className="category">
+              <div
+                className="category-header"
+                onClick={() => toggleCategory(category)}
+              >
+                <span className="expand-icon">
+                  {expandedCategories.has(category) ? '▼' : '▶'}
+                </span>
+                {category}
+                <span className="category-count">({categoryNodes.length})</span>
               </div>
+              {expandedCategories.has(category) && (
+                <div className="category-nodes">
+                  {categoryNodes.map(node => (
+                    <div
+                      key={`${node.id}-${node.language}`}
+                      className="menu-item"
+                      onClick={() => onAddNode(node.id.toString(), flowPosition)}
+                    >
+                      <span className="node-name">{node.name}</span>
+                      <span className="node-language">{node.language}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          );
-        })}
+          ))
+        )}
       </div>
     </div>
   );

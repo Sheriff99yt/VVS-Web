@@ -12,23 +12,23 @@ import 'prismjs/components/prism-cpp';
 import './CodePanel.css';
 import { CodeGenerator, Language } from '../../services/CodeGenerator';
 import { Node, Edge } from 'reactflow';
-import { CustomNodeData } from '../nodes/CustomNodes';
+import { NodeData } from '../../services/NodeFactory';
 
 interface CodePanelProps {
-  nodes: Node<CustomNodeData>[];
-  connections: Edge[];
+  nodes: Node<NodeData>[];
+  edges: Edge[];
 }
 
-const CodePanel: React.FC<CodePanelProps> = ({ nodes, connections }) => {
+const CodePanel: React.FC<CodePanelProps> = ({ nodes, edges }) => {
   const [language, setLanguage] = useState<Language>('python');
   const [code, setCode] = useState('');
   const codeRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const generator = new CodeGenerator({ language });
-    const generatedCode = generator.generateCode(nodes, connections);
+    const generatedCode = generator.generateCode(nodes, edges);
     setCode(generatedCode);
-  }, [nodes, connections, language]);
+  }, [nodes, edges, language]);
 
   useEffect(() => {
     if (codeRef.current) {

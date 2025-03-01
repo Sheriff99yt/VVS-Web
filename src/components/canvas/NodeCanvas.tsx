@@ -6,28 +6,24 @@ import ReactFlow, {
   Node,
   Edge,
   Connection,
-  addEdge,
   NodeChange,
   EdgeChange,
   applyNodeChanges,
   applyEdgeChanges,
   ReactFlowProvider,
   useReactFlow,
-  useNodesState,
-  useEdgesState,
-  XYPosition,
+  addEdge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { customNodes, nodeTypes, CustomNodeData } from '../nodes/CustomNodes';
-import { NodeFactory } from '../../services/NodeFactory';
+import { NodeFactory, NodeData } from '../../services/NodeFactory';
 import './NodeCanvas.css';
 
 interface NodeCanvasProps {
-  nodes: Node<CustomNodeData>[];
+  nodes: Node<NodeData>[];
   edges: Edge[];
-  onNodesChange: (nodes: Node<CustomNodeData>[], recordHistory?: boolean) => void;
+  onNodesChange: (nodes: Node<NodeData>[], recordHistory?: boolean) => void;
   onEdgesChange: (edges: Edge[]) => void;
-  onSelectionChange: (nodes: Node<CustomNodeData>[], edges: Edge[]) => void;
+  onSelectionChange: (nodes: Node<NodeData>[], edges: Edge[]) => void;
   onInit?: (instance: any) => void;
 }
 
@@ -39,37 +35,21 @@ const Flow: React.FC<NodeCanvasProps> = ({
   onSelectionChange,
   onInit,
 }) => {
-  const { fitView, project, getViewport } = useReactFlow();
+  const { fitView, project } = useReactFlow();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Delay fitView to ensure nodes are properly rendered
     const timer = setTimeout(() => {
       fitView({ padding: 0.2 });
     }, 0);
     return () => clearTimeout(timer);
   }, [fitView]);
 
-  const screenToFlowPosition = useCallback((screenX: number, screenY: number) => {
-    if (!reactFlowWrapper.current) return { x: 0, y: 0 };
-
-    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-    const position = project({
-      x: screenX - reactFlowBounds.left,
-      y: screenY - reactFlowBounds.top,
-    });
-
-    return position;
-  }, [project]);
-
   const handleNodesChange = (changes: NodeChange[]) => {
-    const updatedNodes = applyNodeChanges(changes, nodes) as Node<CustomNodeData>[];
-    
-    // Only record history when the drag operation is complete
+    const updatedNodes = applyNodeChanges(changes, nodes) as Node<NodeData>[];
     const shouldRecordHistory = changes.every(change => 
       change.type !== 'position' || change.dragging === false
     );
-    
     onNodesChange(updatedNodes, shouldRecordHistory);
   };
 
@@ -80,29 +60,16 @@ const Flow: React.FC<NodeCanvasProps> = ({
 
   const handleSelectionChange = (params: { nodes: Node[]; edges: Edge[] }) => {
     onSelectionChange(
-      params.nodes as Node<CustomNodeData>[],
+      params.nodes as Node<NodeData>[],
       params.edges
     );
   };
 
   const handleConnect = useCallback(
     (connection: Connection) => {
-      // Validate connection before adding
-      const sourceNode = nodes.find(n => n.id === connection.source);
-      const targetNode = nodes.find(n => n.id === connection.target);
-      
-      if (sourceNode && targetNode && connection.sourceHandle && connection.targetHandle) {
-        if (NodeFactory.isValidConnection(
-          sourceNode,
-          connection.sourceHandle,
-          targetNode,
-          connection.targetHandle
-        )) {
-          onEdgesChange(addEdge(connection, edges));
-        }
-      }
+      onEdgesChange(addEdge(connection, edges));
     },
-    [edges, nodes, onEdgesChange]
+    [edges, onEdgesChange]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -119,13 +86,9 @@ const Flow: React.FC<NodeCanvasProps> = ({
       const nodeType = event.dataTransfer.getData('application/vvsnode');
       if (!nodeType) return;
 
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      const viewport = getViewport();
-      
-      // Calculate position relative to the canvas
       const position = project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
+        x: event.clientX - reactFlowWrapper.current.getBoundingClientRect().left,
+        y: event.clientY - reactFlowWrapper.current.getBoundingClientRect().top,
       });
 
       const newNode = NodeFactory.createNode({
@@ -133,9 +96,11 @@ const Flow: React.FC<NodeCanvasProps> = ({
         position,
       });
 
-      onNodesChange([...nodes, newNode]);
+      if (newNode) {
+        onNodesChange([...nodes, newNode]);
+      }
     },
-    [nodes, onNodesChange, project, getViewport]
+    [nodes, onNodesChange, project]
   );
 
   return (
@@ -150,7 +115,6 @@ const Flow: React.FC<NodeCanvasProps> = ({
         onDrop={onDrop}
         onSelectionChange={handleSelectionChange}
         onInit={onInit}
-        nodeTypes={customNodes}
         draggable={true}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         minZoom={0.1}

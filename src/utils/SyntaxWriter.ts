@@ -1,4 +1,4 @@
-import { DataType, NodeCategory } from '../components/nodes/CustomNodes';
+import { DataType, NodeCategory } from '../old/components/nodes/CustomNodes';
 
 // Supported programming languages
 export type ProgrammingLanguage = 

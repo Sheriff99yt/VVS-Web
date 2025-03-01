@@ -5,7 +5,7 @@ import NodeCanvas from './components/canvas/NodeCanvas';
 import CodePanel from './components/code/CodePanel';
 import NodePalette from './components/layout/NodePalette';
 import { Node, Edge } from 'reactflow';
-import { CustomNodeData, nodeTypes } from './components/nodes/CustomNodes';
+import { NodeData } from './services/NodeFactory';
 import { HistoryService } from './services/HistoryService';
 import { ClipboardService } from './services/ClipboardService';
 import { NodeContextMenu, GraphContextMenu } from './components/menu/NodeContextMenu';
@@ -14,40 +14,14 @@ import { NodeFactory } from './services/NodeFactory';
 function App() {
   const [splitPosition, setSplitPosition] = useState(60); // percentage
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedNodes, setSelectedNodes] = useState<Node<CustomNodeData>[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<Node<NodeData>[]>([]);
   const [selectedEdges, setSelectedEdges] = useState<Edge[]>([]);
   const [mousePosition, setMousePosition] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const graphPaneRef = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes] = useState<Node<CustomNodeData>[]>([
-    {
-      id: '1',
-      type: nodeTypes.ifStatement,
-      position: { x: 100, y: 100 },
-      data: {
-        title: 'If Statement',
-        inputs: [
-          { id: 'condition', label: 'Condition', dataType: 'boolean' }
-        ],
-        outputs: [
-          { id: 'true', label: 'True', dataType: 'any' },
-          { id: 'false', label: 'False', dataType: 'any' }
-        ]
-      }
-    },
-    {
-      id: '2',
-      type: nodeTypes.print,
-      position: { x: 400, y: 100 },
-      data: {
-        title: 'Print',
-        inputs: [
-          { id: 'value', label: 'Value', dataType: 'any' }
-        ],
-        outputs: []
-      }
-    }
-  ]);
+  
+  // Start with an empty graph
+  const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [contextMenu, setContextMenu] = useState<{
     type: 'node' | 'graph';
@@ -57,7 +31,7 @@ function App() {
   } | null>(null);
 
   // Initialize history service
-  const historyServiceRef = useRef(new HistoryService({ nodes, edges }));
+  const historyServiceRef = useRef(new HistoryService());
 
   // Track mouse position
   useEffect(() => {
@@ -76,7 +50,7 @@ function App() {
   }, []);
 
   // Calculate node offset for paste/duplicate
-  const calculateNodeOffset = (nodes: Node<CustomNodeData>[]) => {
+  const calculateNodeOffset = (nodes: Node<NodeData>[]) => {
     if (nodes.length === 0) return { x: 0, y: 0 };
 
     // Find the bounding box of the nodes
@@ -109,185 +83,46 @@ function App() {
 
   // Handle state changes
   const handleStateChange = useCallback((
-    newNodes: Node<CustomNodeData>[],
+    newNodes: Node<NodeData>[],
     newEdges: Edge[],
-    debounce: boolean = false,
-    selectedNodes: Node<CustomNodeData>[] = [],
-    selectedEdges: Edge[] = []
+    debounce: boolean = false
   ) => {
-    setNodes(newNodes);
-    setEdges(newEdges);
     historyServiceRef.current.pushState({
       nodes: newNodes,
       edges: newEdges,
-      selectedNodeIds: selectedNodes.map(node => node.id),
-      selectedEdgeIds: selectedEdges.map(edge => edge.id)
-    }, debounce);
-  }, []);
-
-  // Delete handler
-  const handleDelete = useCallback(() => {
-    if (selectedNodes.length > 0 || selectedEdges.length > 0) {
-      // Remove selected nodes
-      const remainingNodes = nodes.filter(node => 
-        !selectedNodes.some(selectedNode => selectedNode.id === node.id)
-      );
-      
-      // Remove edges connected to deleted nodes and selected edges
-      const remainingEdges = edges.filter(edge => 
-        !selectedNodes.some(node => node.id === edge.source || node.id === edge.target) &&
-        !selectedEdges.some(selectedEdge => selectedEdge.id === edge.id)
-      );
-
-      handleStateChange(remainingNodes, remainingEdges);
-      setSelectedNodes([]);
-      setSelectedEdges([]);
-    }
-  }, [nodes, edges, selectedNodes, selectedEdges, handleStateChange]);
+      selectedNodes,
+      selectedEdges
+    });
+  }, [selectedNodes, selectedEdges]);
 
   // Handle nodes changes
-  const handleNodesChange = useCallback((newNodes: Node<CustomNodeData>[], recordHistory: boolean = true) => {
+  const handleNodesChange = useCallback((newNodes: Node<NodeData>[], recordHistory: boolean = true) => {
     setNodes(newNodes);
     if (recordHistory) {
-      // Use debouncing for node movements (when recordHistory is true but it's a drag operation)
-      const isNodeMovement = nodes.some((node, i) => 
-        node.position.x !== newNodes[i].position.x || 
-        node.position.y !== newNodes[i].position.y
-      );
-      handleStateChange(newNodes, edges, isNodeMovement, selectedNodes, selectedEdges);
+      handleStateChange(newNodes, edges);
     }
-  }, [edges, nodes, selectedNodes, selectedEdges, handleStateChange]);
+  }, [edges, handleStateChange]);
 
+  // Handle edges changes
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
-    handleStateChange(nodes, newEdges, false, selectedNodes, selectedEdges);
-  }, [nodes, handleStateChange, selectedNodes, selectedEdges]);
+    setEdges(newEdges);
+    handleStateChange(nodes, newEdges);
+  }, [nodes, handleStateChange]);
 
   // Selection handlers
-  const handleSelectionChange = useCallback((nodes: Node<CustomNodeData>[], edges: Edge[]) => {
+  const handleSelectionChange = useCallback((nodes: Node<NodeData>[], edges: Edge[]) => {
     setSelectedNodes(nodes);
     setSelectedEdges(edges);
-    // Don't record history for selection changes
   }, []);
 
-  const handleSelectAll = useCallback(() => {
-    const allNodes = nodes.map(node => ({ ...node, selected: true }));
-    const allEdges = edges.map(edge => ({ ...edge, selected: true }));
-    setNodes(allNodes);
-    setEdges(allEdges);
-    setSelectedNodes(allNodes);
-    setSelectedEdges(allEdges);
-    handleStateChange(allNodes, allEdges, false, allNodes, allEdges);
-  }, [nodes, edges, handleStateChange]);
-
-  const handleDeselectAll = useCallback(() => {
-    const unselectedNodes = nodes.map(node => ({ ...node, selected: false }));
-    const unselectedEdges = edges.map(edge => ({ ...edge, selected: false }));
-    setNodes(unselectedNodes);
-    setEdges(unselectedEdges);
-    setSelectedNodes([]);
-    setSelectedEdges([]);
-    handleStateChange(unselectedNodes, unselectedEdges, false, [], []);
-  }, [nodes, edges, handleStateChange]);
-
-  // Cut handler
-  const handleCut = useCallback(() => {
-    if (selectedNodes.length > 0) {
-      // First copy the selected nodes and edges
-      const relevantEdges = edges.filter(edge =>
-        selectedNodes.some(node => node.id === edge.source) &&
-        selectedNodes.some(node => node.id === edge.target)
-      );
-      ClipboardService.copy(selectedNodes, relevantEdges);
-
-      // Then delete them
-      handleDelete();
-    }
-  }, [selectedNodes, edges, handleDelete]);
-
-  // Clipboard operations
-  const handleCopy = useCallback(() => {
-    if (selectedNodes.length > 0) {
-      const relevantEdges = edges.filter(edge =>
-        selectedNodes.some(node => node.id === edge.source) &&
-        selectedNodes.some(node => node.id === edge.target)
-      );
-      ClipboardService.copy(selectedNodes, relevantEdges);
-    }
-  }, [selectedNodes, edges]);
-
-  const handlePaste = useCallback(() => {
-    if (!reactFlowInstance || !ClipboardService.hasData()) return;
-
-    // Get the target position for pasting (mouse position in flow coordinates)
-    const targetPosition = reactFlowInstance.screenToFlowPosition({
-      x: mousePosition.x,
-      y: mousePosition.y
-    });
-
-    // Create new nodes and edges from clipboard, centered at target position
-    const pastedElements = ClipboardService.createFromClipboard(targetPosition);
-    if (!pastedElements) return;
-
-    // Unselect all existing elements
-    const unselectedNodes = nodes.map(node => ({ ...node, selected: false }));
-    const unselectedEdges = edges.map(edge => ({ ...edge, selected: false }));
-
-    // Combine existing and new elements
-    const newNodes = [...unselectedNodes, ...pastedElements.nodes];
-    const newEdges = [...unselectedEdges, ...pastedElements.edges];
-
-    // Update state with new elements
-    handleStateChange(newNodes, newEdges, false, pastedElements.nodes, pastedElements.edges);
-    setSelectedNodes(pastedElements.nodes);
-    setSelectedEdges(pastedElements.edges);
-  }, [nodes, edges, handleStateChange, mousePosition, reactFlowInstance]);
-
-  const handleDuplicate = useCallback(() => {
-    if (selectedNodes.length === 0 || !reactFlowInstance) return;
-
-    // Get edges between selected nodes
-    const relevantEdges = edges.filter(edge =>
-      selectedNodes.some(node => node.id === edge.source) &&
-      selectedNodes.some(node => node.id === edge.target)
-    );
-
-    // Get the target position for duplicating (mouse position in flow coordinates)
-    const targetPosition = reactFlowInstance.screenToFlowPosition({
-      x: mousePosition.x,
-      y: mousePosition.y
-    });
-
-    // Create duplicates centered at target position
-    const { nodes: duplicatedNodes, edges: duplicatedEdges } = 
-      ClipboardService.duplicateElements(selectedNodes, relevantEdges, targetPosition);
-
-    // Unselect existing nodes and edges
-    const unselectedNodes = nodes.map(node => ({ ...node, selected: false }));
-    const unselectedEdges = edges.map(edge => ({ ...edge, selected: false }));
-
-    // Combine existing and duplicated elements
-    const newNodes = [...unselectedNodes, ...duplicatedNodes];
-    const newEdges = [...unselectedEdges, ...duplicatedEdges];
-
-    // Update state with new elements
-    handleStateChange(newNodes, newEdges, false, duplicatedNodes, duplicatedEdges);
-    setSelectedNodes(duplicatedNodes);
-    setSelectedEdges(duplicatedEdges);
-  }, [selectedNodes, edges, nodes, handleStateChange, mousePosition, reactFlowInstance]);
-
-  // Undo/Redo handlers
+  // History handlers
   const handleUndo = useCallback(() => {
     const previousState = historyServiceRef.current.undo();
     if (previousState) {
       setNodes(previousState.nodes);
       setEdges(previousState.edges);
-      // Restore selections
-      setSelectedNodes(previousState.nodes.filter(node => 
-        previousState.selectedNodeIds.includes(node.id)
-      ));
-      setSelectedEdges(previousState.edges.filter(edge => 
-        previousState.selectedEdgeIds.includes(edge.id)
-      ));
+      setSelectedNodes(previousState.selectedNodes);
+      setSelectedEdges(previousState.selectedEdges);
     }
   }, []);
 
@@ -296,86 +131,134 @@ function App() {
     if (nextState) {
       setNodes(nextState.nodes);
       setEdges(nextState.edges);
-      // Restore selections
-      setSelectedNodes(nextState.nodes.filter(node => 
-        nextState.selectedNodeIds.includes(node.id)
-      ));
-      setSelectedEdges(nextState.edges.filter(edge => 
-        nextState.selectedEdgeIds.includes(edge.id)
-      ));
+      setSelectedNodes(nextState.selectedNodes);
+      setSelectedEdges(nextState.selectedEdges);
     }
   }, []);
+
+  // Clipboard handlers
+  const handleCopy = useCallback(() => {
+    if (selectedNodes.length > 0) {
+      const selectedEdgesSet = new Set(selectedEdges.map(e => e.id));
+      const connectedEdges = edges.filter(e => 
+        selectedEdgesSet.has(e.id) || 
+        (selectedNodes.some(n => n.id === e.source) && selectedNodes.some(n => n.id === e.target))
+      );
+      ClipboardService.copyToClipboard(selectedNodes, connectedEdges);
+    }
+  }, [selectedNodes, selectedEdges, edges]);
+
+  const handlePaste = useCallback(() => {
+    if (ClipboardService.hasData()) {
+      const data = ClipboardService.createFromClipboard({ x: 50, y: 50 });
+      if (data) {
+        handleNodesChange([...nodes, ...data.nodes]);
+        handleEdgesChange([...edges, ...data.edges]);
+      }
+    }
+  }, [nodes, edges, handleNodesChange, handleEdgesChange]);
+
+  const handleCut = useCallback(() => {
+    if (selectedNodes.length > 0) {
+      handleCopy();
+      const remainingNodes = nodes.filter(node => !selectedNodes.some(n => n.id === node.id));
+      const remainingEdges = edges.filter(edge => 
+        !selectedEdges.some(e => e.id === edge.id) &&
+        !selectedNodes.some(n => n.id === edge.source || n.id === edge.target)
+      );
+      handleNodesChange(remainingNodes);
+      handleEdgesChange(remainingEdges);
+    }
+  }, [selectedNodes, selectedEdges, nodes, edges, handleCopy, handleNodesChange, handleEdgesChange]);
+
+  const handleDuplicate = useCallback(() => {
+    if (selectedNodes.length > 0) {
+      handleCopy();
+      handlePaste();
+    }
+  }, [selectedNodes, handleCopy, handlePaste]);
+
+  // Context menu handlers
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    if (!graphPaneRef.current) return;
+
+    const rect = graphPaneRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    setContextMenu({
+      type: selectedNodes.length > 0 ? 'node' : 'graph',
+      x,
+      y,
+      flowPosition: { x, y }
+    });
+  }, [selectedNodes]);
+
+  const handleDelete = useCallback(() => {
+    if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+      const remainingNodes = nodes.filter(node => !selectedNodes.some(n => n.id === node.id));
+      const remainingEdges = edges.filter(edge => 
+        !selectedEdges.some(e => e.id === edge.id) &&
+        !selectedNodes.some(n => n.id === edge.source || n.id === edge.target)
+      );
+      handleNodesChange(remainingNodes);
+      handleEdgesChange(remainingEdges);
+    }
+  }, [selectedNodes, selectedEdges, nodes, edges, handleNodesChange, handleEdgesChange]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Handle escape key for deselect all
-      if (event.key === 'Escape') {
-        handleDeselectAll();
-        return;
-      }
-
-      // Handle delete/backspace
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        // Only handle delete if we're not in an input/textarea
-        if (!(event.target instanceof HTMLInputElement) && 
-            !(event.target instanceof HTMLTextAreaElement)) {
-          event.preventDefault();
-          handleDelete();
-          return;
-        }
-      }
-
       if (event.ctrlKey || event.metaKey) {
         switch (event.key.toLowerCase()) {
-          case 'a':
-            event.preventDefault();
-            handleSelectAll();
-            break;
-          case 'c':
-            event.preventDefault();
-            handleCopy();
-            break;
-          case 'x':
-            event.preventDefault();
-            handleCut();
-            break;
-          case 'v':
-            event.preventDefault();
-            handlePaste();
-            break;
-          case 'd':
-            event.preventDefault();
-            handleDuplicate();
-            break;
           case 'z':
-            event.preventDefault();
             if (event.shiftKey) {
               handleRedo();
             } else {
               handleUndo();
             }
             break;
-          case 'y':
+          case 'c':
+            handleCopy();
+            break;
+          case 'v':
+            handlePaste();
+            break;
+          case 'x':
+            handleCut();
+            break;
+          case 'd':
             event.preventDefault();
-            handleRedo();
+            handleDuplicate();
+            break;
+          case 'a':
+            event.preventDefault();
+            setSelectedNodes(nodes);
+            setSelectedEdges(edges);
             break;
         }
+      } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        handleDelete();
+      } else if (event.key === 'Escape') {
+        setSelectedNodes([]);
+        setSelectedEdges([]);
+        setContextMenu(null);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
+    handleUndo,
+    handleRedo,
     handleCopy,
     handlePaste,
     handleCut,
     handleDuplicate,
-    handleUndo,
-    handleRedo,
     handleDelete,
-    handleSelectAll,
-    handleDeselectAll
+    nodes,
+    edges
   ]);
 
   // Split pane handlers
@@ -425,55 +308,6 @@ function App() {
     setContextMenu(null);
   }, [nodes, edges, handleStateChange]);
 
-  // Update context menu handler
-  const handleContextMenu = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    // Only show context menu if clicking in the graph pane
-    if (graphPaneRef.current?.contains(event.target as HTMLElement)) {
-      const target = event.target as HTMLElement;
-      const nodeElement = target.closest('.react-flow__node');
-      
-      // Get the flow position for the context menu
-      const flowPosition = reactFlowInstance?.screenToFlowPosition({
-        x: event.clientX - graphPaneRef.current.getBoundingClientRect().left,
-        y: event.clientY - graphPaneRef.current.getBoundingClientRect().top,
-      }) || { x: 0, y: 0 };
-
-      // If we clicked on a node
-      if (nodeElement) {
-        const nodeId = nodeElement.getAttribute('data-id');
-        // If no nodes are selected and we clicked on a node, select it
-        if (selectedNodes.length === 0 && nodeId) {
-          const node = nodes.find(n => n.id === nodeId);
-          if (node) {
-            setSelectedNodes([node]);
-            setSelectedEdges([]);
-            const updatedNodes = nodes.map(n => ({
-              ...n,
-              selected: n.id === nodeId
-            }));
-            setNodes(updatedNodes);
-          }
-        }
-        // Show node context menu
-        setContextMenu({ 
-          type: 'node',
-          x: event.clientX, 
-          y: event.clientY,
-          flowPosition: { x: flowPosition.x, y: flowPosition.y }
-        });
-      } else {
-        // Show graph context menu
-        setContextMenu({ 
-          type: 'graph',
-          x: event.clientX, 
-          y: event.clientY,
-          flowPosition: { x: flowPosition.x, y: flowPosition.y }
-        });
-      }
-    }
-  }, [nodes, selectedNodes, setNodes, setSelectedNodes, setSelectedEdges, reactFlowInstance]);
-
   // Close context menu when clicking outside
   const handleClick = useCallback((event: MouseEvent) => {
     if (contextMenu) {
@@ -491,23 +325,6 @@ function App() {
     return () => window.removeEventListener('click', handleClick);
   }, [handleClick]);
 
-  // Close context menu on escape
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && contextMenu) {
-        setContextMenu(null);
-        return;
-      }
-      // ... rest of existing keyboard handlers ...
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    // ... existing dependencies ...
-    contextMenu
-  ]);
-
   return (
     <div className={`app ${isDragging ? 'resizing' : ''}`}>
       <MenuBar 
@@ -517,8 +334,14 @@ function App() {
         onPaste={handlePaste}
         onCut={handleCut}
         onDuplicate={handleDuplicate}
-        onSelectAll={handleSelectAll}
-        onDeselectAll={handleDeselectAll}
+        onSelectAll={() => {
+          setSelectedNodes(nodes);
+          setSelectedEdges(edges);
+        }}
+        onDeselectAll={() => {
+          setSelectedNodes([]);
+          setSelectedEdges([]);
+        }}
         canUndo={historyServiceRef.current.canUndo()}
         canRedo={historyServiceRef.current.canRedo()}
         canCopy={selectedNodes.length > 0}
@@ -547,26 +370,11 @@ function App() {
                 <NodeContextMenu
                   x={contextMenu.x}
                   y={contextMenu.y}
-                  onCopy={() => {
-                    handleCopy();
-                    setContextMenu(null);
-                  }}
-                  onCut={() => {
-                    handleCut();
-                    setContextMenu(null);
-                  }}
-                  onPaste={() => {
-                    handlePaste();
-                    setContextMenu(null);
-                  }}
-                  onDuplicate={() => {
-                    handleDuplicate();
-                    setContextMenu(null);
-                  }}
-                  onDelete={() => {
-                    handleDelete();
-                    setContextMenu(null);
-                  }}
+                  onCopy={handleCopy}
+                  onCut={handleCut}
+                  onPaste={handlePaste}
+                  onDuplicate={handleDuplicate}
+                  onDelete={handleDelete}
                   canPaste={ClipboardService.hasData()}
                   hasSelection={selectedNodes.length > 0 || selectedEdges.length > 0}
                 />

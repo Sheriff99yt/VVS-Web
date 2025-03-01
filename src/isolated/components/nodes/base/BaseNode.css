@@ -1,0 +1,118 @@
+.base-node {
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #2d2d2d;
+  border: 2px solid #3d3d3d;
+  color: #ffffff;
+  min-width: 150px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.base-node.selected {
+  border-color: #4d9fff;
+  box-shadow: 0 0 0 2px rgba(77, 159, 255, 0.3);
+}
+
+.node-header {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+.node-title {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.node-description {
+  font-size: 12px;
+  color: #a0a0a0;
+  margin-bottom: 8px;
+}
+
+.node-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.ports {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.port-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+.ports.inputs .port-container {
+  padding-left: 12px;
+}
+
+.ports.outputs .port-container {
+  padding-right: 12px;
+  justify-content: flex-end;
+}
+
+.port-label {
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.optional-badge {
+  font-size: 10px;
+  color: #a0a0a0;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background-color: #3d3d3d;
+  margin-left: 4px;
+}
+
+.node-error {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.2);
+  border-radius: 4px;
+  color: #ff6b6b;
+  font-size: 12px;
+}
+
+/* Port styles */
+.port {
+  width: 12px !important;
+  height: 12px !important;
+  background-color: #4d4d4d;
+  border: 2px solid #6d6d6d;
+  border-radius: 50%;
+}
+
+.port.connected {
+  border-color: #4d9fff;
+}
+
+/* Port type colors */
+.port.string { background-color: #4CAF50; }
+.port.number { background-color: #2196F3; }
+.port.boolean { background-color: #FF9800; }
+.port.array { background-color: #9C27B0; }
+.port.object { background-color: #795548; }
+.port.function { background-color: #607D8B; }
+.port.any { background-color: #9E9E9E; }
+.port.void { background-color: #757575; }
+
+/* Node type styles */
+.base-node.function { border-color: #4CAF50; }
+.base-node.control-flow { border-color: #2196F3; }
+.base-node.data { border-color: #9C27B0; }
+.base-node.math { border-color: #FF9800; }
+.base-node.string { border-color: #4CAF50; }
+.base-node.array { border-color: #9C27B0; }
+.base-node.logic { border-color: #FF5722; }
+.base-node.comparison { border-color: #607D8B; }
+.base-node.io { border-color: #795548; } 

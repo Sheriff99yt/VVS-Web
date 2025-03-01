@@ -1,90 +1,84 @@
-import React, { useState } from 'react';
-import { NodeRegistry, NodeTemplate } from '../../services/NodeRegistry';
+import React, { useEffect, useState } from 'react';
 import './NodePalette.css';
+import { NodeFunctionStructure } from '../../isolated/db/FunctionDB';
+import { DataImportService } from '../../services/DataImportService';
 
 interface NodePaletteProps {
-  onDragStart: (event: React.DragEvent, nodeType: string) => void;
+  onDragStart?: (event: React.DragEvent, nodeType: string) => void;
 }
 
 const NodePalette: React.FC<NodePaletteProps> = ({ onDragStart }) => {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
+  const [nodes, setNodes] = useState<NodeFunctionStructure[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId);
-      } else {
-        newSet.add(categoryId);
+  useEffect(() => {
+    const loadNodes = async () => {
+      try {
+        // First import example data
+        await DataImportService.importExampleData();
+        // Then fetch all nodes
+        const allNodes = await DataImportService.getAllNodes();
+        setNodes(allNodes);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load nodes');
+      } finally {
+        setLoading(false);
       }
-      return newSet;
-    });
+    };
+
+    loadNodes();
+  }, []);
+
+  const handleDragStart = (event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData('application/vvsnode', nodeType);
+    if (onDragStart) {
+      onDragStart(event, nodeType);
+    }
   };
 
-  const categories = NodeRegistry.getAllCategories();
-  const filteredNodeTemplates = searchQuery 
-    ? NodeRegistry.searchNodes(searchQuery)
-    : NodeRegistry.getAllNodes();
+  // Group nodes by category
+  const nodesByCategory = nodes.reduce((acc, node) => {
+    if (!acc[node.category]) {
+      acc[node.category] = [];
+    }
+    acc[node.category].push(node);
+    return acc;
+  }, {} as Record<string, NodeFunctionStructure[]>);
+
+  if (loading) {
+    return <div className="node-palette loading">Loading nodes...</div>;
+  }
+
+  if (error) {
+    return <div className="node-palette error">Error: {error}</div>;
+  }
 
   return (
     <div className="node-palette">
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search nodes..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-        {searchQuery && (
-          <button 
-            className="clear-search"
-            onClick={() => setSearchQuery('')}
-            aria-label="Clear search"
-          >
-            ×
-          </button>
-        )}
+      <div className="palette-header">
+        <h3>Nodes</h3>
       </div>
-      <div className="nodes-list">
-        {categories.map(category => {
-          const categoryNodes = filteredNodeTemplates.filter(
-            (template: NodeTemplate) => template.category === category.id
-          );
-          
-          if (searchQuery && categoryNodes.length === 0) {
-            return null;
-          }
-
-          return (
-            <div key={category.id} className="node-category">
-              <div 
-                className={`category-header ${expandedCategories.has(category.id) ? 'expanded' : ''}`}
-                onClick={() => toggleCategory(category.id)}
-              >
-                <span className="category-icon">{expandedCategories.has(category.id) ? '▼' : '▶'}</span>
-                {category.label}
-                {searchQuery && categoryNodes.length > 0 && (
-                  <span className="category-count">({categoryNodes.length})</span>
-                )}
-              </div>
-              <div className={`category-items ${expandedCategories.has(category.id) || searchQuery ? 'expanded' : ''}`}>
-                {categoryNodes.map((template: NodeTemplate) => (
-                  <div
-                    key={template.type}
-                    className="node-template"
-                    draggable
-                    onDragStart={(e) => onDragStart(e, template.type)}
-                  >
-                    <div className="template-title">{template.title}</div>
-                    <div className="template-description">{template.description}</div>
-                  </div>
-                ))}
-              </div>
+      <div className="palette-content">
+        {Object.entries(nodesByCategory).map(([category, categoryNodes]) => (
+          <div key={category} className="node-category">
+            <div className="category-header">{category}</div>
+            <div className="category-nodes">
+              {categoryNodes.map(node => (
+                <div
+                  key={`${node.id}-${node.language}`}
+                  className="node-item"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, node.id.toString())}
+                  title={node.description}
+                >
+                  <span className="node-name">{node.name}</span>
+                  <span className="node-language">{node.language}</span>
+                </div>
+              ))}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
