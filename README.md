@@ -33,10 +33,9 @@ VVS Web is a visual programming environment that allows you to create web applic
 
 ## Documentation
 
-- [User Guide](./docs/user/README.md) - Guide for using VVS Web
-- [Development Documentation](./docs/development/README.md) - Documentation for developers
-  - [System Migration](./docs/development/system/SystemMigration.md) - Migration guide
-  - [Data Structures](./docs/development/data/complete_example.md) - Node definition structure
+- [User Guide](./docs/user/User_Guide.md) - Guide for using VVS Web
+- [System Migration](./docs/development/SystemMigration.md) - Migration guide
+- [Data Structures](./docs/development/complete_example.md) - Node definition structure
 
 ## Contributing
 
