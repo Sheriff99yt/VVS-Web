@@ -1,0 +1,893 @@
+{
+  "version": "1.0",
+  "description": "Python function definitions for VVS Web",
+  "functions": [
+    {
+      "id": "math_add",
+      "name": "add",
+      "displayName": "Add",
+      "category": "Math",
+      "description": "Add two numbers together",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "First number to add",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Second number to add",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0} + {1}",
+          "type": "expression",
+          "imports": [],
+          "description": "Python addition operator"
+        }
+      }
+    },
+    {
+      "id": "math_subtract",
+      "name": "subtract",
+      "displayName": "Subtract",
+      "category": "Math",
+      "description": "Subtract second number from first",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "Number to subtract from",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Number to subtract",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0} - {1}",
+          "type": "expression",
+          "imports": [],
+          "description": "Python subtraction operator"
+        }
+      }
+    },
+    {
+      "id": "math_multiply",
+      "name": "multiply",
+      "displayName": "Multiply",
+      "category": "Math",
+      "description": "Multiply two numbers",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "First number to multiply",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Second number to multiply",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0} * {1}",
+          "type": "expression",
+          "imports": [],
+          "description": "Python multiplication operator"
+        }
+      }
+    },
+    {
+      "id": "math_divide",
+      "name": "divide",
+      "displayName": "Divide",
+      "category": "Math",
+      "description": "Divide first number by second",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "Number to divide (dividend)",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Number to divide by (divisor)",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0} / {1}",
+          "type": "expression",
+          "imports": [],
+          "description": "Python division operator"
+        }
+      }
+    },
+    {
+      "id": "math_min",
+      "name": "min",
+      "displayName": "Minimum",
+      "category": "Math",
+      "description": "Find the minimum value between two numbers",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "First number",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Second number",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "min({0}, {1})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python min function"
+        }
+      }
+    },
+    {
+      "id": "math_max",
+      "name": "max",
+      "displayName": "Maximum",
+      "category": "Math",
+      "description": "Find the maximum value between two numbers",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "First number",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Second number",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "max({0}, {1})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python max function"
+        }
+      }
+    },
+    {
+      "id": "math_abs",
+      "name": "abs",
+      "displayName": "Absolute Value",
+      "category": "Math",
+      "description": "Return the absolute value of a number",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "Number",
+          "description": "Number to find absolute value of",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "abs({0})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python abs function"
+        }
+      }
+    },
+    {
+      "id": "string_concat",
+      "name": "concat",
+      "displayName": "Concatenate",
+      "category": "String",
+      "description": "Concatenate two strings",
+      "parameters": [
+        {
+          "name": "str1",
+          "type": "String",
+          "description": "First string",
+          "isRequired": true
+        },
+        {
+          "name": "str2",
+          "type": "String",
+          "description": "Second string",
+          "isRequired": true
+        }
+      ],
+      "returnType": "String",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0} + {1}",
+          "type": "expression",
+          "imports": [],
+          "description": "Python string concatenation"
+        }
+      }
+    },
+    {
+      "id": "string_split",
+      "name": "split",
+      "displayName": "Split String",
+      "category": "String",
+      "description": "Split a string by a delimiter",
+      "parameters": [
+        {
+          "name": "string",
+          "type": "String",
+          "description": "String to split",
+          "isRequired": true
+        },
+        {
+          "name": "delimiter",
+          "type": "String",
+          "description": "Delimiter to split by",
+          "isRequired": true
+        }
+      ],
+      "returnType": "List",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0}.split({1})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python string split method"
+        }
+      }
+    },
+    {
+      "id": "string_join",
+      "name": "join",
+      "displayName": "Join Strings",
+      "category": "String",
+      "description": "Join a list of strings with a delimiter",
+      "parameters": [
+        {
+          "name": "delimiter",
+          "type": "String",
+          "description": "Delimiter to join with",
+          "isRequired": true
+        },
+        {
+          "name": "strings",
+          "type": "List",
+          "description": "List of strings to join",
+          "isRequired": true
+        }
+      ],
+      "returnType": "String",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0}.join({1})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python string join method"
+        }
+      }
+    },
+    {
+      "id": "string_replace",
+      "name": "replace",
+      "displayName": "Replace in String",
+      "category": "String",
+      "description": "Replace occurrences of a substring with another",
+      "parameters": [
+        {
+          "name": "string",
+          "type": "String",
+          "description": "Original string",
+          "isRequired": true
+        },
+        {
+          "name": "old",
+          "type": "String",
+          "description": "Substring to replace",
+          "isRequired": true
+        },
+        {
+          "name": "new",
+          "type": "String",
+          "description": "Replacement substring",
+          "isRequired": true
+        }
+      ],
+      "returnType": "String",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0}.replace({1}, {2})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python string replace method"
+        }
+      }
+    },
+    {
+      "id": "convert_to_string",
+      "name": "toString",
+      "displayName": "Convert to String",
+      "category": "Conversion",
+      "description": "Convert a value to string representation",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "Any",
+          "description": "Value to convert to string",
+          "isRequired": true
+        }
+      ],
+      "returnType": "String",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "str({0})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python str() function"
+        }
+      }
+    },
+    {
+      "id": "list_create",
+      "name": "createList",
+      "displayName": "Create List",
+      "category": "List",
+      "description": "Create a new list with specified items",
+      "parameters": [
+        {
+          "name": "items",
+          "type": "Any",
+          "description": "Items to include in the list (variadic)",
+          "isRequired": false
+        }
+      ],
+      "returnType": "List",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "[{0}]",
+          "type": "expression",
+          "imports": [],
+          "description": "Python list literal"
+        }
+      }
+    },
+    {
+      "id": "list_filter",
+      "name": "filter",
+      "displayName": "Filter List",
+      "category": "List",
+      "description": "Filter elements in a list based on a condition",
+      "parameters": [
+        {
+          "name": "lst",
+          "type": "List",
+          "description": "List to filter",
+          "isRequired": true
+        },
+        {
+          "name": "function",
+          "type": "Function",
+          "description": "Function that returns True for items to keep",
+          "isRequired": true
+        }
+      ],
+      "returnType": "List",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "list(filter({1}, {0}))",
+          "type": "expression",
+          "imports": [],
+          "description": "Python filter function with list conversion"
+        }
+      }
+    },
+    {
+      "id": "list_map",
+      "name": "map",
+      "displayName": "Map List",
+      "category": "List",
+      "description": "Apply a function to each element in a list",
+      "parameters": [
+        {
+          "name": "lst",
+          "type": "List",
+          "description": "List to map",
+          "isRequired": true
+        },
+        {
+          "name": "function",
+          "type": "Function",
+          "description": "Function to apply to each element",
+          "isRequired": true
+        }
+      ],
+      "returnType": "List",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "list(map({1}, {0}))",
+          "type": "expression",
+          "imports": [],
+          "description": "Python map function with list conversion"
+        }
+      }
+    },
+    {
+      "id": "list_sort",
+      "name": "sort",
+      "displayName": "Sort List",
+      "category": "List",
+      "description": "Sort elements in a list",
+      "parameters": [
+        {
+          "name": "lst",
+          "type": "List",
+          "description": "List to sort",
+          "isRequired": true
+        },
+        {
+          "name": "reverse",
+          "type": "Boolean",
+          "description": "Whether to sort in reverse order",
+          "isRequired": false
+        }
+      ],
+      "returnType": "List",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "sorted({0}, reverse={1})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python sorted function"
+        }
+      }
+    },
+    {
+      "id": "dict_create",
+      "name": "createDict",
+      "displayName": "Create Dictionary",
+      "category": "Dictionary",
+      "description": "Create a new dictionary",
+      "parameters": [
+        {
+          "name": "keys",
+          "type": "List",
+          "description": "List of keys",
+          "isRequired": true
+        },
+        {
+          "name": "values",
+          "type": "List",
+          "description": "List of values",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Dictionary",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "dict(zip({0}, {1}))",
+          "type": "expression",
+          "imports": [],
+          "description": "Python dictionary creation using zip"
+        }
+      }
+    },
+    {
+      "id": "dict_get",
+      "name": "getDictItem",
+      "displayName": "Get Dictionary Item",
+      "category": "Dictionary",
+      "description": "Get a value from a dictionary by key",
+      "parameters": [
+        {
+          "name": "dict",
+          "type": "Dictionary",
+          "description": "Dictionary to get value from",
+          "isRequired": true
+        },
+        {
+          "name": "key",
+          "type": "Any",
+          "description": "Key to look up",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Any",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0}[{1}]",
+          "type": "expression",
+          "imports": [],
+          "description": "Python dictionary key lookup"
+        }
+      }
+    },
+    {
+      "id": "control_if",
+      "name": "if",
+      "displayName": "If Statement",
+      "category": "Control Flow",
+      "description": "Conditional execution block",
+      "parameters": [
+        {
+          "name": "condition",
+          "type": "Boolean",
+          "description": "Condition to check",
+          "isRequired": true
+        },
+        {
+          "name": "body",
+          "type": "Block",
+          "description": "Code to execute if condition is true",
+          "isRequired": true
+        }
+      ],
+      "returnType": "None",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "if {0}:\n{1}",
+          "type": "block",
+          "imports": [],
+          "description": "Python if statement"
+        }
+      }
+    },
+    {
+      "id": "control_for",
+      "name": "for",
+      "displayName": "For Loop",
+      "category": "Control Flow",
+      "description": "Iterate over a sequence",
+      "parameters": [
+        {
+          "name": "variable",
+          "type": "String",
+          "description": "Loop variable name",
+          "isRequired": true
+        },
+        {
+          "name": "sequence",
+          "type": "Iterable",
+          "description": "Sequence to iterate over",
+          "isRequired": true
+        },
+        {
+          "name": "body",
+          "type": "Block",
+          "description": "Code to execute for each item",
+          "isRequired": true
+        }
+      ],
+      "returnType": "None",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "for {0} in {1}:\n{2}",
+          "type": "block",
+          "imports": [],
+          "description": "Python for loop"
+        }
+      }
+    },
+    {
+      "id": "io_print",
+      "name": "print",
+      "displayName": "Print",
+      "category": "Input/Output",
+      "description": "Print output to the console",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "Any",
+          "description": "Value to print",
+          "isRequired": true
+        }
+      ],
+      "returnType": "None",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "print({0})",
+          "type": "statement",
+          "imports": [],
+          "description": "Python print function"
+        }
+      }
+    },
+    {
+      "id": "io_input",
+      "name": "input",
+      "displayName": "Input",
+      "category": "Input/Output",
+      "description": "Get input from the user",
+      "parameters": [
+        {
+          "name": "prompt",
+          "type": "String",
+          "description": "Prompt to display",
+          "isRequired": false
+        }
+      ],
+      "returnType": "String",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "input({0})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python input function"
+        }
+      }
+    },
+    {
+      "id": "convert_to_number",
+      "name": "toNumber",
+      "displayName": "Convert to Number",
+      "category": "Conversion",
+      "description": "Convert a value to a number",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "Any",
+          "description": "Value to convert to number",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "float({0})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python float conversion"
+        }
+      }
+    },
+    {
+      "id": "convert_to_int",
+      "name": "toInteger",
+      "displayName": "Convert to Integer",
+      "category": "Conversion",
+      "description": "Convert a value to an integer",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "Any",
+          "description": "Value to convert to integer",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Number",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "int({0})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python int conversion"
+        }
+      }
+    },
+    {
+      "id": "logic_compare_gt",
+      "name": "greaterThan",
+      "displayName": "Greater Than",
+      "category": "Logic",
+      "description": "Check if the first value is greater than the second",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "First value",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Second value",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Boolean",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0} > {1}",
+          "type": "expression",
+          "imports": [],
+          "description": "Python greater than operator"
+        }
+      }
+    },
+    {
+      "id": "logic_compare_lt",
+      "name": "lessThan",
+      "displayName": "Less Than",
+      "category": "Logic",
+      "description": "Check if the first value is less than the second",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "Number",
+          "description": "First value",
+          "isRequired": true
+        },
+        {
+          "name": "b",
+          "type": "Number",
+          "description": "Second value",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Boolean",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0} < {1}",
+          "type": "expression",
+          "imports": [],
+          "description": "Python less than operator"
+        }
+      }
+    },
+    {
+      "id": "file_open",
+      "name": "openFile",
+      "displayName": "Open File",
+      "category": "File",
+      "description": "Open a file and return a file handle",
+      "parameters": [
+        {
+          "name": "filepath",
+          "type": "String",
+          "description": "Path to the file",
+          "isRequired": true
+        },
+        {
+          "name": "mode",
+          "type": "String",
+          "description": "File open mode ('r' for read, 'w' for write, etc.)",
+          "isRequired": true
+        }
+      ],
+      "returnType": "File",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "open({0}, {1})",
+          "type": "expression",
+          "imports": [],
+          "description": "Python open function"
+        }
+      }
+    },
+    {
+      "id": "file_read",
+      "name": "readFile",
+      "displayName": "Read File",
+      "category": "File",
+      "description": "Read entire file contents as a string",
+      "parameters": [
+        {
+          "name": "file",
+          "type": "File",
+          "description": "File handle to read from",
+          "isRequired": true
+        }
+      ],
+      "returnType": "String",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0}.read()",
+          "type": "expression",
+          "imports": [],
+          "description": "Python file read method"
+        }
+      }
+    },
+    {
+      "id": "file_write",
+      "name": "writeFile",
+      "displayName": "Write File",
+      "category": "File",
+      "description": "Write string data to a file",
+      "parameters": [
+        {
+          "name": "file",
+          "type": "File",
+          "description": "File handle to write to",
+          "isRequired": true
+        },
+        {
+          "name": "data",
+          "type": "String",
+          "description": "Data to write",
+          "isRequired": true
+        }
+      ],
+      "returnType": "None",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0}.write({1})",
+          "type": "statement",
+          "imports": [],
+          "description": "Python file write method"
+        }
+      }
+    },
+    {
+      "id": "file_close",
+      "name": "closeFile",
+      "displayName": "Close File",
+      "category": "File",
+      "description": "Close a file",
+      "parameters": [
+        {
+          "name": "file",
+          "type": "File",
+          "description": "File handle to close",
+          "isRequired": true
+        }
+      ],
+      "returnType": "None",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "{0}.close()",
+          "type": "statement",
+          "imports": [],
+          "description": "Python file close method"
+        }
+      }
+    },
+    {
+      "id": "file_exists",
+      "name": "fileExists",
+      "displayName": "File Exists",
+      "category": "File",
+      "description": "Check if a file exists",
+      "parameters": [
+        {
+          "name": "filepath",
+          "type": "String",
+          "description": "Path to the file",
+          "isRequired": true
+        }
+      ],
+      "returnType": "Boolean",
+      "syntaxPatterns": {
+        "python": {
+          "pattern": "os.path.exists({0})",
+          "type": "expression",
+          "imports": ["import os.path"],
+          "description": "Python os.path.exists function"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "lastUpdated": "2024-03-03",
+    "supportedLanguages": ["python"],
+    "categories": ["Math", "String", "List", "Control Flow", "Input/Output", "Conversion", "Logic", "Dictionary", "File"]
+  }
+} 

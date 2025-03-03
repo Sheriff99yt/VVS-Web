@@ -1,0 +1,290 @@
+.function-node {
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 12px;
+  background: #2a2a2a;
+  color: #fff;
+  width: 280px;
+  font-family: 'Roboto', sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.function-node.selected {
+  border: 2px solid #6f93ff;
+  box-shadow: 0 0 12px rgba(111, 147, 255, 0.4);
+}
+
+.function-node.with-execution-ports {
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.function-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #555;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.function-node-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.function-node-category {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #464646;
+  color: #ccc;
+}
+
+.function-node-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.function-node-description {
+  font-size: 12px;
+  color: #bbb;
+  line-height: 1.4;
+  margin: 6px 0;
+  text-align: center;
+  max-width: 180px;
+}
+
+/* Input and output ports styling */
+.function-node-inputs,
+.function-node-outputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 80px;
+}
+
+.function-node-port {
+  position: relative;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.function-node-outputs .function-node-port {
+  align-items: flex-end;
+}
+
+.function-node-port-label {
+  margin: 0 8px;
+  white-space: nowrap;
+  color: #ddd;
+}
+
+.function-node-port-type {
+  font-size: 10px;
+  color: #999;
+  margin: 0 8px;
+}
+
+.required {
+  color: #ff6b6b;
+  margin-left: 2px;
+}
+
+/* Execution ports container */
+.execution-ports {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 6px 0;
+}
+
+.execution-inputs {
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+}
+
+.execution-outputs {
+  position: absolute;
+  bottom: -12px;
+  left: 0;
+  right: 0;
+}
+
+/* Custom styling for handle based on data type */
+.port-type-number .react-flow__handle {
+  background: #64b5f6;
+  border-color: #1976d2;
+}
+
+.port-type-string .react-flow__handle {
+  background: #81c784;
+  border-color: #388e3c;
+}
+
+.port-type-boolean .react-flow__handle {
+  background: #ffb74d;
+  border-color: #f57c00;
+}
+
+.port-type-array .react-flow__handle,
+.port-type-list .react-flow__handle {
+  background: #ba68c8;
+  border-color: #7b1fa2;
+}
+
+.port-type-object .react-flow__handle,
+.port-type-dictionary .react-flow__handle {
+  background: #4db6ac;
+  border-color: #00796b;
+}
+
+.port-type-any .react-flow__handle {
+  background: #e0e0e0;
+  border-color: #9e9e9e;
+}
+
+/* Handle hover state */
+.react-flow__handle:hover {
+  transform: scale(1.2);
+}
+
+/* Port types with colors */
+.port-type-string {
+  background-color: #4caf50 !important;
+}
+
+.port-type-number {
+  background-color: #2196f3 !important;
+}
+
+.port-type-boolean {
+  background-color: #ff9800 !important;
+}
+
+.port-type-array {
+  background-color: #9c27b0 !important;
+}
+
+.port-type-object {
+  background-color: #607d8b !important;
+}
+
+.port-type-any {
+  background-color: #795548 !important;
+}
+
+/* Category colors */
+.category-math {
+  border-top: 4px solid #2196f3;
+}
+
+.category-string {
+  border-top: 4px solid #4caf50;
+}
+
+.category-array {
+  border-top: 4px solid #9c27b0;
+}
+
+.category-logic {
+  border-top: 4px solid #ff9800;
+}
+
+.category-io {
+  border-top: 4px solid #607d8b;
+}
+
+/* Port styling */
+.port {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+  background-color: #c2c2c2;
+  border: 1px solid #999 !important;
+}
+
+.port.port-required {
+  border: 1px solid #e53935 !important;
+}
+
+/* React Flow connection line */
+.react-flow__connection-path {
+  stroke: #b1b1b7;
+  stroke-width: 2;
+}
+
+.react-flow__connection-path:hover {
+  stroke: #1a192b;
+}
+
+/* Execution port styles */
+.function-node.has-execution-ports {
+  padding: 12px;
+}
+
+/* Horizontal execution layout */
+.function-node.horizontal-execution {
+  padding: 12px;
+}
+
+.function-node-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Vertical execution ports (top/bottom) */
+.execution-inputs {
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 10px;
+  z-index: 5;
+}
+
+.execution-outputs {
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 10px;
+  z-index: 5;
+}
+
+/* Horizontal execution ports (left/right) */
+.execution-inputs.horizontal {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+  margin-right: 10px;
+}
+
+.execution-outputs.horizontal {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+  margin-left: 10px;
+} 

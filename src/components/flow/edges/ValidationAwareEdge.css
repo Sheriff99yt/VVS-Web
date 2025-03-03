@@ -1,0 +1,90 @@
+/* Styles for the ValidationAwareEdge component */
+
+/* Basic edge styles */
+.react-flow__edge-path {
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+/* Data edge styles */
+.data-edge {
+  stroke: #555;
+  stroke-width: 1.5px;
+}
+
+/* Execution edge styles */
+.execution-edge {
+  stroke: #555;
+  stroke-width: 2px;
+  stroke-dasharray: 5, 5;
+}
+
+/* Error edge style */
+.react-flow__edge-path.error {
+  stroke: #ff0000;
+  stroke-width: 2px;
+}
+
+/* Warning edge style */
+.react-flow__edge-path.warning {
+  stroke: #ffcc00;
+  stroke-width: 2px;
+}
+
+/* Validation status labels */
+.edge-validation-label {
+  background-color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.edge-validation-label:hover {
+  transform: scale(1.1) translate(-45%, -45%);
+}
+
+/* Error validation label */
+.edge-validation-label.error {
+  background-color: #ffeeee;
+  border: 1px solid #ff0000;
+  color: #ff0000;
+}
+
+/* Warning validation label */
+.edge-validation-label.warning {
+  background-color: #fffbee;
+  border: 1px solid #ffcc00;
+  color: #cc9900;
+}
+
+/* Info validation label */
+.edge-validation-label.info {
+  background-color: #eef6ff;
+  border: 1px solid #0066ff;
+  color: #0066ff;
+}
+
+/* Animation for invalid edges */
+@keyframes pulse {
+  0% {
+    stroke-opacity: 0.6;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+  100% {
+    stroke-opacity: 0.6;
+  }
+}
+
+.react-flow__edge-path.error {
+  animation: pulse 2s infinite;
+}
+
+.react-flow__edge-path.warning {
+  animation: pulse 3s infinite;
+} 

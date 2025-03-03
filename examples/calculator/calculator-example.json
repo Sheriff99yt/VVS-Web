@@ -1,0 +1,141 @@
+{
+  "name": "Simple Calculator Example",
+  "description": "A basic calculator that can perform addition, subtraction, multiplication, and division",
+  "version": "1.0.0",
+  "flow": {
+    "nodes": [
+      {
+        "id": "number1",
+        "type": "input",
+        "position": { "x": 100, "y": 100 },
+        "data": {
+          "label": "Number 1",
+          "type": "Number",
+          "defaultValue": 10
+        }
+      },
+      {
+        "id": "number2",
+        "type": "input",
+        "position": { "x": 100, "y": 200 },
+        "data": {
+          "label": "Number 2",
+          "type": "Number",
+          "defaultValue": 5
+        }
+      },
+      {
+        "id": "add",
+        "type": "function",
+        "position": { "x": 350, "y": 50 },
+        "data": {
+          "functionId": "math_add",
+          "label": "Add"
+        }
+      },
+      {
+        "id": "subtract",
+        "type": "function",
+        "position": { "x": 350, "y": 150 },
+        "data": {
+          "functionId": "math_subtract",
+          "label": "Subtract"
+        }
+      },
+      {
+        "id": "multiply",
+        "type": "function",
+        "position": { "x": 350, "y": 250 },
+        "data": {
+          "functionId": "math_multiply",
+          "label": "Multiply"
+        }
+      },
+      {
+        "id": "divide",
+        "type": "function",
+        "position": { "x": 350, "y": 350 },
+        "data": {
+          "functionId": "math_divide",
+          "label": "Divide"
+        }
+      },
+      {
+        "id": "output",
+        "type": "output",
+        "position": { "x": 600, "y": 200 },
+        "data": {
+          "label": "Result"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-number1-add",
+        "source": "number1",
+        "sourceHandle": "output",
+        "target": "add",
+        "targetHandle": "a"
+      },
+      {
+        "id": "edge-number2-add",
+        "source": "number2",
+        "sourceHandle": "output",
+        "target": "add",
+        "targetHandle": "b"
+      },
+      {
+        "id": "edge-number1-subtract",
+        "source": "number1",
+        "sourceHandle": "output",
+        "target": "subtract",
+        "targetHandle": "a"
+      },
+      {
+        "id": "edge-number2-subtract",
+        "source": "number2",
+        "sourceHandle": "output",
+        "target": "subtract",
+        "targetHandle": "b"
+      },
+      {
+        "id": "edge-number1-multiply",
+        "source": "number1",
+        "sourceHandle": "output",
+        "target": "multiply",
+        "targetHandle": "a"
+      },
+      {
+        "id": "edge-number2-multiply",
+        "source": "number2",
+        "sourceHandle": "output",
+        "target": "multiply",
+        "targetHandle": "b"
+      },
+      {
+        "id": "edge-number1-divide",
+        "source": "number1",
+        "sourceHandle": "output",
+        "target": "divide",
+        "targetHandle": "a"
+      },
+      {
+        "id": "edge-number2-divide",
+        "source": "number2",
+        "sourceHandle": "output",
+        "target": "divide",
+        "targetHandle": "b"
+      },
+      {
+        "id": "edge-add-output",
+        "source": "add",
+        "sourceHandle": "output",
+        "target": "output",
+        "targetHandle": "input"
+      }
+    ]
+  },
+  "expectedOutput": {
+    "code": "# Simple Calculator Example\n\n# Inputs\nnumber1 = 10\nnumber2 = 5\n\n# Calculations\nresult = number1 + number2\n\n# Output\nprint(f\"Result: {result}\")"
+  }
+} 

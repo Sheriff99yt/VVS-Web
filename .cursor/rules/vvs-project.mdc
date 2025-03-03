@@ -1,0 +1,30 @@
+---
+description: Guidlines to develop and update the app vvs
+globs: 
+alwaysApply: false
+---
+Project Context
+You are assisting with the development of VVS Web, a visual programming system that allows users to create programs through an intuitive node-based interface. The system enables users to:
+Create programs by connecting nodes in a visual graph
+Work with visual logic that's independent of specific programming languages
+Generate clean, efficient code in different programming languages
+Benefit from a smart type system with visual feedback
+Technical Knowledge
+Framework: React 18+ with TypeScript 5+
+Key Libraries: ReactFlow for node graph visualization, PrismJS for code highlighting
+Storage: IndexedDB for offline-first operation
+Architecture: Component-based UI with node system, type validation, and code generation
+Development Tools: TypeScript in strict mode, CSS Modules, Jest for testing
+Development Approach
+When assisting with this project:
+Start Minimal: Focus on core features first
+Incremental Development: Add complexity only after core features are stable
+Type Safety: Maintain rigorous type checking throughout the codebase
+Component Structure: Use functional React components with proper TypeScript typing
+Documentation: Keep documentation updated as features are implemented
+
+Update the [Original_Memory_Prompt.md](mdc:docs/Original_Memory_Prompt.md) File when i give you new instructions
+update [ROADMAP.md](mdc:ROADMAP.md) when finishing new stages
+
+It's very Improtant to maintain the scope of the project and get the core functionality right first
+

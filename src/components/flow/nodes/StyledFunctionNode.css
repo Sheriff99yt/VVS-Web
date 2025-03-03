@@ -1,0 +1,258 @@
+/* StyledFunctionNode Styles */
+
+.styled-function-node {
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: 300px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.2s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.styled-function-node.selected {
+  box-shadow: 0 0 0 2px #ffd700, 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.styled-function-node.has-execution {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.styled-function-node.hovered {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.styled-function-node.collapsed {
+  min-width: 150px;
+}
+
+/* Node Header */
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background-color: #4a90e2;
+  color: white;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  flex-wrap: wrap;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.node-title {
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.node-category {
+  font-size: 10px;
+  opacity: 0.8;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-right: 5px;
+  white-space: nowrap;
+}
+
+.collapse-toggle {
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+}
+
+/* Node Content */
+.node-content {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.node-description {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.3;
+  margin-bottom: 5px;
+  word-break: break-word;
+}
+
+/* Ports styling */
+.ports-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.port {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 24px;
+}
+
+.input-ports .port {
+  justify-content: flex-start;
+  margin-left: -12px;
+}
+
+.output-ports .port {
+  justify-content: flex-end;
+  margin-right: -12px;
+}
+
+.port-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.input-ports .port-info {
+  align-items: flex-start;
+  margin-left: 8px;
+}
+
+.output-ports .port-info {
+  align-items: flex-end;
+  margin-right: 8px;
+}
+
+.port-name {
+  font-weight: 500;
+  color: #444;
+}
+
+.port-type {
+  font-size: 10px;
+  color: #777;
+}
+
+/* Handle styles */
+.input-handle,
+.output-handle {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  border: 2px solid white !important;
+  transition: all 0.2s ease !important;
+}
+
+.input-handle:hover,
+.output-handle:hover {
+  transform: scale(1.3) !important;
+  cursor: crosshair !important;
+}
+
+/* Type-specific handle colors */
+.string-type {
+  background-color: #3498db !important;
+}
+
+.number-type,
+.integer-type,
+.float-type {
+  background-color: #e74c3c !important;
+}
+
+.boolean-type {
+  background-color: #2ecc71 !important;
+}
+
+.array-type,
+.list-type {
+  background-color: #9b59b6 !important;
+}
+
+.object-type,
+.dictionary-type {
+  background-color: #f39c12 !important;
+}
+
+.any-type {
+  background-color: #95a5a6 !important;
+}
+
+/* Execution ports containers */
+.execution-inputs-container,
+.execution-outputs-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 0 5px 0;
+}
+
+.execution-outputs-container {
+  margin: 5px 0 0 0;
+}
+
+/* Node controls */
+.node-controls {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.node-control-button {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background-color: #fff;
+  color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.node-control-button:hover {
+  transform: scale(1.1);
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+/* Animation for node selection */
+@keyframes nodeSelect {
+  0% {
+    box-shadow: 0 0 0 0px rgba(255, 215, 0, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(255, 215, 0, 0);
+  }
+}
+
+.styled-function-node.selected {
+  animation: nodeSelect 1s ease infinite;
+} 

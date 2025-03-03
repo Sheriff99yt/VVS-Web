@@ -11,19 +11,24 @@
     "@types/node": "^16.18.126",
     "@types/prismjs": "^1.26.5",
     "@types/react-dom": "^19.0.4",
+    "classnames": "^2.5.1",
     "prismjs": "^1.29.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
     "react-scripts": "5.0.1",
     "reactflow": "^11.11.4",
-    "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "zustand": "^5.0.3"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "react-scripts eject",
+    "test:db": "jest --testMatch='**/tests/database/DatabaseTestSuite.test.ts' --forceExit",
+    "test:analyzer": "jest --testMatch='**/tests/database/PythonAnalyzerTests.test.ts' --forceExit",
+    "test:all": "jest --testMatch='**/tests/**/*.test.ts' --forceExit"
   },
   "eslintConfig": {
     "extends": [
@@ -45,8 +50,50 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "@types/lodash": "^4.17.16",
     "@types/react": "^19.0.10",
     "@types/uuid": "^10.0.0",
+    "fake-indexeddb": "^6.0.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^4.9.5",
     "webpack-dev-server": "4.14.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "isolatedModules": true,
+          "diagnostics": {
+            "ignoreCodes": [
+              2345,
+              2339,
+              2322,
+              2551,
+              18047,
+              7053
+            ]
+          }
+        }
+      ]
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/tests/setup.ts"
+    ],
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/src/$1"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
   }
 }

@@ -1,0 +1,187 @@
+{
+  "name": "String Formatter Example",
+  "description": "A simple string formatter that demonstrates string concatenation and formatting",
+  "version": "1.0.0",
+  "flow": {
+    "nodes": [
+      {
+        "id": "firstName",
+        "type": "input",
+        "position": { "x": 100, "y": 100 },
+        "data": {
+          "label": "First Name",
+          "type": "String",
+          "defaultValue": "John"
+        }
+      },
+      {
+        "id": "lastName",
+        "type": "input",
+        "position": { "x": 100, "y": 200 },
+        "data": {
+          "label": "Last Name",
+          "type": "String",
+          "defaultValue": "Doe"
+        }
+      },
+      {
+        "id": "age",
+        "type": "input",
+        "position": { "x": 100, "y": 300 },
+        "data": {
+          "label": "Age",
+          "type": "Number",
+          "defaultValue": 30
+        }
+      },
+      {
+        "id": "concatNames",
+        "type": "function",
+        "position": { "x": 350, "y": 150 },
+        "data": {
+          "functionId": "string_concat",
+          "label": "Concatenate Names"
+        }
+      },
+      {
+        "id": "space",
+        "type": "input",
+        "position": { "x": 350, "y": 50 },
+        "data": {
+          "label": "Space",
+          "type": "String",
+          "defaultValue": " "
+        }
+      },
+      {
+        "id": "addSpace",
+        "type": "function",
+        "position": { "x": 550, "y": 150 },
+        "data": {
+          "functionId": "string_concat",
+          "label": "Add Space"
+        }
+      },
+      {
+        "id": "ageToString",
+        "type": "function",
+        "position": { "x": 350, "y": 300 },
+        "data": {
+          "functionId": "convert_to_string",
+          "label": "Convert Age to String"
+        }
+      },
+      {
+        "id": "ageText",
+        "type": "input",
+        "position": { "x": 550, "y": 250 },
+        "data": {
+          "label": "Age Text",
+          "type": "String",
+          "defaultValue": ", age: "
+        }
+      },
+      {
+        "id": "concatAgeText",
+        "type": "function",
+        "position": { "x": 750, "y": 300 },
+        "data": {
+          "functionId": "string_concat",
+          "label": "Concatenate Age Text"
+        }
+      },
+      {
+        "id": "finalConcat",
+        "type": "function",
+        "position": { "x": 750, "y": 200 },
+        "data": {
+          "functionId": "string_concat",
+          "label": "Final Concatenation"
+        }
+      },
+      {
+        "id": "output",
+        "type": "output",
+        "position": { "x": 950, "y": 200 },
+        "data": {
+          "label": "Formatted String"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-firstName-concatNames",
+        "source": "firstName",
+        "sourceHandle": "output",
+        "target": "concatNames",
+        "targetHandle": "str1"
+      },
+      {
+        "id": "edge-lastName-concatNames",
+        "source": "lastName",
+        "sourceHandle": "output",
+        "target": "concatNames",
+        "targetHandle": "str2"
+      },
+      {
+        "id": "edge-space-addSpace",
+        "source": "space",
+        "sourceHandle": "output",
+        "target": "addSpace",
+        "targetHandle": "str1"
+      },
+      {
+        "id": "edge-concatNames-addSpace",
+        "source": "concatNames",
+        "sourceHandle": "output",
+        "target": "addSpace",
+        "targetHandle": "str2"
+      },
+      {
+        "id": "edge-age-ageToString",
+        "source": "age",
+        "sourceHandle": "output",
+        "target": "ageToString",
+        "targetHandle": "value"
+      },
+      {
+        "id": "edge-ageText-concatAgeText",
+        "source": "ageText",
+        "sourceHandle": "output",
+        "target": "concatAgeText",
+        "targetHandle": "str1"
+      },
+      {
+        "id": "edge-ageToString-concatAgeText",
+        "source": "ageToString",
+        "sourceHandle": "output",
+        "target": "concatAgeText",
+        "targetHandle": "str2"
+      },
+      {
+        "id": "edge-addSpace-finalConcat",
+        "source": "addSpace",
+        "sourceHandle": "output",
+        "target": "finalConcat",
+        "targetHandle": "str1"
+      },
+      {
+        "id": "edge-concatAgeText-finalConcat",
+        "source": "concatAgeText",
+        "sourceHandle": "output",
+        "target": "finalConcat",
+        "targetHandle": "str2"
+      },
+      {
+        "id": "edge-finalConcat-output",
+        "source": "finalConcat",
+        "sourceHandle": "output",
+        "target": "output",
+        "targetHandle": "input"
+      }
+    ]
+  },
+  "expectedOutput": {
+    "code": "# String Formatter Example\n\n# Inputs\nfirst_name = \"John\"\nlast_name = \"Doe\"\nage = 30\nspace = \" \"\nage_text = \", age: \"\n\n# String operations\nfull_name = first_name + last_name\nfull_name_with_space = space + full_name\nage_str = str(age)\nformatted_age = age_text + age_str\nformatted_string = full_name_with_space + formatted_age\n\n# Output\nprint(formatted_string)"
+  }
+} 

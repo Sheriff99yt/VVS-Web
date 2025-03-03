@@ -1,0 +1,356 @@
+.code-preview {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.code-preview-header {
+  padding: 12px 16px;
+  background-color: #1a192b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.code-preview-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.loading-indicator {
+  font-size: 12px;
+  color: #61dafb;
+  margin-left: 10px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.syntax-status {
+  font-size: 11px;
+  color: #aaa;
+  margin-left: auto;
+  font-style: italic;
+}
+
+.code-preview-error {
+  padding: 10px;
+  background-color: #ff000015;
+  color: #ff3333;
+  border-bottom: 1px solid #ff6666;
+  font-size: 12px;
+}
+
+.code-preview-content {
+  flex: 1;
+  overflow: auto;
+  margin: 0;
+  padding: 16px;
+  background-color: #282c34;
+  color: #abb2bf;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Syntax highlighting styles */
+.code-preview-content code {
+  display: block;
+  white-space: pre;
+}
+
+/* Comment syntax highlighting */
+.code-preview-content code span.comment {
+  color: #7f848e;
+  font-style: italic;
+}
+
+/* Keyword syntax highlighting */
+.code-preview-content code span.keyword {
+  color: #c678dd;
+}
+
+/* Function syntax highlighting */
+.code-preview-content code span.function {
+  color: #61afef;
+}
+
+/* String syntax highlighting */
+.code-preview-content code span.string {
+  color: #98c379;
+}
+
+/* Number syntax highlighting */
+.code-preview-content code span.number {
+  color: #d19a66;
+}
+
+/* Operator syntax highlighting */
+.code-preview-content code span.operator {
+  color: #56b6c2;
+}
+
+/* Pulse animation for loading indicator */
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* Add styles for the export button, dialog and related elements to the existing CSS */
+
+.code-preview {
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.code-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: #e9ecef;
+  border-bottom: 1px solid #ced4da;
+}
+
+.code-preview-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.code-preview-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-indicator {
+  color: #6c757d;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.syntax-status {
+  color: #6c757d;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.export-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.export-button:hover {
+  background-color: #218838;
+}
+
+.export-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.code-preview-error {
+  margin: 8px 16px;
+  padding: 8px 12px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.code-preview-content {
+  flex-grow: 1;
+  overflow: auto;
+  margin: 0;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #212529;
+}
+
+/* Export Dialog Styles */
+.export-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.export-dialog {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 450px;
+  max-width: 90%;
+  padding: 0;
+  overflow: hidden;
+  animation: dialog-fade-in 0.2s ease-out;
+}
+
+@keyframes dialog-fade-in {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.export-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.export-dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #212529;
+}
+
+.export-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: #6c757d;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.export-dialog-close:hover {
+  color: #212529;
+}
+
+.export-dialog form {
+  padding: 16px;
+}
+
+.export-form-group {
+  margin-bottom: 16px;
+}
+
+.export-form-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.export-form-group input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.export-form-group small {
+  display: block;
+  margin-top: 4px;
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.export-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.export-form-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.export-form-actions button[type="button"] {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #ced4da;
+}
+
+.export-form-actions button[type="button"]:hover {
+  background-color: #e9ecef;
+}
+
+.export-form-actions button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.export-form-actions button[type="submit"]:hover {
+  background-color: #0069d9;
+}
+
+.export-form-actions button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.export-status {
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.export-status.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.export-status.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+} 

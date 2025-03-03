@@ -1,0 +1,115 @@
+.conversion-node {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #f8f8f8;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  width: 200px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #333;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.conversion-node.selected {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.conversion-node-header {
+  background-color: #5bc0de;
+  color: white;
+  padding: 10px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: center;
+}
+
+.conversion-node-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversion-node-content {
+  padding: 15px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.conversion-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 12px;
+}
+
+.conversion-type {
+  background-color: #e9e9e9;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  color: #555;
+  font-family: monospace;
+}
+
+.arrow {
+  font-size: 20px;
+  color: #999;
+  margin: 0 5px;
+}
+
+/* Data type-specific colors for input/output handles */
+.port-type-string {
+  background-color: #3498db !important;
+}
+
+.port-type-number, 
+.port-type-integer,
+.port-type-float {
+  background-color: #e74c3c !important;
+}
+
+.port-type-boolean {
+  background-color: #2ecc71 !important;
+}
+
+.port-type-array,
+.port-type-list {
+  background-color: #9b59b6 !important;
+}
+
+.port-type-object,
+.port-type-dictionary {
+  background-color: #f39c12 !important;
+}
+
+.port-type-any {
+  background-color: #95a5a6 !important;
+}
+
+/* Handle hover effects */
+.react-flow__handle:hover {
+  background-color: #555 !important;
+  width: 10px !important;
+  height: 10px !important;
+}
+
+/* Animation for node creation */
+@keyframes nodeAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.conversion-node {
+  animation: nodeAppear 0.3s ease-out forwards;
+} 

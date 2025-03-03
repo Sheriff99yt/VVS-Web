@@ -1,0 +1,219 @@
+.project-menu {
+  width: 320px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  position: relative;
+  z-index: 100;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f8f8;
+}
+
+.project-menu-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #444;
+}
+
+.project-menu-content {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
+
+.menu-button {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.menu-button:hover {
+  background-color: #f0f0f0;
+  border-color: #bbb;
+}
+
+.menu-button:active {
+  background-color: #e8e8e8;
+}
+
+.project-info {
+  background-color: #f8f8f8;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-top: 8px;
+  position: relative;
+}
+
+.project-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.project-info p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.modified-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: #ff8800;
+  color: white;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* Save As Dialog */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.save-as-dialog {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.save-as-dialog h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.dialog-buttons button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dialog-buttons button[type="button"] {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  color: #555;
+}
+
+.dialog-buttons button[type="button"]:hover {
+  background-color: #f5f5f5;
+}
+
+.dialog-buttons button[type="submit"] {
+  background-color: #3498db;
+  border: 1px solid #2980b9;
+  color: white;
+}
+
+.dialog-buttons button[type="submit"]:hover {
+  background-color: #2980b9;
+} 
