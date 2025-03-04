@@ -35,6 +35,8 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - [x] Implement properties panel for viewing node properties
 - [x] Add support for editing node properties
 - [x] Convert properties panel to a floating panel that appears near selected nodes
+- [x] Implement node descriptions for all node types
+- [x] Add user-editable comments that appear in generated code
 - [ ] Implement complete node library with all essential node types
 - [x] Implement collapsible node categories for better organization
 - [x] Add node search functionality for quick access
@@ -117,6 +119,7 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
    - ~~Implement info panel toggle for socket type legend and help information~~ (Completed)
    - ~~Implement toolbar with light/dark mode toggle~~ (Completed)
    - ~~Implement comprehensive theme system with light and dark mode support~~ (Completed)
+   - ~~Implement node documentation with descriptions and comments~~ (Completed)
 10. Implement multi-language code generation:
     - Design and implement abstract code generator architecture
     - Refactor existing Python code generator to use the new architecture
@@ -143,6 +146,11 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - Socket type based coloring has been implemented, enhancing the visual clarity of the node graph and making it easier for users to identify compatible connections
 - A socket type legend has been added to help users understand the color coding system
 - Socket input widgets now seamlessly integrate with the code generation system, providing default values when sockets aren't connected and ensuring consistent behavior across all node types
+- Node documentation has been implemented with two key components:
+  - Built-in descriptions for each node type that explain what the node does
+  - User-editable comments that appear as properly formatted comments in the generated code
+- Comments in the Details panel are clearly labeled to indicate they will appear in the generated code
+- The code generator now automatically formats and inserts comments above the code for each node
 - Multi-language code generation is being implemented to allow users to generate code in Python, TypeScript, and C++
 - A toolbar with light/dark mode toggle has been added to improve user experience and accessibility
 - A comprehensive theme system has been implemented with support for both light and dark modes, featuring smooth transitions between themes and consistent styling across all components

@@ -9,6 +9,7 @@ import useGraphStore from '../store/useGraphStore';
 export const FloatingPropertiesPanel: React.FC = () => {
   const { nodes, selectedNodeId, updateNodeProperty } = useGraphStore();
   const [isDark, setIsDark] = useState(true);
+  const [isHiding, setIsHiding] = useState(false);
   
   // Effect to track theme changes
   useEffect(() => {
@@ -31,6 +32,16 @@ export const FloatingPropertiesPanel: React.FC = () => {
     // Clean up
     return () => observer.disconnect();
   }, []);
+
+  // Effect to handle fade out animation when node is deselected
+  useEffect(() => {
+    if (!selectedNodeId && !isHiding) {
+      setIsHiding(true);
+      // Reset hiding state after animation completes
+      const timer = setTimeout(() => setIsHiding(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedNodeId]);
   
   // Theme-aware colors
   const bgColor = isDark ? 'gray.800' : 'white';
@@ -43,13 +54,13 @@ export const FloatingPropertiesPanel: React.FC = () => {
   // Find the selected node
   const selectedNode = nodes.find(node => node.id === selectedNodeId);
   
-  // If no node is selected, don't render anything
-  if (!selectedNode) {
+  // If no node is selected and not in hiding animation, don't render anything
+  if (!selectedNode && !isHiding) {
     return null;
   }
   
   // Get the properties of the selected node
-  const { properties = {} } = selectedNode.data;
+  const { properties = {} } = selectedNode?.data || {};
   
   // Handle property change
   const handlePropertyChange = (key: string, value: string) => {
@@ -59,56 +70,23 @@ export const FloatingPropertiesPanel: React.FC = () => {
   };
   
   return (
-    <Box 
+    <Box
+      className={`details-panel ${isHiding ? 'hiding' : ''}`}
       position="absolute"
-      right="20px"
       bottom="20px"
-      zIndex={10}
-      width="300px"
-      bg={bgColor}
-      borderRadius="md"
-      boxShadow="0 0 10px rgba(0,0,0,0.2)"
-      border="1px solid"
-      borderColor={borderColor}
-      p={3}
-      data-testid="node-details-panel"
+      right="20px"
+      width="200px"
+      zIndex={1000}
     >
-      <Text fontSize="md" fontWeight="bold" mb={2} color={textColor}>
-        {selectedNode.data.label} Details
+      <Text className="details-panel-description">
+        {properties.description || 'No description available'}
       </Text>
-      
-      <Stack gap={3}>
-        <Box>
-          <Text fontSize="xs" mb={1} color={textColor}>Description</Text>
-          <Box 
-            p={2}
-            bg={descriptionBgColor}
-            borderRadius="md"
-            fontSize="sm"
-            color={textColor}
-            border="1px solid"
-            borderColor={borderColor}
-            minHeight="40px"
-          >
-            {properties.description || 'No description available.'}
-          </Box>
-        </Box>
-        
-        <Box>
-          <Text fontSize="xs" mb={1} color={textColor}>Comment (will appear in generated code)</Text>
-          <Textarea 
-            value={properties.comment || ''}
-            onChange={(e) => handlePropertyChange('comment', e.target.value)}
-            placeholder="Add a comment for this node..."
-            size="sm"
-            bg={inputBgColor}
-            color={textColor}
-            _placeholder={{ color: placeholderColor }}
-            resize="vertical"
-            rows={3}
-          />
-        </Box>
-      </Stack>
+      <Textarea
+        className="details-panel-comment"
+        value={properties.comment || ''}
+        onChange={(e) => handlePropertyChange('comment', e.target.value)}
+        placeholder="Add a comment..."
+      />
     </Box>
   );
 };

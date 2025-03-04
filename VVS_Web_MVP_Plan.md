@@ -35,6 +35,11 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Graph editor with node placement and connection
 - Code preview panel with language selection
 - Floating properties panel that appears near selected nodes
+- **Node documentation system:**
+  - Built-in descriptions for each node type explaining its functionality
+  - User-editable comments that appear in the generated code
+  - Details panel showing node descriptions and comment fields
+  - Clear differentiation between fixed descriptions and user comments
 - **Socket input widget system:**
   - Integrated widgets for socket inputs when not connected
   - Default value configuration through input widgets
@@ -76,6 +81,11 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Basic error detection in generated code
 - Language-specific syntax highlighting in Monaco Editor
 - Language-specific code formatting
+- **Code comments generation:**
+  - User-added node comments appear as code comments
+  - Comments are appropriately formatted for each target language
+  - Comments appear above the code generated for each node
+  - Enhanced code readability for complex graphs
 
 ### 3.4 Features Explicitly Excluded from MVP
 
@@ -182,6 +192,8 @@ The MVP will be considered successful if users can:
 4. Switch between different programming languages for code generation
 5. Understand the core value proposition of visual programming
 6. Easily identify socket types through consistent color coding
+7. View node descriptions to understand node functionality
+8. Add comments to nodes that appear in the generated code
 
 ## 8. Post-MVP Priorities
 
@@ -203,6 +215,7 @@ Since the MVP operates as a runtime-only experience, we will implement:
 - A banner indicating this is an experimental version
 - Visual guide for socket type color meanings
 - Language selection guidance for code generation
+- Tool tips explaining how to use node descriptions and comments
 
 ## 10. Conclusion
 

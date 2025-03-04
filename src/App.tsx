@@ -4,17 +4,19 @@ import { NodeLibrary } from './components/NodeLibrary';
 import { GraphEditor } from './components/GraphEditor';
 import { CodePreview } from './components/CodePreview';
 import { Toolbar } from './components/Toolbar';
+import InfoPanel from './components/InfoPanel';
 import 'reactflow/dist/style.css';
 
 /**
  * Main App component
  */
 function App() {
-  // State for panel widths
+  // State for panel widths and info panel
   const [codePreviewWidth, setCodePreviewWidth] = useState(400);
   const [nodeLibraryWidth, setNodeLibraryWidth] = useState(250);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const dragStartXRef = useRef(0);
   const initialWidthRef = useRef(0);
 
@@ -71,7 +73,7 @@ function App() {
   return (
     <Flex height="100vh" width="100vw" direction="column">
       {/* Toolbar */}
-      <Toolbar />
+      <Toolbar isInfoOpen={isInfoOpen} onInfoToggle={() => setIsInfoOpen(!isInfoOpen)} />
       
       {/* Main content */}
       <Flex flex="1" overflow="hidden" position="relative">
@@ -117,6 +119,9 @@ function App() {
             zIndex="10"
           />
         </Box>
+
+        {/* Info Panel */}
+        <InfoPanel isOpen={isInfoOpen} />
       </Flex>
     </Flex>
   );

@@ -30,31 +30,31 @@ const SocketTypeLegend: React.FC = () => {
       type: SocketType.BOOLEAN,
       color: booleanColor,
       label: 'Boolean',
-      description: 'True/False values'
+      description: ''
     },
     {
       type: SocketType.NUMBER,
       color: numberColor,
       label: 'Number',
-      description: 'Numeric values'
+      description: ''
     },
     {
       type: SocketType.STRING,
       color: stringColor,
       label: 'String',
-      description: 'Text values'
+      description: ''
     },
     {
       type: SocketType.FLOW,
       color: flowColor,
       label: 'Flow',
-      description: 'Execution flow'
+      description: ''
     },
     {
       type: SocketType.ANY,
       color: anyColor,
       label: 'Any',
-      description: 'Compatible with any type'
+      description: ''
     }
   ];
 
@@ -67,7 +67,7 @@ const SocketTypeLegend: React.FC = () => {
       maxWidth="250px"
       boxShadow="lg"
     >
-      <Text fontWeight="bold" mb={2} fontSize="sm">Socket Type Legend</Text>
+      <Text fontWeight="bold" mb={1} fontSize="sm">Socket Type Legend</Text>
       <VStack align="stretch" gap="2">
         {socketTypes.map((socketType) => (
           <HStack key={socketType.type} gap="2">
@@ -91,7 +91,7 @@ const SocketTypeLegend: React.FC = () => {
             border="1px solid white"
           />
           <Text fontSize="xs" fontWeight="bold">Error</Text>
-          <Text fontSize="xs" flex="1">Incompatible connection</Text>
+          <Text fontSize="xs" flex="1"></Text>
         </HStack>
       </VStack>
     </Box>

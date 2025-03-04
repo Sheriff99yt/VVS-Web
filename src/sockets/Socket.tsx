@@ -58,7 +58,15 @@ export const Socket: React.FC<SocketProps> = ({
     anyHoverColor,
     errorColor,
     errorHoverColor,
-    compatibleColor
+    compatibleColor,
+    // Input widget colors
+    inputBg,
+    inputBgHover,
+    inputBorder,
+    inputBorderHover,
+    inputText,
+    inputPlaceholder,
+    inputLabel
   ] = useToken('colors', [
     'socket.boolean',
     'socket.booleanHover',
@@ -72,7 +80,15 @@ export const Socket: React.FC<SocketProps> = ({
     'socket.anyHover',
     'socket.error',
     'socket.errorHover',
-    'socket.compatible'
+    'socket.compatible',
+    // Input widget colors
+    'input.bg',
+    'input.bgHover',
+    'input.border',
+    'input.borderHover',
+    'input.text',
+    'input.placeholder',
+    'input.label'
   ]);
 
   // Maps socket types to their color from theme
@@ -137,34 +153,13 @@ export const Socket: React.FC<SocketProps> = ({
     switch (socket.type) {
       case SocketType.BOOLEAN:
         return (
-          <Box 
-            as="label" 
-            display="flex" 
-            alignItems="center" 
-            ml={2}
-            cursor="pointer"
-          >
-            <input 
-              type="checkbox" 
-              checked={value === true}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.checked)}
-              style={{ 
-                accentColor: booleanColor,
-                width: '14px',
-                height: '14px'
-              }}
-            />
-            {config.label && (
-              <Box 
-                as="span" 
-                fontSize="xs" 
-                ml={1} 
-                color="gray.300"
-              >
-                {config.label}
-              </Box>
-            )}
-          </Box>
+          <input 
+            type="checkbox" 
+            checked={value === true}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.checked)}
+            className="socket-checkbox"
+            style={{ accentColor: booleanColor }}
+          />
         );
       case SocketType.NUMBER:
         return (
@@ -191,11 +186,7 @@ export const Socket: React.FC<SocketProps> = ({
               
               handleValueChange(val);
             }}
-            width="90px"
-            ml={2}
-            borderColor="gray.600"
-            _hover={{ borderColor: "gray.500" }}
-            bg="gray.700"
+            className="socket-input"
             textAlign="right"
             paddingRight="8px"
             step={config.step || (config.isInteger ? 1 : 0.1)}
@@ -209,12 +200,7 @@ export const Socket: React.FC<SocketProps> = ({
             size="xs"
             value={value !== undefined ? value : ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
-            width="90px"
-            ml={2}
-            borderColor="gray.600"
-            _hover={{ borderColor: "gray.500" }}
-            bg="gray.700"
-            placeholder={config.placeholder}
+            className="socket-input"
             maxLength={config.maxLength}
           />
         );
@@ -224,11 +210,7 @@ export const Socket: React.FC<SocketProps> = ({
             size="xs"
             value={value !== undefined ? String(value) : ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
-            width="90px"
-            ml={2}
-            borderColor="gray.600"
-            _hover={{ borderColor: "gray.500" }}
-            bg="gray.700"
+            className="socket-input"
           />
         );
       default:
@@ -243,7 +225,8 @@ export const Socket: React.FC<SocketProps> = ({
       display="flex"
       alignItems="center"
       justifyContent={position === Position.Left ? 'flex-start' : 'flex-end'}
-      mb={1.5}
+      mb="0.8em"
+      minHeight="14px"
     >
       <Box
         title={`${socket.name} (${socket.type})`}
@@ -274,7 +257,12 @@ export const Socket: React.FC<SocketProps> = ({
           position={position}
           id={socket.id}
           isConnectable={isConnectable}
-          style={{
+          className={`${socket.type === SocketType.FLOW ? 'flow-socket execution-edge' : ''} ${
+            handleType === 'source' ? 'source' : 'target'
+          } ${isHovered ? 'hovered' : ''} ${
+            isInvalidConnection ? 'error' : ''
+          } ${isValidConnection ? 'compatible' : ''}`}
+          style={socket.type !== SocketType.FLOW ? {
             width: '14px',
             height: '14px',
             background: socketColor,
@@ -283,19 +271,20 @@ export const Socket: React.FC<SocketProps> = ({
             transition: 'all 0.2s ease-in-out',
             borderRadius: '50%',
             zIndex: 2,
-          }}
+          } : {
+            zIndex: 2,
+            '--flow-socket-color': flowColor,
+            '--flow-socket-hover-color': flowHoverColor,
+            '--socket-error-color': errorColor,
+            '--socket-compatible-color': compatibleColor,
+          } as any}
         />
         <Box
           as="span"
-          ml={position === Position.Left ? 2 : 0}
-          mr={position === Position.Right ? 2 : 0}
-          fontSize="xs"
-          fontWeight="medium"
+          className={`socket-label ${position === Position.Left ? 'left' : 'right'} ${isHovered ? 'hovered' : ''}`}
           color={isInvalidConnection ? errorColor :
                  isValidConnection ? compatibleColor :
-                 'gray.300'}
-          transition="color 0.2s ease-in-out"
-          letterSpacing="tight"
+                 undefined}
         >
           {socket.name}
         </Box>
@@ -307,4 +296,5 @@ export const Socket: React.FC<SocketProps> = ({
   );
 };
 
-export default Socket; 
+// Change to default export
+export default Socket;

@@ -3,7 +3,9 @@ import {
   Box, 
   Flex, 
   Button,
-  Text
+  Text,
+  IconButton,
+  Tooltip
 } from '@chakra-ui/react';
 import { colorModeManager } from '../themes/theme';
 
@@ -56,11 +58,16 @@ const useColorMode = () => {
   return { colorMode, toggleColorMode };
 };
 
+interface ToolbarProps {
+  isInfoOpen: boolean;
+  onInfoToggle: () => void;
+}
+
 /**
  * Toolbar component for the application
  * Contains controls like theme toggle and other actions
  */
-export const Toolbar: React.FC = () => {
+export const Toolbar: React.FC<ToolbarProps> = ({ isInfoOpen, onInfoToggle }) => {
   const { colorMode, toggleColorMode } = useColorMode();
   
   return (
@@ -88,6 +95,17 @@ export const Toolbar: React.FC = () => {
         </Flex>
         
         <Flex alignItems="center" gap={2}>
+          <Box>
+            <IconButton
+              aria-label="Toggle info panel"
+              title={isInfoOpen ? "Hide info panel" : "Show info panel"}
+              children="ℹ️"
+              onClick={onInfoToggle}
+              colorScheme={isInfoOpen ? "blue" : "gray"}
+              size="sm"
+              variant="ghost"
+            />
+          </Box>
           <Button
             aria-label={`Switch to ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
             title={`Switch to ${colorMode === 'dark' ? 'light' : 'dark'} mode`}

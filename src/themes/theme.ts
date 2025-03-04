@@ -3,26 +3,26 @@ import { createSystem, defaultConfig } from '@chakra-ui/react';
 // Define colors for our socket types
 const socketColors = {
   // Base socket colors
-  boolean: { value: '#ffd700' }, // Gold
-  number: { value: '#00bcd4' },  // Cyan
-  string: { value: '#4caf50' },  // Green
-  any: { value: '#9e9e9e' },     // Gray
-  flow: { value: '#ff5722' },    // Orange
+  boolean: { value: '#FF4040' },  // Dark Red for binary/boolean
+  number: { value: '#00E1C5' },   // Aqua Green for numbers
+  string: { value: '#FF40FF' },   // Magenta for strings
+  any: { value: '#9E9E9E' },      // Gray for any type
+  flow: { value: '#FFFFFF' },      // White for execution flow
   
   // Hover state colors (slightly brighter)
-  booleanHover: { value: '#ffeb3b' }, // Brighter gold
-  numberHover: { value: '#26c6da' },  // Brighter cyan
-  stringHover: { value: '#66bb6a' },  // Brighter green
-  anyHover: { value: '#bdbdbd' },     // Brighter gray
-  flowHover: { value: '#ff7043' },    // Brighter orange
+  booleanHover: { value: '#FF6060' },  // Lighter red
+  numberHover: { value: '#40F0D5' },   // Lighter aqua
+  stringHover: { value: '#FF60FF' },   // Lighter magenta
+  anyHover: { value: '#BDBDBD' },      // Lighter gray
+  flowHover: { value: '#FFFFFF' },      // White (no change)
   
   // Error state colors
-  error: { value: '#f44336' },        // Red
-  errorHover: { value: '#ef5350' },   // Brighter red
+  error: { value: '#f44336' },         // Red
+  errorHover: { value: '#ef5350' },    // Brighter red
   
   // Compatible connection indicator
-  compatible: { value: '#4caf50' },   // Green
-  incompatible: { value: '#f44336' }, // Red
+  compatible: { value: '#4caf50' },    // Green
+  incompatible: { value: '#f44336' },  // Red
 };
 
 // Custom color mode manager to sync with data-theme attribute
@@ -168,6 +168,50 @@ const system = createSystem(defaultConfig, {
           value: {
             base: 'gray.400',
             _dark: 'white',
+          }
+        },
+        
+        // Input colors
+        'input.bg': {
+          value: {
+            base: 'white',
+            _dark: 'gray.700',
+          }
+        },
+        'input.bgHover': {
+          value: {
+            base: 'gray.50',
+            _dark: 'gray.600',
+          }
+        },
+        'input.border': {
+          value: {
+            base: 'gray.200',
+            _dark: 'gray.600',
+          }
+        },
+        'input.borderHover': {
+          value: {
+            base: 'gray.300',
+            _dark: 'gray.500',
+          }
+        },
+        'input.text': {
+          value: {
+            base: 'gray.800',
+            _dark: 'white',
+          }
+        },
+        'input.placeholder': {
+          value: {
+            base: 'gray.400',
+            _dark: 'gray.500',
+          }
+        },
+        'input.label': {
+          value: {
+            base: 'gray.600',
+            _dark: 'gray.300',
           }
         },
         

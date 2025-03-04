@@ -479,3 +479,175 @@ button:focus-visible {
 .theme-toggle-button:active {
   transform: scale(0.95);
 }
+
+/* Socket styles */
+.socket-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  position: absolute;
+  top: 50%;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.9);
+  transition: all 0.2s ease-in-out;
+}
+
+.socket-label.left {
+  left: 24px;
+}
+
+.socket-label.right {
+  right: 24px;
+}
+
+.socket-label.hovered {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Theme-specific socket label styles */
+:root[data-theme="light"] .socket-label {
+  background-color: var(--bg);
+  color: var(--text-color);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+:root[data-theme="dark"] .socket-label {
+  background-color: var(--node-bg);
+  color: var(--text-color);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+/* Socket input widget styles */
+.socket-input {
+  width: 90px;
+  margin-left: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.socket-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  margin-left: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="light"] .socket-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+:root[data-theme="light"] .socket-input:hover {
+  background-color: var(--button-hover);
+  border-color: var(--input-focus-border);
+}
+
+:root[data-theme="dark"] .socket-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+:root[data-theme="dark"] .socket-input:hover {
+  background-color: var(--button-hover);
+  border-color: var(--input-focus-border);
+}
+
+/* Flow socket triangle shape */
+.flow-socket {
+  width: 0 !important;
+  height: 0 !important;
+  border: none !important;
+  background: none !important;
+  position: relative;
+}
+
+.flow-socket::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-left: 19px solid white;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.2s ease-in-out;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+}
+
+.flow-socket.source::before {
+  opacity: 0.9;
+}
+
+.flow-socket.target::before {
+  opacity: 0.9;
+}
+
+.flow-socket.hovered::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.flow-socket.error::before {
+  border-left-color: var(--socket-error-color, #f44336);
+}
+
+.flow-socket.compatible::before {
+  border-left-color: var(--socket-compatible-color, #4caf50);
+}
+
+/* Execution edge styles */
+.react-flow__edge.execution-edge .react-flow__edge-path {
+  stroke-width: 3;
+}
+
+.react-flow__edge.execution-edge:hover .react-flow__edge-path {
+  stroke-width: 4;
+}
+
+/* Details panel animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(10px); }
+}
+
+.details-panel {
+  padding: 8px !important;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.details-panel.hiding {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+.details-panel-description {
+  font-size: 12px !important;
+  color: var(--text-secondary) !important;
+  margin-bottom: 4px !important;
+}
+
+.details-panel-comment {
+  font-size: 12px !important;
+  min-height: 60px !important;
+  resize: none !important;
+}
