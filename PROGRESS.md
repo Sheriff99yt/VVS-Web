@@ -35,6 +35,8 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - [x] Implement properties panel for viewing node properties
 - [x] Add support for editing node properties
 - [ ] Implement complete node library with all essential node types
+- [x] Implement collapsible node categories for better organization
+- [x] Add node search functionality for quick access
 - [x] Add error handling for node connections
 - [x] Implement workspace panning and zooming
 - [x] Add ability to delete nodes and connections

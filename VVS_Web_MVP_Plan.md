@@ -30,6 +30,8 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 **Included in MVP:**
 - Three-panel layout (node library, graph editor, code/properties)
 - Basic node library with categorization
+- Collapsible node categories for better organization
+- Node search functionality for quick access
 - Graph editor with node placement and connection
 - Code preview panel with language selection
 - Basic properties panel for selected nodes

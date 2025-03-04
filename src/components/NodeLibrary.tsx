@@ -1,5 +1,12 @@
-import React from 'react';
-import { Box, Button, Text, Heading } from '@chakra-ui/react';
+import React, { useState, useMemo } from 'react';
+import { 
+  Box, 
+  Button, 
+  Text, 
+  Heading, 
+  Input,
+  Flex,
+} from '@chakra-ui/react';
 import { NODE_CATEGORIES, NodeType } from '../nodes/types';
 import { SocketDirection, SocketType, createSocketDefinition } from '../sockets/types';
 import useGraphStore from '../store/useGraphStore';
@@ -17,6 +24,23 @@ interface NodeTemplate {
  */
 export const NodeLibrary: React.FC = () => {
   const addNode = useGraphStore(state => state.addNode);
+  
+  // State for search and category collapse
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
+    NODE_CATEGORIES.reduce((acc, category) => ({
+      ...acc,
+      [category.id]: true
+    }), {})
+  );
+  
+  // Toggle category expansion
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
   
   // Templates for all available nodes
   const nodeTemplates: Record<NodeType, NodeTemplate> = {
@@ -324,6 +348,29 @@ export const NodeLibrary: React.FC = () => {
     addNode(newNode);
   };
 
+  // Filter nodes based on search query
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return NODE_CATEGORIES;
+    }
+    
+    const query = searchQuery.toLowerCase();
+    
+    return NODE_CATEGORIES.map(category => {
+      // Filter node types that match the search query
+      const matchingNodeTypes = category.nodeTypes.filter(nodeType => {
+        const template = nodeTemplates[nodeType];
+        return template && template.label.toLowerCase().includes(query);
+      });
+      
+      // Only include categories that have matching nodes
+      return {
+        ...category,
+        nodeTypes: matchingNodeTypes
+      };
+    }).filter(category => category.nodeTypes.length > 0);
+  }, [searchQuery, nodeTemplates]);
+
   return (
     <Box 
       height="100%" 
@@ -336,40 +383,76 @@ export const NodeLibrary: React.FC = () => {
         Node Library
       </Text>
       
-      {NODE_CATEGORIES.map((category) => (
+      {/* Search input */}
+      <Box mb={4} position="relative">
+        <Input 
+          placeholder="Search nodes..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          borderRadius="md"
+          size="sm"
+          paddingLeft="2rem"
+        />
+        <Text 
+          position="absolute" 
+          left="0.5rem" 
+          top="50%" 
+          transform="translateY(-50%)"
+          color="gray.500"
+          fontSize="sm"
+        >
+          🔍
+        </Text>
+      </Box>
+      
+      {filteredCategories.map((category) => (
         <Box key={category.id} mb={4}>
-          <Heading 
-            size="sm" 
+          <Flex 
             py={2} 
             px={1}
-            color={category.color}
+            alignItems="center"
+            cursor="pointer"
+            onClick={() => toggleCategory(category.id)}
           >
-            {category.label}
-          </Heading>
-          <Box 
-            borderTop="1px solid" 
-            borderColor="gray.700" 
-            mb={2} 
-            mt={1}
-          />
-          <Box>
-            {category.nodeTypes.map((nodeType) => {
-              const template = nodeTemplates[nodeType];
-              return template ? (
-                <Button 
-                  key={nodeType}
-                  size="sm"
-                  width="100%"
-                  justifyContent="flex-start"
-                  colorScheme="gray"
-                  mb={1}
-                  onClick={() => handleAddNode(template)}
-                >
-                  {template.label}
-                </Button>
-              ) : null;
-            })}
-          </Box>
+            <Text mr={2} fontSize="sm">
+              {expandedCategories[category.id] ? '▼' : '▶'}
+            </Text>
+            <Heading 
+              size="sm" 
+              color={category.color}
+            >
+              {category.label}
+            </Heading>
+          </Flex>
+          
+          {expandedCategories[category.id] && (
+            <>
+              <Box 
+                borderTop="1px solid" 
+                borderColor="gray.700" 
+                mb={2} 
+                mt={1}
+              />
+              <Box>
+                {category.nodeTypes.map((nodeType) => {
+                  const template = nodeTemplates[nodeType];
+                  return template ? (
+                    <Button 
+                      key={nodeType}
+                      size="sm"
+                      width="100%"
+                      justifyContent="flex-start"
+                      colorScheme="gray"
+                      mb={1}
+                      onClick={() => handleAddNode(template)}
+                    >
+                      {template.label}
+                    </Button>
+                  ) : null;
+                })}
+              </Box>
+            </>
+          )}
         </Box>
       ))}
     </Box>
