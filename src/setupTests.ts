@@ -49,6 +49,13 @@ jest.mock('@chakra-ui/react', () => {
     HStack: ({ children, ...props }: any) => React.createElement('div', filterChakraProps(props), children),
     Button: ({ children, ...props }: any) => React.createElement('button', filterChakraProps(props), children),
     Input: ({ children, ...props }: any) => React.createElement('input', filterChakraProps(props), children),
+    // Alert components
+    Alert: ({ children, ...props }: any) => React.createElement('div', { ...filterChakraProps(props), 'data-testid': 'alert' }, children),
+    AlertIcon: () => React.createElement('div', { 'data-testid': 'alert-icon' }),
+    AlertTitle: ({ children, ...props }: any) => React.createElement('div', { ...filterChakraProps(props), 'data-testid': 'alert-title' }, children),
+    AlertDescription: ({ children, ...props }: any) => React.createElement('div', { ...filterChakraProps(props), 'data-testid': 'alert-description' }, children),
+    CloseButton: ({ onClick, ...props }: any) => React.createElement('button', { ...filterChakraProps(props), onClick, 'data-testid': 'close-button' }),
+    Heading: ({ children, ...props }: any) => React.createElement('h2', { ...filterChakraProps(props), 'data-testid': 'heading' }, children),
   };
 });
 

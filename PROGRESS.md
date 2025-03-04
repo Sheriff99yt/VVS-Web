@@ -35,9 +35,8 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - [x] Add support for editing node properties
 - [ ] Implement complete node library with all essential node types
 - [x] Add error handling for node connections
-- [ ] Implement workspace panning and zooming
-- [ ] Add ability to delete nodes and connections
-- [ ] Implement proper node positioning when added
+- [x] Implement workspace panning and zooming
+- [x] Add ability to delete nodes and connections
 
 ### Phase 4: Polish & Testing
 - [ ] Refine UI and interactions
