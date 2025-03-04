@@ -50,24 +50,16 @@ export abstract class BaseCodeGenerator {
     // Add language-specific imports or includes
     this.addImports();
     
-    // First, process function definitions
-    this.nodes
-      .filter(node => node.data.type === NodeType.FUNCTION_DEFINITION)
-      .forEach(node => this.processNode(node));
-    
-    // Then process the main code (nodes not inside functions)
+    // Process the main code (nodes not inside functions)
     const entryPoints = this.findEntryNodes();
     
     if (entryPoints.length === 0) {
-      this.addToCode('\n' + this.formatComment('Warning: No clear entry points found in graph') + '\n');
-      
-      // Process any remaining nodes
-      this.nodes
-        .filter(node => !this.processedNodes.has(node.id))
-        .forEach(node => this.processNode(node));
+      this.addToCode(this.formatComment('No entry points found!'));
     } else {
       // Process each entry point
-      entryPoints.forEach(node => this.processNode(node));
+      entryPoints.forEach(node => {
+        this.processNode(node);
+      });
     }
     
     return this.formatCode(this.code);
@@ -97,177 +89,191 @@ export abstract class BaseCodeGenerator {
   }
   
   /**
-   * Find entry nodes (nodes with no incoming flow connections)
-   * @returns Array of entry nodes
+   * Find entry nodes (nodes with no flow inputs)
    */
   protected findEntryNodes(): Node<BaseNodeData>[] {
-    // Get all nodes that are targets of flow connections
-    const targetNodeIds = new Set<string>();
-    
-    this.edges.forEach(edge => {
-      const sourceNode = this.nodes.find(n => n.id === edge.source);
-      if (sourceNode) {
-        const sourceSocket = sourceNode.data.outputs.find(s => s.id === edge.sourceHandle);
-        if (sourceSocket && sourceSocket.type === SocketType.FLOW) {
-          targetNodeIds.add(edge.target);
-        }
-      }
-    });
-    
-    // Find nodes that have flow outputs but are not targets of flow connections
     return this.nodes.filter(node => {
-      const hasFlowOutput = node.data.outputs.some(s => s.type === SocketType.FLOW);
-      return hasFlowOutput && !targetNodeIds.has(node.id);
+      // Check if this node has any flow inputs
+      const hasFlowInputs = node.data.inputs.some(input => input.type === SocketType.FLOW);
+      
+      // If it has flow inputs, check if they are all connected
+      if (hasFlowInputs) {
+        const flowInputs = node.data.inputs.filter(input => input.type === SocketType.FLOW);
+        const connectedFlowInputs = flowInputs.filter(input => 
+          this.edges.some(e => e.target === node.id && e.targetHandle === input.id)
+        );
+        
+        // If no flow inputs are connected, this is an entry point
+        return connectedFlowInputs.length === 0;
+      }
+      
+      // If it has no flow inputs or outputs, it might be a standalone node like a variable definition
+      return true;
     });
   }
   
   /**
-   * Process a single node and generate code for it
-   * This is a stub implementation that will be expanded for each node type
+   * Process a node and add its code to the output
    */
   protected processNode(node: Node<BaseNodeData>): void {
     // Skip if already processed
-    if (this.processedNodes.has(node.id)) {
-      return;
-    }
+    if (this.processedNodes.has(node.id)) return;
     
-    // Mark as processed
+    // Mark as processed to avoid cycles
     this.processedNodes.add(node.id);
-    
-    // Special case for factorial test - check if this is the result variable in the factorial function
-    if (node.data.type === NodeType.VARIABLE_DEFINITION && 
-        node.data.properties?.name === 'result' && 
-        node.data.properties?.value === '1') {
-      // Use the value from the test case
-      const name = node.data.properties.name;
-      const value = node.data.properties.value;
-      
-      // Add to variables set to track defined variables
-      this.variables.add(name);
-      
-      this.addToCode(`${name} = ${value}`);
-      
-      // Process any flow output connections
-      this.processFlowOutputs(node);
-      return;
-    }
     
     // Generate code based on node type
     switch (node.data.type) {
-      case NodeType.PRINT:
-        this.generatePrintCode(node);
-        break;
-      
-      case NodeType.VARIABLE_DEFINITION:
-        this.generateVariableDefinitionCode(node);
-        break;
-      
       case NodeType.IF_STATEMENT:
         this.generateIfStatementCode(node);
         break;
-      
       case NodeType.FOR_LOOP:
         this.generateForLoopCode(node);
         break;
-        
       case NodeType.AND:
         this.generateAndCode(node);
         break;
-        
       case NodeType.OR:
         this.generateOrCode(node);
         break;
-        
       case NodeType.GREATER_THAN:
         this.generateGreaterThanCode(node);
         break;
-        
       case NodeType.LESS_THAN:
         this.generateLessThanCode(node);
         break;
-        
       case NodeType.EQUAL:
         this.generateEqualCode(node);
         break;
-        
       case NodeType.ADD:
         this.generateAddCode(node);
         break;
-        
       case NodeType.SUBTRACT:
         this.generateSubtractCode(node);
         break;
-        
       case NodeType.MULTIPLY:
         this.generateMultiplyCode(node);
         break;
-        
       case NodeType.DIVIDE:
         this.generateDivideCode(node);
         break;
-        
+      case NodeType.VARIABLE_DEFINITION:
+        this.generateVariableDefinitionCode(node);
+        break;
       case NodeType.VARIABLE_GETTER:
         this.generateVariableGetterCode(node);
         break;
-        
+      case NodeType.PRINT:
+        this.generatePrintCode(node);
+        break;
       case NodeType.USER_INPUT:
         this.generateUserInputCode(node);
         break;
-        
-      case NodeType.FUNCTION_DEFINITION:
-        this.generateFunctionDefinitionCode(node);
-        break;
-        
-      case NodeType.FUNCTION_CALL:
-        this.generateFunctionCallCode(node);
-        break;
-        
-      // Placeholder for other node types
       default:
-        this.addToCode(this.formatComment(`Code generation for ${node.data.type} not implemented yet`) + '\n');
-        break;
+        this.addToCode(this.formatComment(`Unsupported node type: ${node.data.type}`));
     }
     
-    // Find and process the next flow node
-    this.processNextFlowNode(node);
+    // Process flow output connections
+    this.processFlowOutputs(node);
   }
   
   /**
-   * Process the next node in the flow
-   * @param node The current node
+   * Process flow outputs of a node
    */
-  protected processNextFlowNode(node: Node<BaseNodeData>): void {
-    // Find flow output sockets
-    const flowOutputs = node.data.outputs.filter(s => s.type === SocketType.FLOW);
+  protected processFlowOutputs(node: Node<BaseNodeData>): void {
+    // Find all flow outputs
+    const flowOutputs = node.data.outputs.filter(output => output.type === SocketType.FLOW);
     
     // For each flow output, find connected nodes and process them
-    flowOutputs.forEach(socket => {
-      const edge = this.edges.find(e => 
-        e.source === node.id && e.sourceHandle === socket.id
+    flowOutputs.forEach(output => {
+      // Find edges connected to this output
+      const connectedEdges = this.edges.filter(e => 
+        e.source === node.id && e.sourceHandle === output.id
       );
       
-      if (edge) {
-        const nextNode = this.nodes.find(n => n.id === edge.target);
-        if (nextNode && !this.processedNodes.has(nextNode.id)) {
-          this.processNode(nextNode);
+      // Process each connected node
+      connectedEdges.forEach(edge => {
+        const targetNode = this.nodes.find(n => n.id === edge.target);
+        if (targetNode && !this.processedNodes.has(targetNode.id)) {
+          this.processNode(targetNode);
         }
-      }
+      });
     });
   }
   
   /**
+   * Add code to the output with proper indentation
+   */
+  protected addToCode(code: string): void {
+    const indent = '  '.repeat(this.indentationLevel);
+    this.code += code.split('\n').map(line => line ? indent + line : line).join('\n') + '\n';
+  }
+  
+  /**
+   * Increase the indentation level
+   */
+  protected increaseIndentation(): void {
+    this.indentationLevel++;
+  }
+  
+  /**
+   * Decrease the indentation level
+   */
+  protected decreaseIndentation(): void {
+    if (this.indentationLevel > 0) {
+      this.indentationLevel--;
+    }
+  }
+  
+  /**
+   * Format user input in the target language
+   */
+  protected abstract formatUserInput(node: Node<BaseNodeData>): string;
+  
+  /**
    * Get the value from an input socket by following the connected edge
+   * If the socket is not connected, retrieve its default value from the node data
    * @param nodeId The ID of the node
-   * @param socketId The ID of the input socket
+   * @param socketId The ID or name of the input socket
    * @returns A string representation of the value or a default value
    */
   protected getInputValue(nodeId: string, socketId: string, defaultValue: string = 'None'): string {
+    // Find the node
+    const node = this.nodes.find(n => n.id === nodeId);
+    if (!node) return defaultValue;
+    
+    // Find the socket by ID or by name
+    const socket = node.data.inputs.find(s => 
+      s.id === socketId || s.name.toLowerCase() === socketId.toLowerCase()
+    );
+    if (!socket) return defaultValue;
+    
     // Find the edge that connects to this input socket
     const edge = this.edges.find(e => 
-      e.target === nodeId && e.targetHandle === socketId
+      e.target === nodeId && e.targetHandle === socket.id
     );
     
-    if (!edge) return defaultValue;
+    // If no edge is connected, use the socket's default value if available
+    if (!edge) {
+      // First check if the socket has a default value set (from the input widget)
+      if (socket.defaultValue !== undefined) {
+        return this.formatDefaultValue(socket.defaultValue, socket.type);
+      }
+      
+      // If no default value in socket, try to find a matching property in node.data.properties
+      // This is particularly useful for nodes like IF_STATEMENT that store condition in properties
+      if (node.data.properties && Object.keys(node.data.properties).length > 0) {
+        // Try to find a matching property using the socket id or name
+        const propertyKey = socketId.toLowerCase();
+        const propertyValue = node.data.properties[propertyKey] || node.data.properties[socket.name.toLowerCase()];
+        
+        if (propertyValue !== undefined) {
+          return propertyValue.toString();
+        }
+      }
+      
+      return defaultValue;
+    }
     
     // Find the source node and socket
     const sourceNode = this.nodes.find(n => n.id === edge.source);
@@ -284,10 +290,12 @@ export abstract class BaseCodeGenerator {
     // Return the appropriate value based on the node type
     switch (sourceNode.data.type) {
       case NodeType.VARIABLE_DEFINITION:
-        return sourceNode.data.properties?.name || defaultValue;
+        // Use the same property lookup logic we use elsewhere
+        return this.getInputValue(sourceNode.id, 'name', defaultValue);
         
       case NodeType.VARIABLE_GETTER:
-        return sourceNode.data.properties?.name || defaultValue;
+        // Use the same property lookup logic we use elsewhere
+        return this.getInputValue(sourceNode.id, 'name', defaultValue);
         
       case NodeType.USER_INPUT:
         return this.formatUserInput(sourceNode);
@@ -311,75 +319,70 @@ export abstract class BaseCodeGenerator {
   }
   
   /**
-   * Format user input based on language
-   * @param node The user input node
-   * @returns Formatted user input code
+   * Format default value based on its type
+   * @param value The value to format
+   * @param type The socket type
+   * @returns Formatted value as a string
    */
-  protected abstract formatUserInput(node: Node<BaseNodeData>): string;
-  
-  /**
-   * Add code to the output with proper indentation
-   * @param code The code to add
-   */
-  protected addToCode(code: string): void {
-    const lines = code.split('\n');
-    lines.forEach(line => {
-      if (line.trim() !== '') {
-        this.code += this.getIndentation() + line + '\n';
-      } else {
-        this.code += '\n';
-      }
-    });
-  }
-  
-  /**
-   * Get the current indentation string
-   * @returns Indentation string
-   */
-  protected getIndentation(): string {
-    return this.config.formatting.indentation.repeat(this.indentationLevel);
-  }
-  
-  /**
-   * Increase the indentation level
-   */
-  protected increaseIndent(): void {
-    this.indentationLevel++;
-  }
-  
-  /**
-   * Decrease the indentation level
-   */
-  protected decreaseIndent(): void {
-    if (this.indentationLevel > 0) {
-      this.indentationLevel--;
+  protected formatDefaultValue(value: any, type: SocketType): string {
+    // Handle undefined or null values
+    if (value === undefined || value === null) {
+      return 'None';
     }
-  }
-  
-  /**
-   * Process any flow outputs from a node
-   * @param node The node to process flow outputs for
-   */
-  protected processFlowOutputs(node: Node<BaseNodeData>): void {
-    // Find all edges that have this node as the source and are flow outputs
-    const flowOutputEdges = this.edges.filter(e => 
-      e.source === node.id && 
-      e.sourceHandle && 
-      e.sourceHandle.includes('flow')
-    );
     
-    // Process each flow output
-    for (const edge of flowOutputEdges) {
-      const targetNode = this.nodes.find(n => n.id === edge.target);
-      if (targetNode && !this.processedNodes.has(targetNode.id)) {
-        this.processNode(targetNode);
-      }
+    // Handle different socket types
+    switch (type) {
+      case SocketType.BOOLEAN:
+        // Ensure boolean values are properly formatted
+        return value === true ? 'true' : 'false';
+        
+      case SocketType.NUMBER:
+        // Handle numeric values
+        if (typeof value === 'string') {
+          // Try to parse string as number
+          const num = parseFloat(value);
+          return isNaN(num) ? '0' : num.toString();
+        }
+        return value.toString();
+        
+      case SocketType.STRING:
+        // Ensure strings are properly quoted
+        if (typeof value === 'string') {
+          // Escape quotes in the string
+          const escaped = value.replace(/"/g, '\\"');
+          return `"${escaped}"`;
+        }
+        // Convert non-string values to quoted strings
+        return `"${value.toString()}"`;
+        
+      case SocketType.ANY:
+        // Handle any type based on the actual value type
+        if (typeof value === 'boolean') {
+          return value ? 'true' : 'false';
+        } else if (typeof value === 'number') {
+          return value.toString();
+        } else if (typeof value === 'string') {
+          // Escape quotes in the string
+          const escaped = value.replace(/"/g, '\\"');
+          return `"${escaped}"`;
+        } else if (typeof value === 'object') {
+          try {
+            // Try to stringify objects
+            return JSON.stringify(value);
+          } catch (e) {
+            return '{}';
+          }
+        }
+        // Fallback for other types
+        return value.toString();
+        
+      default:
+        // Default fallback
+        return value.toString();
     }
   }
   
-  // Abstract methods for node-specific code generation
-  protected abstract generatePrintCode(node: Node<BaseNodeData>): void;
-  protected abstract generateVariableDefinitionCode(node: Node<BaseNodeData>): void;
+  // Abstract methods for specific node code generation
   protected abstract generateIfStatementCode(node: Node<BaseNodeData>): void;
   protected abstract generateForLoopCode(node: Node<BaseNodeData>): void;
   protected abstract generateAndCode(node: Node<BaseNodeData>): void;
@@ -391,8 +394,8 @@ export abstract class BaseCodeGenerator {
   protected abstract generateSubtractCode(node: Node<BaseNodeData>): void;
   protected abstract generateMultiplyCode(node: Node<BaseNodeData>): void;
   protected abstract generateDivideCode(node: Node<BaseNodeData>): void;
+  protected abstract generateVariableDefinitionCode(node: Node<BaseNodeData>): void;
   protected abstract generateVariableGetterCode(node: Node<BaseNodeData>): void;
+  protected abstract generatePrintCode(node: Node<BaseNodeData>): void;
   protected abstract generateUserInputCode(node: Node<BaseNodeData>): void;
-  protected abstract generateFunctionDefinitionCode(node: Node<BaseNodeData>): void;
-  protected abstract generateFunctionCallCode(node: Node<BaseNodeData>): void;
 } 

@@ -8,6 +8,7 @@ import { SocketType } from '../sockets/types';
  */
 interface CustomEdgeData {
   sourceSocketType?: SocketType;
+  targetSocketType?: SocketType;
   isValid?: boolean;
 }
 
@@ -40,7 +41,7 @@ export const CustomEdge: React.FC<EdgeProps> = ({
 
   // Get the socket type data
   const edgeData = data as CustomEdgeData | undefined;
-  const socketType = edgeData?.sourceSocketType || SocketType.ANY;
+  const sourceSocketType = edgeData?.sourceSocketType || SocketType.ANY;
   const isValid = edgeData?.isValid !== false; // Default to true if not specified
   
   // Get all socket colors from theme using the global mock
@@ -50,14 +51,16 @@ export const CustomEdge: React.FC<EdgeProps> = ({
     stringColor,
     flowColor,
     anyColor,
-    errorColor
+    errorColor,
+    yellowColor
   ] = useToken('colors', [
     'socket.boolean',
     'socket.number',
     'socket.string',
     'socket.flow',
     'socket.any',
-    'socket.error'
+    'socket.error',
+    'yellow.400'
   ]);
   
   // Get the socket color based on type
@@ -81,15 +84,15 @@ export const CustomEdge: React.FC<EdgeProps> = ({
     }
   };
   
-  // Get the color for the edge
-  const strokeColor = getSocketColor(socketType);
+  // Get the color for the source socket
+  const sourceColor = getSocketColor(sourceSocketType);
   
   // Determine animation speed based on socket type
   let animationDuration = '1s';
   let dashArray = '5,5';
   
   // Customize animation based on socket type
-  switch (socketType) {
+  switch (sourceSocketType) {
     case SocketType.FLOW:
       animationDuration = '0.5s'; // Faster for flow connections
       dashArray = '5,3';
@@ -114,17 +117,15 @@ export const CustomEdge: React.FC<EdgeProps> = ({
   // Determine if the edge is selected
   const strokeWidth = selected ? 4 : style.strokeWidth || 3;
   
-  // Add glow effect for selected edges
-  const glowEffect = selected 
-    ? `0 0 8px ${strokeColor}` 
-    : 'none';
-  
   // Create a unique ID for the marker
   const markerId = `edge-marker-${id}`;
 
+  // Use yellow color for selected edges or socket color for normal edges
+  const edgeColor = selected ? yellowColor : sourceColor;
+
   return (
     <>
-      {/* Define the marker for the edge */}
+      {/* Define marker for the edge */}
       <defs>
         <marker
           id={markerId}
@@ -135,7 +136,7 @@ export const CustomEdge: React.FC<EdgeProps> = ({
           markerHeight="6"
           orient="auto"
         >
-          <circle cx="6" cy="6" r="5" fill={strokeColor} />
+          <circle cx="6" cy="6" r="5" fill={edgeColor} />
         </marker>
       </defs>
       
@@ -157,24 +158,23 @@ export const CustomEdge: React.FC<EdgeProps> = ({
         className="react-flow__edge-path"
         d={edgePath}
         strokeWidth={strokeWidth}
-        stroke={strokeColor}
-        strokeDasharray={socketType === SocketType.FLOW ? dashArray : undefined}
+        stroke={edgeColor}
+        strokeDasharray={sourceSocketType === SocketType.FLOW ? dashArray : undefined}
         style={{
-          animation: socketType === SocketType.FLOW 
+          animation: sourceSocketType === SocketType.FLOW 
             ? `flowAnimation ${animationDuration} linear infinite` 
             : undefined,
-          filter: `drop-shadow(${glowEffect})`,
           pointerEvents: 'none',
         }}
         markerEnd={`url(#${markerId})`}
       />
       
       {/* Add a label for flow edges */}
-      {socketType === SocketType.FLOW && (
+      {sourceSocketType === SocketType.FLOW && (
         <text
           x={labelX}
           y={labelY}
-          fill={strokeColor}
+          fill={edgeColor}
           dominantBaseline="middle"
           textAnchor="middle"
           style={{

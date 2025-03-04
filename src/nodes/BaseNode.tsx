@@ -1,14 +1,47 @@
-import React, { memo } from 'react';
-import { NodeProps, Position } from 'reactflow';
+import React, { memo, useEffect, useState, useCallback } from 'react';
+import { NodeProps, Position, useEdges, getConnectedEdges, useReactFlow } from 'reactflow';
 import { Box, Text, Flex, useToken } from '@chakra-ui/react';
 import { BaseNodeData, NodeType, NODE_CATEGORIES, NodeCategory } from './types';
 import Socket from '../sockets/Socket';
+import { SocketDefinition, SocketDirection } from '../sockets/types';
 
 /**
  * Base node component for all node types
  * Displays node with its inputs and outputs
  */
-export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ data, selected }) => {
+export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ id, data, selected }) => {
+  // State to track current theme
+  const [isDark, setIsDark] = useState(true);
+  
+  // Get all edges to check for connections
+  const edges = useEdges();
+  
+  // Access to ReactFlow instance for updating node data
+  const { setNodes } = useReactFlow();
+  
+  // Effect to update when theme changes
+  useEffect(() => {
+    // Initial check
+    const theme = document.documentElement.getAttribute('data-theme');
+    setIsDark(theme !== 'light');
+    
+    // Create an observer to watch for attribute changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme') {
+          const newTheme = document.documentElement.getAttribute('data-theme');
+          setIsDark(newTheme !== 'light');
+        }
+      });
+    });
+    
+    // Start observing
+    observer.observe(document.documentElement, { attributes: true });
+    
+    // Cleanup
+    return () => observer.disconnect();
+  }, []);
+
   // Find the category for this node type
   const getNodeCategory = (type: NodeType): NodeCategory | undefined => {
     const category = NODE_CATEGORIES.find((cat) => cat.nodeTypes.includes(type));
@@ -26,25 +59,71 @@ export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ data, selecte
   
   // Get brand colors from theme
   const [brand500, brand600] = useToken('colors', ['brand.500', 'brand.600']);
+  
+  // Theme-aware colors
+  const bgColor = isDark ? 'gray.800' : 'white';
+  const headerBgColor = isDark ? 'gray.900' : 'gray.50';
+  const borderColor = isDark ? 'gray.700' : 'gray.200';
+  const selectedBorderColor = isDark ? 'white' : 'brand.500';
+  const textColor = isDark ? 'white' : 'gray.800';
+  const shadowColor = isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)';
+  
+  // Check if a socket is connected
+  const isSocketConnected = useCallback((socketId: string, direction: SocketDirection) => {
+    return edges.some(edge => 
+      (direction === SocketDirection.INPUT && edge.target === id && edge.targetHandle === socketId) ||
+      (direction === SocketDirection.OUTPUT && edge.source === id && edge.sourceHandle === socketId)
+    );
+  }, [edges, id]);
+  
+  // Handle socket value change
+  const handleSocketValueChange = useCallback((socketId: string, value: any) => {
+    // Update the node data in the ReactFlow state
+    setNodes(nodes => 
+      nodes.map(node => {
+        if (node.id === id) {
+          // Create a deep copy of the node data
+          const newData = { ...node.data };
+          
+          // Find the socket in inputs and update its default value
+          newData.inputs = newData.inputs.map((socket: SocketDefinition) => {
+            if (socket.id === socketId) {
+              return { ...socket, defaultValue: value };
+            }
+            return socket;
+          });
+          
+          // Return updated node
+          return {
+            ...node,
+            data: newData
+          };
+        }
+        return node;
+      })
+    );
+    
+    console.log(`Socket ${socketId} value changed to:`, value);
+  }, [id, setNodes]);
 
   return (
     <Box
       borderRadius="xl"
       border="1px solid"
-      borderColor={selected ? 'white' : 'gray.700'}
-      bg="gray.800"
+      borderColor={selected ? selectedBorderColor : borderColor}
+      bg={bgColor}
       minWidth="180px"
       maxWidth="280px"
       overflow="hidden"
       boxShadow={selected 
-        ? `0 0 0 1px white, 0 8px 25px -5px rgba(0,0,0,0.5), 0 0 15px -3px ${nodeColor}40` 
-        : `0 4px 15px -3px rgba(0,0,0,0.3)`
+        ? `0 0 0 1px ${selectedBorderColor}, 0 8px 25px -5px ${shadowColor}` 
+        : `0 4px 15px -3px ${shadowColor}`
       }
       transition="all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
       _hover={{
         boxShadow: selected 
-          ? `0 0 0 1px white, 0 12px 30px -5px rgba(0,0,0,0.6), 0 0 20px -3px ${nodeColor}60` 
-          : `0 8px 25px -5px rgba(0,0,0,0.4), 0 0 10px -3px ${nodeColor}30`
+          ? `0 0 0 1px ${selectedBorderColor}, 0 12px 30px -5px ${shadowColor}` 
+          : `0 8px 25px -5px ${shadowColor}`
       }}
       className="node-container"
       style={{
@@ -57,9 +136,9 @@ export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ data, selecte
         borderTop={`3px solid ${nodeColor}`}
         py={2.5}
         px={3.5}
-        bg="gray.900"
+        bg={headerBgColor}
         borderBottom="1px solid"
-        borderColor="gray.700"
+        borderColor={borderColor}
         position="relative"
         _before={{
           content: '""',
@@ -73,37 +152,20 @@ export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ data, selecte
           pointerEvents: 'none',
         }}
       >
-        <Flex justifyContent="space-between" alignItems="center">
-          <Text 
-            fontWeight="semibold" 
-            fontSize="sm"
-            letterSpacing="tight"
-            textShadow={selected ? `0 0 8px ${nodeColor}80` : 'none'}
-            transition="text-shadow 0.2s ease"
-          >
-            {data.label}
-          </Text>
-          <Text 
-            fontSize="xs" 
-            opacity={0.8}
-            color={nodeColor}
-            fontWeight="medium"
-            px={1.5}
-            py={0.5}
-            borderRadius="md"
-            bg={`${nodeColor}15`}
-            letterSpacing="0.02em"
-            textTransform="uppercase"
-          >
-            {nodeCategory}
-          </Text>
-        </Flex>
+        <Text 
+          fontWeight="semibold" 
+          fontSize="sm"
+          letterSpacing="tight"
+          color={textColor}
+        >
+          {data.label}
+        </Text>
       </Box>
 
       {/* Node content with inputs and outputs */}
       <Box 
         p={3} 
-        bg="gray.800"
+        bg={bgColor}
         position="relative"
         _after={{
           content: '""',
@@ -124,6 +186,8 @@ export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ data, selecte
                 key={socket.id}
                 socket={socket}
                 position={Position.Left}
+                isConnected={isSocketConnected(socket.id, socket.direction)}
+                onValueChange={handleSocketValueChange}
               />
             ))}
           </Box>
@@ -135,6 +199,7 @@ export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ data, selecte
                 key={socket.id}
                 socket={socket}
                 position={Position.Right}
+                isConnected={isSocketConnected(socket.id, socket.direction)}
               />
             ))}
           </Box>

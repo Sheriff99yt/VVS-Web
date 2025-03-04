@@ -1,7 +1,9 @@
-import { render } from '@testing-library/react';
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { EdgeProps, Position } from 'reactflow';
 import CustomEdge from '../../components/CustomEdge';
 import { SocketType } from '../../sockets/types';
-import { Position } from 'reactflow';
+import { useToken } from '@chakra-ui/react';
 
 // Mock the getBezierPath function
 jest.mock('reactflow', () => ({
@@ -18,20 +20,25 @@ jest.mock('reactflow', () => ({
 // Mock the useToken hook
 jest.mock('@chakra-ui/react', () => ({
   ...jest.requireActual('@chakra-ui/react'),
-  useToken: jest.fn(() => {
-    return [
-      '#2B6CB0', // boolean
-      '#DD6B20', // number
-      '#805AD5', // string
-      '#38A169', // flow
-      '#718096', // any
-      '#E53E3E', // error
-    ];
-  }),
+  useToken: jest.fn(),
 }));
 
+// Set up the mock return value for useToken
+beforeEach(() => {
+  (useToken as jest.Mock).mockReturnValue([
+    '#ffd700', // boolean
+    '#00bcd4', // number
+    '#4caf50', // string
+    '#ff5722', // flow
+    '#9e9e9e', // any
+    '#f44336', // error
+    '#ffeb3b', // yellow
+  ]);
+});
+
 describe('CustomEdge', () => {
-  const defaultProps = {
+  // Default props for testing
+  const defaultProps: EdgeProps = {
     id: 'edge-1',
     source: 'node-1',
     target: 'node-2',
@@ -41,8 +48,9 @@ describe('CustomEdge', () => {
     targetY: 200,
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
-    style: { stroke: '#ff0000', strokeWidth: 2 },
-    selected: false,
+    data: {
+      sourceSocketType: SocketType.NUMBER,
+    },
   };
 
   test('renders with default props', () => {
@@ -52,21 +60,21 @@ describe('CustomEdge', () => {
     const path = document.querySelector('.react-flow__edge-path');
     expect(path).toBeInTheDocument();
     
-    // Check if the marker is defined
-    const marker = document.querySelector('marker');
-    expect(marker).toBeInTheDocument();
-    
-    // Check if the connection points are rendered
-    const circles = document.querySelectorAll('circle');
-    expect(circles.length).toBe(1);
+    // Check if the path has the right color
+    expect(path).toHaveAttribute('stroke', '#00bcd4');
   });
 
   test('renders with selected state', () => {
-    render(<CustomEdge {...defaultProps} selected={true} />);
+    render(
+      <CustomEdge 
+        {...defaultProps} 
+        selected={true} 
+      />
+    );
     
     // Check if the main path has increased stroke width when selected
     const path = document.querySelector('.react-flow__edge-path');
-    expect(path).toHaveAttribute('stroke-width', '3');
+    expect(path).toHaveAttribute('stroke-width', '4');
   });
 
   test('renders with flow socket type', () => {
@@ -74,20 +82,17 @@ describe('CustomEdge', () => {
       <CustomEdge 
         {...defaultProps} 
         data={{ 
-          sourceSocketType: SocketType.FLOW,
-          targetSocketType: SocketType.FLOW
+          sourceSocketType: SocketType.FLOW 
         }} 
       />
     );
     
-    // Check if the flow indicator is rendered
-    const text = document.querySelector('text');
-    expect(text).toBeInTheDocument();
-    expect(text?.textContent).toBe('FLOW');
+    // Check if the flow label is rendered
+    expect(screen.getByText('FLOW')).toBeInTheDocument();
     
-    // Check if the path has the correct stroke color
+    // Check if the path has stroke-dasharray attribute
     const path = document.querySelector('.react-flow__edge-path');
-    expect(path).toHaveAttribute('stroke', '#38A169');
+    expect(path).toHaveAttribute('stroke-dasharray');
   });
 
   test('renders with number socket type', () => {

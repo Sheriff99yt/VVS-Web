@@ -54,7 +54,9 @@ export const NodeLibrary: React.FC = () => {
       category: 'Process Flow',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('condition', 'Condition', SocketType.BOOLEAN, SocketDirection.INPUT),
+          createSocketDefinition('condition', 'Condition', SocketType.BOOLEAN, SocketDirection.INPUT, true, {
+            label: 'Condition',
+          }),
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
         ],
         outputs: [
@@ -73,6 +75,18 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
+          createSocketDefinition('start', 'Start', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            isInteger: true,
+            min: 0,
+          }),
+          createSocketDefinition('end', 'End', SocketType.NUMBER, SocketDirection.INPUT, 10, {
+            isInteger: true,
+            min: 0,
+          }),
+          createSocketDefinition('step', 'Step', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            isInteger: true,
+            min: 1,
+          }),
         ],
         outputs: [
           createSocketDefinition('loop_body', 'Body', SocketType.FLOW, SocketDirection.OUTPUT),
@@ -94,8 +108,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Logic Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
+            label: 'Input A',
+          }),
+          createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
+            label: 'Input B',
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
@@ -109,8 +127,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Logic Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
+            label: 'Input A',
+          }),
+          createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
+            label: 'Input B',
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
@@ -124,8 +146,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Logic Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 1,
+          }),
+          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 1,
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
@@ -139,8 +165,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Logic Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 1,
+          }),
+          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 1,
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
@@ -154,8 +184,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Logic Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.ANY, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.ANY, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.ANY, SocketDirection.INPUT, '', {
+            placeholder: 'Value A',
+          }),
+          createSocketDefinition('b', 'B', SocketType.ANY, SocketDirection.INPUT, '', {
+            placeholder: 'Value B',
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
@@ -171,8 +205,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Math Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 0.1,
+          }),
+          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 0.1,
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
@@ -186,8 +224,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Math Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 0.1,
+          }),
+          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            step: 0.1,
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
@@ -201,8 +243,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Math Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            step: 0.1,
+          }),
+          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            step: 0.1,
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
@@ -216,8 +262,13 @@ export const NodeLibrary: React.FC = () => {
       category: 'Math Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT),
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            step: 0.1,
+          }),
+          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            step: 0.1,
+            min: 0.000001, // Prevent division by zero
+          }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
@@ -234,7 +285,9 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
-          createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.INPUT),
+          createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.INPUT, 0, {
+            placeholder: 'Enter value',
+          }),
         ],
         outputs: [
           createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
@@ -268,7 +321,9 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
-          createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.INPUT),
+          createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.INPUT, 'Hello World', {
+            placeholder: 'Text to print',
+          }),
         ],
         outputs: [
           createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
@@ -285,6 +340,10 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
+          createSocketDefinition('prompt', 'Prompt', SocketType.STRING, SocketDirection.INPUT, 'Enter a value:', {
+            placeholder: 'Prompt text',
+            maxLength: 100,
+          }),
         ],
         outputs: [
           createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
@@ -292,44 +351,6 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           prompt: 'Enter a value:',
-        },
-      }),
-    },
-    
-    // Function nodes
-    [NodeType.FUNCTION_DEFINITION]: {
-      type: NodeType.FUNCTION_DEFINITION,
-      label: 'Function Definition',
-      category: 'Function',
-      createNodeData: () => ({
-        inputs: [
-          createSocketDefinition('param1', 'Parameter 1', SocketType.ANY, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('body', 'Body', SocketType.FLOW, SocketDirection.OUTPUT),
-          createSocketDefinition('return', 'Return', SocketType.ANY, SocketDirection.INPUT),
-        ],
-        properties: {
-          name: 'myFunction',
-          parameters: ['param1'],
-        },
-      }),
-    },
-    [NodeType.FUNCTION_CALL]: {
-      type: NodeType.FUNCTION_CALL,
-      label: 'Function Call',
-      category: 'Function',
-      createNodeData: () => ({
-        inputs: [
-          createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
-          createSocketDefinition('param1', 'Parameter 1', SocketType.ANY, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
-          createSocketDefinition('return', 'Return', SocketType.ANY, SocketDirection.OUTPUT),
-        ],
-        properties: {
-          function: 'myFunction',
         },
       }),
     },

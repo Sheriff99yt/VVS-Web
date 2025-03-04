@@ -42,10 +42,6 @@ export enum NodeType {
   // Input/Output nodes
   PRINT = 'print',
   USER_INPUT = 'user_input',
-  
-  // Function nodes
-  FUNCTION_DEFINITION = 'function_definition',
-  FUNCTION_CALL = 'function_call',
 }
 
 /**
@@ -57,7 +53,6 @@ export enum NodeCategory {
   MATH = 'Math Operations',
   VARIABLES = 'Variables',
   IO = 'Input/Output',
-  FUNCTION = 'Function',
 }
 
 /**
@@ -120,11 +115,5 @@ export const NODE_CATEGORIES: NodeCategoryDefinition[] = [
     label: 'Input/Output',
     nodeTypes: [NodeType.PRINT, NodeType.USER_INPUT],
     color: '#FFC107',
-  },
-  {
-    id: NodeCategory.FUNCTION,
-    label: 'Function',
-    nodeTypes: [NodeType.FUNCTION_DEFINITION, NodeType.FUNCTION_CALL],
-    color: '#673AB7',
   },
 ]; 
