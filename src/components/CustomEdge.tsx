@@ -112,11 +112,11 @@ export const CustomEdge: React.FC<EdgeProps> = ({
   }
 
   // Determine if the edge is selected
-  const strokeWidth = selected ? 3 : style.strokeWidth || 2;
+  const strokeWidth = selected ? 4 : style.strokeWidth || 3;
   
   // Add glow effect for selected edges
   const glowEffect = selected 
-    ? `0 0 6px ${strokeColor}` 
+    ? `0 0 8px ${strokeColor}` 
     : 'none';
   
   // Create a unique ID for the marker
@@ -128,16 +128,28 @@ export const CustomEdge: React.FC<EdgeProps> = ({
       <defs>
         <marker
           id={markerId}
-          viewBox="0 0 10 10"
-          refX="5"
-          refY="5"
-          markerWidth="5"
-          markerHeight="5"
+          viewBox="0 0 12 12"
+          refX="6"
+          refY="6"
+          markerWidth="6"
+          markerHeight="6"
           orient="auto"
         >
-          <circle cx="5" cy="5" r="4" fill={strokeColor} />
+          <circle cx="6" cy="6" r="5" fill={strokeColor} />
         </marker>
       </defs>
+      
+      {/* Invisible wider path for better selection */}
+      <path
+        d={edgePath}
+        strokeWidth={20}
+        stroke="transparent"
+        fill="none"
+        style={{
+          pointerEvents: 'stroke',
+          cursor: 'pointer',
+        }}
+      />
       
       {/* Render the edge path */}
       <path
@@ -152,6 +164,7 @@ export const CustomEdge: React.FC<EdgeProps> = ({
             ? `flowAnimation ${animationDuration} linear infinite` 
             : undefined,
           filter: `drop-shadow(${glowEffect})`,
+          pointerEvents: 'none',
         }}
         markerEnd={`url(#${markerId})`}
       />
@@ -165,7 +178,7 @@ export const CustomEdge: React.FC<EdgeProps> = ({
           dominantBaseline="middle"
           textAnchor="middle"
           style={{
-            fontSize: '8px',
+            fontSize: '9px',
             fontWeight: 'bold',
             pointerEvents: 'none',
           }}

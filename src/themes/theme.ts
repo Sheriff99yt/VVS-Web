@@ -1,6 +1,6 @@
 import { createSystem, defaultConfig } from '@chakra-ui/react';
 
-// Define colors for our theme
+// Define colors for our socket types
 const socketColors = {
   // Base socket colors
   boolean: { value: '#ffd700' }, // Gold
@@ -25,6 +25,24 @@ const socketColors = {
   incompatible: { value: '#f44336' }, // Red
 };
 
+// Custom color mode manager to sync with data-theme attribute
+export const colorModeManager = {
+  get: () => {
+    const dataTheme = document.documentElement.getAttribute('data-theme');
+    return dataTheme === 'light' ? 'light' : 'dark';
+  },
+  set: (colorMode: 'light' | 'dark') => {
+    document.documentElement.setAttribute('data-theme', colorMode);
+    if (colorMode === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
+    } else {
+      document.body.classList.add('light-mode');
+      document.body.classList.remove('dark-mode');
+    }
+  }
+};
+
 // Create system with custom configuration
 const system = createSystem(defaultConfig, {
   theme: {
@@ -47,17 +65,123 @@ const system = createSystem(defaultConfig, {
     },
     semanticTokens: {
       colors: {
-        // Add semantic tokens as needed
+        // Background colors
         bg: {
           value: {
-            base: 'gray.900',
+            base: 'white',
             _dark: 'gray.900',
           }
         },
+        bgSecondary: {
+          value: {
+            base: 'gray.50',
+            _dark: 'gray.800',
+          }
+        },
+        bgTertiary: {
+          value: {
+            base: 'gray.100',
+            _dark: 'gray.700',
+          }
+        },
+        
+        // Text colors
         text: {
           value: {
-            base: 'white',
+            base: 'gray.800',
             _dark: 'white',
+          }
+        },
+        textSecondary: {
+          value: {
+            base: 'gray.600',
+            _dark: 'gray.300',
+          }
+        },
+        textMuted: {
+          value: {
+            base: 'gray.500',
+            _dark: 'gray.400',
+          }
+        },
+        
+        // Border colors
+        border: {
+          value: {
+            base: 'gray.200',
+            _dark: 'gray.700',
+          }
+        },
+        
+        // Panel colors
+        panelBg: {
+          value: {
+            base: 'white',
+            _dark: 'gray.900',
+          }
+        },
+        panelHeaderBg: {
+          value: {
+            base: 'gray.50',
+            _dark: 'gray.800',
+          }
+        },
+        
+        // Node colors
+        nodeBg: {
+          value: {
+            base: 'white',
+            _dark: 'gray.800',
+          }
+        },
+        nodeHeaderBg: {
+          value: {
+            base: 'gray.50',
+            _dark: 'gray.900',
+          }
+        },
+        
+        // Toolbar colors
+        toolbarBg: {
+          value: {
+            base: 'white',
+            _dark: 'gray.800',
+          }
+        },
+        toolbarBorder: {
+          value: {
+            base: 'gray.200',
+            _dark: 'gray.700',
+          }
+        },
+        
+        // Graph editor colors
+        graphBg: {
+          value: {
+            base: 'gray.50',
+            _dark: 'gray.900',
+          }
+        },
+        
+        // Socket colors (for better visibility in light mode)
+        socketBorder: {
+          value: {
+            base: 'gray.400',
+            _dark: 'white',
+          }
+        },
+        
+        // Code preview colors
+        codeBg: {
+          value: {
+            base: 'gray.50',
+            _dark: 'gray.800',
+          }
+        },
+        codeText: {
+          value: {
+            base: 'gray.800',
+            _dark: 'gray.100',
           }
         },
       },

@@ -21,11 +21,11 @@ interface SocketProps {
  * Socket component for node inputs/outputs
  * Provides visual distinction between socket types with color coding
  */
-export const Socket: React.FC<SocketProps> = ({ 
-  socket, 
-  position, 
+export const Socket: React.FC<SocketProps> = ({
+  socket,
+  position,
   isValidConnection = false,
-  isInvalidConnection = false 
+  isInvalidConnection = false
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -65,11 +65,11 @@ export const Socket: React.FC<SocketProps> = ({
     if (isInvalidConnection) {
       return hovered ? errorHoverColor : errorColor;
     }
-    
+
     if (isValidConnection) {
       return compatibleColor;
     }
-    
+
     switch (type) {
       case SocketType.BOOLEAN:
         return hovered ? booleanHoverColor : booleanColor;
@@ -93,20 +93,20 @@ export const Socket: React.FC<SocketProps> = ({
 
   // Get the socket color
   const socketColor = getSocketColor(socket.type, isHovered);
-  
+
   // Calculate the glow effect for hover and valid/invalid connections
   let glowColor = 'transparent';
   let glowSize = '0px';
-  
+
   if (isValidConnection) {
     glowColor = compatibleColor;
-    glowSize = '4px';
+    glowSize = '5px';
   } else if (isInvalidConnection) {
     glowColor = errorColor;
-    glowSize = '4px';
+    glowSize = '5px';
   } else if (isHovered) {
     glowColor = socketColor;
-    glowSize = '3px';
+    glowSize = '4px';
   }
 
   return (
@@ -116,37 +116,59 @@ export const Socket: React.FC<SocketProps> = ({
       display="flex"
       alignItems="center"
       justifyContent={position === Position.Left ? 'flex-start' : 'flex-end'}
-      mb={1}
+      mb={1.5}
     >
       <Box
-        title={`${socket.name} (${socket.type})`} 
+        title={`${socket.name} (${socket.type})`}
         data-testid="socket-wrapper"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        display="flex"
+        alignItems="center"
+        opacity={isHovered ? 1 : 0.85}
+        transition="opacity 0.2s ease"
+        position="relative"
       >
+        {/* Invisible larger hit area for better selection */}
+        <Box
+          position="absolute"
+          width="24px"
+          height="24px"
+          left={position === Position.Left ? "-12px" : undefined}
+          right={position === Position.Right ? "-12px" : undefined}
+          top="50%"
+          transform="translateY(-50%)"
+          zIndex={1}
+          borderRadius="50%"
+        />
+        
         <Handle
           type={handleType}
           position={position}
           id={socket.id}
           isConnectable={isConnectable}
           style={{
-            width: '12px',
-            height: '12px',
+            width: '14px',
+            height: '14px',
             background: socketColor,
-            border: '2px solid white',
+            border: '2px solid rgba(255,255,255,0.8)',
             boxShadow: `0 0 ${glowSize} ${glowColor}`,
             transition: 'all 0.2s ease-in-out',
+            borderRadius: '50%',
+            zIndex: 2,
           }}
         />
-        <Box 
+        <Box
           as="span"
           ml={position === Position.Left ? 2 : 0}
           mr={position === Position.Right ? 2 : 0}
-          fontSize="sm"
-          color={isInvalidConnection ? errorColor : 
-                 isValidConnection ? compatibleColor : 
-                 'text'}
+          fontSize="xs"
+          fontWeight="medium"
+          color={isInvalidConnection ? errorColor :
+                 isValidConnection ? compatibleColor :
+                 'gray.300'}
           transition="color 0.2s ease-in-out"
+          letterSpacing="tight"
         >
           {socket.name}
         </Box>

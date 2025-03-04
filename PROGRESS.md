@@ -43,6 +43,9 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - [x] Add ability to delete nodes and connections
 - [x] Refine socket type coloring and connection feedback
 - [x] Implement info panel toggle for displaying socket type legend and other help information
+- [x] Implement toolbar with light/dark mode toggle
+- [x] Implement comprehensive theme system with light and dark mode support
+- [x] Add smooth transitions between themes for all UI components
 - [ ] Design and implement multi-language code generation architecture
 - [ ] Create language selection UI in code preview panel
 - [ ] Implement TypeScript code generator
@@ -110,6 +113,8 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
    - Improved node positioning
    - ~~Convert properties panel to a floating panel that appears near selected nodes~~ (Completed)
    - ~~Implement info panel toggle for socket type legend and help information~~ (Completed)
+   - ~~Implement toolbar with light/dark mode toggle~~ (Completed)
+   - ~~Implement comprehensive theme system with light and dark mode support~~ (Completed)
 10. Implement multi-language code generation:
     - Design and implement abstract code generator architecture
     - Refactor existing Python code generator to use the new architecture
@@ -131,4 +136,6 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - Socket type based coloring has been implemented, enhancing the visual clarity of the node graph and making it easier for users to identify compatible connections
 - A socket type legend has been added to help users understand the color coding system
 - Multi-language code generation is being implemented to allow users to generate code in Python, TypeScript, and C++
+- A toolbar with light/dark mode toggle has been added to improve user experience and accessibility
+- A comprehensive theme system has been implemented with support for both light and dark modes, featuring smooth transitions between themes and consistent styling across all components
 

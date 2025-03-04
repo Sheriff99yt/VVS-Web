@@ -32,61 +32,61 @@ export const CodePreview: React.FC = () => {
   };
   
   return (
-    <Box 
-      height="100%" 
-      display="flex" 
+    <Box
+      height="100%"
+      display="flex"
       flexDirection="column"
       borderLeft="1px solid"
-      borderColor="gray.700"
+      borderColor="border"
+      bg="panelBg"
+      className="code-preview"
     >
-      <Box 
-        p={4} 
-        borderBottom="1px solid" 
-        borderColor="gray.700"
+      <Flex 
+        py={2} 
+        px={3} 
+        borderBottom="1px solid"
+        borderColor="border"
+        alignItems="center"
+        justifyContent="space-between"
+        bg="panelHeaderBg"
+        className="code-header"
       >
-        <Flex justifyContent="space-between" alignItems="center">
-          <Text fontSize="xl" fontWeight="bold">
-            Generated Code
-          </Text>
-          <Box width="150px">
-            <select
-              value={selectedLanguage}
-              onChange={handleLanguageChange}
-              style={{
-                width: '100%',
-                padding: '0.25rem',
-                backgroundColor: '#2D3748',
-                color: 'white',
-                border: '1px solid #4A5568',
-                borderRadius: '0.25rem',
-                fontSize: '0.875rem'
-              }}
-            >
-              {availableLanguages.map((lang: string) => (
-                <option key={lang} value={lang}>{lang}</option>
-              ))}
-            </select>
-          </Box>
-        </Flex>
-        <Text fontSize="sm" color="gray.400">
-          This code is generated from your node graph in real-time.
-        </Text>
-      </Box>
+        <Text fontSize="sm" fontWeight="medium">Code Preview</Text>
+        
+        <Box width="120px">
+          <select
+            value={selectedLanguage}
+            onChange={handleLanguageChange}
+            className="language-select"
+            style={{
+              width: '100%',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.25rem',
+              fontSize: '0.75rem'
+            }}
+          >
+            {availableLanguages.map(lang => (
+              <option key={lang} value={lang}>{lang}</option>
+            ))}
+          </select>
+        </Box>
+      </Flex>
       
-      <Box flex="1" position="relative">
+      <Box flex="1" overflow="hidden">
         <MonacoEditor
           height="100%"
-          defaultLanguage="python"
           language={selectedLanguage.toLowerCase()}
           value={generatedCode}
-          theme="vs-dark"
           options={{
             readOnly: true,
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
+            fontSize: 13,
+            lineNumbers: 'on',
+            renderLineHighlight: 'all',
             wordWrap: 'on',
-            automaticLayout: true,
           }}
+          theme={document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'vs-dark'}
         />
       </Box>
     </Box>

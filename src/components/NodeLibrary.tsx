@@ -450,10 +450,11 @@ export const NodeLibrary: React.FC = () => {
     <Box 
       height="100%" 
       overflowY="auto" 
-      p={4}
+      p={2}
       borderRight="1px solid"
       borderColor={borderColor}
       bg={panelBg}
+      className="node-library"
       style={{
         scrollbarWidth: 'thin',
         scrollbarColor: 'gray transparent',
@@ -462,15 +463,18 @@ export const NodeLibrary: React.FC = () => {
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
       
       {/* Search input */}
-      <Box mb={4} position="relative">
+      <Box mb={2} position="relative">
         <Box position="relative">
           <Input 
             placeholder="Search nodes..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            borderRadius="full"
+            borderRadius="md"
             bg={searchBg}
             paddingLeft="2.5rem"
+            className="search-input"
+            size="sm"
+            height="28px"
             _focus={{
               boxShadow: '0 0 0 1px var(--chakra-colors-brand-500)',
               borderColor: 'brand.500',
@@ -479,12 +483,13 @@ export const NodeLibrary: React.FC = () => {
           />
           <Box 
             position="absolute" 
-            left="1rem" 
+            left="0.75rem"
             top="50%" 
             transform="translateY(-50%)"
             color="gray.500"
+            className="search-icon"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </Box>
@@ -497,73 +502,77 @@ export const NodeLibrary: React.FC = () => {
             key={category.id} 
             borderRadius="md" 
             overflow="hidden"
-            boxShadow="sm"
-            transition="all 0.2s"
-            _hover={{ boxShadow: 'md' }}
-            mb={3}
+            boxShadow="xs"
+            mb={2}
           >
             <Flex 
-              py={2} 
-              px={3}
+              py={1}
+              px={2}
+              bg={headerBg}
               alignItems="center"
+              justifyContent="space-between"
               cursor="pointer"
               onClick={() => toggleCategory(category.id)}
-              bg={headerBg}
-              className="category-header"
-              _hover={{ bg: hoverBg }}
+              borderTopRadius="md"
+              borderBottom={expandedCategories[category.id] ? `1px solid ${borderColor}` : 'none'}
+              className={`category-header ${expandedCategories[category.id] ? 'category-header-open' : 'category-header-closed'}`}
+              height="28px"
             >
+              <Text fontWeight="medium" fontSize="xs">{category.label}</Text>
               <Box 
-                mr={2}
                 className={`chevron ${expandedCategories[category.id] ? 'chevron-open' : 'chevron-closed'}`}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 9L12 16L5 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </Box>
-              <Heading 
-                size="sm" 
-                color={category.color}
-                fontWeight="600"
-              >
-                {category.label}
-              </Heading>
             </Flex>
             
             <Box 
               className={`category-content ${expandedCategories[category.id] ? 'category-content-open' : 'category-content-closed'}`}
               ref={(el: HTMLDivElement | null) => contentRefs.current[category.id] = el}
             >
-              <Box p={2}>
-                {category.nodeTypes.map((nodeType) => {
-                  const template = nodeTemplates[nodeType];
-                  return template ? (
-                    <Button 
-                      key={nodeType}
-                      size="sm"
-                      justifyContent="flex-start"
-                      variant="ghost"
-                      borderRadius="md"
-                      fontWeight="normal"
-                      py={1}
-                      px={3}
-                      mb={1}
-                      width="100%"
-                      onClick={() => handleAddNode(template)}
-                      _hover={{ 
-                        bg: 'rgba(66, 153, 225, 0.08)',
-                        transform: 'translateX(2px)'
-                      }}
-                      _active={{
-                        bg: 'rgba(66, 153, 225, 0.16)',
-                      }}
-                      className="node-button"
-                      transition="all 0.2s"
-                    >
-                      {template.label}
-                    </Button>
-                  ) : null;
-                })}
-              </Box>
+              {expandedCategories[category.id] && (
+                <Box p={1}>
+                  <Flex flexWrap="wrap" gap={1}>
+                    {category.nodeTypes.map((nodeType) => {
+                      const template = nodeTemplates[nodeType];
+                      return template ? (
+                        <Button 
+                          key={nodeType}
+                          size="xs"
+                          variant="outline"
+                          width="calc(50% - 2px)"
+                          justifyContent="center"
+                          mb={1}
+                          py={0.5}
+                          px={1}
+                          height="22px"
+                          onClick={() => handleAddNode(template)}
+                          className="node-button"
+                          _hover={{ bg: 'gray.100' }}
+                          title={template.label}
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap"
+                        >
+                          <Text 
+                            fontSize="2xs" 
+                            style={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '100%'
+                            }}
+                          >
+                            {template.label}
+                          </Text>
+                        </Button>
+                      ) : null;
+                    })}
+                  </Flex>
+                </Box>
+              )}
             </Box>
           </Box>
         ))}

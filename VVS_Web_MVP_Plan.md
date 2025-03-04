@@ -35,7 +35,16 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Graph editor with node placement and connection
 - Code preview panel with language selection
 - Floating properties panel that appears near selected nodes
-- Dark theme implementation
+- **Theme system:**
+  - Light and dark theme support with smooth transitions
+  - Theme toggle in the toolbar for user preference
+  - Consistent color scheme across all components
+  - Semantic color tokens for UI elements
+  - Automatic theme application to all components
+- **Dark theme implementation:**
+  - Default dark theme optimized for extended use
+  - Reduced eye strain for long coding sessions
+  - Consistent with modern IDE aesthetics
 - **Socket type based coloring:**
   - Color-coded sockets based on data types (number, string, boolean, flow)
   - Visual indicators for compatible connections
@@ -46,6 +55,11 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
   - Socket type legend showing color coding for different data types
   - Expandable to include additional help and information panels
   - Non-intrusive UI that can be hidden when not needed
+- **Toolbar system:**
+  - Minimal toolbar at the top of the application
+  - Light/dark mode toggle for user preference
+  - Quick access to common actions
+  - Responsive design that adapts to different screen sizes
 
 ### 3.3 Code Generation
 
