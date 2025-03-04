@@ -35,6 +35,12 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Graph editor with node placement and connection
 - Code preview panel with language selection
 - Floating properties panel that appears near selected nodes
+- **Socket input widget system:**
+  - Integrated widgets for socket inputs when not connected
+  - Default value configuration through input widgets
+  - Seamless switching between connected values and default values
+  - Common input types (text, number, boolean) with appropriate controls
+  - Consistent value propagation to code generation
 - **Theme system:**
   - Light and dark theme support with smooth transitions
   - Theme toggle in the toolbar for user preference

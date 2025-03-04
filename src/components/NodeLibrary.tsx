@@ -65,6 +65,7 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           condition: 'True',
+          description: 'Conditionally executes one of two branches based on whether the condition is true or false.',
         },
       }),
     },
@@ -97,6 +98,7 @@ export const NodeLibrary: React.FC = () => {
           variable: 'i',
           start: '0',
           end: '10',
+          description: 'Executes a loop from Start to End with the given Step size, providing the current value as output.',
         },
       }),
     },
@@ -118,7 +120,9 @@ export const NodeLibrary: React.FC = () => {
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Performs a logical AND operation on two boolean inputs. Returns true only if both inputs are true.',
+        }
       }),
     },
     [NodeType.OR]: {
@@ -137,7 +141,9 @@ export const NodeLibrary: React.FC = () => {
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Performs a logical OR operation on two boolean inputs. Returns true if either input is true.',
+        },
       }),
     },
     [NodeType.GREATER_THAN]: {
@@ -147,16 +153,18 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            step: 1,
+            label: 'Input A',
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            step: 1,
+            label: 'Input B',
           }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Compares two number inputs and returns true if the first value is greater than the second value.',
+        },
       }),
     },
     [NodeType.LESS_THAN]: {
@@ -166,16 +174,18 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            step: 1,
+            label: 'Input A',
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            step: 1,
+            label: 'Input B',
           }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Compares two number inputs and returns true if the first value is less than the second value.',
+        },
       }),
     },
     [NodeType.EQUAL]: {
@@ -194,7 +204,9 @@ export const NodeLibrary: React.FC = () => {
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Compares two inputs of any type and returns true if they are equal.',
+        },
       }),
     },
     
@@ -215,7 +227,9 @@ export const NodeLibrary: React.FC = () => {
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Adds two numbers together and outputs the sum.',
+        },
       }),
     },
     [NodeType.SUBTRACT]: {
@@ -234,7 +248,9 @@ export const NodeLibrary: React.FC = () => {
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Subtracts the second number from the first and outputs the difference.',
+        },
       }),
     },
     [NodeType.MULTIPLY]: {
@@ -253,7 +269,9 @@ export const NodeLibrary: React.FC = () => {
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Multiplies two numbers together and outputs the product.',
+        },
       }),
     },
     [NodeType.DIVIDE]: {
@@ -273,7 +291,9 @@ export const NodeLibrary: React.FC = () => {
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
         ],
-        properties: {},
+        properties: {
+          description: 'Divides the first number by the second and outputs the quotient. Has safeguards to prevent division by zero.',
+        },
       }),
     },
     
@@ -295,6 +315,7 @@ export const NodeLibrary: React.FC = () => {
         properties: {
           name: 'myVar',
           value: '0',
+          description: 'Defines or updates a variable with the given name and value.',
         },
       }),
     },
@@ -309,6 +330,7 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           name: 'myVar',
+          description: 'Retrieves the value of a previously defined variable by name.',
         },
       }),
     },
@@ -329,7 +351,7 @@ export const NodeLibrary: React.FC = () => {
           createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
         ],
         properties: {
-          text: 'Hello World',
+          description: 'Outputs the connected value to the console or standard output.',
         },
       }),
     },
@@ -351,6 +373,7 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           prompt: 'Enter a value:',
+          description: 'Collects input from the user by displaying a prompt and returns the entered value.',
         },
       }),
     },

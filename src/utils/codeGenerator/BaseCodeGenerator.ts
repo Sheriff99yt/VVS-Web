@@ -113,6 +113,19 @@ export abstract class BaseCodeGenerator {
   }
   
   /**
+   * Add node comment to the code if it exists
+   * @param node The node to check for comments
+   */
+  protected addNodeCommentToCode(node: Node<BaseNodeData>): void {
+    if (node.data.properties?.comment) {
+      const comment = node.data.properties.comment.trim();
+      if (comment) {
+        this.addToCode(this.formatComment(comment));
+      }
+    }
+  }
+  
+  /**
    * Process a node and add its code to the output
    */
   protected processNode(node: Node<BaseNodeData>): void {
@@ -121,6 +134,9 @@ export abstract class BaseCodeGenerator {
     
     // Mark as processed to avoid cycles
     this.processedNodes.add(node.id);
+    
+    // Add node comment if it exists
+    this.addNodeCommentToCode(node);
     
     // Generate code based on node type
     switch (node.data.type) {
