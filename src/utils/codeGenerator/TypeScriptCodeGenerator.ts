@@ -243,7 +243,7 @@ export class TypeScriptCodeGenerator extends BaseCodeGenerator {
   /**
    * Generate code for variable getter
    */
-  protected generateVariableGetterCode(node: Node<BaseNodeData>): void {
+  protected generateVariableGetterCode(_node: Node<BaseNodeData>): void {
     // No code needed for variable getter, it's handled in getInputValue
   }
   

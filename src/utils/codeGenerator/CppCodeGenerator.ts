@@ -7,8 +7,6 @@ import { BaseCodeGenerator } from './BaseCodeGenerator';
  * C++ code generator implementation
  */
 export class CppCodeGenerator extends BaseCodeGenerator {
-  private hasUserInput: boolean = false;
-  
   /**
    * Constructor
    * @param nodes The nodes in the graph
@@ -33,7 +31,6 @@ export class CppCodeGenerator extends BaseCodeGenerator {
    * Format user input for C++
    */
   protected formatUserInput(node: Node<BaseNodeData>): string {
-    this.hasUserInput = true;
     const varName = node.data.properties?.name || 'userInput';
     return varName;
   }
@@ -315,7 +312,7 @@ export class CppCodeGenerator extends BaseCodeGenerator {
   /**
    * Generate code for variable getter
    */
-  protected generateVariableGetterCode(node: Node<BaseNodeData>): void {
+  protected generateVariableGetterCode(_node: Node<BaseNodeData>): void {
     // No code needed for variable getter, it's handled in getInputValue
   }
   
@@ -339,7 +336,6 @@ export class CppCodeGenerator extends BaseCodeGenerator {
     
     // Add to variables set
     this.variables.add(name);
-    this.hasUserInput = true;
   }
   
   /**

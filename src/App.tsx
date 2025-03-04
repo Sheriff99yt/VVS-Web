@@ -3,7 +3,6 @@ import { Box, Flex, Text } from '@chakra-ui/react';
 import { NodeLibrary } from './components/NodeLibrary';
 import { GraphEditor } from './components/GraphEditor';
 import { CodePreview } from './components/CodePreview';
-import { PropertiesPanel } from './components/PropertiesPanel';
 import 'reactflow/dist/style.css';
 
 /**
@@ -39,15 +38,10 @@ function App() {
           <GraphEditor />
         </Box>
         
-        {/* Right panels: Properties and Code Preview */}
-        <Flex width="400px" height="100%" direction="column">
-          <Box height="50%">
-            <PropertiesPanel />
-          </Box>
-          <Box height="50%">
-            <CodePreview />
-          </Box>
-        </Flex>
+        {/* Right panel: Code Preview */}
+        <Box width="400px" height="100%">
+          <CodePreview />
+        </Box>
       </Flex>
     </Flex>
   );

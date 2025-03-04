@@ -12,7 +12,8 @@ import { Box, Alert } from '@chakra-ui/react';
 import useGraphStore from '../store/useGraphStore';
 import BaseNode from '../nodes/BaseNode';
 import CustomEdge from './CustomEdge';
-import SocketTypeLegend from './SocketTypeLegend';
+import InfoPanel from './InfoPanel';
+import FloatingPropertiesPanel from './FloatingPropertiesPanel';
 
 /**
  * Custom node types for the graph editor
@@ -103,8 +104,9 @@ export const GraphEditor: React.FC = () => {
             }}
             maskColor="rgba(0, 0, 0, 0.5)"
           />
+          <FloatingPropertiesPanel />
         </ReactFlow>
-        <SocketTypeLegend />
+        <InfoPanel />
       </ReactFlowProvider>
     </Box>
   );

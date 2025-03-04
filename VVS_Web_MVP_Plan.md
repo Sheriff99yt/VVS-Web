@@ -34,13 +34,18 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Node search functionality for quick access
 - Graph editor with node placement and connection
 - Code preview panel with language selection
-- Basic properties panel for selected nodes
+- Floating properties panel that appears near selected nodes
 - Dark theme implementation
 - **Socket type based coloring:**
   - Color-coded sockets based on data types (number, string, boolean, flow)
   - Visual indicators for compatible connections
   - Error highlighting for incompatible connections
   - Consistent color scheme across the application
+- **Info panel system:**
+  - Toggleable info panel with an info button
+  - Socket type legend showing color coding for different data types
+  - Expandable to include additional help and information panels
+  - Non-intrusive UI that can be hidden when not needed
 
 ### 3.3 Code Generation
 

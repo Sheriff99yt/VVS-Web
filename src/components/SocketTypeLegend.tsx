@@ -61,15 +61,11 @@ const SocketTypeLegend: React.FC = () => {
   return (
     <Box
       className="socket-type-legend"
-      position="absolute"
-      bottom="20px"
-      right="20px"
       bg="blackAlpha.700"
       borderRadius="md"
       p={3}
       maxWidth="250px"
       boxShadow="lg"
-      zIndex={10}
     >
       <Text fontWeight="bold" mb={2} fontSize="sm">Socket Type Legend</Text>
       <VStack align="stretch" gap="2">
