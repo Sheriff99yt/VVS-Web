@@ -1,20 +1,35 @@
 import React, { useEffect } from 'react';
-import { Box, Text } from '@chakra-ui/react';
+import { Box, Text, Flex } from '@chakra-ui/react';
 import MonacoEditor from '@monaco-editor/react';
 import useGraphStore from '../store/useGraphStore';
-import { generatePythonCode } from '../utils/codeGenerator';
+import { generateCode, getAvailableCodeLanguages } from '../utils/codeGenerator/index';
 
 /**
- * CodePreview component - displays the generated Python code
+ * CodePreview component - displays the generated code
  */
 export const CodePreview: React.FC = () => {
-  const { nodes, edges, updateGeneratedCode, generatedCode } = useGraphStore();
+  const { 
+    nodes, 
+    edges, 
+    updateGeneratedCode, 
+    generatedCode, 
+    selectedLanguage, 
+    setSelectedLanguage 
+  } = useGraphStore();
   
-  // Generate code whenever nodes or edges change
+  // Available languages for code generation
+  const availableLanguages = getAvailableCodeLanguages();
+  
+  // Generate code whenever nodes, edges, or selected language changes
   useEffect(() => {
-    const code = generatePythonCode(nodes, edges);
+    const code = generateCode(nodes, edges, selectedLanguage);
     updateGeneratedCode(code);
-  }, [nodes, edges, updateGeneratedCode]);
+  }, [nodes, edges, selectedLanguage, updateGeneratedCode]);
+  
+  // Handle language selection change
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedLanguage(e.target.value);
+  };
   
   return (
     <Box 
@@ -29,9 +44,30 @@ export const CodePreview: React.FC = () => {
         borderBottom="1px solid" 
         borderColor="gray.700"
       >
-        <Text fontSize="xl" fontWeight="bold">
-          Generated Python Code
-        </Text>
+        <Flex justifyContent="space-between" alignItems="center">
+          <Text fontSize="xl" fontWeight="bold">
+            Generated Code
+          </Text>
+          <Box width="150px">
+            <select
+              value={selectedLanguage}
+              onChange={handleLanguageChange}
+              style={{
+                width: '100%',
+                padding: '0.25rem',
+                backgroundColor: '#2D3748',
+                color: 'white',
+                border: '1px solid #4A5568',
+                borderRadius: '0.25rem',
+                fontSize: '0.875rem'
+              }}
+            >
+              {availableLanguages.map((lang: string) => (
+                <option key={lang} value={lang}>{lang}</option>
+              ))}
+            </select>
+          </Box>
+        </Flex>
         <Text fontSize="sm" color="gray.400">
           This code is generated from your node graph in real-time.
         </Text>
@@ -41,6 +77,7 @@ export const CodePreview: React.FC = () => {
         <MonacoEditor
           height="100%"
           defaultLanguage="python"
+          language={selectedLanguage.toLowerCase()}
           value={generatedCode}
           theme="vs-dark"
           options={{

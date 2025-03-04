@@ -8,7 +8,7 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 
 - Create a functional node-based visual programming interface
 - Support basic graph creation and manipulation
-- Generate Python code from node graphs
+- Generate code in multiple languages (Python, TypeScript, C++) from node graphs
 - Provide essential node types for basic programming
 - Deliver a clean, intuitive user interface
 - Demonstrate the core value proposition with minimal development time
@@ -31,7 +31,7 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Three-panel layout (node library, graph editor, code/properties)
 - Basic node library with categorization
 - Graph editor with node placement and connection
-- Python code preview panel
+- Code preview panel with language selection
 - Basic properties panel for selected nodes
 - Dark theme implementation
 - **Socket type based coloring:**
@@ -43,10 +43,12 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 ### 3.3 Code Generation
 
 **Included in MVP:**
-- Python code generation only
+- Multi-language code generation (Python, TypeScript, C++)
+- Language selection dropdown in code preview panel
 - Real-time code updates as graph changes
 - Basic error detection in generated code
-- Code highlighting in Monaco Editor
+- Language-specific syntax highlighting in Monaco Editor
+- Language-specific code formatting
 
 ### 3.4 Features Explicitly Excluded from MVP
 
@@ -55,7 +57,6 @@ The following features are intentionally excluded from the MVP to focus developm
 - Export/import project files
 - Auto-save functionality
 - Undo/redo for graph operations
-- C++ and Rust code generation
 - Advanced node types
 - Project templates
 - Version control
@@ -77,7 +78,7 @@ The following features are intentionally excluded from the MVP to focus developm
 1. **Node System:** Basic node structure and functionality
 2. **Socket System:** Essential socket types and connections with type-based coloring
 3. **Graph Editor:** Fundamental graph manipulation capabilities
-4. **Code Generation:** Python-only with basic formatting
+4. **Code Generation:** Multi-language support with language-specific formatting
 5. **UI System:** Core UI components and layout
 
 ## 5. MVP Development Phases
@@ -101,11 +102,13 @@ The following features are intentionally excluded from the MVP to focus developm
 - Finalize basic node interactions
 - Add socket connection validation
 - Refine socket type coloring and connection feedback
+- Implement multi-language code generation architecture
 
 ### Phase 4: Polish & Testing (Weeks 7-8)
 - Refine UI and interactions
 - Fix bugs and issues
 - Optimize performance for basic operations
+- Complete language-specific code generators
 - Prepare for MVP release
 
 ## 6. Testing Strategy for MVP
@@ -126,7 +129,7 @@ The following features are intentionally excluded from the MVP to focus developm
 - **Socket System:** Unit tests for socket type definitions and the Socket component
 - **Node System:** Unit tests for the BaseNode component
 - **State Management:** Unit tests for Zustand store operations (useGraphStore)
-- **Code Generation:** Unit tests for the Python code generator
+- **Code Generation:** Unit tests for the code generators
 - **Error Handling:** Unit tests for connection error handling and alerts
 
 ### 6.3 Remaining Test Goals
@@ -136,6 +139,7 @@ The following features are intentionally excluded from the MVP to focus developm
 - Develop test cases for different node combinations
 - Validate complete workflow from node creation to code generation
 - Test socket type coloring and connection validation
+- Test language-specific code generation
 
 ### 6.4 Testing Documentation
 - Created dedicated testing documentation (TESTING.md)
@@ -147,9 +151,10 @@ The following features are intentionally excluded from the MVP to focus developm
 The MVP will be considered successful if users can:
 1. Create a functional node graph with the basic node types
 2. Connect nodes with properly validated connections
-3. Generate correct Python code from their graphs
-4. Understand the core value proposition of visual programming
-5. Easily identify socket types through consistent color coding
+3. Generate correct code in multiple languages from their graphs
+4. Switch between different programming languages for code generation
+5. Understand the core value proposition of visual programming
+6. Easily identify socket types through consistent color coding
 
 ## 8. Post-MVP Priorities
 
@@ -159,7 +164,7 @@ After releasing the MVP, the following features will be prioritized:
 3. Export/import capabilities
 4. Auto-save functionality
 5. Additional node types for more complex programming
-6. Multiple language support (C++, Rust)
+6. Support for additional programming languages
 7. Enhanced socket type system with custom types
 
 ## 9. User Guidance for MVP
@@ -170,7 +175,8 @@ Since the MVP operates as a runtime-only experience, we will implement:
 - Visual indicators that work will be lost on page refresh
 - A banner indicating this is an experimental version
 - Visual guide for socket type color meanings
+- Language selection guidance for code generation
 
 ## 10. Conclusion
 
-This MVP plan creates an ultra-focused first version that delivers just the core value of VVS Web - the visual programming experience itself. By removing all persistence features, development can move much faster to demonstrate the fundamental concept, with persistence and project management features to follow in subsequent releases. 
+This MVP plan creates an ultra-focused first version that delivers just the core value of VVS Web - the visual programming experience itself with multi-language support. By removing all persistence features, development can move much faster to demonstrate the fundamental concept, with persistence and project management features to follow in subsequent releases. 

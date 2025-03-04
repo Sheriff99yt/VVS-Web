@@ -39,6 +39,10 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - [x] Implement workspace panning and zooming
 - [x] Add ability to delete nodes and connections
 - [x] Refine socket type coloring and connection feedback
+- [ ] Design and implement multi-language code generation architecture
+- [ ] Create language selection UI in code preview panel
+- [ ] Implement TypeScript code generator
+- [ ] Implement C++ code generator
 
 ### Phase 4: Polish & Testing
 - [ ] Refine UI and interactions
@@ -56,6 +60,7 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - [ ] Implement integration tests for the complete application flow
 - [ ] Test the application with different node combinations
 - [ ] Test socket type coloring and connection validation
+- [ ] Test language-specific code generation
 - [ ] Fix identified bugs and issues
 
 ## Outstanding Issues
@@ -70,10 +75,12 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
    - ~~Node property editing is not yet implemented~~ (Resolved)
    - Node positioning and layout could be improved
    - ReactFlow rendering issues in test environment (Workaround implemented)
+   - Need to implement multi-language code generation
 
 3. **Testing Issues**:
    - SVG elements causing console errors in test environment (Non-blocking)
    - Need to implement more comprehensive test coverage for remaining components
+   - Need to add tests for language-specific code generators
 
 ## Next Steps
 
@@ -97,6 +104,14 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
    - ~~Workspace panning and zooming~~ (Completed)
    - ~~Node deletion functionality~~ (Completed)
    - Improved node positioning
+10. Implement multi-language code generation:
+    - Design and implement abstract code generator architecture
+    - Refactor existing Python code generator to use the new architecture
+    - Create language configuration system for syntax templates
+    - Implement TypeScript code generator
+    - Implement C++ code generator
+    - Add language selection UI to code preview panel
+    - Update Monaco Editor to use language-specific syntax highlighting
 
 
 ## Notes
@@ -109,4 +124,5 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - Connection error handling tests have been implemented to verify proper error management
 - Socket type based coloring has been implemented, enhancing the visual clarity of the node graph and making it easier for users to identify compatible connections
 - A socket type legend has been added to help users understand the color coding system
+- Multi-language code generation is being implemented to allow users to generate code in Python, TypeScript, and C++
 

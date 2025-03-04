@@ -24,6 +24,7 @@ interface GraphState {
   selectedNodeId: string | null;
   generatedCode: string;
   connectionError: string | null;
+  selectedLanguage: string;
   
   // Methods for updating the graph
   onNodesChange: OnNodesChange;
@@ -34,6 +35,7 @@ interface GraphState {
   setSelectedNode: (nodeId: string | null) => void;
   updateNodeProperty: (nodeId: string, propertyKey: string, value: any) => void;
   clearConnectionError: () => void;
+  setSelectedLanguage: (language: string) => void;
 }
 
 /**
@@ -47,6 +49,7 @@ const useGraphStore = create<GraphState>((set, get) => ({
   selectedNodeId: null,
   generatedCode: '',
   connectionError: null,
+  selectedLanguage: 'Python',
   
   // Node changes handler
   onNodesChange: (changes: NodeChange[]) => {
@@ -174,6 +177,13 @@ const useGraphStore = create<GraphState>((set, get) => ({
   // Clear the connection error
   clearConnectionError: () => {
     set({ connectionError: null });
+  },
+  
+  // Set the selected language
+  setSelectedLanguage: (language: string) => {
+    set({
+      selectedLanguage: language,
+    });
   },
 }));
 
