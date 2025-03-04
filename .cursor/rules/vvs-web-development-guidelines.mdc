@@ -1,0 +1,64 @@
+---
+description: VVS Web Development Guidelines
+globs: 
+alwaysApply: false
+---
+## MVP FOCUS
+- Implement only features explicitly listed in MVP plan
+- No persistence features until post-MVP
+- Python-only code generation
+- Ruthlessly question any feature not serving core functionality
+
+## CODE STANDARDS
+- Use TypeScript with strict typing
+- Follow React functional component patterns
+- Use named exports for components
+- Document props with JSDoc comments
+- Keep components under 150 lines
+- One component per file
+- Create automated tests after each stage
+## STATE MANAGEMENT
+- Use Zustand for global state only
+- Keep component state local when possible
+- Avoid redundant state
+- Use immutable patterns for state updates
+
+## NODE SYSTEM
+- Each node type in separate file
+- Consistent node structure across all types
+- Handle null/undefined inputs gracefully
+- Validate all connections between nodes
+
+## SOCKET SYSTEM
+- Clear visual distinction between socket types
+- Strong typing for all socket connections
+- Consistent connection validation rules
+
+## UI COMPONENTS
+- Follow Chakra UI patterns for consistency
+- Use theme variables, never hardcoded values
+- Ensure keyboard accessibility
+- Support dark theme only for MVP
+
+## PERFORMANCE
+- Memoize expensive calculations
+- Avoid re-renders with React.memo for complex nodes
+- Use React Flow's built-in optimizations
+- Test with at least 50 nodes for performance
+
+## TESTING
+- Unit test all node logic
+- Test code generation accuracy
+- Verify socket connections work as expected
+- Include cross-browser testing
+
+## DEVELOPMENT WORKFLOW
+- Develop feature branches
+- Write tests before implementation
+- Maintain a running demo at all times
+- Prioritize based on MVP development phases
+
+## POST-MVP PLANNING
+- Document potential features for later phases
+- Maintain extensible architecture for future features
+- Design with persistence in mind, even if not implementing 

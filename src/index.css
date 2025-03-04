@@ -1,20 +1,653 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Theme-specific variables */
+:root[data-theme="light"] {
+  --background-color: #ffffff;
+  --text-color: #213547;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --panel-bg: #f9f9f9;
+  --panel-border: #e0e0e0;
+  --node-bg: #ffffff;
+  --node-border: #e0e0e0;
+  --node-header: #f5f5f5;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #e0e0e0;
+  --graph-bg: #f5f5f5;
+  --code-bg: #f5f5f5;
+  --code-text: #1a202c;
+  --socket-border: #718096;
+  --button-bg: #f5f5f5;
+  --button-hover: #e2e8f0;
+  --button-active: #cbd5e0;
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --input-focus-border: #3182ce;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a1a1a1;
+  
+  /* Node Library specific */
+  --node-library-bg: #ffffff;
+  --node-library-border: #e0e0e0;
+  --category-header-bg: #f5f5f5;
+  --category-header-hover: #edf2f7;
+  --category-border: #e0e0e0;
+  --node-button-bg: #ffffff;
+  --node-button-hover: #edf2f7;
+  --node-button-active: #e2e8f0;
+  --node-button-border: #e0e0e0;
+  --search-input-bg: #ffffff;
+  --search-icon-color: #718096;
+  
+  /* Code Preview specific */
+  --code-panel-bg: #ffffff;
+  --code-panel-border: #e0e0e0;
+  --code-header-bg: #f5f5f5;
+  --code-editor-bg: #f8f9fa;
+  --language-select-bg: #ffffff;
+  --language-select-border: #e0e0e0;
+}
+
+:root[data-theme="dark"] {
+  --background-color: #1a202c;
+  --text-color: rgba(255, 255, 255, 0.92);
+  --text-secondary: #a0aec0;
+  --text-muted: #718096;
+  --panel-bg: #2d3748;
+  --panel-border: #4a5568;
+  --node-bg: #2d3748;
+  --node-border: #4a5568;
+  --node-header: #1a202c;
+  --toolbar-bg: #2d3748;
+  --toolbar-border: #4a5568;
+  --graph-bg: #1a202c;
+  --code-bg: #2d3748;
+  --code-text: #e2e8f0;
+  --socket-border: #e2e8f0;
+  --button-bg: #2d3748;
+  --button-hover: #4a5568;
+  --button-active: #718096;
+  --input-bg: #2d3748;
+  --input-border: #4a5568;
+  --input-focus-border: #63b3ed;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --scrollbar-track: #2d3748;
+  --scrollbar-thumb: #4a5568;
+  --scrollbar-thumb-hover: #718096;
+  
+  /* Node Library specific */
+  --node-library-bg: #2d3748;
+  --node-library-border: #4a5568;
+  --category-header-bg: #1a202c;
+  --category-header-hover: #2d3748;
+  --category-border: #4a5568;
+  --node-button-bg: #2d3748;
+  --node-button-hover: #3a4a61;
+  --node-button-active: #4a5568;
+  --node-button-border: #4a5568;
+  --search-input-bg: #1a202c;
+  --search-icon-color: #a0aec0;
+  
+  /* Code Preview specific */
+  --code-panel-bg: #2d3748;
+  --code-panel-border: #4a5568;
+  --code-header-bg: #1a202c;
+  --code-editor-bg: #1a202c;
+  --language-select-bg: #2d3748;
+  --language-select-border: #4a5568;
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Apply transitions to all elements for smooth theme changes */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.3s ease, color 0.3s ease;
+}
+button:hover {
+  background-color: var(--button-hover);
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Custom edge animations */
+@keyframes flowAnimation {
+  0% {
+    stroke-dashoffset: 10;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Pulse animation for socket handles */
+@keyframes socketPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* Error pulse animation */
+@keyframes errorPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+/* Compatible connection pulse */
+@keyframes compatiblePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(76, 175, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
+.react-flow__edge-path-flow {
+  animation: flowAnimation 1s linear infinite;
+}
+
+/* Edge selection styles */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3;
+}
+
+/* Hover effect for edges */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 5px var(--shadow-color));
+}
+
+/* Socket handle hover effects */
+.react-flow__handle:hover {
+  animation: socketPulse 1.5s infinite;
+}
+
+/* Socket handle error state */
+.react-flow__handle.error {
+  animation: errorPulse 1.5s infinite;
+}
+
+/* Socket handle compatible state */
+.react-flow__handle.compatible {
+  animation: compatiblePulse 1.5s infinite;
+}
+
+/* Tooltip for socket type information */
+.socket-tooltip {
+  position: absolute;
+  background-color: var(--panel-bg);
+  color: var(--text-color);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+/* Socket type legend */
+.socket-type-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+:root[data-theme="light"] .socket-type-legend {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dark"] .socket-type-legend {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.socket-type-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.socket-type-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--text-color);
+}
+
+.socket-type-label {
+  font-size: 12px;
+  color: var(--text-color);
+}
+
+/* Theme transition effects */
+.react-flow__node, 
+.react-flow__controls, 
+.react-flow__background,
+.react-flow__panel {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Fade-in animation for UI elements */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ReactFlow specific theme adjustments */
+.react-flow__node {
+  background-color: var(--node-bg);
+  border-color: var(--node-border);
+  color: var(--text-color);
+  box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+.react-flow__controls {
+  background-color: var(--panel-bg);
+  border-color: var(--panel-border);
+  box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+.react-flow__controls button {
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  border-color: var(--panel-border);
+}
+
+.react-flow__controls button:hover {
+  background-color: var(--button-hover);
+}
+
+.react-flow__attribution {
+  background-color: var(--panel-bg);
+  color: var(--text-muted);
+}
+
+/* Node Library specific styling */
+.node-library {
+  background-color: var(--node-library-bg) !important;
+  border-color: var(--node-library-border) !important;
+}
+
+.search-input {
+  background-color: var(--search-input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-color) !important;
+}
+
+.search-icon {
+  color: var(--search-icon-color) !important;
+}
+
+.category-header {
+  background-color: var(--category-header-bg) !important;
+  border-color: var(--category-border) !important;
+  color: var(--text-color) !important;
+}
+
+.category-header:hover {
+  background-color: var(--category-header-hover) !important;
+}
+
+.node-button {
+  background-color: var(--node-button-bg) !important;
+  border-color: var(--node-button-border) !important;
+  color: var(--text-color) !important;
+}
+
+.node-button:hover {
+  background-color: var(--node-button-hover) !important;
+}
+
+.node-button:active {
+  background-color: var(--node-button-active) !important;
+}
+
+.category-content {
+  background-color: var(--node-library-bg) !important;
+}
+
+/* Code Preview specific styling */
+.code-preview {
+  background-color: var(--code-panel-bg) !important;
+  border-color: var(--code-panel-border) !important;
+}
+
+.code-header {
+  background-color: var(--code-header-bg) !important;
+  border-color: var(--code-panel-border) !important;
+  color: var(--text-color) !important;
+}
+
+.language-select {
+  background-color: var(--language-select-bg) !important;
+  border-color: var(--language-select-border) !important;
+  color: var(--text-color) !important;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Monaco editor theme adjustments */
+.monaco-editor {
+  transition: none !important;
+}
+
+.monaco-editor .monaco-editor-background,
+.monaco-editor .margin-view-overlays {
+  background-color: var(--code-editor-bg) !important;
+}
+
+.monaco-editor .view-lines {
+  color: var(--code-text) !important;
+}
+
+/* Toolbar specific styling */
+.toolbar {
+  background-color: var(--toolbar-bg) !important;
+  border-color: var(--toolbar-border) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 1px 3px var(--shadow-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app-title {
+  color: var(--text-color) !important;
+  transition: color 0.3s ease;
+}
+
+.app-version {
+  color: var(--text-muted) !important;
+  transition: color 0.3s ease;
+}
+
+.theme-toggle-button {
+  color: var(--text-color) !important;
+  background-color: transparent !important;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle-button:hover {
+  background-color: var(--button-hover) !important;
+  transform: scale(1.05);
+}
+
+.theme-toggle-button:active {
+  transform: scale(0.95);
+}
+
+/* Socket styles */
+.socket-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  position: absolute;
+  top: 50%;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.9);
+  transition: all 0.2s ease-in-out;
+}
+
+.socket-label.left {
+  left: 24px;
+}
+
+.socket-label.right {
+  right: 24px;
+}
+
+.socket-label.hovered {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Theme-specific socket label styles */
+:root[data-theme="light"] .socket-label {
+  background-color: var(--bg);
+  color: var(--text-color);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+:root[data-theme="dark"] .socket-label {
+  background-color: var(--node-bg);
+  color: var(--text-color);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+/* Socket input widget styles */
+.socket-input {
+  width: 90px;
+  margin-left: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.socket-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  margin-left: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="light"] .socket-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+:root[data-theme="light"] .socket-input:hover {
+  background-color: var(--button-hover);
+  border-color: var(--input-focus-border);
+}
+
+:root[data-theme="dark"] .socket-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+:root[data-theme="dark"] .socket-input:hover {
+  background-color: var(--button-hover);
+  border-color: var(--input-focus-border);
+}
+
+/* Flow socket triangle shape */
+.flow-socket {
+  width: 0 !important;
+  height: 0 !important;
+  border: none !important;
+  background: none !important;
+  position: relative;
+}
+
+.flow-socket::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-left: 19px solid white;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.2s ease-in-out;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+}
+
+.flow-socket.source::before {
+  opacity: 0.9;
+}
+
+.flow-socket.target::before {
+  opacity: 0.9;
+}
+
+.flow-socket.hovered::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.flow-socket.error::before {
+  border-left-color: var(--socket-error-color, #f44336);
+}
+
+.flow-socket.compatible::before {
+  border-left-color: var(--socket-compatible-color, #4caf50);
+}
+
+/* Execution edge styles */
+.react-flow__edge.execution-edge .react-flow__edge-path {
+  stroke-width: 3;
+}
+
+.react-flow__edge.execution-edge:hover .react-flow__edge-path {
+  stroke-width: 4;
+}
+
+/* Details panel animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(10px); }
+}
+
+.details-panel {
+  padding: 8px !important;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.details-panel.hiding {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+.details-panel-description {
+  font-size: 12px !important;
+  color: var(--text-secondary) !important;
+  margin-bottom: 4px !important;
+}
+
+.details-panel-comment {
+  font-size: 12px !important;
+  min-height: 60px !important;
+  resize: none !important;
 }

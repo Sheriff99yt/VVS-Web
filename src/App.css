@@ -1,65 +1,42 @@
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background-color: #1a1b1e;
-  color: #ffffff;
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
 }
 
-.main-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-.split-view {
-  display: flex;
-  flex: 1;
-  position: relative;
-}
-
-.split-pane {
-  height: 100%;
-  overflow: hidden;
-}
-
-.graph-pane {
-  background-color: #2d2e32;
-}
-
-.code-pane {
-  background-color: #1a1b1e;
-}
-
-.split-handle {
-  width: 4px;
-  height: 100%;
-  background-color: #3a3b3f;
-  cursor: col-resize;
-}
-
-.split-handle:hover {
-  background-color: #4a4b4f;
-}
-
-.resizing {
-  cursor: col-resize;
-  user-select: none;
-}
-
-/* Node fade-out animation */
-.fade-out {
-  animation: fadeOut 0.3s ease-out forwards;
-  pointer-events: none;
-}
-
-@keyframes fadeOut {
+@keyframes logo-spin {
   from {
-    opacity: 1;
-    transform: scale(1);
+    transform: rotate(0deg);
   }
   to {
-    opacity: 0;
-    transform: scale(0.95);
+    transform: rotate(360deg);
   }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
 }
