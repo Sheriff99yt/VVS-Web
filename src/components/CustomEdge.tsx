@@ -1,15 +1,20 @@
 import React from 'react';
 import { EdgeProps, getBezierPath } from 'reactflow';
+import { useToken } from '@chakra-ui/react';
 import { SocketType } from '../sockets/types';
 
+/**
+ * Custom edge data interface
+ */
 interface CustomEdgeData {
-  sourceSocketType: SocketType;
-  targetSocketType: SocketType;
+  sourceSocketType?: SocketType;
+  isValid?: boolean;
 }
 
 /**
  * CustomEdge component for enhanced visual representation of connections
  * Provides animated flow and better visual feedback for connections
+ * Uses socket type based coloring for visual clarity
  */
 export const CustomEdge: React.FC<EdgeProps> = ({
   id,
@@ -36,6 +41,48 @@ export const CustomEdge: React.FC<EdgeProps> = ({
   // Get the socket type data
   const edgeData = data as CustomEdgeData | undefined;
   const socketType = edgeData?.sourceSocketType || SocketType.ANY;
+  const isValid = edgeData?.isValid !== false; // Default to true if not specified
+  
+  // Get all socket colors from theme using the global mock
+  const [
+    booleanColor,
+    numberColor,
+    stringColor,
+    flowColor,
+    anyColor,
+    errorColor
+  ] = useToken('colors', [
+    'socket.boolean',
+    'socket.number',
+    'socket.string',
+    'socket.flow',
+    'socket.any',
+    'socket.error'
+  ]);
+  
+  // Get the socket color based on type
+  const getSocketColor = (type: SocketType): string => {
+    if (!isValid) {
+      return errorColor;
+    }
+    
+    switch (type) {
+      case SocketType.BOOLEAN:
+        return booleanColor;
+      case SocketType.NUMBER:
+        return numberColor;
+      case SocketType.STRING:
+        return stringColor;
+      case SocketType.FLOW:
+        return flowColor;
+      case SocketType.ANY:
+      default:
+        return anyColor;
+    }
+  };
+  
+  // Get the color for the edge
+  const strokeColor = getSocketColor(socketType);
   
   // Determine animation speed based on socket type
   let animationDuration = '1s';
@@ -66,53 +113,64 @@ export const CustomEdge: React.FC<EdgeProps> = ({
 
   // Determine if the edge is selected
   const strokeWidth = selected ? 3 : style.strokeWidth || 2;
-  const stroke = style.stroke || 'var(--chakra-colors-socket-any)';
   
+  // Add glow effect for selected edges
+  const glowEffect = selected 
+    ? `0 0 6px ${strokeColor}` 
+    : 'none';
+  
+  // Create a unique ID for the marker
+  const markerId = `edge-marker-${id}`;
+
   return (
     <>
-      {/* Main path */}
+      {/* Define the marker for the edge */}
+      <defs>
+        <marker
+          id={markerId}
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto"
+        >
+          <circle cx="5" cy="5" r="4" fill={strokeColor} />
+        </marker>
+      </defs>
+      
+      {/* Render the edge path */}
       <path
         id={id}
         className="react-flow__edge-path"
         d={edgePath}
-        stroke={stroke}
         strokeWidth={strokeWidth}
-        fill="none"
-      />
-      
-      {/* Animated flow effect */}
-      <path
-        id={`${id}-flow`}
-        className="react-flow__edge-path-flow"
-        d={edgePath}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeDasharray={dashArray}
+        stroke={strokeColor}
+        strokeDasharray={socketType === SocketType.FLOW ? dashArray : undefined}
         style={{
-          animation: `flowAnimation ${animationDuration} linear infinite`,
-          opacity: 0.6,
+          animation: socketType === SocketType.FLOW 
+            ? `flowAnimation ${animationDuration} linear infinite` 
+            : undefined,
+          filter: `drop-shadow(${glowEffect})`,
         }}
+        markerEnd={`url(#${markerId})`}
       />
       
-      {/* Add a small dot at the connection points for better visibility */}
-      <circle cx={sourceX} cy={sourceY} r={4} fill={stroke} />
-      <circle cx={targetX} cy={targetY} r={4} fill={stroke} />
-      
-      {/* Add a label for the connection type if needed */}
+      {/* Add a label for flow edges */}
       {socketType === SocketType.FLOW && (
         <text
           x={labelX}
           y={labelY}
-          textAnchor="middle"
+          fill={strokeColor}
           dominantBaseline="middle"
+          textAnchor="middle"
           style={{
-            fontSize: '10px',
-            fill: stroke,
+            fontSize: '8px',
+            fontWeight: 'bold',
             pointerEvents: 'none',
           }}
         >
-          ▶
+          FLOW
         </text>
       )}
     </>

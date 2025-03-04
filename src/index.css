@@ -77,6 +77,45 @@ button:focus-visible {
   }
 }
 
+/* Pulse animation for socket handles */
+@keyframes socketPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* Error pulse animation */
+@keyframes errorPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+/* Compatible connection pulse */
+@keyframes compatiblePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(76, 175, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
 .react-flow__edge-path-flow {
   animation: flowAnimation 1s linear infinite;
 }
@@ -90,4 +129,64 @@ button:focus-visible {
 .react-flow__edge:hover .react-flow__edge-path {
   stroke-width: 3;
   filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+/* Socket handle hover effects */
+.react-flow__handle:hover {
+  animation: socketPulse 1.5s infinite;
+}
+
+/* Socket handle error state */
+.react-flow__handle.error {
+  animation: errorPulse 1.5s infinite;
+}
+
+/* Socket handle compatible state */
+.react-flow__handle.compatible {
+  animation: compatiblePulse 1.5s infinite;
+}
+
+/* Tooltip for socket type information */
+.socket-tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Socket type legend */
+.socket-type-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.socket-type-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.socket-type-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+.socket-type-label {
+  font-size: 12px;
+  color: white;
 }

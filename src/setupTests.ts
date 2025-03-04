@@ -1,39 +1,67 @@
 // jest-dom adds custom jest matchers for asserting on DOM nodes
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 // Polyfill structuredClone if it's not available
 if (typeof structuredClone === 'undefined') {
   global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
 }
 
-// Create a function to filter Chakra UI props that cause warnings
-const filterChakraProps = (props: Record<string, any>) => {
-  const commonChakraProps = [
-    'alignItems', 'justifyContent', 'textAlign', 'borderRadius', 
-    'position', 'width', 'height', 'display', 'mb', 'mt', 'ml', 'mr',
-    'p', 'px', 'py', 'fontSize', 'fontWeight', 'bg', 'color', 'backgroundColor',
-    'borderColor', 'minWidth', 'maxWidth', 'boxShadow', 'minH', 'maxH',
-    'flex', 'flexDirection', 'flexWrap', 'flexGrow', 'flexShrink', 'flexBasis',
-    'borderWidth', 'borderStyle', 'overflow', 'overflowX', 'overflowY',
-    'padding', 'margin', 'as', 'gap'
+// Helper function to filter out Chakra UI props that might cause warnings in tests
+export function filterChakraProps(props: Record<string, unknown>) {
+  const chakraProps = [
+    'colorScheme',
+    'size',
+    'variant',
+    'isDisabled',
+    'isLoading',
+    'isActive',
+    'isInvalid',
+    'isFocused',
+    'isReadOnly',
+    'isRequired',
+    'isFullWidth',
   ];
   
-  const filteredProps: Record<string, any> = {};
-  
-  Object.keys(props).forEach(key => {
-    if (!commonChakraProps.includes(key)) {
-      filteredProps[key] = props[key];
+  const filteredProps = { ...props };
+  chakraProps.forEach(prop => {
+    if (prop in filteredProps) {
+      delete filteredProps[prop];
     }
   });
   
   return filteredProps;
-};
+}
 
 // Mock Chakra UI components
 jest.mock('@chakra-ui/react', () => {
+  const originalModule = jest.requireActual('@chakra-ui/react');
+  
   return {
     __esModule: true,
+    ...originalModule,
+    // Mock useToken hook
+    useToken: jest.fn().mockImplementation((_scale, tokens) => {
+      // Return an array of mock color values based on the token names
+      if (Array.isArray(tokens)) {
+        return tokens.map(token => {
+          if (token.includes('boolean')) return '#FF5733';
+          if (token.includes('number')) return '#33FF57';
+          if (token.includes('string')) return '#3357FF';
+          if (token.includes('flow')) return '#FF33F6';
+          if (token.includes('any')) return '#F6FF33';
+          if (token.includes('error')) return '#FF0000';
+          return '#CCCCCC'; // Default color
+        });
+      }
+      return ['#CCCCCC']; // Default for single token
+    }),
+    // Mock ChakraProvider
+    ChakraProvider: ({ children }: { children: ReactNode }) => children,
+    // Mock other Chakra components
     Box: ({ children, ...props }: any) => React.createElement('div', filterChakraProps(props), children),
     Text: ({ children, ...props }: any) => React.createElement('span', filterChakraProps(props), children),
     Tooltip: ({ children, ...props }: any) => React.createElement('div', { ...filterChakraProps(props), 'data-testid': 'tooltip' }, children),
@@ -43,7 +71,6 @@ jest.mock('@chakra-ui/react', () => {
       onClose: jest.fn(),
       onToggle: jest.fn(),
     }),
-    // Add other Chakra components as needed
     Flex: ({ children, ...props }: any) => React.createElement('div', filterChakraProps(props), children),
     VStack: ({ children, ...props }: any) => React.createElement('div', filterChakraProps(props), children),
     HStack: ({ children, ...props }: any) => React.createElement('div', filterChakraProps(props), children),

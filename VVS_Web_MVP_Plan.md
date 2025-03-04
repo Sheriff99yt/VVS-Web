@@ -34,6 +34,11 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Python code preview panel
 - Basic properties panel for selected nodes
 - Dark theme implementation
+- **Socket type based coloring:**
+  - Color-coded sockets based on data types (number, string, boolean, flow)
+  - Visual indicators for compatible connections
+  - Error highlighting for incompatible connections
+  - Consistent color scheme across the application
 
 ### 3.3 Code Generation
 
@@ -70,7 +75,7 @@ The following features are intentionally excluded from the MVP to focus developm
 ### 4.2 System Implementation Priority
 
 1. **Node System:** Basic node structure and functionality
-2. **Socket System:** Essential socket types and connections
+2. **Socket System:** Essential socket types and connections with type-based coloring
 3. **Graph Editor:** Fundamental graph manipulation capabilities
 4. **Code Generation:** Python-only with basic formatting
 5. **UI System:** Core UI components and layout
@@ -86,6 +91,7 @@ The following features are intentionally excluded from the MVP to focus developm
 ### Phase 2: Core Functionality (Weeks 3-4)
 - Implement basic node types (If, Math, Variables)
 - Create socket type system with basic validation
+- Implement socket type coloring for visual clarity
 - Implement Monaco Editor for code preview
 - Add basic Python code generation
 
@@ -94,6 +100,7 @@ The following features are intentionally excluded from the MVP to focus developm
 - Implement properties panel
 - Finalize basic node interactions
 - Add socket connection validation
+- Refine socket type coloring and connection feedback
 
 ### Phase 4: Polish & Testing (Weeks 7-8)
 - Refine UI and interactions
@@ -120,6 +127,7 @@ The following features are intentionally excluded from the MVP to focus developm
 - **Node System:** Unit tests for the BaseNode component
 - **State Management:** Unit tests for Zustand store operations (useGraphStore)
 - **Code Generation:** Unit tests for the Python code generator
+- **Error Handling:** Unit tests for connection error handling and alerts
 
 ### 6.3 Remaining Test Goals
 - Implement tests for main UI components (NodeLibrary, GraphEditor, PropertiesPanel)
@@ -127,6 +135,7 @@ The following features are intentionally excluded from the MVP to focus developm
 - Test cross-browser compatibility for essential features
 - Develop test cases for different node combinations
 - Validate complete workflow from node creation to code generation
+- Test socket type coloring and connection validation
 
 ### 6.4 Testing Documentation
 - Created dedicated testing documentation (TESTING.md)
@@ -140,6 +149,7 @@ The MVP will be considered successful if users can:
 2. Connect nodes with properly validated connections
 3. Generate correct Python code from their graphs
 4. Understand the core value proposition of visual programming
+5. Easily identify socket types through consistent color coding
 
 ## 8. Post-MVP Priorities
 
@@ -150,6 +160,7 @@ After releasing the MVP, the following features will be prioritized:
 4. Auto-save functionality
 5. Additional node types for more complex programming
 6. Multiple language support (C++, Rust)
+7. Enhanced socket type system with custom types
 
 ## 9. User Guidance for MVP
 
@@ -158,6 +169,7 @@ Since the MVP operates as a runtime-only experience, we will implement:
 - Instructions for manually copying generated code
 - Visual indicators that work will be lost on page refresh
 - A banner indicating this is an experimental version
+- Visual guide for socket type color meanings
 
 ## 10. Conclusion
 

@@ -15,6 +15,21 @@ jest.mock('reactflow', () => ({
   },
 }));
 
+// Mock the useToken hook
+jest.mock('@chakra-ui/react', () => ({
+  ...jest.requireActual('@chakra-ui/react'),
+  useToken: jest.fn(() => {
+    return [
+      '#2B6CB0', // boolean
+      '#DD6B20', // number
+      '#805AD5', // string
+      '#38A169', // flow
+      '#718096', // any
+      '#E53E3E', // error
+    ];
+  }),
+}));
+
 describe('CustomEdge', () => {
   const defaultProps = {
     id: 'edge-1',
@@ -37,13 +52,13 @@ describe('CustomEdge', () => {
     const path = document.querySelector('.react-flow__edge-path');
     expect(path).toBeInTheDocument();
     
-    // Check if the animated flow path is rendered
-    const flowPath = document.querySelector('.react-flow__edge-path-flow');
-    expect(flowPath).toBeInTheDocument();
+    // Check if the marker is defined
+    const marker = document.querySelector('marker');
+    expect(marker).toBeInTheDocument();
     
     // Check if the connection points are rendered
     const circles = document.querySelectorAll('circle');
-    expect(circles.length).toBe(2);
+    expect(circles.length).toBe(1);
   });
 
   test('renders with selected state', () => {
@@ -68,11 +83,11 @@ describe('CustomEdge', () => {
     // Check if the flow indicator is rendered
     const text = document.querySelector('text');
     expect(text).toBeInTheDocument();
-    expect(text?.textContent).toBe('▶');
+    expect(text?.textContent).toBe('FLOW');
     
-    // Check if the animation duration is set correctly
-    const flowPath = document.querySelector('.react-flow__edge-path-flow');
-    expect(flowPath).toHaveStyle('animation: flowAnimation 0.5s linear infinite');
+    // Check if the path has the correct stroke color
+    const path = document.querySelector('.react-flow__edge-path');
+    expect(path).toHaveAttribute('stroke', '#38A169');
   });
 
   test('renders with number socket type', () => {
@@ -86,11 +101,8 @@ describe('CustomEdge', () => {
       />
     );
     
-    // Check if the animation duration is set correctly
-    const flowPath = document.querySelector('.react-flow__edge-path-flow');
-    expect(flowPath).toHaveStyle('animation: flowAnimation 1.2s linear infinite');
-    
-    // Check if the dash array is set correctly
-    expect(flowPath).toHaveAttribute('stroke-dasharray', '4,4');
+    // Check if the path has the correct stroke color
+    const path = document.querySelector('.react-flow__edge-path');
+    expect(path).toHaveAttribute('stroke', '#DD6B20');
   });
 }); 

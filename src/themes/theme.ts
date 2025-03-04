@@ -2,11 +2,27 @@ import { createSystem, defaultConfig } from '@chakra-ui/react';
 
 // Define colors for our theme
 const socketColors = {
-  boolean: { value: '#ffd700' },
-  number: { value: '#00bcd4' },
-  string: { value: '#4caf50' },
-  any: { value: '#9e9e9e' },
-  flow: { value: '#ff5722' },
+  // Base socket colors
+  boolean: { value: '#ffd700' }, // Gold
+  number: { value: '#00bcd4' },  // Cyan
+  string: { value: '#4caf50' },  // Green
+  any: { value: '#9e9e9e' },     // Gray
+  flow: { value: '#ff5722' },    // Orange
+  
+  // Hover state colors (slightly brighter)
+  booleanHover: { value: '#ffeb3b' }, // Brighter gold
+  numberHover: { value: '#26c6da' },  // Brighter cyan
+  stringHover: { value: '#66bb6a' },  // Brighter green
+  anyHover: { value: '#bdbdbd' },     // Brighter gray
+  flowHover: { value: '#ff7043' },    // Brighter orange
+  
+  // Error state colors
+  error: { value: '#f44336' },        // Red
+  errorHover: { value: '#ef5350' },   // Brighter red
+  
+  // Compatible connection indicator
+  compatible: { value: '#4caf50' },   // Green
+  incompatible: { value: '#f44336' }, // Red
 };
 
 // Create system with custom configuration
