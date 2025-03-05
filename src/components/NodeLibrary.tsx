@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { 
   Box, 
   Button, 
@@ -7,7 +7,7 @@ import {
   Input,
   Flex,
 } from '@chakra-ui/react';
-import { NODE_CATEGORIES, NodeType } from '../nodes/types';
+import { NODE_CATEGORIES, NodeType, NodeCategory } from '../nodes/types';
 import { SocketDirection, SocketType, createSocketDefinition } from '../sockets/types';
 import useGraphStore from '../store/useGraphStore';
 
@@ -34,6 +34,33 @@ export const NodeLibrary: React.FC = () => {
     }), {})
   );
   
+  // Store the previous expanded state before search
+  const [previousExpandedState, setPreviousExpandedState] = useState<Record<string, boolean>>({});
+  
+  // Handle search input changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    
+    // If we're starting a search from empty, store the current expanded state
+    if (searchQuery === '' && newQuery !== '') {
+      setPreviousExpandedState({...expandedCategories});
+      
+      // Expand all categories when searching
+      const allExpanded = NODE_CATEGORIES.reduce((acc, category) => ({
+        ...acc,
+        [category.id]: true
+      }), {});
+      
+      setExpandedCategories(allExpanded);
+    } 
+    // If we're clearing the search, restore previous expanded state
+    else if (newQuery === '' && searchQuery !== '') {
+      setExpandedCategories(previousExpandedState);
+    }
+    
+    setSearchQuery(newQuery);
+  };
+  
   // Refs for measuring content height for animations
   const contentRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
@@ -55,6 +82,7 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('condition', 'Condition', SocketType.BOOLEAN, SocketDirection.INPUT, true, {
+            enabled: true,
             label: 'Condition',
           }),
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
@@ -77,14 +105,17 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
           createSocketDefinition('start', 'Start', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            enabled: true,
             isInteger: true,
             min: 0,
           }),
           createSocketDefinition('end', 'End', SocketType.NUMBER, SocketDirection.INPUT, 10, {
+            enabled: true,
             isInteger: true,
             min: 0,
           }),
           createSocketDefinition('step', 'Step', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            enabled: true,
             isInteger: true,
             min: 1,
           }),
@@ -111,10 +142,12 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
-            label: 'Input A',
+            enabled: true,
+            label: 'A',
           }),
           createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
-            label: 'Input B',
+            enabled: true,
+            label: 'B',
           }),
         ],
         outputs: [
@@ -132,10 +165,12 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
-            label: 'Input A',
+            enabled: true,
+            label: 'A',
           }),
           createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
-            label: 'Input B',
+            enabled: true,
+            label: 'B',
           }),
         ],
         outputs: [
@@ -153,10 +188,14 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            label: 'Input A',
+            enabled: true,
+            min: -Infinity,
+            max: Infinity,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            label: 'Input B',
+            enabled: true,
+            min: -Infinity,
+            max: Infinity,
           }),
         ],
         outputs: [
@@ -174,10 +213,14 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            label: 'Input A',
+            enabled: true,
+            min: -Infinity,
+            max: Infinity,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
-            label: 'Input B',
+            enabled: true,
+            min: -Infinity,
+            max: Infinity,
           }),
         ],
         outputs: [
@@ -195,9 +238,11 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.ANY, SocketDirection.INPUT, '', {
+            enabled: true,
             placeholder: 'Value A',
           }),
           createSocketDefinition('b', 'B', SocketType.ANY, SocketDirection.INPUT, '', {
+            enabled: true,
             placeholder: 'Value B',
           }),
         ],
@@ -218,9 +263,11 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            enabled: true,
             step: 0.1,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            enabled: true,
             step: 0.1,
           }),
         ],
@@ -239,9 +286,11 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            enabled: true,
             step: 0.1,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            enabled: true,
             step: 0.1,
           }),
         ],
@@ -259,10 +308,12 @@ export const NodeLibrary: React.FC = () => {
       category: 'Math Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            enabled: true,
             step: 0.1,
           }),
-          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+          createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
+            enabled: true,
             step: 0.1,
           }),
         ],
@@ -281,9 +332,12 @@ export const NodeLibrary: React.FC = () => {
       createNodeData: () => ({
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            enabled: true,
             step: 0.1,
+            min: 0,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+            enabled: true,
             step: 0.1,
             min: 0.000001, // Prevent division by zero
           }),
@@ -306,7 +360,7 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
           createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.INPUT, 0, {
-            placeholder: 'Enter value',
+            enabled: true,
           }),
         ],
         outputs: [
@@ -344,6 +398,7 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
           createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.INPUT, 'Hello World', {
+            enabled: true,
             placeholder: 'Text to print',
           }),
         ],
@@ -363,6 +418,7 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
           createSocketDefinition('prompt', 'Prompt', SocketType.STRING, SocketDirection.INPUT, 'Enter a value:', {
+            enabled: true,
             placeholder: 'Prompt text',
             maxLength: 100,
           }),
@@ -381,6 +437,15 @@ export const NodeLibrary: React.FC = () => {
 
   // Function to handle adding a node to the graph
   const handleAddNode = (template: NodeTemplate) => {
+    // Convert template category string to NodeCategory enum
+    let categoryEnum: NodeCategory | undefined;
+    
+    // Find the matching category definition
+    const categoryDef = NODE_CATEGORIES.find(cat => cat.label === template.category);
+    if (categoryDef) {
+      categoryEnum = categoryDef.id;
+    }
+    
     const newNode = {
       id: `node_${Date.now()}`,
       type: 'baseNode', // All nodes use the same component
@@ -389,6 +454,7 @@ export const NodeLibrary: React.FC = () => {
         ...template.createNodeData(),
         type: template.type,
         label: template.label,
+        category: categoryEnum,
       },
     };
     
@@ -401,7 +467,7 @@ export const NodeLibrary: React.FC = () => {
       return NODE_CATEGORIES;
     }
     
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
     
     return NODE_CATEGORIES.map(category => {
       // Filter node types that match the search query
@@ -427,198 +493,293 @@ export const NodeLibrary: React.FC = () => {
 
   // CSS for animations
   const animationStyles = `
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-      100% { transform: scale(1); }
-    }
-    
-    @keyframes slideDown {
-      from { max-height: 0; opacity: 0; }
-      to { max-height: 1000px; opacity: 1; }
-    }
-    
-    @keyframes slideUp {
-      from { max-height: 1000px; opacity: 1; }
-      to { max-height: 0; opacity: 0; }
-    }
-    
     .category-content {
       overflow: hidden;
-      transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-    }
-    
-    .category-content-open {
-      animation: slideDown 0.3s ease-in-out forwards;
+      transition: max-height 0.15s cubic-bezier(0.4, 0, 0.2, 1), 
+                 opacity 0.15s ease, 
+                 padding 0.15s ease,
+                 transform 0.15s ease;
       transform-origin: top;
-    }
-    
-    .category-content-closed {
-      animation: slideUp 0.3s ease-in-out forwards;
-      transform-origin: top;
-      max-height: 0;
-      opacity: 0;
     }
     
     .category-header {
-      transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+      transition: background-color 0.12s ease-in-out, transform 0.12s ease-in-out;
     }
     
     .category-header:hover {
-      transform: translateX(2px);
+      transform: translateX(1px);
     }
     
-    .chevron {
-      transition: transform 0.3s ease-in-out;
-    }
-    
-    .chevron-open {
-      transform: rotate(0deg);
-    }
-    
-    .chevron-closed {
-      transform: rotate(-90deg);
+    .category-chevron {
+      transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .node-button:active {
-      animation: pulse 0.3s ease-in-out;
+      transform: scale(0.98);
+      transition: transform 0.08s ease;
     }
   `;
+
+  // Get CSS variable for node category color
+  const getCategoryColorVar = (categoryId: NodeCategory): string => {
+    switch(categoryId) {
+      case NodeCategory.PROCESS_FLOW:
+        return 'var(--node-category-process-flow)';
+      case NodeCategory.LOGIC:
+        return 'var(--node-category-logic)';
+      case NodeCategory.MATH:
+        return 'var(--node-category-math)';
+      case NodeCategory.VARIABLES:
+        return 'var(--node-category-variables)';
+      case NodeCategory.IO:
+        return 'var(--node-category-io)';
+      default:
+        return 'var(--text-muted)';
+    }
+  };
+
+  // Render a single node item button
+  const renderNodeItem = (type: NodeType, template: NodeTemplate) => {
+    // Get CSS variable name for the category
+    const categoryColorVar = getCategoryColorVar(template.category as NodeCategory);
+    
+    // Check if this node matches the search query
+    const isMatch = searchQuery.trim() && 
+                   template.label.toLowerCase().includes(searchQuery.toLowerCase().trim());
+    
+    return (
+      <Button 
+        key={type}
+        size="xs"
+        variant="ghost"
+        width="calc(50% - 2px)"
+        minWidth="60px"
+        maxWidth="100%"
+        justifyContent="center"
+        mb={0.5}
+        py={0}
+        px={1.5}
+        height="19px"
+        onClick={() => handleAddNode(template)}
+        className={`node-button ${isMatch ? 'search-match' : ''}`}
+        overflow="hidden"
+        textOverflow="ellipsis"
+        whiteSpace="nowrap"
+        borderRadius="sm"
+        position="relative"
+        flexShrink={0}
+        transition="transform 0.1s ease, background-color 0.1s ease, box-shadow 0.1s ease"
+        _hover={{
+          bg: 'var(--node-button-hover)',
+          transform: 'translateY(-1px)',
+        }}
+        _active={{
+          bg: 'var(--node-button-active)',
+          transform: 'translateY(0) scale(0.98)',
+        }}
+        boxShadow={isMatch ? 'var(--node-button-match-shadow)' : 'var(--node-button-shadow)'}
+        bg={isMatch ? 'var(--node-button-match-bg)' : 'transparent'}
+      >
+        <Box 
+          position="absolute" 
+          left="0" 
+          top="0" 
+          bottom="0" 
+          width="2px" 
+          borderRadius="0"
+          className="node-button-indicator"
+          style={{ 
+            background: categoryColorVar,
+            opacity: isMatch ? 1 : 0.7,
+          }}
+        />
+        <Text 
+          fontSize="xs" 
+          fontWeight="medium"
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: '100%'
+          }}
+        >
+          {template.label}
+        </Text>
+      </Button>
+    );
+  };
+
+  // Render a category section with its nodes
+  const renderCategory = (category: NodeCategory) => {
+    const isExpanded = expandedCategories[category] || false;
+    
+    // Find the corresponding category definition
+    const categoryDef = NODE_CATEGORIES.find(cat => cat.id === category);
+    
+    // Get CSS variable name for the category
+    const categoryColorVar = getCategoryColorVar(category);
+    
+    return (
+      <Box key={category} mb={1} className="node-category" width="100%">
+        <Flex 
+          className="category-header"
+          justifyContent="space-between" 
+          alignItems="center" 
+          p={1}
+          pl={1.5}
+          borderRadius="sm"
+          cursor="pointer"
+          onClick={() => toggleCategory(category)}
+          _hover={{
+            bg: 'var(--category-header-hover)',
+          }}
+        >
+          <Flex alignItems="center" minWidth={0} flex="1">
+            <Box 
+              w="2px" 
+              h="10px" 
+              mr={1} 
+              borderRadius="full"
+              bg={categoryColorVar}
+              className="category-indicator"
+              flexShrink={0}
+            />
+            <Text 
+              fontWeight="medium" 
+              fontSize="xs"
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%'
+              }}
+            >
+              {categoryDef ? categoryDef.label : category}
+            </Text>
+          </Flex>
+          <Box
+            className="category-chevron"
+            transform={isExpanded ? "rotate(180deg)" : "rotate(0deg)"}
+            opacity={0.6}
+            h="14px"
+            w="14px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            flexShrink={0}
+          >
+            <svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0.5 0.5L4 4L7.5 0.5" stroke="currentColor" strokeWidth="1" strokeLinecap="square"/>
+            </svg>
+          </Box>
+        </Flex>
+
+        <Box
+          className="category-content nodes-grid"
+          ref={(el: HTMLDivElement | null) => (contentRefs.current[category] = el)}
+          overflow="hidden"
+          maxH={isExpanded ? '500px' : '0px'}
+          transition="max-height 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease, padding 0.15s ease, transform 0.15s ease"
+          opacity={isExpanded ? 1 : 0}
+          transform={isExpanded ? 'scaleY(1)' : 'scaleY(0.95)'}
+          pl={2}
+          pr={1}
+          pt={isExpanded ? 1 : 0}
+          pb={isExpanded ? 0.5 : 0}
+          display="flex"
+          flexWrap="wrap"
+          justifyContent="space-between"
+          width="100%"
+        >
+          {Object.entries(nodeTemplates)
+            .filter(([_, template]) => template.category === category)
+            .filter(([_, template]) => {
+              if (!searchQuery.trim()) return true;
+              return template.label.toLowerCase().includes(searchQuery.toLowerCase().trim());
+            })
+            .map(([type, template]) => renderNodeItem(type as NodeType, template))}
+        </Box>
+      </Box>
+    );
+  };
 
   return (
     <Box 
       height="100%" 
-      overflowY="auto" 
-      p={2}
-      borderRight="1px solid"
-      borderColor={borderColor}
-      bg={panelBg}
+      position="relative"
+      borderRight="1px solid var(--node-library-border)"
+      bg="var(--node-library-bg)"
       className="node-library"
-      style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'gray transparent',
-      }}
+      backdropFilter="blur(8px)"
     >
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
       
-      {/* Search input */}
-      <Box mb={2} position="relative">
+      {/* Search input - fixed at top */}
+      <Box 
+        position="sticky" 
+        top="0" 
+        zIndex="10"
+        pt={2}
+        pb={1.5}
+        px={2}
+        bg="var(--node-library-bg)"
+        borderBottom="1px solid var(--node-library-border)"
+        className="node-search-container"
+        backdropFilter="blur(8px)"
+      >
         <Box position="relative">
-          <Input 
-            placeholder="Search nodes..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            borderRadius="md"
-            bg={searchBg}
-            paddingLeft="2.5rem"
-            className="search-input"
-            size="sm"
-            height="28px"
-            _focus={{
-              boxShadow: '0 0 0 1px var(--chakra-colors-brand-500)',
-              borderColor: 'brand.500',
-            }}
-            transition="all 0.2s"
-          />
-          <Box 
-            position="absolute" 
-            left="0.75rem"
-            top="50%" 
+          <Box
+            position="absolute"
+            left="8px"
+            top="50%"
             transform="translateY(-50%)"
-            color="gray.500"
+            color="var(--search-icon-color)"
+            zIndex="2"
             className="search-icon"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 21L15.5 15.5M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </Box>
+          <Input 
+            placeholder="Search nodes..." 
+            value={searchQuery}
+            onChange={handleSearchChange}
+            borderRadius="sm"
+            bg="var(--search-input-bg)"
+            paddingLeft="28px"
+            paddingRight="10px"
+            className="search-input"
+            size="xs"
+            border="none"
+            height="28px"
+            boxShadow="var(--search-input-shadow)"
+            _focus={{
+              bg: 'var(--search-input-bg-focus)',
+              boxShadow: 'var(--search-input-shadow-focus)',
+            }}
+            _hover={{
+              bg: 'var(--search-input-bg-hover)',
+            }}
+            transition="all 0.2s ease"
+          />
         </Box>
       </Box>
       
-      <Box>
+      {/* Scrollable nodes section */}
+      <Box 
+        flex="1"
+        overflowY="auto" 
+        className="nodes-container"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'var(--scrollbar-thumb) transparent',
+        }}
+        p={2}
+        pt={1}
+      >
         {filteredCategories.map((category) => (
-          <Box 
-            key={category.id} 
-            borderRadius="md" 
-            overflow="hidden"
-            boxShadow="xs"
-            mb={2}
-          >
-            <Flex 
-              py={1}
-              px={2}
-              bg={headerBg}
-              alignItems="center"
-              justifyContent="space-between"
-              cursor="pointer"
-              onClick={() => toggleCategory(category.id)}
-              borderTopRadius="md"
-              borderBottom={expandedCategories[category.id] ? `1px solid ${borderColor}` : 'none'}
-              className={`category-header ${expandedCategories[category.id] ? 'category-header-open' : 'category-header-closed'}`}
-              height="28px"
-            >
-              <Text fontWeight="medium" fontSize="xs">{category.label}</Text>
-              <Box 
-                className={`chevron ${expandedCategories[category.id] ? 'chevron-open' : 'chevron-closed'}`}
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 9L12 16L5 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </Box>
-            </Flex>
-            
-            <Box 
-              className={`category-content ${expandedCategories[category.id] ? 'category-content-open' : 'category-content-closed'}`}
-              ref={(el: HTMLDivElement | null) => contentRefs.current[category.id] = el}
-            >
-              {expandedCategories[category.id] && (
-                <Box p={1}>
-                  <Flex flexWrap="wrap" gap={1}>
-                    {category.nodeTypes.map((nodeType) => {
-                      const template = nodeTemplates[nodeType];
-                      return template ? (
-                        <Button 
-                          key={nodeType}
-                          size="xs"
-                          variant="outline"
-                          width="calc(50% - 2px)"
-                          justifyContent="center"
-                          mb={1}
-                          py={0.5}
-                          px={1}
-                          height="22px"
-                          onClick={() => handleAddNode(template)}
-                          className="node-button"
-                          _hover={{ bg: 'gray.100' }}
-                          title={template.label}
-                          overflow="hidden"
-                          textOverflow="ellipsis"
-                          whiteSpace="nowrap"
-                        >
-                          <Text 
-                            fontSize="2xs" 
-                            style={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              maxWidth: '100%'
-                            }}
-                          >
-                            {template.label}
-                          </Text>
-                        </Button>
-                      ) : null;
-                    })}
-                  </Flex>
-                </Box>
-              )}
-            </Box>
-          </Box>
+          renderCategory(category.id as NodeCategory)
         ))}
       </Box>
     </Box>

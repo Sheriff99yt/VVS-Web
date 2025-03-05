@@ -1,0 +1,75 @@
+/* Edge Animations & Styling
+   This file contains all styles for custom edges in the graph editor
+*/
+
+/* Basic edge styling - absolutely no effects */
+.react-flow__edge-path {
+  stroke-linecap: round;
+  transition: stroke 0.2s ease, stroke-width 0.2s ease;
+  filter: none !important;
+}
+
+/* Edge selection styling - only yellow color */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--color-yellow-400, #ECC94B) !important; 
+  stroke-width: 3px;
+  filter: none !important;
+}
+
+/* Flow edges are twice as thick */
+.edge-flow .react-flow__edge-path {
+  stroke-width: 5px;
+}
+
+/* Edge hover effect - just slightly wider */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3px;
+  filter: none !important;
+}
+
+/* Socket type specific colors - these are applied by the CustomEdge component */
+/* Boolean socket type */
+.edge-boolean .react-flow__edge-path {
+  /* Color is applied directly in the component */
+  filter: none !important;
+}
+
+/* Number socket type */
+.edge-number .react-flow__edge-path {
+  /* Color is applied directly in the component */
+  filter: none !important;
+}
+
+/* String socket type */
+.edge-string .react-flow__edge-path {
+  /* Color is applied directly in the component */
+  filter: none !important;
+}
+
+/* Flow socket type */
+.edge-flow .react-flow__edge-path {
+  /* Color is applied directly in the component */
+  filter: none !important;
+}
+
+/* Any socket type */
+.edge-any .react-flow__edge-path {
+  /* Color is applied directly in the component */
+  filter: none !important;
+}
+
+/* Invalid edge styling - solid line without effects */
+.edge-invalid .react-flow__edge-path {
+  stroke: var(--socket-error);
+  filter: none !important;
+}
+
+/* Hide all edge text */
+.react-flow__edge-text {
+  display: none !important;
+}
+
+/* Hide edge text backgrounds */
+.react-flow__edge-textbg {
+  display: none !important;
+} 

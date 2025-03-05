@@ -115,15 +115,13 @@ const useGraphStore = create<GraphState>((set, get) => ({
         ...connection,
         // Use custom edge type
         type: 'custom',
-        // Add some styling to the edge based on the socket type
-        style: { 
-          stroke: `var(--chakra-colors-socket-${sourceSocket.type})`,
-          strokeWidth: 2 
-        },
-        // Add socket type data to the edge for potential use in the custom edge
+        // Add CSS class for socket type styling
+        className: `edge-${sourceSocket.type.toLowerCase()}`,
+        // Add socket type information as edge data for color mapping
         data: {
           sourceSocketType: sourceSocket.type,
-          targetSocketType: targetSocket.type
+          targetSocketType: targetSocket.type,
+          isValid: true
         }
       }, get().edges),
       // Clear any previous error

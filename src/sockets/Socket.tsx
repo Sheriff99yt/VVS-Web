@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Handle, Position } from 'reactflow';
 import { Box, useToken, Input, Text } from '@chakra-ui/react';
 import { SocketDefinition, SocketDirection, SocketType } from './types';
+import { useSocketTooltip } from '../contexts/SocketTooltipContext';
 
 /**
  * Socket component props
@@ -24,6 +25,8 @@ interface SocketProps {
 /**
  * Socket component for node inputs/outputs
  * Provides visual distinction between socket types with color coding
+ * Ultra-compact design for input widgets
+ * Uses global tooltip system for improved performance
  */
 export const Socket: React.FC<SocketProps> = ({
   socket,
@@ -35,6 +38,8 @@ export const Socket: React.FC<SocketProps> = ({
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const [value, setValue] = React.useState<any>(socket.defaultValue);
+  const socketRef = React.useRef<HTMLDivElement>(null);
+  const { showTooltip, hideTooltip } = useSocketTooltip();
 
   // Handle value change
   const handleValueChange = (newValue: any) => {
@@ -140,6 +145,26 @@ export const Socket: React.FC<SocketProps> = ({
     glowSize = '4px';
   }
 
+  // Handle hover events for tooltip
+  const handleMouseEnter = React.useCallback(() => {
+    setIsHovered(true);
+    
+    if (socketRef.current) {
+      const rect = socketRef.current.getBoundingClientRect();
+      const x = position === Position.Left ? 
+        rect.left : 
+        rect.right;
+      const y = rect.top;
+      
+      showTooltip(socket, x, y);
+    }
+  }, [socket, position, showTooltip]);
+
+  const handleMouseLeave = React.useCallback(() => {
+    setIsHovered(false);
+    hideTooltip();
+  }, [hideTooltip]);
+
   // Render input widget based on socket type and configuration
   const renderInputWidget = () => {
     // Only render for input sockets that aren't connected and have inputWidget config
@@ -158,7 +183,9 @@ export const Socket: React.FC<SocketProps> = ({
             checked={value === true}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.checked)}
             className="socket-checkbox"
-            style={{ accentColor: booleanColor }}
+            style={{ 
+              accentColor: booleanColor
+            }}
           />
         );
       case SocketType.NUMBER:
@@ -171,37 +198,45 @@ export const Socket: React.FC<SocketProps> = ({
               let val: number;
               
               if (config.isInteger) {
-                val = parseInt(e.target.value, 10);
+                val = parseInt(e.target.value, 10) || 0;
               } else {
-                val = parseFloat(e.target.value);
+                val = parseFloat(e.target.value) || 0;
               }
               
-              // Apply min/max constraints if specified
-              if (!isNaN(val)) {
-                if (config.min !== undefined && val < config.min) val = config.min;
-                if (config.max !== undefined && val > config.max) val = config.max;
-              } else {
-                val = 0;
-              }
+              // Apply min/max constraints if defined
+              if (config.min !== undefined && val < config.min) val = config.min;
+              if (config.max !== undefined && val > config.max) val = config.max;
               
               handleValueChange(val);
             }}
             className="socket-input"
+            height="var(--socket-input-height)"
+            fontSize="var(--socket-input-font-size)"
+            padding="var(--socket-input-padding)"
+            width="var(--socket-input-width)"
+            borderRadius="2px"
+            fontFamily="monospace"
             textAlign="right"
-            paddingRight="8px"
-            step={config.step || (config.isInteger ? 1 : 0.1)}
             min={config.min}
             max={config.max}
+            step={config.step || (config.isInteger ? 1 : 0.1)}
           />
         );
       case SocketType.STRING:
         return (
           <Input
+            type="text"
             size="xs"
             value={value !== undefined ? value : ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
             className="socket-input"
-            maxLength={config.maxLength}
+            height="var(--socket-input-height)"
+            fontSize="var(--socket-input-font-size)"
+            padding="var(--socket-input-padding)"
+            width="var(--socket-input-width)"
+            borderRadius="2px"
+            fontFamily="monospace"
+            placeholder={config.placeholder || ''}
           />
         );
       case SocketType.ANY:
@@ -220,73 +255,46 @@ export const Socket: React.FC<SocketProps> = ({
 
   return (
     <Box
-      position="relative"
-      width="100%"
-      display="flex"
-      alignItems="center"
-      justifyContent={position === Position.Left ? 'flex-start' : 'flex-end'}
-      mb="0.8em"
-      minHeight="14px"
+      className={`socket-container socket-container-${position === Position.Left ? 'left' : 'right'}`}
     >
       <Box
         title={`${socket.name} (${socket.type})`}
         data-testid="socket-wrapper"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        display="flex"
-        alignItems="center"
-        opacity={isHovered ? 1 : 0.85}
-        transition="opacity 0.2s ease"
-        position="relative"
+        className="socket-wrapper"
       >
-        {/* Invisible larger hit area for better selection */}
         <Box
-          position="absolute"
-          width="24px"
-          height="24px"
-          left={position === Position.Left ? "-12px" : undefined}
-          right={position === Position.Right ? "-12px" : undefined}
-          top="50%"
-          transform="translateY(-50%)"
-          zIndex={1}
-          borderRadius="50%"
-        />
-        
-        <Handle
-          type={handleType}
-          position={position}
-          id={socket.id}
-          isConnectable={isConnectable}
-          className={`${socket.type === SocketType.FLOW ? 'flow-socket execution-edge' : ''} ${
-            handleType === 'source' ? 'source' : 'target'
-          } ${isHovered ? 'hovered' : ''} ${
-            isInvalidConnection ? 'error' : ''
-          } ${isValidConnection ? 'compatible' : ''}`}
-          style={socket.type !== SocketType.FLOW ? {
-            width: '14px',
-            height: '14px',
-            background: socketColor,
-            border: '2px solid rgba(255,255,255,0.8)',
-            boxShadow: `0 0 ${glowSize} ${glowColor}`,
-            transition: 'all 0.2s ease-in-out',
-            borderRadius: '50%',
-            zIndex: 2,
-          } : {
-            zIndex: 2,
-            '--flow-socket-color': flowColor,
-            '--flow-socket-hover-color': flowHoverColor,
-            '--socket-error-color': errorColor,
-            '--socket-compatible-color': compatibleColor,
-          } as any}
-        />
-        <Box
-          as="span"
-          className={`socket-label ${position === Position.Left ? 'left' : 'right'} ${isHovered ? 'hovered' : ''}`}
-          color={isInvalidConnection ? errorColor :
-                 isValidConnection ? compatibleColor :
-                 undefined}
+          className="socket-handle-container"
+          ref={socketRef}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          {socket.name}
+          <Handle
+            type={handleType}
+            position={position}
+            id={socket.id}
+            isConnectable={isConnectable}
+            className={`${socket.type === SocketType.FLOW ? 'flow-socket execution-edge' : ''} ${
+              handleType === 'source' ? 'source' : 'target'
+            } ${isHovered ? 'hovered' : ''} ${
+              isInvalidConnection ? 'error' : ''
+            } ${isValidConnection ? 'compatible' : ''}`}
+            style={socket.type !== SocketType.FLOW ? {
+              width: 'var(--socket-handle-size)',
+              height: 'var(--socket-handle-size)',
+              background: socketColor,
+              border: 'var(--socket-handle-border)',
+              boxShadow: `0 0 ${glowSize} ${glowColor}`,
+              transition: 'var(--socket-handle-transition)',
+              borderRadius: 'var(--socket-handle-border-radius)',
+              zIndex: 2,
+            } : {
+              zIndex: 2,
+              '--flow-socket-color': flowColor,
+              '--flow-socket-hover-color': flowHoverColor,
+              '--socket-error-color': errorColor,
+              '--socket-compatible-color': compatibleColor,
+            } as any}
+          />
         </Box>
         
         {/* Input widget for unconnected input sockets */}

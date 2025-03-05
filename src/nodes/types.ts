@@ -11,6 +11,7 @@ export interface BaseNodeData {
   inputs: SocketDefinition[];
   outputs: SocketDefinition[];
   properties?: Record<string, any>;
+  category?: NodeCategory;
 }
 
 /**

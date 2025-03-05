@@ -11,105 +11,268 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Socket component styling variables */
+  --socket-input-margin: 2px;
+  --socket-input-width: 60px;
+  --socket-input-height: 18px;
+  --socket-input-font-size: 0.65rem;
+  --socket-input-line-height: 1;
+  --socket-input-padding: 0 3px;
+  --socket-checkbox-size: 10px;
+  --socket-spacing-vertical: 4px;
+  --socket-handle-size: 10px;
+  --socket-container-min-height: 22px;
+  --socket-label-offset: 20px;
+  --socket-handle-border: 2px solid rgba(255,255,255,0.8);
+  --socket-handle-transition: all 0.2s ease-in-out;
+  --socket-handle-border-radius: 50%;
+  --socket-handle-border-width: 1px;
+  --socket-label-font-size: 0.65rem;
+  --socket-label-margin: 0 3px;
+  
+  /* Essential Node UI variables */
+  --node-border-radius: 3px;
+  --node-header-height: 24px;
+  --node-selected-color: #ffffff;
+  --node-spacing: 5px;
+  --node-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  --node-selected-shadow: 0 0 0 1px var(--node-selected-color), 0 3px 10px rgba(0,0,0,0.35);
+
+  /* Node Library Vars */
+  --node-library-bg: rgba(22, 22, 27, 0.95);
+  --node-library-border: rgba(80, 80, 95, 0.2);
+  --search-input-bg: rgba(35, 35, 45, 0.5);
+  --search-input-bg-hover: rgba(45, 45, 55, 0.6);
+  --search-input-bg-focus: rgba(50, 50, 65, 0.7);
+  --search-input-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --search-input-shadow-focus: 0 2px 6px rgba(0, 0, 0, 0.15);
+  --search-icon-color: rgba(180, 180, 200, 0.6);
+  --scrollbar-thumb: rgba(100, 100, 120, 0.5);
+  --scrollbar-track: rgba(30, 30, 40, 0.2);
+  --category-header-hover: rgba(40, 40, 50, 0.5);
+  --node-button-hover: rgba(50, 50, 65, 0.7);
+  --node-button-active: rgba(60, 60, 75, 0.8);
+  --node-button-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  --node-button-match-bg: rgba(60, 70, 100, 0.3);
+  --node-button-match-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  
+  /* Side Panel Vars */
+  --sidepanel-bg: rgba(22, 22, 27, 0.95);
+  --sidepanel-tabs-bg: rgba(18, 18, 22, 0.97);
+  --sidepanel-tab-bg: transparent;
+  --sidepanel-tab-hover: rgba(40, 40, 50, 0.5);
+  --sidepanel-tab-active: rgba(28, 28, 35, 0.95);
+  --sidepanel-tab-active-color: rgba(80, 145, 255, 0.9);
+  --sidepanel-border: rgba(80, 80, 95, 0.2);
+  --sidepanel-resizer-hover: rgba(80, 145, 255, 0.9);
 }
 
 /* Theme-specific variables */
 :root[data-theme="light"] {
-  --background-color: #ffffff;
-  --text-color: #213547;
-  --text-secondary: #4a5568;
-  --text-muted: #718096;
-  --panel-bg: #f9f9f9;
-  --panel-border: #e0e0e0;
+  color: #213547;
+  background-color: #ffffff;
+  
+  /* Color palette */
+  --primary-color: #2563eb;
+  --primary-hover: #1E40AF;
+  --secondary-color: #4b5563;
+  --background-color: #f9fafb;
+  --text-color: #1e293b;
+  --text-muted: #64748b;
+  --link-color: #2563eb;
+  --link-hover: #1E40AF;
+  --border-color: #e2e8f0;
+  --error-color: #ef4444;
+  --warning-color: #f59e0b;
+  --success-color: #10b981;
+  --accent-color: #8b5cf6;
+  
+  /* Socket component styling */
+  --socket-label-color: #333;
+  --socket-label-bg: rgba(255, 255, 255, 0.85);
+  --socket-label-border: #ccc;
+  --socket-label-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --socket-input-bg: #fafafa;
+  --socket-input-border: #eaeaea;
+  --socket-input-color: #333;
+  --socket-input-focus-bg: #fff;
+  --socket-input-focus-border: #90cdf4;
+  --socket-handle-bg: #e2e8f0;
+  
+  /* Flow Socket styling */
+  --socket-boolean-color: #60a5fa;
+  --socket-string-color: #34d399;
+  --socket-number-color: #f97316;
+  --socket-object-color: #a78bfa;
+  --socket-array-color: #f472b6;
+  --socket-function-color: #fbbf24;
+  --socket-any-color: #9ca3af;
+  --socket-buffer-color: #64748b;
+  --socket-execution-color: #d1d5db;
+  --socket-boolean-icon: url("data:image/svg+xml,...");
+  --socket-number-icon: url("data:image/svg+xml,...");
+  --socket-string-icon: url("data:image/svg+xml,...");
+  --socket-object-icon: url("data:image/svg+xml,...");
+  --socket-array-icon: url("data:image/svg+xml,...");
+  --socket-function-icon: url("data:image/svg+xml,...");
+  --socket-any-icon: url("data:image/svg+xml,...");
+  --socket-buffer-icon: url("data:image/svg+xml,...");
+  --socket-execution-icon: url("data:image/svg+xml,...");
+  
+  /* Edge/Connection styling */
+  --edge-boolean-color: #60a5fa;
+  --edge-string-color: #34d399;
+  --edge-number-color: #f97316;
+  --edge-object-color: #a78bfa;
+  --edge-array-color: #f472b6;
+  --edge-function-color: #fbbf24;
+  --edge-any-color: #9ca3af;
+  --edge-buffer-color: #64748b;
+  --edge-execution-color: #666666;
+  --edge-compatible-color: #22c55e;
+  --edge-error-color: #ef4444;
+  --edge-selected-color: #3b82f6;
+  --edge-hover-color: #60a5fa;
+  
+  /* Node styling */
   --node-bg: #ffffff;
-  --node-border: #e0e0e0;
-  --node-header: #f5f5f5;
-  --toolbar-bg: #ffffff;
-  --toolbar-border: #e0e0e0;
-  --graph-bg: #f5f5f5;
-  --code-bg: #f5f5f5;
-  --code-text: #1a202c;
-  --socket-border: #718096;
-  --button-bg: #f5f5f5;
-  --button-hover: #e2e8f0;
-  --button-active: #cbd5e0;
-  --input-bg: #ffffff;
-  --input-border: #e2e8f0;
-  --input-focus-border: #3182ce;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --scrollbar-track: #f1f1f1;
-  --scrollbar-thumb: #c1c1c1;
-  --scrollbar-thumb-hover: #a1a1a1;
+  --node-border: #e2e8f0;
+  --node-header-bg: #f3f4f6;
+  --node-header-color: #1e293b;
+  --node-selected-border: #3b82f6;
+  --node-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --node-selected-shadow: 0 0 0 1px #3b82f6, 0 0 15px rgba(59, 130, 246, 0.3);
   
   /* Node Library specific */
-  --node-library-bg: #ffffff;
-  --node-library-border: #e0e0e0;
-  --category-header-bg: #f5f5f5;
-  --category-header-hover: #edf2f7;
+  --node-library-bg: rgba(245, 245, 250, 0.95);
+  --node-library-border: rgba(210, 210, 220, 0.5);
+  --category-header-bg: #f8f8f8;
+  --category-header-hover: rgba(210, 215, 225, 0.5);
   --category-border: #e0e0e0;
   --node-button-bg: #ffffff;
-  --node-button-hover: #edf2f7;
-  --node-button-active: #e2e8f0;
-  --node-button-border: #e0e0e0;
-  --search-input-bg: #ffffff;
-  --search-icon-color: #718096;
+  --node-button-hover: rgba(200, 205, 220, 0.7);
+  --node-button-active: rgba(190, 195, 210, 0.8);
+  --node-button-border: #e5e5e5;
+  --search-input-bg: rgba(228, 230, 235, 0.7);
+  --search-input-bg-hover: rgba(220, 222, 230, 0.8);
+  --search-input-bg-focus: rgba(210, 215, 225, 0.9);
+  --search-input-shadow: 0 2px 6px rgba(100, 110, 140, 0.08);
+  --search-input-shadow-focus: 0 3px 10px rgba(100, 110, 140, 0.12);
+  --search-icon-color: rgba(100, 110, 140, 0.6);
+  --scrollbar-thumb: rgba(180, 180, 200, 0.5);
+  --scrollbar-track: rgba(220, 220, 230, 0.3);
   
   /* Code Preview specific */
-  --code-panel-bg: #ffffff;
-  --code-panel-border: #e0e0e0;
-  --code-header-bg: #f5f5f5;
-  --code-editor-bg: #f8f9fa;
-  --language-select-bg: #ffffff;
-  --language-select-border: #e0e0e0;
+  --code-preview-bg: #f8f8f8;
+  --code-preview-border: #e0e0e0;
+  --code-preview-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  
+  /* Toolbar specific */
+  --toolbar-bg: #f8f8f8;
+  --toolbar-border: #e0e0e0;
+  --toolbar-shadow: rgba(0, 0, 0, 0.05);
+  
+  /* Side Panel specific */
+  --sidepanel-bg: rgba(245, 245, 250, 0.95);
+  --sidepanel-tabs-bg: rgba(230, 232, 240, 0.9);
+  --sidepanel-tab-bg: transparent;
+  --sidepanel-tab-hover: rgba(210, 215, 225, 0.8);
+  --sidepanel-tab-active: rgba(255, 255, 255, 0.95);
+  --sidepanel-tab-active-color: rgba(37, 99, 235, 0.9);
+  --sidepanel-border: rgba(210, 210, 220, 0.5);
+  --sidepanel-resizer-hover: rgba(37, 99, 235, 0.7);
+
+  /* Application specific */
+  --app-bg: #f5f5f7;
+  --app-border: #e5e5e7;
+  
+  /* Tooltip specific */
+  --tooltip-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-border: rgba(210, 210, 220, 0.5);
+  --tooltip-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --tooltip-text: #333;
+  --tooltip-text-secondary: #666;
 }
 
 :root[data-theme="dark"] {
-  --background-color: #1a202c;
-  --text-color: rgba(255, 255, 255, 0.92);
-  --text-secondary: #a0aec0;
-  --text-muted: #718096;
-  --panel-bg: #2d3748;
-  --panel-border: #4a5568;
-  --node-bg: #2d3748;
-  --node-border: #4a5568;
-  --node-header: #1a202c;
-  --toolbar-bg: #2d3748;
-  --toolbar-border: #4a5568;
-  --graph-bg: #1a202c;
-  --code-bg: #2d3748;
-  --code-text: #e2e8f0;
-  --socket-border: #e2e8f0;
-  --button-bg: #2d3748;
-  --button-hover: #4a5568;
-  --button-active: #718096;
-  --input-bg: #2d3748;
-  --input-border: #4a5568;
-  --input-focus-border: #63b3ed;
-  --shadow-color: rgba(0, 0, 0, 0.3);
-  --scrollbar-track: #2d3748;
-  --scrollbar-thumb: #4a5568;
-  --scrollbar-thumb-hover: #718096;
+  --background-color: #121212; /* Base background */
+  --text-color: #F5F5F5; /* Pure white text for main content */
+  --text-secondary: #BBBBBB; /* Light grey for secondary text */
+  --text-muted: #757575; /* Medium grey for tertiary text */
+  --panel-bg: #1E1E1E; /* VS Code-like panel background */
+  --panel-border: #363636; /* Subtle border */
+  --node-bg: #242424; /* Node background */
+  --node-border: #363636; /* Node border */
+  --node-header: #2A2A2A; /* Node header */
+  --toolbar-bg: #161616;
+  --toolbar-border: #2A2A2A;
+  --toolbar-shadow: rgba(0, 0, 0, 0.1);
+  --graph-bg: #121212; /* Graph editor background */
+  --code-bg: #181818; /* Code preview background */
+  --code-text: #E0E0E0; /* Code text */
+  --socket-border: #9E9E9E; /* Socket border */
+  --button-bg: #242424; /* Button background */
+  --button-hover: #303030; /* Button hover state */
+  --button-active: #404040; /* Button active state */
+  --input-bg: #2A2A2A; /* Input background */
+  --input-border: #363636; /* Input border */
+  --input-focus-border: #4A4A4A; /* Input focus border */
+  --shadow-color: rgba(0, 0, 0, 0.3); /* Shadow color (no change) */
+  --scrollbar-track: #1E1E1E; /* Scrollbar track */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2); /* Scrollbar thumb */
+  --scrollbar-thumb-hover: #4A4A4A; /* Scrollbar thumb hover */
+  
+  /* Node category colors - enhanced for dark mode */
+  --node-category-process-flow: #FF7043; /* Process Flow - brighter orange */
+  --node-category-logic: #42A5F5; /* Logic - brighter blue */
+  --node-category-math: #BA68C8; /* Math - brighter purple */
+  --node-category-variables: #66BB6A; /* Variables - brighter green */
+  --node-category-io: #FFCA28; /* IO - brighter yellow */
   
   /* Node Library specific */
-  --node-library-bg: #2d3748;
-  --node-library-border: #4a5568;
-  --category-header-bg: #1a202c;
-  --category-header-hover: #2d3748;
-  --category-border: #4a5568;
-  --node-button-bg: #2d3748;
-  --node-button-hover: #3a4a61;
-  --node-button-active: #4a5568;
-  --node-button-border: #4a5568;
-  --search-input-bg: #1a202c;
+  --node-library-bg: #1a1a1a;
+  --node-library-border: #2c2c2c;
+  --category-header-bg: #252525;
+  --category-header-hover: #2a2a2a;
+  --category-border: #333333;
+  --node-button-bg: #252525;
+  --node-button-hover: #2d2d2d;
+  --node-button-active: #303030;
+  --node-button-border: #333333;
+  --search-input-bg: #222222;
+  --search-input-bg-hover: #2a2a2a;
+  --search-input-bg-focus: #303030;
   --search-icon-color: #a0aec0;
+  --search-input-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --search-input-shadow-focus: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --node-button-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  --node-button-match-bg: rgba(60, 70, 100, 0.3);
+  --node-button-match-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   
   /* Code Preview specific */
-  --code-panel-bg: #2d3748;
-  --code-panel-border: #4a5568;
-  --code-header-bg: #1a202c;
-  --code-editor-bg: #1a202c;
-  --language-select-bg: #2d3748;
-  --language-select-border: #4a5568;
+  --code-panel-bg: #1E1E1E; /* Code panel background */
+  --code-panel-border: #363636; /* Code panel border */
+  --code-header-bg: #181818; /* Code header background */
+  --code-editor-bg: #1E1E1E; /* Code editor background */
+  --language-select-bg: #242424; /* Language select background */
+  --language-select-border: #363636; /* Language select border */
+  
+  /* SidePanel specific */
+  --sidepanel-bg: #1E1E1E; /* Side panel background */
+  --sidepanel-tabs-bg: #242424; /* Tabs container background */
+  --sidepanel-tab-bg: transparent; /* Tab button background */
+  --sidepanel-tab-hover: #303030; /* Tab button hover */
+  --sidepanel-tab-active: #121212; /* Active tab background */
+  --sidepanel-tab-active-color: #4299E1; /* Active tab accent color */
+  --sidepanel-border: #363636; /* Side panel borders */
+  --sidepanel-resizer-hover: #4299E1; /* Resizer hover color */
+  
+  /* Global Socket Tooltip */
+  --tooltip-bg: #242424;
+  --tooltip-border: #444;
+  --tooltip-text: #f5f5f5;
+  --tooltip-text-secondary: #aaa;
 }
 
 /* Apply theme variables */
@@ -170,10 +333,26 @@ button:focus-visible {
 /* Custom edge animations */
 @keyframes flowAnimation {
   0% {
-    stroke-dashoffset: 10;
+    stroke-dashoffset: 20;
   }
   100% {
     stroke-dashoffset: 0;
+  }
+}
+
+/* Flow direction pulse animation */
+@keyframes flowDirectionPulse {
+  0% {
+    opacity: 0.7;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.05);
+  }
+  100% {
+    opacity: 0.7;
+    transform: translateY(-50%) scale(1);
   }
 }
 
@@ -216,19 +395,53 @@ button:focus-visible {
   }
 }
 
-.react-flow__edge-path-flow {
-  animation: flowAnimation 1s linear infinite;
+/* Add a glow pulse animation for edges */
+@keyframes edgeGlowPulse {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+  }
+  100% {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+  }
 }
 
-/* Edge selection styles */
+/* Apply the flow direction pulse animation to flow sockets */
+.flow-socket.source::before,
+.flow-socket.target::before {
+  animation: flowDirectionPulse 1.5s ease-in-out infinite;
+}
+
+/* Improved edge path flow */
+.react-flow__edge-path-flow {
+  stroke-dasharray: 6, 3;
+  animation: flowAnimation 1.2s linear infinite;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* Apply glow pulse to execution edges */
+.react-flow__edge.execution-edge .react-flow__edge-path {
+  stroke-width: 2.5;
+  stroke-dasharray: 6, 3;
+  animation: 
+    flowAnimation 1.2s linear infinite,
+    edgeGlowPulse 3s ease-in-out infinite;
+  stroke-linecap: round;
+}
+
+/* Edge selection styles - Enhanced */
 .react-flow__edge.selected .react-flow__edge-path {
   stroke-width: 3;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
 
-/* Hover effect for edges */
+/* Hover effect for edges - Enhanced */
 .react-flow__edge:hover .react-flow__edge-path {
   stroke-width: 3;
-  filter: drop-shadow(0 0 5px var(--shadow-color));
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
 }
 
 /* Socket handle hover effects */
@@ -353,46 +566,129 @@ button:focus-visible {
 
 /* Node Library specific styling */
 .node-library {
-  background-color: var(--node-library-bg) !important;
-  border-color: var(--node-library-border) !important;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
 }
 
+/* Search container at top */
+.node-search-container {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  z-index: 5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* Scrollable nodes container */
+.nodes-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0; /* Important for flex child scrolling */
+}
+
+/* Scrollbar styling */
+.nodes-container::-webkit-scrollbar {
+  width: 3px;
+}
+
+.nodes-container::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 0;
+}
+
+.nodes-container::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 0;
+}
+
+/* Search input styling */
 .search-input {
-  background-color: var(--search-input-bg) !important;
-  border-color: var(--input-border) !important;
-  color: var(--text-color) !important;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  color: var(--text-color);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
 .search-icon {
-  color: var(--search-icon-color) !important;
+  opacity: 0.8;
+  transition: opacity 0.1s ease;
 }
 
+.search-input:focus + .search-icon {
+  opacity: 1;
+}
+
+/* Category styling */
 .category-header {
-  background-color: var(--category-header-bg) !important;
-  border-color: var(--category-border) !important;
-  color: var(--text-color) !important;
+  border-radius: 2px;
+  transition: all 0.1s ease;
+  background: transparent;
+  margin-top: 1px;
 }
 
 .category-header:hover {
-  background-color: var(--category-header-hover) !important;
+  background: var(--category-header-hover);
 }
 
+.category-indicator {
+  opacity: 0.8;
+  transition: opacity 0.1s ease;
+}
+
+.category-header:hover .category-indicator {
+  opacity: 1;
+}
+
+/* Node button styling */
 .node-button {
-  background-color: var(--node-button-bg) !important;
-  border-color: var(--node-button-border) !important;
-  color: var(--text-color) !important;
+  margin-bottom: 2px !important;
+  border-radius: 2px !important;
+  transition: all 0.1s ease;
+  font-weight: 450;
+  position: relative;
+  overflow: hidden;
 }
 
 .node-button:hover {
-  background-color: var(--node-button-hover) !important;
+  transform: translateY(-1px);
 }
 
 .node-button:active {
-  background-color: var(--node-button-active) !important;
+  transform: translateY(0) scale(0.98);
 }
 
+.node-button-indicator {
+  transition: opacity 0.1s ease;
+  border-radius: 0 !important;
+}
+
+.node-button:hover .node-button-indicator {
+  opacity: 1;
+}
+
+/* Category content transition */
 .category-content {
-  background-color: var(--node-library-bg) !important;
+  transition: max-height 0.15s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.15s ease,
+              padding 0.15s ease,
+              transform 0.15s ease;
+  transform-origin: top;
+}
+
+/* Category chevron smooth transition */
+.category-chevron {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Code Preview specific styling */
@@ -446,38 +742,76 @@ button:focus-visible {
   color: var(--code-text) !important;
 }
 
+/* Enhanced Monaco Editor styling for dark mode */
+:root[data-theme="dark"] .monaco-editor,
+:root[data-theme="dark"] .monaco-editor-background,
+:root[data-theme="dark"] .monaco-editor .margin-view-overlays {
+  background-color: var(--code-editor-bg) !important;
+}
+
+:root[data-theme="dark"] .monaco-editor .editor-widget,
+:root[data-theme="dark"] .monaco-editor .editor-widget input {
+  background-color: var(--input-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--input-border) !important;
+}
+
+:root[data-theme="dark"] .monaco-editor .suggest-widget {
+  background-color: var(--panel-bg) !important;
+  border-color: var(--panel-border) !important;
+  color: var(--text-color) !important;
+}
+
+:root[data-theme="dark"] .monaco-editor .editor-scrollable {
+  background-color: var(--code-editor-bg) !important;
+}
+
+:root[data-theme="dark"] .monaco-editor .line-numbers {
+  color: var(--text-muted) !important;
+}
+
+:root[data-theme="dark"] .monaco-editor .current-line {
+  background-color: rgba(50, 50, 50, 0.3) !important;
+}
+
+:root[data-theme="dark"] .monaco-editor .view-overlays .current-line {
+  border-color: rgba(80, 80, 80, 0.7) !important;
+}
+
+:root[data-theme="dark"] .monaco-editor .cursor {
+  background-color: var(--text-color) !important;
+  border-color: var(--text-color) !important;
+}
+
 /* Toolbar specific styling */
 .toolbar {
   background-color: var(--toolbar-bg) !important;
   border-color: var(--toolbar-border) !important;
   color: var(--text-color) !important;
-  box-shadow: 0 1px 3px var(--shadow-color);
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 1px 2px var(--toolbar-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  min-height: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
 }
 
 .app-title {
   color: var(--text-color) !important;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
+  font-size: 12px;
+  line-height: 1;
 }
 
 .app-version {
-  color: var(--text-muted) !important;
-  transition: color 0.3s ease;
+  font-size: 9px;
+  opacity: 0.7;
 }
 
 .theme-toggle-button {
-  color: var(--text-color) !important;
-  background-color: transparent !important;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.theme-toggle-button:hover {
-  background-color: var(--button-hover) !important;
-  transform: scale(1.05);
-}
-
-.theme-toggle-button:active {
-  transform: scale(0.95);
+  height: 24px !important;
+  min-height: 24px !important;
+  min-width: 24px !important;
 }
 
 /* Socket styles */
@@ -498,11 +832,11 @@ button:focus-visible {
 }
 
 .socket-label.left {
-  left: 24px;
+  left: var(--socket-label-offset);
 }
 
 .socket-label.right {
-  right: 24px;
+  right: var(--socket-label-offset);
 }
 
 .socket-label.hovered {
@@ -525,17 +859,40 @@ button:focus-visible {
 
 /* Socket input widget styles */
 .socket-input {
-  width: 90px;
-  margin-left: 24px;
+  width: var(--socket-input-width);
+  margin-left: var(--socket-input-margin);
   position: relative;
   z-index: 1;
+  height: var(--socket-input-height);
+  font-size: var(--socket-input-font-size);
+  line-height: var(--socket-input-line-height);
+  padding: var(--socket-input-padding);
+  border-radius: 2px;
+  font-family: monospace;
+  transition: all 0.1s ease;
+}
+
+.socket-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--input-focus-border);
+}
+
+/* Remove spinner buttons from number inputs */
+.socket-input[type="number"]::-webkit-inner-spin-button, 
+.socket-input[type="number"]::-webkit-outer-spin-button { 
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.socket-input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .socket-checkbox {
-  width: 14px;
-  height: 14px;
+  width: var(--socket-checkbox-size);
+  height: var(--socket-checkbox-size);
   cursor: pointer;
-  margin-left: 24px;
+  margin-left: var(--socket-input-margin);
   position: relative;
   z-index: 1;
 }
@@ -562,58 +919,114 @@ button:focus-visible {
   border-color: var(--input-focus-border);
 }
 
-/* Flow socket triangle shape */
+/* Flow socket modern directional design */
 .flow-socket {
   width: 0 !important;
   height: 0 !important;
   border: none !important;
   background: none !important;
   position: relative;
+  top: 0 !important;
+  transform: none !important;
 }
 
 .flow-socket::before {
   content: '';
   position: absolute;
-  width: 0;
-  height: 0;
-  border-top: 11px solid transparent;
-  border-bottom: 11px solid transparent;
-  border-left: 19px solid white;
-  left: 50%;
+  width: 24px;
+  height: 12px;
   top: 50%;
-  transform: translate(-50%, -50%);
-  transition: all 0.2s ease-in-out;
+  left: -12px;
+  transform: translateY(-50%);
+  transition: all 0.2s ease;
+  clip-path: polygon(0% 50%, 70% 0%, 100% 0%, 100% 100%, 70% 100%);
   filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
 }
 
+/* Source points left (reversed direction) */
 .flow-socket.source::before {
   opacity: 0.9;
+  clip-path: polygon(100% 50%, 30% 0%, 0% 0%, 0% 100%, 30% 100%);
+  animation: flowDirectionPulse 1.5s ease-in-out infinite;
 }
 
+/* Target points left (unchanged) */
 .flow-socket.target::before {
   opacity: 0.9;
+  clip-path: polygon(100% 50%, 30% 0%, 0% 0%, 0% 100%, 30% 100%);
+  animation: flowDirectionPulse 1.5s ease-in-out infinite;
 }
 
 .flow-socket.hovered::before {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1.1);
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+  transform: translateY(-50%) scale(1.15);
 }
 
-.flow-socket.error::before {
-  border-left-color: var(--socket-error-color, #f44336);
+.flow-socket.source.hovered::before {
+  clip-path: polygon(100% 50%, 30% 0%, 0% 0%, 0% 100%, 30% 100%);
 }
 
-.flow-socket.compatible::before {
-  border-left-color: var(--socket-compatible-color, #4caf50);
-}
-
-/* Execution edge styles */
+/* Execution edge styles - Redesigned for visual harmony */
 .react-flow__edge.execution-edge .react-flow__edge-path {
-  stroke-width: 3;
+  stroke-width: 2.5;
+  stroke-dasharray: 6, 3;
+  animation: flowAnimation 1.2s linear infinite;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.3));
 }
 
 .react-flow__edge.execution-edge:hover .react-flow__edge-path {
-  stroke-width: 4;
+  stroke-width: 3;
+  stroke-dasharray: 6, 3;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+}
+
+.react-flow__edge.execution-edge.selected .react-flow__edge-path {
+  stroke-width: 3.5;
+  stroke-dasharray: 6, 3;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+}
+
+/* Theme-specific edge styling - Enhanced */
+:root[data-theme="dark"] .react-flow__edge.execution-edge .react-flow__edge-path {
+  stroke: rgba(180, 180, 220, 0.85);
+  animation: 
+    flowAnimation 1.2s linear infinite,
+    darkEdgeGlowPulse 3s ease-in-out infinite;
+}
+
+:root[data-theme="light"] .react-flow__edge.execution-edge .react-flow__edge-path {
+  stroke: rgba(60, 60, 100, 0.8);
+  animation: 
+    flowAnimation 1.2s linear infinite,
+    lightEdgeGlowPulse 3s ease-in-out infinite;
+}
+
+/* Dark theme edge glow */
+@keyframes darkEdgeGlowPulse {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(180, 180, 220, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 3px rgba(180, 180, 220, 0.5));
+  }
+  100% {
+    filter: drop-shadow(0 0 2px rgba(180, 180, 220, 0.3));
+  }
+}
+
+/* Light theme edge glow */
+@keyframes lightEdgeGlowPulse {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(60, 60, 100, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 3px rgba(60, 60, 100, 0.5));
+  }
+  100% {
+    filter: drop-shadow(0 0 2px rgba(60, 60, 100, 0.3));
+  }
 }
 
 /* Details panel animations */
@@ -650,4 +1063,376 @@ button:focus-visible {
   font-size: 12px !important;
   min-height: 60px !important;
   resize: none !important;
+}
+
+/* SidePanel styling */
+.side-panel {
+  background-color: var(--sidepanel-bg);
+  border-right: 1px solid var(--sidepanel-border);
+  transition: width 150ms ease-out, background-color 0.3s ease, border-color 0.3s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+}
+
+.side-panel-tabs-container {
+  background-color: var(--sidepanel-tabs-bg);
+  border-right: 1px solid var(--sidepanel-border);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.side-panel-tab {
+  background-color: var(--sidepanel-tab-bg);
+  color: var(--text-color);
+  transition: all 0.1s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  position: relative;
+  overflow: hidden;
+}
+
+.side-panel-tab:hover {
+  background-color: var(--sidepanel-tab-hover);
+  transform: translateY(-1px);
+}
+
+.side-panel-tab.active {
+  background-color: var(--sidepanel-tab-active);
+  color: var(--sidepanel-tab-active-color);
+  border-left: 2px solid var(--sidepanel-tab-active-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.side-panel-tab svg {
+  transition: all 0.1s ease;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
+  opacity: 0.8;
+}
+
+.side-panel-tab:hover svg {
+  transform: scale(1.05);
+  opacity: 1;
+}
+
+.side-panel-tab.active svg {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.side-panel-content {
+  background-color: var(--sidepanel-bg);
+  transition: opacity 150ms ease-out, background-color 0.3s ease;
+}
+
+.side-panel-resizer:hover {
+  background-color: var(--sidepanel-resizer-hover);
+}
+
+/* Socket handle container */
+.socket-handle-container {
+  position: relative;
+  width: 16px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+/* Socket container */
+.socket-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  min-height: var(--socket-container-min-height);
+  box-sizing: border-box;
+}
+
+.socket-container-left {
+  justify-content: flex-start;
+}
+
+.socket-container-right {
+  justify-content: flex-end;
+}
+
+/* Socket wrapper */
+.socket-wrapper {
+  display: flex;
+  align-items: center;
+  opacity: 0.85;
+  transition: opacity 0.1s ease;
+  position: relative;
+}
+
+.socket-wrapper:hover {
+  opacity: 1;
+}
+
+/* Harmonized Node Styling */
+.node-minimal {
+  border-radius: var(--node-border-radius);
+  transition: all 0.1s ease;
+  box-shadow: var(--node-shadow);
+  overflow: hidden;
+}
+
+.node-minimal:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transform: translateY(-1px);
+}
+
+.node-minimal.selected {
+  box-shadow: var(--node-selected-shadow);
+}
+
+.node-minimal .node-header {
+  display: flex;
+  align-items: center;
+  height: var(--node-header-height);
+  padding: 0 8px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  font-size: 12px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+.node-minimal .node-content {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding: var(--node-spacing);
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.node-minimal .node-inputs {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--socket-spacing-vertical);
+  flex: 1;
+  padding-right: 2px;
+}
+
+.node-minimal .node-outputs {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--socket-spacing-vertical);
+  flex: 0;
+  padding-left: 2px;
+}
+
+/* Remove margin from first and last socket containers */
+.node-minimal .node-inputs > .socket-container:first-child,
+.node-minimal .node-outputs > .socket-container:first-child {
+  margin-top: 0;
+}
+
+.node-minimal .node-inputs > .socket-container:last-child,
+.node-minimal .node-outputs > .socket-container:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark theme specific node styling */
+:root[data-theme="dark"] .node-minimal {
+  --node-bg: #1E1E1E;
+  --node-border: #363636;
+  --node-header: #242424;
+  --selected-border-color: #ffffff;
+  
+  /* Node category colors - dark theme */
+  --node-category-process-flow: #4d2110;
+  --node-category-logic-operations: #0c3c6d;
+  --node-category-math-operations: #450c53;
+  --node-category-variables: #0e441c;
+  --node-category-input-output: #5a460e;
+}
+
+/* Light theme specific node styling */
+:root[data-theme="light"] .node-minimal {
+  --node-bg: #ffffff;
+  --node-border: #e0e0e0;
+  --node-header: #f5f5f5;
+  --selected-border-color: var(--brand-500, #2979e4);
+  
+  /* Node category colors - light theme */
+  --node-category-process-flow: #ffd6c2;
+  --node-category-logic-operations: #c2e0ff;
+  --node-category-math-operations: #ecc2ff;
+  --node-category-variables: #c2ffc9;
+  --node-category-input-output: #fff3c2;
+}
+
+/* Global Socket Tooltip */
+.socket-global-tooltip {
+  opacity: 0;
+  animation: tooltipFadeIn 0.2s forwards;
+  pointer-events: none;
+}
+
+.socket-tooltip-content {
+  background-color: var(--tooltip-bg);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-width: 200px;
+  border: 1px solid var(--tooltip-border);
+}
+
+.socket-tooltip-name {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--tooltip-text);
+}
+
+.socket-tooltip-type {
+  font-size: 10px;
+  color: var(--tooltip-text-secondary);
+  font-family: monospace;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -90%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}
+
+/* Dark theme flow socket styling */
+:root[data-theme="dark"] .flow-socket::before {
+  background: linear-gradient(to right, rgba(100, 100, 100, 0.1), rgba(220, 220, 220, 0.9));
+}
+
+:root[data-theme="dark"] .flow-socket.error::before {
+  background: linear-gradient(to right, rgba(180, 50, 50, 0.2), rgba(220, 70, 70, 0.9));
+}
+
+:root[data-theme="dark"] .flow-socket.compatible::before {
+  background: linear-gradient(to right, rgba(50, 160, 70, 0.2), rgba(70, 200, 90, 0.9));
+}
+
+/* Light theme flow socket styling */
+:root[data-theme="light"] .flow-socket::before {
+  background: linear-gradient(to right, rgba(80, 80, 80, 0.1), rgba(60, 60, 60, 0.9));
+}
+
+:root[data-theme="light"] .flow-socket.error::before {
+  background: linear-gradient(to right, rgba(200, 50, 50, 0.2), rgba(230, 60, 60, 0.9));
+}
+
+:root[data-theme="light"] .flow-socket.compatible::before {
+  background: linear-gradient(to right, rgba(30, 150, 50, 0.2), rgba(50, 180, 70, 0.9));
+}
+
+/* Restore missing error and compatible states */
+.flow-socket.error::before {
+  background: linear-gradient(to right, 
+    rgba(200, 50, 50, 0.2), 
+    rgba(230, 60, 60, 0.9)
+  );
+}
+
+.flow-socket.compatible::before {
+  background: linear-gradient(to right, 
+    rgba(30, 150, 50, 0.2), 
+    rgba(50, 180, 70, 0.9)
+  );
+}
+
+/* Edge text label styling */
+.react-flow__edge-textbg {
+  fill: var(--panel-bg);
+  fill-opacity: 0.8;
+  rx: 4;
+  ry: 4;
+}
+
+.react-flow__edge-text {
+  fill: var(--text-color);
+  font-size: 10px;
+  pointer-events: none;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 500;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+}
+
+:root[data-theme="dark"] .react-flow__edge-text {
+  fill: rgba(220, 220, 255, 0.9);
+}
+
+:root[data-theme="light"] .react-flow__edge-text {
+  fill: rgba(50, 50, 90, 0.9);
+}
+
+/* Edge Animation Styles */
+@keyframes flowAnimation {
+  0% {
+    stroke-dashoffset: 20;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Edge Interactivity */
+.react-flow__edge-path {
+  stroke-linecap: round;
+  transition: 
+    stroke 0.2s ease,
+    stroke-width 0.2s ease,
+    filter 0.2s ease;
+}
+
+/* Edge marker styling */
+.react-flow__edge-marker circle {
+  transition: fill 0.2s ease, r 0.2s ease;
+}
+
+/* Edge hover effect */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3px;
+}
+
+/* Category content with responsive behavior */
+.category-content.nodes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding-top: 2px;
+}
+
+/* Make node buttons responsive */
+@media (max-width: 180px) {
+  .node-button {
+    width: 100% !important;
+    margin-bottom: 1px !important;
+  }
+}
+
+.node-button.search-match {
+  background-color: var(--node-button-match-bg);
+  box-shadow: var(--node-button-match-shadow);
+  font-weight: 500;
+}
+
+.node-button.search-match:hover {
+  transform: translateY(-1px);
+}
+
+.node-button.search-match .node-button-indicator {
+  opacity: 1;
+  width: 3px;
+  border-radius: 0;
 }

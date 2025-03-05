@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
-import { NodeLibrary } from './components/NodeLibrary';
 import { GraphEditor } from './components/GraphEditor';
 import { CodePreview } from './components/CodePreview';
 import { Toolbar } from './components/Toolbar';
 import InfoPanel from './components/InfoPanel';
+import { SidePanel } from './components/SidePanel';
+import { SocketTooltipProvider, useSocketTooltip } from './contexts/SocketTooltipContext';
+import SocketTooltip from './components/SocketTooltip';
 import 'reactflow/dist/style.css';
 
 /**
@@ -13,7 +15,8 @@ import 'reactflow/dist/style.css';
 function App() {
   // State for panel widths and info panel
   const [codePreviewWidth, setCodePreviewWidth] = useState(400);
-  const [nodeLibraryWidth, setNodeLibraryWidth] = useState(250);
+  const [sidePanelWidth, setSidePanelWidth] = useState(250);
+  const [sidePanelCollapsedWidth] = useState(40); // Width when collapsed
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -21,22 +24,22 @@ function App() {
   const initialWidthRef = useRef(0);
 
   // Handle mouse events for right resizer (code panel)
-  const handleRightDragStart = (e: React.MouseEvent) => {
+  const handleRightDragStart = useCallback((e: React.MouseEvent) => {
     setIsDraggingRight(true);
     dragStartXRef.current = e.clientX;
     initialWidthRef.current = codePreviewWidth;
     document.body.style.cursor = 'ew-resize';
     document.body.style.userSelect = 'none';
-  };
+  }, [codePreviewWidth]);
 
-  // Handle mouse events for left resizer (node library)
-  const handleLeftDragStart = (e: React.MouseEvent) => {
+  // Handle mouse events for left resizer (side panel)
+  const handleLeftDragStart = useCallback((e: React.MouseEvent) => {
     setIsDraggingLeft(true);
     dragStartXRef.current = e.clientX;
-    initialWidthRef.current = nodeLibraryWidth;
+    initialWidthRef.current = sidePanelWidth;
     document.body.style.cursor = 'ew-resize';
     document.body.style.userSelect = 'none';
-  };
+  }, [sidePanelWidth]);
 
   // Handle mouse move and up events
   useEffect(() => {
@@ -44,11 +47,17 @@ function App() {
       if (isDraggingRight) {
         const deltaX = dragStartXRef.current - e.clientX;
         const newWidth = Math.max(200, Math.min(800, initialWidthRef.current + deltaX));
-        setCodePreviewWidth(newWidth);
+        // Use requestAnimationFrame for smoother updates
+        requestAnimationFrame(() => {
+          setCodePreviewWidth(newWidth);
+        });
       } else if (isDraggingLeft) {
         const deltaX = e.clientX - dragStartXRef.current;
         const newWidth = Math.max(150, Math.min(500, initialWidthRef.current + deltaX));
-        setNodeLibraryWidth(newWidth);
+        // Use requestAnimationFrame for smoother updates
+        requestAnimationFrame(() => {
+          setSidePanelWidth(newWidth);
+        });
       }
     };
 
@@ -60,7 +69,7 @@ function App() {
     };
 
     if (isDraggingRight || isDraggingLeft) {
-      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mousemove', handleMouseMove, { passive: true });
       document.addEventListener('mouseup', handleMouseUp);
     }
 
@@ -71,60 +80,63 @@ function App() {
   }, [isDraggingRight, isDraggingLeft]);
 
   return (
-    <Flex height="100vh" width="100vw" direction="column">
-      {/* Toolbar */}
-      <Toolbar isInfoOpen={isInfoOpen} onInfoToggle={() => setIsInfoOpen(!isInfoOpen)} />
-      
-      {/* Main content */}
-      <Flex flex="1" overflow="hidden" position="relative">
-        {/* Left panel: Node Library */}
-        <Box width={`${nodeLibraryWidth}px`} height="100%" position="relative">
-          <NodeLibrary />
-          
-          {/* Left resizer */}
-          <Box
-            position="absolute"
-            top="0"
-            right="0"
-            width="4px"
-            height="100%"
-            cursor="ew-resize"
-            bg="transparent"
-            _hover={{ bg: "blue.500", opacity: 0.5 }}
-            onMouseDown={handleLeftDragStart}
-            zIndex="10"
-          />
-        </Box>
+    <SocketTooltipProvider>
+      <Flex height="100vh" width="100vw" direction="column">
+        {/* Toolbar */}
+        <Toolbar isInfoOpen={isInfoOpen} onInfoToggle={() => setIsInfoOpen(!isInfoOpen)} />
         
-        {/* Middle panel: Graph Editor */}
-        <Box flex="1" height="100%">
-          <GraphEditor />
-        </Box>
-        
-        {/* Right panel: Code Preview */}
-        <Box width={`${codePreviewWidth}px`} height="100%" position="relative">
-          <CodePreview />
-          
-          {/* Right resizer */}
-          <Box
-            position="absolute"
-            top="0"
-            left="0"
-            width="4px"
-            height="100%"
-            cursor="ew-resize"
-            bg="transparent"
-            _hover={{ bg: "blue.500", opacity: 0.5 }}
-            onMouseDown={handleRightDragStart}
-            zIndex="10"
+        {/* Main content */}
+        <Flex flex="1" overflow="hidden" position="relative">
+          {/* Left panel: Side Panel with tabs */}
+          <SidePanel 
+            width={sidePanelWidth} 
+            onResize={handleLeftDragStart} 
+            isDraggingLeft={isDraggingLeft}
           />
-        </Box>
+          
+          {/* Middle panel: Graph Editor */}
+          <Box flex="1" height="100%">
+            <GraphEditor />
+          </Box>
+          
+          {/* Right panel: Code Preview */}
+          <Box width={`${codePreviewWidth}px`} height="100%" position="relative">
+            <CodePreview />
+            
+            {/* Right resizer */}
+            <Box
+              position="absolute"
+              top="0"
+              left="0"
+              width="4px"
+              height="100%"
+              cursor="ew-resize"
+              className="side-panel-resizer"
+              onMouseDown={handleRightDragStart}
+              zIndex="10"
+            />
+          </Box>
 
-        {/* Info Panel */}
-        <InfoPanel isOpen={isInfoOpen} />
+          {/* Info Panel */}
+          <InfoPanel isOpen={isInfoOpen} />
+        </Flex>
+        
+        {/* Global Socket Tooltip */}
+        <SocketTooltipConsumer />
       </Flex>
-    </Flex>
+    </SocketTooltipProvider>
   );
 }
+
+// Component to consume the socket tooltip context
+const SocketTooltipConsumer = () => {
+  const { hoveredSocket } = useSocketTooltip();
+  return (
+    <SocketTooltip 
+      socket={hoveredSocket.socket} 
+      position={hoveredSocket.position} 
+    />
+  );
+};
 
 export default App;

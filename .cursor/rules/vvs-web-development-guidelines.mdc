@@ -17,6 +17,7 @@ alwaysApply: false
 - Keep components under 150 lines
 - One component per file
 - Create automated tests after each stage
+
 ## STATE MANAGEMENT
 - Use Zustand for global state only
 - Keep component state local when possible

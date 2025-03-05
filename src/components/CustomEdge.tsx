@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { EdgeProps, getBezierPath } from 'reactflow';
 import { useToken } from '@chakra-ui/react';
 import { SocketType } from '../sockets/types';
+import './EdgeStyles.css';
 
 /**
- * Custom edge data interface
+ * Interface for edge data passed from the graph store
  */
 interface CustomEdgeData {
   sourceSocketType?: SocketType;
@@ -13,9 +14,20 @@ interface CustomEdgeData {
 }
 
 /**
- * CustomEdge component for enhanced visual representation of connections
- * Provides animated flow and better visual feedback for connections
- * Uses socket type based coloring for visual clarity
+ * Configuration for edge styling by socket type
+ */
+interface EdgeStyleConfig {
+  // No showLabel property needed anymore
+}
+
+/**
+ * CustomEdge component for socket connections
+ * Features:
+ * - Color based on socket type
+ * - No dashed styles or glow effects
+ * - Flow edges are thicker
+ * - No end markers
+ * - No text labels
  */
 export const CustomEdge: React.FC<EdgeProps> = ({
   id,
@@ -29,22 +41,12 @@ export const CustomEdge: React.FC<EdgeProps> = ({
   data,
   selected,
 }) => {
-  // Calculate the path for the edge
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
-
-  // Get the socket type data
+  // Extract edge data
   const edgeData = data as CustomEdgeData | undefined;
   const sourceSocketType = edgeData?.sourceSocketType || SocketType.ANY;
   const isValid = edgeData?.isValid !== false; // Default to true if not specified
   
-  // Get all socket colors from theme using the global mock
+  // Get all socket colors from theme
   const [
     booleanColor,
     numberColor,
@@ -52,7 +54,7 @@ export const CustomEdge: React.FC<EdgeProps> = ({
     flowColor,
     anyColor,
     errorColor,
-    yellowColor
+    selectedColor,
   ] = useToken('colors', [
     'socket.boolean',
     'socket.number',
@@ -63,84 +65,50 @@ export const CustomEdge: React.FC<EdgeProps> = ({
     'yellow.400'
   ]);
   
-  // Get the socket color based on type
-  const getSocketColor = (type: SocketType): string => {
+  // Calculate the path for the edge
+  const [edgePath] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+  
+  // No need for edgeStyleConfig anymore since we don't show labels
+  
+  // Generate CSS classes for the edge based on socket type and validity
+  const edgeClasses = useMemo(() => {
+    const classes = [`edge-${sourceSocketType.toLowerCase()}`];
+    
     if (!isValid) {
-      return errorColor;
+      classes.push('edge-invalid');
     }
     
-    switch (type) {
-      case SocketType.BOOLEAN:
-        return booleanColor;
-      case SocketType.NUMBER:
-        return numberColor;
-      case SocketType.STRING:
-        return stringColor;
-      case SocketType.FLOW:
-        return flowColor;
-      case SocketType.ANY:
-      default:
-        return anyColor;
-    }
-  };
+    return classes.join(' ');
+  }, [sourceSocketType, isValid]);
   
-  // Get the color for the source socket
-  const sourceColor = getSocketColor(sourceSocketType);
+  // Determine edge color based on socket type
+  // Selected state is handled purely by CSS
+  const edgeColor = useMemo(() => {
+    if (!isValid) return errorColor;
+    
+    return getSocketColor(sourceSocketType, {
+      booleanColor,
+      numberColor,
+      stringColor,
+      flowColor,
+      anyColor,
+      errorColor
+    });
+  }, [sourceSocketType, isValid, booleanColor, numberColor, stringColor, flowColor, anyColor, errorColor]);
   
-  // Determine animation speed based on socket type
-  let animationDuration = '1s';
-  let dashArray = '5,5';
+  // Determine base stroke width - flow edges are thicker in CSS
+  const baseStrokeWidth = sourceSocketType === SocketType.FLOW ? 5 : (style.strokeWidth || 2.5);
   
-  // Customize animation based on socket type
-  switch (sourceSocketType) {
-    case SocketType.FLOW:
-      animationDuration = '0.5s'; // Faster for flow connections
-      dashArray = '5,3';
-      break;
-    case SocketType.NUMBER:
-      animationDuration = '1.2s';
-      dashArray = '4,4';
-      break;
-    case SocketType.BOOLEAN:
-      animationDuration = '0.8s';
-      dashArray = '2,4';
-      break;
-    case SocketType.STRING:
-      animationDuration = '1.5s';
-      dashArray = '8,4';
-      break;
-    default:
-      animationDuration = '1s';
-      dashArray = '5,5';
-  }
-
-  // Determine if the edge is selected
-  const strokeWidth = selected ? 4 : style.strokeWidth || 3;
-  
-  // Create a unique ID for the marker
-  const markerId = `edge-marker-${id}`;
-
-  // Use yellow color for selected edges or socket color for normal edges
-  const edgeColor = selected ? yellowColor : sourceColor;
-
   return (
     <>
-      {/* Define marker for the edge */}
-      <defs>
-        <marker
-          id={markerId}
-          viewBox="0 0 12 12"
-          refX="6"
-          refY="6"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto"
-        >
-          <circle cx="6" cy="6" r="5" fill={edgeColor} />
-        </marker>
-      </defs>
-      
-      {/* Invisible wider path for better selection */}
+      {/* Invisible wider path for easier selection */}
       <path
         d={edgePath}
         strokeWidth={20}
@@ -152,42 +120,57 @@ export const CustomEdge: React.FC<EdgeProps> = ({
         }}
       />
       
-      {/* Render the edge path */}
+      {/* The visible edge path with CSS classes for styling */}
       <path
         id={id}
-        className="react-flow__edge-path"
+        className={`react-flow__edge-path ${edgeClasses}`}
         d={edgePath}
-        strokeWidth={strokeWidth}
-        stroke={edgeColor}
-        strokeDasharray={sourceSocketType === SocketType.FLOW ? dashArray : undefined}
+        strokeWidth={baseStrokeWidth}
+        stroke={selected ? selectedColor : edgeColor} // Use socket type color or yellow when selected
         style={{
-          animation: sourceSocketType === SocketType.FLOW 
-            ? `flowAnimation ${animationDuration} linear infinite` 
-            : undefined,
+          strokeLinecap: 'round',
           pointerEvents: 'none',
         }}
-        markerEnd={`url(#${markerId})`}
       />
-      
-      {/* Add a label for flow edges */}
-      {sourceSocketType === SocketType.FLOW && (
-        <text
-          x={labelX}
-          y={labelY}
-          fill={edgeColor}
-          dominantBaseline="middle"
-          textAnchor="middle"
-          style={{
-            fontSize: '9px',
-            fontWeight: 'bold',
-            pointerEvents: 'none',
-          }}
-        >
-          FLOW
-        </text>
-      )}
     </>
   );
+};
+
+/**
+ * Get socket color based on socket type
+ */
+interface ColorOptions {
+  booleanColor: string;
+  numberColor: string;
+  stringColor: string;
+  flowColor: string;
+  anyColor: string;
+  errorColor: string;
+}
+
+const getSocketColor = (type: SocketType, colors: ColorOptions): string => {
+  switch (type) {
+    case SocketType.BOOLEAN:
+      return colors.booleanColor;
+    case SocketType.NUMBER:
+      return colors.numberColor;
+    case SocketType.STRING:
+      return colors.stringColor;
+    case SocketType.FLOW:
+      return colors.flowColor;
+    case SocketType.ANY:
+    default:
+      return colors.anyColor;
+  }
+};
+
+/**
+ * Get edge styling configuration based on socket type
+ * We no longer need this, but keeping a simpler version for consistency
+ */
+const getEdgeStyleBySocketType = (type: SocketType): EdgeStyleConfig => {
+  // Empty configuration since we don't need any special styling based on type anymore
+  return {};
 };
 
 export default CustomEdge; 

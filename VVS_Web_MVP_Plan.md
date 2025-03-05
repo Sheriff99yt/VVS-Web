@@ -35,6 +35,10 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Graph editor with node placement and connection
 - Code preview panel with language selection
 - Floating properties panel that appears near selected nodes
+- **Side panel tabs system:**
+  - VS Code-inspired side panel with collapsible tabs
+  - Tabs for Nodes, Library, and Files
+  - Ability to collapse the entire side panel by clicking the active tab
 - **Node documentation system:**
   - Built-in descriptions for each node type explaining its functionality
   - User-editable comments that appear in the generated code
