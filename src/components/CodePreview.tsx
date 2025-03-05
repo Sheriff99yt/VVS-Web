@@ -4,9 +4,11 @@ import MonacoEditor from '@monaco-editor/react';
 import useGraphStore from '../store/useGraphStore';
 import { generateCode, getAvailableCodeLanguages } from '../utils/codeGenerator/index';
 import { colorModeManager } from '../themes/theme';
+import LanguageSelector from './LanguageSelector';
 
 /**
  * CodePreview component - displays the generated code
+ * Supports multiple programming languages through language selection
  */
 export const CodePreview: React.FC = () => {
   const { 
@@ -14,12 +16,8 @@ export const CodePreview: React.FC = () => {
     edges, 
     updateGeneratedCode, 
     generatedCode, 
-    selectedLanguage, 
-    setSelectedLanguage 
+    selectedLanguage
   } = useGraphStore();
-  
-  // Available languages for code generation
-  const availableLanguages = getAvailableCodeLanguages();
   
   // Get current theme
   const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
@@ -48,9 +46,18 @@ export const CodePreview: React.FC = () => {
     };
   }, []);
   
-  // Handle language selection change
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedLanguage(e.target.value);
+  // Map language name to Monaco editor language identifier
+  const getMonacoLanguageId = (language: string): string => {
+    const languageMap: Record<string, string> = {
+      'Python': 'python',
+      'TypeScript': 'typescript',
+      'C++': 'cpp',
+      'Java': 'java',
+      'Go': 'go',
+      // Add more mappings as new languages are supported
+    };
+    
+    return languageMap[language] || language.toLowerCase();
   };
   
   return (
@@ -74,30 +81,13 @@ export const CodePreview: React.FC = () => {
         className="code-header"
       >
         <Text fontSize="sm" fontWeight="medium">Code Preview</Text>
-        
-        <Box width="120px">
-          <select
-            value={selectedLanguage}
-            onChange={handleLanguageChange}
-            className="language-select"
-            style={{
-              width: '100%',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.25rem',
-              fontSize: '0.75rem'
-            }}
-          >
-            {availableLanguages.map(lang => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
-        </Box>
+        <LanguageSelector width="140px" />
       </Flex>
       
       <Box flex="1" overflow="hidden">
         <MonacoEditor
           height="100%"
-          language={selectedLanguage.toLowerCase()}
+          language={getMonacoLanguageId(selectedLanguage)}
           value={generatedCode}
           options={{
             readOnly: true,

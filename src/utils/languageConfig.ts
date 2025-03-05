@@ -16,6 +16,7 @@ export interface LanguageConfig {
     ifStatement: string;
     elseStatement: string;
     forLoop: string;
+    whileLoop: string;
     
     // Function related
     functionDefinition: string;
@@ -53,7 +54,12 @@ export interface LanguageConfig {
   formatting: {
     indentation: string;
     statementEnd: string;
+    blockStart: string;    // E.g., { or : or nothing
+    blockEnd: string;      // E.g., } or nothing for indentation-based languages
   };
+  
+  // Common imports or includes needed for the language
+  standardImports?: string[];
 }
 
 /**
@@ -67,6 +73,7 @@ export const pythonConfig: LanguageConfig = {
     ifStatement: 'if $condition:',
     elseStatement: 'else:',
     forLoop: 'for $variable in range($start, $end):',
+    whileLoop: 'while $condition:',
     functionDefinition: 'def $name($parameters):',
     functionCall: '$name($arguments)',
     returnStatement: 'return $value',
@@ -92,7 +99,10 @@ export const pythonConfig: LanguageConfig = {
   formatting: {
     indentation: '    ',
     statementEnd: '',
+    blockStart: ':',
+    blockEnd: '',
   },
+  standardImports: []
 };
 
 /**
@@ -106,9 +116,10 @@ export const typeScriptConfig: LanguageConfig = {
     ifStatement: 'if ($condition) {',
     elseStatement: '} else {',
     forLoop: 'for (let $variable = $start; $variable < $end; $variable++) {',
+    whileLoop: 'while ($condition) {',
     functionDefinition: 'function $name($parameters) {',
     functionCall: '$name($arguments)',
-    returnStatement: 'return $value;',
+    returnStatement: 'return $value',
     variableDefinition: 'let $name = $value',
     lineComment: '// $comment',
     blockCommentStart: '/*',
@@ -131,7 +142,10 @@ export const typeScriptConfig: LanguageConfig = {
   formatting: {
     indentation: '  ',
     statementEnd: ';',
+    blockStart: '{',
+    blockEnd: '}',
   },
+  standardImports: []
 };
 
 /**
@@ -145,9 +159,10 @@ export const cppConfig: LanguageConfig = {
     ifStatement: 'if ($condition) {',
     elseStatement: '} else {',
     forLoop: 'for (int $variable = $start; $variable < $end; $variable++) {',
+    whileLoop: 'while ($condition) {',
     functionDefinition: '$returnType $name($parameters) {',
     functionCall: '$name($arguments)',
-    returnStatement: 'return $value;',
+    returnStatement: 'return $value',
     variableDefinition: '$type $name = $value',
     lineComment: '// $comment',
     blockCommentStart: '/*',
@@ -170,7 +185,14 @@ export const cppConfig: LanguageConfig = {
   formatting: {
     indentation: '    ',
     statementEnd: ';',
+    blockStart: '{',
+    blockEnd: '}',
   },
+  standardImports: [
+    '#include <iostream>',
+    '#include <string>',
+    '#include <vector>'
+  ]
 };
 
 /**
@@ -188,7 +210,11 @@ export const languageConfigs: Record<string, LanguageConfig> = {
  * @returns The language configuration
  */
 export const getLanguageConfig = (language: string): LanguageConfig => {
-  return languageConfigs[language] || pythonConfig;
+  const normalizedName = language.toLowerCase();
+  const config = Object.values(languageConfigs).find(
+    (config) => config.name.toLowerCase() === normalizedName
+  );
+  return config || pythonConfig;
 };
 
 /**
@@ -196,5 +222,5 @@ export const getLanguageConfig = (language: string): LanguageConfig => {
  * @returns Array of available language names
  */
 export const getAvailableLanguages = (): string[] => {
-  return Object.keys(languageConfigs);
+  return Object.values(languageConfigs).map(config => config.name);
 }; 

@@ -8,6 +8,7 @@ import {
   Tooltip
 } from '@chakra-ui/react';
 import { colorModeManager } from '../themes/theme';
+import LanguageSelector from './LanguageSelector';
 
 /**
  * Custom hook to handle color mode
@@ -97,7 +98,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({ isInfoOpen, onInfoToggle }) =>
           <Text fontSize="2xs" color="textMuted" className="app-version">MVP</Text>
         </Flex>
         
-        <Flex alignItems="center" gap={1.5}>
+        <Flex alignItems="center" gap={2}>
+          {/* Language selector */}
+          <Box>
+            <LanguageSelector width="110px" compact={true} />
+          </Box>
+          
+          <Box mx={1} height="14px">
+            <Box 
+              as="span" 
+              width="1px" 
+              height="100%" 
+              bg="toolbarBorder"
+              display="inline-block"
+            />
+          </Box>
+          
           <Box>
             <IconButton
               aria-label="Toggle info panel"
@@ -109,6 +125,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ isInfoOpen, onInfoToggle }) =>
               variant="ghost"
             />
           </Box>
+          
           <Button
             aria-label={`Switch to ${colorMode === 'dark' ? 'light' : 'dark'} mode`}
             title={`Switch to ${colorMode === 'dark' ? 'light' : 'dark'} mode`}

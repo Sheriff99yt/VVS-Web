@@ -1,7 +1,7 @@
 import { Edge, Node } from 'reactflow';
 import { BaseNodeData } from '../../nodes/types';
-import { CodeGeneratorFactory } from './CodeGeneratorFactory';
-import { getAvailableLanguages } from '../languageConfig';
+import { LanguageRegistry } from './languageRegistry';
+import { UniversalCodeGenerator } from './UniversalCodeGenerator';
 
 /**
  * Generate code from a node graph in the specified language
@@ -15,21 +15,22 @@ export const generateCode = (
   edges: Edge[],
   language: string = 'Python'
 ): string => {
-  const generator = CodeGeneratorFactory.createGenerator(language, nodes, edges);
+  // Get language configuration
+  const config = LanguageRegistry.getConfigWithFallback(language);
+  
+  // Create and use the universal generator
+  const generator = new UniversalCodeGenerator(nodes, edges, config);
   return generator.generate();
 };
 
 /**
- * Get the list of available languages for code generation
+ * Get available languages for code generation
  * @returns Array of available language names
  */
 export const getAvailableCodeLanguages = (): string[] => {
-  return getAvailableLanguages();
+  return LanguageRegistry.getAvailableLanguages();
 };
 
-// Export the factory and individual generators for direct use if needed
-export { CodeGeneratorFactory } from './CodeGeneratorFactory';
-export { BaseCodeGenerator } from './BaseCodeGenerator';
-export { PythonCodeGenerator } from './PythonCodeGenerator';
-export { TypeScriptCodeGenerator } from './TypeScriptCodeGenerator';
-export { CppCodeGenerator } from './CppCodeGenerator'; 
+// Export for direct use
+export { LanguageRegistry } from './languageRegistry';
+export { UniversalCodeGenerator } from './UniversalCodeGenerator'; 

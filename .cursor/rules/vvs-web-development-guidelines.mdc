@@ -6,7 +6,10 @@ alwaysApply: false
 ## MVP FOCUS
 - Implement only features explicitly listed in MVP plan
 - No persistence features until post-MVP
-- Python-only code generation
+- Multi-language code generation with simplified architecture
+  - Focus on Python, TypeScript, and C++ for MVP
+  - Use configuration-based approach for language definitions
+  - Implement a universal code generator that works with all languages
 - Ruthlessly question any feature not serving core functionality
 
 ## CODE STANDARDS
@@ -34,6 +37,16 @@ alwaysApply: false
 - Clear visual distinction between socket types
 - Strong typing for all socket connections
 - Consistent connection validation rules
+
+## CODE GENERATION
+- Use a central language registry for managing language configurations
+- Define each language via configuration objects, not specialized classes
+- Keep language definitions separate from generation logic
+- Follow a template-based approach for language syntax
+- Ensure consistent code formatting for each language
+- Generate code comments that match language-specific syntax
+- Write comprehensive tests for each supported language
+- Validate generated code against expected output for all node types
 
 ## UI COMPONENTS
 - Follow Chakra UI patterns for consistency
