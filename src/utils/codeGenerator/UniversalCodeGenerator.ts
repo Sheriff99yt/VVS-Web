@@ -195,27 +195,58 @@ export class UniversalCodeGenerator {
     const name = this.getInputValue(node.id, 'name', 'variable');
     const value = this.getInputValue(node.id, 'value', '0');
     
-    this.variables.add(name);
+    // Remove quotes from variable names (they should never be quoted)
+    const cleanName = this.cleanValue(name, 'string');
     
-    let code = this.config.syntax.variableDefinition
-      .replace('$name', name)
-      .replace('$value', value);
+    this.variables.add(cleanName);
     
-    // Add type hints for statically typed languages
-    if (this.config.name.toLowerCase() === 'java') {
+    let code = this.config.syntax.variableDefinition;
+    
+    // Handle type inference for statically typed languages
+    const languageName = this.config.name.toLowerCase();
+    
+    if (languageName === 'java') {
       // Try to determine the type from the value
       let type = 'Object';
+      
+      // Store original value without quotes for numeric checking
+      const numericValue = this.cleanValue(value, 'string');
+      
       if (value.startsWith('"') || value.startsWith("'")) {
         type = 'String';
       } else if (value === 'true' || value === 'false') {
         type = 'boolean';
-      } else if (!isNaN(Number(value))) {
+      } else if (!isNaN(Number(numericValue))) {
+        // Use the cleaned value for numeric checks
         // Check if it's likely a decimal
-        type = value.includes('.') ? 'double' : 'int';
+        type = numericValue.includes('.') ? 'double' : 'int';
+      }
+      
+      code = code.replace('$type', type);
+    } 
+    else if (languageName === 'c++') {
+      // Determine the C++ type
+      let type = 'auto';
+      
+      // Store original value without quotes for numeric checking
+      const numericValue = this.cleanValue(value, 'string');
+      
+      if (value.startsWith('"') || value.startsWith("'")) {
+        type = 'std::string';
+      } else if (value === 'true' || value === 'false') {
+        type = 'bool';
+      } else if (!isNaN(Number(numericValue))) {
+        // Use the cleaned value for numeric checks
+        // Check if it's likely a decimal
+        type = numericValue.includes('.') ? 'double' : 'int';
       }
       
       code = code.replace('$type', type);
     }
+    
+    // Replace other template variables
+    code = code.replace('$name', cleanName)
+               .replace('$value', value);
     
     this.addToCode(code);
     this.addLineEnd();
@@ -261,12 +292,15 @@ export class UniversalCodeGenerator {
     const start = this.getInputValue(node.id, 'start', '0');
     const end = this.getInputValue(node.id, 'end', '10');
     
-    // Add variable to known variables
-    this.variables.add(variable);
+    // Clean variable name by removing quotes
+    const cleanVariable = this.cleanValue(variable, 'string');
     
-    // For loop
-    const forCode = this.config.syntax.forLoop
-      .replace('$variable', variable)
+    // Add variable to known variables
+    this.variables.add(cleanVariable);
+    
+    // For loop - handle all occurrences of $variable in the template
+    let forCode = this.config.syntax.forLoop
+      .replace(/\$variable/g, cleanVariable)
       .replace('$start', start)
       .replace('$end', end);
     
@@ -301,31 +335,50 @@ export class UniversalCodeGenerator {
    * @param node The input node
    */
   protected processInput(node: Node<BaseNodeData>): void {
-    const prompt = this.getInputValue(node.id, 'prompt', '""');
-    const variable = this.getInputValue(node.id, 'variable', 'userInput');
-    
-    // Add variable to known variables
-    this.variables.add(variable);
+    const prompt = this.getInputValue(node.id, 'prompt', '"Enter a value: "');
+    const variableName = node.data.properties?.variableName || 'input';
     
     const languageName = this.config.name.toLowerCase();
     
-    if (languageName === 'go') {
-      // Special handling for Go input
-      this.addToCode(`fmt.Print(${prompt})`);
+    if (languageName === 'python') {
+      // Python input
+      const code = `${variableName} = ${this.config.syntax.input.replace('$prompt', prompt)}`;
+      this.addToCode(code);
       this.addLineEnd();
-      this.addToCode(`${variable}, _ := reader.ReadString('\\n')`);
+    } 
+    else if (languageName === 'typescript' || languageName === 'javascript') {
+      // JavaScript/TypeScript prompt
+      this.addToCode(`const ${variableName} = prompt(${prompt});`);
       this.addLineEnd();
-      this.addToCode(`${variable} = strings.TrimSpace(${variable})`);
+    } 
+    else if (languageName === 'java') {
+      // Java input
+      this.addToCode(`System.out.print(${prompt});`);
       this.addLineEnd();
-    } else {
-      // Default handling for other languages
-      const inputCode = this.config.syntax.variableDefinition
-        .replace('$name', variable)
-        .replace('$value', this.config.syntax.input.replace('$prompt', prompt))
-        .replace('$variable', variable)
-        .replace('$type', 'String'); // For languages that need type
-      
-      this.addToCode(inputCode);
+      this.addToCode(`String ${variableName} = scanner.nextLine();`);
+      this.addLineEnd();
+    } 
+    else if (languageName === 'c++') {
+      // C++ input
+      this.addToCode(`std::cout << ${prompt};`);
+      this.addLineEnd();
+      this.addToCode(`std::string ${variableName};`);
+      this.addLineEnd();
+      this.addToCode(`std::getline(std::cin, ${variableName});`);
+      this.addLineEnd();
+    } 
+    else if (languageName === 'go') {
+      // Go input handling
+      this.addToCode(`fmt.Print(${prompt});`);
+      this.addLineEnd();
+      this.addToCode(`${variableName}, _ := reader.ReadString('\\n');`);
+      this.addLineEnd();
+      this.addToCode(`${variableName} = strings.TrimSpace(${variableName});`);
+      this.addLineEnd();
+    } 
+    else {
+      // Generic fallback
+      this.addToCode(`// Input: ${prompt} -> ${variableName}`);
       this.addLineEnd();
     }
     
@@ -410,24 +463,14 @@ export class UniversalCodeGenerator {
    * @param socketName The name of the output socket
    */
   protected processOutputSocket(node: Node<BaseNodeData>, socketName: string): void {
-    // Find the socket by name
-    const socket = node.data.outputs?.find(output => 
-      output.type === SocketType.FLOW && output.name === socketName
-    );
-    if (!socket) return;
+    const connections = this.getConnectionsFromOutput(node.id, socketName);
     
-    // Find connected edge
-    const edge = this.edges.find(e => 
-      e.source === node.id && e.sourceHandle === socket.id
-    );
-    if (!edge) return;
-    
-    // Find target node
-    const targetNode = this.nodes.find(n => n.id === edge.target);
-    if (!targetNode) return;
-    
-    // Process target node
-    this.processNode(targetNode);
+    for (const connection of connections) {
+      const targetNode = this.nodes.find(n => n.id === connection.target);
+      if (targetNode && !this.processedNodes.has(targetNode.id)) {
+        this.processNode(targetNode);
+      }
+    }
   }
   
   /**
@@ -450,82 +493,109 @@ export class UniversalCodeGenerator {
   }
   
   /**
-   * Get the value of an input socket
-   * @param nodeId The node ID
+   * Get the value for an input socket, either from a connected node or default value
+   * @param nodeId The ID of the node
    * @param inputName The name of the input socket
-   * @param defaultValue The default value if not found
-   * @returns The value of the input
+   * @param defaultValue Default value if no connection or value is found
+   * @returns The value for the input
    */
   protected getInputValue(nodeId: string, inputName: string, defaultValue: string): string {
     // Find the node
     const node = this.nodes.find(n => n.id === nodeId);
     if (!node) return defaultValue;
     
-    // Find the socket by name
-    const socket = node.data.inputs?.find(input => input.name === inputName);
-    if (!socket) return defaultValue;
+    // Find the input socket
+    const input = node.data.inputs?.find(i => i.name === inputName || i.id === inputName);
+    if (!input) return defaultValue;
     
-    // Check if socket has a default value
-    if (socket.defaultValue !== undefined && socket.defaultValue !== null) {
-      if (typeof socket.defaultValue === 'string') {
-        // For strings, wrap in quotes if not already
-        if (socket.type === SocketType.STRING && 
-            !socket.defaultValue.startsWith('"') && 
-            !socket.defaultValue.startsWith("'")) {
-          return `"${socket.defaultValue}"`;
-        }
-        return socket.defaultValue;
+    // Check if this input is connected to an output
+    const connection = this.edges.find(
+      edge => edge.target === nodeId && edge.targetHandle === input.id
+    );
+    
+    if (connection) {
+      // Find the source node of the connection
+      const sourceNode = this.nodes.find(n => n.id === connection.source);
+      if (!sourceNode) return input.defaultValue || defaultValue;
+      
+      // Find the source socket
+      const sourceSocket = sourceNode.data.outputs?.find(o => o.id === connection.sourceHandle);
+      if (!sourceSocket) return input.defaultValue || defaultValue;
+      
+      // If it's a variable getter or variable definition, return the variable name
+      if (sourceNode.data.type === NodeType.VARIABLE_GETTER) {
+        const varName = this.getInputValue(sourceNode.id, 'name', 'unknown');
+        return varName.replace(/["']/g, ''); // Remove quotes from variable names
       }
-      return String(socket.defaultValue);
-    }
-    
-    // Check if socket is connected
-    const edge = this.edges.find(e => 
-      e.target === nodeId && e.targetHandle === socket.id
-    );
-    
-    if (!edge) return defaultValue;
-    
-    // Find source node and socket
-    const sourceNode = this.nodes.find(n => n.id === edge.source);
-    if (!sourceNode) return defaultValue;
-    
-    const sourceSocket = sourceNode.data.outputs?.find(output => 
-      output.id === edge.sourceHandle
-    );
-    if (!sourceSocket) return defaultValue;
-    
-    // Process based on source node type
-    switch (sourceNode.data.type) {
-      case NodeType.VARIABLE_GETTER:
-        return this.getInputValue(sourceNode.id, 'name', 'unknown_var');
-      case NodeType.ADD:
-        return this.processMathOperation(sourceNode, this.config.operators.add);
-      case NodeType.SUBTRACT:
-        return this.processMathOperation(sourceNode, this.config.operators.subtract);
-      case NodeType.MULTIPLY:
-        return this.processMathOperation(sourceNode, this.config.operators.multiply);
-      case NodeType.DIVIDE:
-        return this.processMathOperation(sourceNode, this.config.operators.divide);
-      case NodeType.AND:
-        return this.processMathOperation(sourceNode, this.config.operators.and);
-      case NodeType.OR:
-        return this.processMathOperation(sourceNode, this.config.operators.or);
-      case NodeType.GREATER_THAN:
-        return this.processMathOperation(sourceNode, this.config.operators.greaterThan);
-      case NodeType.LESS_THAN:
-        return this.processMathOperation(sourceNode, this.config.operators.lessThan);
-      case NodeType.EQUAL:
-        return this.processMathOperation(sourceNode, this.config.operators.equal);
-      case NodeType.USER_INPUT:
-        return this.getInputValue(sourceNode.id, 'variable', 'userInput');
-      default:
-        // For other node types, use the output value if available
-        if (sourceSocket.defaultValue !== undefined && sourceSocket.defaultValue !== null) {
-          return String(sourceSocket.defaultValue);
+      
+      if (sourceNode.data.type === NodeType.VARIABLE_DEFINITION) {
+        const varName = this.getInputValue(sourceNode.id, 'name', 'unknown');
+        return varName.replace(/["']/g, ''); // Remove quotes from variable names
+      }
+      
+      // For math operations, process the operation and return result
+      if (
+        sourceNode.data.type === NodeType.ADD ||
+        sourceNode.data.type === NodeType.SUBTRACT ||
+        sourceNode.data.type === NodeType.MULTIPLY ||
+        sourceNode.data.type === NodeType.DIVIDE
+      ) {
+        let operatorTemplate = '';
+        switch (sourceNode.data.type) {
+          case NodeType.ADD:
+            operatorTemplate = this.config.operators.add;
+            break;
+          case NodeType.SUBTRACT:
+            operatorTemplate = this.config.operators.subtract;
+            break;
+          case NodeType.MULTIPLY:
+            operatorTemplate = this.config.operators.multiply;
+            break;
+          case NodeType.DIVIDE:
+            operatorTemplate = this.config.operators.divide;
+            break;
         }
-        return defaultValue;
+        return this.processMathOperation(sourceNode, operatorTemplate);
+      }
+      
+      // For logic operations, process the operation and return result
+      if (
+        sourceNode.data.type === NodeType.AND ||
+        sourceNode.data.type === NodeType.OR ||
+        sourceNode.data.type === NodeType.GREATER_THAN ||
+        sourceNode.data.type === NodeType.LESS_THAN ||
+        sourceNode.data.type === NodeType.EQUAL
+      ) {
+        let operatorTemplate = '';
+        switch (sourceNode.data.type) {
+          case NodeType.AND:
+            operatorTemplate = this.config.operators.and;
+            break;
+          case NodeType.OR:
+            operatorTemplate = this.config.operators.or;
+            break;
+          case NodeType.GREATER_THAN:
+            operatorTemplate = this.config.operators.greaterThan;
+            break;
+          case NodeType.LESS_THAN:
+            operatorTemplate = this.config.operators.lessThan;
+            break;
+          case NodeType.EQUAL:
+            operatorTemplate = this.config.operators.equal;
+            break;
+        }
+        return this.processMathOperation(sourceNode, operatorTemplate);
+      }
+      
+      // For user input, return the variable name
+      if (sourceNode.data.type === NodeType.USER_INPUT) {
+        const varName = sourceNode.data.properties?.variableName || 'input';
+        return varName;
+      }
     }
+    
+    // If no valid connection, return default value from the input socket
+    return input.defaultValue || defaultValue;
   }
   
   /**
@@ -610,5 +680,48 @@ export class UniversalCodeGenerator {
   protected addGoClosing(): void {
     this.indentationLevel = 1; // For closing the main function
     this.addToCode("}\n");
+  }
+  
+  /**
+   * Get all connections from a specific output socket of a node
+   * @param nodeId The node ID
+   * @param socketName The name of the output socket
+   * @returns Array of connections from the output socket
+   */
+  protected getConnectionsFromOutput(nodeId: string, socketName: string): Edge[] {
+    // Find the node
+    const node = this.nodes.find(n => n.id === nodeId);
+    if (!node) return [];
+    
+    // Find the socket by name
+    const socket = node.data.outputs?.find(output => 
+      output.name === socketName || output.id === socketName
+    );
+    if (!socket) return [];
+    
+    // Find all connected edges
+    return this.edges.filter(edge => 
+      edge.source === nodeId && edge.sourceHandle === socket.id
+    );
+  }
+  
+  /**
+   * Clean a value by removing quotes if it's a string
+   * @param value The value to clean
+   * @param type Optional type hint (force string cleaning)
+   * @returns The cleaned value
+   */
+  protected cleanValue(value: string, type?: string): string {
+    if (!value) return '';
+    
+    // Always remove quotes for string type
+    if (type === 'string' || 
+        (value.startsWith('"') && value.endsWith('"')) || 
+        (value.startsWith("'") && value.endsWith("'"))) {
+      // Remove surrounding quotes
+      return value.replace(/^["']|["']$/g, '');
+    }
+    
+    return value;
   }
 } 

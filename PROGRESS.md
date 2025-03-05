@@ -79,6 +79,16 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
 - [ ] Test language-specific code generation
 - [ ] Fix identified bugs and issues
 
+## Testing Progress
+
+- [x] Basic tests for UniversalCodeGenerator
+- [x] Complex tests for multi-language code generation
+- [x] Tests for variable definitions in multiple languages
+- [x] Tests for if statements and conditions
+- [x] Tests for for loops
+- [x] Tests for complex data flow with multiple operations
+- [ ] Update legacy tests to work with new code generation system
+
 ## Outstanding Issues
 
 1. **UI Issues**:
