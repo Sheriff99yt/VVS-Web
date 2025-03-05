@@ -578,7 +578,7 @@ export const NodeLibrary: React.FC = () => {
           transform: 'translateY(0) scale(0.98)',
         }}
         boxShadow={isMatch ? 'var(--node-button-match-shadow)' : 'var(--node-button-shadow)'}
-        bg={isMatch ? 'var(--node-button-match-bg)' : 'transparent'}
+        bg={isMatch ? 'var(--node-button-match-bg)' : 'var(--node-button-bg)'}
       >
         <Box 
           position="absolute" 
