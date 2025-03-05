@@ -124,14 +124,26 @@ This document tracks the progress of the Vision Visual Scripting Web project dev
    - ~~Implement toolbar with light/dark mode toggle~~ (Completed)
    - ~~Implement comprehensive theme system with light and dark mode support~~ (Completed)
    - ~~Implement node documentation with descriptions and comments~~ (Completed)
-11. Implement multi-language code generation:
-    - Design and implement abstract code generator architecture
-    - Refactor existing Python code generator to use the new architecture
-    - Create language configuration system for syntax templates
-    - Implement TypeScript code generator
-    - Implement C++ code generator
-    - Add language selection UI to code preview panel
-    - Update Monaco Editor to use language-specific syntax highlighting
+11. Implement simplified multi-language code generation:
+    - Create streamlined language configuration system
+      - Define standard interface for language syntax templates
+      - Add formatting rules and standardized operators
+      - Create sample configurations for Python, TypeScript, and C++
+    - Develop language registry for managing supported languages
+      - Simple API for registering and retrieving language configurations
+      - Function to list all available languages for UI selection
+    - Implement universal code generator
+      - Create single generator that works with any language configuration
+      - Support for different block styles (braces vs indentation-based)
+      - Common code generation logic with language-specific formatting
+    - Integrate with existing codebase
+      - Update code preview panel to use the new system
+      - Implement language selection dropdown
+      - Ensure Monaco Editor uses language-specific syntax highlighting
+    - Add tests for language-specific code generation
+      - Test language configurations
+      - Test universal code generator with different languages
+      - Validate output code format and structure
 12. Improve Socket Input Widget system:
     - Enhanced validation for input values
     - Better visual integration with node design

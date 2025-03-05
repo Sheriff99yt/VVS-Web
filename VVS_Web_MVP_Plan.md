@@ -80,6 +80,8 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 
 **Included in MVP:**
 - Multi-language code generation (Python, TypeScript, C++)
+- Simplified language configuration system for extending language support
+- Universal code generator that works with any registered language
 - Language selection dropdown in code preview panel
 - Real-time code updates as graph changes
 - Basic error detection in generated code
@@ -90,6 +92,11 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
   - Comments are appropriately formatted for each target language
   - Comments appear above the code generated for each node
   - Enhanced code readability for complex graphs
+- **Language Registry System:**
+  - Centralized registry for managing supported languages
+  - Simple configuration-based language definitions
+  - Each language defined by syntax templates, operators, and formatting rules
+  - Extensible system allowing easy addition of new languages post-MVP
 
 ### 3.4 Features Explicitly Excluded from MVP
 
@@ -207,7 +214,10 @@ After releasing the MVP, the following features will be prioritized:
 3. Export/import capabilities
 4. Auto-save functionality
 5. Additional node types for more complex programming
-6. Support for additional programming languages
+6. Support for additional programming languages:
+   - Using the simplified language configuration system
+   - Adding configurations for languages like Java, Go, Rust, C#, Ruby, PHP, Swift, Kotlin
+   - Optimizing the universal code generator for broader language compatibility
 7. Enhanced socket type system with custom types
 
 ## 9. User Guidance for MVP
