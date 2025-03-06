@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { NodeProps, Position, useEdges, useReactFlow } from 'reactflow';
 import { Box, Text } from '@chakra-ui/react';
-import { BaseNodeData, NodeType } from './types';
+import { BaseNodeData } from './types';
 import Socket from '../sockets/Socket';
 import { SocketDefinition, SocketDirection, SocketType } from '../sockets/types';
 
@@ -29,12 +29,32 @@ export const BaseNode: React.FC<NodeProps<BaseNodeData>> = memo(({ id, data, sel
       nodes.map(node => {
         if (node.id === id) {
           const newData = { ...node.data };
+          
+          // Update the socket's defaultValue
           newData.inputs = newData.inputs.map((socket: SocketDefinition) => {
             if (socket.id === socketId) {
               return { ...socket, defaultValue: value };
             }
             return socket;
           });
+          
+          // Also update corresponding property if needed
+          const socket = newData.inputs.find((s: SocketDefinition) => s.id === socketId);
+          if (socket && newData.properties) {
+            // Create properties object if it doesn't exist
+            if (!newData.properties) {
+              newData.properties = {};
+            }
+            
+            // Store the value in both socket ID and socket name properties 
+            // to ensure consistent access
+            newData.properties = {
+              ...newData.properties,
+              [socketId]: value,
+              [socket.name.toLowerCase()]: value
+            };
+          }
+          
           return { ...node, data: newData };
         }
         return node;

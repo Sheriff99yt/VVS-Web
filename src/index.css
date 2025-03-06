@@ -899,26 +899,76 @@ button:focus-visible {
   z-index: 1;
 }
 
-:root[data-theme="light"] .socket-input {
-  background-color: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--text-color);
+/* New styles for slider widget */
+.socket-slider-container {
+  display: flex;
+  align-items: center;
+  width: calc(var(--socket-input-width) + 40px);
+  margin-left: var(--socket-input-margin);
 }
 
-:root[data-theme="light"] .socket-input:hover {
-  background-color: var(--button-hover);
-  border-color: var(--input-focus-border);
+.socket-slider {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  margin-right: 8px;
 }
 
-:root[data-theme="dark"] .socket-input {
-  background-color: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--text-color);
+.socket-slider-value {
+  width: 40px !important;
+  margin-left: 0 !important;
+  text-align: right;
 }
 
-:root[data-theme="dark"] .socket-input:hover {
-  background-color: var(--button-hover);
-  border-color: var(--input-focus-border);
+/* Styles for dropdown widget */
+.socket-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+  padding-right: 2rem !important;
+}
+
+/* Styles for textarea widget */
+.socket-textarea {
+  min-height: 60px;
+  resize: vertical;
+  font-family: monospace;
+  font-size: var(--socket-input-font-size);
+  line-height: 1.4;
+  width: var(--socket-input-width);
+  margin-left: var(--socket-input-margin);
+}
+
+/* Styles for color picker widget */
+.socket-color {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  background: none !important;
+  cursor: pointer;
+  border: none;
+  margin-left: 0 !important;
+}
+
+.socket-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.socket-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.socket-color-preview {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  margin-right: 4px;
+  border: 1px solid var(--border-color);
 }
 
 /* Flow socket modern directional design */
@@ -1437,4 +1487,27 @@ button:focus-visible {
   opacity: 1;
   width: 3px;
   border-radius: 0;
+}
+
+/* Socket styles for different themes */
+:root[data-theme="light"] .socket-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+:root[data-theme="light"] .socket-input:hover {
+  background-color: var(--button-hover);
+  border-color: var(--input-focus-border);
+}
+
+:root[data-theme="dark"] .socket-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+:root[data-theme="dark"] .socket-input:hover {
+  background-color: var(--button-hover);
+  border-color: var(--input-focus-border);
 }

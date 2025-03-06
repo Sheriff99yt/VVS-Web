@@ -12,6 +12,7 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - Provide essential node types for basic programming
 - Deliver a clean, intuitive user interface
 - Demonstrate the core value proposition with minimal development time
+- Enable intuitive code nesting through visual node connections
 
 ## 3. MVP Core Features
 
@@ -24,6 +25,11 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
 - **Variables:** Variable definition and retrieval
 - **Input/Output:** Print, User Input
 - **Function:** Basic function definition and calling
+
+**Key Node Features:**
+- Flow-based connections that establish execution order and code nesting structure
+- Control structure nodes (If, For Loop) that automatically generate properly nested code blocks
+- Function definition nodes that establish proper scoping for contained code
 
 ### 3.2 User Interface
 
@@ -65,6 +71,7 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
   - Visual indicators for compatible connections
   - Error highlighting for incompatible connections
   - Consistent color scheme across the application
+  - Visual distinction between regular data sockets and flow sockets that determine execution order
 - **Info panel system:**
   - Toggleable info panel with an info button
   - Socket type legend showing color coding for different data types
@@ -97,6 +104,15 @@ This MVP plan outlines the minimal feature set needed to deliver a functional ve
   - Simple configuration-based language definitions
   - Each language defined by syntax templates, operators, and formatting rules
   - Extensible system allowing easy addition of new languages post-MVP
+- **Code Nesting System:**
+  - Hierarchical code structure determined by node connections
+  - Flow sockets define execution order and nesting relationships
+  - Language-specific indentation and block formatting (braces vs. indentation)
+  - Proper scope management for variables and functions
+  - Automatic handling of nested control structures (if/else, loops)
+  - Intelligent traversal of connected nodes to maintain proper nesting depth
+  - Context-aware code block generation with appropriate start/end markers
+  - Visual representation of code nesting through node connections
 
 ### 3.4 Features Explicitly Excluded from MVP
 
@@ -126,7 +142,7 @@ The following features are intentionally excluded from the MVP to focus developm
 1. **Node System:** Basic node structure and functionality
 2. **Socket System:** Essential socket types and connections with type-based coloring
 3. **Graph Editor:** Fundamental graph manipulation capabilities
-4. **Code Generation:** Multi-language support with language-specific formatting
+4. **Code Generation:** Multi-language support with language-specific formatting and proper nesting
 5. **UI System:** Core UI components and layout
 
 ## 5. MVP Development Phases
@@ -143,6 +159,7 @@ The following features are intentionally excluded from the MVP to focus developm
 - Implement socket type coloring for visual clarity
 - Implement Monaco Editor for code preview
 - Add basic Python code generation
+- Develop initial code nesting system for control flow structures
 
 ### Phase 3: Essential Features (Weeks 5-6)
 - Complete essential node library
@@ -151,12 +168,14 @@ The following features are intentionally excluded from the MVP to focus developm
 - Add socket connection validation
 - Refine socket type coloring and connection feedback
 - Implement multi-language code generation architecture
+- Enhance code nesting to support all control structures and language-specific formatting
 
 ### Phase 4: Polish & Testing (Weeks 7-8)
 - Refine UI and interactions
 - Fix bugs and issues
 - Optimize performance for basic operations
 - Complete language-specific code generators
+- Test complex code nesting scenarios across languages
 - Prepare for MVP release
 
 ## 6. Testing Strategy for MVP
@@ -179,6 +198,7 @@ The following features are intentionally excluded from the MVP to focus developm
 - **State Management:** Unit tests for Zustand store operations (useGraphStore)
 - **Code Generation:** Unit tests for the code generators
 - **Error Handling:** Unit tests for connection error handling and alerts
+- **Code Nesting:** Unit tests for properly nested code generation in various languages
 
 ### 6.3 Remaining Test Goals
 - Implement tests for main UI components (NodeLibrary, GraphEditor, PropertiesPanel)
@@ -188,6 +208,11 @@ The following features are intentionally excluded from the MVP to focus developm
 - Validate complete workflow from node creation to code generation
 - Test socket type coloring and connection validation
 - Test language-specific code generation
+- Test complex code nesting scenarios:
+  - Nested if statements and loops
+  - Function definitions with nested control structures
+  - Variable scope handling in nested code blocks
+  - Consistent indentation across different nesting levels
 
 ### 6.4 Testing Documentation
 - Created dedicated testing documentation (TESTING.md)
@@ -205,6 +230,8 @@ The MVP will be considered successful if users can:
 6. Easily identify socket types through consistent color coding
 7. View node descriptions to understand node functionality
 8. Add comments to nodes that appear in the generated code
+9. Create complex logic with properly nested code generation
+10. Visually understand how node connections determine code structure and nesting
 
 ## 8. Post-MVP Priorities
 
@@ -219,6 +246,11 @@ After releasing the MVP, the following features will be prioritized:
    - Adding configurations for languages like Java, Go, Rust, C#, Ruby, PHP, Swift, Kotlin
    - Optimizing the universal code generator for broader language compatibility
 7. Enhanced socket type system with custom types
+8. Advanced code nesting features:
+   - Custom block structures beyond standard control flow
+   - Enhanced visualization of nested code relationships
+   - Support for specialized language-specific nesting patterns
+   - Optimization of generated code structure for readability
 
 ## 9. User Guidance for MVP
 
@@ -230,7 +262,169 @@ Since the MVP operates as a runtime-only experience, we will implement:
 - Visual guide for socket type color meanings
 - Language selection guidance for code generation
 - Tool tips explaining how to use node descriptions and comments
+- Interactive tutorial highlighting how flow connections determine code structure and nesting
 
 ## 10. Conclusion
 
-This MVP plan creates an ultra-focused first version that delivers just the core value of VVS Web - the visual programming experience itself with multi-language support. By removing all persistence features, development can move much faster to demonstrate the fundamental concept, with persistence and project management features to follow in subsequent releases. 
+This MVP plan creates an ultra-focused first version that delivers just the core value of VVS Web - the visual programming experience itself with multi-language support. By removing all persistence features, development can move much faster to demonstrate the fundamental concept, with persistence and project management features to follow in subsequent releases. The implementation of the code nesting system is crucial to the MVP's success as it enables users to create properly structured code through intuitive visual connections, making the relationship between the visual graph and generated code clear and understandable. 
+
+## 11. Node Creation System
+
+To streamline the development process and make it easier to add new nodes to the system, we will implement a comprehensive Node Creation System. This system will significantly reduce the time and effort required to create new nodes, minimize errors, and improve maintainability.
+
+### 11.1 Current Node Creation Process Challenges
+
+The existing process for adding new nodes requires:
+1. Updating multiple files (types.ts, NodeLibrary.tsx, UniversalCodeGenerator.ts)
+2. Ensuring consistent IDs between node templates and code generators
+3. Manually setting up default values and properties
+4. Implementing code generation logic for each language
+5. Maintaining consistency across all components
+
+This process is error-prone, time-consuming, and creates a high barrier to extending the system.
+
+### 11.2 Node Creation System Architecture
+
+The new system will consist of:
+
+#### 11.2.1 Node Factory Pattern
+
+A centralized node registration system with:
+- Single registration point for new nodes
+- Automatic integration with node categories
+- Automatic template generation
+- Code generation handler registration
+
+```typescript
+// Example Node Factory usage
+registerNode({
+  type: NodeType.ADD,
+  label: 'Add',
+  category: 'Math Operations',
+  inputs: [
+    { id: 'a', name: 'A', type: SocketType.NUMBER, defaultValue: 0 },
+    { id: 'b', name: 'B', type: SocketType.NUMBER, defaultValue: 0 }
+  ],
+  outputs: [
+    { id: 'result', name: 'Result', type: SocketType.NUMBER }
+  ],
+  properties: {
+    description: 'Adds two numbers together',
+    a: 0,
+    b: 0
+  },
+  codeGenerationHandler: (node, generator) => {
+    // Code generation logic
+  }
+});
+```
+
+#### 11.2.2 Node Template System
+
+Predefined templates for common node patterns:
+- Math operation template
+- Logic operation template
+- Control flow template
+- Variable operation template
+
+```typescript
+// Example template usage
+const AddNode = createMathOperationNode({
+  type: NodeType.ADD,
+  label: 'Add',
+  operator: '+',
+  description: 'Adds two numbers together'
+});
+```
+
+#### 11.2.3 Node Definition File Structure
+
+A structured file organization for better maintainability:
+- Separate definition files by node category
+- Centralized registration through index files
+- Clear separation of node definitions from implementation
+
+```
+src/
+  nodes/
+    definitions/
+      MathNodes.ts
+      LogicNodes.ts
+      ControlFlowNodes.ts
+      VariableNodes.ts
+      index.ts  # Exports and registers all nodes
+    templates/
+      MathOperationTemplate.ts
+      LogicOperationTemplate.ts
+      ControlFlowTemplate.ts
+    NodeFactory.ts
+```
+
+#### 11.2.4 Language Configuration System
+
+Enhanced language support with:
+- Operation-based language configurations
+- Simplified syntax templates
+- Automatic formatting based on node type
+- Easy extension for new languages
+
+```typescript
+// Example language configuration
+export const mathOperations = {
+  add: {
+    python: '$a + $b',
+    typescript: '$a + $b',
+    cpp: '$a + $b',
+    java: '$a + $b',
+    go: '$a + $b',
+  }
+};
+```
+
+#### 11.2.5 Validation and Documentation
+
+Built-in tools for ensuring correctness:
+- Node definition validation
+- Socket ID consistency checking
+- Default value validation
+- Automatic documentation generation
+- Test case generation
+
+### 11.3 Implementation Strategy
+
+The Node Creation System will be implemented in phases:
+
+1. **Foundation Phase (Week 1):**
+   - Create NodeFactory implementation
+   - Define basic node templates
+   - Set up node definition file structure
+
+2. **Integration Phase (Week 2):**
+   - Refactor existing nodes to use the new system
+   - Implement language configuration enhancements
+   - Create validation utilities
+
+3. **Enhancement Phase (Week 3):**
+   - Develop documentation generators
+   - Create testing utilities
+   - Implement node creation guidelines
+
+4. **Advanced Features (Post-MVP):**
+   - Node creation UI tool
+   - Visual node template previews
+   - Code generation preview across languages
+   - Node export/import system
+
+### 11.4 Expected Benefits
+
+The Node Creation System will provide:
+- **Development Speed:** Reduce node creation time from hours to minutes
+- **Error Reduction:** Automated validation prevents common mistakes
+- **Consistency:** Enforced patterns across node definitions
+- **Maintainability:** Centralized definitions for easier updates
+- **Documentation:** Auto-generated docs that stay in sync with implementation
+- **Onboarding:** Lower learning curve for new developers
+- **Extensibility:** Easier path to add new node types and languages
+- **Testing:** Built-in testing utilities for node validation
+
+This system will be a critical component in the long-term success of VVS Web, allowing for rapid expansion of capabilities while maintaining quality and consistency. It addresses the core development challenges encountered during MVP implementation and provides a scalable foundation for future growth. 

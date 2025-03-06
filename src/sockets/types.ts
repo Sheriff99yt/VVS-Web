@@ -25,6 +25,7 @@ export enum SocketDirection {
 export interface InputWidgetConfig {
   // Basic settings
   enabled: boolean;           // Whether the input widget is enabled
+  widgetType?: WidgetType;    // What type of widget to display (default depends on socket type)
   
   // Settings for NUMBER type
   min?: number;               // Minimum value (for number inputs)
@@ -32,13 +33,40 @@ export interface InputWidgetConfig {
   step?: number;              // Step size (for number inputs)
   precision?: number;         // Decimal precision (for number inputs)
   isInteger?: boolean;        // Whether the number should be an integer
+  useSlider?: boolean;        // Whether to use a slider for numeric input
   
   // Settings for STRING type
   maxLength?: number;         // Maximum string length
   placeholder?: string;       // Placeholder text
+  multiline?: boolean;        // Whether to use a multi-line text area
+  rows?: number;              // Number of rows for multi-line text area
   
   // Settings for BOOLEAN type
   label?: string;             // Label for the checkbox
+  
+  // Settings for dropdown/select widget
+  options?: Array<{
+    label: string;
+    value: any;
+  }>;                         // Available options for dropdown
+  
+  // Settings for color picker
+  defaultColor?: string;      // Default color in hex format
+}
+
+/**
+ * Available widget types that can be used for input sockets
+ */
+export enum WidgetType {
+  DEFAULT = 'default',        // Use default for the socket type
+  TEXT = 'text',              // Text input (for strings)
+  NUMBER = 'number',          // Number input
+  CHECKBOX = 'checkbox',      // Checkbox (for booleans)
+  DROPDOWN = 'dropdown',      // Dropdown/select (for enumerated values)
+  COLOR_PICKER = 'color',     // Color picker
+  TEXTAREA = 'textarea',      // Multi-line text area
+  SLIDER = 'slider',          // Slider for numeric values
+  // Add more widget types as needed
 }
 
 // Socket definition interface
@@ -86,6 +114,7 @@ export const createSocketDefinition = (
     // Create the base config with required fields
     defaultInputWidget = {
       enabled: true,
+      widgetType: WidgetType.DEFAULT,
     };
     
     // Add type-specific defaults
@@ -96,10 +125,12 @@ export const createSocketDefinition = (
         defaultInputWidget.step = 1;
         defaultInputWidget.precision = name.toLowerCase().includes('int') ? 0 : 2;
         defaultInputWidget.isInteger = name.toLowerCase().includes('int');
+        defaultInputWidget.useSlider = false;
         break;
       case SocketType.STRING:
         defaultInputWidget.maxLength = 1000;
         defaultInputWidget.placeholder = '';
+        defaultInputWidget.multiline = false;
         break;
       case SocketType.BOOLEAN:
         defaultInputWidget.label = '';

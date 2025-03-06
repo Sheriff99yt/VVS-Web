@@ -1,14 +1,13 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { 
   Box, 
   Button, 
   Text, 
-  Heading, 
   Input,
   Flex,
 } from '@chakra-ui/react';
 import { NODE_CATEGORIES, NodeType, NodeCategory } from '../nodes/types';
-import { SocketDirection, SocketType, createSocketDefinition } from '../sockets/types';
+import { SocketDirection, SocketType, createSocketDefinition, WidgetType } from '../sockets/types';
 import useGraphStore from '../store/useGraphStore';
 
 // Type for node creation template
@@ -144,10 +143,12 @@ export const NodeLibrary: React.FC = () => {
           createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
             enabled: true,
             label: 'A',
+            widgetType: WidgetType.CHECKBOX,
           }),
           createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
             enabled: true,
             label: 'B',
+            widgetType: WidgetType.CHECKBOX,
           }),
         ],
         outputs: [
@@ -155,6 +156,8 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           description: 'Performs a logical AND operation on two boolean inputs. Returns true only if both inputs are true.',
+          a: false,
+          b: false,
         }
       }),
     },
@@ -167,17 +170,42 @@ export const NodeLibrary: React.FC = () => {
           createSocketDefinition('a', 'A', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
             enabled: true,
             label: 'A',
+            widgetType: WidgetType.CHECKBOX,
           }),
           createSocketDefinition('b', 'B', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
             enabled: true,
             label: 'B',
+            widgetType: WidgetType.CHECKBOX,
           }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
         ],
         properties: {
-          description: 'Performs a logical OR operation on two boolean inputs. Returns true if either input is true.',
+          description: 'Performs a logical OR operation on two boolean inputs.',
+          a: false,
+          b: false,
+        },
+      }),
+    },
+    [NodeType.NOT]: {
+      type: NodeType.NOT,
+      label: 'NOT',
+      category: 'Logic Operations',
+      createNodeData: () => ({
+        inputs: [
+          createSocketDefinition('input', 'Input', SocketType.BOOLEAN, SocketDirection.INPUT, false, {
+            enabled: true,
+            label: 'Input',
+            widgetType: WidgetType.CHECKBOX,
+          }),
+        ],
+        outputs: [
+          createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
+        ],
+        properties: {
+          description: 'Performs a logical NOT operation on a boolean input.',
+          input: false,
         },
       }),
     },
@@ -189,13 +217,19 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
-            min: -Infinity,
-            max: Infinity,
+            min: -1000,
+            max: 1000,
+            step: 1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
-            min: -Infinity,
-            max: Infinity,
+            min: -1000,
+            max: 1000,
+            step: 1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
         ],
         outputs: [
@@ -203,6 +237,8 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           description: 'Compares two number inputs and returns true if the first value is greater than the second value.',
+          a: 0,
+          b: 0,
         },
       }),
     },
@@ -214,13 +250,19 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
-            min: -Infinity,
-            max: Infinity,
+            min: -1000,
+            max: 1000,
+            step: 1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
-            min: -Infinity,
-            max: Infinity,
+            min: -1000,
+            max: 1000,
+            step: 1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
         ],
         outputs: [
@@ -228,6 +270,8 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           description: 'Compares two number inputs and returns true if the first value is less than the second value.',
+          a: 0,
+          b: 0,
         },
       }),
     },
@@ -237,20 +281,22 @@ export const NodeLibrary: React.FC = () => {
       category: 'Logic Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.ANY, SocketDirection.INPUT, '', {
+          createSocketDefinition('a', 'A', SocketType.ANY, SocketDirection.INPUT, 0, {
             enabled: true,
-            placeholder: 'Value A',
+            widgetType: WidgetType.DEFAULT,
           }),
-          createSocketDefinition('b', 'B', SocketType.ANY, SocketDirection.INPUT, '', {
+          createSocketDefinition('b', 'B', SocketType.ANY, SocketDirection.INPUT, 0, {
             enabled: true,
-            placeholder: 'Value B',
+            widgetType: WidgetType.DEFAULT,
           }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
         ],
         properties: {
-          description: 'Compares two inputs of any type and returns true if they are equal.',
+          description: 'Compares two values and returns true if they are equal.',
+          a: 0,
+          b: 0,
         },
       }),
     },
@@ -264,11 +310,19 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
         ],
         outputs: [
@@ -276,6 +330,8 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           description: 'Adds two numbers together and outputs the sum.',
+          a: 0,
+          b: 0,
         },
       }),
     },
@@ -287,11 +343,19 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
         ],
         outputs: [
@@ -299,6 +363,8 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           description: 'Subtracts the second number from the first and outputs the difference.',
+          a: 0,
+          b: 0,
         },
       }),
     },
@@ -310,11 +376,19 @@ export const NodeLibrary: React.FC = () => {
         inputs: [
           createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
         ],
         outputs: [
@@ -322,6 +396,8 @@ export const NodeLibrary: React.FC = () => {
         ],
         properties: {
           description: 'Multiplies two numbers together and outputs the product.',
+          a: 0,
+          b: 0,
         },
       }),
     },
@@ -331,22 +407,30 @@ export const NodeLibrary: React.FC = () => {
       category: 'Math Operations',
       createNodeData: () => ({
         inputs: [
-          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 1, {
+          createSocketDefinition('a', 'A', SocketType.NUMBER, SocketDirection.INPUT, 0, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
-            min: 0,
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
           createSocketDefinition('b', 'B', SocketType.NUMBER, SocketDirection.INPUT, 1, {
             enabled: true,
+            min: -1000,
+            max: 1000,
             step: 0.1,
-            min: 0.000001, // Prevent division by zero
+            precision: 2,
+            widgetType: WidgetType.NUMBER,
           }),
         ],
         outputs: [
           createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
         ],
         properties: {
-          description: 'Divides the first number by the second and outputs the quotient. Has safeguards to prevent division by zero.',
+          description: 'Divides the first number by the second and outputs the quotient.',
+          a: 0,
+          b: 1,
         },
       }),
     },
@@ -483,13 +567,6 @@ export const NodeLibrary: React.FC = () => {
       };
     }).filter(category => category.nodeTypes.length > 0);
   }, [searchQuery, nodeTemplates]);
-
-  // Colors
-  const panelBg = 'gray.900';
-  const borderColor = 'gray.700';
-  const headerBg = 'gray.800';
-  const hoverBg = 'gray.700';
-  const searchBg = 'gray.800';
 
   // CSS for animations
   const animationStyles = `

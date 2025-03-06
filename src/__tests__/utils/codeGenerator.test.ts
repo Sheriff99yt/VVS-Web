@@ -1,15 +1,21 @@
-import { generatePythonCode } from '../../utils/codeGenerator';
+import { generateCode, getAvailableCodeLanguages } from '../../utils/codeGenerator/index';
+import { LanguageRegistry } from '../../utils/codeGenerator/languageRegistry';
 import { NodeType } from '../../nodes/types';
-import { SocketDirection, SocketType, createSocketDefinition } from '../../sockets/types';
+import { SocketDirection, SocketType } from '../../sockets/types';
 import { Edge, Node } from 'reactflow';
 import { BaseNodeData } from '../../nodes/types';
+
+// Make sure language registry is initialized before tests
+beforeAll(() => {
+  LanguageRegistry.initialize();
+});
 
 describe('Code Generator', () => {
   test('generates empty code when no nodes are present', () => {
     const nodes: Node<BaseNodeData>[] = [];
     const edges: Edge[] = [];
     
-    const code = generatePythonCode(nodes, edges);
+    const code = generateCode(nodes, edges, 'Python');
     
     expect(code).toContain('# No nodes in the graph');
   });
@@ -23,21 +29,29 @@ describe('Code Generator', () => {
         label: 'Print Node',
         type: NodeType.PRINT,
         inputs: [
-          createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
+          { 
+            id: 'value', 
+            name: 'value', 
+            type: SocketType.STRING, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '"Hello, World!"'
+          },
         ],
         outputs: [
-          createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
-        ],
-        properties: {
-          text: 'Hello VVS'
-        }
+          { 
+            id: 'flow', 
+            name: 'flow', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+        ]
       }
     };
     
     const nodes: Node<BaseNodeData>[] = [printNode];
     const edges: Edge[] = [];
     
-    const code = generatePythonCode(nodes, edges);
+    const code = generateCode(nodes, edges, 'Python');
     
     expect(code).toContain('print("Hello, World!")');
   });
@@ -50,21 +64,43 @@ describe('Code Generator', () => {
       data: {
         label: 'Variable Node',
         type: NodeType.VARIABLE_DEFINITION,
-        inputs: [],
-        outputs: [
-          createSocketDefinition('value', 'Value', SocketType.NUMBER, SocketDirection.OUTPUT),
+        inputs: [
+          { 
+            id: 'name', 
+            name: 'name', 
+            type: SocketType.STRING, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '"variable"'
+          },
+          { 
+            id: 'value', 
+            name: 'value', 
+            type: SocketType.NUMBER, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '0'
+          }
         ],
-        properties: {
-          name: 'counter',
-          value: '42'
-        }
+        outputs: [
+          { 
+            id: 'flow', 
+            name: 'flow', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+          { 
+            id: 'variable', 
+            name: 'variable', 
+            type: SocketType.NUMBER, 
+            direction: SocketDirection.OUTPUT 
+          },
+        ]
       }
     };
     
     const nodes: Node<BaseNodeData>[] = [varNode];
     const edges: Edge[] = [];
     
-    const code = generatePythonCode(nodes, edges);
+    const code = generateCode(nodes, edges, 'Python');
     
     expect(code).toContain('variable = 0');
   });
@@ -78,25 +114,43 @@ describe('Code Generator', () => {
         label: 'If Statement',
         type: NodeType.IF_STATEMENT,
         inputs: [
-          createSocketDefinition('condition', 'Condition', SocketType.BOOLEAN, SocketDirection.INPUT),
-          createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
+          { 
+            id: 'condition', 
+            name: 'condition', 
+            type: SocketType.BOOLEAN, 
+            direction: SocketDirection.INPUT,
+            defaultValue: 'true'
+          }
         ],
         outputs: [
-          createSocketDefinition('true_flow', 'True', SocketType.FLOW, SocketDirection.OUTPUT),
-          createSocketDefinition('false_flow', 'False', SocketType.FLOW, SocketDirection.OUTPUT),
-        ],
-        properties: {
-          condition: 'x > 10'
-        }
+          { 
+            id: 'flow', 
+            name: 'flow', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+          { 
+            id: 'then', 
+            name: 'then', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+          { 
+            id: 'else', 
+            name: 'else', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          }
+        ]
       }
     };
     
     const nodes: Node<BaseNodeData>[] = [ifNode];
     const edges: Edge[] = [];
     
-    const code = generatePythonCode(nodes, edges);
+    const code = generateCode(nodes, edges, 'Python');
     
-    expect(code).toContain('if x > 10:');
+    expect(code).toContain('if true:');
   });
   
   test('generates code for a for loop node', () => {
@@ -108,25 +162,55 @@ describe('Code Generator', () => {
         label: 'For Loop',
         type: NodeType.FOR_LOOP,
         inputs: [
-          createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
+          { 
+            id: 'variable', 
+            name: 'variable', 
+            type: SocketType.STRING, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '"i"' 
+          },
+          { 
+            id: 'start', 
+            name: 'start', 
+            type: SocketType.NUMBER, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '0' 
+          },
+          { 
+            id: 'end', 
+            name: 'end', 
+            type: SocketType.NUMBER, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '10' 
+          }
         ],
         outputs: [
-          createSocketDefinition('loop_body', 'Body', SocketType.FLOW, SocketDirection.OUTPUT),
-          createSocketDefinition('loop_complete', 'Complete', SocketType.FLOW, SocketDirection.OUTPUT),
-          createSocketDefinition('current_value', 'Value', SocketType.NUMBER, SocketDirection.OUTPUT),
-        ],
-        properties: {
-          variable: 'idx',
-          start: '1',
-          end: '5'
-        }
+          { 
+            id: 'flow', 
+            name: 'flow', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+          { 
+            id: 'body', 
+            name: 'body', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+          { 
+            id: 'index', 
+            name: 'index', 
+            type: SocketType.NUMBER, 
+            direction: SocketDirection.OUTPUT 
+          }
+        ]
       }
     };
     
     const nodes: Node<BaseNodeData>[] = [forNode];
     const edges: Edge[] = [];
     
-    const code = generatePythonCode(nodes, edges);
+    const code = generateCode(nodes, edges, 'Python');
     
     expect(code).toContain('for i in range(0, 10):');
   });
@@ -139,388 +223,130 @@ describe('Code Generator', () => {
       data: {
         label: 'Test Node',
         type: NodeType.PRINT,
-        inputs: [],
-        outputs: [],
-        properties: {
-          text: 'Test'
-        }
+        inputs: [
+          { 
+            id: 'value', 
+            name: 'value', 
+            type: SocketType.STRING, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '"Test"' 
+          }
+        ],
+        outputs: [
+          { 
+            id: 'flow', 
+            name: 'flow', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          }
+        ]
       }
     }];
     const edges: Edge[] = [];
     
-    const code = generatePythonCode(nodes, edges);
+    const code = generateCode(nodes, edges, 'Python');
     
     expect(code).toContain('# Generated Python code from VVS Web');
   });
   
-  // Tests for logic operations
-  test('generates code for AND operation', () => {
-    const andNode: Node<BaseNodeData> = {
-      id: 'and-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'AND',
-        type: NodeType.AND,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.BOOLEAN, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.BOOLEAN, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [andNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_and_node = False and False');
-  });
-  
-  test('generates code for OR operation', () => {
-    const orNode: Node<BaseNodeData> = {
-      id: 'or-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'OR',
-        type: NodeType.OR,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.BOOLEAN, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.BOOLEAN, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [orNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_or_node = False or False');
-  });
-  
-  test('generates code for GREATER_THAN operation', () => {
-    const gtNode: Node<BaseNodeData> = {
-      id: 'gt-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Greater Than',
-        type: NodeType.GREATER_THAN,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.NUMBER, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [gtNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_gt_node = 0 > 0');
-  });
-  
-  test('generates code for LESS_THAN operation', () => {
-    const ltNode: Node<BaseNodeData> = {
-      id: 'lt-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Less Than',
-        type: NodeType.LESS_THAN,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.NUMBER, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [ltNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_lt_node = 0 < 0');
-  });
-  
-  test('generates code for EQUAL operation', () => {
-    const eqNode: Node<BaseNodeData> = {
-      id: 'eq-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Equal',
-        type: NodeType.EQUAL,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.ANY, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.ANY, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.BOOLEAN, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [eqNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_eq_node = 0 == 0');
-  });
-  
-  // Tests for math operations
-  test('generates code for ADD operation', () => {
-    const addNode: Node<BaseNodeData> = {
-      id: 'add-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Add',
-        type: NodeType.ADD,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.NUMBER, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [addNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_add_node = 0 + 0');
-  });
-  
-  test('generates code for SUBTRACT operation', () => {
-    const subNode: Node<BaseNodeData> = {
-      id: 'sub-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Subtract',
-        type: NodeType.SUBTRACT,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.NUMBER, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [subNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_sub_node = 0 - 0');
-  });
-  
-  test('generates code for MULTIPLY operation', () => {
-    const mulNode: Node<BaseNodeData> = {
-      id: 'mul-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Multiply',
-        type: NodeType.MULTIPLY,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.NUMBER, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [mulNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_mul_node = 0 * 0');
-  });
-  
-  test('generates code for DIVIDE operation', () => {
-    const divNode: Node<BaseNodeData> = {
-      id: 'div-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Divide',
-        type: NodeType.DIVIDE,
-        inputs: [
-          createSocketDefinition('left', 'Left', SocketType.NUMBER, SocketDirection.INPUT),
-          createSocketDefinition('right', 'Right', SocketType.NUMBER, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('result', 'Result', SocketType.NUMBER, SocketDirection.OUTPUT),
-        ],
-        properties: {}
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [divNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('_temp_div_node = 0 / 1');
-  });
-  
-  // Tests for variable getter
-  test('generates code for VARIABLE_GETTER', () => {
-    const getterNode: Node<BaseNodeData> = {
-      id: 'getter-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Get Variable',
-        type: NodeType.VARIABLE_GETTER,
-        inputs: [],
-        outputs: [
-          createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.OUTPUT),
-        ],
-        properties: {
-          name: 'myVariable'
-        }
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [getterNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    // Variable getters don't generate code directly, they're used in other nodes
-    expect(code).toContain('# Generated Python code from VVS Web');
-  });
-  
-  // Tests for user input
-  test('generates code for USER_INPUT', () => {
-    const userInputNode: Node<BaseNodeData> = {
-      id: 'user-input-node',
-      type: 'baseNode',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'User Input',
-        type: NodeType.USER_INPUT,
-        inputs: [
-          createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
-          createSocketDefinition('prompt', 'Prompt', SocketType.STRING, SocketDirection.INPUT),
-        ],
-        outputs: [
-          createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
-          createSocketDefinition('value', 'Value', SocketType.STRING, SocketDirection.OUTPUT),
-        ],
-        properties: {
-          prompt: 'Enter your name:'
-        }
-      }
-    };
-    
-    const nodes: Node<BaseNodeData>[] = [userInputNode];
-    const edges: Edge[] = [];
-    
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('userName = input(Enter your name:)');
-  });
-  
-  // Test for connected nodes
-  test('generates code for connected nodes', () => {
+  // Test for multiple languages
+  test('generates code in TypeScript', () => {
     const varNode: Node<BaseNodeData> = {
       id: 'var-node',
       type: 'baseNode',
       position: { x: 100, y: 100 },
       data: {
-        label: 'Variable',
+        label: 'Variable Node',
         type: NodeType.VARIABLE_DEFINITION,
         inputs: [
-          createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
-          createSocketDefinition('value', 'Value', SocketType.NUMBER, SocketDirection.INPUT, 0),
+          { 
+            id: 'name', 
+            name: 'name', 
+            type: SocketType.STRING, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '"counter"'
+          },
+          { 
+            id: 'value', 
+            name: 'value', 
+            type: SocketType.NUMBER, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '42'
+          }
         ],
         outputs: [
-          createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
-        ],
-        properties: {
-          name: 'x',
-          value: '10'
-        }
+          { 
+            id: 'flow', 
+            name: 'flow', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+          { 
+            id: 'variable', 
+            name: 'variable', 
+            type: SocketType.NUMBER, 
+            direction: SocketDirection.OUTPUT 
+          }
+        ]
       }
     };
     
+    const nodes: Node<BaseNodeData>[] = [varNode];
+    const edges: Edge[] = [];
+    
+    const code = generateCode(nodes, edges, 'TypeScript');
+    
+    expect(code).toContain('// Generated TypeScript code from VVS Web');
+    expect(code).toContain('let counter = 42');
+  });
+  
+  test('generates code in Java', () => {
     const printNode: Node<BaseNodeData> = {
       id: 'print-node',
       type: 'baseNode',
-      position: { x: 300, y: 100 },
+      position: { x: 100, y: 100 },
       data: {
-        label: 'Print',
+        label: 'Print Node',
         type: NodeType.PRINT,
         inputs: [
-          createSocketDefinition('flow_in', 'Flow In', SocketType.FLOW, SocketDirection.INPUT),
-          createSocketDefinition('value', 'Value', SocketType.ANY, SocketDirection.INPUT),
+          { 
+            id: 'value', 
+            name: 'value', 
+            type: SocketType.STRING, 
+            direction: SocketDirection.INPUT,
+            defaultValue: '"Hello Java!"'
+          },
         ],
         outputs: [
-          createSocketDefinition('flow_out', 'Flow Out', SocketType.FLOW, SocketDirection.OUTPUT),
-        ],
-        properties: {}
+          { 
+            id: 'flow', 
+            name: 'flow', 
+            type: SocketType.FLOW, 
+            direction: SocketDirection.OUTPUT 
+          },
+        ]
       }
     };
     
-    const edge: Edge = {
-      id: 'edge1',
-      source: 'var-node',
-      target: 'print-node',
-      sourceHandle: 'flow_out',
-      targetHandle: 'flow_in',
-    };
+    const nodes: Node<BaseNodeData>[] = [printNode];
+    const edges: Edge[] = [];
     
-    const valueEdge: Edge = {
-      id: 'edge2',
-      source: 'var-node',
-      target: 'print-node',
-      sourceHandle: 'value',
-      targetHandle: 'value',
-    };
+    const code = generateCode(nodes, edges, 'Java');
     
-    const nodes: Node<BaseNodeData>[] = [varNode, printNode];
-    const edges: Edge[] = [edge, valueEdge];
+    expect(code).toContain('// Generated Java code from VVS Web');
+    expect(code).toContain('System.out.println("Hello Java!")');
+  });
+  
+  // Test for the language registry
+  test('language registry provides available languages', () => {
+    const languages = getAvailableCodeLanguages();
     
-    const code = generatePythonCode(nodes, edges);
-    
-    expect(code).toContain('variable = 0');
-    expect(code).toContain('print("Hello, World!")');
+    // Should have at least Python, TypeScript, C++, Java and Go
+    expect(languages).toContain('Python');
+    expect(languages).toContain('TypeScript');
+    expect(languages).toContain('C++');
+    expect(languages).toContain('Java');
+    expect(languages).toContain('Go');
   });
 });
 

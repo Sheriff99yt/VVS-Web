@@ -4,12 +4,15 @@ import { NodeType } from '../../nodes/types';
 import { SocketDirection, SocketType, createSocketDefinition } from '../../sockets/types';
 import React from 'react';
 import { ReactFlowProvider } from 'reactflow';
+import { SocketTooltipProvider } from '../../contexts/SocketTooltipContext';
 
 // Create a test wrapper with ReactFlowProvider
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <ReactFlowProvider>
-      {children}
+      <SocketTooltipProvider>
+        {children}
+      </SocketTooltipProvider>
     </ReactFlowProvider>
   );
 };
@@ -27,7 +30,21 @@ jest.mock('reactflow', () => ({
   // Export a real ReactFlowProvider
   ReactFlowProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="flow-provider">{children}</div>,
   // Mock the Handle component
-  Handle: () => <div data-testid="handle" />
+  Handle: () => <div data-testid="handle" />,
+  // Mock the useEdges hook
+  useEdges: () => [],
+  // Mock the useReactFlow hook
+  useReactFlow: () => ({
+    setNodes: jest.fn(),
+    getNode: () => null,
+    setEdges: jest.fn(),
+    getEdges: () => [],
+    screenToFlowPosition: jest.fn(),
+    flowToScreenPosition: jest.fn(),
+    project: jest.fn(),
+    getIntersectingNodes: jest.fn(),
+    viewportInitialized: true
+  })
 }));
 
 describe('BaseNode Component', () => {
@@ -78,8 +95,13 @@ describe('BaseNode Component', () => {
         <BaseNode {...mockNodeProps} />
       </TestWrapper>
     );
-    expect(screen.getByText('Input 1')).toBeInTheDocument();
-    expect(screen.getByText('Input 2')).toBeInTheDocument();
+    // Check for socket wrappers with the correct titles
+    const inputSockets = screen.getAllByTestId('socket-wrapper');
+    const input1Socket = inputSockets.find(socket => socket.title.includes('Input 1'));
+    const input2Socket = inputSockets.find(socket => socket.title.includes('Input 2'));
+    
+    expect(input1Socket).toBeInTheDocument();
+    expect(input2Socket).toBeInTheDocument();
   });
 
   test('renders correct number of output sockets', () => {
@@ -88,7 +110,11 @@ describe('BaseNode Component', () => {
         <BaseNode {...mockNodeProps} />
       </TestWrapper>
     );
-    expect(screen.getByText('Output')).toBeInTheDocument();
+    // Check for socket wrapper with the correct title
+    const outputSockets = screen.getAllByTestId('socket-wrapper');
+    const outputSocket = outputSockets.find(socket => socket.title.includes('Output'));
+    
+    expect(outputSocket).toBeInTheDocument();
   });
 
   test('changes appearance when selected', () => {

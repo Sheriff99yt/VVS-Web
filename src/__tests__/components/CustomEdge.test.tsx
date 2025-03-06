@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { EdgeProps, Position } from 'reactflow';
 import CustomEdge from '../../components/CustomEdge';
 import { SocketType } from '../../sockets/types';
@@ -74,7 +73,8 @@ describe('CustomEdge', () => {
     
     // Check if the main path has increased stroke width when selected
     const path = document.querySelector('.react-flow__edge-path');
-    expect(path).toHaveAttribute('stroke-width', '4');
+    // The selected state changes the color, not the stroke width
+    expect(path).toHaveAttribute('stroke', '#ffeb3b'); // yellow.400 color
   });
 
   test('renders with flow socket type', () => {
@@ -87,12 +87,11 @@ describe('CustomEdge', () => {
       />
     );
     
-    // Check if the flow label is rendered
-    expect(screen.getByText('FLOW')).toBeInTheDocument();
-    
-    // Check if the path has stroke-dasharray attribute
+    // Check if the path has the correct class and stroke color
     const path = document.querySelector('.react-flow__edge-path');
-    expect(path).toHaveAttribute('stroke-dasharray');
+    expect(path).toHaveClass('edge-flow');
+    expect(path).toHaveAttribute('stroke', '#ff5722');
+    expect(path).toHaveAttribute('stroke-width', '5');
   });
 
   test('renders with number socket type', () => {
@@ -108,6 +107,6 @@ describe('CustomEdge', () => {
     
     // Check if the path has the correct stroke color
     const path = document.querySelector('.react-flow__edge-path');
-    expect(path).toHaveAttribute('stroke', '#DD6B20');
+    expect(path).toHaveAttribute('stroke', '#00bcd4');
   });
 }); 

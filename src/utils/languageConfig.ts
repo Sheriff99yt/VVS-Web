@@ -45,6 +45,7 @@ export interface LanguageConfig {
     // Logic operators
     and: string;
     or: string;
+    not?: string;
     greaterThan: string;
     lessThan: string;
     equal: string;
@@ -56,6 +57,24 @@ export interface LanguageConfig {
     statementEnd: string;
     blockStart: string;    // E.g., { or : or nothing
     blockEnd: string;      // E.g., } or nothing for indentation-based languages
+  };
+  
+  // Special language-specific values for literals
+  values?: {
+    // Boolean values
+    true?: string;
+    false?: string;
+    null?: string;
+    // Other language-specific literals as needed
+  };
+  
+  // Escape sequences for specific character handling
+  escapeSequences?: {
+    quote?: string;
+    doubleQuote?: string;
+    newline?: string;
+    tab?: string;
+    // Other escape sequences as needed
   };
   
   // Common imports or includes needed for the language
@@ -91,6 +110,7 @@ export const pythonConfig: LanguageConfig = {
     divide: '$left / $right',
     and: '$left and $right',
     or: '$left or $right',
+    not: 'not $value',
     greaterThan: '$left > $right',
     lessThan: '$left < $right',
     equal: '$left == $right',
@@ -101,6 +121,17 @@ export const pythonConfig: LanguageConfig = {
     statementEnd: '',
     blockStart: ':',
     blockEnd: '',
+  },
+  values: {
+    true: 'True',
+    false: 'False',
+    null: 'None'
+  },
+  escapeSequences: {
+    quote: "\\'",
+    doubleQuote: '\\"',
+    newline: '\\n',
+    tab: '\\t'
   },
   standardImports: []
 };
@@ -134,6 +165,7 @@ export const typeScriptConfig: LanguageConfig = {
     divide: '$left / $right',
     and: '$left && $right',
     or: '$left || $right',
+    not: '!$value',
     greaterThan: '$left > $right',
     lessThan: '$left < $right',
     equal: '$left === $right',
@@ -144,6 +176,17 @@ export const typeScriptConfig: LanguageConfig = {
     statementEnd: ';',
     blockStart: '{',
     blockEnd: '}',
+  },
+  values: {
+    true: 'true',
+    false: 'false',
+    null: 'null'
+  },
+  escapeSequences: {
+    quote: "\\'",
+    doubleQuote: '\\"',
+    newline: '\\n',
+    tab: '\\t'
   },
   standardImports: []
 };
@@ -177,6 +220,7 @@ export const cppConfig: LanguageConfig = {
     divide: '$left / $right',
     and: '$left && $right',
     or: '$left || $right',
+    not: '!$value',
     greaterThan: '$left > $right',
     lessThan: '$left < $right',
     equal: '$left == $right',
@@ -187,6 +231,17 @@ export const cppConfig: LanguageConfig = {
     statementEnd: ';',
     blockStart: '{',
     blockEnd: '}',
+  },
+  values: {
+    true: 'true',
+    false: 'false',
+    null: 'nullptr'
+  },
+  escapeSequences: {
+    quote: "\\'",
+    doubleQuote: '\\"',
+    newline: '\\n',
+    tab: '\\t'
   },
   standardImports: [
     '#include <iostream>',

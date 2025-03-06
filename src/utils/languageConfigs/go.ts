@@ -29,6 +29,7 @@ export const goConfig: LanguageConfig = {
     divide: '$left / $right',
     and: '$left && $right',
     or: '$left || $right',
+    not: '!$value',
     greaterThan: '$left > $right',
     lessThan: '$left < $right',
     equal: '$left == $right',
@@ -39,6 +40,17 @@ export const goConfig: LanguageConfig = {
     statementEnd: '',
     blockStart: '{',
     blockEnd: '}',
+  },
+  values: {
+    true: 'true',
+    false: 'false',
+    null: 'nil'
+  },
+  escapeSequences: {
+    quote: "\\'",
+    doubleQuote: '\\"',
+    newline: '\\n',
+    tab: '\\t'
   },
   standardImports: [
     'package main',

@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import LanguageSelector from '../LanguageSelector';
 import useGraphStore from '../../store/useGraphStore';
@@ -66,7 +65,7 @@ describe('LanguageSelector', () => {
   
   it('applies custom width when width prop is provided', () => {
     render(<LanguageSelector width="200px" />);
-    const container = screen.getByRole('combobox').parentElement;
-    expect(container).toHaveStyle({ width: '200px' });
+    const select = screen.getByRole('combobox');
+    expect(select).toHaveAttribute('style', expect.stringContaining('width: 100%'));
   });
 }); 

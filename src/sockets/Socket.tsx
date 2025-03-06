@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Handle, Position } from 'reactflow';
-import { Box, useToken, Input, Text } from '@chakra-ui/react';
-import { SocketDefinition, SocketDirection, SocketType } from './types';
+import { Box, useToken, Input, Textarea } from '@chakra-ui/react';
+import { SocketDefinition, SocketDirection, SocketType, WidgetType } from './types';
 import { useSocketTooltip } from '../contexts/SocketTooltipContext';
 
 /**
@@ -37,9 +37,28 @@ export const Socket: React.FC<SocketProps> = ({
   onValueChange
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
-  const [value, setValue] = React.useState<any>(socket.defaultValue);
+  // Use a helper function to get a display value that never shows "undefined"
+  const getInitialValue = (val: any) => {
+    if (val === "undefined" || val === undefined) {
+      // Return appropriate default based on socket type
+      switch (socket.type) {
+        case SocketType.NUMBER: return 0;
+        case SocketType.STRING: return '';
+        case SocketType.BOOLEAN: return false;
+        default: return '';
+      }
+    }
+    return val;
+  };
+  
+  const [value, setValue] = React.useState<any>(getInitialValue(socket.defaultValue));
   const socketRef = React.useRef<HTMLDivElement>(null);
   const { showTooltip, hideTooltip } = useSocketTooltip();
+
+  // Sync local state with socket.defaultValue when it changes
+  React.useEffect(() => {
+    setValue(getInitialValue(socket.defaultValue));
+  }, [socket.defaultValue]);
 
   // Handle value change
   const handleValueChange = (newValue: any) => {
@@ -64,14 +83,6 @@ export const Socket: React.FC<SocketProps> = ({
     errorColor,
     errorHoverColor,
     compatibleColor,
-    // Input widget colors
-    inputBg,
-    inputBgHover,
-    inputBorder,
-    inputBorderHover,
-    inputText,
-    inputPlaceholder,
-    inputLabel
   ] = useToken('colors', [
     'socket.boolean',
     'socket.booleanHover',
@@ -86,14 +97,6 @@ export const Socket: React.FC<SocketProps> = ({
     'socket.error',
     'socket.errorHover',
     'socket.compatible',
-    // Input widget colors
-    'input.bg',
-    'input.bgHover',
-    'input.border',
-    'input.borderHover',
-    'input.text',
-    'input.placeholder',
-    'input.label'
   ]);
 
   // Maps socket types to their color from theme
@@ -166,7 +169,7 @@ export const Socket: React.FC<SocketProps> = ({
   }, [hideTooltip]);
 
   // Render input widget based on socket type and configuration
-  const renderInputWidget = () => {
+  const renderInputWidget = (): React.ReactNode => {
     // Only render for input sockets that aren't connected and have inputWidget config
     if (!isInput || isConnected || !socket.inputWidget || !socket.inputWidget.enabled) {
       return null;
@@ -174,26 +177,52 @@ export const Socket: React.FC<SocketProps> = ({
 
     // Get widget config
     const config = socket.inputWidget;
-
-    switch (socket.type) {
-      case SocketType.BOOLEAN:
-        return (
-          <input 
-            type="checkbox" 
-            checked={value === true}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.checked)}
-            className="socket-checkbox"
-            style={{ 
-              accentColor: booleanColor
+    const widgetType = config.widgetType || WidgetType.DEFAULT;
+    
+    // Helper function to determine if we should use default widget for a type
+    const isDefaultWidgetForType = (socketType: SocketType): boolean => {
+      return widgetType === WidgetType.DEFAULT && socket.type === socketType;
+    };
+    
+    // Determine which widget to render based on widget type and socket type
+    if (widgetType === WidgetType.CHECKBOX || isDefaultWidgetForType(SocketType.BOOLEAN)) {
+      return (
+        <input 
+          type="checkbox" 
+          checked={value === true}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.checked)}
+          className="socket-checkbox"
+          style={{ 
+            accentColor: booleanColor
+          }}
+          title={config.label || socket.name}
+        />
+      );
+    }
+    
+    if (widgetType === WidgetType.SLIDER && socket.type === SocketType.NUMBER) {
+      // Use a simple range input instead of Chakra UI's Slider
+      return (
+        <Box className="socket-slider-container" display="flex" alignItems="center">
+          <input
+            type="range"
+            min={config.min !== undefined ? config.min : 0}
+            max={config.max !== undefined ? config.max : 100}
+            step={config.step || 1}
+            value={value === "undefined" ? 0 : (Number(value) || 0)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+              handleValueChange(parseFloat(e.target.value))}
+            className="socket-slider"
+            style={{
+              width: "var(--socket-input-width)",
+              marginLeft: "var(--socket-input-margin)",
+              accentColor: numberColor
             }}
           />
-        );
-      case SocketType.NUMBER:
-        return (
           <Input
             type="number"
             size="xs"
-            value={value !== undefined ? value : 0}
+            value={value === "undefined" ? 0 : (value !== undefined ? value : 0)}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               let val: number;
               
@@ -209,11 +238,11 @@ export const Socket: React.FC<SocketProps> = ({
               
               handleValueChange(val);
             }}
-            className="socket-input"
+            className="socket-input socket-slider-value"
+            width="40px"
             height="var(--socket-input-height)"
             fontSize="var(--socket-input-font-size)"
             padding="var(--socket-input-padding)"
-            width="var(--socket-input-width)"
             borderRadius="2px"
             fontFamily="monospace"
             textAlign="right"
@@ -221,36 +250,174 @@ export const Socket: React.FC<SocketProps> = ({
             max={config.max}
             step={config.step || (config.isInteger ? 1 : 0.1)}
           />
-        );
-      case SocketType.STRING:
-        return (
-          <Input
-            type="text"
-            size="xs"
-            value={value !== undefined ? value : ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
-            className="socket-input"
-            height="var(--socket-input-height)"
-            fontSize="var(--socket-input-font-size)"
-            padding="var(--socket-input-padding)"
-            width="var(--socket-input-width)"
-            borderRadius="2px"
-            fontFamily="monospace"
-            placeholder={config.placeholder || ''}
-          />
-        );
-      case SocketType.ANY:
-        return (
-          <Input
-            size="xs"
-            value={value !== undefined ? String(value) : ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
-            className="socket-input"
-          />
-        );
-      default:
-        return null;
+        </Box>
+      );
     }
+    
+    if (widgetType === WidgetType.DROPDOWN && config.options && config.options.length > 0) {
+      // Use a regular HTML select instead of Chakra UI's Select
+      const displayValue = value === "undefined" ? (config.options[0]?.value || '') : (value !== undefined ? String(value) : '');
+      return (
+        <select
+          value={displayValue}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleValueChange(e.target.value)}
+          className="socket-input socket-select"
+          style={{
+            height: "var(--socket-input-height)",
+            fontSize: "var(--socket-input-font-size)",
+            width: "var(--socket-input-width)",
+            marginLeft: "var(--socket-input-margin)",
+            borderRadius: "2px",
+            fontFamily: "monospace"
+          }}
+        >
+          {config.options.map((option, index) => (
+            <option key={index} value={String(option.value)}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    
+    if (widgetType === WidgetType.TEXTAREA) {
+      return (
+        <Textarea
+          value={value === "undefined" ? '' : (value !== undefined ? String(value) : '')}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleValueChange(e.target.value)}
+          className="socket-input socket-textarea"
+          height={config.rows ? `${config.rows * 20}px` : "60px"}
+          fontSize="var(--socket-input-font-size)"
+          padding="var(--socket-input-padding)"
+          width="var(--socket-input-width)"
+          marginLeft="var(--socket-input-margin)"
+          borderRadius="2px"
+          fontFamily="monospace"
+          placeholder={config.placeholder || ''}
+          resize="vertical"
+          size="xs"
+        />
+      );
+    }
+    
+    if (widgetType === WidgetType.COLOR_PICKER) {
+      const displayColor = value === "undefined" ? (config.defaultColor || '#000000') : (value || config.defaultColor || '#000000');
+      return (
+        <Box display="flex" alignItems="center">
+          <Box 
+            className="socket-color-preview"
+            width="15px"
+            height="15px"
+            borderRadius="3px"
+            backgroundColor={displayColor}
+            marginLeft="var(--socket-input-margin)"
+            marginRight="4px"
+            border="1px solid var(--border-color)"
+          />
+          <Input
+            type="color"
+            value={displayColor}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
+            className="socket-input socket-color"
+            height="var(--socket-input-height)"
+            width="var(--socket-input-width)"
+            padding="0"
+            cursor="pointer"
+          />
+        </Box>
+      );
+    }
+    
+    if (widgetType === WidgetType.NUMBER || isDefaultWidgetForType(SocketType.NUMBER)) {
+      // If useSlider is true, render a simple slider instead
+      if (config.useSlider) {
+        const newConfig = { ...config, widgetType: WidgetType.SLIDER };
+        
+        // Recursively call renderInputWidget with the modified socket
+        return renderInputWidget();
+      }
+      
+      return (
+        <Input
+          type="number"
+          size="xs"
+          value={value === "undefined" ? 0 : (value !== undefined ? value : 0)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            let val: number;
+            
+            if (config.isInteger) {
+              val = parseInt(e.target.value, 10) || 0;
+            } else {
+              val = parseFloat(e.target.value) || 0;
+            }
+            
+            // Apply min/max constraints if defined
+            if (config.min !== undefined && val < config.min) val = config.min;
+            if (config.max !== undefined && val > config.max) val = config.max;
+            
+            handleValueChange(val);
+          }}
+          className="socket-input"
+          height="var(--socket-input-height)"
+          fontSize="var(--socket-input-font-size)"
+          padding="var(--socket-input-padding)"
+          width="var(--socket-input-width)"
+          borderRadius="2px"
+          fontFamily="monospace"
+          textAlign="right"
+          min={config.min}
+          max={config.max}
+          step={config.step || (config.isInteger ? 1 : 0.1)}
+        />
+      );
+    }
+    
+    if (widgetType === WidgetType.TEXT || isDefaultWidgetForType(SocketType.STRING)) {
+      // If multiline is true, render a textarea instead
+      if (config.multiline) {
+        const newConfig = { ...config, widgetType: WidgetType.TEXTAREA };
+        
+        // Recursively call renderInputWidget with the modified socket
+        return renderInputWidget();
+      }
+      
+      return (
+        <Input
+          type="text"
+          size="xs"
+          value={value === "undefined" ? '' : (value !== undefined ? value : '')}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
+          className="socket-input"
+          height="var(--socket-input-height)"
+          fontSize="var(--socket-input-font-size)"
+          padding="var(--socket-input-padding)"
+          width="var(--socket-input-width)"
+          borderRadius="2px"
+          fontFamily="monospace"
+          placeholder={config.placeholder || ''}
+        />
+      );
+    }
+    
+    if (isDefaultWidgetForType(SocketType.ANY)) {
+      return (
+        <Input
+          size="xs"
+          value={value === "undefined" ? '' : (value !== undefined ? String(value) : '')}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleValueChange(e.target.value)}
+          className="socket-input"
+          height="var(--socket-input-height)"
+          fontSize="var(--socket-input-font-size)"
+          padding="var(--socket-input-padding)"
+          width="var(--socket-input-width)"
+          borderRadius="2px"
+          fontFamily="monospace"
+          placeholder={config.placeholder || ''}
+        />
+      );
+    }
+    
+    return null;
   };
 
   return (

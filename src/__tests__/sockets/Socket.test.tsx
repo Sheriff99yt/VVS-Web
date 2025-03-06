@@ -3,10 +3,15 @@ import { Socket } from '../../sockets/Socket';
 import { Position } from 'reactflow';
 import { SocketType, SocketDirection, createSocketDefinition } from '../../sockets/types';
 import React from 'react';
+import { SocketTooltipProvider } from '../../contexts/SocketTooltipContext';
 
 // Create a wrapper that will catch and handle the Chakra UI props
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
-  return <div data-testid="socket-container">{children}</div>;
+  return (
+    <SocketTooltipProvider>
+      <div data-testid="socket-container">{children}</div>
+    </SocketTooltipProvider>
+  );
 };
 
 describe('Socket Component', () => {
@@ -31,8 +36,10 @@ describe('Socket Component', () => {
       </TestWrapper>
     );
     
-    // Check if the socket name is displayed
-    expect(screen.getByText('Input Socket')).toBeInTheDocument();
+    // Check if the socket wrapper is rendered with the correct title
+    const socketWrapper = screen.getByTestId('socket-wrapper');
+    expect(socketWrapper).toBeInTheDocument();
+    expect(socketWrapper).toHaveAttribute('title', 'Input Socket (number)');
   });
 
   test('renders output socket correctly', () => {
@@ -42,8 +49,10 @@ describe('Socket Component', () => {
       </TestWrapper>
     );
     
-    // Check if the socket name is displayed
-    expect(screen.getByText('Output Socket')).toBeInTheDocument();
+    // Check if the socket wrapper is rendered with the correct title
+    const socketWrapper = screen.getByTestId('socket-wrapper');
+    expect(socketWrapper).toBeInTheDocument();
+    expect(socketWrapper).toHaveAttribute('title', 'Output Socket (string)');
   });
 
   test('positions socket based on the position prop', () => {
@@ -53,8 +62,8 @@ describe('Socket Component', () => {
       </TestWrapper>
     );
     
-    // Instead of testing the style directly, check for the socket position
-    expect(screen.getByText('Input Socket')).toBeInTheDocument();
+    // Check if the socket container has the correct class for left position
+    expect(document.querySelector('.socket-container-left')).toBeInTheDocument();
     
     // Rerender with right position
     rerender(
@@ -63,7 +72,7 @@ describe('Socket Component', () => {
       </TestWrapper>
     );
     
-    // Just verify the component still renders after position change
-    expect(screen.getByText('Input Socket')).toBeInTheDocument();
+    // Check if the socket container has the correct class for right position
+    expect(document.querySelector('.socket-container-right')).toBeInTheDocument();
   });
 }); 

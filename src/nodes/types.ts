@@ -26,6 +26,7 @@ export enum NodeType {
   // Logic Operation nodes
   AND = 'and',
   OR = 'or',
+  NOT = 'not',
   GREATER_THAN = 'greater_than',
   LESS_THAN = 'less_than',
   EQUAL = 'equal',
@@ -88,6 +89,7 @@ export const NODE_CATEGORIES: NodeCategoryDefinition[] = [
     nodeTypes: [
       NodeType.AND,
       NodeType.OR,
+      NodeType.NOT,
       NodeType.GREATER_THAN,
       NodeType.LESS_THAN,
       NodeType.EQUAL,

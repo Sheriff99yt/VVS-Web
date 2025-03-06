@@ -1,6 +1,6 @@
 import { Edge, Node } from 'reactflow';
 import { BaseNodeData, NodeType } from '../../nodes/types';
-import { SocketType } from '../../sockets/types';
+import { SocketType, InputWidgetConfig, WidgetType } from '../../sockets/types';
 import { LanguageConfig } from '../languageConfig';
 
 /**
@@ -15,6 +15,8 @@ export class UniversalCodeGenerator {
   protected processedNodes: Set<string> = new Set();
   protected variables: Set<string> = new Set();
   protected functions: Set<string> = new Set();
+  // Add output handlers map for socket processing
+  protected socketOutputHandlers: Record<string, (node: Node<BaseNodeData>, socketId: string) => string> = {};
   
   /**
    * Constructor
@@ -493,53 +495,83 @@ export class UniversalCodeGenerator {
   }
   
   /**
-   * Get the value for an input socket, either from a connected node or default value
+   * Get the value from an input socket by following the connected edge
+   * If the socket is not connected, retrieve its default value from the node data
    * @param nodeId The ID of the node
-   * @param inputName The name of the input socket
-   * @param defaultValue Default value if no connection or value is found
-   * @returns The value for the input
+   * @param socketId The ID or name of the input socket
+   * @returns A string representation of the value or a default value
    */
-  protected getInputValue(nodeId: string, inputName: string, defaultValue: string): string {
-    // Find the node
+  protected getInputValue(nodeId: string, socketId: string, defaultValue: string = 'undefined'): string {
+    // Find the node and socket
     const node = this.nodes.find(n => n.id === nodeId);
     if (!node) return defaultValue;
     
-    // Find the input socket
-    const input = node.data.inputs?.find(i => i.name === inputName || i.id === inputName);
-    if (!input) return defaultValue;
+    const socket = node.data.inputs?.find(s => s.id === socketId);
+    if (!socket) return defaultValue;
     
-    // Check if this input is connected to an output
-    const connection = this.edges.find(
-      edge => edge.target === nodeId && edge.targetHandle === input.id
-    );
-    
-    if (connection) {
-      // Find the source node of the connection
-      const sourceNode = this.nodes.find(n => n.id === connection.source);
-      if (!sourceNode) return input.defaultValue || defaultValue;
+    // Check if there are any edges connected to this socket
+    const connectedEdges = this.edges.filter(e => e.target === nodeId && e.targetHandle === socketId);
+    if (connectedEdges.length === 0) {
+      // No connections, try to get the value from different sources
       
-      // Find the source socket
-      const sourceSocket = sourceNode.data.outputs?.find(o => o.id === connection.sourceHandle);
-      if (!sourceSocket) return input.defaultValue || defaultValue;
-      
-      // If it's a variable getter or variable definition, return the variable name
-      if (sourceNode.data.type === NodeType.VARIABLE_GETTER) {
-        const varName = this.getInputValue(sourceNode.id, 'name', 'unknown');
-        return varName.replace(/["']/g, ''); // Remove quotes from variable names
+      // First check if the value is in the node's properties
+      if (node.data.properties) {
+        // Check by socket ID
+        if (node.data.properties[socketId] !== undefined && node.data.properties[socketId] !== "undefined") {
+          return this.formatDefaultValue(node.data.properties[socketId], socket.type);
+        }
+        
+        // Check by socket name
+        if (socket.name && 
+            node.data.properties[socket.name.toLowerCase()] !== undefined && 
+            node.data.properties[socket.name.toLowerCase()] !== "undefined") {
+          return this.formatDefaultValue(node.data.properties[socket.name.toLowerCase()], socket.type);
+        }
       }
       
-      if (sourceNode.data.type === NodeType.VARIABLE_DEFINITION) {
-        const varName = this.getInputValue(sourceNode.id, 'name', 'unknown');
-        return varName.replace(/["']/g, ''); // Remove quotes from variable names
+      // Next check if the socket has a default value
+      if (socket.defaultValue !== undefined && socket.defaultValue !== "undefined") {
+        return this.formatDefaultValue(socket.defaultValue, socket.type);
       }
       
-      // For math operations, process the operation and return result
-      if (
-        sourceNode.data.type === NodeType.ADD ||
-        sourceNode.data.type === NodeType.SUBTRACT ||
-        sourceNode.data.type === NodeType.MULTIPLY ||
-        sourceNode.data.type === NodeType.DIVIDE
-      ) {
+      // If we get here, use type-appropriate defaults instead of 'undefined'
+      if (socket.type === SocketType.NUMBER) {
+        return '0';
+      } else if (socket.type === SocketType.STRING) {
+        return '""';
+      } else if (socket.type === SocketType.BOOLEAN) {
+        return 'false';
+      }
+      
+      return defaultValue;
+    }
+    
+    // Get the source node and socket
+    const edge = connectedEdges[0]; // Use the first connection
+    const sourceNode = this.nodes.find(n => n.id === edge.source);
+    if (!sourceNode) return defaultValue;
+    
+    const sourceSocket = sourceNode.data.outputs?.find(s => s.id === edge.sourceHandle);
+    if (!sourceSocket) return defaultValue;
+    
+    // Check the source node type to determine how to get the value
+    switch (sourceNode.data.type) {
+      case NodeType.VARIABLE_GETTER:
+        // For variable getters, get the variable name
+        const varName = sourceNode.data.properties?.name || 'undefined_var';
+        return varName;
+        
+      case NodeType.ADD:
+      case NodeType.SUBTRACT:
+      case NodeType.MULTIPLY:
+      case NodeType.DIVIDE:
+      case NodeType.GREATER_THAN:
+      case NodeType.LESS_THAN:
+      case NodeType.EQUAL:
+      case NodeType.AND:
+      case NodeType.OR:
+      case NodeType.NOT:
+        // Get the appropriate operator template based on node type
         let operatorTemplate = '';
         switch (sourceNode.data.type) {
           case NodeType.ADD:
@@ -554,26 +586,6 @@ export class UniversalCodeGenerator {
           case NodeType.DIVIDE:
             operatorTemplate = this.config.operators.divide;
             break;
-        }
-        return this.processMathOperation(sourceNode, operatorTemplate);
-      }
-      
-      // For logic operations, process the operation and return result
-      if (
-        sourceNode.data.type === NodeType.AND ||
-        sourceNode.data.type === NodeType.OR ||
-        sourceNode.data.type === NodeType.GREATER_THAN ||
-        sourceNode.data.type === NodeType.LESS_THAN ||
-        sourceNode.data.type === NodeType.EQUAL
-      ) {
-        let operatorTemplate = '';
-        switch (sourceNode.data.type) {
-          case NodeType.AND:
-            operatorTemplate = this.config.operators.and;
-            break;
-          case NodeType.OR:
-            operatorTemplate = this.config.operators.or;
-            break;
           case NodeType.GREATER_THAN:
             operatorTemplate = this.config.operators.greaterThan;
             break;
@@ -583,34 +595,200 @@ export class UniversalCodeGenerator {
           case NodeType.EQUAL:
             operatorTemplate = this.config.operators.equal;
             break;
+          case NodeType.AND:
+            operatorTemplate = this.config.operators.and;
+            break;
+          case NodeType.OR:
+            operatorTemplate = this.config.operators.or;
+            break;
+          case NodeType.NOT:
+            // For NOT, we need a special case since it's unary
+            const input = this.getInputValue(sourceNode.id, 'input', 'false');
+            // Use the language-specific not operator if available
+            const notTemplate = this.config.operators.not || '!$value';
+            return notTemplate.replace('$value', input);
         }
         return this.processMathOperation(sourceNode, operatorTemplate);
-      }
-      
-      // For user input, return the variable name
-      if (sourceNode.data.type === NodeType.USER_INPUT) {
-        const varName = sourceNode.data.properties?.variableName || 'input';
-        return varName;
-      }
+        
+      default:
+        // For other nodes, get the custom output value if defined
+        if (sourceNode.data.properties?.outputValue) {
+          return sourceNode.data.properties.outputValue;
+        }
+        
+        // If output socket has a special handler, call it
+        if (this.socketOutputHandlers[sourceNode.data.type]) {
+          const handler = this.socketOutputHandlers[sourceNode.data.type];
+          return handler(sourceNode, sourceSocket.id);
+        }
+        
+        // Fallback to socket name
+        return `${sourceNode.data.label}_${sourceSocket.name}`;
     }
-    
-    // If no valid connection, return default value from the input socket
-    return input.defaultValue || defaultValue;
   }
   
   /**
-   * Process a math operation
-   * @param node The math operation node
-   * @param operatorTemplate The template for the operator
-   * @returns The formatted math operation
+   * Format value from an input widget based on socket type and widget configuration
+   * This provides more intelligent formatting based on widget customizations
+   * @param value The value to format
+   * @param type The socket type
+   * @param widgetConfig Optional widget configuration
+   * @returns Formatted value as a string
    */
-  protected processMathOperation(node: Node<BaseNodeData>, operatorTemplate: string): string {
-    const left = this.getInputValue(node.id, 'left', '0');
-    const right = this.getInputValue(node.id, 'right', '0');
+  protected formatWidgetValue(
+    value: any, 
+    type: SocketType, 
+    widgetConfig?: InputWidgetConfig
+  ): string {
+    // Handle undefined or null values
+    if (value === undefined || value === null) {
+      return 'None';
+    }
     
-    return operatorTemplate
-      .replace('$left', left)
-      .replace('$right', right);
+    // Apply widget-specific formatting where needed
+    if (widgetConfig) {
+      // Handle special widget types
+      switch (widgetConfig.widgetType) {
+        case WidgetType.COLOR_PICKER:
+          // For colors, preserve the string format
+          return this.formatDefaultValue(value, SocketType.STRING);
+          
+        case WidgetType.DROPDOWN:
+          // For dropdowns, try to use the option value directly
+          if (widgetConfig.options) {
+            const option = widgetConfig.options.find(opt => String(opt.value) === String(value));
+            if (option) {
+              return this.formatDefaultValue(option.value, type);
+            }
+          }
+          break;
+          
+        case WidgetType.SLIDER:
+          // For sliders, ensure numeric formatting
+          if (typeof value === 'string') {
+            const num = parseFloat(value);
+            if (!isNaN(num)) {
+              return num.toString();
+            }
+          }
+          break;
+          
+        case WidgetType.TEXTAREA:
+          // For multiline text, handle line breaks
+          if (typeof value === 'string' && value.includes('\n')) {
+            return this.formatDefaultValue(value.replace(/\n/g, '\\n'), type);
+          }
+          break;
+      }
+      
+      // Apply precision formatting for numbers if specified
+      if (type === SocketType.NUMBER && widgetConfig.precision !== undefined) {
+        const num = parseFloat(String(value));
+        if (!isNaN(num)) {
+          return num.toFixed(widgetConfig.precision);
+        }
+      }
+    }
+    
+    // Fallback to standard formatting
+    return this.formatDefaultValue(value, type);
+  }
+  
+  /**
+   * Format a boolean value according to the language's syntax
+   */
+  protected formatBooleanValue(value: any): string {
+    const boolValue = value === true || value === 'true' || value === 1;
+    // Use language-specific boolean representation if available
+    return boolValue 
+      ? (this.config.values?.true || 'true') 
+      : (this.config.values?.false || 'false');
+  }
+  
+  /**
+   * Format a number value according to the language's syntax
+   */
+  protected formatNumberValue(value: any): string {
+    if (typeof value === 'string') {
+      const num = parseFloat(value);
+      return isNaN(num) ? '0' : num.toString();
+    }
+    return value.toString();
+  }
+  
+  /**
+   * Format a string value according to the language's syntax
+   */
+  protected formatStringValue(value: any): string {
+    if (typeof value !== 'string') {
+      value = value.toString();
+    }
+    
+    // Use language-specific escape sequences if available
+    const doubleQuoteEscape = this.config.escapeSequences?.doubleQuote || '\\"';
+    const escaped = value.replace(/"/g, doubleQuoteEscape);
+    return `"${escaped}"`;
+  }
+  
+  /**
+   * Format a multiline text according to the language's syntax
+   */
+  protected formatMultilineText(value: string): string {
+    // For most languages, use multiple string concatenation
+    const lines = value.split('\n');
+    const newlineChar = this.config.escapeSequences?.newline || '\\n';
+    
+    // If the language has a specific multiline string format, use it
+    // Otherwise fall back to string concatenation with escaped newlines
+    const doubleQuoteEscape = this.config.escapeSequences?.doubleQuote || '\\"';
+    const formatted = lines.map(line => {
+      const escaped = line.replace(/"/g, doubleQuoteEscape);
+      return `"${escaped}"`;
+    }).join(` + "${newlineChar}" + `);
+    
+    return formatted;
+  }
+  
+  /**
+   * Format default value based on its type
+   * @param value The value to format
+   * @param type The socket type
+   * @returns Formatted value as a string
+   */
+  protected formatDefaultValue(value: any, type: SocketType): string {
+    // Handle "undefined" string value
+    if (value === "undefined") {
+      // Return appropriate language default based on type
+      switch (type) {
+        case SocketType.BOOLEAN:
+          return this.formatBooleanValue(false);
+        case SocketType.NUMBER:
+          return this.formatNumberValue(0);
+        case SocketType.STRING:
+          return this.formatStringValue("");
+        default:
+          return 'None';
+      }
+    }
+    
+    // Don't call formatWidgetValue again - this creates infinite recursion
+    switch (type) {
+      case SocketType.BOOLEAN:
+        return this.formatBooleanValue(value);
+      case SocketType.NUMBER:
+        return this.formatNumberValue(value);
+      case SocketType.STRING:
+        if (typeof value === 'string' && value.includes('\n')) {
+          return this.formatMultilineText(value);
+        } else {
+          return this.formatStringValue(value);
+        }
+      case SocketType.ANY:
+      case SocketType.FLOW:
+      default:
+        // Basic conversion of value to string
+        return value !== undefined && value !== null ? String(value) : 'None';
+    }
   }
   
   /**
@@ -645,7 +823,9 @@ export class UniversalCodeGenerator {
    * Add block start and increase indentation
    */
   protected addBlockStart(): void {
-    if (this.config.formatting.blockStart) {
+    // For Python (and potentially other languages), the colon is already part of the statements
+    // so we don't need to add it again here if it was already added with the statement
+    if (this.config.formatting.blockStart && this.code[this.code.length - 1] !== this.config.formatting.blockStart) {
       this.code += this.config.formatting.blockStart;
     }
     this.code += '\n';
@@ -723,5 +903,22 @@ export class UniversalCodeGenerator {
     }
     
     return value;
+  }
+  
+  /**
+   * Process a math operation node
+   * @param node The operation node
+   * @param operatorTemplate The template for the operation from language config
+   * @returns The formatted operation expression
+   */
+  protected processMathOperation(node: Node<BaseNodeData>, operatorTemplate: string): string {
+    // Get the left and right input values
+    const leftInput = this.getInputValue(node.id, 'a');
+    const rightInput = this.getInputValue(node.id, 'b');
+    
+    // Replace the placeholders in the template
+    return operatorTemplate
+      .replace('$left', leftInput)
+      .replace('$right', rightInput);
   }
 } 

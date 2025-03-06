@@ -14,13 +14,6 @@ interface CustomEdgeData {
 }
 
 /**
- * Configuration for edge styling by socket type
- */
-interface EdgeStyleConfig {
-  // No showLabel property needed anymore
-}
-
-/**
  * CustomEdge component for socket connections
  * Features:
  * - Color based on socket type
@@ -74,8 +67,6 @@ export const CustomEdge: React.FC<EdgeProps> = ({
     targetY,
     targetPosition,
   });
-  
-  // No need for edgeStyleConfig anymore since we don't show labels
   
   // Generate CSS classes for the edge based on socket type and validity
   const edgeClasses = useMemo(() => {
@@ -162,15 +153,6 @@ const getSocketColor = (type: SocketType, colors: ColorOptions): string => {
     default:
       return colors.anyColor;
   }
-};
-
-/**
- * Get edge styling configuration based on socket type
- * We no longer need this, but keeping a simpler version for consistency
- */
-const getEdgeStyleBySocketType = (type: SocketType): EdgeStyleConfig => {
-  // Empty configuration since we don't need any special styling based on type anymore
-  return {};
 };
 
 export default CustomEdge; 

@@ -35,7 +35,15 @@ describe('createSocketDefinition', () => {
       name: 'Test Socket',
       type: SocketType.NUMBER,
       direction: SocketDirection.INPUT,
-      defaultValue: 42
+      defaultValue: 42,
+      inputWidget: {
+        enabled: true,
+        min: -Infinity,
+        max: Infinity,
+        step: 1,
+        precision: 2,
+        isInteger: false
+      }
     });
   });
 
