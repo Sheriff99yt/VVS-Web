@@ -4,6 +4,10 @@ import { ChakraProvider } from '@chakra-ui/react'
 import App from './App'
 import './index.css'
 import system from './themes/theme.ts'
+import { initializeNodeSystem } from './nodes/NodeSystem'
+
+// Initialize the node system
+initializeNodeSystem();
 
 // Set the initial color mode to dark
 document.documentElement.setAttribute('data-theme', 'dark');
