@@ -179,18 +179,20 @@ export function EditorNavigationProvider({
     if (seededRef.current) return;
     seededRef.current = true;
 
-    const fromHistory = readNavigationFrameFromHistoryState(window.history.state);
-    if (fromHistory) {
-      const sanitized = sanitizeNavigationFrame(fromHistory, availableGraphIds);
-      applyingNavigationRef.current = true;
-      applyNavigationFrame(sanitized);
-      lastRecordedFrameRef.current = sanitized;
-      applyingNavigationRef.current = false;
-      return;
-    }
+    queueMicrotask(() => {
+      const fromHistory = readNavigationFrameFromHistoryState(window.history.state);
+      if (fromHistory) {
+        const sanitized = sanitizeNavigationFrame(fromHistory, availableGraphIds);
+        applyingNavigationRef.current = true;
+        applyNavigationFrame(sanitized);
+        lastRecordedFrameRef.current = sanitized;
+        applyingNavigationRef.current = false;
+        return;
+      }
 
-    const initial = sanitizeNavigationFrame(buildCurrentFrame(), availableGraphIds);
-    recordHistory(initial, 'replace');
+      const initial = sanitizeNavigationFrame(buildCurrentFrame(), availableGraphIds);
+      recordHistory(initial, 'replace');
+    });
   }, [
     applyNavigationFrame,
     availableGraphIds,

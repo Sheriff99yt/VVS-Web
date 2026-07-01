@@ -33,7 +33,18 @@ function parseAllowedDevOrigins(): string[] | undefined {
 
 const allowedDevOrigins = parseAllowedDevOrigins();
 
+const isGithubPages = process.env.GITHUB_PAGES === 'true';
+/** Project Pages URL: https://sheriff99yt.github.io/VVS-Web/ */
+const githubPagesBasePath = '/VVS-Web';
+
 const nextConfig: NextConfig = {
+  ...(isGithubPages
+    ? {
+        output: 'export',
+        basePath: githubPagesBasePath,
+        assetPrefix: `${githubPagesBasePath}/`,
+      }
+    : {}),
   ...(allowedDevOrigins ? { allowedDevOrigins } : {}),
 };
 

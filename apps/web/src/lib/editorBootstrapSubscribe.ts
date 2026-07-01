@@ -23,23 +23,21 @@ export function useEditorBootstrap(
   const [bootstrap, setBootstrap] = useState<EditorBootstrap | null>(null);
 
   useEffect(() => {
-    if (!projectId) {
-      setBootstrap(null);
-      return;
-    }
-
-    const load = () => resolveBootstrap(projectId, view);
-    const immediate = load();
-    if (immediate) {
-      setBootstrap(immediate);
-      return;
-    }
+    let cancelled = false;
 
     const timer = window.setTimeout(() => {
-      setBootstrap(load());
+      if (cancelled) return;
+      if (!projectId) {
+        setBootstrap(null);
+        return;
+      }
+      setBootstrap(resolveBootstrap(projectId, view));
     }, 0);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [projectId, view]);
 
   return bootstrap;

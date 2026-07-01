@@ -115,6 +115,8 @@ bun run dev
 
 Open [http://localhost:3000](http://localhost:3000) — create or open a project from the start screen.
 
+**Live preview:** [sheriff99yt.github.io/VVS-Web](https://sheriff99yt.github.io/VVS-Web/) (GitHub Pages — static, browser storage only).
+
 Before pushing: confirm `apps/web/.env.local` does **not** appear in `git status`.
 
 **Build:**

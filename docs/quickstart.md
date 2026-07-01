@@ -26,6 +26,8 @@ bun run dev
 
 Open **[http://localhost:3000](http://localhost:3000)**.
 
+**Live preview (GitHub Pages):** [https://sheriff99yt.github.io/VVS-Web/](https://sheriff99yt.github.io/VVS-Web/) — static build; projects save to browser `localStorage` only (separate from localhost).
+
 The terminal prints a **Network** URL for LAN access (e.g. `http://192.168.x.x:3000`). Requires `DEV_ALLOWED_ORIGIN` in `apps/web/.env.local` — `setup_env.ps1` creates this on Windows.
 
 ---
