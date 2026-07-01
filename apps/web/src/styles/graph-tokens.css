@@ -1,0 +1,26 @@
+/* Global tokens for the VVS Editor (Minimal & Clean) */
+:root {
+  /* Pin Type Colors - Highly Visible Semantic Colors */
+  --vvs-pin-execution: #ffffff;      /* White */
+  --vvs-pin-data_string: #ec4899;    /* Bright Pink */
+  --vvs-pin-data_number: #22c55e;    /* Bright Green */
+  --vvs-pin-data_boolean: #ef4444;   /* Bright Red */
+  --vvs-pin-data_object: #3b82f6;    /* Bright Blue */
+  --vvs-pin-data_array: #f59e0b;     /* Amber */
+  --vvs-pin-data_any: #9ca3af;       /* Neutral Gray */
+
+  /* Node Category Colors - Subtle */
+  --vvs-cat-events: #ef4444;
+  --vvs-cat-flow: #6b7280;
+  --vvs-cat-math: #22c55e;
+  --vvs-cat-action: #3b82f6;
+  
+  /* Container UI - Flat and solid */
+  --vvs-node-bg: #1f2937; /* Tailwind gray-800 */
+  --vvs-node-border: #374151; /* Tailwind gray-700 */
+  --vvs-node-border-hover: #9ca3af; /* Tailwind gray-400 */
+  --vvs-node-border-selected: #60a5fa; /* Blue accent for selection */
+  
+  --vvs-text-primary: #f9fafb;
+  --vvs-text-secondary: #9ca3af;
+}

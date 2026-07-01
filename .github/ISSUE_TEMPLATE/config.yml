@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Roadmap & vision
+    url: https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md
+    about: Phased plan and product direction
+  - name: Original VVS (2021)
+    url: https://github.com/Sheriff99yt/Vision_Visual_Scripting
+    about: Python desktop predecessor — graph to any language

@@ -1,0 +1,49 @@
+.reroute {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #52525b;
+  background-color: #3f3f46;
+  pointer-events: none;
+}
+
+.dot[data-pintype='execution'] {
+  border-radius: 0;
+  clip-path: polygon(0 0, 70% 0, 100% 50%, 70% 100%, 0 100%);
+  width: 10px;
+  height: 10px;
+  border: none;
+  background-color: var(--vvs-pin-execution);
+}
+
+.dot[data-pintype='data_string'] { background-color: var(--vvs-pin-data_string); }
+.dot[data-pintype='data_number'] { background-color: var(--vvs-pin-data_number); }
+.dot[data-pintype='data_boolean'] { background-color: var(--vvs-pin-data_boolean); }
+.dot[data-pintype='data_object'] { background-color: var(--vvs-pin-data_object); }
+.dot[data-pintype='data_any'] { background-color: var(--vvs-pin-data_any); }
+
+.rerouteSelected .dot {
+  box-shadow: 0 0 0 2px var(--vvs-node-border-selected);
+}
+
+.handle {
+  width: 8px !important;
+  height: 8px !important;
+  opacity: 0;
+  border: none !important;
+  background: transparent !important;
+}
+
+.handle[data-pintype='execution'] {
+  width: 10px !important;
+  height: 10px !important;
+}

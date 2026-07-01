@@ -1,0 +1,83 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js (apps/web)
+apps/web/.next/
+apps/web/out/
+apps/web/build/
+
+# Production / misc build output
+dist/
+build/
+*.tsbuildinfo
+
+# Go (server/)
+*.exe
+*.exe~
+*.test
+*.out
+/vendor/
+server/bin/
+
+# Environment & secrets — never commit (machine-specific)
+.env
+.env.*
+!.env.example
+!**/.env.example
+.env.local
+**/.env.local
+
+# Local agent / contributor overrides (never commit)
+*.local.md
+AGENTS.local.md
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editors
+.idea/
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# Logs & debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Vercel / deploy artifacts
+.vercel
+
+# Turbo / monorepo cache (future)
+.turbo
+
+# Certificates
+*.pem
+
+# TypeScript generated (apps/web)
+apps/web/next-env.d.ts
+
+# Agent / local scratch (optional local-only)
+.cursor/
+
+# Local-only maintainer scripts (never commit)
+tools/check_git_safe.ps1
+tools/publish_github.ps1

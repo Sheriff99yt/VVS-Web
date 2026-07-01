@@ -1,0 +1,44 @@
+name: Feature request
+description: Suggest an enhancement for VVS Web
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [docs/roadmap.md](../docs/roadmap.md) and [docs/current_state.md](../docs/current_state.md) before proposing — large features may already be planned.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem does this solve? Who is it for?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Web editor (apps/web)
+        - Transpiler (packages/transpiler)
+        - Backend / MCP (server/)
+        - UE6 plugin (plugins/)
+        - Documentation
+        - Other
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a PR for this (optional)

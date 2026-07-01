@@ -1,0 +1,23 @@
+.edgeBase {
+  stroke-width: 2px;
+  fill: none;
+  transition: stroke-width 0.1s ease, stroke 0.1s ease;
+}
+
+.edgeSelected {
+  stroke-width: 3px;
+  stroke: var(--vvs-node-border-selected) !important;
+}
+
+/* Edge colors inheriting from graph tokens */
+.edgeBase[data-pintype="execution"] { stroke: var(--vvs-pin-execution); }
+.edgeBase[data-pintype="data_string"] { stroke: var(--vvs-pin-data_string); }
+.edgeBase[data-pintype="data_number"] { stroke: var(--vvs-pin-data_number); }
+.edgeBase[data-pintype="data_boolean"] { stroke: var(--vvs-pin-data_boolean); }
+.edgeBase[data-pintype="data_object"] { stroke: var(--vvs-pin-data_object); }
+.edgeBase[data-pintype="data_any"] { stroke: var(--vvs-pin-data_any); }
+
+/* Apply static dash pattern to non-execution lines for data flow (no animation) */
+.edgeBase:not([data-pintype="execution"]) {
+  stroke-dasharray: 4 4;
+}
