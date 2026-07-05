@@ -12,34 +12,61 @@ import {
   Trash2,
   Variable,
   PlaySquare,
-  Boxes,
   GitBranch,
   Radio,
+  ExternalLink,
+  GripVertical,
+  Layers,
 } from 'lucide-react';
+import type { FunctionBinding, FunctionSymbol } from '@vvs/graph-types';
+import { createVariableSymbol, LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
 import { useProject } from '@/contexts/ProjectContext';
-import { createFunctionSymbol } from '@/lib/functionTabs';
-import { overloadDisplayLabel } from '@/lib/functionTabs';
 import {
-  createMacroId,
+  createFunctionSymbol,
+  appendFunctionOverload,
+  reorderFunctionSymbols,
+  overloadTreeLabel,
+} from '@/lib/functionTabs';
+import {
+  FUNCTION_OVERLOAD_DRAG_MIME,
+  type FunctionOverloadDragPayload,
+  commitFunctionSymbolUpdate,
+} from '@/lib/functionHelpers';
+import { PANEL_SCROLL_ATTR } from '@/components/graph/useBlockCanvasWheel';
+import {
   openFunctionGraphTab,
-  openMacroGraphTab,
   openMainGraph,
 } from '@/lib/graphTabs';
 import { defaultValueForVariableType, VariableType } from '@/lib/variableDefaults';
+import { mergeDemoVariables } from '@/lib/demoVariables';
+import {
+  isBindingCoaAllowed,
+  isDataTypeCoaAllowed,
+} from '@/lib/variableCoaUi';
+import type { VariableBinding } from '@/types/graph';
 import { findGraphIdsUsingVariable } from '@/lib/graphRelations';
 import { dispatchSwitchEditorView } from '@/lib/editorNavigate';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import {
   listGeneratedExports,
-  listMacroEntries,
   listEventDispatchers,
 } from '@/lib/projectTree';
 import { createEventId } from '@/lib/eventHelpers';
+import {
+  dispatchSpawnEnvironmentNode,
+  type EnvironmentSpawnAction,
+} from '@/lib/environmentHelpers';
+import { getLinkedEnvironmentManifest } from '@/lib/environmentContext';
+import { resolveApiSurface } from '@vvs/environment-templates';
+import { SymbolDeleteDialog } from '@/components/layout/SymbolDeleteDialog';
+import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
+import { getSymbolDisplayName } from '@/lib/symbolLifecycle';
+import type { SymbolRefKind } from '@vvs/graph-types';
 
 type CategoryKey =
   | 'graphs'
+  | 'environment'
   | 'functions'
-  | 'macros'
   | 'variables'
   | 'dispatchers'
   | 'generated';
@@ -50,12 +77,21 @@ interface TreeRowProps {
   depth?: keyof typeof INDENT;
   active?: boolean;
   icon?: React.ReactNode;
+  leading?: React.ReactNode;
   label: string;
+  meta?: string;
   suffix?: React.ReactNode;
   onSelect?: () => void;
   onOpen?: () => void;
   hint?: string;
   className?: string;
+  isDropTarget?: boolean;
+  isDragging?: boolean;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragLeave?: () => void;
+  /** Drag from tree onto the graph canvas (e.g. function overload call). */
+  canvasDrag?: { mimeType: string; payload: string };
 }
 
 const SINGLE_CLICK_DELAY_MS = 220;
@@ -64,12 +100,20 @@ function TreeRow({
   depth = 'l1',
   active,
   icon,
+  leading,
   label,
-  suffix,
+  meta,
   onSelect,
   onOpen,
   hint,
+  suffix,
   className = '',
+  isDropTarget = false,
+  isDragging = false,
+  onDragOver,
+  onDrop,
+  onDragLeave,
+  canvasDrag,
 }: TreeRowProps) {
   const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,32 +141,49 @@ function TreeRow({
 
   const interactive = Boolean(onSelect || onOpen);
 
+  const handleCanvasDragStart = (e: React.DragEvent) => {
+    if (!canvasDrag) return;
+    e.stopPropagation();
+    e.dataTransfer.setData(canvasDrag.mimeType, canvasDrag.payload);
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
   return (
     <div
+      draggable={Boolean(canvasDrag)}
+      onDragStart={canvasDrag ? handleCanvasDragStart : undefined}
       className={`flex items-center gap-1.5 py-1 pr-2 select-none group ${INDENT[depth]} ${
         interactive ? 'cursor-pointer' : ''
-      } ${
+      } ${canvasDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${
         active ? 'bg-zinc-800/80 border-l-2 border-indigo-500' : 'hover:bg-zinc-900 border-l-2 border-transparent'
+      } ${isDropTarget ? 'bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/30' : ''} ${
+        isDragging ? 'opacity-40' : ''
       } ${className}`}
       onClick={interactive ? handleClick : undefined}
       onDoubleClick={onOpen ? handleDoubleClick : undefined}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragLeave={onDragLeave}
       title={
         hint ??
         (onOpen
-          ? 'Click for references · Double-click to open'
+          ? 'Click to select · Double-click to open'
           : onSelect
-            ? 'Click for references'
+            ? 'Click to select'
             : undefined)
       }
     >
-      <span className="w-4 shrink-0" />
+      <span className="w-4 shrink-0 flex items-center justify-center">{leading}</span>
       {icon}
-      <span
-        className={`text-[11px] truncate flex-1 min-w-0 ${
-          active ? 'text-zinc-100 font-medium' : 'text-zinc-400 group-hover:text-zinc-200'
-        }`}
-      >
-        {label}
+      <span className="flex-1 min-w-0 flex flex-col">
+        <span
+          className={`text-[11px] truncate ${
+            active ? 'text-zinc-100 font-medium' : 'text-zinc-400 group-hover:text-zinc-200'
+          }`}
+        >
+          {label}
+        </span>
+        {meta ? <span className="text-[9px] text-zinc-600 truncate">{meta}</span> : null}
       </span>
       {suffix}
     </div>
@@ -276,13 +337,21 @@ function VariableRow({
   hint,
   onSelect,
   onOpen,
+  onDelete,
 }: {
-  variable: { id: string; name: string; type: string };
+  variable: {
+    id: string;
+    name: string;
+    type: string;
+    binding?: string;
+    flags?: { readonly?: boolean };
+  };
   isSelected: boolean;
   color: string;
   hint?: string;
   onSelect: () => void;
   onOpen: () => void;
+  onDelete?: () => void;
 }) {
   const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -328,7 +397,29 @@ function VariableRow({
       >
         {variable.name}
       </span>
-      <span className="text-[9px] text-zinc-600 uppercase shrink-0">{variable.type}</span>
+      <span className="text-[9px] text-zinc-600 uppercase shrink-0">
+        {LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === variable.type)?.shortLabel ??
+          variable.type.replace(/^data_/, '')}
+      </span>
+      {variable.binding && variable.binding !== 'instance' ? (
+        <span className="text-[8px] uppercase text-amber-500/80 shrink-0">{variable.binding}</span>
+      ) : null}
+      {variable.flags?.readonly ? (
+        <span className="text-[8px] uppercase text-zinc-500 shrink-0">ro</span>
+      ) : null}
+      {onDelete ? (
+        <button
+          type="button"
+          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400 shrink-0"
+          title="Remove variable"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 size={11} />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -361,35 +452,57 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     activeGraphTab,
     projectDetails,
     targetLanguage,
+    crossOverMode,
     openTabs,
     isTabDirty,
     focusReference,
     referenceRootGraphId,
     referenceVariableName,
+    environmentId,
+    environmentVersion,
   } = useProject();
 
   const documents = useGraphDocuments();
+  const { deleteSymbol, getUsageSummary } = useSymbolLifecycle();
+
+  const [pendingDelete, setPendingDelete] = useState<{
+    kind: SymbolRefKind;
+    symbolId: string;
+    symbolName: string;
+  } | null>(null);
 
   const [filterQuery, setFilterQuery] = useState('');
   const [expanded, setExpanded] = useState<Record<CategoryKey, boolean>>({
     graphs: true,
+    environment: true,
     functions: true,
-    macros: true,
     variables: true,
     dispatchers: false,
     generated: false,
   });
   const [isAddingVariable, setIsAddingVariable] = useState(false);
   const [newVarName, setNewVarName] = useState('');
-  const [newVarType, setNewVarType] = useState<VariableType>('string');
+  const [newVarType, setNewVarType] = useState<VariableType>('data_string');
+  const [newVarBinding, setNewVarBinding] = useState<VariableBinding>('instance');
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [newEventName, setNewEventName] = useState('');
   const [isAddingFunction, setIsAddingFunction] = useState(false);
   const [newFuncName, setNewFuncName] = useState('');
-  const [isAddingMacro, setIsAddingMacro] = useState(false);
-  const [newMacroName, setNewMacroName] = useState('');
+  const [newFuncBinding, setNewFuncBinding] = useState<FunctionBinding>('instance');
+  const [addingOverloadForId, setAddingOverloadForId] = useState<string | null>(null);
+  const [draggingFunctionId, setDraggingFunctionId] = useState<string | null>(null);
+  const [dropFunctionId, setDropFunctionId] = useState<string | null>(null);
 
-  const macros = useMemo(() => listMacroEntries(openTabs), [openTabs]);
+  const environmentManifest = useMemo(
+    () => getLinkedEnvironmentManifest(environmentId),
+    [environmentId]
+  );
+  const environmentSurface = useMemo(
+    () =>
+      environmentManifest ? resolveApiSurface(environmentManifest, targetLanguage) : null,
+    [environmentManifest, targetLanguage]
+  );
+
   const dispatchers = useMemo(() => listEventDispatchers(events, documents), [events, documents]);
   const generatedExports = useMemo(
     () =>
@@ -409,10 +522,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     () => functions.filter((f) => matchesFilter(f.name, q)),
     [functions, q]
   );
-  const filteredMacros = useMemo(
-    () => macros.filter((m) => matchesFilter(m.name, q)),
-    [macros, q]
-  );
   const filteredVariables = useMemo(
     () => variables.filter((v) => matchesFilter(v.name, q) || matchesFilter(v.type, q)),
     [variables, q]
@@ -428,24 +537,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   };
 
   const openGraph = useCallback(
-    (graphId: string, type: 'main' | 'function' | 'macro') => {
+    (graphId: string, type: 'main' | 'function') => {
       if (type === 'main') {
         openMainGraph(setActiveGraphTab);
         setSelection({ type: 'graph', id: null });
       } else {
-        const tab = openTabs.find((t) => t.id === graphId);
-        if (tab?.type === 'macro') {
-          openMacroGraphTab({ id: graphId, name: tab.name }, setOpenTabs, setActiveGraphTab);
-        } else {
-          const func = functions.find((f) => f.id === graphId);
-          if (func) openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
-        }
+        const func = functions.find((f) => f.id === graphId);
+        if (func) openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
         setSelection({ type: 'graph', id: graphId });
       }
       focusReference(graphId, null);
       dispatchSwitchEditorView('canvas');
     },
-    [focusReference, functions, openTabs, setActiveGraphTab, setOpenTabs, setSelection]
+    [focusReference, functions, setActiveGraphTab, setOpenTabs, setSelection]
   );
 
   const openGraphById = useCallback(
@@ -454,11 +558,82 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         openGraph('main', 'main');
         return;
       }
-      const tab = openTabs.find((t) => t.id === graphId);
-      const type: 'function' | 'macro' = tab?.type === 'macro' ? 'macro' : 'function';
-      openGraph(graphId, type);
+      openGraph(graphId, 'function');
     },
-    [openGraph, openTabs]
+    [openGraph]
+  );
+
+  const selectFunction = useCallback(
+    (func: FunctionSymbol) => {
+      setSelection({ type: 'function', id: func.id });
+      openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
+      setExpanded((s) => ({ ...s, functions: true }));
+    },
+    [setActiveGraphTab, setOpenTabs, setSelection]
+  );
+
+  const openFunctionOverloadGraph = useCallback(
+    (func: FunctionSymbol, overloadId: string) => {
+      const tabId =
+        func.overloads.find((o) => o.id === overloadId)?.graphTabId ?? func.id;
+      openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
+      setActiveGraphTab(tabId);
+      dispatchSwitchEditorView('canvas');
+    },
+    [setActiveGraphTab, setOpenTabs]
+  );
+
+  const canReorderFunctions = !q;
+
+  const handleAddOverload = useCallback(
+    (funcId: string) => {
+      const func = functions.find((f) => f.id === funcId);
+      if (!func) return;
+      const { func: next, graphTabId } = appendFunctionOverload(func);
+      commitFunctionSymbolUpdate(next, setFunctions, setOpenTabs);
+      setSelection({ type: 'function', id: funcId });
+      openFunctionGraphTab(next, setOpenTabs, setActiveGraphTab);
+      setActiveGraphTab(graphTabId);
+      setAddingOverloadForId(null);
+      dispatchSwitchEditorView('canvas');
+    },
+    [functions, setActiveGraphTab, setFunctions, setOpenTabs, setSelection]
+  );
+
+  const handleFunctionDragStart = useCallback((e: React.DragEvent, funcId: string) => {
+    e.stopPropagation();
+    e.dataTransfer.setData('application/vvs-function', funcId);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingFunctionId(funcId);
+  }, []);
+
+  const handleFunctionDragEnd = useCallback(() => {
+    setDraggingFunctionId(null);
+    setDropFunctionId(null);
+  }, []);
+
+  const handleFunctionDragOver = useCallback(
+    (e: React.DragEvent, funcId: string) => {
+      if (!canReorderFunctions || !draggingFunctionId || draggingFunctionId === funcId) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setDropFunctionId(funcId);
+    },
+    [canReorderFunctions, draggingFunctionId]
+  );
+
+  const handleFunctionDrop = useCallback(
+    (e: React.DragEvent, funcId: string) => {
+      if (!canReorderFunctions) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const fromId = e.dataTransfer.getData('application/vvs-function') || draggingFunctionId;
+      if (!fromId || fromId === funcId) return;
+      setFunctions((prev) => reorderFunctionSymbols(prev, fromId, funcId));
+      setDraggingFunctionId(null);
+      setDropFunctionId(null);
+    },
+    [canReorderFunctions, draggingFunctionId, setFunctions]
   );
 
   const selectGraphForReferences = useCallback(
@@ -523,18 +698,49 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const handleSaveVariable = () => {
     if (!newVarName.trim()) return;
-    setVariables([
-      ...variables,
-      {
-        id: `var-${Date.now()}`,
-        name: newVarName.trim(),
-        type: newVarType,
-        defaultValue: defaultValueForVariableType(newVarType),
-      },
-    ]);
+    const variable = createVariableSymbol(newVarName.trim(), {
+      type: newVarType,
+      binding: newVarBinding,
+    });
+    variable.defaultValue = defaultValueForVariableType(newVarType);
+    setVariables([...variables, variable]);
     setNewVarName('');
+    setNewVarBinding('instance');
     setIsAddingVariable(false);
     setExpanded((s) => ({ ...s, variables: true }));
+  };
+
+  const handleLoadDemoVariables = () => {
+    setVariables((list) => mergeDemoVariables(list));
+    setExpanded((s) => ({ ...s, variables: true }));
+  };
+
+  const requestDeleteSymbol = useCallback(
+    (kind: SymbolRefKind, symbolId: string) => {
+      const symbols = { variables, functions, events, openTabs };
+      setPendingDelete({
+        kind,
+        symbolId,
+        symbolName: getSymbolDisplayName(kind, symbolId, symbols),
+      });
+    },
+    [variables, functions, events, openTabs]
+  );
+
+  const pendingUsage = pendingDelete
+    ? getUsageSummary(pendingDelete.kind, pendingDelete.symbolId)
+    : { nodeCount: 0, graphCount: 0 };
+
+  const handleDeleteVariable = (varId: string) => {
+    requestDeleteSymbol('variable', varId);
+  };
+
+  const handleDeleteFunction = (funcId: string) => {
+    requestDeleteSymbol('function', funcId);
+  };
+
+  const handleDeleteEvent = (eventId: string) => {
+    requestDeleteSymbol('event', eventId);
   };
 
   const handleSaveEvent = () => {
@@ -555,77 +761,114 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const handleSaveFunction = () => {
     if (!newFuncName.trim()) return;
-    const func = createFunctionSymbol(newFuncName.trim());
+    const func = createFunctionSymbol(newFuncName.trim(), { binding: newFuncBinding });
     setFunctions([...functions, func]);
-    openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
-    setSelection({ type: 'function', id: func.id });
+    selectFunction(func);
     setNewFuncName('');
+    setNewFuncBinding('instance');
     setIsAddingFunction(false);
-    setExpanded((s) => ({ ...s, functions: true }));
-  };
-
-  const handleSaveMacro = () => {
-    if (!newMacroName.trim()) return;
-    const id = createMacroId();
-    openMacroGraphTab({ id, name: newMacroName.trim() }, setOpenTabs, setActiveGraphTab);
-    setSelection({ type: 'graph', id });
-    setNewMacroName('');
-    setIsAddingMacro(false);
-    setExpanded((s) => ({ ...s, macros: true }));
-  };
-
-  const handleDeleteFunction = (funcId: string) => {
-    setFunctions((f) => f.filter((x) => x.id !== funcId));
-    setOpenTabs((tabs) => tabs.filter((t) => t.id !== funcId));
-    if (activeGraphTab === funcId) {
-      setActiveGraphTab('main');
-      setSelection({ type: 'graph', id: null });
-    }
-  };
-
-  const handleDeleteMacro = (macroId: string) => {
-    setOpenTabs((tabs) => tabs.filter((t) => t.id !== macroId));
-    if (activeGraphTab === macroId) {
-      setActiveGraphTab('main');
-      setSelection({ type: 'graph', id: null });
-    }
   };
 
   const getVariableColor = (type: string) => {
     switch (type) {
+      case 'data_string':
       case 'string':
-        return 'var(--vvs-pin-data_string)';
+        return '#38bdf8';
+      case 'data_number':
       case 'number':
-        return 'var(--vvs-pin-data_number)';
+        return '#4ade80';
+      case 'data_boolean':
       case 'boolean':
-        return 'var(--vvs-pin-data_boolean)';
+        return '#f87171';
+      case 'data_object':
       case 'object':
-        return 'var(--vvs-pin-data_object)';
+        return '#a78bfa';
+      case 'data_array':
+      case 'array':
+        return '#fbbf24';
+      case 'data_any':
+      case 'any':
+        return '#94a3b8';
       default:
-        return 'var(--vvs-pin-data_any)';
+        return '#71717a';
     }
   };
 
-  const renderInlineNameInput = (
-    placeholder: string,
-    value: string,
-    onChange: (v: string) => void,
-    onSave: () => void,
-    onCancel: () => void
-  ) => (
-    <div className={`${INDENT.l1} py-1 pr-2`}>
+  const renderFunctionCreateForm = () => (
+    <div className={`${INDENT.l1} py-1.5 pr-2 space-y-1.5`}>
       <input
         type="text"
-        placeholder={placeholder}
+        placeholder="Function name"
         className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={newFuncName}
+        onChange={(e) => setNewFuncName(e.target.value)}
         autoFocus
         onKeyDown={(e) => {
-          if (e.key === 'Enter') onSave();
-          if (e.key === 'Escape') onCancel();
+          if (e.key === 'Enter') handleSaveFunction();
+          if (e.key === 'Escape') {
+            setIsAddingFunction(false);
+            setNewFuncName('');
+            setNewFuncBinding('instance');
+          }
         }}
       />
+      <div className="flex flex-wrap gap-1">
+        {(['instance', 'static', 'module'] as FunctionBinding[]).map((binding) => (
+          <button
+            key={binding}
+            type="button"
+            onClick={() => setNewFuncBinding(binding)}
+            className={`px-1.5 py-0.5 rounded text-[9px] border ${
+              newFuncBinding === binding
+                ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
+                : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            {binding}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-1">
+        <button
+          type="button"
+          onClick={handleSaveFunction}
+          className="flex-1 px-2 py-1 rounded bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/30 hover:bg-indigo-500/30"
+        >
+          Create & open
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setIsAddingFunction(false);
+            setNewFuncName('');
+            setNewFuncBinding('instance');
+          }}
+          className="px-2 py-1 rounded text-[10px] text-zinc-500 border border-zinc-800 hover:text-zinc-300"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderOverloadCreateForm = (funcId: string) => (
+    <div className={`${INDENT.l2} py-1 pr-2`}>
+      <div className="flex gap-1">
+        <button
+          type="button"
+          onClick={() => handleAddOverload(funcId)}
+          className="flex-1 px-2 py-1 rounded bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/30 hover:bg-indigo-500/30"
+        >
+          Add & open
+        </button>
+        <button
+          type="button"
+          onClick={() => setAddingOverloadForId(null)}
+          className="px-2 py-1 rounded text-[10px] text-zinc-500 border border-zinc-800 hover:text-zinc-300"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 
@@ -641,13 +884,24 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         <div className="text-[12px] font-medium text-zinc-100 truncate" title={projectDetails.moduleName}>
           {projectDetails.moduleName || 'Untitled'}
         </div>
+        {environmentManifest ? (
+          <div
+            className="text-[9px] text-indigo-400/90 truncate mt-0.5"
+            title={`${environmentManifest.description}${environmentVersion ? ` · linked v${environmentVersion}` : ''}`}
+          >
+            env: {environmentManifest.displayName}
+            {environmentVersion ? (
+              <span className="text-zinc-600 font-mono"> · v{environmentVersion}</span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex-none flex items-center gap-1 px-2 py-1.5 border-b border-zinc-800/60">
         <PanelFilter value={filterQuery} onChange={setFilterQuery} placeholder="Filter…" />
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 py-0.5">
+      <div className="flex-1 overflow-y-auto min-h-0 py-0.5 overscroll-contain" {...{ [PANEL_SCROLL_ATTR]: '' }}>
         {/* Graphs — primary event graph */}
         <CategorySection
           title="Graphs"
@@ -675,6 +929,112 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           )}
         </CategorySection>
 
+        {environmentSurface && environmentManifest ? (
+          <CategorySection
+            title="Environment API"
+            count={
+              environmentSurface.events.length +
+              environmentSurface.natives.length +
+              environmentSurface.overrideable.length
+            }
+            icon={<Layers size={12} className="text-indigo-400/80 shrink-0" />}
+            expanded={expanded.environment}
+            onToggle={() => toggleCategory('environment')}
+          >
+            {environmentSurface.events
+              .filter((e) => matchesFilter(e.name, q))
+              .map((event) => (
+                <TreeRow
+                  key={event.id}
+                  icon={<Radio size={10} className="text-indigo-400/70 shrink-0" />}
+                  label={event.name}
+                  meta="event"
+                  hint="Spawn handler or subscribe"
+                  suffix={
+                    !isReferenceMode ? (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                        <button
+                          type="button"
+                          className="px-1 py-0.5 rounded text-[8px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30"
+                          title="Add handler"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dispatchSpawnEnvironmentNode('event_handler', event.id);
+                          }}
+                        >
+                          Handler
+                        </button>
+                        <button
+                          type="button"
+                          className="px-1 py-0.5 rounded text-[8px] bg-zinc-800 text-zinc-300 border border-zinc-700"
+                          title="Add subscribe"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dispatchSpawnEnvironmentNode('event_subscribe', event.id);
+                          }}
+                        >
+                          Sub
+                        </button>
+                      </div>
+                    ) : null
+                  }
+                />
+              ))}
+            {environmentSurface.natives
+              .filter((m) => matchesFilter(m.name, q))
+              .map((method) => (
+                <TreeRow
+                  key={method.id}
+                  icon={<PlaySquare size={10} className="text-sky-400/70 shrink-0" />}
+                  label={`${method.name}()`}
+                  meta="native"
+                  hint="Spawn native call node"
+                  suffix={
+                    !isReferenceMode ? (
+                      <button
+                        type="button"
+                        className="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] bg-sky-500/20 text-sky-200 border border-sky-500/30"
+                        title="Add call"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dispatchSpawnEnvironmentNode('call_native' as EnvironmentSpawnAction, method.id);
+                        }}
+                      >
+                        Call
+                      </button>
+                    ) : null
+                  }
+                />
+              ))}
+            {environmentSurface.overrideable
+              .filter((m) => matchesFilter(m.name, q))
+              .map((method) => (
+                <TreeRow
+                  key={method.id}
+                  icon={<GitBranch size={10} className="text-amber-400/70 shrink-0" />}
+                  label={`${method.name}()`}
+                  meta="override"
+                  hint="Spawn override handler"
+                  suffix={
+                    !isReferenceMode ? (
+                      <button
+                        type="button"
+                        className="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                        title="Add override"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dispatchSpawnEnvironmentNode('event_handler', method.id);
+                        }}
+                      >
+                        Override
+                      </button>
+                    ) : null
+                  }
+                />
+              ))}
+          </CategorySection>
+        ) : null}
+
         {/* Functions */}
         <CategorySection
           title="Functions"
@@ -682,36 +1042,82 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           icon={<PlaySquare size={12} className="text-indigo-400/80 shrink-0" />}
           expanded={expanded.functions}
           onToggle={() => toggleCategory('functions')}
-          onAdd={() => setIsAddingFunction(true)}
+          onAdd={() => {
+            setIsAddingFunction(true);
+            setExpanded((s) => ({ ...s, functions: true }));
+          }}
           addLabel="New function"
         >
-          {isAddingFunction &&
-            renderInlineNameInput(
-              'Function name',
-              newFuncName,
-              setNewFuncName,
-              handleSaveFunction,
-              () => setIsAddingFunction(false)
-            )}
+          {isAddingFunction ? renderFunctionCreateForm() : null}
           {filteredFunctions.length === 0 && !isAddingFunction
-            ? emptyHint(functions.length === 0 ? 'Empty' : '—')
+            ? emptyHint(functions.length === 0 ? 'Empty — use + to add' : '—')
             : filteredFunctions.map((f) => (
                 <React.Fragment key={f.id}>
                   <TreeRow
                     active={selection.type === 'function' && selection.id === f.id}
+                    isDragging={draggingFunctionId === f.id}
+                    isDropTarget={dropFunctionId === f.id}
+                    leading={
+                      canReorderFunctions ? (
+                        <span
+                          draggable
+                          onDragStart={(e) => handleFunctionDragStart(e, f.id)}
+                          onDragEnd={handleFunctionDragEnd}
+                          className="cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 p-0"
+                          title="Drag to reorder"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <GripVertical size={11} />
+                        </span>
+                      ) : (
+                        <span className="w-2.5" />
+                      )
+                    }
                     icon={<div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
-                    label={f.overloads.length > 1 ? `${f.name} · ${f.overloads.length}` : f.name}
-                    hint={rowHint}
-                    onSelect={() => setSelection({ type: 'function', id: f.id })}
+                    label={f.name}
+                    meta={
+                      f.binding !== 'instance'
+                        ? f.binding
+                        : f.overloads.length > 1
+                          ? `${f.overloads.length} overloads`
+                          : undefined
+                    }
+                    hint={canReorderFunctions ? 'Drag to reorder · click to edit' : rowHint}
+                    onSelect={() => selectFunction(f)}
                     onOpen={() => openGraph(f.id, 'function')}
+                    onDragOver={(e) => handleFunctionDragOver(e, f.id)}
+                    onDrop={(e) => handleFunctionDrop(e, f.id)}
+                    onDragLeave={() => {
+                      if (dropFunctionId === f.id) setDropFunctionId(null);
+                    }}
                     suffix={
-                      <div className="flex items-center gap-1 shrink-0">
-                        {f.binding !== 'instance' ? (
-                          <span className="text-[9px] text-zinc-600 uppercase">{f.binding}</span>
-                        ) : null}
+                      <div className="flex items-center gap-0.5 shrink-0">
                         {isTabDirty(f.id) ? (
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Uncompiled changes" />
                         ) : null}
+                        <button
+                          type="button"
+                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
+                          title="Add overload"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAddingOverloadForId(f.id);
+                            selectFunction(f);
+                          }}
+                        >
+                          <Plus size={11} />
+                        </button>
+                        <button
+                          type="button"
+                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-indigo-300"
+                          title="Open graph"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openGraph(f.id, 'function');
+                          }}
+                        >
+                          <ExternalLink size={11} />
+                        </button>
                         <button
                           type="button"
                           className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
@@ -726,78 +1132,38 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       </div>
                     }
                   />
-                  {f.overloads.length > 1
-                    ? f.overloads.map((overload) => (
-                        <TreeRow
-                          key={overload.id}
-                          depth="l2"
-                          active={activeGraphTab === (overload.graphTabId ?? f.id)}
-                          icon={<div className="w-1 h-1 rounded-full bg-indigo-400/60 shrink-0 ml-2" />}
-                          label={overloadDisplayLabel(overload)}
-                          hint={rowHint}
-                          onSelect={() => {
-                            setSelection({ type: 'function', id: f.id });
-                            setActiveGraphTab(overload.graphTabId ?? f.id);
-                          }}
-                          onOpen={() => {
-                            setActiveGraphTab(overload.graphTabId ?? f.id);
-                            openGraph(overload.graphTabId ?? f.id, 'function');
-                          }}
-                        />
-                      ))
-                    : null}
-                </React.Fragment>
-              ))}
-        </CategorySection>
-
-        {/* Macros */}
-        <CategorySection
-          title="Macros"
-          count={macros.length}
-          icon={<Boxes size={12} className="text-amber-500/80 shrink-0" />}
-          expanded={expanded.macros}
-          onToggle={() => toggleCategory('macros')}
-          onAdd={() => setIsAddingMacro(true)}
-          addLabel="New macro"
-        >
-          {isAddingMacro &&
-            renderInlineNameInput(
-              'Macro name',
-              newMacroName,
-              setNewMacroName,
-              handleSaveMacro,
-              () => setIsAddingMacro(false)
-            )}
-          {filteredMacros.length === 0 && !isAddingMacro
-            ? emptyHint(macros.length === 0 ? 'Empty' : '—')
-            : filteredMacros.map((m) => (
-                <TreeRow
-                  key={m.id}
-                  active={isGraphReferenceActive(m.id)}
-                  icon={<div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />}
-                  label={`${m.name} · macro`}
-                  hint={rowHint}
-                  onSelect={() => selectGraph(m.id)}
-                  onOpen={() => openGraph(m.id, 'macro')}
-                  suffix={
-                    <div className="flex items-center gap-1 shrink-0">
-                      {isTabDirty(m.id) ? (
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      ) : null}
-                      <button
-                        type="button"
-                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                        title="Remove macro"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMacro(m.id);
+                  {f.overloads.map((overload, index) => {
+                    const dragPayload: FunctionOverloadDragPayload = {
+                      functionId: f.id,
+                      overloadId: overload.id,
+                    };
+                    return (
+                      <TreeRow
+                        key={overload.id}
+                        depth="l2"
+                        active={
+                          selection.type === 'function' &&
+                          selection.id === f.id &&
+                          activeGraphTab === (overload.graphTabId ?? f.id)
+                        }
+                        icon={<div className="w-1 h-1 rounded-full bg-indigo-400/60 shrink-0 ml-2" />}
+                        label={overloadTreeLabel(overload)}
+                        meta={f.overloads.length > 1 ? `overload ${index + 1}` : 'drag to call'}
+                        hint="Drag to graph to call · click to select"
+                        canvasDrag={{
+                          mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
+                          payload: JSON.stringify(dragPayload),
                         }}
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    </div>
-                  }
-                />
+                        onSelect={() => {
+                          selectFunction(f);
+                          setActiveGraphTab(overload.graphTabId ?? f.id);
+                        }}
+                        onOpen={() => openFunctionOverloadGraph(f, overload.id)}
+                      />
+                    );
+                  })}
+                  {addingOverloadForId === f.id ? renderOverloadCreateForm(f.id) : null}
+                </React.Fragment>
               ))}
         </CategorySection>
 
@@ -811,6 +1177,17 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           onAdd={() => setIsAddingVariable(true)}
           addLabel="New variable"
         >
+          {!isReferenceMode && variables.length < 3 ? (
+            <div className={`${INDENT.l1} py-1 pr-2`}>
+              <button
+                type="button"
+                onClick={handleLoadDemoVariables}
+                className="text-[10px] text-indigo-400/90 hover:text-indigo-300"
+              >
+                Load sample variables (datatypes demo)
+              </button>
+            </div>
+          ) : null}
           {isAddingVariable && (
             <div className={`${INDENT.l1} py-1 pr-2 space-y-1`}>
               <input
@@ -831,10 +1208,14 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   value={newVarType}
                   onChange={(e) => setNewVarType(e.target.value as VariableType)}
                 >
-                  <option value="string">String</option>
-                  <option value="number">Number</option>
-                  <option value="boolean">Boolean</option>
-                  <option value="object">Object</option>
+                  {LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => {
+                    const coaBlocked = !isDataTypeCoaAllowed(descriptor.id, crossOverMode);
+                    return (
+                      <option key={descriptor.id} value={descriptor.id} disabled={coaBlocked}>
+                        {descriptor.label}
+                      </option>
+                    );
+                  })}
                 </select>
                 <button
                   type="button"
@@ -843,6 +1224,23 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 >
                   Add
                 </button>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => (
+                  <button
+                    key={binding}
+                    type="button"
+                    disabled={!isBindingCoaAllowed(binding, crossOverMode)}
+                    onClick={() => setNewVarBinding(binding)}
+                    className={`px-1.5 py-0.5 text-[9px] rounded border ${
+                      newVarBinding === binding
+                        ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
+                        : 'bg-zinc-950 border-zinc-800 text-zinc-500'
+                    } disabled:opacity-40`}
+                  >
+                    {binding}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -861,6 +1259,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   }
                   onSelect={() => selectVariable(v.id, v.name)}
                   onOpen={() => setSelection({ type: 'variable', id: v.id })}
+                  onDelete={isReferenceMode ? undefined : () => handleDeleteVariable(v.id)}
                 />
               ))}
         </CategorySection>
@@ -903,18 +1302,35 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           {filteredDispatchers.length === 0 && !isAddingEvent
             ? emptyHint(
                 dispatchers.length === 0
-                  ? 'Add project events, then place On / Dispatch nodes in graphs.'
+                  ? 'Add project events, then place On / Subscribe / Emit nodes in graphs.'
                   : 'No match.'
               )
             : filteredDispatchers.map((d) => (
                 <TreeRow
                   key={d.id}
                   icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
-                  label={d.label}
+                  label={
+                    d.subscriberCount > 0 ? `${d.label} · ${d.subscriberCount} sub` : d.label
+                  }
                   active={selection.type === 'event' && selection.id === d.id}
                   hint={rowHint}
                   onSelect={() => setSelection({ type: 'event', id: d.id })}
                   onOpen={() => openGraphById(d.graphId)}
+                  suffix={
+                    isReferenceMode ? undefined : (
+                      <button
+                        type="button"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
+                        title="Remove event"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEvent(d.id);
+                        }}
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )
+                  }
                 />
               ))}
         </CategorySection>
@@ -951,8 +1367,29 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       </div>
 
       <div className="flex-none px-3 py-1 border-t border-zinc-800 text-[9px] text-zinc-600 text-center">
-        {isReferenceMode ? 'Click · dbl-click open' : 'Click · dbl-click open'}
+        {isReferenceMode
+          ? 'Click · dbl-click open'
+          : 'Drag overload to graph · drag function grip to reorder'}
       </div>
+
+      <SymbolDeleteDialog
+        open={pendingDelete !== null}
+        kind={pendingDelete?.kind ?? 'variable'}
+        symbolName={pendingDelete?.symbolName ?? ''}
+        nodeCount={pendingUsage.nodeCount}
+        graphCount={pendingUsage.graphCount}
+        onCancel={() => setPendingDelete(null)}
+        onDeleteSymbolOnly={() => {
+          if (!pendingDelete) return;
+          deleteSymbol(pendingDelete.kind, pendingDelete.symbolId, 'symbol_only');
+          setPendingDelete(null);
+        }}
+        onDeleteSymbolAndRefs={() => {
+          if (!pendingDelete) return;
+          deleteSymbol(pendingDelete.kind, pendingDelete.symbolId, 'symbol_and_refs');
+          setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }

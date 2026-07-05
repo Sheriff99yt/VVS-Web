@@ -1,4 +1,4 @@
-import type { EditorNavigateEventDetail } from '@/types/editorNavigation';
+import type { EditorNavigateEventDetail, EditorViewTab } from '@/types/editorNavigation';
 
 /** Dispatch a versioned editor navigation request (handled by EditorNavigationProvider). */
 export function dispatchEditorNavigate(
@@ -16,6 +16,6 @@ export function dispatchSwitchToCanvas(): void {
   dispatchEditorNavigate({ editorView: 'canvas' });
 }
 
-export function dispatchSwitchEditorView(view: 'canvas' | 'references' | 'library'): void {
+export function dispatchSwitchEditorView(view: EditorViewTab): void {
   dispatchEditorNavigate({ editorView: view });
 }

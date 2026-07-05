@@ -10,6 +10,7 @@
     "test": "bun test src/lib"
   },
   "dependencies": {
+    "@vvs/environment-templates": "workspace:*",
     "@vvs/graph-types": "workspace:*",
     "@vvs/language-profiles": "workspace:*",
     "@vvs/syntax-registry": "workspace:*",

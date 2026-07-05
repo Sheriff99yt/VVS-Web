@@ -6,6 +6,10 @@ import { GraphDocument, GraphTabMetadata } from '@/lib/graphDefaults';
 export interface GraphWorkspaceApi {
   getDocuments: () => Record<string, GraphDocument>;
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
+  patchAllDocuments: (
+    updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
+    options?: { affectedTabIds?: string[] }
+  ) => string[];
   importGraphDocument: (tab: import('@/contexts/ProjectContext').GraphTab, document: GraphDocument) => void;
   getActiveTabMetadata: () => GraphTabMetadata;
   updateActiveTabMetadata: (patch: Partial<GraphTabMetadata>) => void;
@@ -16,6 +20,10 @@ interface GraphWorkspaceContextValue {
   registerWorkspace: (api: GraphWorkspaceApi | null) => void;
   getDocuments: () => Record<string, GraphDocument> | null;
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
+  patchAllDocuments: (
+    updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
+    options?: { affectedTabIds?: string[] }
+  ) => string[] | null;
   importGraphDocument: (tab: import('@/contexts/ProjectContext').GraphTab, document: GraphDocument) => void;
   getActiveTabMetadata: () => GraphTabMetadata | null;
   updateActiveTabMetadata: (patch: Partial<GraphTabMetadata>) => void;
@@ -57,6 +65,14 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const patchAllDocuments = useCallback(
+    (
+      updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
+      options?: { affectedTabIds?: string[] }
+    ) => apiRef.current?.patchAllDocuments(updater, options) ?? null,
+    []
+  );
+
   const importGraphDocument = useCallback(
     (tab: import('@/contexts/ProjectContext').GraphTab, document: GraphDocument) => {
       apiRef.current?.importGraphDocument(tab, document);
@@ -86,6 +102,7 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
         registerWorkspace,
         getDocuments,
         loadDocuments,
+        patchAllDocuments,
         importGraphDocument,
         getActiveTabMetadata,
         updateActiveTabMetadata,

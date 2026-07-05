@@ -40,7 +40,7 @@ type NodeData struct {
 // GraphBinding links a node instance to a project symbol (function, macro, import).
 // Aligns with @vvs/graph-types GraphBinding and ProjectSnapshot v2.
 type GraphBinding struct {
-	Kind       string `json:"kind"` // call_function | use_macro | import_module
+	Kind       string `json:"kind"` // call_function | import_module (use_macro deprecated → call_function)
 	SymbolID   string `json:"symbolId"`
 	OverloadID string `json:"overloadId,omitempty"`
 }

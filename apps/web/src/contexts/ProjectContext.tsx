@@ -8,7 +8,9 @@ import type { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import type { ProjectSource } from '@/types/projectRegistry';
 
-import type { FunctionSymbol, GraphTab, TargetLanguage } from '@vvs/graph-types';
+import type { FunctionSymbol, GraphTab, TargetLanguage, CrossOverArchitectureMode, ProjectIntegrationConfig, SyntaxPackLock } from '@vvs/graph-types';
+import { createDefaultIntegration } from '@vvs/graph-types';
+import { readCrossOverMode } from '@/lib/crossOverPreferences';
 
 export type { TargetLanguage, GraphTab, FunctionSymbol };
 export type SelectionType = 'node' | 'variable' | 'event' | 'function' | 'graph';
@@ -61,6 +63,9 @@ interface ProjectContextValue {
   targetLanguage: TargetLanguage;
   setTargetLanguage: React.Dispatch<React.SetStateAction<TargetLanguage>>;
 
+  crossOverMode: CrossOverArchitectureMode;
+  setCrossOverMode: React.Dispatch<React.SetStateAction<CrossOverArchitectureMode>>;
+
   undoTrigger: number;
   triggerUndo: () => void;
   redoTrigger: number;
@@ -77,6 +82,16 @@ interface ProjectContextValue {
 
   installedLibrary: InstalledLibraryEntry[];
   setInstalledLibrary: React.Dispatch<React.SetStateAction<InstalledLibraryEntry[]>>;
+
+  environmentId?: string;
+  environmentVersion?: string;
+  setEnvironmentLink: (id: string | undefined, version?: string) => void;
+
+  integration: ProjectIntegrationConfig;
+  setIntegration: React.Dispatch<React.SetStateAction<ProjectIntegrationConfig>>;
+
+  syntaxPackLock?: SyntaxPackLock;
+  setSyntaxPackLock: React.Dispatch<React.SetStateAction<SyntaxPackLock | undefined>>;
 
   /** Root for References view graph/tree — updated from project tree selection */
   referenceRootGraphId: string;
@@ -153,6 +168,7 @@ export function ProjectProvider({
     [autoCompile]
   );
   const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>(initialSnapshot.targetLanguage);
+  const [crossOverMode, setCrossOverMode] = useState<CrossOverArchitectureMode>(() => readCrossOverMode());
 
   const [undoTrigger, setUndoTrigger] = useState(0);
   const [redoTrigger, setRedoTrigger] = useState(0);
@@ -165,6 +181,33 @@ export function ProjectProvider({
   const [installedLibrary, setInstalledLibrary] = useState<InstalledLibraryEntry[]>(
     initialSnapshot.installedLibrary ?? []
   );
+  const [environmentId, setEnvironmentId] = useState<string | undefined>(
+    initialSnapshot.environmentId
+  );
+  const [environmentVersion, setEnvironmentVersion] = useState<string | undefined>(
+    initialSnapshot.environmentVersion
+  );
+
+  const [integration, setIntegration] = useState<ProjectIntegrationConfig>(
+    () =>
+      initialSnapshot.integration ??
+      createDefaultIntegration({
+        environmentId: initialSnapshot.environmentId,
+        environmentVersion: initialSnapshot.environmentVersion,
+        moduleName: initialSnapshot.projectDetails.moduleName,
+        defaultTarget: initialSnapshot.targetLanguage,
+        adoptExisting: true,
+      })
+  );
+
+  const [syntaxPackLock, setSyntaxPackLock] = useState<SyntaxPackLock | undefined>(
+    initialSnapshot.syntaxPackLock
+  );
+
+  const setEnvironmentLink = useCallback((id: string | undefined, version?: string) => {
+    setEnvironmentId(id);
+    setEnvironmentVersion(version);
+  }, []);
 
   const initialTab = initialSnapshot.activeGraphTab || 'main';
   const [referenceRootGraphId, setReferenceRootGraphId] = useState(initialTab);
@@ -234,6 +277,8 @@ export function ProjectProvider({
         setAutoSave,
         targetLanguage,
         setTargetLanguage,
+        crossOverMode,
+        setCrossOverMode,
         undoTrigger,
         triggerUndo,
         redoTrigger,
@@ -248,6 +293,13 @@ export function ProjectProvider({
         setValidationWarnings,
         installedLibrary,
         setInstalledLibrary,
+        environmentId,
+        environmentVersion,
+        setEnvironmentLink,
+        integration,
+        setIntegration,
+        syntaxPackLock,
+        setSyntaxPackLock,
         referenceRootGraphId,
         referenceVariableName,
         focusReference,

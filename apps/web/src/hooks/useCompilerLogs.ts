@@ -13,6 +13,7 @@ export interface LogEntry {
   source: string;
   tabId?: string;
   nodeId?: string;
+  symbolId?: string;
 }
 
 const INITIAL_LOGS: LogEntry[] = [
@@ -76,6 +77,7 @@ export function useCompilerLogs() {
           source: 'Validator',
           tabId: msg.tabId,
           nodeId: msg.nodeId,
+          symbolId: msg.symbolId,
         }))
       );
     };

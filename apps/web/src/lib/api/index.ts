@@ -5,10 +5,27 @@ import {
   mockLoadProject,
   mockProbeMcp,
   mockSaveProject,
+  mockListEnvironments,
+  mockListProjects,
+  mockImportEnvironment,
+  loadStoredImportedEnvironments,
   type HealthResponse,
   type McpProbeResult,
+  type EnvironmentCatalogEntry,
+  type ProjectListEntry,
+  type ImportEnvironmentRequest,
 } from './mock';
-import { httpGetHealth, httpLoadProject, httpProbeMcp, httpSaveProject } from './client';
+import {
+  httpGetHealth,
+  httpLoadProject,
+  httpProbeMcp,
+  httpSaveProject,
+  httpListEnvironments,
+  httpListProjects,
+  httpCompileProject,
+  httpImportEnvironment,
+} from './client';
+import { registerEnvironmentManifest } from '@vvs/environment-templates';
 
 export type ApiMode = 'mock' | 'http';
 
@@ -18,6 +35,13 @@ export function getApiMode(): ApiMode {
 
 const DEFAULT_PROJECT_ID = 'default';
 
+/** Register user-imported environments from localStorage (mock/offline). */
+export function bootstrapImportedEnvironments(): void {
+  for (const manifest of loadStoredImportedEnvironments()) {
+    registerEnvironmentManifest(manifest);
+  }
+}
+
 export const VvsApi = {
   getHealth(): Promise<HealthResponse> {
     return getApiMode() === 'http' ? httpGetHealth() : mockGetHealth();
@@ -26,21 +50,41 @@ export const VvsApi = {
   saveProject(snapshot: ProjectSnapshot, projectId = DEFAULT_PROJECT_ID): Promise<boolean> {
     return getApiMode() === 'http'
       ? httpSaveProject(projectId, snapshot)
-      : mockSaveProject(snapshot);
+      : mockSaveProject(snapshot, projectId);
   },
 
   loadProject(projectId = DEFAULT_PROJECT_ID): Promise<ProjectSnapshot | null> {
-    return getApiMode() === 'http' ? httpLoadProject(projectId) : mockLoadProject();
+    return getApiMode() === 'http' ? httpLoadProject(projectId) : mockLoadProject(projectId);
   },
 
-  compileProject(): Promise<{ ok: true }> {
-    return mockCompileProject();
+  listProjects(): Promise<ProjectListEntry[]> {
+    return getApiMode() === 'http' ? httpListProjects() : mockListProjects();
+  },
+
+  compileProject(projectId = DEFAULT_PROJECT_ID): Promise<{ ok: true }> {
+    return getApiMode() === 'http'
+      ? httpCompileProject(projectId)
+      : mockCompileProject(projectId);
   },
 
   probeMcp(url: string): Promise<McpProbeResult> {
     return getApiMode() === 'http' ? httpProbeMcp(url) : mockProbeMcp(url);
   },
+
+  listEnvironments(): Promise<EnvironmentCatalogEntry[]> {
+    return getApiMode() === 'http' ? httpListEnvironments() : mockListEnvironments();
+  },
+
+  importEnvironment(request: ImportEnvironmentRequest): Promise<EnvironmentCatalogEntry> {
+    return getApiMode() === 'http' ? httpImportEnvironment(request) : mockImportEnvironment(request);
+  },
 };
 
 export { ApiError } from './errors';
-export type { HealthResponse, McpProbeResult };
+export type {
+  HealthResponse,
+  McpProbeResult,
+  EnvironmentCatalogEntry,
+  ProjectListEntry,
+  ImportEnvironmentRequest,
+};

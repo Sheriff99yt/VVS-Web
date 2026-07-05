@@ -12,7 +12,7 @@ Get the VVS editor running in a few minutes. First-time machine setup: **[setup.
 # One-time setup (if you haven't already)
 .\tools\setup_env.ps1
 
-# Start frontend + optional Go server in new windows
+# Start frontend + Go server (API + MCP) in new windows
 .\tools\start_app.ps1
 ```
 
@@ -43,12 +43,12 @@ The terminal prints a **Network** URL for LAN access (e.g. `http://192.168.x.x:3
 ## First session (2 minutes)
 
 1. **New project** — empty graph with an **On Start** event node  
-2. **Examples → Game Session** — multi-graph demo (variables, functions, branching)  
-3. **Right-click canvas** — spawn nodes from the context menu  
-4. **Connect pins** — drag from output to input (execution + data wires)  
-5. **Generate** (TopNav) — runs validation + `@vvs/transpiler` code preview  
-6. **Functions** — add in Project tree; inspect overloads; spawn **Call {name}** from context menu  
-7. **File → Save** — persists **ProjectSnapshot v2** to browser **localStorage** (offline mock mode)
+2. **Examples → Calculator** — interactive demo (user input, To String, functions, events, branch)  
+3. **Right-click canvas** — spawn nodes (Action, **Conversion**, Math, Variables, …)  
+4. **Connect pins** — same-type wires only; use **To String** before Print for numbers  
+5. **Generate** (TopNav) — validation + `@vvs/transpiler` code preview (Python, JS, C++, Verse)  
+6. **Functions** — add in Project tree; spawn **Call {name}** from context menu  
+7. **File → Save** — persists **ProjectSnapshot v2** to browser **localStorage**
 
 Projects appear under **Recent projects** on the start screen.
 
@@ -79,10 +79,13 @@ bun run lint
 
 | Works now | Planned |
 |-----------|---------|
-| Graph editor, tabs, references view | Real transpiler output |
-| localStorage save/load | Cloud sync |
-| Mock codegen preview | Python, JS, C++, Verse emitters |
-| Offline honest UI | MCP connect, Go API |
+| Graph editor, tabs, references view | Cloud sync |
+| localStorage save/load | Production MCP auth / remote deploy |
+| `@vvs/transpiler` — Python, JS, C++, Verse | JSON graph export as runnable code |
+| Conversion nodes, Get User Input, pin validation | String concat, compare, loops |
+| Start-screen examples (Hello World, Calculator) | Community library backend |
+| Offline honest UI | WebSocket collaboration |
+| Local Go API + MCP (`start_app.ps1`) | Supabase-backed persistence |
 
 Details: **[current_state.md](current_state.md)** · Roadmap: **[roadmap.md](roadmap.md)**
 
@@ -98,6 +101,8 @@ Close the PowerShell windows opened by `start_app.ps1`, or stop the `bun run dev
 
 | Doc | Topic |
 |-----|--------|
+| [node_system.md](node_system.md) | Nodes, pins, conversion, property schema |
+| [language_profiles.md](language_profiles.md) | Per-target portability |
 | [setup.md](setup.md) | Toolchain, `.env.local`, git safety |
 | [vision.md](vision.md) | Product direction |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | How to contribute |

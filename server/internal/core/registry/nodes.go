@@ -3,6 +3,7 @@ package registry
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 )
 
 //go:embed core-pack.json
@@ -61,6 +62,20 @@ func ListAvailableNodes() ([]AvailableNode, error) {
 		})
 	}
 	return out, nil
+}
+
+// LookupKind returns a core-pack kind definition by kindId.
+func LookupKind(kindID string) (*NodeKindDefinition, error) {
+	var pack CorePack
+	if err := json.Unmarshal(corePackJSON, &pack); err != nil {
+		return nil, err
+	}
+	for i := range pack.Kinds {
+		if pack.Kinds[i].KindID == kindID {
+			return &pack.Kinds[i], nil
+		}
+	}
+	return nil, fmt.Errorf("kind not found: %s", kindID)
 }
 
 // CorePackRaw returns the exported registry JSON for tooling parity with @vvs/syntax-registry.

@@ -20,34 +20,40 @@ describe('generateMockCode', () => {
       documents: snapshot.documents,
     });
 
-    expect(code).toContain('self.ApplyDamage()');
-    expect(code).toContain('def ApplyDamage(self):');
-    expect(code).toContain('self.PlayerHealth =');
+    expect(code).toContain('self.Add()');
+    expect(code).toContain('def Add(self):');
+    expect(code).toContain('self.A =');
+    expect(code).toContain('float(input("Enter A:"))');
+    expect(code).toContain('float(input("Enter B:"))');
     expect(code).toContain('if ');
-    expect(code).toContain('self.ResetGame()');
-    expect(code).toContain('def on_damage(self, damageamount):');
+    expect(code).toContain('def Clear(self):');
+    expect(code).toContain('def on_calculate(self):');
+    expect(code).toContain('def on_clear(self):');
+    expect(code).toContain('print(str(self.Result))');
+    expect(code).toContain('self.Clear()');
+    expect(code).not.toContain('import ');
   });
 
   test('function tab emits standalone function body', () => {
     const snapshot = createComplexExampleSnapshot();
-    const f1 = snapshot.documents!.f1;
+    const addTab = snapshot.documents!['fn-add'];
 
     const code = generateMockCode({
-      moduleName: 'ApplyDamage',
+      moduleName: 'Add',
       extendsType: '',
       targetLanguage: 'python',
       variables: snapshot.variables,
       projectEvents: snapshot.events,
       functions: snapshot.functions,
-      nodes: f1.nodes,
-      edges: f1.edges,
-      tabId: 'f1',
+      nodes: addTab.nodes,
+      edges: addTab.edges,
+      tabId: 'fn-add',
       documents: snapshot.documents,
     });
 
-    expect(code).toContain('def ApplyDamage(self):');
-    expect(code).toContain('print("Damage applied")');
-    expect(code).not.toContain('class GameSession');
+    expect(code).toContain('def Add(self):');
+    expect(code).toContain('self.Result =');
+    expect(code).not.toContain('class Calculator');
   });
 
   test('transpile result includes sourceMap for statement nodes', () => {
@@ -69,11 +75,11 @@ describe('generateMockCode', () => {
 
     expect(result.files[0]?.content.length).toBeGreaterThan(0);
     expect(Object.keys(result.sourceMap).length).toBeGreaterThan(0);
-    expect(result.sourceMap['cx-print-welcome']?.length).toBeGreaterThan(0);
-    expect(result.fragments?.['cx-print-welcome']).toContain('print');
+    expect(result.sourceMap['calc-set-a']?.length).toBeGreaterThan(0);
+    expect(result.fragments?.['calc-set-a']).toContain('A');
   });
 
-  test('event nodes map to full handler block in sourceMap', () => {
+  test('event define nodes map to full handler block in sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
     const main = snapshot.documents!.main;
 
@@ -90,15 +96,16 @@ describe('generateMockCode', () => {
       documents: snapshot.documents,
     });
 
-    const damageRanges = result.sourceMap['cx-damage-event'];
-    expect(damageRanges?.length).toBeGreaterThan(0);
+    const handlerRanges = result.sourceMap['calc-define'];
+    expect(handlerRanges?.length).toBeGreaterThan(0);
 
     const content = result.files[0]!.content;
-    const handlerLine = content.split('\n').findIndex((l) => l.includes('def on_damage(self')) + 1;
+    const handlerLine =
+      content.split('\n').findIndex((l) => l.includes('def on_calculate(self')) + 1;
     expect(handlerLine).toBeGreaterThan(0);
-    expect(damageRanges![0]!.startLine).toBeLessThanOrEqual(handlerLine);
-    expect(damageRanges![0]!.endLine).toBeGreaterThanOrEqual(handlerLine);
-    expect(result.fragments?.['cx-damage-event']).toContain('on_damage');
+    expect(handlerRanges![0]!.startLine).toBeLessThanOrEqual(handlerLine);
+    expect(handlerRanges![0]!.endLine).toBeGreaterThanOrEqual(handlerLine);
+    expect(result.fragments?.['calc-define']).toContain('on_calculate');
   });
 
   test('On Start maps to on_start handler not run', () => {
@@ -121,87 +128,49 @@ describe('generateMockCode', () => {
     const content = result.files[0]!.content;
     expect(content).toContain('def on_start(self):');
     expect(content).not.toContain('def run(self):');
-    expect(result.sourceMap['cx-start']?.length).toBeGreaterThan(0);
-    expect(result.fragments?.['cx-start']).toContain('on_start');
+    expect(result.sourceMap['calc-start']?.length).toBeGreaterThan(0);
+    expect(result.fragments?.['calc-start']).toContain('on_start');
   });
 
-  test('On Update chain emits on_update handler with mapped set node', () => {
+  test('Add function graph maps get and math nodes to expression spans', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
+    const addTab = snapshot.documents!['fn-add'];
 
     const result = generateMockTranspileResult({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
+      moduleName: 'Add',
+      extendsType: '',
       targetLanguage: 'python',
       variables: snapshot.variables,
       projectEvents: snapshot.events,
       functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
+      nodes: addTab.nodes,
+      edges: addTab.edges,
+      tabId: 'fn-add',
       documents: snapshot.documents,
     });
 
-    const content = result.files[0]!.content;
-    expect(content).toContain('def on_update(self, delta_time):');
-    expect(result.sourceMap['cx-set-score-tick']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['cx-update']?.length).toBeGreaterThan(0);
-  });
+    expect(result.sourceMap['calc-add-get-a']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-add-math']?.length).toBeGreaterThan(0);
 
-  test('get and math nodes map to expression spans in on_update set line', () => {
-    const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
-
-    const result = generateMockTranspileResult({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
-      documents: snapshot.documents,
-    });
-
-    expect(result.sourceMap['cx-get-score']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['cx-add-score']?.length).toBeGreaterThan(0);
-
-    const getRange = result.sourceMap['cx-get-score']![0]!;
-    const mathRange = result.sourceMap['cx-add-score']![0]!;
+    const getRange = result.sourceMap['calc-add-get-a']![0]!;
+    const mathRange = result.sourceMap['calc-add-math']![0]!;
     expect(getRange.startLine).toBe(mathRange.startLine);
     expect(mathRange.startCol).toBeLessThan(getRange.startCol);
-    expect(result.fragments?.['cx-get-score']).toContain('Score');
-    expect(result.fragments?.['cx-add-score']).toContain('Score');
+    expect(result.fragments?.['calc-add-get-a']).toContain('A');
+    expect(result.fragments?.['calc-add-math']).toContain('A');
   });
 
-  test('dispatch node emits parameterized call with sourceMap', () => {
+  test('dispatch node emits parameterless call with sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
-    const start = snapshot.documents!.main.nodes.find((n) => n.id === 'cx-start')!;
-    const dispatchNode = {
-      id: 'cx-dispatch-damage',
-      type: 'vvs_standard_node' as const,
-      position: { x: 320, y: 40 },
-      data: {
-        label: 'Dispatch damage',
-        category: 'Events',
-        kindId: 'event_dispatch',
-        properties: { eventId: 'evt-damage', eventName: 'damage' },
-        inputs: [
-          { id: 'exec_in', label: '', type: 'execution' as const },
-          { id: 'damage', label: 'DamageAmount', type: 'data_number' as const },
-        ],
-        outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
-        inlineValues: { damage: 25 },
-      },
-    };
+    const start = snapshot.documents!.main.nodes.find((n) => n.id === 'calc-start')!;
+    const dispatchNode = snapshot.documents!.main.nodes.find((n) => n.id === 'calc-dispatch')!;
+
     const nodes = [start, dispatchNode];
     const edges = [
       {
-        id: 'cx-edge-dispatch',
-        source: 'cx-start',
-        target: 'cx-dispatch-damage',
+        id: 'calc-edge-dispatch-test',
+        source: 'calc-start',
+        target: 'calc-dispatch',
         sourceHandle: 'exec_out',
         targetHandle: 'exec_in',
         type: 'vvs_standard_edge' as const,
@@ -223,7 +192,96 @@ describe('generateMockCode', () => {
     });
 
     const content = result.files[0]!.content;
-    expect(content).toContain('self.on_damage(25)');
-    expect(result.sourceMap['cx-dispatch-damage']?.length).toBeGreaterThan(0);
+    expect(content).toContain('self.on_calculate()');
+    expect(result.sourceMap['calc-dispatch']?.length).toBeGreaterThan(0);
+  });
+
+  test('import nodes hoist to line 1 with sourceMap and skip body', () => {
+    const nodes = [
+      {
+        id: 'start-1',
+        type: 'vvs_standard_node' as const,
+        position: { x: 0, y: 0 },
+        data: {
+          label: 'On Start',
+          category: 'Events',
+          kindId: 'event_on_start',
+          inputs: [],
+          outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
+          inlineValues: {},
+        },
+      },
+      {
+        id: 'import-utils',
+        type: 'vvs_standard_node' as const,
+        position: { x: 200, y: 0 },
+        data: {
+          label: 'Import utils',
+          category: 'Imports',
+          kindId: 'import_module_utils',
+          linkKind: 'import_module' as const,
+          linkedGraphId: 'utils',
+          inputs: [{ id: 'exec_in', label: '', type: 'execution' as const }],
+          outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
+          inlineValues: {},
+        },
+      },
+      {
+        id: 'print-1',
+        type: 'vvs_standard_node' as const,
+        position: { x: 400, y: 0 },
+        data: {
+          label: 'Print String',
+          category: 'Action',
+          kindId: 'action_print',
+          inputs: [
+            { id: 'exec_in', label: '', type: 'execution' as const },
+            { id: 'in_str', label: 'String', type: 'data_string' as const },
+          ],
+          outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
+          inlineValues: { in_str: 'hi' },
+        },
+      },
+    ];
+    const edges = [
+      {
+        id: 'e1',
+        source: 'start-1',
+        target: 'import-utils',
+        sourceHandle: 'exec_out',
+        targetHandle: 'exec_in',
+        type: 'vvs_standard_edge' as const,
+        data: { pinType: 'execution' as const },
+      },
+      {
+        id: 'e2',
+        source: 'import-utils',
+        target: 'print-1',
+        sourceHandle: 'exec_out',
+        targetHandle: 'exec_in',
+        type: 'vvs_standard_edge' as const,
+        data: { pinType: 'execution' as const },
+      },
+    ];
+
+    const result = generateMockTranspileResult({
+      moduleName: 'TestMod',
+      extendsType: '',
+      targetLanguage: 'python',
+      variables: [],
+      projectEvents: [],
+      functions: [],
+      nodes,
+      edges,
+      tabId: 'main',
+    });
+
+    const content = result.files[0]!.content;
+    const lines = content.split('\n');
+    expect(lines[0]).toBe('from utils import *');
+    expect(content).not.toContain('import at exec position');
+    expect(content).not.toMatch(/^\s+from utils import/m);
+    expect(result.sourceMap['import-utils']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['import-utils']![0]!.startLine).toBe(1);
   });
 });

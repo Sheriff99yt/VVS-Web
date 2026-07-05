@@ -1,22 +1,21 @@
 'use client';
 
 import React from 'react';
-import { Plus, Trash2, Radio, Send } from 'lucide-react';
+import { Plus, Trash2, Radio, Send, Bell } from 'lucide-react';
 import type { EventParameter, PinType, ProjectEventDefinition } from '@/types/graph';
+import { DATA_PIN_TYPE_OPTIONS } from '@vvs/graph-types';
 import { createEventParameterId, eventDisplayName } from '@/lib/eventHelpers';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 
-const PARAM_TYPES: { value: PinType; label: string }[] = [
-  { value: 'data_string', label: 'Text' },
-  { value: 'data_number', label: 'Number' },
-  { value: 'data_boolean', label: 'Yes/No' },
-];
+const PARAM_TYPES = DATA_PIN_TYPE_OPTIONS.filter((t) => t.value !== 'data_object' && t.value !== 'data_array');
 
 interface EventPropertiesPanelProps {
   event: ProjectEventDefinition;
   onChange: (next: ProjectEventDefinition) => void;
   onSpawnDefine?: () => void;
   onSpawnDispatch?: () => void;
+  onSpawnEmit?: () => void;
+  onSpawnSubscribe?: () => void;
 }
 
 export function EventPropertiesPanel({
@@ -24,6 +23,8 @@ export function EventPropertiesPanel({
   onChange,
   onSpawnDefine,
   onSpawnDispatch,
+  onSpawnEmit,
+  onSpawnSubscribe,
 }: EventPropertiesPanelProps) {
   const updateParam = (index: number, patch: Partial<EventParameter>) => {
     const parameters = event.parameters.map((p, i) => (i === index ? { ...p, ...patch } : p));
@@ -113,7 +114,7 @@ export function EventPropertiesPanel({
         )}
       </div>
 
-      {(onSpawnDefine || onSpawnDispatch) && (
+      {(onSpawnDefine || onSpawnDispatch || onSpawnEmit || onSpawnSubscribe) && (
         <div className="flex flex-wrap gap-1.5 pt-1 border-t border-zinc-800/80">
           {onSpawnDefine && (
             <button
@@ -126,12 +127,34 @@ export function EventPropertiesPanel({
               On
             </button>
           )}
+          {onSpawnSubscribe && (
+            <button
+              type="button"
+              onClick={onSpawnSubscribe}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] hover:bg-emerald-500/25"
+              title="Add Subscribe node to canvas"
+            >
+              <Bell size={10} />
+              Subscribe
+            </button>
+          )}
+          {onSpawnEmit && (
+            <button
+              type="button"
+              onClick={onSpawnEmit}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] hover:bg-amber-500/25"
+              title="Add Emit node to canvas"
+            >
+              <Send size={10} />
+              Emit
+            </button>
+          )}
           {onSpawnDispatch && (
             <button
               type="button"
               onClick={onSpawnDispatch}
               className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] hover:bg-zinc-700"
-              title="Add Dispatch node to canvas"
+              title="Add Dispatch node (legacy) to canvas"
             >
               <Send size={10} />
               Dispatch

@@ -1,0 +1,10 @@
+{
+  "id": "python.base",
+  "version": "1",
+  "family": "python",
+  "templates": {
+    "Print": { "quasi": "print({value})" },
+    "Assign": { "quasi": "self.{target} = {value}" },
+    "CallInstance": { "quasi": "self.{callee}()" }
+  }
+}

@@ -3,6 +3,7 @@ export {
   resolve,
   list,
   expandProjectSymbols,
+  expandEnvironmentSymbols,
   resolveNodeKindId,
   inferKindIdFromLabel,
   CORE_NODE_REGISTRY,

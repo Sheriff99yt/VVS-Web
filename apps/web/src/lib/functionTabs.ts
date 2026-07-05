@@ -1,4 +1,4 @@
-import type { GraphTab, FunctionSymbol } from '@vvs/graph-types';
+import type { GraphTab, FunctionSymbol, FunctionBinding } from '@vvs/graph-types';
 import { createDefaultOverload } from '@vvs/graph-types';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -9,14 +9,17 @@ export function createFunctionId(): string {
   return `func-${Date.now()}`;
 }
 
-export function createFunctionSymbol(name: string, id?: string): FunctionSymbol {
-  const funcId = id ?? createFunctionId();
+export function createFunctionSymbol(
+  name: string,
+  options?: { id?: string; binding?: FunctionBinding }
+): FunctionSymbol {
+  const funcId = options?.id ?? createFunctionId();
   const overload = createDefaultOverload();
   return {
     kind: 'function',
     id: funcId,
     name,
-    binding: 'instance',
+    binding: options?.binding ?? 'instance',
     visibility: 'public',
     overloads: [{ ...overload, graphTabId: funcId }],
   };
@@ -64,4 +67,46 @@ export function overloadDisplayLabel(overload: FunctionSymbol['overloads'][numbe
   if (overload.parameters.length === 0) return '( )';
   const parts = overload.parameters.map((p) => p.label || p.id);
   return `( ${parts.join(', ')} )`;
+}
+
+export function overloadTreeLabel(overload: FunctionSymbol['overloads'][number]): string {
+  const sig = overloadDisplayLabel(overload);
+  const ret =
+    overload.returnType === 'void'
+      ? 'void'
+      : overload.returnType.replace(/^data_/, '');
+  return `${sig} → ${ret}`;
+}
+
+/** Append a new overload and return ids needed to open its graph tab. */
+export function appendFunctionOverload(func: FunctionSymbol): {
+  func: FunctionSymbol;
+  overloadId: string;
+  graphTabId: string;
+} {
+  const overload = createDefaultOverload();
+  const graphTabId =
+    func.overloads.length === 0 ? func.id : `${func.id}::${overload.id}`;
+  return {
+    func: {
+      ...func,
+      overloads: [...func.overloads, { ...overload, graphTabId }],
+    },
+    overloadId: overload.id,
+    graphTabId,
+  };
+}
+
+export function reorderFunctionSymbols(
+  functions: FunctionSymbol[],
+  fromId: string,
+  toId: string
+): FunctionSymbol[] {
+  const fromIndex = functions.findIndex((f) => f.id === fromId);
+  const toIndex = functions.findIndex((f) => f.id === toId);
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return functions;
+  const next = functions.slice();
+  const [item] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, item);
+  return next;
 }

@@ -14,7 +14,7 @@ export interface LibraryNodeTemplate {
   inputs?: PinDefinition[];
   outputs?: PinDefinition[];
   linkedGraphId?: string;
-  linkKind?: 'call_function' | 'use_macro' | 'import_module';
+  linkKind?: GraphBinding['kind'];
   graphBinding?: GraphBinding;
 }
 

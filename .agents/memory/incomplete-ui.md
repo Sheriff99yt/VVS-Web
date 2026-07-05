@@ -147,7 +147,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-_All UI backlog rows complete (2026-07-05). **Mock codegen depth (M1):** Call Function, Branch, per-function bodies — done. Next: `packages/transpiler` scaffold or more node types._
+_All UI backlog rows complete (2026-07-05). **Codegen depth:** Call Function, Branch, Get User Input, Conversion nodes, cross-language example tests — done. Next: string concat / compare nodes, IR module split._
 
 ---
 

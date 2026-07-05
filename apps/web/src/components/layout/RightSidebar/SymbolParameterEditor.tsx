@@ -3,14 +3,10 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { PinType, SymbolParameter } from '@vvs/graph-types';
+import { DATA_PIN_TYPE_OPTIONS } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 
-const PARAM_TYPES: { value: PinType; label: string }[] = [
-  { value: 'data_string', label: 'Text' },
-  { value: 'data_number', label: 'Number' },
-  { value: 'data_boolean', label: 'Yes/No' },
-  { value: 'data_any', label: 'Any' },
-];
+const PARAM_TYPES: { value: PinType; label: string }[] = DATA_PIN_TYPE_OPTIONS;
 
 export function createSymbolParameterId(): string {
   return `param-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;

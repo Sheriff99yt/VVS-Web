@@ -2,42 +2,40 @@
 
 Canonical spec for the **data-driven node model**, **port strategy**, **pin types**, **code generation contracts**, and **selection → code UX**. Complements [vision.md](vision.md) (logic vs syntax), [project_requirements.md](project_requirements.md) (transpiler stages), and [current_state.md](current_state.md) (what ships today).
 
-**Status:** Approved direction (July 2026). **Cross-language redesign shipped (July 2026):** shared packages, `FunctionSymbol`, unified registry, portability warnings, transpiler package. Legacy label adapters remain for old saves; full IR split is partial — see [current_state.md](current_state.md).
+**Status:** Approved direction (July 2026). **Text-shaped graphs** locked July 2026 — see [visual_to_text_fidelity.md](visual_to_text_fidelity.md). Cross-language redesign shipped: shared packages, `FunctionSymbol`, unified registry, portability warnings, transpiler package.
 
 ---
 
-## 1. Problem statement (today)
+## 1. Problem statement (historical → current)
 
-The editor shell is ahead of the node model. Spawn catalogs, graph instances, and codegen are not yet connected through a single registry contract.
+The editor shell originally outpaced the node model. **July 2026 redesign** shipped shared packages, `kindId` registry, and `@vvs/transpiler` — many gaps below are **resolved**; remaining work is IR split and label-free hot paths.
 
 ```mermaid
 flowchart LR
-  subgraph catalogs ["Catalogs (code)"]
-    NC[nodeCatalog.ts]
-    PNC[projectNodeCatalog.ts]
+  subgraph registry ["Registry (data)"]
+    CP[core-pack.json]
   end
 
   subgraph instance ["Graph instance"]
-    ND["VVSNodeData: label, category, pins copied"]
+    ND["VVSNodeData: kindId, resolvedPorts, properties"]
   end
 
   subgraph codegen ["Codegen"]
-    MC[mockCodegen.ts — label string matching]
+    TR["@vvs/transpiler generate.ts"]
   end
 
-  NC -->|spawn| ND
-  PNC -->|spawn| ND
-  ND --> MC
+  CP -->|spawn resolve| ND
+  ND --> TR
 ```
 
-| Gap | Why it blocks extendability |
-|-----|------------------------------|
-| No stable **node kind ID** on instances | Catalog has `type: 'math_add'`; graph stores only `label: 'Math Add'` |
-| **Definition duplicated** into instance | Pins copied at spawn; pack updates do not apply to existing nodes |
-| **Semantics in UI strings** | Codegen uses `label.startsWith('Set ')` — breaks renames, i18n, community packs |
-| **Multiple catalogs** | No single source of truth for UI, MCP, and transpiler |
-| **Logic + syntax coupled in mock** | Language-specific `if` / `print` beside graph walking |
-| **Types only in apps/web** | `packages/graph-types` and `packages/syntax-registry` are placeholders |
+| Gap | Status |
+|-----|--------|
+| No stable **node kind ID** on instances | **Fixed** — spawn sets `kindId`, `kindVersion`, `resolvedPorts` |
+| **Definition duplicated** into instance | **Partial** — hybrid port strategy; pack updates need re-resolve UX |
+| **Semantics in UI strings** | **Partial** — registry semantics + `kindId` lowering; legacy label adapters remain |
+| **Multiple catalogs** | **Fixed** — `core-pack.json` + `expandProjectSymbols` for project calls |
+| **Logic + syntax coupled in mock** | **Fixed** — transpiler package; per-language helpers (`convertExprs.ts`, etc.) |
+| **Types only in apps/web** | **Fixed** — `@vvs/graph-types`, `@vvs/syntax-registry`, `@vvs/language-profiles` |
 
 ---
 
@@ -78,7 +76,7 @@ Lives in `packages/syntax-registry` (fixture JSON in repo today; later JSONB + I
 | `version` | Schema evolution / migration |
 | `display` | Title, category, description (UI only) |
 | `ports` | Pin schema: id, label, direction, logical type |
-| `properties` | Inline fields when unwired |
+| `propertySchema` | Inspector settings schema (see §2.2a) — stored in `node.data.properties` |
 | `semantics` | **Lowering rule** — data, not label strings |
 
 **Extension rule (Open/Closed):** a new node = new registry row (+ IR shape if needed). No edits to `GraphCanvas` or DAG analysis.
@@ -89,7 +87,8 @@ Lives in `packages/syntax-registry` (fixture JSON in repo today; later JSONB + I
 |-------------|---------|
 | `{ lowering: 'builtin', rule: 'flow.branch' }` | Branch |
 | `{ lowering: 'builtin', rule: 'action.print' }` | Print String |
-| `{ lowering: 'call_graph', linkKind: 'call_function' }` | Call ApplyDamage |
+| `{ lowering: 'builtin', rule: 'action.input.blocking' }` | Get User Input |
+| `{ lowering: 'call_graph', linkKind: 'call_function' }` | Call Function |
 | `{ lowering: 'variable', mode: 'get' \| 'set' }` | Variable nodes |
 | `{ lowering: 'event', role: 'entry' \| 'tick' \| 'custom' }` | On Start, On Update |
 
@@ -112,6 +111,89 @@ interface GraphNodeInstance {
 ```
 
 Wires remain **edges** (React Flow). Ports are resolved from registry + optional snapshot (see §4).
+
+### 2.2a Pins, inline values, and property settings
+
+Node instance data uses three complementary stores:
+
+| Store | UI surface | Purpose |
+|-------|------------|---------|
+| **`inputs` / `outputs`** | Canvas pins | Execution + data flow between nodes |
+| **`inlineValues`** | Inspector pin fields (when unwired) | Default literal for a pin |
+| **`properties`** | Inspector **Settings** section | Per-node behavior not worth wiring (enum, flags, binding ids) |
+
+**`propertySchema`** on a registry kind defines the Settings form generically (`PropertySchemaPanel` in `apps/web`). Helpers live in `@vvs/syntax-registry` (`propertySchema.ts`: defaults, conditional `when` visibility).
+
+Example — **`action_get_input`** (Get User Input):
+
+| Pin / field | Role |
+|-------------|------|
+| `exec_in` → `exec_out` | Blocking read; flow continues after input |
+| `prompt` (string, optional wire) | Message shown to the user |
+| `value` (out) | Result read by downstream nodes |
+| `properties.inputKind` | `text` \| `number` \| `password` — syncs `value` pin type |
+| `properties.placeholder` | Hint (inspector only; shown when `inputKind` is text/password) |
+| `properties.required` | Documented intent for blocking read |
+
+Codegen assigns a handler-local temp (`_vvs_input_<nodeId>`) and wires the **Value** output to that symbol. Semantics: `action.input.blocking`.
+
+**Extension pattern:** add `propertySchema` to a new core-pack kind → spawn applies defaults → inspector renders Settings → transpiler lowers by `semantics`. Symbol pickers (events, functions) remain **inspector plugins** when the schema alone is not enough.
+
+### 2.2b Pin type compatibility and portable examples
+
+**Wiring rules** (`apps/web/src/lib/graphWiring.ts`):
+
+| Rule | Behavior |
+|------|----------|
+| Execution ↔ execution | Allowed |
+| Execution ↔ data | **Rejected** |
+| Same data type (e.g. `data_number` → `data_number`) | Allowed |
+| Either side is `data_any` | Allowed (acts as wildcard) |
+| Different concrete types (e.g. `data_number` → `data_string`) | **Rejected in the editor** |
+
+The transpiler does **not** insert automatic casts — it emits the wired expression as-is. **`analyzeProject`** now reports **`PIN_TYPE_MISMATCH`** errors when saved graphs contain wires the editor would reject (shared rules in `@vvs/graph-types` / `pinCompatibility.ts`, same as `graphWiring.ts`).
+
+**Print String** (`action_print`) requires a **`data_string`** input — use an explicit **To String** node instead of implicit casts. Emitters map to each language’s print/log (`print`, `console.log`, `std::cout`, `Print`).
+
+**Conversion nodes** (pure expression — visible on graph, highlighted in codegen):
+
+| kindId | Title | In → Out | Emits (examples) |
+|--------|-------|----------|------------------|
+| `convert_to_string` | To String | `data_any` → `data_string` | `str(x)`, `String(x)`, `std::to_string(x)`, `ToString(x)` |
+| `convert_to_number` | To Number | `data_string` → `data_number` | `float(x)`, `parseFloat(x)`, `std::stof(x)`, `ParseFloat(x)` |
+
+Each conversion is **one graph node = one call in source**. The transpiler never folds `str()` / `String()` into Print or other consumers; `wrapExpr` registers **expression spans** so selecting **To String** highlights the call in the code panel (same as Get / Math).
+
+**No implicit coercion policy:** mismatched pin types are rejected by the editor and by `analyzeProject` (`PIN_TYPE_MISMATCH`). Examples must wire **Get Result → To String → Print String** to display numeric results.
+
+**Writing examples that work on all targets (Python, JavaScript, C++, Verse):**
+
+| Do | Avoid |
+|----|--------|
+| Stick to core-pack kinds with emitters in `@vvs/transpiler` | `import_module`, engine-only nodes |
+| Use portable types: `data_number`, `data_string`, `data_boolean` | `data_object`, `data_array`, `data_any` on **variables** |
+| Wire same types or through **Conversion** nodes | Hand-authoring edges the UI would reject |
+| Use **To String** before Print for numeric values | Wiring number directly to Print String |
+| Use **Get User Input** `number` + **Set** for numeric vars | Hardcoded literals when demonstrating input |
+| Use **Branch** on `data_boolean` | Comparison nodes (not in core pack yet) |
+| Keep events **parameterless** until param emit is uniform | Cross-language param naming edge cases |
+| Prefer inline string literals on Print when message is fixed | String concat nodes (not in core pack yet) |
+
+**Known gaps (no core node yet):** string concat, comparisons, loops, explicit **Wait** / async graphs. Use **Conversion** for type changes — never rely on transpiler casts.
+
+### 2.2c Text-shaped fidelity (locked)
+
+Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md).
+
+| Visual | Text | Notes |
+|--------|------|-------|
+| **Call Function** | `self.foo(args)` | One call node → one call site |
+| **Define** (event) | `def on_foo(self, …):` | Handler body |
+| **Dispatch** | `self.on_foo(…)` | Explicit line; phase 2 may add **Subscribe** + **Emit** |
+| **Conversion** | `str(x)`, etc. | Never folded into consumers |
+| **Macro (legacy)** | **Deprecated** | Must become **Function + Call** — no compile-time paste |
+
+**Not supported:** Blueprint latent Delay, macro inline expansion, behavior that requires a VVS/UE VM to match the graph.
 
 ### 2.3 IR (transpiler internal)
 
@@ -142,6 +224,7 @@ flowchart TB
 | Source | Example | How produced |
 |--------|---------|--------------|
 | **Core pack** | Branch, Print, Math Add | Repo JSON |
+| **Environment pack** | `env.call_native`, manifest events | `@vvs/environment-templates` JSON |
 | **Project-derived** | Call ApplyDamage | Template `vvs.project.call_function` + `functions[]` |
 | **Community pack** | Movement templates | Pack manifest + definitions |
 | **Engine pack** | Verse API nodes | Separate pack; web UI stays engine-neutral |
@@ -251,7 +334,7 @@ VVS uses **linear flow chains**, not Blueprint-style wire splicing or implicit m
 | **Insert in the middle** | Wiring `A → B → C` then connecting `X → B` **drops** `A → B`. `A` is no longer in that sequence — it is not auto-merged or spliced like UE. |
 | **Branch nodes** | `true` / `false` (or equivalent) are separate output handles; each obeys the same single-wire rule. |
 
-**Why:** Copy-pasting long linear chains produces redundant generated code. Breaking the chain on rewire pushes authors toward **functions**, **macros**, and **shared graphs** for repeated behavior — normal software practice, not engine-event spaghetti.
+**Why:** Copy-pasting long linear chains produces redundant generated code. Breaking the chain on rewire pushes authors toward **functions** (Call Function) for repeated behavior — not invisible macro paste.
 
 Implementation: `apps/web/src/lib/graphWiring.ts` (`edgesWithoutTargetHandle`, `edgesWithoutSourceHandle`).
 
@@ -529,7 +612,7 @@ flowchart LR
 
 ## 12. Event dispatchers (custom events)
 
-**Status:** Phase 1 implemented (July 2026) — project-level `events[]`, **Define** and **Dispatch** node kinds, direct-call emit in mock codegen. Multicast **Bind** nodes remain phase 2.
+**Status:** Phase 1 implemented (July 2026) — project-level `events[]`, **Define** and **Dispatch** node kinds, direct-call emit in `@vvs/transpiler`. Multicast **Bind** nodes remain phase 2.
 
 Unreal **Event Dispatchers** are one engine’s name for a universal pattern: **named signals with typed parameters, subscribers, and a broadcast**. VVS models that in the **graph + IR**; language-specific idioms live only in the **emitter**.
 
@@ -579,6 +662,10 @@ Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. 
 | `event_on_update` | On Update | Lifecycle tick |
 | `event_define` | On … | Handler entry; `properties.eventId` |
 | `event_dispatch` | Dispatch … | Broadcast; `properties.eventId` |
+| `action_print` | Print String | Sync stdout/log |
+| `action_get_input` | Get User Input | Blocking input; `propertySchema` + `value` out |
+| `convert_to_string` | To String | Explicit `str()` / `String()` / `std::to_string` — expression node |
+| `convert_to_number` | To Number | Explicit parse to number from string |
 | `event_custom` | *(legacy alias)* | Migrated to `event_define` |
 
 Semantics (not label strings):
@@ -681,6 +768,7 @@ Parameter names are derived from event parameter labels (snake_case in Python, c
 
 | Document | Topic |
 |----------|-------|
+| [visual_to_text_fidelity.md](visual_to_text_fidelity.md) | **Text-shaped graphs** — locked direction |
 | [vision.md](vision.md) | Logic vs syntax, three layers |
 | [project_requirements.md](project_requirements.md) | Transpiler stages, syntax registry |
 | [roadmap.md](roadmap.md) | Phases, UE plugin |

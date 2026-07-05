@@ -10,7 +10,7 @@ One-time machine setup for developing VVS Web locally. For day-to-day commands a
 |------|----------|---------|
 | [Bun](https://bun.sh) | Yes | Frontend package manager & dev server |
 | [Git](https://git-scm.com/) | Yes | Clone, commit, contribute |
-| [Go](https://go.dev/) 1.22+ | Optional | `server/` skeleton (`GET /health` only today) |
+| [Go](https://go.dev/) 1.22+ | Optional | `server/` — project API, compile, registry, local MCP (`/mcp`) |
 
 **OS:** Windows scripts live in `tools/`; macOS/Linux users can run the equivalent `bun` commands from `apps/web` (see [Quick start](#manual-setup-all-platforms)).
 
@@ -30,7 +30,7 @@ The script will:
 
 1. Install or verify **Bun**, **Go** (optional), and **Git**
 2. Run **`bun install`** at the **repository root** (Bun workspaces: `apps/web` + `packages/*`)
-3. Create **`apps/web/.env.local`** from `.env.example` if missing
+3. Create **`apps/web/.env.local`** from `.env.example` if missing (includes `NEXT_PUBLIC_API_MODE=http` for Go + MCP)
 4. Auto-detect your **LAN IPv4** and set `DEV_ALLOWED_ORIGIN` (for phone/tablet testing)
 5. Run **`go mod download`** in `server/` when Go is available
 
@@ -48,11 +48,11 @@ cd VVS-Web
 # 2. Install JS dependencies (root workspaces — web + packages)
 bun install
 
-# 3. Local env (gitignored — copy template)
+# 3. Local env (gitignored — copy template; includes http API + MCP defaults)
 cp apps/web/.env.example apps/web/.env.local
-# Edit apps/web/.env.local — set DEV_ALLOWED_ORIGIN to your LAN IP if you use http://192.168.x.x:3000
+# Edit DEV_ALLOWED_ORIGIN in .env.local if you use http://192.168.x.x:3000 on LAN
 
-# 4. Optional Go server
+# 4. Go server (API + MCP — start_app.ps1 launches this on Windows)
 cd server
 go mod download
 ```

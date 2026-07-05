@@ -1,5 +1,10 @@
 import type { PinType } from './pins';
 import type { GraphEdge, GraphNode } from './nodes';
+import {
+  legacyVariableTypeToDataType,
+  portabilityFeaturesForDataType,
+  type VariableDataType,
+} from './variableTypes';
 
 export type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse' | 'json';
 
@@ -12,11 +17,26 @@ export type PortabilityFeature =
   | 'class.inheritance'
   | 'macro.inline'
   | 'variable.static'
-  | 'event.multicast';
+  | 'variable.module'
+  | 'variable.readonly'
+  | 'type.data_object'
+  | 'type.data_array'
+  | 'type.data_any'
+  | 'event.multicast'
+  | 'env.native';
 
 export type FunctionBinding = 'instance' | 'static' | 'module';
 export type SymbolVisibility = 'public' | 'private';
-export type VariableBinding = 'instance' | 'static';
+export type VariableBinding = 'instance' | 'static' | 'module';
+
+/**
+ * Future Cross Over Architecture mode — restrict authoring to features valid
+ * across `allowedLanguages` so switching codegen target stays error-free.
+ */
+export interface CrossOverArchitectureMode {
+  enabled: boolean;
+  allowedLanguages: TargetLanguage[];
+}
 
 export interface SymbolParameter {
   id: string;
@@ -46,13 +66,84 @@ export interface FunctionSymbol {
   flags?: { virtual?: boolean; async?: boolean };
 }
 
-export interface GraphVariable {
+export interface VariableSymbol {
+  kind: 'variable';
   id: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'object';
+  type: VariableDataType;
   defaultValue?: unknown;
-  binding?: VariableBinding;
-  readonly?: boolean;
+  binding: VariableBinding;
+  visibility: SymbolVisibility;
+  flags?: { readonly?: boolean };
+}
+
+/** @deprecated use VariableSymbol */
+export type GraphVariable = VariableSymbol;
+
+export function createVariableSymbol(
+  name: string,
+  options?: {
+    id?: string;
+    type?: VariableDataType;
+    binding?: VariableBinding;
+  }
+): VariableSymbol {
+  const type = options?.type ?? 'data_string';
+  return {
+    kind: 'variable',
+    id: options?.id ?? `var-${Date.now()}`,
+    name,
+    type,
+    binding: options?.binding ?? 'instance',
+    visibility: 'public',
+    defaultValue: undefined,
+  };
+}
+
+export function migrateLegacyVariable(raw: unknown): VariableSymbol {
+  if (!raw || typeof raw !== 'object') {
+    return createVariableSymbol('Variable');
+  }
+  const item = raw as Record<string, unknown>;
+  const readonly =
+    item.readonly === true ||
+    (item.flags &&
+      typeof item.flags === 'object' &&
+      (item.flags as { readonly?: boolean }).readonly === true);
+  const type = legacyVariableTypeToDataType(
+    typeof item.type === 'string' ? item.type : 'string'
+  );
+  return {
+    kind: 'variable',
+    id: typeof item.id === 'string' ? item.id : `var-${Date.now()}`,
+    name: typeof item.name === 'string' ? item.name : 'Variable',
+    type,
+    defaultValue: item.defaultValue,
+    binding:
+      item.binding === 'static' || item.binding === 'module' || item.binding === 'instance'
+        ? item.binding
+        : 'instance',
+    visibility: item.visibility === 'private' ? 'private' : 'public',
+    flags: readonly ? { readonly: true } : undefined,
+  };
+}
+
+export function normalizeVariableSymbols(raw: unknown): VariableSymbol[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    if (item && typeof item === 'object' && (item as VariableSymbol).kind === 'variable') {
+      return migrateLegacyVariable(item);
+    }
+    return migrateLegacyVariable(item);
+  });
+}
+
+export function portabilityFeaturesForVariable(variable: VariableSymbol): PortabilityFeature[] {
+  const features: PortabilityFeature[] = [...portabilityFeaturesForDataType(variable.type)];
+  if (variable.binding === 'static') features.push('variable.static');
+  if (variable.binding === 'module') features.push('variable.module');
+  if (variable.flags?.readonly) features.push('variable.readonly');
+  return features;
 }
 
 export interface ProjectEventDefinition {
@@ -135,7 +226,7 @@ export function normalizeFunctionSymbols(
 export function collectPortabilityFeatures(snapshot: {
   projectDetails: { extendsType: string };
   functions: FunctionSymbol[];
-  variables?: GraphVariable[];
+  variables?: VariableSymbol[];
 }): PortabilityFeature[] {
   const features = new Set<PortabilityFeature>();
   if (snapshot.projectDetails.extendsType) {
@@ -149,7 +240,9 @@ export function collectPortabilityFeatures(snapshot: {
     if (fn.flags?.async) features.add('function.async');
   }
   for (const variable of snapshot.variables ?? []) {
-    if (variable.binding === 'static') features.add('variable.static');
+    for (const feature of portabilityFeaturesForVariable(variable)) {
+      features.add(feature);
+    }
   }
   return [...features];
 }

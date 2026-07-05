@@ -26,6 +26,11 @@
   box-shadow: 0 0 0 1px #22c55e !important;
 }
 
+.nodeBrokenRef {
+  border-color: #b45309 !important;
+  box-shadow: inset 3px 0 0 #f59e0b;
+}
+
 .header {
   padding: 8px 12px;
   border-bottom-left-radius: 12px;

@@ -31,18 +31,14 @@ export function GraphBreadcrumb() {
     }
 
     const tab = openTabs.find((t) => t.id === graphId);
-    if (tab?.type === 'macro') {
-      if (!openTabs.some((t) => t.id === graphId)) {
-        setOpenTabs((prev) => [...prev, tab]);
-      }
-    } else {
-      const func = functions.find((f) => f.id === graphId);
-      if (func && !openTabs.some((t) => t.id === graphId)) {
-        setOpenTabs((prev) => [
-          ...prev,
-          { id: func.id, type: 'function', name: formatFunctionTabName(func.name) },
-        ]);
-      }
+    const func = functions.find((f) => f.id === graphId);
+    if (func && !openTabs.some((t) => t.id === graphId)) {
+      setOpenTabs((prev) => [
+        ...prev,
+        { id: func.id, type: 'function', name: formatFunctionTabName(func.name) },
+      ]);
+    } else if (tab && !openTabs.some((t) => t.id === graphId)) {
+      setOpenTabs((prev) => [...prev, tab]);
     }
 
     navigate({

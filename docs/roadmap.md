@@ -4,7 +4,7 @@ Broad phases for Vision Visual Scripting. Timelines are **directional**, not com
 
 **Lineage:** The roadmap builds on the original [Vision Visual Scripting](https://github.com/Sheriff99yt/Vision_Visual_Scripting) graduation project (graph → any language). **VVS Web** is the active codebase for an **open visual scripting language** aimed at all engines and workflows — see [history.md](history.md).
 
-**North star:** A portable visual programming system that generates real code, integrates with existing developer workflows, supports the **AI era** via open MCP integration, and **hands the torch from legacy Blueprint-style authoring to Verse-first development inside Unreal Engine 6**.
+**North star:** **Text-shaped graphs** — a portable visual programming system where every node maps to honest, readable source code; integrates with existing developer workflows (IDE, git, CI); supports the **AI era** via open MCP; and optionally reaches Unreal teams through **Verse emission**, not Blueprint VM simulation. See [visual_to_text_fidelity.md](visual_to_text_fidelity.md).
 
 ---
 
@@ -22,19 +22,24 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 
 ---
 
-## Phase 1 — Web editor & client transpiler *(in progress)*
+## Phase 1 — Web editor & client transpiler *(largely shipped)*
 
-**Goal:** Prove the graph model and generation pipeline in the browser without backend dependency.
+**Goal:** Prove the graph model and **text-shaped** generation pipeline in the browser without backend dependency.
+
+**Fidelity:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — locked direction; alignment **shipped** July 2026.
 
 | Track | Deliverables |
 |-------|----------------|
-| **Editor** | Node canvas, typed wiring, functions/macros, variables, references view, project save/load (local), mock codegen |
-| **Transpiler** | Three-stage pipeline in `packages/transpiler`: graph analysis → IR → emitters |
-| **Languages v1** | Python, JavaScript/TypeScript, C++, **Verse** syntax profiles (client transpiler + mock codegen in web UI) |
-| **Preview** | Live code panel driven by real transpiler output (replace mock templates) |
-| **Quality** | Snapshot tests on generated code; graph validation messages in UI |
+| **Editor** | Node canvas, typed wiring, **functions** (primary reuse), variables, events, references view, project save/load (browser + **`.vvs/` folder**), client transpiler codegen |
+| **Transpiler** | Three-stage pipeline in `packages/transpiler`: graph analysis → structured IR v2 → print (syntax packs) → emitters; **no hidden transforms** |
+| **Languages v1** | Python, JavaScript/TypeScript, C++, **Verse** — client transpiler + web code preview |
+| **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; multi-file output (module + host entry) |
+| **Quality** | Snapshot tests on generated code; **Rosetta golden suite** + fidelity linter in `@vvs/syntax-packs`; graph validation (`PIN_TYPE_MISMATCH`, portability) |
+| **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, Subscribe/Emit multicast — **shipped** |
+| **Project environments** | `@vvs/environment-templates` — VS Code–style templates, Environment API browse/spawn, built-in Python/JS packs — **shipped**; [environment_templates.md](environment_templates.md) |
+| **On-disk projects** | `.vvs/` overlay in existing repos — split JSON layout, `integration.json` emit paths, File System Access API (Chrome/Edge) — **shipped (browser)**; cloud sync still Phase 2 |
 
-**Status:** Editor shell is largely built with mock persistence and mock codegen. Transpiler packages are placeholders.
+**Status:** Phase 1 is **shipped** for the browser editor, v1 client transpiler, text-shaped graphs, project environments, folder-based `.vvs/` projects, OpenAPI/AsyncAPI import UI, overload picker, and syntax pack lock settings. Cloud auth (Supabase), full production MCP deployment, and WebSocket collaboration move to Phase 2+ — see [current_state.md](current_state.md) and the in-app **Development roadmap**.
 
 ---
 
@@ -48,20 +53,21 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 | **API** | Go REST service — projects, graphs, syntax registry |
 | **MCP** | `ListNodes`, `GetGraph`, `AddNode`, `ConnectPins`, `GenerateCode`, … |
 | **PWA** | Offline graph editing + cached syntax registry (IndexedDB) |
-| **Connect AI** | TopNav modal wires to real MCP endpoint (today: honest disconnected state) |
+| **Connect AI** | TopNav modal — Phase 1 local MCP at `http://localhost:8080/mcp` when Go server runs (`NEXT_PUBLIC_API_MODE=http`) |
 
 ---
 
 ## Phase 3 — Community library
 
-**Goal:** Share and discover graphs, node packs, and templates.
+**Goal:** Share and discover graphs, node packs, templates, and **project environments**.
 
-- Upload / browse / install visual scripts
+- Upload / browse / install visual scripts, node packs, templates, and environment manifests
 - Metadata, tags, versions, ratings
 - Semantic search (pgvector) — find by intent, not only keywords
-- Import into editor as new project tabs
+- Import into editor as new project tabs or linked environments
+- **Standards alignment:** OpenAPI + AsyncAPI → environment manifest import **shipped in editor UI**; Backstage scaffolder-compatible skeletons still planned
 
-**Status:** Library UI skeleton exists with mock catalog data.
+**Status:** Library UI with **Templates · Community · Installed**, live built-in environment manifests, and mock community catalog; upload/backend still Phase 3.
 
 ---
 
@@ -77,9 +83,9 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 
 ## Phase 5 — Unreal Engine 6 editor plugin *(strategic)*
 
-**Goal:** In-engine visual authoring on the **same graph model**, reusing the **Phase 1 Verse emitter** and adding UE-specific integration (types, subsystems, editor canvas) for teams migrating from deprecated Blueprint-centric workflows.
+**Goal:** In-engine visual authoring on the **same graph model** and **same text-shaped fidelity rules**, reusing the **Phase 1 Verse emitter** — **not** simulating Blueprint VM, latent actions, or macro expansion.
 
-This is a **first-class product surface**, not a side export. It shares the **same graph schema and transpiler IR** as the web editor.
+This is a **first-class product surface** for Unreal teams, but output remains **reviewable Verse in source control**, embeddable like any third-party tool output.
 
 ### Plugin capabilities (target)
 
@@ -88,16 +94,16 @@ This is a **first-class product surface**, not a side export. It shares the **sa
 | **Node canvas** | UE6 editor-embedded graph view — dynamic node catalog, typed ports, execution + data wires, reroutes, comments |
 | **Verse emission** | Reuses v1 Verse syntax profile from `packages/transpiler`; adds UE API node definitions |
 | **Project model** | Align with multi-graph projects (main graph, functions, imports, cross-graph calls) |
-| **Engine integration** | Hooks into UE types, subsystems, and Verse APIs via data-driven node definitions |
-| **Transition tooling** | Workflows that help teams move from Blueprint habits to Verse — familiar UX, modern output |
+| **Engine integration** | Hooks into UE types, subsystems, and Verse APIs via **environment manifests** and data-driven node definitions |
+| **Transition tooling** | Familiar **canvas** UX; **Verse text** that matches the graph — not Blueprint bytecode semantics |
 | **Round-trip** | Graph JSON as source of truth; generated Verse as reviewable artifact in source control |
 | **Parity with web** | Import/export graphs between browser editor and in-engine sessions |
 
 ### Why this matters
 
-- **Verse** is Epic’s typed, scalable direction for gameplay logic; Blueprint is not the long-term authoring center.
-- Studios need a **bridge** — not a forced rewrite on day one.
-- VVS’s **logic/syntax split** means the UE plugin adds a **Verse emitter profile**, not a second visual system.
+- **Verse** is Epic’s typed direction for gameplay logic; Blueprint is not the long-term authoring center.
+- Studios need a **bridge** with **honest code**, not a second proprietary runtime.
+- VVS’s **logic/syntax split** + **text-shaped graphs** mean the UE plugin adds engine nodes and a **Verse emitter profile** — same fidelity contract as the web editor ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)).
 
 ### Dependencies
 
@@ -113,7 +119,8 @@ This is a **first-class product surface**, not a side export. It shares the **sa
 | Track | Examples |
 |-------|----------|
 | **Performance** | 500+ node graphs at 60fps; worker-based transpile for large graphs |
-| **Languages** | GDScript, Rust, C#; Tree-sitter-assisted syntax ingestion (research) |
+| **Languages** | GDScript, Rust, C#; **syntax packs** + agent-assisted maintenance + optional Tree-sitter parse validation — see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
+| **Templates & standards** | OpenAPI/AsyncAPI → environment manifest import; TypeSpec emitter; Backstage catalog; devcontainer linkage |
 | **Mobile UX** | Touch gestures, radial menus, magnetic pin snap |
 | **Enterprise** | Self-hosted deploy, moderation, audit logs |
 
@@ -122,8 +129,9 @@ This is a **first-class product surface**, not a side export. It shares the **sa
 ## Explicit non-goals (for now)
 
 - **Bundled LLM** — users bring Cursor, Claude, Codex, etc. via MCP
-- **Proprietary runtime** — generated code must run in standard toolchains
-- **In-app roadmap tab** — this document is the public roadmap; the editor stays focused on authoring
+- **Proprietary runtime** — generated code must run in standard toolchains; **no Blueprint VM simulation**
+- **Under-the-hood transforms** — no macro inline expansion, latent delays without AST, or folded casts ([visual_to_text_fidelity.md](visual_to_text_fidelity.md))
+- **In-app roadmap** — **Development roadmap** view summarizes shipped vs coming soon; this document is the public phase strategy
 
 ---
 
@@ -131,6 +139,6 @@ This is a **first-class product surface**, not a side export. It shares the **sa
 
 - **Implementation truth:** [current_state.md](current_state.md)
 - **Agent / contributor backlog:** `.agents/memory/incomplete-ui.md` (UI gaps)
-- **Architecture:** [vision.md](vision.md), [project_requirements.md](project_requirements.md)
+- **Architecture:** [vision.md](vision.md), [visual_to_text_fidelity.md](visual_to_text_fidelity.md), [project_requirements.md](project_requirements.md)
 
 Issues and discussions on the public repository are the best place to influence prioritization within each phase.

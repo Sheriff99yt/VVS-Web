@@ -4,6 +4,7 @@ import { graphDisplayName, generatedFileName } from './graphTabs';
 
 import type { ProjectEventDefinition } from '@/types/graph';
 import { findGraphWithEventDefine } from './eventHelpers';
+import { resolveNodeKindId } from './nodeKind';
 
 const LIFECYCLE_EVENT_LABELS = new Set(['On Start', 'On Update']);
 
@@ -11,6 +12,23 @@ export interface EventDispatcherEntry {
   id: string;
   label: string;
   graphId: string;
+  subscriberCount: number;
+}
+
+function countEventSubscribers(
+  eventId: string,
+  documents: Record<string, GraphDocument> | null
+): number {
+  if (!documents) return 0;
+  let count = 0;
+  for (const doc of Object.values(documents)) {
+    for (const node of doc.nodes) {
+      if (node.type !== 'vvs_standard_node') continue;
+      if (resolveNodeKindId(node.data) !== 'event_subscribe') continue;
+      if (node.data.properties?.eventId === eventId) count += 1;
+    }
+  }
+  return count;
 }
 
 /** List project events for the tree. Falls back to scanning graphs for legacy projects. */
@@ -24,6 +42,7 @@ export function listEventDispatchers(
         id: event.id,
         label: eventDisplayName(event.name),
         graphId: findGraphWithEventDefine(event.id, documents) ?? 'main',
+        subscriberCount: countEventSubscribers(event.id, documents),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -54,7 +73,7 @@ function listLegacyEventDispatchers(
       const key = label.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      entries.push({ id: `dispatcher-${key}`, label, graphId });
+      entries.push({ id: `dispatcher-${key}`, label, graphId, subscriberCount: 0 });
     }
   }
 
@@ -88,10 +107,9 @@ export function listGeneratedExports(
   }));
 }
 
-export function listMacroEntries(openTabs: GraphTab[]): MacroEntry[] {
-  return openTabs
-    .filter((t) => t.type === 'macro')
-    .map((t) => ({ id: t.id, name: graphDisplayName(t) }));
+/** @deprecated Macro authoring removed — always returns []. */
+export function listMacroEntries(_openTabs: GraphTab[]): MacroEntry[] {
+  return [];
 }
 
 export function listAllGraphTabs(
@@ -109,7 +127,7 @@ export function listAllGraphTabs(
   }
 
   for (const tab of openTabs) {
-    if (tab.type === 'macro') byId.set(tab.id, tab);
+    if (tab.type === 'function' && !byId.has(tab.id)) byId.set(tab.id, tab);
   }
 
   if (documents) {
@@ -146,9 +164,7 @@ export function buildGraphBreadcrumb(
     return segments;
   }
 
-  segments.push({
-    label: tab.type === 'function' ? 'Functions' : 'Macros',
-  });
+  segments.push({ label: 'Functions' });
   segments.push({ label: graphDisplayName(tab), graphId: tab.id });
   return segments;
 }

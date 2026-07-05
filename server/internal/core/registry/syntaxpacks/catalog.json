@@ -1,0 +1,42 @@
+[
+  {
+    "id": "python.base",
+    "version": "1",
+    "family": "python",
+    "capabilities": [],
+    "extends": null,
+    "description": "Base print templates for Python"
+  },
+  {
+    "id": "javascript.base",
+    "version": "1",
+    "family": "javascript",
+    "capabilities": [],
+    "extends": null,
+    "description": "Base print templates for JavaScript"
+  },
+  {
+    "id": "cpp.base",
+    "version": "1",
+    "family": "cpp",
+    "capabilities": [],
+    "extends": null,
+    "description": "Base print templates for C++"
+  },
+  {
+    "id": "verse.base",
+    "version": "1",
+    "family": "verse",
+    "capabilities": [],
+    "extends": null,
+    "description": "Base print templates for Verse"
+  },
+  {
+    "id": "javascript.es2022",
+    "version": "1",
+    "family": "javascript",
+    "capabilities": ["es2022"],
+    "extends": "javascript.base",
+    "description": "ES2022 capability overlay (nullish coalesce template)"
+  }
+]

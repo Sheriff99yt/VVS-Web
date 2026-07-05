@@ -1,0 +1,122 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { generateMockTranspileResult } from '@vvs/transpiler';
+import type { GraphEdge, GraphNode, ProjectEventDefinition, FunctionSymbol, VariableSymbol } from '@vvs/graph-types';
+
+export type LanguageFamily = 'python' | 'javascript' | 'cpp' | 'verse';
+
+export const ROSETTA_FAMILIES: LanguageFamily[] = ['python', 'javascript', 'cpp', 'verse'];
+
+export interface RosettaFixture {
+  name: string;
+  description?: string;
+  moduleName: string;
+  extendsType?: string;
+  variables?: VariableSymbol[];
+  functions?: FunctionSymbol[];
+  events?: ProjectEventDefinition[];
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  /** When set, load environment manifest for env-native fixtures. */
+  environmentId?: string;
+  /** Golden extraction mode — default on_start handler body. */
+  goldenExtract?: 'on_start' | 'imports';
+}
+
+export function rosettaDir(): string {
+  return join(import.meta.dir, '..', 'rosetta');
+}
+
+export function loadRosettaFixture(name: string): RosettaFixture {
+  return JSON.parse(readFileSync(join(rosettaDir(), `${name}.fixture.json`), 'utf8'));
+}
+
+/** Extract on_start handler body lines for golden comparison. */
+export function extractOnStartBody(content: string, family: LanguageFamily): string {
+  const lines = content.split('\n');
+  let start = -1;
+  let end = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    if (family === 'python' && lines[i]!.includes('def on_start')) start = i + 1;
+    if (family === 'javascript' && lines[i]!.includes('on_start()')) start = i + 1;
+    if (family === 'cpp' && lines[i]!.includes('void on_start()')) start = i + 1;
+    if (family === 'verse' && lines[i]!.includes('on_start')) start = i + 1;
+  }
+  if (start < 0) return content;
+  for (let i = start + 1; i < lines.length; i++) {
+    const l = lines[i]!;
+    if (family === 'python' && /^    def /.test(l)) {
+      end = i;
+      break;
+    }
+    if (family === 'javascript' && /^  [a-z_]/.test(l) && !l.startsWith('    ')) {
+      end = i;
+      break;
+    }
+    if (family === 'cpp' && /^    void /.test(l)) {
+      end = i;
+      break;
+    }
+    if (family === 'verse' && /^    on_/.test(l)) {
+      end = i;
+      break;
+    }
+  }
+  return lines.slice(start, end).join('\n') + '\n';
+}
+
+/** Extract hoisted import lines for golden comparison. */
+export function extractImports(content: string, family: LanguageFamily): string {
+  const lines = content.split('\n');
+  const imports: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (imports.length > 0) break;
+      continue;
+    }
+    if (family === 'python' && (trimmed.startsWith('import ') || trimmed.startsWith('from '))) {
+      imports.push(line);
+      continue;
+    }
+    if (family === 'javascript' && trimmed.startsWith('import ')) {
+      imports.push(line);
+      continue;
+    }
+    if (family === 'cpp' && trimmed.startsWith('#include')) {
+      imports.push(line);
+      continue;
+    }
+    if (family === 'verse' && trimmed.startsWith('using ')) {
+      imports.push(line);
+      continue;
+    }
+    if (imports.length > 0) break;
+    if (trimmed.startsWith('class ') || trimmed.startsWith('export ')) break;
+  }
+  return imports.join('\n') + (imports.length > 0 ? '\n' : '');
+}
+
+export function extractGoldenBody(
+  content: string,
+  family: LanguageFamily,
+  mode: 'on_start' | 'imports' = 'on_start'
+): string {
+  if (mode === 'imports') return extractImports(content, family);
+  return extractOnStartBody(content, family);
+}
+
+export function transpileRosettaFixture(fixture: RosettaFixture, family: LanguageFamily) {
+  return generateMockTranspileResult({
+    moduleName: fixture.moduleName,
+    extendsType: fixture.extendsType ?? '',
+    targetLanguage: family,
+    variables: fixture.variables ?? [],
+    functions: fixture.functions ?? [],
+    projectEvents: fixture.events ?? [],
+    nodes: fixture.nodes,
+    edges: fixture.edges,
+    tabId: 'main',
+    environmentId: fixture.environmentId,
+  });
+}

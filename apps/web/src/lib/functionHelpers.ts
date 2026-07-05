@@ -1,4 +1,7 @@
 import type { PinDefinition, PinType, FunctionSymbol, VVSNodeData } from '@/types/graph';
+import type { GraphTab } from '@vvs/graph-types';
+import type { Dispatch, SetStateAction } from 'react';
+import { formatFunctionTabName } from '@/lib/functionTabs';
 import { resolveNodeKindId } from '@/lib/nodeKind';
 
 const EXEC_IN: PinDefinition = { id: 'exec_in', label: '', type: 'execution' };
@@ -127,6 +130,29 @@ export function syncCallNodesForFunction(
 
 export const FUNCTION_RENAMED_EVENT = 'vvs:function-renamed';
 
+export const FUNCTION_OVERLOAD_DRAG_MIME = 'application/vvs-function-overload';
+
+export interface FunctionOverloadDragPayload {
+  functionId: string;
+  overloadId: string;
+}
+
 export function dispatchFunctionRenamed(func: FunctionSymbol): void {
   window.dispatchEvent(new CustomEvent(FUNCTION_RENAMED_EVENT, { detail: { func } }));
+}
+
+/** Persist a function symbol edit and sync open tabs + call nodes on the canvas. */
+export function commitFunctionSymbolUpdate(
+  next: FunctionSymbol,
+  setFunctions: Dispatch<SetStateAction<FunctionSymbol[]>>,
+  setOpenTabs?: Dispatch<SetStateAction<GraphTab[]>>
+): void {
+  setFunctions((list) => list.map((f) => (f.id === next.id ? next : f)));
+  if (setOpenTabs) {
+    const tabName = formatFunctionTabName(next.name);
+    setOpenTabs((tabs) =>
+      tabs.map((tab) => (tab.id === next.id && tab.type === 'function' ? { ...tab, name: tabName } : tab))
+    );
+  }
+  dispatchFunctionRenamed(next);
 }

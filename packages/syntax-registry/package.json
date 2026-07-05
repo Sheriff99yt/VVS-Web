@@ -13,6 +13,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@vvs/graph-types": "workspace:*"
+    "@vvs/graph-types": "workspace:*",
+    "@vvs/environment-templates": "workspace:*"
   }
 }

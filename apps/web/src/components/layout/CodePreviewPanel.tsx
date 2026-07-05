@@ -18,6 +18,7 @@ import type { TranspileResult } from '@/types/transpile';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
+import { CopyPathButton } from '@/components/ui/CopyPathButton';
 
 import type { TargetLanguage } from '@/contexts/ProjectContext';
 
@@ -77,12 +78,16 @@ export function CodePreviewPanel() {
     selection,
     validationWarnings,
     setValidationWarnings,
+    crossOverMode,
+    environmentId,
+    integration,
   } = useProject();
   const { getActiveTabMetadata } = useGraphWorkspace();
   const documents = useGraphDocuments();
 
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [activeFileIndex, setActiveFileIndex] = useState(0);
   const lastCleanResultRef = useRef<TranspileResult | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -107,6 +112,8 @@ export function CodePreviewPanel() {
       tabLabel: activeTab?.name,
       tabId: activeGraphTab,
       documents: documents ?? undefined,
+      environmentId,
+      integration,
     });
   }, [
     activeDocument,
@@ -119,6 +126,8 @@ export function CodePreviewPanel() {
     events,
     functions,
     documents,
+    environmentId,
+    integration,
   ]);
 
   useEffect(() => {
@@ -128,13 +137,16 @@ export function CodePreviewPanel() {
       functions,
       events,
       variables,
+      openTabs,
       projectDetails,
       targetLanguage,
+      crossOver: crossOverMode,
+      environmentId,
     });
     setValidationWarnings((prev) =>
       warningsEqual(prev, analysis.warnings) ? prev : analysis.warnings
     );
-  }, [documents, functions, events, variables, projectDetails, targetLanguage, setValidationWarnings]);
+  }, [documents, functions, events, variables, openTabs, projectDetails, targetLanguage, crossOverMode, environmentId, setValidationWarnings]);
 
   useEffect(() => {
     if (compileState === 'success' || compileState === 'clean') {
@@ -183,8 +195,15 @@ export function CodePreviewPanel() {
         ? liveResult
         : lastCleanResultRef.current ?? liveResult;
 
-  const generatedCode = displayResult.files[0]?.content ?? '';
-  const filePath = displayResult.files[0]?.path ?? 'output';
+  useEffect(() => {
+    setActiveFileIndex(0);
+  }, [displayResult.files.length, activeGraphTab, targetLanguage]);
+
+  const safeFileIndex = Math.min(activeFileIndex, Math.max(0, (displayResult?.files.length ?? 1) - 1));
+  const activeFile = displayResult.files[safeFileIndex] ?? displayResult.files[0];
+  const generatedCode = activeFile?.content ?? '';
+  const filePath = activeFile?.path ?? 'output';
+  const copyablePath = filePath;
   const sourceMap = displayResult.sourceMap;
   const mappedNodeCount = countMappedNodes(displayResult);
   const lines = lineCount(generatedCode);
@@ -231,12 +250,31 @@ export function CodePreviewPanel() {
       <div className="flex items-center justify-between gap-2 border-b border-zinc-800 bg-zinc-900/80 px-2 h-8 shrink-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <FileCode2 size={12} className="text-indigo-400 shrink-0" />
-          <span
-            className="text-[10px] text-zinc-400 font-mono truncate max-w-[min(160px,40%)]"
-            title={filePath}
-          >
-            {filePath}
-          </span>
+          {displayResult.files.length > 1 ? (
+            <select
+              value={safeFileIndex}
+              onChange={(e) => setActiveFileIndex(Number(e.target.value))}
+              className="text-[10px] text-zinc-300 font-mono bg-zinc-900 border border-zinc-800 rounded px-1 py-0.5 max-w-[min(200px,50%)] truncate"
+              title="Generated file"
+            >
+              {displayResult.files.map((file, index) => (
+                <option key={file.path} value={index}>
+                  {file.path}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span
+              className="text-[10px] text-zinc-400 font-mono truncate max-w-[min(160px,40%)]"
+              title={copyablePath}
+            >
+              {filePath}
+            </span>
+          )}
+          <CopyPathButton
+            path={copyablePath}
+            title={`Copy path: ${copyablePath}`}
+          />
         </div>
 
         <div className="flex items-center gap-1 shrink-0">

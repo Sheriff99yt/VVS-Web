@@ -6,7 +6,6 @@ import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'reac
 import { ReactFlowProvider } from '@xyflow/react';
 import { useProject } from '@/contexts/ProjectContext';
 import { formatReferenceEndpoint } from '@/lib/graphRelations';
-import { listMacroEntries } from '@/lib/projectTree';
 import { useGraphReferenceIndex } from '@/hooks/useGraphDocuments';
 import {
   REFERENCE_DEPTH_DEFAULT,
@@ -20,7 +19,6 @@ import {
 } from '@/lib/referenceTree';
 import {
   openFunctionGraphTab,
-  openMacroGraphTab,
   openMainGraph,
 } from '@/lib/graphTabs';
 import { GraphExplorer } from '@/components/layout/GraphExplorer';
@@ -71,10 +69,9 @@ function DepthStepper({
 const TYPE_FILTER_OPTIONS: { id: ReferenceGraphTypeFilter; label: string; color: string }[] = [
   { id: 'main', label: 'Event Graph', color: '#10b981' },
   { id: 'function', label: 'Function', color: '#6366f1' },
-  { id: 'macro', label: 'Macro', color: '#f59e0b' },
 ];
 
-const ALL_TYPES: ReferenceGraphTypeFilter[] = ['main', 'function', 'macro'];
+const ALL_TYPES: ReferenceGraphTypeFilter[] = ['main', 'function'];
 
 export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
   const {
@@ -97,8 +94,7 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
     () => new Set(ALL_TYPES)
   );
 
-  const macros = listMacroEntries(openTabs);
-  const index = useGraphReferenceIndex(functions, macros);
+  const index = useGraphReferenceIndex(functions, []);
 
   const depths = useMemo(
     () => ({
@@ -137,18 +133,13 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
         openMainGraph(setActiveGraphTab);
         setSelection({ type: 'graph', id: null });
       } else {
-        const tab = openTabs.find((t) => t.id === graphId);
-        if (tab?.type === 'macro') {
-          openMacroGraphTab({ id: graphId, name: tab.name }, setOpenTabs, setActiveGraphTab);
-        } else {
-          const func = functions.find((f) => f.id === graphId);
-          if (func) openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
-        }
+        const func = functions.find((f) => f.id === graphId);
+        if (func) openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
         setSelection({ type: 'graph', id: graphId });
       }
       onSwitchToCanvas();
     },
-    [functions, onSwitchToCanvas, openTabs, setActiveGraphTab, setOpenTabs, setSelection]
+    [functions, onSwitchToCanvas, setActiveGraphTab, setOpenTabs, setSelection]
   );
 
   const selectReferenceGraph = useCallback(

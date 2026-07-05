@@ -2,6 +2,20 @@
 
 Choices agents must not undo without explicit user approval.
 
+## Text-shaped graphs (July 2026 — major direction)
+
+**Canonical spec:** `docs/visual_to_text_fidelity.md`
+
+- **Product direction:** **Text-shaped graphs** — the canvas edits **ordinary source structure**; every behavioral node maps to **visible, locatable** generated text
+- **Fidelity contract:** No compile-time paste, no hidden casts, no latent VM steps absent from export
+- **Integration goal:** Generated files embed in **any** third-party stack (IDE, git, CI, MCP) — **no VVS runtime required**
+- **Reuse:** **Function + Call Function** — not Blueprint macro inline expansion
+- **Events:** Define/Dispatch → visible handler methods and call/emit lines; phase 2 multicast = **Subscribe + Emit** nodes, not hidden callback lists
+- **Timing (future):** **Wait** / **Await Wait** nodes + async graph flag — explicit in text, not latent Delay
+- **Macro tabs / `use_macro`:** **Deprecated as codegen concept** — migrate to Function + Call (UI may linger until alignment plan ships)
+- **Rejected:** Blueprint-faithful semantics (macro expand, latent delay, VM-only behavior) — breaks visual↔text trust and third-party embedding
+- **UE6 plugin:** Same fidelity rules; emits **Verse text** — does **not** simulate Blueprint VM
+
 ## Product UI (July 2026 revision)
 
 - **No in-app Roadmap or Integrations tabs** — planning lives in `docs/`; MCP via Connect AI modal only
@@ -30,7 +44,7 @@ Done for daily editing UX (sections 1–3 of `incomplete-ui.md`):
 - `data_array` pin geometry; simulation mock highlight
 - Centralized wire validation in `graphWiring.ts` (single-wire-per-input, cycle guards)
 
-Still open: File New/Import polish, mock validator, Library backend, MCP connect, real transpiler — see `incomplete-ui.md` sections 4–8.
+Still open: File New/Import polish, Library backend, MCP connect, full IR pipeline split — see `incomplete-ui.md` sections 4–8.
 
 ## Public repository & product direction
 
@@ -63,7 +77,27 @@ Shipped in monorepo packages + web UI:
 - **Extract to function** — Ctrl+Shift+E / View menu
 - **Go registry** — `GET /registry/nodes`, `GET /registry/core-pack` (MCP transport TBD)
 
-Still partial: full analyze→lower→emit IR modules, ambiguous overload picker on call nodes, removing all label-based semantics from hot paths.
+Still partial: full analyze→lower→emit IR module split, ambiguous overload picker on call nodes, removing all label-based semantics from hot paths.
+
+## Node design: property schema & conversion (July 2026)
+
+- **`propertySchema`** on registry kinds drives **`PropertySchemaPanel`** (Settings in floating inspector) — first kind: **`action_get_input`**
+- **Conversion nodes** (`convert_to_string`, `convert_to_number`) — pure expression; **one node = one call** in generated code; **no transpiler folding**
+- **Print String** requires **`data_string`** — numeric display uses **Get → To String → Print**
+- **`pinCompatibility.ts`** in `@vvs/graph-types` — shared with editor + `analyzeProject` (`PIN_TYPE_MISMATCH`)
+- **Example templates:** Calculator demonstrates input, conversion, functions, events, branch — see `apps/web/src/lib/examples/`
+
+## Syntax packs & codegen layers (July 2026)
+
+**Canonical spec:** `docs/syntax_pack_architecture.md`
+
+- **Syntax packs** (`@vvs/syntax-packs`) are the **authoritative print layer** — base JSON + capability overlays, resolved via explicit merge order
+- **Structured IR** carries semantics only — no target-language strings in `lower/` after migration
+- **Hybrid emit:** simple constructs in JSON templates; events, hoisting, async, multi-file, spans in TS `PrinterRegistry` printers
+- **Language profiles** remain **portability policy** — native/emulated/unsupported; packs do not replace profiles
+- **Tree-sitter: validator-only** — optional CI parse check on Rosetta output (Python/JS first); **not** syntax author or auto-ingestion
+- **Agent scope:** may edit `packages/syntax-packs/**`; must not edit `lower/**`, IR schema, or fidelity rules without RFC
+- **Verification gates:** Rosetta golden tests + span invariants + fidelity linter (+ optional parse validation)
 
 ## Architecture
 

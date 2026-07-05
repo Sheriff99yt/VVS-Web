@@ -4,6 +4,7 @@ import { GraphVariable, ProjectEventDefinition, FunctionSymbol } from '@/types/g
 import { GraphDocument } from '@/lib/graphDefaults';
 import { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { Dispatch, SetStateAction } from 'react';
+import { createDefaultIntegration, type ProjectIntegrationConfig, type SyntaxPackLock } from '@vvs/graph-types';
 
 export interface SnapshotApplyTarget {
   setVariables: Dispatch<SetStateAction<GraphVariable[]>>;
@@ -21,6 +22,9 @@ export interface SnapshotApplyTarget {
   }) => void;
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
   setInstalledLibrary: Dispatch<SetStateAction<InstalledLibraryEntry[]>>;
+  setEnvironmentLink: (id: string | undefined, version?: string) => void;
+  setIntegration: Dispatch<SetStateAction<ProjectIntegrationConfig>>;
+  setSyntaxPackLock?: Dispatch<SetStateAction<SyntaxPackLock | undefined>>;
 }
 
 export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: SnapshotApplyTarget): void {
@@ -39,4 +43,16 @@ export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: Snapshot
   target.setSelection({ type: 'graph', id: null });
   target.loadDocuments(snapshot.documents as Record<string, GraphDocument>, activeTab);
   target.setInstalledLibrary(snapshot.installedLibrary ?? []);
+  target.setEnvironmentLink(snapshot.environmentId, snapshot.environmentVersion);
+  target.setIntegration(
+    snapshot.integration ??
+      createDefaultIntegration({
+        environmentId: snapshot.environmentId,
+        environmentVersion: snapshot.environmentVersion,
+        moduleName: snapshot.projectDetails.moduleName,
+        defaultTarget: snapshot.targetLanguage,
+        adoptExisting: true,
+      })
+  );
+  target.setSyntaxPackLock?.(snapshot.syntaxPackLock);
 }

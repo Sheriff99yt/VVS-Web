@@ -253,6 +253,18 @@ export function EditorNavigationProvider({
       );
     };
 
+    const onNavigateToVariable = (event: Event) => {
+      const { symbolId } = (event as CustomEvent<{ symbolId: string }>).detail;
+      if (!symbolId) return;
+      navigate(
+        {
+          editorView: 'canvas',
+          selection: { type: 'variable', id: symbolId },
+        },
+        { history: 'push' }
+      );
+    };
+
     const onSwitchEditorView = (event: Event) => {
       const view = (event as CustomEvent<{ view: EditorViewTab }>).detail.view;
       navigate({ editorView: view });
@@ -260,10 +272,12 @@ export function EditorNavigationProvider({
 
     window.addEventListener('vvs:editor-navigate', onEditorNavigate);
     window.addEventListener('vvs:navigate-to-node', onNavigateToNode);
+    window.addEventListener('vvs:navigate-to-variable', onNavigateToVariable);
     window.addEventListener('vvs:switch-editor-view', onSwitchEditorView);
     return () => {
       window.removeEventListener('vvs:editor-navigate', onEditorNavigate);
       window.removeEventListener('vvs:navigate-to-node', onNavigateToNode);
+      window.removeEventListener('vvs:navigate-to-variable', onNavigateToVariable);
       window.removeEventListener('vvs:switch-editor-view', onSwitchEditorView);
     };
   }, [navigate]);

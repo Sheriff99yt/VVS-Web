@@ -1,0 +1,54 @@
+{
+  "name": "dispatch",
+  "description": "Dispatch project event from On Start",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "variables": [],
+  "functions": [],
+  "events": [
+    {
+      "id": "evt-go",
+      "name": "go",
+      "parameters": []
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "dispatch-go",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "Dispatch go",
+        "category": "Events",
+        "kindId": "event_dispatch",
+        "properties": { "eventId": "evt-go", "eventName": "go" },
+        "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "dispatch-go",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

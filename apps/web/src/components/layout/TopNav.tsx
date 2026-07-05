@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Zap, RefreshCw, Bot, PenLine, GitBranch, Package, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput } from 'lucide-react';
+import { Loader2, Save, Zap, RefreshCw, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { VvsApi, getApiMode } from '@/lib/api';
@@ -11,12 +11,18 @@ import { ProjectSnapshot, isProjectSnapshot } from '@/types/projectSnapshot';
 import { applyProjectSnapshot } from '@/lib/applyProjectSnapshot';
 import { dispatchEditorNavigate } from '@/lib/editorNavigate';
 import { useRouter } from 'next/navigation';
-import { saveProjectToStore } from '@/lib/projectStore';
+import { saveProjectToStore, upsertRecentProject, isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
+import { saveProjectToFolder, isFolderPickerSupported } from '@/lib/projectFolder';
+import { promoteBrowserProjectToDisk, SAVE_ON_DISK_PROMPT_EVENT } from '@/lib/promoteProjectToDisk';
+import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDialog';
+import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 
+import type { EditorViewTab } from '@/types/editorNavigation';
+
 export interface TopNavProps {
-  activeTab: 'canvas' | 'references' | 'library';
-  onTabChange: (tab: 'canvas' | 'references' | 'library') => void;
+  activeTab: EditorViewTab;
+  onTabChange: (tab: EditorViewTab) => void;
 }
 
 export function TopNav({ activeTab, onTabChange }: TopNavProps) {
@@ -26,6 +32,9 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [mcpProbeMessage, setMcpProbeMessage] = useState<string | null>(null);
   const mcpUrl = 'http://localhost:8080/mcp';
   const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | null>(null);
+  const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
+  const [saveOnDiskPromptMode, setSaveOnDiskPromptMode] = useState<'close' | 'manual'>('close');
+  const [saveOnDiskBusy, setSaveOnDiskBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -38,6 +47,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     activeGraphTab, setActiveGraphTab,
     projectDetails, setProjectDetails,
     targetLanguage, setTargetLanguage,
+    crossOverMode,
     autoCompile, setAutoCompile,
     autoSave, setAutoSave,
     dirtyTabIds,
@@ -52,7 +62,16 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setLastSavedAt,
     isTabDirty,
     resetDirtyTabs,
+    environmentId,
+    environmentVersion,
+    setEnvironmentLink,
+    integration,
+    setIntegration,
+    syntaxPackLock,
+    setSyntaxPackLock,
   } = useProject();
+
+  const { isFolderProject, folderHandle, folderLabel } = useProjectFolder();
 
   const router = useRouter();
 
@@ -72,6 +91,9 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setSelection,
       loadDocuments,
       setInstalledLibrary,
+      setEnvironmentLink,
+      setIntegration,
+      setSyntaxPackLock,
     }),
     [
       setVariables,
@@ -86,7 +108,31 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setSelection,
       loadDocuments,
       setInstalledLibrary,
+      setEnvironmentLink,
+      setIntegration,
+      setSyntaxPackLock,
     ]
+  );
+
+  const persistSnapshot = useCallback(
+    async (snapshot: ProjectSnapshot): Promise<string> => {
+      if (isFolderProject && folderHandle) {
+        await saveProjectToFolder(folderHandle, snapshot);
+        upsertRecentProject({
+          id: projectId,
+          moduleName: snapshot.projectDetails.moduleName || 'Untitled',
+          savedAt: snapshot.savedAt,
+          source: projectSource,
+          storage: 'folder',
+          folderLabel: folderLabel ?? folderHandle.name,
+        });
+        return snapshot.savedAt;
+      }
+      const saved = saveProjectToStore(projectId, snapshot, projectSource);
+      await VvsApi.saveProject(snapshot, projectId);
+      return saved.savedAt;
+    },
+    [isFolderProject, folderHandle, folderLabel, projectId, projectSource]
   );
 
   const handleMcpProbe = async () => {
@@ -140,6 +186,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       autoSave,
       documents,
       installedLibrary,
+      environmentId,
+      environmentVersion,
+      integration,
+      syntaxPackLock,
     };
   }, [
     getDocuments,
@@ -154,16 +204,19 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     autoCompile,
     autoSave,
     installedLibrary,
+    environmentId,
+    environmentVersion,
+    integration,
+    syntaxPackLock,
   ]);
 
   const handleSave = useCallback(async () => {
     const snapshot = buildSnapshot();
     if (!snapshot) return;
-    const saved = saveProjectToStore(projectId, snapshot, projectSource);
-    await VvsApi.saveProject(snapshot, projectId);
-    setLastSavedAt(saved.savedAt);
+    const savedAt = await persistSnapshot(snapshot);
+    setLastSavedAt(savedAt);
     setOpenMenu(null);
-  }, [buildSnapshot, projectId, projectSource, setLastSavedAt]);
+  }, [buildSnapshot, persistSnapshot, setLastSavedAt]);
 
   const handleCompile = useCallback(async () => {
     if (compileState === 'compiling') return;
@@ -176,8 +229,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       functions,
       events,
       variables,
+      openTabs,
       projectDetails,
       targetLanguage,
+      crossOver: crossOverMode,
     });
     window.dispatchEvent(
       new CustomEvent('vvs:validation-result', {
@@ -196,7 +251,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setValidationWarnings(analysis.warnings);
     setCompileState('compiling');
     try {
-      await VvsApi.compileProject();
+      await VvsApi.compileProject(projectId);
       setValidationErrors([]);
       setValidationWarnings(analysis.warnings);
       markTabClean(activeGraphTab);
@@ -212,10 +267,13 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     getDocuments,
     markTabClean,
     projectDetails,
+    projectId,
     setCompileState,
     setValidationErrors,
     setValidationWarnings,
     targetLanguage,
+    crossOverMode,
+    variables,
   ]);
 
   const handleCommitPreview = useCallback(() => {
@@ -273,16 +331,62 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  const handleCloseProject = async () => {
-    const snapshot = buildSnapshot();
-    if (snapshot) {
-      const saved = saveProjectToStore(projectId, snapshot, projectSource);
-      await VvsApi.saveProject(snapshot, projectId);
-      setLastSavedAt(saved.savedAt);
+  const finishCloseProject = useCallback(async () => {
+    const draftOnly = isProjectDraftOnly(projectId);
+    if (!draftOnly) {
+      const snapshot = buildSnapshot();
+      if (snapshot) {
+        const savedAt = await persistSnapshot(snapshot);
+        setLastSavedAt(savedAt);
+      }
+    } else {
+      removeProjectDraft(projectId);
     }
     setOpenMenu(null);
+    setSaveOnDiskPromptOpen(false);
     router.push('/');
-  };
+  }, [buildSnapshot, persistSnapshot, projectId, router, setLastSavedAt]);
+
+  const handleSaveOnDisk = useCallback(async () => {
+    const snapshot = buildSnapshot();
+    if (!snapshot) return;
+    setSaveOnDiskBusy(true);
+    try {
+      const handle = await promoteBrowserProjectToDisk(projectId, snapshot, projectSource);
+      if (!handle) return;
+      setOpenMenu(null);
+      setSaveOnDiskPromptOpen(false);
+      router.push('/');
+    } finally {
+      setSaveOnDiskBusy(false);
+    }
+  }, [buildSnapshot, projectId, projectSource, router]);
+
+  const handleCloseProject = useCallback(() => {
+    if (isFolderProject) {
+      void finishCloseProject();
+      return;
+    }
+    setSaveOnDiskPromptMode('close');
+    setSaveOnDiskPromptOpen(true);
+  }, [isFolderProject, finishCloseProject]);
+
+  const handleDismissSaveOnDiskPrompt = useCallback(() => {
+    if (saveOnDiskPromptMode === 'close') {
+      void finishCloseProject();
+      return;
+    }
+    setSaveOnDiskPromptOpen(false);
+  }, [saveOnDiskPromptMode, finishCloseProject]);
+
+  useEffect(() => {
+    const onPrompt = () => {
+      setSaveOnDiskPromptMode('manual');
+      setSaveOnDiskPromptOpen(true);
+    };
+    window.addEventListener(SAVE_ON_DISK_PROMPT_EVENT, onPrompt);
+    return () => window.removeEventListener(SAVE_ON_DISK_PROMPT_EVENT, onPrompt);
+  }, []);
 
   const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -480,6 +584,13 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             >
               <Package size={14} />
             </button>
+            <button
+              onClick={() => navigate({ editorView: 'roadmap' })}
+              title="Development roadmap"
+              className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'roadmap' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+            >
+              <Milestone size={14} />
+            </button>
           </div>
         </div>
 
@@ -534,7 +645,11 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             </div>
             <div className="p-6 space-y-4">
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Connect your IDE (Cursor, Claude Desktop, or Windsurf) to this VVS session so AI can read and write node graphs.
+                Connect your IDE (Cursor, Claude Desktop, or Windsurf) to this VVS session so AI can read and write node graphs via MCP.
+              </p>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
+                Phase 1: run the local Go server with{' '}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_API_MODE=http</span>, then use Test connection below. No auth token required for local dev.
               </p>
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">MCP Server URL</label>
@@ -582,8 +697,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   <span className="text-zinc-400 block">
                     {mcpProbeState === 'idle'
                       ? getApiMode() === 'mock'
-                        ? 'Offline mode — MCP requires a running Go server (Phase 2).'
-                        : 'Not connected — use Test connection when the server is running.'
+                        ? 'Offline mode — set NEXT_PUBLIC_API_MODE=http and start the Go server for local MCP.'
+                        : 'Not connected — start the Go server and use Test connection.'
                       : mcpProbeMessage}
                   </span>
                   {mcpProbeState === 'fail' && getApiMode() === 'mock' ? (
@@ -595,6 +710,15 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           </div>
         </div>
       )}
+      <SaveOnDiskPromptDialog
+        open={saveOnDiskPromptOpen}
+        projectName={projectDetails.moduleName || 'Untitled'}
+        isDraft={isProjectDraftOnly(projectId)}
+        saving={saveOnDiskBusy}
+        folderPickerAvailable={isFolderPickerSupported()}
+        onSaveOnDisk={() => void handleSaveOnDisk()}
+        onCancel={handleDismissSaveOnDiskPrompt}
+      />
     </>
   );
 }

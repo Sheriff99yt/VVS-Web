@@ -1,47 +1,76 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   FolderOpen,
   FilePlus,
   Upload,
   Clock,
-  Globe,
   Trash2,
   ChevronRight,
-  BookOpen,
+  Library,
+  FolderPlus,
+  FolderSearch,
 } from 'lucide-react';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
-import { EXAMPLE_PROJECTS } from '@/lib/exampleProjects';
-import { createProjectFromTemplate } from '@/lib/createProjectFromTemplate';
 import {
   createProjectId,
   loadProjectFromStore,
   removeFromRecentList,
   removeProjectFromStore,
   saveProjectToStore,
+  upsertRecentProject,
+  saveProjectDraft,
 } from '@/lib/projectStore';
 import {
   initRecentProjects,
   notifyRecentProjectsChanged,
   useRecentProjects,
 } from '@/lib/recentProjectsSubscribe';
-import { LIBRARY_CATALOG } from '@/lib/libraryCatalog';
 import { isProjectSnapshot } from '@/types/projectSnapshot';
 import type { RecentProjectEntry } from '@/types/projectRegistry';
+import { isFolderRecentEntry } from '@/types/projectRegistry';
+import {
+  createProjectInFolder,
+  folderKeyFromHandleName,
+  getFolderHandle,
+  isFolderPickerSupported,
+  loadProjectFromFolder,
+  pickProjectFolder,
+  storeFolderHandle,
+  verifyHandlePermission,
+  resolveProjectFolderHandle,
+  linkLocalProjectToFolder,
+} from '@/lib/projectFolder';
+import { ProjectFolderBrowserModal } from '@/components/start/ProjectFolderBrowserModal';
 
-function openInEditor(
+function openLocalInEditor(
   router: ReturnType<typeof useRouter>,
   projectId: string,
   snapshot: ReturnType<typeof createEmptyProjectSnapshot>,
   source: RecentProjectEntry['source'],
-  initialView?: 'canvas' | 'library'
+  query?: Record<string, string>
 ) {
   saveProjectToStore(projectId, snapshot, source);
   notifyRecentProjectsChanged();
   const params = new URLSearchParams({ id: projectId });
-  if (initialView === 'library') params.set('view', 'library');
+  if (query) {
+    for (const [key, value] of Object.entries(query)) params.set(key, value);
+  }
+  router.push(`/editor?${params.toString()}`);
+}
+
+function openFolderInEditor(
+  router: ReturnType<typeof useRouter>,
+  folderKey: string,
+  query?: Record<string, string>
+) {
+  notifyRecentProjectsChanged();
+  const params = new URLSearchParams({ id: folderKey });
+  if (query) {
+    for (const [key, value] of Object.entries(query)) params.set(key, value);
+  }
   router.push(`/editor?${params.toString()}`);
 }
 
@@ -57,54 +86,140 @@ export function StartScreen() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recent = useRecentProjects();
+  const [folderPickerReady, setFolderPickerReady] = useState(false);
+  const [folderBrowser, setFolderBrowser] = useState<{
+    handle: FileSystemDirectoryHandle;
+    projectName: string;
+  } | null>(null);
 
   useEffect(() => {
     initRecentProjects();
+    setFolderPickerReady(isFolderPickerSupported());
   }, []);
-
-  const templates = LIBRARY_CATALOG.filter((a) => a.type === 'Templates');
 
   const refreshRecent = () => notifyRecentProjectsChanged();
 
   const handleNewProject = () => {
     const id = createProjectId();
-    openInEditor(router, id, createEmptyProjectSnapshot(), 'new');
+    openLocalInEditor(router, id, createEmptyProjectSnapshot(), 'new');
   };
 
-  const handleOpenExample = (level: 'simple' | 'complex') => {
+  const handleNewProjectFolder = async () => {
+    const handle = await pickProjectFolder();
+    if (!handle) return;
+    const snapshot = createEmptyProjectSnapshot();
     try {
-      const def = EXAMPLE_PROJECTS.find((e) => e.level === level);
-      if (!def) return;
-      const id = createProjectId();
-      openInEditor(router, id, def.create(), 'demo');
+      await createProjectInFolder(handle, snapshot, { adoptExisting: true });
     } catch (error) {
       window.alert(
-        error instanceof Error
-          ? error.message
-          : 'Could not open this example. Check browser storage settings and try again.'
+        error instanceof Error ? error.message : 'Could not create project in that folder.'
       );
+      return;
     }
+    const folderKey = folderKeyFromHandleName(handle.name);
+    await storeFolderHandle(folderKey, handle);
+    upsertRecentProject({
+      id: folderKey,
+      moduleName: snapshot.projectDetails.moduleName,
+      savedAt: new Date().toISOString(),
+      source: 'new',
+      storage: 'folder',
+      folderLabel: handle.name,
+    });
+    openFolderInEditor(router, folderKey);
   };
 
-  const handleOpenRecent = (entry: RecentProjectEntry) => {
+  const handleOpenProjectFolder = async () => {
+    const handle = await pickProjectFolder();
+    if (!handle) return;
+    const permitted = await verifyHandlePermission(handle);
+    if (!permitted) return;
+    const loaded = await loadProjectFromFolder(handle);
+    if (!loaded) {
+      window.alert('No .vvs/project.json found in that folder. Use "New in folder" to initialize one.');
+      return;
+    }
+    const folderKey = folderKeyFromHandleName(handle.name);
+    await storeFolderHandle(folderKey, handle);
+    upsertRecentProject({
+      id: folderKey,
+      moduleName: loaded.snapshot.projectDetails.moduleName || handle.name,
+      savedAt: loaded.snapshot.savedAt,
+      source: 'recent',
+      storage: 'folder',
+      folderLabel: handle.name,
+    });
+    openFolderInEditor(router, folderKey);
+  };
+
+  const handleOpenLibrary = () => {
+    const id = createProjectId();
+    saveProjectDraft(id, createEmptyProjectSnapshot());
+    router.push(`/editor?id=${id}&view=library&section=templates`);
+  };
+
+  const handleOpenRecent = async (entry: RecentProjectEntry) => {
+    if (isFolderRecentEntry(entry)) {
+      const handle = await getFolderHandle(entry.id);
+      if (!handle) {
+        window.alert('Folder access was lost. Use the folder button to reconnect.');
+        return;
+      }
+      const permitted = await verifyHandlePermission(handle);
+      if (!permitted) return;
+      openFolderInEditor(router, entry.id);
+      return;
+    }
     const snapshot = loadProjectFromStore(entry.id);
     if (!snapshot) {
       removeProjectFromStore(entry.id);
       refreshRecent();
       return;
     }
-    openInEditor(router, entry.id, snapshot, 'recent');
+    openLocalInEditor(router, entry.id, snapshot, 'recent');
   };
 
-  const handleRemoveRecent = (e: React.MouseEvent, id: string) => {
+  const handleRemoveRecent = (e: React.MouseEvent, entry: RecentProjectEntry) => {
     e.stopPropagation();
-    removeFromRecentList(id);
+    removeFromRecentList(entry.id);
     refreshRecent();
   };
 
-  const handleBrowseLibrary = () => {
-    const id = createProjectId();
-    openInEditor(router, id, createEmptyProjectSnapshot(), 'new', 'library');
+  const handleOpenProjectDirectory = async (
+    e: React.MouseEvent,
+    entry: RecentProjectEntry
+  ) => {
+    e.stopPropagation();
+    if (!folderPickerReady) {
+      window.alert('Your browser does not support folder access. Use Chrome or Edge.');
+      return;
+    }
+
+    let handle: FileSystemDirectoryHandle | null = null;
+
+    if (isFolderRecentEntry(entry)) {
+      handle = await resolveProjectFolderHandle(entry.id, entry.folderLabel);
+    } else {
+      const snapshot = loadProjectFromStore(entry.id);
+      if (!snapshot) {
+        window.alert('Project data not found in browser storage.');
+        return;
+      }
+      handle = await linkLocalProjectToFolder(entry.id, snapshot);
+      if (handle) {
+        upsertRecentProject({
+          ...entry,
+          storage: 'folder',
+          folderLabel: handle.name,
+          savedAt: new Date().toISOString(),
+        });
+        notifyRecentProjectsChanged();
+      }
+    }
+
+    if (handle) {
+      setFolderBrowser({ handle, projectName: entry.moduleName });
+    }
   };
 
   const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,17 +233,10 @@ export function StartScreen() {
         return;
       }
       const id = parsed.projectId ?? createProjectId();
-      openInEditor(router, id, { ...parsed, projectId: id }, 'import');
+      openLocalInEditor(router, id, { ...parsed, projectId: id }, 'import');
     } catch {
       window.alert('Could not parse JSON file.');
     }
-  };
-
-  const handleTemplate = (assetId: string) => {
-    const asset = LIBRARY_CATALOG.find((a) => a.id === assetId);
-    if (!asset) return;
-    const id = createProjectId();
-    openInEditor(router, id, createProjectFromTemplate(asset), 'template');
   };
 
   const formatRelative = (iso: string) => {
@@ -164,102 +272,82 @@ export function StartScreen() {
           </div>
         </div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-600 font-semibold">
-          Offline · Local projects
+          {folderPickerReady ? 'Git-friendly · .vvs/ overlay' : 'Offline · Local projects'}
         </span>
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-10 space-y-10">
-          {/* Quick actions */}
-          <section>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">
-              Start
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={handleNewProject}
-                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-900/80 transition-colors text-left group"
-              >
-                <div className="p-2 rounded bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                  <FilePlus size={20} />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-zinc-100">New project</div>
-                  <div className="text-xs text-zinc-500">Empty graph with On Start</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-900/80 transition-colors text-left group"
-              >
-                <div className="p-2 rounded bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-                  <Upload size={20} />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-zinc-100">Open file</div>
-                  <div className="text-xs text-zinc-500">Import a .vvs.json project</div>
-                </div>
-              </button>
+        <div className="max-w-3xl mx-auto px-8 py-10 space-y-8">
+          <button
+            type="button"
+            onClick={handleOpenLibrary}
+            className="w-full flex items-center gap-4 p-5 rounded-lg border border-indigo-500/30 bg-indigo-500/5 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-colors text-left group"
+          >
+            <div className="p-3 rounded-lg bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-500/25 transition-colors">
+              <Library size={24} />
             </div>
-          </section>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-zinc-100">Browse project templates</div>
+              <div className="text-xs text-zinc-500 mt-0.5">
+                Environments, examples, and community assets — organized by category
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-zinc-600 shrink-0 group-hover:text-indigo-400 transition-colors" />
+          </button>
 
-          {/* Examples */}
-          <section>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <BookOpen size={14} /> Examples
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {EXAMPLE_PROJECTS.map((example) => (
+          <div className="flex flex-wrap gap-2">
+            {folderPickerReady ? (
+              <>
                 <button
-                  key={example.id}
                   type="button"
-                  onClick={() => handleOpenExample(example.level)}
-                  className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group"
+                  onClick={() => void handleNewProjectFolder()}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50 text-sm text-emerald-200 transition-colors"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded ${
-                        example.level === 'simple'
-                          ? 'text-emerald-400 bg-emerald-500/10'
-                          : 'text-indigo-400 bg-indigo-500/10'
-                      }`}
-                    >
-                      {example.level === 'simple' ? 'Simple' : 'Complex'}
-                    </span>
-                    <span className="text-[11px] text-zinc-600 font-mono">{example.moduleName}</span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-zinc-100 mt-2 group-hover:text-white transition-colors">
-                    {example.title}
-                  </h3>
-                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{example.description}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {example.highlights.map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[10px] text-zinc-500 bg-zinc-800/80 px-2 py-0.5 rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  <FolderPlus size={16} className="text-emerald-400" />
+                  New project in folder
                 </button>
-              ))}
-            </div>
-          </section>
+                <button
+                  type="button"
+                  onClick={() => void handleOpenProjectFolder()}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
+                >
+                  <FolderOpen size={16} className="text-blue-400" />
+                  Open project folder
+                </button>
+              </>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleNewProject}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
+            >
+              <FilePlus size={16} className="text-emerald-400" />
+              New blank project
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
+            >
+              <Upload size={16} className="text-blue-400" />
+              Open file
+            </button>
+          </div>
 
-          {/* Recent */}
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                <Clock size={14} /> Recent projects
-              </h2>
-            </div>
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <Clock size={14} /> Recent projects
+            </h2>
             {recent.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-zinc-800 py-12 text-center text-zinc-600 text-sm">
-                No recent projects. Create a new project or try an example to get started.
+              <div className="rounded-lg border border-dashed border-zinc-800 py-16 text-center">
+                <p className="text-zinc-500 text-sm mb-3">No recent projects yet.</p>
+                <button
+                  type="button"
+                  onClick={handleOpenLibrary}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  Pick a template from the library →
+                </button>
               </div>
             ) : (
               <div className="rounded-lg border border-zinc-800 overflow-hidden divide-y divide-zinc-800">
@@ -268,28 +356,58 @@ export function StartScreen() {
                     key={entry.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => handleOpenRecent(entry)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleOpenRecent(entry)}
-                    className="w-full flex items-center gap-4 px-4 py-3 hover:bg-zinc-900 transition-colors text-left group cursor-pointer"
+                    onClick={() => void handleOpenRecent(entry)}
+                    onKeyDown={(e) => e.key === 'Enter' && void handleOpenRecent(entry)}
+                    className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-zinc-900 transition-colors text-left group cursor-pointer"
                   >
                     <FolderOpen size={18} className="text-zinc-500 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-zinc-200 truncate">
-                        {entry.moduleName}
+                        {isFolderRecentEntry(entry) && entry.folderLabel
+                          ? `${entry.folderLabel} / ${entry.moduleName}`
+                          : entry.moduleName}
                       </div>
                       <div className="text-[11px] text-zinc-500">
                         {formatRelative(entry.savedAt)}
-                        {entry.source !== 'recent' && (
-                          <span className="ml-2 text-zinc-600">· {SOURCE_LABEL[entry.source]}</span>
+                        {isFolderRecentEntry(entry) ? (
+                          <span className="ml-2 text-zinc-600">· Folder</span>
+                        ) : (
+                          <span className="ml-2 text-zinc-600">· Browser</span>
                         )}
+                        {entry.source !== 'recent' && !isFolderRecentEntry(entry) ? (
+                          <span className="ml-2 text-zinc-600">· {SOURCE_LABEL[entry.source]}</span>
+                        ) : null}
                       </div>
                     </div>
+                    {folderPickerReady ? (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => void handleOpenProjectDirectory(e, entry)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            void handleOpenProjectDirectory(
+                              e as unknown as React.MouseEvent,
+                              entry
+                            );
+                          }
+                        }}
+                        className="p-1.5 text-zinc-500 hover:text-blue-400 rounded transition-colors shrink-0"
+                        title={
+                          isFolderRecentEntry(entry)
+                            ? 'Browse project folder'
+                            : 'Save to folder on disk and browse'
+                        }
+                      >
+                        <FolderSearch size={14} />
+                      </span>
+                    ) : null}
                     <span
                       role="button"
                       tabIndex={0}
-                      onClick={(e) => handleRemoveRecent(e, entry.id)}
+                      onClick={(e) => handleRemoveRecent(e, entry)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleRemoveRecent(e as unknown as React.MouseEvent, entry.id);
+                        if (e.key === 'Enter') handleRemoveRecent(e as unknown as React.MouseEvent, entry);
                       }}
                       className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-red-400 rounded transition-all"
                       title="Remove from recent"
@@ -302,44 +420,16 @@ export function StartScreen() {
               </div>
             )}
           </section>
-
-          {/* Community templates */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                <Globe size={14} /> Community templates
-              </h2>
-              <button
-                type="button"
-                onClick={handleBrowseLibrary}
-                className="text-[11px] text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                Browse full library →
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {templates.map((asset) => (
-                <button
-                  key={asset.id}
-                  type="button"
-                  onClick={() => handleTemplate(asset.id)}
-                  className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-purple-500/40 transition-colors text-left"
-                >
-                  <span className="text-[10px] uppercase tracking-wide font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">
-                    Template
-                  </span>
-                  <h3 className="text-sm font-semibold text-zinc-100 mt-2">{asset.title}</h3>
-                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{asset.description}</p>
-                  <p className="text-[11px] text-zinc-600 mt-3">by {asset.author}</p>
-                </button>
-              ))}
-              {templates.length === 0 && (
-                <p className="text-sm text-zinc-600 col-span-2">No templates available.</p>
-              )}
-            </div>
-          </section>
         </div>
       </main>
+
+      {folderBrowser ? (
+        <ProjectFolderBrowserModal
+          handle={folderBrowser.handle}
+          projectName={folderBrowser.projectName}
+          onClose={() => setFolderBrowser(null)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -6,6 +6,7 @@ export interface Diagnostic {
   code?: string;
   tabId?: string;
   nodeId?: string;
+  edgeId?: string;
   symbolId?: string;
   source?: 'structural' | 'semantic' | 'portability';
 }
@@ -22,6 +23,8 @@ export function diagnosticsToValidationMessages(
   message: string;
   tabId?: string;
   nodeId?: string;
+  symbolId?: string;
+  code?: string;
 }> {
   return diagnostics
     .filter((d) => d.level === 'error' || d.level === 'warning')
@@ -30,5 +33,7 @@ export function diagnosticsToValidationMessages(
       message: d.message,
       tabId: d.tabId,
       nodeId: d.nodeId,
+      symbolId: d.symbolId,
+      code: d.code,
     }));
 }

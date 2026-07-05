@@ -1,4 +1,6 @@
-import type { PinDefinition, FunctionSymbol, GraphBinding } from '@vvs/graph-types';
+import type { PinDefinition, FunctionSymbol, GraphBinding, TargetLanguage } from '@vvs/graph-types';
+import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
+import { expandEnvironmentSymbols as expandEnvSymbols } from '@vvs/environment-templates';
 import corePack from '../core-pack.json';
 
 export type NodeSemantics =
@@ -7,14 +9,26 @@ export type NodeSemantics =
   | 'event.custom'
   | 'event.define'
   | 'event.dispatch'
+  | 'event.emit'
+  | 'event.subscribe'
   | 'flow.branch'
+  | 'flow.for'
+  | 'flow.while'
+  | 'flow.switch'
+  | 'flow.sequence'
   | 'action.print'
+  | 'action.input.blocking'
+  | 'action.wait.sync'
+  | 'action.wait.async'
+  | 'convert.to_string'
+  | 'convert.to_number'
   | 'math.binary'
   | 'variable.get'
   | 'variable.set'
   | 'project.call'
   | 'project.import'
-  | 'project.macro';
+  | 'env.call_native'
+  | 'env.event_handler';
 
 export interface NodeKindDefinition {
   kindId: string;
@@ -25,6 +39,7 @@ export interface NodeKindDefinition {
   mathOp?: 'add' | 'subtract' | 'multiply' | 'divide';
   inputs: PinDefinition[];
   outputs: PinDefinition[];
+  propertySchema?: import('./propertySchema').PropertyFieldDefinition[];
   dynamic?: boolean;
 }
 
@@ -62,7 +77,7 @@ export function resolve(kindId: string, _version?: number): NodeKindDefinition |
     return KIND_MAP.get('vvs.project.import_module');
   }
   if (kindId.startsWith('use_macro_')) {
-    return KIND_MAP.get('vvs.project.use_macro');
+    return KIND_MAP.get('vvs.project.call_function');
   }
   return undefined;
 }
@@ -75,6 +90,9 @@ export interface ListRegistryOptions {
   currentGraphId: string;
   functions: FunctionSymbol[];
   filterPin?: PinDefinition;
+  environmentId?: string;
+  environmentManifest?: ProjectEnvironmentManifest;
+  targetLanguage?: TargetLanguage;
 }
 
 function pinsMatchFilter(pin: PinDefinition, filter?: PinDefinition): boolean {
@@ -142,16 +160,41 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
     items,
   }));
 
-  return [...coreCategories, ...expandProjectSymbols(options)];
+  return [...coreCategories, ...expandProjectSymbols(options), ...expandEnvironmentCategories(options)];
 }
+
+function expandEnvironmentCategories(options: ListRegistryOptions): LibraryCategory[] {
+  if (!options.environmentManifest || !options.environmentId || !options.targetLanguage) {
+    return [];
+  }
+  return expandEnvSymbols({
+    environmentId: options.environmentId,
+    manifest: options.environmentManifest,
+    targetLanguage: options.targetLanguage,
+    currentGraphId: options.currentGraphId,
+  });
+}
+
+export { expandEnvSymbols as expandEnvironmentSymbols };
 
 export function inferKindIdFromLabel(label: string, category: string): string | undefined {
   if (label === 'On Start') return 'event_on_start';
   if (label === 'On Update') return 'event_on_update';
   if (label.startsWith('On ')) return 'event_define';
   if (label.startsWith('Dispatch ')) return 'event_dispatch';
+  if (label.startsWith('Emit ')) return 'event_emit';
+  if (label.startsWith('Subscribe ')) return 'event_subscribe';
   if (label === 'Branch') return 'flow_branch';
+  if (label === 'For Loop') return 'flow_for';
+  if (label === 'While Loop') return 'flow_while';
+  if (label === 'Switch') return 'flow_switch';
+  if (label === 'Sequence') return 'flow_sequence';
   if (label === 'Print String') return 'action_print';
+  if (label === 'Get User Input') return 'action_get_input';
+  if (label === 'Wait') return 'action_wait';
+  if (label === 'Await Wait') return 'action_await_wait';
+  if (label === 'To String') return 'convert_to_string';
+  if (label === 'To Number') return 'convert_to_number';
   if (label === 'Math Add') return 'math_add';
   if (label === 'Math Subtract') return 'math_subtract';
   if (label === 'Math Multiply') return 'math_multiply';
@@ -160,6 +203,7 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label.startsWith('Set ')) return 'variable_set';
   if (label.startsWith('Call ')) return 'vvs.project.call_function';
   if (label.startsWith('Import ')) return 'vvs.project.import_module';
+  if (label.startsWith('Use ')) return 'vvs.project.call_function';
   if (category === 'Events' && label !== 'On Start' && label !== 'On Update') return 'event_define';
   return undefined;
 }
@@ -175,7 +219,7 @@ export function resolveNodeKindId(data: {
   if (data.kindId) {
     if (data.kindId.startsWith('call_function_')) return 'vvs.project.call_function';
     if (data.kindId.startsWith('import_module_')) return 'vvs.project.import_module';
-    if (data.kindId.startsWith('use_macro_')) return 'vvs.project.use_macro';
+    if (data.kindId.startsWith('use_macro_')) return 'vvs.project.call_function';
     return data.kindId;
   }
   if (data.graphBinding?.kind === 'call_function' || data.linkKind === 'call_function') {
@@ -185,8 +229,10 @@ export function resolveNodeKindId(data: {
     return 'vvs.project.import_module';
   }
   if (data.graphBinding?.kind === 'use_macro' || data.linkKind === 'use_macro') {
-    return 'vvs.project.use_macro';
+    return 'vvs.project.call_function';
   }
+  if (data.graphBinding?.kind === 'env_native') return 'env.call_native';
+  if (data.graphBinding?.kind === 'env_event') return 'env.event_handler';
   return inferKindIdFromLabel(data.label, data.category) ?? data.label;
 }
 

@@ -4,7 +4,7 @@
 
 **Visual programming that generates real code** — compose logic on a graph, export ordinary source, and integrate with the tools you already use: your IDE, git, CI, and AI assistants (via MCP).
 
-VVS builds **on top of traditional development**, not instead of it. The graph is the authoring view; **text code stays the integration layer**.
+VVS builds **on top of traditional development**, not instead of it. The graph is the authoring view; **text code stays the integration layer** — with **text-shaped fidelity** (what you draw is what you could type). See [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md).
 
 ---
 
@@ -14,26 +14,32 @@ VVS builds **on top of traditional development**, not instead of it. The graph i
 
 | Layer | Today | Not yet |
 |-------|--------|---------|
-| **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, references view, wiring, variables/functions, local project save, mock code preview, simple + complex examples | Real transpiler output, cloud sync, MCP connect |
-| **Transpiler** (`packages/transpiler`) | Empty placeholder; types live in `apps/web/src/types/` for now | Three-stage pipeline, v1 emitters (Python, JS/TS, C++, **Verse**) |
+| **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, references view, wiring, variables/functions, local project save, **real** codegen preview (`@vvs/transpiler`), Hello World + **Calculator** examples | Cloud sync, MCP connect |
+| **Transpiler** (`packages/transpiler`) | Client-side codegen (Python, JS, C++, C#, Verse), conversion nodes, snapshot tests; monolith `generate.ts` | Full analyze → IR → per-language emitter split |
 | **Backend** (`server/`) | Go skeleton — `GET /health` only | REST API, MCP server, WebSockets |
 | **UE6 plugin** (`plugins/`) | Roadmap doc only | In-engine canvas (reuses v1 Verse emitter) |
 
-**What you can do today:** run the app locally, create projects, edit graphs, explore multi-graph examples (e.g. Game Session), save to browser storage, and preview **mock** generated code. Status chrome is honest — **offline / disconnected**, not fake “synced” or “MCP connected.”
+**What you can do today:** run the app locally, create projects, edit graphs, explore multi-graph examples (e.g. **Calculator**), save to browser storage, and preview **real** generated code (Python, C++, C#, Verse) via `@vvs/transpiler`. Status chrome is honest — **offline / disconnected**, not fake “synced” or “MCP connected.”
 
-**Canonical detail:** [docs/current_state.md](docs/current_state.md) · **Phases:** [docs/roadmap.md](docs/roadmap.md)
+**Canonical detail:** [docs/current_state.md](docs/current_state.md) · **Direction:** [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md) · **Phases:** [docs/roadmap.md](docs/roadmap.md)
+
+---
+
+## Text-shaped graphs
+
+VVS does **not** simulate Unreal Blueprint (macro expansion, latent delays, VM-only behavior). Generated code must be **honest, grep-able, and embeddable** in any third-party product. Rationale and rejected alternatives: [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md).
 
 ---
 
 ## UI-first approach (why we build this way)
 
-We are deliberately building the **visual editor and data contracts first**, with **mock persistence and mock codegen**, before the transpiler, database, or MCP server. This is not “UI only forever” — it is how we **de-risk** a system that spans a browser editor, a codegen engine, AI tools, and eventually an Unreal plugin.
+We are deliberately building the **visual editor and data contracts first**, with **mock persistence** (localStorage) while the **client transpiler** (`@vvs/transpiler`) matures in parallel. Cloud database and MCP server remain planned. This is not “UI only forever” — it is how we **de-risk** a system that spans a browser editor, a codegen engine, AI tools, and eventually an Unreal plugin.
 
 **What UI-first means here**
 
 1. **Shape the product in the canvas** — tabs, references, wiring rules, project tree, properties, and navigation must feel right before we lock backend APIs.
 2. **Define interfaces while building UI** — `ProjectSnapshot`, graph documents, `VvsApi`, validation messages, and target-language selection are **contracts** the transpiler and server will implement later, not afterthoughts.
-3. **Mock honestly** — `localStorage` save/load and template codegen stand in for real services; the UI says **offline** until MCP and cloud sync exist.
+3. **Mock honestly** — `localStorage` save/load stands in for cloud sync; codegen uses **`@vvs/transpiler`** (facade: `mockCodegen.ts`); the UI says **offline** until MCP and cloud sync exist.
 4. **Wire one vertical slice at a time** — when backend work starts, UI → facade → API → Go handler → storage, without rewriting the shell. See [docs/ui_api_delivery_loop.md](docs/ui_api_delivery_loop.md).
 
 **What this helps us avoid**

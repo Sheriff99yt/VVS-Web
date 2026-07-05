@@ -1,571 +1,142 @@
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import { defaultTabMetadata } from '@/lib/graphDefaults';
-import { VVSNode, VVSEdge } from '@/types/graph';
+import type { VVSNode, VVSEdge } from '@/types/graph';
 import { createFunctionSymbol } from '@/lib/functionTabs';
+import { createVariableSymbol } from '@vvs/graph-types';
+import {
+  convertToStringNode,
+  boundCallFunction,
+  boundEventDefine,
+  boundEventDispatch,
+  boundVariableGet,
+  boundVariableSet,
+  branchNode,
+  dataEdge,
+  exampleDocument,
+  execEdge,
+  functionEntryNode,
+  getUserInputNode,
+  mathAddNode,
+  onStartNode,
+  printStringNode,
+} from '@/lib/examples/exampleGraphBuild';
+
+const VAR_A = createVariableSymbol('A', { id: 'var-a', type: 'data_number' });
+const VAR_B = createVariableSymbol('B', { id: 'var-b', type: 'data_number' });
+const VAR_RESULT = createVariableSymbol('Result', { id: 'var-result', type: 'data_number' });
+const VAR_SHOW = createVariableSymbol('ShowResult', { id: 'var-show', type: 'data_boolean' });
+
+VAR_A.defaultValue = 0;
+VAR_B.defaultValue = 0;
+VAR_RESULT.defaultValue = 0;
+VAR_SHOW.defaultValue = true;
+
+const FN_ADD = createFunctionSymbol('Add', { id: 'fn-add' });
+const FN_CLEAR = createFunctionSymbol('Clear', { id: 'fn-clear' });
+
+const EVT_CALCULATE = {
+  id: 'evt-calc',
+  name: 'calculate',
+  parameters: [] as { id: string; label: string; type: 'data_number' }[],
+};
+
+const EVT_CLEAR = {
+  id: 'evt-clear',
+  name: 'clear',
+  parameters: [] as { id: string; label: string; type: 'data_number' }[],
+};
 
 const MAIN_NODES: VVSNode[] = [
-  {
-    id: 'cx-start',
-    type: 'vvs_standard_node',
-    position: { x: 40, y: 40 },
-    data: {
-      label: 'On Start',
-      category: 'Events',
-      inputs: [],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-print-welcome',
-    type: 'vvs_standard_node',
-    position: { x: 760, y: 40 },
-    data: {
-      label: 'Print String',
-      category: 'Action',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'in_str', label: 'In String', type: 'data_string' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: { in_str: 'GameSession started' },
-    },
-  },
-  {
-    id: 'cx-set-score-init',
-    type: 'vvs_standard_node',
-    position: { x: 1020, y: 40 },
-    data: {
-      label: 'Set Score',
-      category: 'Variables',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'val', label: 'New Score', type: 'data_number' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: { val: 0 },
-    },
-  },
-  {
-    id: 'cx-update',
-    type: 'vvs_standard_node',
-    position: { x: 40, y: 220 },
-    data: {
-      label: 'On Update',
-      category: 'Events',
-      inputs: [],
-      outputs: [
-        { id: 'exec_out', label: '', type: 'execution' },
-        { id: 'delta', label: 'Delta time', type: 'data_number' },
-      ],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-get-score',
-    type: 'vvs_standard_node',
-    position: { x: 280, y: 280 },
-    data: {
-      label: 'Get Score',
-      category: 'Variables',
-      inputs: [],
-      outputs: [{ id: 'val', label: 'Score', type: 'data_number' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-add-score',
-    type: 'vvs_standard_node',
-    position: { x: 520, y: 260 },
-    data: {
-      label: 'Math Add',
-      category: 'Math',
-      inputs: [
-        { id: 'a', label: 'A', type: 'data_number' },
-        { id: 'b', label: 'B', type: 'data_number' },
-      ],
-      outputs: [{ id: 'result', label: 'Result', type: 'data_number' }],
-      inlineValues: { b: 1 },
-    },
-  },
-  {
-    id: 'cx-set-score-tick',
-    type: 'vvs_standard_node',
-    position: { x: 760, y: 220 },
-    data: {
-      label: 'Set Score',
-      category: 'Variables',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'val', label: 'New Score', type: 'data_number' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-import-apply-damage',
-    type: 'vvs_standard_node',
-    position: { x: 280, y: 40 },
-    data: {
-      label: 'Import ApplyDamage',
-      category: 'Imports',
-      linkKind: 'import_module',
-      linkedGraphId: 'f1',
-      inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-import-reset-game',
-    type: 'vvs_standard_node',
-    position: { x: 520, y: 40 },
-    data: {
-      label: 'Import ResetGame',
-      category: 'Imports',
-      linkKind: 'import_module',
-      linkedGraphId: 'f2',
-      inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-damage-event',
-    type: 'vvs_standard_node',
-    position: { x: 40, y: 480 },
-    data: {
-      label: 'On damage',
-      category: 'Events',
-      kindId: 'event_define',
-      properties: { eventId: 'evt-damage', eventName: 'damage' },
-      inputs: [],
-      outputs: [
-        { id: 'exec_out', label: '', type: 'execution' },
-        { id: 'damage', label: 'DamageAmount', type: 'data_number' },
-      ],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-call-apply-damage',
-    type: 'vvs_standard_node',
-    position: { x: 320, y: 480 },
-    data: {
-      label: 'Call ApplyDamage',
-      category: 'Project',
-      linkKind: 'call_function',
-      linkedGraphId: 'f1',
-      inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-get-alive',
-    type: 'vvs_standard_node',
-    position: { x: 320, y: 640 },
-    data: {
-      label: 'Get IsAlive',
-      category: 'Variables',
-      inputs: [],
-      outputs: [{ id: 'val', label: 'IsAlive', type: 'data_boolean' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-branch-alive',
-    type: 'vvs_standard_node',
-    position: { x: 600, y: 480 },
-    data: {
-      label: 'Branch',
-      category: 'Flow Control',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'condition', label: 'Condition', type: 'data_boolean' },
-      ],
-      outputs: [
-        { id: 'true_exec', label: 'True', type: 'execution' },
-        { id: 'false_exec', label: 'False', type: 'execution' },
-      ],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-call-reset-game',
-    type: 'vvs_standard_node',
-    position: { x: 900, y: 560 },
-    data: {
-      label: 'Call ResetGame',
-      category: 'Project',
-      linkKind: 'call_function',
-      linkedGraphId: 'f2',
-      inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
+  onStartNode('calc-start', { x: 40, y: 40 }),
+  getUserInputNode('calc-input-a', { x: 240, y: 40 }, { prompt: 'Enter A:', inputKind: 'number' }),
+  boundVariableSet('calc-set-a', { x: 480, y: 40 }, VAR_A),
+  getUserInputNode('calc-input-b', { x: 720, y: 40 }, { prompt: 'Enter B:', inputKind: 'number' }),
+  boundVariableSet('calc-set-b', { x: 960, y: 40 }, VAR_B),
+  boundVariableSet('calc-set-show', { x: 1200, y: 40 }, VAR_SHOW, true),
+  boundEventDispatch('calc-dispatch', { x: 1440, y: 40 }, EVT_CALCULATE),
+  boundEventDefine('calc-define', { x: 40, y: 280 }, EVT_CALCULATE),
+  boundCallFunction('calc-call-add', { x: 320, y: 280 }, FN_ADD),
+  boundVariableGet('calc-get-show', { x: 320, y: 420 }, VAR_SHOW),
+  branchNode('calc-branch', { x: 560, y: 280 }),
+  printStringNode('calc-print-done', { x: 820, y: 220 }, 'Calculation complete'),
+  boundVariableGet('calc-get-result', { x: 820, y: 340 }, VAR_RESULT),
+  convertToStringNode('calc-to-string', { x: 950, y: 340 }),
+  printStringNode('calc-print-result', { x: 1080, y: 220 }),
+  boundEventDispatch('calc-dispatch-clear', { x: 1340, y: 220 }, EVT_CLEAR),
+  printStringNode('calc-print-skip', { x: 820, y: 400 }, 'Result hidden'),
+  boundEventDefine('calc-define-clear', { x: 40, y: 560 }, EVT_CLEAR),
+  boundCallFunction('calc-call-clear', { x: 320, y: 560 }, FN_CLEAR),
+  printStringNode('calc-print-cleared', { x: 580, y: 560 }, 'Values cleared'),
 ];
 
 const MAIN_EDGES: VVSEdge[] = [
-  {
-    id: 'cx-e-start-import-damage',
-    source: 'cx-start',
-    target: 'cx-import-apply-damage',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-e-import-damage-reset',
-    source: 'cx-import-apply-damage',
-    target: 'cx-import-reset-game',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-e-import-reset-print',
-    source: 'cx-import-reset-game',
-    target: 'cx-print-welcome',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-e-print-score',
-    source: 'cx-print-welcome',
-    target: 'cx-set-score-init',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-e-update-score',
-    source: 'cx-update',
-    target: 'cx-set-score-tick',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-e-get-add',
-    source: 'cx-get-score',
-    target: 'cx-add-score',
-    sourceHandle: 'val',
-    targetHandle: 'a',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'data_number' },
-  },
-  {
-    id: 'cx-e-add-set',
-    source: 'cx-add-score',
-    target: 'cx-set-score-tick',
-    sourceHandle: 'result',
-    targetHandle: 'val',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'data_number' },
-  },
-  {
-    id: 'cx-e-damage-call',
-    source: 'cx-damage-event',
-    target: 'cx-call-apply-damage',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-e-call-branch',
-    source: 'cx-call-apply-damage',
-    target: 'cx-branch-alive',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-e-alive-branch',
-    source: 'cx-get-alive',
-    target: 'cx-branch-alive',
-    sourceHandle: 'val',
-    targetHandle: 'condition',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'data_boolean' },
-  },
-  {
-    id: 'cx-e-branch-reset',
-    source: 'cx-branch-alive',
-    target: 'cx-call-reset-game',
-    sourceHandle: 'false_exec',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
+  execEdge('calc-e-start-input-a', 'calc-start', 'calc-input-a'),
+  execEdge('calc-e-input-a-set-a', 'calc-input-a', 'calc-set-a'),
+  dataEdge('calc-e-input-a-val', 'calc-input-a', 'calc-set-a', 'value', 'val'),
+  execEdge('calc-e-set-a-input-b', 'calc-set-a', 'calc-input-b'),
+  execEdge('calc-e-input-b-set-b', 'calc-input-b', 'calc-set-b'),
+  dataEdge('calc-e-input-b-val', 'calc-input-b', 'calc-set-b', 'value', 'val'),
+  execEdge('calc-e-set-b-show', 'calc-set-b', 'calc-set-show'),
+  execEdge('calc-e-show-dispatch', 'calc-set-show', 'calc-dispatch'),
+  execEdge('calc-e-define-call', 'calc-define', 'calc-call-add'),
+  execEdge('calc-e-call-branch', 'calc-call-add', 'calc-branch'),
+  dataEdge('calc-e-show-branch', 'calc-get-show', 'calc-branch', 'val', 'condition', 'data_boolean'),
+  execEdge('calc-e-branch-done', 'calc-branch', 'calc-print-done', 'true_exec', 'exec_in'),
+  execEdge('calc-e-done-result', 'calc-print-done', 'calc-print-result'),
+  dataEdge('calc-e-result-tostr', 'calc-get-result', 'calc-to-string', 'val', 'value', 'data_number'),
+  dataEdge('calc-e-tostr-print', 'calc-to-string', 'calc-print-result', 'result', 'in_str', 'data_string'),
+  execEdge('calc-e-result-clear', 'calc-print-result', 'calc-dispatch-clear'),
+  execEdge('calc-e-branch-skip', 'calc-branch', 'calc-print-skip', 'false_exec', 'exec_in'),
+  execEdge('calc-e-define-clear-call', 'calc-define-clear', 'calc-call-clear'),
+  execEdge('calc-e-clear-print', 'calc-call-clear', 'calc-print-cleared'),
 ];
 
-const APPLY_DAMAGE_NODES: VVSNode[] = [
-  {
-    id: 'cx-fn-entry',
-    type: 'vvs_standard_node',
-    position: { x: 60, y: 80 },
-    data: {
-      label: 'ApplyDamage',
-      category: 'Events',
-      inputs: [],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-fn-get',
-    type: 'vvs_standard_node',
-    position: { x: 60, y: 240 },
-    data: {
-      label: 'Get PlayerHealth',
-      category: 'Variables',
-      inputs: [],
-      outputs: [{ id: 'val', label: 'Health', type: 'data_number' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-fn-sub',
-    type: 'vvs_standard_node',
-    position: { x: 320, y: 160 },
-    data: {
-      label: 'Math Subtract',
-      category: 'Math',
-      inputs: [
-        { id: 'a', label: 'A', type: 'data_number' },
-        { id: 'b', label: 'B', type: 'data_number' },
-      ],
-      outputs: [{ id: 'result', label: 'Result', type: 'data_number' }],
-      inlineValues: { b: 25 },
-    },
-  },
-  {
-    id: 'cx-fn-set',
-    type: 'vvs_standard_node',
-    position: { x: 580, y: 80 },
-    data: {
-      label: 'Set PlayerHealth',
-      category: 'Variables',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'val', label: 'New Health', type: 'data_number' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-fn-print',
-    type: 'vvs_standard_node',
-    position: { x: 860, y: 80 },
-    data: {
-      label: 'Print String',
-      category: 'Action',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'in_str', label: 'In String', type: 'data_string' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: { in_str: 'Damage applied' },
-    },
-  },
+const ADD_NODES: VVSNode[] = [
+  functionEntryNode('calc-add-entry', { x: 60, y: 80 }, FN_ADD),
+  boundVariableGet('calc-add-get-a', { x: 60, y: 220 }, VAR_A),
+  boundVariableGet('calc-add-get-b', { x: 60, y: 340 }, VAR_B),
+  mathAddNode('calc-add-math', { x: 320, y: 260 }),
+  boundVariableSet('calc-add-set-result', { x: 580, y: 80 }, VAR_RESULT),
 ];
 
-const APPLY_DAMAGE_EDGES: VVSEdge[] = [
-  {
-    id: 'cx-fn-e1',
-    source: 'cx-fn-entry',
-    target: 'cx-fn-set',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-fn-e2',
-    source: 'cx-fn-get',
-    target: 'cx-fn-sub',
-    sourceHandle: 'val',
-    targetHandle: 'a',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'data_number' },
-  },
-  {
-    id: 'cx-fn-e3',
-    source: 'cx-fn-sub',
-    target: 'cx-fn-set',
-    sourceHandle: 'result',
-    targetHandle: 'val',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'data_number' },
-  },
-  {
-    id: 'cx-fn-e4',
-    source: 'cx-fn-set',
-    target: 'cx-fn-print',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
+const ADD_EDGES: VVSEdge[] = [
+  execEdge('calc-add-e-entry-set', 'calc-add-entry', 'calc-add-set-result'),
+  dataEdge('calc-add-e-a-math', 'calc-add-get-a', 'calc-add-math', 'val', 'a'),
+  dataEdge('calc-add-e-b-math', 'calc-add-get-b', 'calc-add-math', 'val', 'b'),
+  dataEdge('calc-add-e-math-set', 'calc-add-math', 'calc-add-set-result', 'result', 'val'),
 ];
 
-const RESET_GAME_NODES: VVSNode[] = [
-  {
-    id: 'cx-rg-entry',
-    type: 'vvs_standard_node',
-    position: { x: 60, y: 100 },
-    data: {
-      label: 'ResetGame',
-      category: 'Events',
-      inputs: [],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: {},
-    },
-  },
-  {
-    id: 'cx-rg-health',
-    type: 'vvs_standard_node',
-    position: { x: 340, y: 100 },
-    data: {
-      label: 'Set PlayerHealth',
-      category: 'Variables',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'val', label: 'New Health', type: 'data_number' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: { val: 100 },
-    },
-  },
-  {
-    id: 'cx-rg-score',
-    type: 'vvs_standard_node',
-    position: { x: 600, y: 100 },
-    data: {
-      label: 'Set Score',
-      category: 'Variables',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'val', label: 'New Score', type: 'data_number' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: { val: 0 },
-    },
-  },
-  {
-    id: 'cx-rg-alive',
-    type: 'vvs_standard_node',
-    position: { x: 860, y: 100 },
-    data: {
-      label: 'Set IsAlive',
-      category: 'Variables',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'val', label: 'New IsAlive', type: 'data_boolean' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: { val: true },
-    },
-  },
-  {
-    id: 'cx-rg-print',
-    type: 'vvs_standard_node',
-    position: { x: 1120, y: 100 },
-    data: {
-      label: 'Print String',
-      category: 'Action',
-      inputs: [
-        { id: 'exec_in', label: '', type: 'execution' },
-        { id: 'in_str', label: 'In String', type: 'data_string' },
-      ],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-      inlineValues: { in_str: 'Game reset' },
-    },
-  },
+const CLEAR_NODES: VVSNode[] = [
+  functionEntryNode('calc-clear-entry', { x: 60, y: 100 }, FN_CLEAR),
+  boundVariableSet('calc-clear-a', { x: 320, y: 100 }, VAR_A, 0),
+  boundVariableSet('calc-clear-b', { x: 560, y: 100 }, VAR_B, 0),
+  boundVariableSet('calc-clear-result', { x: 800, y: 100 }, VAR_RESULT, 0),
 ];
 
-const RESET_GAME_EDGES: VVSEdge[] = [
-  {
-    id: 'cx-rg-e1',
-    source: 'cx-rg-entry',
-    target: 'cx-rg-health',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-rg-e2',
-    source: 'cx-rg-health',
-    target: 'cx-rg-score',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-rg-e3',
-    source: 'cx-rg-score',
-    target: 'cx-rg-alive',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
-  {
-    id: 'cx-rg-e4',
-    source: 'cx-rg-alive',
-    target: 'cx-rg-print',
-    sourceHandle: 'exec_out',
-    targetHandle: 'exec_in',
-    type: 'vvs_standard_edge',
-    data: { pinType: 'execution' },
-  },
+const CLEAR_EDGES: VVSEdge[] = [
+  execEdge('calc-clear-e-entry-a', 'calc-clear-entry', 'calc-clear-a'),
+  execEdge('calc-clear-e-a-b', 'calc-clear-a', 'calc-clear-b'),
+  execEdge('calc-clear-e-b-result', 'calc-clear-b', 'calc-clear-result'),
 ];
 
-/** Multi-graph project — function calls via Call Function nodes (mock multifile layout). */
+/** Multi-graph calculator — user input, variables, functions, events, branch, and dispatch. */
 export function createComplexExampleSnapshot(): ProjectSnapshot {
   return {
     version: 2,
     savedAt: new Date().toISOString(),
     projectDetails: {
-      moduleName: 'GameSession',
+      moduleName: 'Calculator',
       extendsType: '',
-      description: 'Complex example — multi-graph GameSession with imports and function calls',
+      description:
+        'Complex example — prompt for A and B, add via function, print Result, then clear',
     },
-    variables: [
-      { id: 'v1', name: 'PlayerHealth', type: 'number', defaultValue: 100 },
-      { id: 'v2', name: 'Score', type: 'number', defaultValue: 0 },
-      { id: 'v3', name: 'IsAlive', type: 'boolean', defaultValue: true },
-      { id: 'v4', name: 'PlayerName', type: 'string', defaultValue: 'Hero' },
-    ],
-    events: [
-      {
-        id: 'evt-damage',
-        name: 'damage',
-        parameters: [{ id: 'damage', label: 'DamageAmount', type: 'data_number' }],
-      },
-    ],
-    functions: [
-      createFunctionSymbol('ApplyDamage', 'f1'),
-      createFunctionSymbol('ResetGame', 'f2'),
-    ],
+    variables: [VAR_A, VAR_B, VAR_RESULT, VAR_SHOW],
+    events: [EVT_CALCULATE, EVT_CLEAR],
+    functions: [FN_ADD, FN_CLEAR],
     openTabs: [
       { id: 'main', type: 'main', name: 'Main graph' },
-      { id: 'f1', type: 'function', name: 'ApplyDamage' },
-      { id: 'f2', type: 'function', name: 'ResetGame' },
+      { id: 'fn-add', type: 'function', name: 'Function: Add' },
+      { id: 'fn-clear', type: 'function', name: 'Function: Clear' },
     ],
     activeGraphTab: 'main',
     targetLanguage: 'python',
@@ -573,19 +144,16 @@ export function createComplexExampleSnapshot(): ProjectSnapshot {
     autoSave: false,
     documents: {
       main: {
-        nodes: MAIN_NODES,
-        edges: MAIN_EDGES,
+        ...exampleDocument(MAIN_NODES, MAIN_EDGES),
         metadata: defaultTabMetadata('main', 'Main graph'),
       },
-      f1: {
-        nodes: APPLY_DAMAGE_NODES,
-        edges: APPLY_DAMAGE_EDGES,
-        metadata: defaultTabMetadata('function', 'ApplyDamage'),
+      'fn-add': {
+        ...exampleDocument(ADD_NODES, ADD_EDGES),
+        metadata: defaultTabMetadata('function', 'Add'),
       },
-      f2: {
-        nodes: RESET_GAME_NODES,
-        edges: RESET_GAME_EDGES,
-        metadata: defaultTabMetadata('function', 'ResetGame'),
+      'fn-clear': {
+        ...exampleDocument(CLEAR_NODES, CLEAR_EDGES),
+        metadata: defaultTabMetadata('function', 'Clear'),
       },
     },
     installedLibrary: [],

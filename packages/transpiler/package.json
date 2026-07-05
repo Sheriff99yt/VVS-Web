@@ -9,11 +9,14 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "generate:cli": "bun run src/cli/generate.ts"
   },
   "dependencies": {
     "@vvs/graph-types": "workspace:*",
     "@vvs/syntax-registry": "workspace:*",
-    "@vvs/language-profiles": "workspace:*"
+    "@vvs/language-profiles": "workspace:*",
+    "@vvs/environment-templates": "workspace:*",
+    "@vvs/syntax-packs": "workspace:*"
   }
 }

@@ -1,0 +1,49 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pet Store API",
+    "version": "1.0.0",
+    "description": "Sample OpenAPI for VVS environment import tests"
+  },
+  "paths": {
+    "/pets/{petId}": {
+      "get": {
+        "operationId": "getPet",
+        "summary": "Get pet by ID",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "x-vvs": {
+          "role": "native",
+          "targets": {
+            "python": { "callExpr": "get_pet({api_getpet_petid})" },
+            "javascript": { "callExpr": "getPet({api_getpet_petid});" }
+          }
+        }
+      }
+    },
+    "/pets": {
+      "post": {
+        "operationId": "createPet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "title": "Name" },
+                  "tag": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

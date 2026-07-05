@@ -1,7 +1,8 @@
 import { LibraryAsset } from '@/types/libraryAsset';
 import { GraphDocument } from '@/lib/graphDefaults';
 
-export const LIBRARY_CATALOG: LibraryAsset[] = [
+/** Community mock assets — environments are derived from manifests at runtime. */
+export const COMMUNITY_LIBRARY_CATALOG: LibraryAsset[] = [
   {
     id: '1',
     title: 'Advanced Character Controller',
@@ -78,8 +79,20 @@ export const LIBRARY_CATALOG: LibraryAsset[] = [
   },
 ];
 
-export function getLibraryAsset(id: string): LibraryAsset | undefined {
-  return LIBRARY_CATALOG.find((a) => a.id === id);
+/** @deprecated Use getLibraryCatalog() for the full merged catalog. */
+export const LIBRARY_CATALOG = COMMUNITY_LIBRARY_CATALOG;
+
+export function getLibraryCatalog(
+  environmentAssets: LibraryAsset[] = []
+): LibraryAsset[] {
+  return [...environmentAssets, ...COMMUNITY_LIBRARY_CATALOG];
+}
+
+export function getLibraryAsset(
+  id: string,
+  environmentAssets: LibraryAsset[] = []
+): LibraryAsset | undefined {
+  return getLibraryCatalog(environmentAssets).find((a) => a.id === id);
 }
 
 function baseEventNode(id: string, label: string, x: number, y: number) {

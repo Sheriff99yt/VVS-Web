@@ -1,0 +1,3 @@
+    console.log(String(this.Score));
+  }
+}

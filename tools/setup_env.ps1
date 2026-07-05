@@ -25,6 +25,31 @@ function Get-LanIPv4 {
     return $null
 }
 
+function Ensure-HttpApiEnv {
+    param ([string]$EnvLocalPath)
+
+    if (-not (Test-Path $EnvLocalPath)) {
+        return
+    }
+
+    $lines = @(Get-Content $EnvLocalPath)
+    $changed = $false
+
+    if (-not ($lines | Where-Object { $_ -match '^\s*NEXT_PUBLIC_API_MODE\s*=' })) {
+        $lines += "NEXT_PUBLIC_API_MODE=http"
+        $changed = $true
+    }
+    if (-not ($lines | Where-Object { $_ -match '^\s*NEXT_PUBLIC_API_URL\s*=' })) {
+        $lines += "NEXT_PUBLIC_API_URL=http://localhost:8080"
+        $changed = $true
+    }
+
+    if ($changed) {
+        Set-Content -Path $EnvLocalPath -Value ($lines -join "`n").TrimEnd() -Encoding utf8
+        Write-Host "  Added HTTP API + MCP settings to apps/web/.env.local" -ForegroundColor Green
+    }
+}
+
 function Ensure-WebEnvLocal {
     param ([string]$LanIp)
 
@@ -33,6 +58,7 @@ function Ensure-WebEnvLocal {
 
     if (Test-Path $envLocal) {
         Write-Host "  apps/web/.env.local already exists (not overwritten)" -ForegroundColor DarkGray
+        Ensure-HttpApiEnv -EnvLocalPath $envLocal
         return
     }
 
@@ -133,8 +159,9 @@ Write-Host "`n=============================================" -ForegroundColor Cy
 Write-Host "Setup complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "  1. Start dev:  .\tools\start_app.ps1" -ForegroundColor White
+Write-Host "  1. Start dev:  .\tools\start_app.ps1  (web + Go API + MCP)" -ForegroundColor White
 Write-Host "  2. Open:       http://localhost:3000" -ForegroundColor White
+Write-Host "  3. MCP URL:    http://localhost:8080/mcp  (Connect AI in TopNav)" -ForegroundColor White
 if ($lanIp) {
     Write-Host "  3. LAN access: http://${lanIp}:3000 (after dev server starts)" -ForegroundColor White
 }

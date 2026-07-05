@@ -61,14 +61,14 @@ This document outlines the finalized technology stack for Vision Visual Scriptin
 
 ### Tree-sitter
 * **What**: A dynamic incremental parsing library that analyzes official language grammars.
-* **Why**: Allows VVS 2.0 to "self-update" by automatically extracting syntax rules from official language maintainers (like Python or C++ repositories) without requiring manual data entry from developers.
+* **Why**: **Optional parse validator** in CI — confirms generated Rosetta output is syntactically valid for Python/JS (Verse deferred until grammar stable). Syntax rules are authored in **syntax packs** ([syntax_pack_architecture.md](syntax_pack_architecture.md)), not auto-ingested from upstream grammars.
 
 ## 5. Development & Deployment (The Foundation)
 
 ### Bun
 * **What**: Package manager for `apps/web` (and future `packages/transpiler` workspace).
 * **Why**: Fast installs and native TypeScript test runner for transpiler snapshot tests.
-* **Current state**: Only `apps/web` is implemented; `packages/*` directories are placeholders — no workspace `package.json` at repo root yet.
+* **Current state**: Bun workspaces at repo root; `packages/graph-types`, `syntax-registry`, `language-profiles`, and `transpiler` are implemented and consumed by `apps/web`.
 
 ### Vercel & Fly.io
 * **What**: The deployment platforms for the Next.js Frontend (Vercel) and the Go Backend Services (Fly.io).
@@ -96,6 +96,6 @@ These alternatives were evaluated and **locked in** for VVS 2.0:
 | API transport | **REST (OpenAPI) + WebSocket** — not gRPC-Web |
 | Database | **Supabase (Postgres + JSONB + pgvector)** |
 | Caching | **IndexedDB (client)** — Redis removed from stack |
-| Tree-sitter auto-ingestion | **Deferred** — manual syntax profiles for v1 languages |
+| Tree-sitter | **Validator-only** — syntax packs + Rosetta golden tests are authoritative; optional parse check in CI |
 | Deploy | **Vercel (web) + Fly.io (Go)** |
 | JS toolchain | **Bun** |

@@ -1,0 +1,108 @@
+{
+  "name": "for",
+  "description": "For loop with print in body",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "variables": [],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "for-loop",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "For Loop",
+        "category": "Flow Control",
+        "kindId": "flow_for",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "first", "label": "First", "type": "data_number" },
+          { "id": "last", "label": "Last", "type": "data_number" }
+        ],
+        "outputs": [
+          { "id": "body_exec", "label": "Body", "type": "execution" },
+          { "id": "exec_out", "label": "", "type": "execution" },
+          { "id": "index", "label": "Index", "type": "data_number" }
+        ],
+        "inlineValues": { "first": 0, "last": 2 }
+      }
+    },
+    {
+      "id": "print-idx",
+      "type": "vvs_standard_node",
+      "position": { "x": 400, "y": 0 },
+      "data": {
+        "label": "Print",
+        "category": "Action",
+        "kindId": "action_print",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "in_str", "label": "String", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "to-string",
+      "type": "vvs_standard_node",
+      "position": { "x": 300, "y": 100 },
+      "data": {
+        "label": "To String",
+        "category": "Conversion",
+        "kindId": "convert_to_string",
+        "inputs": [{ "id": "value", "label": "Value", "type": "data_any" }],
+        "outputs": [{ "id": "result", "label": "String", "type": "data_string" }],
+        "inlineValues": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "for-loop",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    },
+    {
+      "id": "e2",
+      "source": "for-loop",
+      "target": "print-idx",
+      "sourceHandle": "body_exec",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    },
+    {
+      "id": "e3",
+      "source": "for-loop",
+      "target": "to-string",
+      "sourceHandle": "index",
+      "targetHandle": "value",
+      "data": { "pinType": "data" }
+    },
+    {
+      "id": "e4",
+      "source": "to-string",
+      "target": "print-idx",
+      "sourceHandle": "result",
+      "targetHandle": "in_str",
+      "data": { "pinType": "data" }
+    }
+  ]
+}

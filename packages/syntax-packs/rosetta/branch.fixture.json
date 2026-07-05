@@ -1,0 +1,109 @@
+{
+  "name": "branch",
+  "description": "If branch with print in true arm",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "targetLanguage": "python",
+  "variables": [
+    {
+      "id": "v-flag",
+      "name": "Flag",
+      "type": "data_boolean",
+      "defaultValue": true,
+      "binding": "instance"
+    }
+  ],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "branch",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "Branch",
+        "category": "Flow",
+        "kindId": "flow_branch",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "condition", "label": "Condition", "type": "data_boolean" }
+        ],
+        "outputs": [
+          { "id": "true_exec", "label": "True", "type": "execution" },
+          { "id": "false_exec", "label": "False", "type": "execution" }
+        ],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "get-flag",
+      "type": "vvs_standard_node",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "Get Flag",
+        "category": "Variables",
+        "kindId": "variable_get",
+        "graphBinding": { "kind": "variable_ref", "symbolId": "v-flag" },
+        "properties": { "variableName": "Flag" },
+        "inputs": [],
+        "outputs": [{ "id": "val", "label": "Flag", "type": "data_boolean" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "print-yes",
+      "type": "vvs_standard_node",
+      "position": { "x": 400, "y": 0 },
+      "data": {
+        "label": "Print",
+        "category": "Action",
+        "kindId": "action_print",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "in_str", "label": "String", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "in_str": "yes" }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "branch",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    },
+    {
+      "id": "e2",
+      "source": "get-flag",
+      "target": "branch",
+      "sourceHandle": "val",
+      "targetHandle": "condition",
+      "data": { "pinType": "data" }
+    },
+    {
+      "id": "e3",
+      "source": "branch",
+      "target": "print-yes",
+      "sourceHandle": "true_exec",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

@@ -35,21 +35,18 @@ export function GraphTabBar() {
     }
   };
 
-  const openNewTab = (type: 'function' | 'macro', name?: string, id?: string) => {
+  const openNewTab = (type: 'function', name?: string, id?: string) => {
     let tabId = id;
     let tabName = name;
 
-    if (type === 'function' && !tabId) {
+    if (!tabId) {
       const func = createFunctionSymbol(tabName || 'NewFunction');
       tabId = func.id;
       tabName = func.name;
       setFunctions((prev) => [...prev, func]);
-    } else {
-      tabId = tabId || `graph-${Date.now()}`;
-      tabName = tabName || `New ${type === 'function' ? 'Function' : 'Macro'}`;
     }
 
-    const displayName = type === 'function' ? formatFunctionTabName(tabName!) : tabName!;
+    const displayName = formatFunctionTabName(tabName!);
 
     if (!openTabs.find((t) => t.id === tabId)) {
       setOpenTabs([...openTabs, { id: tabId!, type, name: displayName }]);
@@ -81,7 +78,7 @@ export function GraphTabBar() {
                 : 'bg-zinc-950/50 hover:bg-zinc-900 border-zinc-800/50 hover:border-zinc-800'
             }`}
           >
-            <div className={`w-1.5 h-1.5 rounded-full ${tab.type === 'main' ? 'bg-emerald-500' : tab.type === 'macro' ? 'bg-amber-500' : 'bg-indigo-500'}`}></div>
+            <div className={`w-1.5 h-1.5 rounded-full ${tab.type === 'main' ? 'bg-emerald-500' : 'bg-indigo-500'}`}></div>
             <span className={`text-[11px] font-semibold whitespace-nowrap ${activeGraphTab === tab.id ? 'text-zinc-200' : 'text-zinc-500'}`}>
               {tab.name}
             </span>
@@ -119,13 +116,6 @@ export function GraphTabBar() {
             >
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
               Function
-            </button>
-            <button 
-              onClick={() => openNewTab('macro')}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              Macro
             </button>
 
             <div className="h-px bg-zinc-800 my-1.5 mx-2" />

@@ -1,0 +1,80 @@
+{
+  "name": "switch",
+  "description": "Switch on selector with case body",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "variables": [],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "switch-node",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "Switch",
+        "category": "Flow Control",
+        "kindId": "flow_switch",
+        "properties": { "case0": "0", "case1": "1" },
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "selector", "label": "Selector", "type": "data_any" }
+        ],
+        "outputs": [
+          { "id": "case_0", "label": "Case 0", "type": "execution" },
+          { "id": "case_1", "label": "Case 1", "type": "execution" },
+          { "id": "default_exec", "label": "Default", "type": "execution" },
+          { "id": "exec_out", "label": "", "type": "execution" }
+        ],
+        "inlineValues": { "selector": 1 }
+      }
+    },
+    {
+      "id": "print-one",
+      "type": "vvs_standard_node",
+      "position": { "x": 400, "y": 0 },
+      "data": {
+        "label": "Print",
+        "category": "Action",
+        "kindId": "action_print",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "in_str", "label": "String", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "in_str": "one" }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "switch-node",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    },
+    {
+      "id": "e2",
+      "source": "switch-node",
+      "target": "print-one",
+      "sourceHandle": "case_1",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

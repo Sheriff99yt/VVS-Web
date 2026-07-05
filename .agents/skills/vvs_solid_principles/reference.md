@@ -88,6 +88,18 @@ func HandleAddNode(ctx context.Context, params AddNodeParams) (Result, error) {
 
 **Bad:** Duplicate graph mutation logic inside MCP handler only.
 
+### New node kind (e.g. Conversion, Get User Input)
+
+**Good**
+1. Add `kindId` + semantics + pins (+ optional `propertySchema`) to `core-pack.json`
+2. Add lowering in `@vvs/transpiler` (`resolveNodeOutputExpr` / `emitStatement`)
+3. Optional `PropertySchemaPanel` picks up schema automatically
+4. **Do not** fold behavior into Print/Set (e.g. hidden `str()` inside print)
+
+**Bad:** Transpiler auto-cast when pin types mismatch — breaks 1:1 graph ↔ code teaching model.
+
+**Bad:** Macro inline expansion or latent Delay with no matching export — breaks third-party integration and `sourceMap` trust.
+
 ---
 
 ## L — Liskov Substitution

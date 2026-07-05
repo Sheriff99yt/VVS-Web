@@ -8,6 +8,7 @@ import { GraphTabBar } from './GraphTabBar';
 import { GraphBreadcrumb } from './GraphBreadcrumb';
 import { StatusBar } from './StatusBar';
 import { LibraryView } from '../views/LibraryView';
+import { RoadmapView } from '../views/RoadmapView';
 import { ReferencesView } from '../views/ReferencesView';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { ReactFlowProvider } from '@xyflow/react';
@@ -19,31 +20,41 @@ import { EditorNavigationProvider } from '@/contexts/EditorNavigationContext';
 import { GraphWorkspaceHost } from '@/components/graph/GraphWorkspaceHost';
 import GraphCanvas from '@/components/graph/GraphCanvas';
 import { GraphSettingsModal } from '@/components/layout/GraphSettingsModal';
+import {
+  EnvironmentImportModal,
+  useEnvironmentImportModal,
+} from '@/components/environments/EnvironmentImportModal';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import type { ProjectSource } from '@/types/projectRegistry';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { VVSNode, VVSEdge } from '@/types/graph';
+import type { EditorViewTab } from '@/types/editorNavigation';
+
+export type { EditorViewTab };
 
 interface EditorLayoutProps {
   projectId: string;
   projectSource: ProjectSource;
   initialSnapshot: ProjectSnapshot;
-  initialView?: 'canvas' | 'references' | 'library';
+  initialView?: EditorViewTab;
   initialNodes?: VVSNode[];
   initialEdges?: VVSEdge[];
   initialDocuments?: Record<string, GraphDocument>;
 }
 
-import type { EditorViewTab } from '@/types/editorNavigation';
-
-export type { EditorViewTab };
-
 function CanvasWorkspace() {
-  const { codePanelRef } = useEditorPanels();
+  const { codePanelRef, graphNavPanelRef } = useEditorPanels();
 
   return (
     <PanelGroup orientation="horizontal" className="w-full h-full">
-      <Panel id="left" defaultSize={20} minSize={15}>
+      <Panel
+        id="left"
+        defaultSize={20}
+        minSize={15}
+        collapsible
+        collapsedSize={0}
+        panelRef={graphNavPanelRef}
+      >
         <GraphExplorer mode="canvas" />
       </Panel>
 
@@ -77,6 +88,11 @@ function CanvasWorkspace() {
   );
 }
 
+function EnvImportHost() {
+  const { open, setOpen } = useEnvironmentImportModal();
+  return <EnvironmentImportModal open={open} onClose={() => setOpen(false)} />;
+}
+
 export function EditorLayout({
   projectId,
   projectSource,
@@ -87,10 +103,13 @@ export function EditorLayout({
   initialDocuments,
 }: EditorLayoutProps) {
   const [activeTab, setActiveTab] = React.useState<EditorViewTab>(
-    initialView === 'library' || initialView === 'references' ? initialView : 'canvas'
+    initialView === 'library' || initialView === 'references' || initialView === 'roadmap'
+      ? initialView
+      : 'canvas'
   );
   const isCanvas = activeTab === 'canvas';
   const isReferences = activeTab === 'references';
+  const isRoadmap = activeTab === 'roadmap';
 
   return (
     <ProjectProvider
@@ -130,11 +149,17 @@ export function EditorLayout({
                       <LibraryView />
                     </div>
                   ) : null}
+                  {isRoadmap ? (
+                    <div className="h-full">
+                      <RoadmapView />
+                    </div>
+                  ) : null}
                 </div>
 
                 <StatusBar />
               </div>
               <GraphSettingsModal />
+              <EnvImportHost />
             </EditorPanelProvider>
             </EditorNavigationProvider>
           </EditorViewProvider>

@@ -173,18 +173,71 @@ export function applyEventDispatchBinding(
   };
 }
 
+export function applyEventEmitBinding(
+  data: VVSNodeData,
+  event: ProjectEventDefinition
+): VVSNodeData {
+  const bound = applyEventDispatchBinding(data, event);
+  return {
+    ...bound,
+    kindId: 'event_emit',
+    label: `Emit ${event.name}`,
+  };
+}
+
+export function subscribeNodeInputs(parameters: EventParameter[]): PinDefinition[] {
+  return [
+    { id: 'exec_in', label: '', type: 'execution' },
+    { id: 'handler', label: 'Handler', type: 'execution' },
+    ...parameters.map((p) => ({ id: p.id, label: p.label, type: p.type })),
+  ];
+}
+
+export function applyEventSubscribeBinding(
+  data: VVSNodeData,
+  event: ProjectEventDefinition
+): VVSNodeData {
+  return {
+    ...data,
+    kindId: 'event_subscribe',
+    category: 'Events',
+    label: `Subscribe ${event.name}`,
+    properties: { ...(data.properties ?? {}), eventId: event.id, eventName: event.name },
+    inputs: subscribeNodeInputs(event.parameters),
+    outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+    inlineValues: data.inlineValues ?? {},
+  };
+}
+
 export function buildEventNodeData(
   event: ProjectEventDefinition,
-  role: 'define' | 'dispatch'
+  role: 'define' | 'dispatch' | 'emit' | 'subscribe'
 ): VVSNodeData {
   const base: VVSNodeData = {
-    label: role === 'define' ? eventDisplayName(event.name) : `Dispatch ${event.name}`,
+    label:
+      role === 'define'
+        ? eventDisplayName(event.name)
+        : role === 'subscribe'
+          ? `Subscribe ${event.name}`
+          : role === 'emit'
+            ? `Emit ${event.name}`
+            : `Dispatch ${event.name}`,
     category: 'Events',
-    kindId: role === 'define' ? 'event_define' : 'event_dispatch',
+    kindId:
+      role === 'define'
+        ? 'event_define'
+        : role === 'subscribe'
+          ? 'event_subscribe'
+          : role === 'emit'
+            ? 'event_emit'
+            : 'event_dispatch',
     properties: { eventId: event.id, eventName: event.name },
     inputs: [],
     outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
     inlineValues: {},
   };
-  return role === 'define' ? applyEventDefineBinding(base, event) : applyEventDispatchBinding(base, event);
+  if (role === 'define') return applyEventDefineBinding(base, event);
+  if (role === 'subscribe') return applyEventSubscribeBinding(base, event);
+  if (role === 'emit') return applyEventEmitBinding(base, event);
+  return applyEventDispatchBinding(base, event);
 }

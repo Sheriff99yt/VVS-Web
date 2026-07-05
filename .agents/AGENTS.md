@@ -3,6 +3,7 @@
 When working on this project, strictly enforce the following architectural boundaries:
 
 > **Public repo:** [README.md](../README.md) · [CONTRIBUTING.md](../CONTRIBUTING.md) · [docs/vision.md](../docs/vision.md) · [docs/roadmap.md](../docs/roadmap.md)  
+> **Product direction:** [`docs/visual_to_text_fidelity.md`](../docs/visual_to_text_fidelity.md) — **text-shaped graphs** (locked).  
 > **Current repo state:** See [`docs/current_state.md`](../docs/current_state.md). **Naming:** [`docs/naming_and_product_direction.md`](../docs/naming_and_product_direction.md).
 
 1. **Strict Monorepo Boundaries:**
@@ -18,6 +19,10 @@ When working on this project, strictly enforce the following architectural bound
 
 4. **Interface-First System Boundaries:**
    - The interface between the Graph and Code Generation must remain fully decoupled. Language definitions are data-driven (JSONB syntax registry), not hardcoded logic.
+   - **Text-shaped graphs (locked):** Every behavioral node must map to a **visible, locatable** construct in generated code. See [`docs/visual_to_text_fidelity.md`](../docs/visual_to_text_fidelity.md).
+   - **No implicit type coercion** — use explicit **Conversion** nodes on the graph; transpiler must not fold casts into Print/Set. See [`docs/node_system.md`](../docs/node_system.md) §2.2b.
+   - **No Blueprint VM semantics** — no macro inline expansion, latent delays without matching AST nodes, or transforms that require a proprietary runtime to match the graph.
+   - **Third-party integration** — generated output must import into arbitrary stacks (IDE, git, CI, MCP) without a VVS runtime.
 
 5. **UI-First Strategy (Adhering to Architectural Boundaries):**
    - When building user-facing features, prioritize designing the User Interface (Next.js components) first to establish the visual flow.
@@ -26,6 +31,7 @@ When working on this project, strictly enforce the following architectural bound
    - **Do not add in-app Roadmap or Integrations tabs** — planning and ecosystem docs belong in `docs/`; MCP is exposed via the Connect AI modal only.
    - Follow the locked UI shell in `docs/current_state.md` and `.agents/skills/vvs_ui_development/SKILL.md`.
    - Apply **show data when needed** per `.agents/skills/vvs_progressive_disclosure/SKILL.md` when adding panels, trees, inspectors, or overlays.
+   - Before new node kinds or transpiler lowering: pass the fidelity checklist in `docs/visual_to_text_fidelity.md`.
 
 6. **Modular & Maintainable Implementation (Best Practices):**
    - **Frontend (`apps/web` - Next.js):** 

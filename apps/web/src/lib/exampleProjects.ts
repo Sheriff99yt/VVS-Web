@@ -27,11 +27,11 @@ export const EXAMPLE_PROJECTS: ExampleProjectDefinition[] = [
   {
     id: 'complex',
     level: 'complex',
-    title: 'Game Session',
-    moduleName: 'GameSession',
+    title: 'Calculator',
+    moduleName: 'Calculator',
     description:
-      'A small game loop with health, score, branching, and two function graphs you can explore in the tree.',
-    highlights: ['3 graphs', '4 variables', 'Branch + Update'],
+      'Interactive calculator — read A and B from user input, add, print Result, branch, and clear.',
+    highlights: ['3 graphs', 'Get User Input', 'Add + Clear functions', '2 events'],
     create: createComplexExampleSnapshot,
   },
 ];

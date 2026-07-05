@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vvs.dev/schemas/environment-manifest.json",
+  "title": "VVS ProjectEnvironmentManifest",
+  "description": "Project environment template — aligns with Backstage skeleton + OpenAPI/AsyncAPI apiSurface import.",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "displayName",
+    "description",
+    "defaultTarget",
+    "supportedTargets",
+    "module",
+    "apiSurface",
+    "hostFiles"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^env\\.[a-z0-9.-]+$" },
+    "version": { "type": "string" },
+    "displayName": { "type": "string" },
+    "description": { "type": "string" },
+    "category": {
+      "enum": ["console", "web", "data", "api", "game"]
+    },
+    "defaultTarget": {
+      "enum": ["python", "javascript", "cpp", "verse", "json"]
+    },
+    "supportedTargets": {
+      "type": "array",
+      "items": { "enum": ["python", "javascript", "cpp", "verse", "json"] },
+      "minItems": 1
+    },
+    "module": {
+      "type": "object",
+      "required": ["defaultName"],
+      "properties": {
+        "defaultName": { "type": "string" },
+        "extends": {
+          "type": "object",
+          "required": ["id"],
+          "properties": { "id": { "type": "string" } }
+        }
+      }
+    },
+    "apiSurface": {
+      "type": "object",
+      "required": ["types", "methods", "events"],
+      "properties": {
+        "types": { "type": "array" },
+        "methods": { "type": "array" },
+        "events": { "type": "array" }
+      }
+    },
+    "hostFiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role", "template"],
+        "properties": {
+          "path": { "type": "string" },
+          "role": { "enum": ["entry", "config", "asset"] },
+          "template": { "type": "string" }
+        }
+      }
+    },
+    "starter": { "type": "object" }
+  },
+  "additionalProperties": false
+}

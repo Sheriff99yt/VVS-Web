@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { buildReferenceIndex } from '@/lib/graphRelations';
-import { listMacroEntries } from '@/lib/projectTree';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { ReferenceGraphTree } from './ReferenceGraphTree';
 
@@ -16,12 +15,10 @@ export function ReferenceViewer({ onOpenGraph }: ReferenceViewerProps) {
   const { getDocuments } = useGraphWorkspace();
 
   const documents = getDocuments();
-  const macros = listMacroEntries(openTabs);
-
   const index = useMemo(() => {
     if (!documents) return null;
-    return buildReferenceIndex(documents, functions, macros);
-  }, [documents, functions, macros]);
+    return buildReferenceIndex(documents, functions, []);
+  }, [documents, functions]);
 
   if (!documents || !index) {
     return (

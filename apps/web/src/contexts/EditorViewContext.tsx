@@ -1,7 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import type { EditorViewTab } from '@/components/layout/EditorLayout';
+import type { EditorViewTab } from '@/types/editorNavigation';
+
+export type { EditorViewTab };
 
 interface EditorViewContextValue {
   activeView: EditorViewTab;

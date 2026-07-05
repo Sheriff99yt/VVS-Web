@@ -10,6 +10,13 @@ VVS graphs are **language-neutral**. Features that do not map cleanly to every t
 
 Warnings do **not** block compile unless paired with structural errors.
 
+## Fidelity and portability
+
+- The **editor** enforces strict pin compatibility (see `docs/node_system.md` §2.2b).
+- **Print String** requires `data_string`; use **To String** / **To Number** conversion nodes for type changes.
+- The **transpiler** never folds conversions or hides macro bodies — one graph node = one visible construct ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)).
+- **`data_any`** on **To String** input accepts any wired value; output pins are strictly typed.
+
 ## Feature matrix (summary)
 
 | Feature | Python | JavaScript | C++ | Verse |
@@ -20,10 +27,15 @@ Warnings do **not** block compile unless paired with structural errors.
 | Overloads | Unsupported (use defaults) | Emulated | Native | Emulated |
 | Virtual | N/A | N/A | Native | N/A |
 | Class inheritance | Native | Native | Native | Native |
-| Macro inline | Emulated | Emulated | Emulated | Emulated |
+| Macro inline | **Deprecated** — use Function + Call | **Deprecated** | **Deprecated** | **Deprecated** |
 
 ## Adding a language
 
-1. Add profile entry in `LANGUAGE_PROFILES` (`packages/language-profiles`).
-2. Add emitter rules in `@vvs/transpiler`.
-3. Document language-unique behavior in this file.
+Four-step workflow — portability policy and print rules stay separate ([syntax_pack_architecture.md](syntax_pack_architecture.md)):
+
+1. **Profile** — add entry in `LANGUAGE_PROFILES` (`packages/language-profiles`): native / emulated / unsupported matrix and default capabilities.
+2. **Base pack** — add `family.base.json` in `@vvs/syntax-packs` with Lego templates and layout tokens for simple constructs.
+3. **Rosetta fixtures** — add graph JSON fixtures + `.golden.txt` expected outputs per construct; span invariants must pass.
+4. **Emitter registration** — register TS printers in `@vvs/transpiler` `PrinterRegistry` for complex constructs (events, hoisting, multi-file); wire `CodegenTarget` default mapping.
+
+Document language-unique behavior and portability warnings in this file.

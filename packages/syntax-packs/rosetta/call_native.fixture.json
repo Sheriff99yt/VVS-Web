@@ -1,0 +1,57 @@
+{
+  "name": "call_native",
+  "description": "Environment native print call",
+  "environmentId": "env.python.console-app",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "variables": [],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "native-print",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "print()",
+        "category": "Environment",
+        "kindId": "env.call_native",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "msg", "label": "Message", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "msg": "native" },
+        "properties": { "manifestMethodId": "native.print" },
+        "graphBinding": {
+          "kind": "env_native",
+          "symbolId": "native.print",
+          "manifestMethodId": "native.print"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "native-print",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

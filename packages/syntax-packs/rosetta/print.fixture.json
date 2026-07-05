@@ -1,0 +1,51 @@
+{
+  "name": "print",
+  "description": "Minimal print fixture",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "targetLanguage": "python",
+  "variables": [],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "print-hello",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "Print String",
+        "category": "Action",
+        "kindId": "action_print",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "in_str", "label": "String", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "in_str": "Hello Rosetta" }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "print-hello",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

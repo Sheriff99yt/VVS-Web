@@ -11,10 +11,12 @@ description: Triggers when reading or updating agent memory, starting a delivery
 
 ## When to read (start of task)
 
-1. `docs/current_state.md` — implementation truth (includes **graph system architecture**)
-2. `.agents/memory/workspace-facts.md` — entry points, contexts, events
-3. `.agents/memory/incomplete-ui.md` — **open UI work** (if doing UI slices)
-4. `.agents/memory/decisions.md` — do not violate locked choices (incl. graph isolation)
+1. `docs/visual_to_text_fidelity.md` — **text-shaped graphs** (locked direction — read before codegen/features)
+2. `docs/current_state.md` — implementation truth (includes **graph system architecture**)
+3. `docs/node_system.md` — nodes, pins, conversion, property schema
+4. `.agents/memory/workspace-facts.md` — entry points, contexts, events
+5. `.agents/memory/incomplete-ui.md` — **open UI work** (if doing UI slices)
+6. `.agents/memory/decisions.md` — do not violate locked choices (incl. text-shaped graphs)
 
 ## When to write (end of task)
 
@@ -40,3 +42,4 @@ After each UI/API loop iteration:
 1. Mark completed rows in `incomplete-ui.md`
 2. Set next slice from `docs/ui_api_delivery_loop.md` backlog
 3. Update `docs/current_state.md` if implementation changed
+4. Update `decisions.md` if product direction or fidelity rules changed

@@ -7,6 +7,7 @@ description: Triggers when building user-facing features, Next.js components, or
 
 - When building user-facing features, prioritize designing the User Interface (Next.js components) first to establish the visual flow.
 - **Crucially:** This does NOT override the Interface-First workflow. While building the UI, define the abstract data structures and interfaces the UI will need. Do not implement complex backend or transpiler logic until the interfaces and UI requirements are fully aligned and approved.
+- **Text-shaped graphs:** UI must not imply behavior that generated text cannot show — see `docs/visual_to_text_fidelity.md`.
 - Always build exactly as planned in `docs/project_requirements.md`, ensuring strict separation of concerns between UI, Transpiler, and Server.
 - **Canonical shell reference:** `docs/current_state.md` — update it when the layout changes.
 - **Naming:** `docs/naming_and_product_direction.md` — no Blueprint/BeginPlay/BP_ in user-facing copy.
@@ -29,8 +30,9 @@ description: Triggers when building user-facing features, Next.js components, or
 - **Edit:** Undo, Redo
 - **View:** Zoom to Fit
 - **Compile** button with dirty/compiling/success/error states
-- **Play / Pause / Stop** simulation controls (`simulationState` in `ProjectContext`)
 - **Connect AI** modal (MCP URL — show disconnected until backend exists)
+
+**Removed:** Play/Pause/Stop simulation controls (no runtime yet). **Do not re-add** without real execution backend.
 
 **Do not add:** `GraphToolbar` or duplicate Compile/Save elsewhere.
 
@@ -44,7 +46,10 @@ description: Triggers when building user-facing features, Next.js components, or
 
 ### Node spawning
 
-- Spawnable nodes: `lib/nodeCatalog.ts` + canvas context menu (`NodeContextMenu`)
+- Spawnable nodes: `@vvs/syntax-registry` via `lib/nodeCatalog.ts` → canvas context menu (`NodeContextMenu`)
+- Core categories include **Events**, **Action**, **Conversion**, **Flow Control**, **Math**, **Variables**, plus **Project · Calls**
+- **Conversion** nodes (`To String`, `To Number`) are pure data — wire between Get and Print; never skip them for numeric print
+- **Reuse:** prefer **Function** + **Call Function**; macro tabs are **legacy** — do not add UX that depends on invisible macro expand
 - Library view: community scripts only — not a second local node browser
 
 # Modular & Maintainable Implementation (Frontend)
@@ -76,10 +81,15 @@ Whenever building or evaluating the UI panels, ensure the following professional
 - **Progressive disclosure:** Generated collapsed by default; per-category + on row headers.
 
 ### 2. Right Panel (Properties Inspector)
-- **Context-Aware Forms**: The inspector must adapt based on the global selection state:
-  - *Selected Node*: Show Node input forms.
-  - *Selected Variable (Left Panel)*: Show Variable editing form (Name, Data Type dropdown, Default Value).
-  - *No Selection / Graph*: Show global Graph settings in `GraphPropertiesPanel` — Class Name, Parent Class, Description, **Target Language**, Auto-compile toggle.
+
+- **Floating details** on canvas: `GraphFloatingDetails.tsx` (not a docked right sidebar in Canvas mode)
+- **Context-Aware Forms** — selection drives panel content:
+  - *Selected Node*: **Settings** (`PropertySchemaPanel` when kind has `propertySchema`) → **Pins** (`NodePinsPanel`) → binding plugins (event define/dispatch, broken-ref repair)
+  - *Selected Variable*: `VariablePropertiesPanel`
+  - *Selected Function / Event*: respective property panels
+  - *No Selection*: panel hidden; graph settings via breadcrumb **settings** modal (`GraphSettingsModal`)
+- **Get User Input** exposes `inputKind` / placeholder in Settings; prompt stays on pin
+- **Progressive disclosure:** compact summary when collapsed; force-expand when broken ref selected
 
 ### 3. Center Panel (Graph Canvas & Interaction)
 - **Context-Sensitive Spawning**: Dragging a wire into empty space must open the Context Menu automatically, filtered to ONLY show nodes compatible with that wire's data type.
@@ -88,16 +98,15 @@ Whenever building or evaluating the UI panels, ensure the following professional
 - **Copy/Paste**: Full clipboard support for nodes and wires.
 
 ### 4. Top Navigation Bar
-- **Compile/Validation Pipeline**: Prominent Compile button with clear visual states (Dirty → Compiling → Success/Error).
-- **Simulation Controls**: Play/Pause/Stop for stepping through execution flow.
+- **Generate/Validation Pipeline**: Prominent Generate button with clear visual states (Dirty → Compiling → Success/Error).
 - **Connect AI**: MCP connection modal — not a separate Integrations page.
 
 ### 5. Code Preview Panel
 - Read-only generated code for the active target language.
 - Language selection lives in **Graph Properties**, not in the code panel header.
 - **Code panel is open by default** in Canvas mode (see `docs/node_system.md`).
-- Until `packages/transpiler` exists, mock templates in `CodePreviewPanel` are acceptable.
-- Selection highlight uses `TranspileResult.sourceMap` (planned) — one generate pass, UI-only highlight.
+- Codegen via `@vvs/transpiler` (facade: `lib/mockCodegen.ts`).
+- Selection highlight uses `TranspileResult.sourceMap` + expression spans — **code panel must match graph** (text-shaped fidelity)
 - **Progressive disclosure:** compiler log collapses until errors/compile; user may collapse code via StatusBar **Code** toggle.
 
 # Show Data When Needed

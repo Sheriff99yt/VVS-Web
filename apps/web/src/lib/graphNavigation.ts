@@ -15,3 +15,11 @@ export function dispatchNavigateToNode(tabId: string, nodeId: string): void {
 export function dispatchFocusFirstValidationError(): void {
   window.dispatchEvent(new CustomEvent('vvs:focus-first-validation-error'));
 }
+
+export function dispatchNavigateToVariable(symbolId: string): void {
+  window.dispatchEvent(
+    new CustomEvent('vvs:navigate-to-variable', {
+      detail: { symbolId },
+    })
+  );
+}

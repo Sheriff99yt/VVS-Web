@@ -1,5 +1,5 @@
 /** Top-level editor views (TopNav). */
-export type EditorViewTab = 'canvas' | 'references' | 'library';
+export type EditorViewTab = 'canvas' | 'references' | 'library' | 'roadmap';
 
 export const VVS_NAVIGATION_VERSION = 1 as const;
 

@@ -25,7 +25,8 @@ export function handleInlineFieldKeyDown(event: KeyboardEvent<HTMLElement>) {
 
 export function handleInlineFieldFocus(event: FocusEvent<HTMLInputElement>) {
   event.stopPropagation();
-  requestAnimationFrame(() => event.currentTarget.select());
+  const input = event.currentTarget;
+  requestAnimationFrame(() => input.select());
 }
 
 export const graphInlineFieldProps = {

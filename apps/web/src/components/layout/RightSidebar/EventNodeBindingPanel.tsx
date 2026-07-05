@@ -7,7 +7,7 @@ import { eventDisplayName } from '@/lib/eventHelpers';
 interface EventNodeBindingPanelProps {
   events: ProjectEventDefinition[];
   eventId: string | undefined;
-  role: 'define' | 'dispatch';
+  role: 'define' | 'dispatch' | 'emit' | 'subscribe';
   onSelectEvent: (event: ProjectEventDefinition) => void;
 }
 
@@ -20,7 +20,13 @@ export function EventNodeBindingPanel({
   return (
     <div className="space-y-2">
       <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
-        {role === 'define' ? 'Handler event' : 'Dispatch event'}
+        {role === 'define'
+          ? 'Handler event'
+          : role === 'subscribe'
+            ? 'Subscribe event'
+            : role === 'emit'
+              ? 'Emit event'
+              : 'Dispatch event'}
       </label>
       <select
         value={eventId ?? ''}
@@ -36,7 +42,13 @@ export function EventNodeBindingPanel({
         </option>
         {events.map((ev) => (
           <option key={ev.id} value={ev.id}>
-            {role === 'define' ? eventDisplayName(ev.name) : `Dispatch ${ev.name}`}
+            {role === 'define'
+              ? eventDisplayName(ev.name)
+              : role === 'subscribe'
+                ? `Subscribe ${ev.name}`
+                : role === 'emit'
+                  ? `Emit ${ev.name}`
+                  : `Dispatch ${ev.name}`}
           </option>
         ))}
       </select>

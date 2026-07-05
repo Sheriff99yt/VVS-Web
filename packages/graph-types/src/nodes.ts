@@ -1,9 +1,19 @@
 import type { PinDefinition, PinType } from './pins';
 
 export interface GraphBinding {
-  kind: 'call_function' | 'use_macro' | 'import_module';
+  kind:
+    | 'call_function'
+    | 'use_macro'
+    | 'import_module'
+    | 'variable_ref'
+    | 'env_native'
+    | 'env_event';
   symbolId: string;
   overloadId?: string;
+  /** Manifest method id for env_native / overrideable handlers */
+  manifestMethodId?: string;
+  /** Manifest event id for env_event handlers */
+  manifestEventId?: string;
 }
 
 export interface VVSNodeData {
@@ -22,7 +32,7 @@ export interface VVSNodeData {
   /** @deprecated use graphBinding */
   linkedGraphId?: string;
   /** @deprecated use graphBinding */
-  linkKind?: 'call_function' | 'use_macro' | 'import_module';
+  linkKind?: GraphBinding['kind'];
   graphBinding?: GraphBinding;
   /** Snapshot of registry ports at spawn time (hybrid resolved ports). */
   resolvedPorts?: { inputs: PinDefinition[]; outputs: PinDefinition[] };

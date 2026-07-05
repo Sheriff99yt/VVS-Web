@@ -1,29 +1,33 @@
-import { GraphVariable } from '@/types/graph';
+import type { VariableDataType, VariableSymbol } from '@vvs/graph-types';
+import {
+  defaultValueForDataType,
+  legacyVariableTypeToDataType,
+} from '@vvs/graph-types';
 
-export type VariableType = GraphVariable['type'];
+export type VariableType = VariableDataType;
 
-export function defaultValueForVariableType(type: VariableType): GraphVariable['defaultValue'] {
-  switch (type) {
-    case 'string':
-      return '';
-    case 'number':
-      return 0;
-    case 'boolean':
-      return false;
-    case 'object':
-      return {};
-    default:
-      return '';
-  }
+export function defaultValueForVariableType(type: VariableType): VariableSymbol['defaultValue'] {
+  return defaultValueForDataType(type);
 }
 
 export function coerceVariableDefaultValue(
   type: VariableType,
-  value: GraphVariable['defaultValue']
-): GraphVariable['defaultValue'] {
-  if (type === 'object') {
+  value: VariableSymbol['defaultValue']
+): VariableSymbol['defaultValue'] {
+  if (type === 'data_object') {
     if (value && typeof value === 'object' && !Array.isArray(value)) return value;
     return {};
   }
-  return defaultValueForVariableType(type);
+  if (type === 'data_array') {
+    return Array.isArray(value) ? value : [];
+  }
+  if (type === 'data_any') {
+    return value ?? null;
+  }
+  return defaultValueForDataType(type);
+}
+
+/** @deprecated legacy snapshot values */
+export function normalizeVariableTypeInput(value: string): VariableDataType {
+  return legacyVariableTypeToDataType(value);
 }

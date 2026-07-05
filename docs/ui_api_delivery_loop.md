@@ -179,6 +179,20 @@ Use these in Agent chat. Run **one slice per invocation**.
 
 ---
 
+## GenerateCode fidelity contract (Wave 0-B)
+
+When slice **D1** wires server-side codegen, handlers MUST delegate to the same `@vvs/transpiler` pipeline (or a Go port that preserves output parity). Contract:
+
+1. **Input:** Normalized `ProjectSnapshot` v2 (`normalizeProjectSnapshot` including `migrateTextShapedAlignment`).
+2. **Output:** `TranspileResult` — `files[]`, `sourceMap`, `expressionSpans` / `fragments` per node.
+3. **Rules:** Every behavioral node maps to a grep-able construct; no macro inline, no latent delay without AST, imports hoisted to file top.
+4. **GraphBinding:** `call_function` and `import_module` only (`use_macro` deprecated → migrated to `call_function`).
+5. **Registry:** Go embedded `core-pack.json` stays in sync with `packages/syntax-registry/core-pack.json`.
+
+Optional future: Go mirror of `migrateTextShapedAlignment` for REST ingest before client normalization.
+
+---
+
 ## Anti-patterns (do not reintroduce)
 
 - Components importing `MockApi` or `fetch` directly

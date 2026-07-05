@@ -1,10 +1,16 @@
-import type { GraphDocument, GraphTab, GraphVariable, ProjectEventDefinition, FunctionSymbol, TargetLanguage } from './symbols';
-import { normalizeFunctionSymbols } from './symbols';
+import type { GraphDocument, GraphTab, VariableSymbol, ProjectEventDefinition, FunctionSymbol, TargetLanguage } from './symbols';
+import type { ProjectIntegrationConfig } from './integration';
+import { normalizeIntegrationConfig } from './integration';
+import type { SyntaxPackLock } from './codegenTarget';
+import { normalizeFunctionSymbols, normalizeVariableSymbols } from './symbols';
+import { migrateTextShapedAlignment } from './fidelityMigration';
 
 export interface InstalledLibraryEntry {
   assetId: string;
   installedAt: string;
   linkedGraphId?: string;
+  /** Installed environment template version for drift detection */
+  environmentVersion?: string;
 }
 
 export interface ProjectSnapshotV1 {
@@ -12,7 +18,7 @@ export interface ProjectSnapshotV1 {
   projectId?: string;
   savedAt: string;
   projectDetails: { moduleName: string; extendsType: string; description: string };
-  variables: GraphVariable[];
+  variables: VariableSymbol[];
   events: ProjectEventDefinition[];
   functions: { id: string; name: string }[];
   openTabs: GraphTab[];
@@ -29,7 +35,7 @@ export interface ProjectSnapshotV2 {
   projectId?: string;
   savedAt: string;
   projectDetails: { moduleName: string; extendsType: string; description: string };
-  variables: GraphVariable[];
+  variables: VariableSymbol[];
   events: ProjectEventDefinition[];
   functions: FunctionSymbol[];
   openTabs: GraphTab[];
@@ -39,6 +45,14 @@ export interface ProjectSnapshotV2 {
   autoSave: boolean;
   documents: Record<string, GraphDocument>;
   installedLibrary: InstalledLibraryEntry[];
+  /** Linked project environment template pack id */
+  environmentId?: string;
+  /** Template version at link time — for upgrade/drift detection */
+  environmentVersion?: string;
+  /** Codegen output paths and host file policies — persisted in .vvs/integration.json */
+  integration?: ProjectIntegrationConfig;
+  /** Pinned syntax pack versions per language family — persisted in .vvs/project.json */
+  syntaxPackLock?: SyntaxPackLock;
 }
 
 export type ProjectSnapshot = ProjectSnapshotV2;
@@ -158,7 +172,7 @@ export function normalizeProjectSnapshot(raw: unknown): ProjectSnapshot | null {
 
   const functions = normalizeFunctionSymbols(value.functions);
 
-  return {
+  return migrateTextShapedAlignment({
     version: 2,
     projectId: typeof value.projectId === 'string' ? value.projectId : undefined,
     savedAt: typeof value.savedAt === 'string' ? value.savedAt : new Date().toISOString(),
@@ -172,7 +186,7 @@ export function normalizeProjectSnapshot(raw: unknown): ProjectSnapshot | null {
       description:
         typeof rawDetails?.description === 'string' ? rawDetails.description : '',
     },
-    variables: Array.isArray(value.variables) ? (value.variables as GraphVariable[]) : [],
+    variables: normalizeVariableSymbols(value.variables),
     events: Array.isArray(value.events) ? (value.events as ProjectEventDefinition[]) : [],
     functions,
     openTabs,
@@ -184,7 +198,17 @@ export function normalizeProjectSnapshot(raw: unknown): ProjectSnapshot | null {
     installedLibrary: Array.isArray(value.installedLibrary)
       ? (value.installedLibrary as InstalledLibraryEntry[])
       : [],
-  };
+    environmentId: typeof value.environmentId === 'string' ? value.environmentId : undefined,
+    environmentVersion:
+      typeof value.environmentVersion === 'string' ? value.environmentVersion : undefined,
+    integration: value.integration
+      ? normalizeIntegrationConfig(value.integration)
+      : undefined,
+    syntaxPackLock:
+      value.syntaxPackLock && typeof value.syntaxPackLock === 'object'
+        ? (value.syntaxPackLock as SyntaxPackLock)
+        : undefined,
+  });
 }
 
 export function isProjectSnapshot(value: unknown): value is ProjectSnapshot {

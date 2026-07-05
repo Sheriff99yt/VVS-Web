@@ -1,20 +1,45 @@
-import React from 'react';
-import { GraphVariable } from '@/types/graph';
-import { VariableType, defaultValueForVariableType } from '@/lib/variableDefaults';
+import React, { useMemo } from 'react';
+import type { VariableSymbol, VariableBinding, SymbolVisibility, VariableDataType } from '@/types/graph';
+import {
+  LOGICAL_DATA_TYPE_DESCRIPTORS,
+  portabilityFeaturesForVariable,
+} from '@vvs/graph-types';
+import { analyzePortability } from '@vvs/language-profiles';
+import { useProject } from '@/contexts/ProjectContext';
+import {
+  coerceVariableDefaultValue,
+  defaultValueForVariableType,
+} from '@/lib/variableDefaults';
+import {
+  isBindingCoaAllowed,
+  isDataTypeCoaAllowed,
+  isReadonlyCoaAllowed,
+} from '@/lib/variableCoaUi';
+import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 
 interface VariablePropertiesPanelProps {
-  variable: GraphVariable;
-  onChange: (
-    key: 'name' | 'type' | 'defaultValue' | 'binding' | 'readonly',
-    value: string | number | boolean | Record<string, unknown>
-  ) => void;
+  variable: VariableSymbol;
+  onChange: (next: VariableSymbol) => void;
 }
 
 export function VariablePropertiesPanel({ variable, onChange }: VariablePropertiesPanelProps) {
+  const { targetLanguage, crossOverMode } = useProject();
+
+  const portabilityHints = useMemo(() => {
+    return analyzePortability(portabilityFeaturesForVariable(variable), targetLanguage);
+  }, [variable, targetLanguage]);
+
   const objectDefault =
-    variable.type === 'object' && variable.defaultValue && typeof variable.defaultValue === 'object'
+    variable.type === 'data_object' && variable.defaultValue && typeof variable.defaultValue === 'object'
       ? JSON.stringify(variable.defaultValue, null, 2)
       : '{}';
+
+  const arrayDefault =
+    variable.type === 'data_array' && Array.isArray(variable.defaultValue)
+      ? JSON.stringify(variable.defaultValue, null, 2)
+      : '[]';
+
+  const patch = (partial: Partial<VariableSymbol>) => onChange({ ...variable, ...partial });
 
   return (
     <div className="text-sm text-zinc-300 space-y-3">
@@ -23,8 +48,9 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
         <input
           type="text"
           value={variable.name}
-          onChange={(e) => onChange('name', e.target.value)}
+          onChange={(e) => patch({ name: e.target.value })}
           className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
+          {...graphInlineFieldProps}
         />
       </div>
 
@@ -33,83 +59,138 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
         <select
           value={variable.type}
           onChange={(e) => {
-            const nextType = e.target.value as VariableType;
-            onChange('type', nextType);
-            onChange('defaultValue', defaultValueForVariableType(nextType) as Record<string, unknown>);
+            const nextType = e.target.value as VariableDataType;
+            patch({
+              type: nextType,
+              defaultValue: defaultValueForVariableType(nextType),
+            });
           }}
           className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
         >
-          <option value="string">String</option>
-          <option value="number">Number</option>
-          <option value="boolean">Boolean</option>
-          <option value="object">Object</option>
+          {LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => {
+            const coaBlocked = !isDataTypeCoaAllowed(descriptor.id, crossOverMode);
+            return (
+              <option key={descriptor.id} value={descriptor.id} disabled={coaBlocked}>
+                {descriptor.label}
+                {coaBlocked ? ' (COA)' : ''}
+              </option>
+            );
+          })}
         </select>
+        <p className="text-[10px] text-zinc-500 leading-relaxed">
+          {LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === variable.type)?.description}
+        </p>
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-[11px] font-medium text-zinc-400">Binding</label>
-        <div className="flex gap-2">
-          {(['instance', 'static'] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => onChange('binding', mode)}
-              className={`flex-1 px-2 py-1.5 text-xs rounded border transition-colors ${
-                (variable.binding ?? 'instance') === mode
-                  ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
-              }`}
-            >
-              {mode === 'instance' ? 'Instance' : 'Static'}
-            </button>
-          ))}
+      <div className="space-y-1">
+        <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Binding</span>
+        <div className="flex flex-wrap gap-1">
+          {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => {
+            const coaBlocked = !isBindingCoaAllowed(binding, crossOverMode);
+            return (
+              <button
+                key={binding}
+                type="button"
+                disabled={coaBlocked}
+                onClick={() => patch({ binding })}
+                title={coaBlocked ? 'Not allowed in current COA language set' : undefined}
+                className={`px-2 py-0.5 rounded text-[10px] border transition-colors disabled:opacity-35 disabled:cursor-not-allowed ${
+                  variable.binding === binding
+                    ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {binding}
+              </button>
+            );
+          })}
         </div>
+      </div>
+
+      <div className="space-y-1">
+        <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Visibility</span>
+        <select
+          value={variable.visibility}
+          onChange={(e) => patch({ visibility: e.target.value as SymbolVisibility })}
+          className="w-full bg-zinc-900/80 border border-zinc-800 rounded px-2 py-1 text-[10px] text-zinc-300"
+        >
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </select>
       </div>
 
       <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
         <input
           type="checkbox"
-          checked={variable.readonly ?? false}
-          onChange={(e) => onChange('readonly', e.target.checked)}
-          className="accent-zinc-500 bg-zinc-900 border-zinc-800"
+          checked={variable.flags?.readonly ?? false}
+          disabled={!isReadonlyCoaAllowed(crossOverMode)}
+          onChange={(e) =>
+            patch({
+              flags: e.target.checked ? { readonly: true } : undefined,
+            })
+          }
+          className="accent-zinc-500 bg-zinc-900 border-zinc-800 disabled:opacity-40"
         />
         Read-only
+        {!isReadonlyCoaAllowed(crossOverMode) ? (
+          <span className="text-[9px] text-zinc-600">(blocked by COA)</span>
+        ) : null}
       </label>
+
+      {portabilityHints.length > 0 ? (
+        <div className="space-y-1 border-t border-zinc-800/80 pt-2">
+          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+            Cross-language ({targetLanguage})
+          </span>
+          <ul className="space-y-1">
+            {portabilityHints.map((hint, index) => (
+              <li
+                key={`${hint.code ?? 'hint'}-${index}`}
+                className={`text-[10px] leading-relaxed ${
+                  hint.level === 'warning' ? 'text-amber-400/90' : 'text-zinc-500'
+                }`}
+              >
+                {hint.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="space-y-1.5">
         <label className="text-[11px] font-medium text-zinc-400">Default</label>
 
-        {variable.type === 'string' && (
+        {variable.type === 'data_string' && (
           <input
             type="text"
-            value={variable.defaultValue as string}
-            onChange={(e) => onChange('defaultValue', e.target.value)}
+            value={(variable.defaultValue as string) ?? ''}
+            onChange={(e) => patch({ defaultValue: e.target.value })}
             className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
           />
         )}
 
-        {variable.type === 'number' && (
+        {variable.type === 'data_number' && (
           <input
             type="number"
-            value={variable.defaultValue as number}
-            onChange={(e) => onChange('defaultValue', parseFloat(e.target.value) || 0)}
+            value={(variable.defaultValue as number) ?? 0}
+            onChange={(e) => patch({ defaultValue: parseFloat(e.target.value) || 0 })}
             className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
           />
         )}
 
-        {variable.type === 'boolean' && (
+        {variable.type === 'data_boolean' && (
           <label className="flex items-center gap-2 text-xs text-white cursor-pointer py-1">
             <input
               type="checkbox"
-              checked={variable.defaultValue as boolean}
-              onChange={(e) => onChange('defaultValue', e.target.checked)}
+              checked={Boolean(variable.defaultValue)}
+              onChange={(e) => patch({ defaultValue: e.target.checked })}
               className="accent-zinc-500 bg-zinc-900 border-zinc-800"
             />
             True/False
           </label>
         )}
 
-        {variable.type === 'object' && (
+        {variable.type === 'data_object' && (
           <textarea
             rows={4}
             value={objectDefault}
@@ -117,7 +198,7 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
               try {
                 const parsed = JSON.parse(e.target.value || '{}');
                 if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                  onChange('defaultValue', parsed);
+                  patch({ defaultValue: parsed });
                 }
               } catch {
                 // keep last valid value while typing
@@ -125,6 +206,39 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
             }}
             className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-zinc-500 transition-colors resize-none"
             placeholder="{}"
+          />
+        )}
+
+        {variable.type === 'data_array' && (
+          <textarea
+            rows={4}
+            value={arrayDefault}
+            onChange={(e) => {
+              try {
+                const parsed = JSON.parse(e.target.value || '[]');
+                if (Array.isArray(parsed)) {
+                  patch({ defaultValue: parsed });
+                }
+              } catch {
+                // keep last valid value while typing
+              }
+            }}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-zinc-500 transition-colors resize-none"
+            placeholder="[]"
+          />
+        )}
+
+        {variable.type === 'data_any' && (
+          <input
+            type="text"
+            value={variable.defaultValue == null ? '' : String(variable.defaultValue)}
+            onChange={(e) =>
+              patch({
+                defaultValue: coerceVariableDefaultValue('data_any', e.target.value || null),
+              })
+            }
+            className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
+            placeholder="any value"
           />
         )}
       </div>

@@ -5,9 +5,10 @@ Durable, agent-oriented context for VVS 2.0. This directory is **not** a substit
 ## Read order (start of session)
 
 1. [`../AGENTS.md`](../AGENTS.md) — architecture rules
-2. [`../../docs/current_state.md`](../../docs/current_state.md) — what exists today (source of truth for implementation)
-3. [`incomplete-ui.md`](incomplete-ui.md) — **open UI work** and depth-first section order
-4. [`decisions.md`](decisions.md) — locked choices
+2. [`../../docs/visual_to_text_fidelity.md`](../../docs/visual_to_text_fidelity.md) — **text-shaped graphs** (locked direction)
+3. [`../../docs/current_state.md`](../../docs/current_state.md) — what exists today (source of truth for implementation)
+4. [`incomplete-ui.md`](incomplete-ui.md) — **open UI work** and depth-first section order
+5. [`decisions.md`](decisions.md) — locked choices
 
 ## Files
 

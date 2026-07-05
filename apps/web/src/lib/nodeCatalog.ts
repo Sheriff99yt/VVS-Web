@@ -1,14 +1,27 @@
 import { list } from '@vvs/syntax-registry';
+import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import type { LibraryCategory } from '@/types/ui';
-import type { FunctionSymbol } from '@/types/graph';
+import type { FunctionSymbol, TargetLanguage } from '@/types/graph';
 
 /** Core spawn categories from the unified registry (canonical pin ids). */
 export function buildCoreCategories(
   currentGraphId: string,
   functions: FunctionSymbol[],
-  filterPin?: import('@/types/graph').PinDefinition
+  filterPin?: import('@/types/graph').PinDefinition,
+  options?: {
+    environmentId?: string;
+    environmentManifest?: ProjectEnvironmentManifest;
+    targetLanguage?: TargetLanguage;
+  }
 ): LibraryCategory[] {
-  return list({ currentGraphId, functions, filterPin }).map((cat) => ({
+  return list({
+    currentGraphId,
+    functions,
+    filterPin,
+    environmentId: options?.environmentId,
+    environmentManifest: options?.environmentManifest,
+    targetLanguage: options?.targetLanguage,
+  }).map((cat) => ({
     name: cat.name,
     items: cat.items.map((item) => ({
       type: item.kindId,

@@ -2,6 +2,19 @@ package registry
 
 import "testing"
 
+func TestLookupKind(t *testing.T) {
+	kind, err := LookupKind("event_on_start")
+	if err != nil {
+		t.Fatalf("LookupKind: %v", err)
+	}
+	if kind.KindID != "event_on_start" || len(kind.Outputs) != 1 {
+		t.Fatalf("unexpected kind: %+v", kind)
+	}
+	if _, err := LookupKind("missing_kind"); err == nil {
+		t.Fatal("expected error for missing kind")
+	}
+}
+
 func TestListAvailableNodes(t *testing.T) {
 	nodes, err := ListAvailableNodes()
 	if err != nil {

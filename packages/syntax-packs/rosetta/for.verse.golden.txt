@@ -1,0 +1,2 @@
+        loop:
+            Print(ToString(_vvs_i_for_loop))  # for _vvs_i_for_loop in 0..2

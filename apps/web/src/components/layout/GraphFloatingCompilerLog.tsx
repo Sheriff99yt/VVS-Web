@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Trash2, XCircle, Terminal } from 'lucide-react';
 import { FloatingPanelShell } from './FloatingPanelShell';
 import { useCompilerLogs, type LogEntry, type LogType } from '@/hooks/useCompilerLogs';
-import { dispatchNavigateToNode } from '@/lib/graphNavigation';
+import { dispatchNavigateToNode, dispatchNavigateToVariable } from '@/lib/graphNavigation';
 import { dispatchFocusFirstValidationError } from '@/lib/graphNavigation';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 
@@ -43,7 +43,7 @@ function LogLine({
   compact: boolean;
   onNavigate: (log: LogEntry) => void;
 }) {
-  const navigable = Boolean(log.nodeId && log.tabId);
+  const navigable = Boolean((log.nodeId && log.tabId) || log.symbolId);
   return (
     <button
       type="button"
@@ -52,7 +52,7 @@ function LogLine({
       className={`w-full text-left flex items-start gap-1.5 py-0.5 rounded px-0.5 ${
         navigable ? 'hover:bg-zinc-800/60 cursor-pointer' : 'cursor-default'
       }`}
-      title={navigable ? 'Go to node' : undefined}
+      title={navigable ? (log.symbolId ? 'Go to variable' : 'Go to node') : undefined}
     >
       {logIcon(log.type)}
       <span className={`flex-1 min-w-0 break-words leading-snug ${logColor(log.type)}`}>
@@ -74,6 +74,10 @@ export function GraphFloatingCompilerLog() {
   const handleLogClick = (log: LogEntry) => {
     if (log.nodeId && log.tabId) {
       dispatchNavigateToNode(log.tabId, log.nodeId);
+      return;
+    }
+    if (log.symbolId) {
+      dispatchNavigateToVariable(log.symbolId);
     }
   };
 

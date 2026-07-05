@@ -1,0 +1,10 @@
+{
+  "id": "javascript.base",
+  "version": "1",
+  "family": "javascript",
+  "templates": {
+    "Print": { "quasi": "console.log({value});" },
+    "Assign": { "quasi": "this.{target} = {value};" },
+    "CallInstance": { "quasi": "this.{callee}();" }
+  }
+}

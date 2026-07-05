@@ -1,0 +1,9 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: demo-python-service
+  title: Demo Python Service
+  description: Sample Backstage-compatible pack for VVS environment import
+spec:
+  owner: vvs
+  type: service

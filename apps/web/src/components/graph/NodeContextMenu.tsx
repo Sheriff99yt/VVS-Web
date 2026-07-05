@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { buildCoreCategories } from '@/lib/nodeCatalog';
 import { LibraryNodeTemplate } from '@/types/ui';
-import type { FunctionSymbol, GraphTab } from '@/types/graph';
+import type { FunctionSymbol, GraphTab, TargetLanguage } from '@/types/graph';
+import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 
 interface NodeContextMenuProps {
   x: number;
@@ -15,6 +16,9 @@ interface NodeContextMenuProps {
   currentGraphId: string;
   functions: FunctionSymbol[];
   openTabs: GraphTab[];
+  environmentId?: string;
+  environmentManifest?: ProjectEnvironmentManifest;
+  targetLanguage?: TargetLanguage;
 }
 
 export function NodeContextMenu({
@@ -26,14 +30,33 @@ export function NodeContextMenu({
   currentGraphId,
   functions,
   openTabs,
+  environmentId,
+  environmentManifest,
+  targetLanguage,
 }: NodeContextMenuProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const allCategories = useMemo(
-    () => buildCoreCategories(currentGraphId, functions, filter?.pinType ? { id: 'filter', label: '', type: filter.pinType as import('@/types/graph').PinType } : undefined),
-    [functions, currentGraphId, filter?.pinType]
+    () =>
+      buildCoreCategories(
+        currentGraphId,
+        functions,
+        filter?.pinType
+          ? {
+              id: 'filter',
+              label: '',
+              type: filter.pinType as import('@/types/graph').PinType,
+            }
+          : undefined,
+        {
+          environmentId,
+          environmentManifest,
+          targetLanguage,
+        }
+      ),
+    [functions, currentGraphId, filter?.pinType, environmentId, environmentManifest, targetLanguage]
   );
 
   // Focus search input on mount

@@ -1,5 +1,6 @@
 import type { Connection } from '@xyflow/react';
 import type { PinDefinition, PinType, VVSEdge, VVSNode } from '@/types/graph';
+import { pinsAreCompatible } from '@vvs/graph-types';
 import { wouldWireCreateCycle } from './graphCycles';
 
 export type WireRejectionReason =
@@ -28,13 +29,7 @@ export type WireEvaluation =
   | { ok: true; pinType: PinType; source: ResolvedWirePin; target: ResolvedWirePin }
   | { ok: false; reason: WireRejectionReason };
 
-/** Execution and data pins cannot share a wire channel. */
-export function pinsAreCompatible(sourceType: PinType, targetType: PinType): boolean {
-  if (sourceType === 'execution') return targetType === 'execution';
-  if (targetType === 'execution') return false;
-  if (sourceType === 'data_any' || targetType === 'data_any') return true;
-  return sourceType === targetType;
-}
+export { pinsAreCompatible };
 
 export function resolveNodePin(
   node: VVSNode,

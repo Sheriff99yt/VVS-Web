@@ -1,0 +1,77 @@
+{
+  "name": "while",
+  "description": "While loop with print in body",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "variables": [],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "while-loop",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "While Loop",
+        "category": "Flow Control",
+        "kindId": "flow_while",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "condition", "label": "Condition", "type": "data_boolean" }
+        ],
+        "outputs": [
+          { "id": "body_exec", "label": "Body", "type": "execution" },
+          { "id": "exec_out", "label": "", "type": "execution" }
+        ],
+        "inlineValues": { "condition": true }
+      }
+    },
+    {
+      "id": "print-loop",
+      "type": "vvs_standard_node",
+      "position": { "x": 400, "y": 0 },
+      "data": {
+        "label": "Print",
+        "category": "Action",
+        "kindId": "action_print",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "in_str", "label": "String", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "in_str": "loop" }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "while-loop",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    },
+    {
+      "id": "e2",
+      "source": "while-loop",
+      "target": "print-loop",
+      "sourceHandle": "body_exec",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

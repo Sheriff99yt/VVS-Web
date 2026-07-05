@@ -1,0 +1,61 @@
+{
+  "name": "assign",
+  "description": "Variable set with inline value",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "targetLanguage": "python",
+  "variables": [
+    {
+      "id": "v-count",
+      "name": "Count",
+      "type": "data_number",
+      "defaultValue": 0,
+      "binding": "instance"
+    }
+  ],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "set-count",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "Set Count",
+        "category": "Variables",
+        "kindId": "variable_set",
+        "graphBinding": { "kind": "variable_ref", "symbolId": "v-count" },
+        "properties": { "variableName": "Count" },
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "val", "label": "Count", "type": "data_number" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "val": "42" }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "set-count",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

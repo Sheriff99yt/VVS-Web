@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Position, NodeToolbar, NodeProps, useReactFlow } from '@xyflow/react';
-import { Copy, Trash2, MessageSquarePlus } from 'lucide-react';
+import { AlertTriangle, Copy, Trash2, MessageSquarePlus } from 'lucide-react';
 import { VVSNodeData } from '@/types/graph';
+import { useProject } from '@/contexts/ProjectContext';
 import { dispatchGraphAction, dispatchNodeAction } from '@/lib/graphActions';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle } from '@/lib/nodeKind';
@@ -19,6 +20,17 @@ interface VVSNodeBodyProps {
 
 function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const { updateNodeData } = useReactFlow();
+  const { validationWarnings, activeGraphTab } = useProject();
+  const hasBrokenRef = useMemo(
+    () =>
+      validationWarnings.some(
+        (w) =>
+          w.code === 'UNRESOLVED_SYMBOL_REF' &&
+          w.nodeId === id &&
+          (w.tabId === undefined || w.tabId === activeGraphTab)
+      ),
+    [validationWarnings, id, activeGraphTab]
+  );
   const linkedTargetLabel = linkedGraphTargetLabel(data);
   const isImportNode = data.linkKind === 'import_module';
   const hasPins = data.inputs.length > 0 || data.outputs.length > 0;
@@ -68,12 +80,17 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
       </NodeToolbar>
 
       <div
-        className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''}`}
+        className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''}`}
         data-category={data.category}
       >
         <div className={styles.header}>
-          <div className={styles.titleBlock}>
-            <span className={styles.title}>{title}</span>
+          <div className={`${styles.titleBlock} flex items-center gap-1.5 min-w-0`}>
+            <span className={`${styles.title} truncate`}>{title}</span>
+            {hasBrokenRef ? (
+              <span title="Unresolved symbol reference">
+                <AlertTriangle size={12} className="text-amber-400 shrink-0" aria-hidden />
+              </span>
+            ) : null}
             {linkedTargetLabel && (
               <span
                 className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}

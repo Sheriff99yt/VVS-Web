@@ -34,9 +34,11 @@ This document captures functional and non-functional requirements for Vision Vis
 - **Stage C — Emitter / Printer**: Walk the IR and produce the final code string using the active language's syntax profile
 
 ### 2.3 Data-Driven Syntax ("Lego" Construction)
-- Language constructs are stored as **ordered JSONB arrays** of `{ type: "static" | "slot", val: "..." }` entries
+- Language constructs are stored as **ordered JSONB arrays** of `{ type: "static" | "slot", val: "..." }` entries in **syntax packs** (`@vvs/syntax-packs`) — see [syntax_pack_architecture.md](syntax_pack_architecture.md)
 - Each construct (if-statement, for-loop, variable assignment, etc.) is broken into granular slots: Prefix, Condition, Joiner, Body, Suffix
-- Adding a new language = adding rows to the database — zero engine changes required
+- **Base + overlay inheritance:** a language family base pack plus capability overlays (e.g. `javascript.es2022`); explicit merge order, last-wins, every template records `sourcePackId`
+- **Hybrid emit:** simple constructs in JSON templates; events, hoisting, async, multi-file, and span registration stay in TypeScript printers registered via `PrinterRegistry`
+- Adding a new language = profile entry + base syntax pack + Rosetta fixtures + emitter registration — zero changes to lowering IR schema
 - The system must handle **varying construct complexity** without wasted empty cells (solved by JSONB arrays instead of fixed columns)
 
 ### 2.4 Out-of-Band Token System
@@ -185,7 +187,7 @@ These decisions have been evaluated against all requirements and are confirmed.
 | **Code Formatting** | Lightweight client-side TS formatter (v1); lazy-load Prettier (Phase 2+) | Transpiler tokens handle indentation; minor whitespace cleanup done client-side |
 | **Deployment** | Vercel (Next.js) + Fly.io (Go API + MCP + WS) | Natural split: frontend is static/serverless, backend needs persistent connections |
 | **Caching** | IndexedDB (client) + Go in-memory (server) | Syntax registry is small; Redis removed from stack |
-| **Auto-Ingestion (Tree-sitter)** | Deferred to Phase 4+ | Manually curate syntax tables for v1 languages; auto-ingestion is a research-heavy feature |
+| **Syntax packs + Tree-sitter** | Syntax packs authoritative; Tree-sitter validator-only | Print rules in `@vvs/syntax-packs` with Rosetta golden tests; optional Tree-sitter parse validation in CI — not syntax author — see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
 
 ---
 

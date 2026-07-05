@@ -1,0 +1,10 @@
+{
+  "id": "verse.base",
+  "version": "1",
+  "family": "verse",
+  "templates": {
+    "Print": { "quasi": "Print({value})" },
+    "Assign": { "quasi": "set {target} = {value}" },
+    "CallInstance": { "quasi": "{callee}()" }
+  }
+}

@@ -30,6 +30,7 @@ describe('eventHelpers', () => {
     const snapshot = createComplexExampleSnapshot();
     const { events: _removed, ...withoutEvents } = snapshot;
     const inferred = inferEventsFromDocuments(withoutEvents.documents!);
-    expect(inferred.some((e) => e.name.toLowerCase() === 'damage')).toBe(true);
+    expect(inferred.some((e) => e.name.toLowerCase() === 'calculate')).toBe(true);
+    expect(inferred.some((e) => e.name.toLowerCase() === 'clear')).toBe(true);
   });
 });

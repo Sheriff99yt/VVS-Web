@@ -23,12 +23,22 @@ import { findGraphEntryNodeId, isLinkedGraphNode } from '@/lib/linkedGraphNodes'
 import { GraphNodeSearch } from './GraphNodeSearch';
 import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT } from '@/components/layout/GraphFloatingDetails';
 import { GraphFloatingCompilerLog } from '@/components/layout/GraphFloatingCompilerLog';
+import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { buildEventNodeData } from '@/lib/eventHelpers';
+import {
+  buildEnvironmentNodeData,
+  SPAWN_ENV_NODE_EVENT,
+  type EnvironmentSpawnAction,
+} from '@/lib/environmentHelpers';
+import { getLinkedEnvironmentManifest } from '@/lib/environmentContext';
 import {
   applyFunctionCallBinding,
   FUNCTION_RENAMED_EVENT,
+  FUNCTION_OVERLOAD_DRAG_MIME,
   syncCallNodesForFunction,
+  type FunctionOverloadDragPayload,
 } from '@/lib/functionHelpers';
+import { applyVariableRefBinding } from '@/lib/variableHelpers';
 
 import {
   applyWireConnection,
@@ -46,7 +56,8 @@ import {
 } from '@/lib/graphRelations';
 import { extractSelectionToFunction } from '@/lib/extractToFunction';
 import { resolve as resolveKind } from '@vvs/syntax-registry';
-import { listMacroEntries } from '@/lib/projectTree';
+import { defaultPropertiesFromSchema } from '@vvs/syntax-registry';
+import { normalizeNodeData } from '@/lib/nodeKind';
 import {
   readSystemGraphClipboard,
   writeSystemGraphClipboard,
@@ -142,9 +153,12 @@ function GraphCanvasInner() {
     setOpenTabs,
     setCompileState,
     markTabDirty,
+    environmentId,
+    targetLanguage,
   } = useProject();
 
   const { pendingCanvasFocus, clearPendingCanvasFocus } = useEditorNavigation();
+  const { graphChromeOpen } = useEditorPanels();
 
   const {
     nodes,
@@ -398,21 +412,28 @@ function GraphCanvasInner() {
       const kindDef = resolveKind(template.type, template.kindVersion);
       const inputs = template.inputs || kindDef?.inputs || [];
       const outputs = template.outputs || kindDef?.outputs || [];
+      const defaultProps = kindDef?.propertySchema
+        ? defaultPropertiesFromSchema(kindDef.propertySchema)
+        : {};
+
+      const baseData = normalizeNodeData({
+        label: template.label,
+        category: template.category,
+        inputs,
+        outputs,
+        inlineValues: defaultInlineValues,
+        kindId: template.type,
+        kindVersion: template.kindVersion ?? kindDef?.kindVersion,
+        properties: defaultProps,
+      });
 
       const newNode: VVSNodeType = {
         id: `node-${Date.now()}`,
         type: 'vvs_standard_node',
         position: menu.flowPosition,
         data: {
-          label: template.label,
-          category: template.category,
-          inputs,
-          outputs,
-          inlineValues: defaultInlineValues,
-          kindId: template.type,
-          kindVersion: template.kindVersion ?? kindDef?.kindVersion,
-          resolvedPorts: { inputs, outputs },
-          properties: {},
+          ...baseData,
+          resolvedPorts: { inputs: baseData.inputs, outputs: baseData.outputs },
           ...(template.linkedGraphId ? { linkedGraphId: template.linkedGraphId } : {}),
           ...(template.linkKind ? { linkKind: template.linkKind } : {}),
           ...(template.graphBinding ? { graphBinding: template.graphBinding } : {}),
@@ -426,7 +447,6 @@ function GraphCanvasInner() {
         }
       }
 
-      const macros = listMacroEntries(openTabs);
       const crossTarget = resolveCrossGraphTarget(
         activeGraphTab,
         {
@@ -435,14 +455,14 @@ function GraphCanvasInner() {
           linkKind: template.linkKind,
         },
         functions,
-        macros
+        []
       );
       if (
         crossTarget &&
         wouldCrossGraphDependencyCycle(
           getDocuments() ?? {},
           functions,
-          macros,
+          [],
           activeGraphTab,
           crossTarget.targetGraphId
         )
@@ -516,12 +536,74 @@ function GraphCanvasInner() {
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = event.dataTransfer.types.includes(FUNCTION_OVERLOAD_DRAG_MIME)
+      ? 'copy'
+      : 'move';
   }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
+
+      const overloadDataStr = event.dataTransfer.getData(FUNCTION_OVERLOAD_DRAG_MIME);
+      if (overloadDataStr) {
+        try {
+          const { functionId, overloadId } = JSON.parse(
+            overloadDataStr
+          ) as FunctionOverloadDragPayload;
+          const func = functions.find((f) => f.id === functionId);
+          if (!func) return;
+
+          const boundData = applyFunctionCallBinding(
+            {
+              label: '',
+              category: 'Project',
+              inputs: [],
+              outputs: [],
+              inlineValues: {},
+            },
+            func,
+            overloadId
+          );
+
+          const crossTarget = resolveCrossGraphTarget(
+            activeGraphTab,
+            {
+              label: boundData.label,
+              linkedGraphId: func.id,
+              linkKind: 'call_function',
+            },
+            functions,
+            []
+          );
+          if (
+            crossTarget &&
+            wouldCrossGraphDependencyCycle(
+              getDocuments() ?? {},
+              functions,
+              [],
+              activeGraphTab,
+              crossTarget.targetGraphId
+            )
+          ) {
+            dispatchEditorWarning('Circular cross-graph reference is not allowed.');
+            return;
+          }
+
+          const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+          const newNode: VVSNodeType = {
+            id: `node-${Date.now()}`,
+            type: 'vvs_standard_node',
+            position,
+            data: boundData,
+          };
+          setNodesWithHistory((nds) => [...nds, newNode]);
+        } catch (e) {
+          console.error('Failed to parse dropped function overload', e);
+        }
+        return;
+      }
+
       const variableDataStr = event.dataTransfer.getData('application/vvs-variable');
       if (!variableDataStr) return;
 
@@ -533,7 +615,14 @@ function GraphCanvasInner() {
         console.error('Failed to parse dropped variable', e);
       }
     },
-    [screenToFlowPosition]
+    [
+      activeGraphTab,
+      functions,
+      getDocuments,
+      openTabs,
+      screenToFlowPosition,
+      setNodesWithHistory,
+    ]
   );
 
   const handleSpawnVariableNode = useCallback(
@@ -542,39 +631,37 @@ function GraphCanvasInner() {
       variable: import('@/types/graph').GraphVariable,
       flowPosition: { x: number; y: number }
     ) => {
-      const kindId = type === 'Get' ? 'variable_get' : 'variable_set';
+      if (type === 'Set' && variable.flags?.readonly) {
+        dispatchEditorWarning(`Variable "${variable.name}" is read-only — use Get only.`);
+        setVariableMenu(null);
+        return;
+      }
+
+      const role = type === 'Get' ? 'get' : 'set';
+      const empty = {
+        label: '',
+        category: 'Variables',
+        inputs: [],
+        outputs: [],
+        inlineValues: {},
+      };
+      const data = applyVariableRefBinding(empty, variable, role);
+      if (type === 'Set') {
+        data.inlineValues = {
+          val:
+            typeof variable.defaultValue === 'string' ||
+            typeof variable.defaultValue === 'number' ||
+            typeof variable.defaultValue === 'boolean'
+              ? variable.defaultValue
+              : 0,
+        };
+      }
+
       const newNode: VVSNodeType = {
         id: `node-${Date.now()}`,
         type: 'vvs_standard_node',
         position: flowPosition,
-        data: {
-          label: `${type} ${variable.name}`,
-          category: 'Variables',
-          kindId,
-          properties: { variableName: variable.name },
-          inputs:
-            type === 'Set'
-              ? [
-                  { id: 'exec_in', label: '', type: 'execution' },
-                  { id: 'val', label: 'New Value', type: `data_${variable.type}` as PinType },
-                ]
-              : [],
-          outputs:
-            type === 'Get'
-              ? [{ id: 'val', label: variable.name, type: `data_${variable.type}` as PinType }]
-              : [{ id: 'exec_out', label: '', type: 'execution' }],
-          inlineValues:
-            type === 'Set'
-              ? {
-                  val:
-                    typeof variable.defaultValue === 'string' ||
-                    typeof variable.defaultValue === 'number' ||
-                    typeof variable.defaultValue === 'boolean'
-                      ? variable.defaultValue
-                      : 0,
-                }
-              : {},
-        },
+        data,
       };
       setNodesWithHistory((nds) => nds.concat(newNode));
       setVariableMenu(null);
@@ -666,42 +753,6 @@ function GraphCanvasInner() {
       eds.filter((edge) => !nodes.find((n) => n.selected && (n.id === edge.source || n.id === edge.target)))
     );
   }, [handleCopy, nodes, setNodesWithHistory, setEdgesWithHistory]);
-
-  React.useEffect(() => {
-    const handleVariableRenamed = (event: Event) => {
-      const { oldName, newName } = (event as CustomEvent<{ oldName: string; newName: string }>).detail;
-      if (!oldName || !newName || oldName === newName) return;
-      setNodesWithHistory((nds) =>
-        nds.map((n) => {
-          if (n.type !== 'vvs_standard_node' || n.data.category !== 'Variables') return n;
-          const label = n.data.label;
-          if (label === `Get ${oldName}`) {
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                label: `Get ${newName}`,
-                properties: { ...n.data.properties, variableName: newName },
-              },
-            };
-          }
-          if (label === `Set ${oldName}`) {
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                label: `Set ${newName}`,
-                properties: { ...n.data.properties, variableName: newName },
-              },
-            };
-          }
-          return n;
-        })
-      );
-    };
-    window.addEventListener('vvs:variable-renamed', handleVariableRenamed);
-    return () => window.removeEventListener('vvs:variable-renamed', handleVariableRenamed);
-  }, [setNodesWithHistory]);
 
   React.useEffect(() => {
     const handleFunctionRenamed = (event: Event) => {
@@ -879,7 +930,7 @@ function GraphCanvasInner() {
 
   React.useEffect(() => {
     const onSpawnEventNode = (event: Event) => {
-      const detail = (event as CustomEvent<{ eventId: string; role: 'define' | 'dispatch' }>).detail;
+      const detail = (event as CustomEvent<{ eventId: string; role: 'define' | 'dispatch' | 'emit' | 'subscribe' }>).detail;
       const projectEvent = events.find((e) => e.id === detail.eventId);
       if (!projectEvent) return;
 
@@ -903,6 +954,45 @@ function GraphCanvasInner() {
     return () => window.removeEventListener(SPAWN_EVENT_NODE_EVENT, onSpawnEventNode);
   }, [events, screenToFlowPosition, setNodesWithHistory, setSelection]);
 
+  React.useEffect(() => {
+    const onSpawnEnvNode = (event: Event) => {
+      const detail = (event as CustomEvent<{ action: EnvironmentSpawnAction; symbolId: string }>)
+        .detail;
+      const manifest = getLinkedEnvironmentManifest(environmentId);
+      if (!manifest) return;
+
+      const pane = document.querySelector('.react-flow');
+      const bounds = pane?.getBoundingClientRect();
+      const x = bounds ? bounds.left + bounds.width / 2 : window.innerWidth / 2;
+      const y = bounds ? bounds.top + bounds.height / 2 : window.innerHeight / 2;
+      const flowPosition = screenToFlowPosition({ x, y });
+      const nodeData = buildEnvironmentNodeData(
+        manifest,
+        targetLanguage,
+        detail.action,
+        detail.symbolId
+      );
+      if (!nodeData) return;
+      const nodeId = `node-${Date.now()}`;
+      const newNode: VVSNodeType = {
+        id: nodeId,
+        type: 'vvs_standard_node',
+        position: flowPosition,
+        data: nodeData,
+      };
+      setNodesWithHistory((nds) => nds.concat(newNode));
+      setSelection({ type: 'node', id: nodeId });
+    };
+
+    window.addEventListener(SPAWN_ENV_NODE_EVENT, onSpawnEnvNode);
+    return () => window.removeEventListener(SPAWN_ENV_NODE_EVENT, onSpawnEnvNode);
+  }, [environmentId, targetLanguage, screenToFlowPosition, setNodesWithHistory, setSelection]);
+
+  const environmentManifest = useMemo(
+    () => getLinkedEnvironmentManifest(environmentId),
+    [environmentId]
+  );
+
   return (
     <div
       className="relative w-full h-full"
@@ -914,7 +1004,7 @@ function GraphCanvasInner() {
       <GraphFloatingDetails />
       <GraphFloatingCompilerLog />
       <div className="absolute bottom-2 left-2 z-10 pointer-events-none text-[10px] text-zinc-600 bg-zinc-950/80 border border-zinc-800/80 rounded px-2 py-1">
-        Alt+click or right-click wire to delete · Delete key removes selection
+        Alt+click wire to delete · Delete removes selection · drag overloads to call
       </div>
       <ReactFlow
         nodes={nodes}
@@ -939,20 +1029,24 @@ function GraphCanvasInner() {
         noDragClassName="nodrag"
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#333" />
-        <Controls />
-        <MiniMap
-          nodeColor={(n) => {
-            if (n.data?.category === 'Events') return 'var(--vvs-cat-events)';
-            if (n.data?.category === 'Action') return 'var(--vvs-cat-action)';
-            if (n.data?.category === 'Math') return 'var(--vvs-cat-math)';
-            if (n.data?.category === 'Variables') return 'var(--vvs-cat-variables, #4f46e5)';
-            if (n.data?.category === 'Project') return 'var(--vvs-cat-project, #818cf8)';
-            if (n.data?.category === 'Imports') return 'var(--vvs-cat-imports, #14b8a6)';
-            return '#3f3f46';
-          }}
-          maskColor="rgba(10, 10, 12, 0.7)"
-          style={{ backgroundColor: '#18181b' }}
-        />
+        {graphChromeOpen ? (
+          <>
+            <Controls />
+            <MiniMap
+              nodeColor={(n) => {
+                if (n.data?.category === 'Events') return 'var(--vvs-cat-events)';
+                if (n.data?.category === 'Action') return 'var(--vvs-cat-action)';
+                if (n.data?.category === 'Math') return 'var(--vvs-cat-math)';
+                if (n.data?.category === 'Variables') return 'var(--vvs-cat-variables, #4f46e5)';
+                if (n.data?.category === 'Project') return 'var(--vvs-cat-project, #818cf8)';
+                if (n.data?.category === 'Imports') return 'var(--vvs-cat-imports, #14b8a6)';
+                return '#3f3f46';
+              }}
+              maskColor="rgba(10, 10, 12, 0.7)"
+              style={{ backgroundColor: '#18181b' }}
+            />
+          </>
+        ) : null}
         {menu && (
           <NodeContextMenu
             x={menu.x}
@@ -963,6 +1057,9 @@ function GraphCanvasInner() {
             currentGraphId={activeGraphTab}
             functions={functions}
             openTabs={openTabs}
+            environmentId={environmentId}
+            environmentManifest={environmentManifest}
+            targetLanguage={targetLanguage}
           />
         )}
         {variableMenu && (

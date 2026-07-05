@@ -16,7 +16,7 @@ Companion rules: `docs/naming_and_product_direction.md` · `docs/ui_api_delivery
 | Principle | VVS rule of thumb |
 |-----------|-------------------|
 | **S** Single Responsibility | One reason to change per module: UI renders, hooks hold graph state, `VvsApi` talks to backend, transpiler stages stay separate |
-| **O** Open/Closed | New **language** = syntax registry data + emitter strategy — not edits to graph analysis |
+| **O** Open/Closed | New **language** = registry + emitter; new **node kind** = registry + lowering with **visible** text — never hidden transforms (no macro expand, no fold) |
 | **L** Liskov Substitution | Mock and HTTP transports implement the same `VvsApi` contract; any `GraphRepository` impl must honor port semantics |
 | **I** Interface Segregation | Small ports (`GraphRepository`, `LibraryRepository`) — no god-interface on the frontend context |
 | **D** Dependency Inversion | UI → `VvsApi` → transport; Go handlers → services → ports; transpiler → IR interfaces, not React |

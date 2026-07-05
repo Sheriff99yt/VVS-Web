@@ -1,0 +1,10 @@
+    switch (1) {
+      case 0:
+            // empty
+            break;
+      case 1:
+        console.log("one");
+            break;
+    };
+  }
+}

@@ -1,0 +1,7 @@
+        {
+          // sequence
+            std::cout << "first" << std::endl;
+            std::cout << "second" << std::endl;
+        }
+    }
+};

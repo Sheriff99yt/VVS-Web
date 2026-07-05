@@ -3,18 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { FunctionBinding, FunctionSymbol, PinType, SymbolVisibility } from '@vvs/graph-types';
-import { createDefaultOverload } from '@vvs/graph-types';
+import { createDefaultOverload, FUNCTION_RETURN_TYPE_OPTIONS } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { SymbolParameterEditor } from './SymbolParameterEditor';
 import { overloadDisplayLabel } from '@/lib/functionTabs';
 
-const RETURN_TYPES: { value: PinType | 'void'; label: string }[] = [
-  { value: 'void', label: 'None' },
-  { value: 'data_number', label: 'Number' },
-  { value: 'data_string', label: 'Text' },
-  { value: 'data_boolean', label: 'Yes/No' },
-  { value: 'data_any', label: 'Any' },
-];
+const RETURN_TYPES = FUNCTION_RETURN_TYPE_OPTIONS;
 
 interface FunctionPropertiesPanelProps {
   func: FunctionSymbol;

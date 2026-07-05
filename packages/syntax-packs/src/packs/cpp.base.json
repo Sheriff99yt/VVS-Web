@@ -1,0 +1,10 @@
+{
+  "id": "cpp.base",
+  "version": "1",
+  "family": "cpp",
+  "templates": {
+    "Print": { "quasi": "std::cout << {value} << std::endl;" },
+    "Assign": { "quasi": "{target} = {value};" },
+    "CallInstance": { "quasi": "{callee}();" }
+  }
+}

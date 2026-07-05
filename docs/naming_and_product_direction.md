@@ -2,7 +2,7 @@
 
 Canonical vocabulary and product principles. **Do not use Unreal Engine Blueprint terminology** in user-facing UI, docs, or generated code labels — even though the interaction model is inspired by node-based visual programming.
 
-Companion: [vision.md](vision.md) · [roadmap.md](roadmap.md) · [project_requirements.md](project_requirements.md) · [current_state.md](current_state.md)
+Companion: [vision.md](vision.md) · [visual_to_text_fidelity.md](visual_to_text_fidelity.md) · [roadmap.md](roadmap.md) · [project_requirements.md](project_requirements.md) · [current_state.md](current_state.md)
 
 ---
 
@@ -10,11 +10,11 @@ Companion: [vision.md](vision.md) · [roadmap.md](roadmap.md) · [project_requir
 
 ### 1. Visual layer on top of code — not a replacement
 
-VVS is a **visual way to compose logic** that **generates ordinary source code**. Users can always read, edit, copy, and run the output in their existing toolchain (IDE, repo, CI, runtime).
+VVS is a **visual way to compose logic** that **generates ordinary source code** with **text-shaped fidelity** — every behavioral node maps to visible text ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)).
 
-- The graph is the authoring view; **text code remains the source of truth** for integration.
+- The graph is the authoring view; **text code remains the integration layer** for git, IDE, CI, and third-party embedding.
 - No proprietary runtime required to use exported code.
-- Generated output should look like a human wrote it in the target language.
+- Generated output should look like a human wrote it in the target language — **and match what the graph shows**.
 
 ### 2. Beginner-friendly, professional depth
 
@@ -25,13 +25,13 @@ VVS is a **visual way to compose logic** that **generates ordinary source code**
 ### 3. Integrates with existing systems
 
 - Export to standard files (`.py`, `.js`, `.ts`, `.cpp`, JSON graph).
-- **Bring your own AI** (Cursor, Claude, Codex, etc.) via MCP — no bundled LLM subscription.
+- Embed in **any** product — generated modules import like hand-written code; no VVS VM.
+- **Bring your own AI** (Cursor, Claude, Codex, etc.) via MCP — predictable text diffs when graphs change.
 - **Bring your own backend** later (Supabase, self-hosted) — graphs are data, not a walled garden.
-- MCP and REST are integration surfaces; the app does not require replacing the user's stack.
 
 ### 4. Familiar to anyone who has seen node editors
 
-The UX borrows **patterns** from visual scripting (wires, typed ports, execution flow) but names things like general software development tools — closer to Node-RED, Blender nodes, or Scratch than to a game engine.
+The UX borrows **canvas patterns** from node editors (wires, typed ports, flow) but **semantics follow text code** — functions, calls, handlers — not Unreal Blueprint VM rules (macro expand, latent delay).
 
 ---
 
@@ -53,7 +53,8 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Per-frame hook | **On Update** | Event Tick, Tick | Optional; name for loop/frame |
 | User-defined entry | **Custom event** | — | |
 | Local state | **Variable** | — | Standard CS term |
-| Reusable subgraph | **Function** | Macro (UI may allow both later) | Opens as graph tab |
+| Reusable subgraph | **Function** | Macro, Blueprint Macro | Opens as graph tab; **Call Function** in generated text |
+| Macro (legacy UI tab) | **Function** *(migrate)* | Macro | Deprecated as codegen concept — see [visual_to_text_fidelity.md](visual_to_text_fidelity.md) |
 | Build graph → code | **Generate code** | Compile (OK in toolbar shorthand) | Button may say **Generate**; logs say "generation" |
 | Generated artifact name | **Module name** | Class name, BP_* | Maps to class/module in target language |
 | Optional base type | **Extends** | Parent class, Super | Optional; OOP languages only |
@@ -133,11 +134,11 @@ The **web editor** stays engine-neutral in user-facing copy. The planned **UE6 e
 | Context | Vocabulary |
 |---------|------------|
 | Web app UI | Graph, function, variable, flow — per table above |
-| UE plugin (in-engine) | May use engine-familiar affordances where they aid Blueprint → Verse transition |
+| UE plugin (in-engine) | Same **text-shaped** Verse output; canvas may feel familiar — **not** Blueprint VM semantics |
 | Generated Verse | Normal Verse idioms; not web UI labels |
 | Public messaging | “UE6 integration”, “Verse output”, “Blueprint transition” — see [vision.md](vision.md) |
 
-Do not describe the **web product** as “a Blueprint system for the browser.” Do describe the **roadmap** as helping teams move from legacy Blueprint workflows to Verse via a shared, dynamic node system.
+Do not describe the **web product** as “a Blueprint system for the browser.” Do describe the **roadmap** as **Verse-oriented output with honest visual↔text mapping** — not Blueprint simulation.
 
 ---
 
@@ -147,5 +148,6 @@ Before adding UI or docs:
 
 - [ ] No "Blueprint", "BeginPlay", "BP_", or engine jargon in user-facing strings — see `docs/naming_and_product_direction.md`
 - [ ] Generated code examples use normal language idioms
-- [ ] Features framed as **export** and **integrate**, not lock-in
+- [ ] No Blueprint VM semantics (macro expand, latent delay without text) in transpiler or docs
+- [ ] New nodes pass fidelity checklist in [visual_to_text_fidelity.md](visual_to_text_fidelity.md)
 - [ ] AI features framed as **Connect AI (MCP)**, not built-in chatbot

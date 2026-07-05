@@ -118,6 +118,7 @@ export function GraphWorkspaceHost({
   const {
     getAllDocuments,
     loadAllDocuments,
+    patchAllDocuments,
     getActiveTabMetadata,
     updateActiveTabMetadata,
     subscribeMetadata,
@@ -137,6 +138,7 @@ export function GraphWorkspaceHost({
   const tabSyncRef = useRef({
     getAllDocuments,
     loadAllDocuments,
+    patchAllDocuments,
     importGraphTab,
     getActiveTabMetadata,
     updateActiveTabMetadata,
@@ -145,17 +147,34 @@ export function GraphWorkspaceHost({
   tabSyncRef.current = {
     getAllDocuments,
     loadAllDocuments,
+    patchAllDocuments,
     importGraphTab,
     getActiveTabMetadata,
     updateActiveTabMetadata,
     subscribeMetadata,
   };
 
+  const patchAllDocumentsWithDirty = useCallback(
+    (
+      updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
+      options?: { affectedTabIds?: string[] }
+    ) => {
+      const affected = tabSyncRef.current.patchAllDocuments(updater, options);
+      for (const tabId of affected) {
+        markTabDirty(tabId);
+      }
+      setCompileState('dirty');
+      return affected;
+    },
+    [markTabDirty, setCompileState]
+  );
+
   useEffect(() => {
     registerWorkspace({
       getDocuments: () => tabSyncRef.current.getAllDocuments(),
       loadDocuments: (documents, activeTab) =>
         tabSyncRef.current.loadAllDocuments(documents, activeTab),
+      patchAllDocuments: patchAllDocumentsWithDirty,
       importGraphDocument: (tab, document) =>
         tabSyncRef.current.importGraphTab(tab, document),
       getActiveTabMetadata: () => tabSyncRef.current.getActiveTabMetadata(),
@@ -164,7 +183,7 @@ export function GraphWorkspaceHost({
       subscribeMetadata: (listener) => tabSyncRef.current.subscribeMetadata(listener),
     });
     return () => registerWorkspace(null);
-  }, [registerWorkspace]);
+  }, [registerWorkspace, patchAllDocumentsWithDirty]);
 
   const documentsHydratedRef = useRef(false);
   useEffect(() => {

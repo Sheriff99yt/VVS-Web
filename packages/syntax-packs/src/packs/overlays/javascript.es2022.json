@@ -1,0 +1,11 @@
+{
+  "id": "javascript.es2022",
+  "version": "1",
+  "family": "javascript",
+  "extends": "javascript.base@1",
+  "capabilities": ["es2022"],
+  "templates": {
+    "Print": { "quasi": "console.log({value});" },
+    "NullCoalesce": { "quasi": "{left} ?? {right}" }
+  }
+}

@@ -12,8 +12,8 @@ export interface GraphDocument {
   metadata?: GraphTabMetadata;
 }
 
-export function defaultTabMetadata(tabType: 'main' | 'function' | 'macro', tabName: string): GraphTabMetadata {
-  const cleanName = tabName.replace(/^Function:\s*/, '').replace(/^Macro:\s*/, '');
+export function defaultTabMetadata(tabType: 'main' | 'function', tabName: string): GraphTabMetadata {
+  const cleanName = tabName.replace(/^Function:\s*/, '');
   return {
     moduleName: tabType === 'main' ? 'PlayerController' : cleanName || 'Graph',
     extendsType: '',
@@ -23,7 +23,7 @@ export function defaultTabMetadata(tabType: 'main' | 'function' | 'macro', tabNa
 
 export function withDefaultMetadata(
   doc: GraphDocument,
-  tabType: 'main' | 'function' | 'macro',
+  tabType: 'main' | 'function',
   tabName: string
 ): GraphDocument {
   return {
@@ -57,51 +57,12 @@ export function createFunctionGraph(name: string): GraphDocument {
   );
 }
 
-export function createMacroGraph(name: string): GraphDocument {
-  const inputId = `macro-in-${Date.now()}`;
-  const outputId = `macro-out-${Date.now() + 1}`;
-  return withDefaultMetadata(
-    {
-      nodes: [
-      {
-        id: inputId,
-        type: 'vvs_standard_node',
-        position: { x: 80, y: 120 },
-        data: {
-          label: `${name} Input`,
-          category: 'Flow Control',
-          inputs: [],
-          outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-          inlineValues: {},
-        },
-      },
-      {
-        id: outputId,
-        type: 'vvs_standard_node',
-        position: { x: 400, y: 120 },
-        data: {
-          label: `${name} Output`,
-          category: 'Flow Control',
-          inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
-          outputs: [],
-          inlineValues: {},
-        },
-      },
-      ],
-      edges: [],
-    },
-    'macro',
-    name
-  );
-}
-
 export function createDefaultGraphForTab(
-  tabType: 'main' | 'function' | 'macro',
+  tabType: 'main' | 'function',
   tabName: string,
   fallback?: GraphDocument
 ): GraphDocument {
   if (fallback) return fallback;
   if (tabType === 'function') return createFunctionGraph(tabName);
-  if (tabType === 'macro') return createMacroGraph(tabName);
   return { nodes: [], edges: [] };
 }

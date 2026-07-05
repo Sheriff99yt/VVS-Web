@@ -1,0 +1,74 @@
+{
+  "name": "call",
+  "description": "Call Function instance method",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "variables": [],
+  "functions": [
+    {
+      "kind": "function",
+      "id": "fn-greet",
+      "name": "Greet",
+      "binding": "instance",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "ov-greet",
+          "parameters": [],
+          "returnType": "void"
+        }
+      ]
+    }
+  ],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "call-greet",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "Call Greet",
+        "category": "Project",
+        "kindId": "vvs.project.call_function",
+        "linkKind": "call_function",
+        "linkedGraphId": "fn-greet",
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "fn-greet",
+          "overloadId": "ov-greet"
+        },
+        "properties": {
+          "functionId": "fn-greet",
+          "functionName": "Greet",
+          "overloadId": "ov-greet"
+        },
+        "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "call-greet",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

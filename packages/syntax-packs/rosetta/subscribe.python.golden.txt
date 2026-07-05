@@ -1,0 +1,1 @@
+        self._subscribe('tick', self.on_tick)

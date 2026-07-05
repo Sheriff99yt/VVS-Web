@@ -5,7 +5,7 @@ import type {
 } from '@/types/editorNavigation';
 import { VVS_HISTORY_STATE_KEY, VVS_NAVIGATION_VERSION } from '@/types/editorNavigation';
 
-const EDITOR_VIEWS = new Set<EditorViewTab>(['canvas', 'references', 'library']);
+const EDITOR_VIEWS = new Set<EditorViewTab>(['canvas', 'references', 'library', 'roadmap']);
 
 /** @deprecated Legacy v0 frame — graph tab + view only. */
 interface LegacyVvsEditorHistoryEntry {

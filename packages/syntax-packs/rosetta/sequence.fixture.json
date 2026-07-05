@@ -1,0 +1,100 @@
+{
+  "name": "sequence",
+  "description": "Sequence node with two then pins",
+  "moduleName": "Demo",
+  "extendsType": "",
+  "variables": [],
+  "functions": [],
+  "events": [],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "On Start",
+        "category": "Events",
+        "kindId": "event_on_start",
+        "inputs": [],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "seq",
+      "type": "vvs_standard_node",
+      "position": { "x": 200, "y": 0 },
+      "data": {
+        "label": "Sequence",
+        "category": "Flow Control",
+        "kindId": "flow_sequence",
+        "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+        "outputs": [
+          { "id": "then_0", "label": "Then 0", "type": "execution" },
+          { "id": "then_1", "label": "Then 1", "type": "execution" },
+          { "id": "then_2", "label": "Then 2", "type": "execution" },
+          { "id": "exec_out", "label": "", "type": "execution" }
+        ],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "print-first",
+      "type": "vvs_standard_node",
+      "position": { "x": 400, "y": -50 },
+      "data": {
+        "label": "Print",
+        "category": "Action",
+        "kindId": "action_print",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "in_str", "label": "String", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "in_str": "first" }
+      }
+    },
+    {
+      "id": "print-second",
+      "type": "vvs_standard_node",
+      "position": { "x": 400, "y": 50 },
+      "data": {
+        "label": "Print",
+        "category": "Action",
+        "kindId": "action_print",
+        "inputs": [
+          { "id": "exec_in", "label": "", "type": "execution" },
+          { "id": "in_str", "label": "String", "type": "data_string" }
+        ],
+        "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+        "inlineValues": { "in_str": "second" }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "seq",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    },
+    {
+      "id": "e2",
+      "source": "seq",
+      "target": "print-first",
+      "sourceHandle": "then_0",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    },
+    {
+      "id": "e3",
+      "source": "seq",
+      "target": "print-second",
+      "sourceHandle": "then_1",
+      "targetHandle": "exec_in",
+      "data": { "pinType": "execution" }
+    }
+  ]
+}

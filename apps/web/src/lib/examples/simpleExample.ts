@@ -1,8 +1,12 @@
 import { ProjectSnapshot } from '@/types/projectSnapshot';
 import { defaultTabMetadata } from '@/lib/graphDefaults';
+import { exampleDocument, execEdge, onStartNode, printStringNode } from '@/lib/examples/exampleGraphBuild';
 
 /** Minimal starter — On Start wired to a single Print String node. */
 export function createSimpleExampleSnapshot(): ProjectSnapshot {
+  const start = onStartNode('ex-simple-start', { x: 80, y: 80 });
+  const print = printStringNode('ex-simple-print', { x: 380, y: 80 }, 'Hello from VVS!');
+
   return {
     version: 2,
     savedAt: new Date().toISOString(),
@@ -21,46 +25,7 @@ export function createSimpleExampleSnapshot(): ProjectSnapshot {
     autoSave: false,
     documents: {
       main: {
-        nodes: [
-          {
-            id: 'ex-simple-start',
-            type: 'vvs_standard_node',
-            position: { x: 80, y: 80 },
-            data: {
-              label: 'On Start',
-              category: 'Events',
-              inputs: [],
-              outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-              inlineValues: {},
-            },
-          },
-          {
-            id: 'ex-simple-print',
-            type: 'vvs_standard_node',
-            position: { x: 380, y: 80 },
-            data: {
-              label: 'Print String',
-              category: 'Action',
-              inputs: [
-                { id: 'exec_in', label: '', type: 'execution' },
-                { id: 'in_str', label: 'In String', type: 'data_string' },
-              ],
-              outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
-              inlineValues: { in_str: 'Hello from VVS!' },
-            },
-          },
-        ],
-        edges: [
-          {
-            id: 'ex-simple-edge',
-            source: 'ex-simple-start',
-            target: 'ex-simple-print',
-            sourceHandle: 'exec_out',
-            targetHandle: 'exec_in',
-            type: 'vvs_standard_edge',
-            data: { pinType: 'execution' },
-          },
-        ],
+        ...exampleDocument([start, print], [execEdge('ex-simple-edge', start.id, print.id)]),
         metadata: defaultTabMetadata('main', 'Main graph'),
       },
     },

@@ -58,7 +58,7 @@ Before adding visible UI, answer:
 - **Node / variable selected:** show inspector immediately.
 - **Graph settings:** behind explicit action ("Graph settings…").
 
-**VVS:** `RightSidebar.tsx`, `GraphPropertiesPanel.tsx` (`onClose` back to idle).
+**VVS:** `GraphFloatingDetails.tsx` — floating panel on canvas; `PropertySchemaPanel` (Settings) + `NodePinsPanel` (pins); force-expand on broken symbol ref.
 
 ### 5. Secondary indexes behind disclosure
 
