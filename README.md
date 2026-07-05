@@ -52,7 +52,7 @@ We are deliberately building the **visual editor and data contracts first**, wit
 | Big-bang integration | One feature slice per iteration (save, health, compile, …) with shared types |
 | Engine jargon leaking into a portable web product | Web copy stays engine-neutral; Verse/UE integration is a **target**, not the whole identity |
 
-**Rule of thumb for contributors:** if it is not in [current_state.md](docs/current_state.md), treat it as **planned** — do not assume MCP, Supabase, or real codegen are live. Extend the UI and types first; plug in backend when the contract is clear.
+**Rule of thumb for contributors:** if it is not in [current_state.md](docs/current_state.md), treat it as **planned** — local MCP and Go HTTP API work in dev; cloud persistence is Phase 2 ([deployment.md](docs/deployment.md)). Extend the UI and types first; plug in `PostgresStore` when the contract is clear.
 
 ---
 

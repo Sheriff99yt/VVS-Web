@@ -103,7 +103,7 @@ if (Test-CommandExists "go") {
     if (Test-CommandExists "winget") {
         Write-Host "  Attempting Go install via winget..." -ForegroundColor Cyan
         winget install GoLang.Go --source winget --accept-package-agreements --accept-source-agreements
-        Write-Host "  Go install requested — restart terminal if 'go' is not found" -ForegroundColor Green
+        Write-Host "  Go install requested - restart terminal if 'go' is not found" -ForegroundColor Green
     } else {
         Write-Host "  Download from https://go.dev/dl/ if you need the Go server" -ForegroundColor DarkYellow
     }
@@ -114,7 +114,7 @@ Write-Host "`nChecking for Git..." -ForegroundColor Yellow
 if (Test-CommandExists "git") {
     Write-Host "  $(git --version)" -ForegroundColor Green
 } else {
-    Write-Host "  Git not found — install from https://git-scm.com/" -ForegroundColor Red
+    Write-Host "  Git not found - install from https://git-scm.com/" -ForegroundColor Red
 }
 
 # 4. Frontend dependencies
@@ -128,7 +128,7 @@ if (Test-Path $webPath) {
         Pop-Location
     }
 } else {
-    Write-Host "  apps/web not found — skipping" -ForegroundColor Red
+    Write-Host "  apps/web not found - skipping" -ForegroundColor Red
 }
 
 # 5. Local env file (gitignored)

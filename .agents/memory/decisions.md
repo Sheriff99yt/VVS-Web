@@ -44,7 +44,7 @@ Done for daily editing UX (sections 1–3 of `incomplete-ui.md`):
 - `data_array` pin geometry; simulation mock highlight
 - Centralized wire validation in `graphWiring.ts` (single-wire-per-input, cycle guards)
 
-Still open: File New/Import polish, Library backend, MCP connect, full IR pipeline split — see `incomplete-ui.md` sections 4–8.
+Still open: File New/Import polish, Library backend, **PostgresStore + VPS deploy** — see `docs/deployment.md` and `incomplete-ui.md` sections 4–8.
 
 ## Public repository & product direction
 
@@ -104,6 +104,20 @@ Still partial: full analyze→lower→emit IR module split, ambiguous overload p
 - Transpiler: pure TypeScript in `packages/transpiler`, three-stage pipeline, zero React deps
 - Go MCP tools: thin wrappers over pure functions in `internal/core/services/`
 - Cross-domain communication via typed contracts only (`graph-types`, OpenAPI, `VvsApi`)
+
+## Deployment & persistence (July 2026 — locked)
+
+**Canonical spec:** `docs/deployment.md`
+
+- **Self-hosted Supabase** on VPS — **Postgres + GoTrue (Auth) + Studio**; dev VPS + live VPS (shared hosting = static web only, not Supabase Docker)
+- **Go is the only product API** — Next.js and MCP call `server/` REST + `/mcp`; **not** PostgREST for project/graph CRUD
+- **Go ↔ Postgres via `pgx` pool** — `PostgresStore` replaces `MemoryStore`; same service interfaces
+- **Auth:** GoTrue issues JWT; **Go middleware** verifies JWKS and scopes `user_id` on HTTP + MCP (production)
+- **Storage:** `projects` table with **JSONB `ProjectSnapshot v2`**; tab-level document rows later for large graphs / collab
+- **Browser transpiler stays primary** for editor preview; Go compile/MCP uses existing CLI bridge
+- **No Redis v1** — Postgres + in-process cache until horizontal scale requires it
+- **Phase 4 collab:** Go WebSockets + op log — not Supabase Realtime for product paths
+- **`.vvs/` folders** remain first-class alongside cloud sync
 
 ## Graph system isolation (July 2026)
 

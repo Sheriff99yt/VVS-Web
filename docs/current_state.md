@@ -306,25 +306,30 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Syntax pack MCP tools | `server/` Go | **Partial** — `GET /registry/syntax-packs` + catalog; full MCP wire + propose/run_rosetta TBD |
 | Tree-sitter parse validation | CI | **Deferred** — optional validator, not syntax author |
 | `language-profiles/profiles/*.json` | packages | Profiles in TypeScript today; JSON packs optional |
-| Supabase auth / persistence | Go + Supabase | Not started |
-| MCP server transport | `server/` Go | **Partial** — Phase 1 local SSE at `http://localhost:8080/mcp` (other agent); UI probe wired |
-| HTTP project REST | `server/` Go | **Partial** — frontend wired; `GET/PUT /api/projects`, `POST …/compile` (Go handler TBD) |
-| WebSocket collaboration | `server/` Go | Not started |
+| Supabase auth / persistence | Go + **self-hosted Supabase** (`pgx`) | **Planned Phase 2** — [deployment.md](deployment.md); in-memory store today |
+| MCP server transport | `server/` Go | **Done (local)** — SSE at `/mcp`; production JWT + VPS deploy Phase 2 |
+| HTTP project REST | `server/` Go | **Done (local)** — in-memory `GET/PUT /api/projects`, `POST …/compile`; **PostgresStore** Phase 2 |
+| WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
 | PWA / offline sync | — | Not started |
 | Community library backend | Supabase + pgvector | UI skeleton only |
 | **UE6 editor plugin (Verse)** | `plugins/` (planned) | Roadmap — [roadmap.md](roadmap.md#phase-5--unreal-engine-6-editor-plugin-strategic) |
 
 ---
 
-## Backend (`server/`) — Skeleton + registry
+## Backend (`server/`) — API, registry, local MCP
+
+**Phase 2 target:** Self-hosted Supabase Postgres + GoTrue; Go persists via **`pgx`** — see [deployment.md](deployment.md).
 
 - `internal/core/domain/graph.go` — nodes, `GraphBinding`, `FunctionSymbol`
 - `internal/core/domain/snapshot.go` — `ProjectSnapshot` v2 mirror
-- `internal/core/registry/` — embedded `core-pack.json`, `ListAvailableNodes()` + tests
-- `internal/core/ports/services.go` — hexagonal port interfaces
-- `cmd/vvs-server/main.go` — `GET /health`, registry routes; Phase 1 adds `GET/PUT /api/projects`, `POST …/compile`, MCP at `/mcp` (in progress)
+- `internal/core/registry/` — embedded `core-pack.json`, environments, syntax-packs
+- `internal/core/store/memory.go` — in-memory projects (Phase 1); **`PostgresStore` TBD**
+- `internal/core/services/` — project, graph_edit, compile (pure functions)
+- `internal/transport/http/` — projects, compile, CORS
+- `internal/transport/mcp/` — MCP tools (thin wrappers)
+- `cmd/vvs-server/main.go` — health, registry, `/api/projects`, `/mcp`
 
-Frontend `NEXT_PUBLIC_API_MODE=http` calls project save/load/list/compile against the Go server. MCP URL in Connect AI modal: `http://localhost:8080/mcp`.
+Frontend `NEXT_PUBLIC_API_MODE=http` calls project save/load/list/compile against Go. MCP URL: `http://localhost:8080/mcp` (local dev).
 
 ---
 
@@ -338,6 +343,7 @@ Frontend `NEXT_PUBLIC_API_MODE=http` calls project save/load/list/compile agains
 | **`docs/language_profiles.md`** | Per-target native/emulated/unsupported features + warning semantics |
 | **`docs/vision.md`** | Product philosophy, UE6/Verse direction, logic/syntax model |
 | **`docs/roadmap.md`** | Public phased roadmap (including UE6 plugin) |
+| **`docs/deployment.md`** | Self-hosted Supabase + Go VPS architecture (locked) |
 | **`docs/current_state.md`** | What exists today; avoid re-introducing removed UI |
 | **`docs/ui_api_delivery_loop.md`** | Wiring UI to APIs — one slice per iteration |
 | `docs/naming_and_product_direction.md` | Vocabulary, product principles, terms to avoid |

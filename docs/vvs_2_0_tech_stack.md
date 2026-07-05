@@ -37,13 +37,14 @@ This document outlines the finalized technology stack for Vision Visual Scriptin
 
 ## 3. Data & Community Layer (The Memory)
 
-### Supabase (PostgreSQL)
-* **What**: The primary database for storing user accounts, private projects, and the community library.
-* **Why**: Offers built-in Auth and Realtime sync, drastically reducing the boilerplate needed for collaborative features. Furthermore, its Hybrid SQL+JSONB model natively solves the "Sparse Matrix" problem for syntax templates.
+### Self-hosted Supabase (PostgreSQL + Auth)
+* **What**: **Self-hosted** Supabase stack on VPS — **PostgreSQL** for projects/library and **GoTrue** for auth. Not Supabase Cloud; not PostgREST for VVS app CRUD.
+* **Why**: Full control on dev/live VPS; JSONB fits `ProjectSnapshot v2`; **pgvector** on same Postgres for Phase 3 library search. Go connects via **`pgx`** — one hop, production-grade.
+* **Spec:** [deployment.md](deployment.md)
 
-### pgvector (via Supabase)
-* **What**: A vector database extension for PostgreSQL used to store "Node Embeddings."
-* **Why**: Enables "Semantic Search," allowing users to find visual scripts by intent (e.g., "Smooth movement") rather than relying on exact keyword matches.
+### pgvector (PostgreSQL extension)
+* **What**: Vector extension on the **same** self-hosted Postgres used by Go.
+* **Why**: Semantic library search (Phase 3) without a separate vector service.
 
 ### IndexedDB Caching
 * **What**: In-browser local storage mechanism.
@@ -70,9 +71,14 @@ This document outlines the finalized technology stack for Vision Visual Scriptin
 * **Why**: Fast installs and native TypeScript test runner for transpiler snapshot tests.
 * **Current state**: Bun workspaces at repo root; `packages/graph-types`, `syntax-registry`, `language-profiles`, and `transpiler` are implemented and consumed by `apps/web`.
 
-### Vercel & Fly.io
-* **What**: The deployment platforms for the Next.js Frontend (Vercel) and the Go Backend Services (Fly.io).
-* **Why**: This is a natural split: Vercel provides edge CDN and optimized hosting for Next.js, while Fly.io provides persistent lightweight VMs globally distributed to handle the long-lived WebSocket and MCP server connections.
+### Deployment topology (locked)
+* **What**: **Self-hosted Supabase (Postgres + Auth)** + **Go API/MCP/WS** on **VPS**; Next.js on static edge or VPS; shared hosting for lightweight static assets only in dev.
+* **Why**: Go needs long-lived MCP/WebSocket processes; colocated Postgres minimizes latency; full control for final production architecture — see [deployment.md](deployment.md).
+* **Local dev**: `tools/start_app.ps1` — Next.js + Go in-memory until `PostgresStore` ships.
+
+### Optional: Vercel (web CDN)
+* **What**: Edge hosting for Next.js static export or SSR if not served from VPS.
+* **Why**: Fast global first paint; API/MCP remain on VPS regardless.
 
 ## 6. Engine Integration Layer (Roadmap)
 
@@ -94,8 +100,8 @@ These alternatives were evaluated and **locked in** for VVS 2.0:
 | Backend | **Go** — API, MCP, WebSockets; no Python AI bridge in v1 |
 | AI | **BYOAI via MCP** — no bundled LLM |
 | API transport | **REST (OpenAPI) + WebSocket** — not gRPC-Web |
-| Database | **Supabase (Postgres + JSONB + pgvector)** |
-| Caching | **IndexedDB (client)** — Redis removed from stack |
+| Database | **Self-hosted Supabase Postgres + JSONB** — Go **`pgx`**; PostgREST not used for app |
+| Caching | **IndexedDB (client)** + Go in-process — Redis deferred |
 | Tree-sitter | **Validator-only** — syntax packs + Rosetta golden tests are authoritative; optional parse check in CI |
-| Deploy | **Vercel (web) + Fly.io (Go)** |
+| Deploy | **VPS (Supabase Docker + Go)** — [deployment.md](deployment.md); optional Vercel for web CDN |
 | JS toolchain | **Bun** |

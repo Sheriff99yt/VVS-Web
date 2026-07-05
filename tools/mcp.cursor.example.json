@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "VVS": {
+      "url": "http://localhost:8080/mcp",
+      "headers": {}
+    }
+  }
+}

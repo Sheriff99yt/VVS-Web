@@ -11,7 +11,65 @@ export interface RoadmapSection {
   id: string;
   title: string;
   items: RoadmapItem[];
+  /** Public roadmap phase number (1–6), when applicable */
+  phase?: number;
+  /** Visual emphasis in the Roadmap view */
+  emphasis?: 'active' | 'shipped';
 }
+
+export interface RoadmapPhase {
+  number: number;
+  id: string;
+  title: string;
+  summary: string;
+  status: 'shipped' | 'active' | 'planned';
+}
+
+/** High-level phases — aligned with docs/roadmap.md */
+export const ROADMAP_PHASES: RoadmapPhase[] = [
+  {
+    number: 1,
+    id: 'phase-1',
+    title: 'Web editor & transpiler',
+    summary: 'Browser editor, client transpiler, .vvs/ folders, local Go API + MCP',
+    status: 'shipped',
+  },
+  {
+    number: 2,
+    id: 'phase-2',
+    title: 'Cloud + persistence',
+    summary: 'Self-hosted Supabase on VPS, Go pgx, JWT auth, production MCP',
+    status: 'active',
+  },
+  {
+    number: 3,
+    id: 'phase-3',
+    title: 'Community library',
+    summary: 'Upload, browse, pgvector semantic search',
+    status: 'planned',
+  },
+  {
+    number: 4,
+    id: 'phase-4',
+    title: 'Collaboration',
+    summary: 'Go WebSockets, presence, op log',
+    status: 'planned',
+  },
+  {
+    number: 5,
+    id: 'phase-5',
+    title: 'UE6 plugin',
+    summary: 'In-engine canvas, Verse emission, web round-trip',
+    status: 'planned',
+  },
+  {
+    number: 6,
+    id: 'phase-6',
+    title: 'Scale & polish',
+    summary: 'Performance, more emitters, mobile UX, enterprise ops',
+    status: 'planned',
+  },
+];
 
 /** Shipped editor and platform capabilities (aligned with docs/current_state.md). */
 export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
@@ -226,13 +284,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'transpile',
         title: 'Client transpiler',
         description:
-          'Structured IR v2 (analyze → lower → print → emit); Python, JS, C++, Verse, JSON; example + Rosetta snapshot tests.',
+          'IR v3 pipeline (analyze → graphToIr → print via syntax packs → per-target emit); Python, JS, C++, Verse, JSON; control flow (for/while/switch/sequence); example + Rosetta snapshot tests.',
       },
       {
         id: 'syntax-packs',
         title: 'Syntax packs & Rosetta suite',
         description:
-          '@vvs/syntax-packs — base JSON print templates, capability overlays (e.g. ES2022), golden fixtures (print, branch, assign, call, convert, dispatch, wait), fidelity linter.',
+          '@vvs/syntax-packs — base JSON print templates, capability overlays (e.g. ES2022), 15 Rosetta constructs (print, branch, assign, call, convert, dispatch, wait, loops, subscribe/emit, await, import, call_native), fidelity linter, generate:rosetta script.',
       },
       {
         id: 'codegen-target',
@@ -298,14 +356,16 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           'Templates (categorized environments) · Community · Installed; start project from template; install/link community assets (mock catalog).',
       },
       {
-        id: 'mcp-ui',
+        id: 'mcp-modal',
         title: 'Connect AI modal',
-        description: 'MCP URL copy, connection probe, honest offline messaging in mock mode.',
+        description:
+          'MCP URL copy, live probe against Go /mcp, honest offline messaging; tools/mcp.cursor.example.json for Cursor.',
       },
       {
         id: 'api-facade',
         title: 'VvsApi facade',
-        description: 'Mock and HTTP client layers for save, compile, health, and future backend wiring.',
+        description:
+          'Mock (localStorage) and HTTP (Go) transports — save, load, list, compile, health, MCP probe when NEXT_PUBLIC_API_MODE=http.',
       },
       {
         id: 'codemirror',
@@ -364,12 +424,92 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Health, core-pack nodes, environments, syntax-packs catalog; domain snapshot v2 mirror; ListAvailableNodes + ListSyntaxPacks tests.',
       },
+      {
+        id: 'server-http',
+        title: 'Go project HTTP API (Phase 1)',
+        description:
+          'In-memory store — GET/PUT /api/projects, list projects, POST …/compile via transpiler CLI; CORS for local Next.js dev.',
+      },
+      {
+        id: 'server-mcp',
+        title: 'Local MCP server (Phase 1)',
+        description:
+          'SSE at http://localhost:8080/mcp — list_available_nodes, list_syntax_packs, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; thin wrappers over pure Go services.',
+      },
+      {
+        id: 'dev-startup',
+        title: 'One-command dev startup',
+        description:
+          'tools/start_app.ps1 launches Next.js (HTTP API mode) + Go server; setup_env.ps1 seeds NEXT_PUBLIC_API_MODE=http in .env.local.',
+      },
     ],
   },
 ];
 
 /** Planned or in-progress capabilities (aligned with docs/roadmap.md and current_state gaps). */
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
+  {
+    id: 'phase-2-deploy',
+    phase: 2,
+    emphasis: 'active',
+    title: 'Phase 2 — Self-hosted cloud (active)',
+    items: [
+      {
+        id: 'arch-locked',
+        title: 'Deployment architecture (locked)',
+        description:
+          'Self-hosted Supabase (Postgres + GoTrue) on VPS; Go is the only product API via pgx — PostgREST not used for editor/MCP paths. docs/deployment.md',
+        status: 'partial',
+      },
+      {
+        id: 'self-hosted-deploy',
+        title: 'Supabase Docker on VPS',
+        description:
+          'Dev VPS + live VPS Compose stacks; Caddy TLS; shared hosting limited to static web assets only.',
+        status: 'planned',
+      },
+      {
+        id: 'postgres-store',
+        title: 'PostgresStore (pgx)',
+        description:
+          'projects table with JSONB ProjectSnapshot v2; replaces in-memory store; same /api/projects + MCP services.',
+        status: 'planned',
+      },
+      {
+        id: 'auth',
+        title: 'Auth & project ownership',
+        description:
+          'GoTrue — GitHub OAuth + email v1; Go JWT middleware (JWKS) on HTTP + production MCP; row scoping by user_id.',
+        status: 'planned',
+      },
+      {
+        id: 'editor-cloud-sync',
+        title: 'Editor cloud source of truth',
+        description:
+          'Authenticated sessions load/save via Go API by default; localStorage as offline cache — no MCP vs browser drift.',
+        status: 'planned',
+      },
+      {
+        id: 'mcp-prod',
+        title: 'Production MCP (HTTPS + JWT)',
+        description:
+          'Same tools as local dev; Bearer token required on /mcp in prod; Connect AI modal documents live URL.',
+        status: 'planned',
+      },
+      {
+        id: 'ops-backups',
+        title: 'VPS ops & backups',
+        description: 'Daily pg_dump or volume snapshots, pinned Supabase images, rate limits on MCP, health checks.',
+        status: 'planned',
+      },
+      {
+        id: 'pwa',
+        title: 'PWA offline sync',
+        description: 'Service worker + IndexedDB cached registry; sync to Postgres when connectivity returns.',
+        status: 'planned',
+      },
+    ],
+  },
   {
     id: 'syntax-packs',
     title: 'Syntax packs & agent maintenance',
@@ -378,14 +518,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'rosetta-expand',
         title: 'Expand Rosetta coverage',
         description:
-          'Golden fixtures for subscribe/emit, await wait, env.call_native, imports, and multi-file layouts — 7 constructs shipped.',
-        status: 'partial',
+          'Golden fixtures for subscribe/emit, await wait, env.call_native, imports, and control-flow loops — 15 constructs shipped across Python, JS, C++, Verse.',
+        status: 'done',
       },
       {
         id: 'syntax-pack-mcp',
         title: 'MCP syntax pack tools',
         description:
-          'list_syntax_packs (HTTP shipped), propose_syntax_delta, run_rosetta_suite, validate_generated_parse — Go MCP wire TBD.',
+          'list_syntax_packs + list_available_nodes shipped on local MCP; propose_syntax_delta, run_rosetta_suite, validate_generated_parse still Phase 2.',
         status: 'partial',
       },
       {
@@ -526,46 +666,30 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
   {
-    id: 'cloud',
-    title: 'Cloud, API & MCP',
+    id: 'collaboration',
+    phase: 4,
+    title: 'Phase 4 — Real-time collaboration',
     items: [
       {
-        id: 'auth',
-        title: 'Accounts & cloud projects',
-        description: 'Supabase auth, project ownership, synced persistence beyond localStorage.',
+        id: 'collab',
+        title: 'Go WebSocket sync',
+        description:
+          'Custom Go WS server (not Supabase Realtime); presence, cursors; op log on Postgres documents; CRDT/OT TBD.',
         status: 'planned',
       },
       {
-        id: 'http-persistence',
-        title: 'HTTP project API',
+        id: 'graph-doc-split',
+        title: 'Per-tab document rows',
         description:
-          'VvsApi HTTP mode wired for save/load/list/compile. Go in-memory store handler in progress (other agent). Folder `.vvs/` remains git-friendly path.',
-        status: 'partial',
-      },
-      {
-        id: 'mcp-wire',
-        title: 'MCP server transport',
-        description: 'Local Phase 1 SSE at /mcp — ListNodes, GetGraph, AddNode, ConnectPins, GenerateCode (Go agent). UI probe shipped.',
-        status: 'partial',
-      },
-      {
-        id: 'mcp-mutations',
-        title: 'AI graph editing via MCP',
-        description:
-          'Thin Go wrappers over pure functions for safe agent-driven graph mutations and syntax pack proposals.',
-        status: 'partial',
-      },
-      {
-        id: 'pwa',
-        title: 'PWA offline sync',
-        description: 'Service worker + IndexedDB cached registry for offline-first editing.',
+          'Split large projects into graph_documents rows when JSONB snapshots grow or collab needs partial updates.',
         status: 'planned',
       },
     ],
   },
   {
     id: 'community',
-    title: 'Community & collaboration',
+    phase: 3,
+    title: 'Phase 3 — Community library',
     items: [
       {
         id: 'library-backend',
@@ -575,22 +699,17 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'partial',
       },
       {
-        id: 'collab',
-        title: 'Real-time collaboration',
-        description: 'WebSocket sync, cursors, selection presence, conflict strategy (CRDT/OT TBD).',
-        status: 'planned',
-      },
-      {
         id: 'search',
         title: 'Semantic library search',
-        description: 'pgvector intent search across shared scripts and templates.',
+        description: 'pgvector on self-hosted Postgres — intent search across shared scripts and templates.',
         status: 'planned',
       },
     ],
   },
   {
     id: 'ue6',
-    title: 'Unreal Engine 6 plugin',
+    phase: 5,
+    title: 'Phase 5 — Unreal Engine 6 plugin',
     items: [
       {
         id: 'ue-plugin',
@@ -621,7 +740,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'polish',
-    title: 'Scale, platforms & enterprise',
+    phase: 6,
+    title: 'Phase 6 — Scale, platforms & enterprise',
     items: [
       {
         id: 'languages-more',
@@ -639,7 +759,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'enterprise',
         title: 'Enterprise deploy',
-        description: 'Self-hosted option, moderation, audit logs for studio teams.',
+        description: 'Self-hosted Supabase + Go on VPS (docs/deployment.md), moderation, audit logs for studio teams.',
         status: 'planned',
       },
       {

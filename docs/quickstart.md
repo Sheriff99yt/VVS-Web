@@ -85,7 +85,7 @@ bun run lint
 | Conversion nodes, Get User Input, pin validation | String concat, compare, loops |
 | Start-screen examples (Hello World, Calculator) | Community library backend |
 | Offline honest UI | WebSocket collaboration |
-| Local Go API + MCP (`start_app.ps1`) | Supabase-backed persistence |
+| Local Go API + MCP (`start_app.ps1`) | Self-hosted Supabase + `pgx` on VPS ([deployment.md](deployment.md)) |
 
 Details: **[current_state.md](current_state.md)** · Roadmap: **[roadmap.md](roadmap.md)**
 
@@ -101,6 +101,7 @@ Close the PowerShell windows opened by `start_app.ps1`, or stop the `bun run dev
 
 | Doc | Topic |
 |-----|--------|
+| [deployment.md](deployment.md) | Self-hosted Supabase + Go VPS (locked) |
 | [node_system.md](node_system.md) | Nodes, pins, conversion, property schema |
 | [language_profiles.md](language_profiles.md) | Per-target portability |
 | [setup.md](setup.md) | Toolchain, `.env.local`, git safety |

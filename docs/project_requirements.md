@@ -124,7 +124,7 @@ This document captures functional and non-functional requirements for Vision Vis
 - [ ] Multiple users can view and edit the same graph simultaneously
 - [ ] Cursor presence: see other users' cursors / selections in real-time
 - [ ] Conflict resolution strategy for simultaneous edits
-- [ ] Powered by WebSockets (via Supabase Realtime or custom Go WS server)
+- [ ] Powered by **Go WebSocket** server (Phase 4) — not Supabase Realtime for product collab
 
 ---
 
@@ -182,11 +182,11 @@ These decisions have been evaluated against all requirements and are confirmed.
 | **Backend Language** | Go (Golang) | REST API, MCP server, WebSocket collaboration; zero-pain concurrency via Goroutines |
 | **AI Strategy** | Bring-Your-Own-AI via MCP server | Zero AI cost; no provider lock-in; users connect existing tools (Cursor, Claude, Codex) |
 | **Communication** | REST (OpenAPI) + WebSocket | Type safety via generated TS clients from OpenAPI spec; no gRPC proxy overhead |
-| **Database** | Supabase (PostgreSQL) with Hybrid SQL + JSONB | Relational integrity for users/community + flexible JSONB arrays for syntax registry |
-| **Vector Search** | pgvector (via Supabase) | Semantic search inside Postgres — no extra service needed |
+| **Database** | Self-hosted **Supabase Postgres** + JSONB via Go **`pgx`** | Relational ownership + document snapshots; pgvector on same DB |
+| **Vector Search** | pgvector (Postgres extension) | Semantic search in Phase 3 — no separate vector DB |
 | **Code Formatting** | Lightweight client-side TS formatter (v1); lazy-load Prettier (Phase 2+) | Transpiler tokens handle indentation; minor whitespace cleanup done client-side |
-| **Deployment** | Vercel (Next.js) + Fly.io (Go API + MCP + WS) | Natural split: frontend is static/serverless, backend needs persistent connections |
-| **Caching** | IndexedDB (client) + Go in-memory (server) | Syntax registry is small; Redis removed from stack |
+| **Deployment** | **VPS: self-hosted Supabase + Go**; optional CDN for Next.js — [deployment.md](deployment.md) | Final architecture; shared hosting = static web only |
+| **Caching** | IndexedDB (client) + Go in-process | Syntax registry small; Redis deferred until multi-replica scale |
 | **Syntax packs + Tree-sitter** | Syntax packs authoritative; Tree-sitter validator-only | Print rules in `@vvs/syntax-packs` with Rosetta golden tests; optional Tree-sitter parse validation in CI — not syntax author — see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
 
 ---
@@ -195,10 +195,10 @@ These decisions have been evaluated against all requirements and are confirmed.
 
 | # | Decision | Options | Impact |
 |---|---|---|---|
-| 1 | **Auth strategy** | Email/password, OAuth providers (Google/GitHub), magic links — which ones for v1? | UX, Supabase config, onboarding friction |
+| 1 | **Auth providers (v1)** | **Locked:** GitHub OAuth + email via GoTrue — magic links optional | See [deployment.md](deployment.md) |
 | 2 | **Monorepo structure** | Turborepo, Nx, or simple folder structure for Next.js + Go | Build tooling, CI/CD, developer experience |
 | 3 | **Collaboration conflict resolution** | OT (Operational Transform), CRDT, or simple last-write-wins for v1? | Complexity, real-time editing quality |
-| 4 | **MCP auth & session scoping** | Token-based auth, OAuth flow, or Supabase session passthrough? | Security model for external AI tool access |
+| 4 | **MCP auth** | **Locked:** Supabase JWT passthrough — Go verifies JWKS, scopes tools to `user_id` | See [deployment.md](deployment.md) |
 
 ---
 
@@ -221,7 +221,7 @@ These items are acknowledged as necessary but not yet specified:
 - [ ] **Testing strategy**: Unit tests (transpiler — TypeScript), integration tests (Go API + MCP), E2E tests (graph editor interactions)
 - [ ] **Error handling & user feedback**: How invalid graphs surface errors in the UI
 - [ ] **Graph versioning / undo-redo**: State history management approach
-- [ ] **CI/CD pipeline**: Build, test, and deploy automation across Vercel + Fly.io
+- [ ] **CI/CD pipeline**: Build, test, and deploy automation — VPS Compose for Supabase + Go; see [deployment.md](deployment.md)
 - [ ] **Logging & observability**: Structured logging, error tracking, performance monitoring (especially MCP server)
 - [ ] **Rate limiting & abuse prevention**: MCP tool call limits, community moderation workflows
 - [ ] **MCP auth & session management**: How external AI tools authenticate and scope access to user projects

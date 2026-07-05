@@ -3,7 +3,7 @@ Write-Host "Starting VVS 2.0 Development Environment..." -ForegroundColor Green
 # $PSScriptRoot is the directory containing this script.
 $projectRoot = Split-Path -Parent $PSScriptRoot
 
-# HTTP API mode — web app talks to Go server + local MCP (Connect AI modal).
+# HTTP API mode - web app talks to Go server + local MCP (Connect AI modal).
 $apiMode = "http"
 $apiUrl = "http://localhost:8080"
 
@@ -20,7 +20,7 @@ if (Test-Path $webPath) {
 # Start Go Backend (project API, registry, compile, MCP SSE)
 $serverPath = Join-Path $projectRoot "server"
 if (Test-Path $serverPath) {
-    Write-Host "Starting Go Backend (server) — API + MCP at $apiUrl/mcp ..." -ForegroundColor Cyan
+    Write-Host "Starting Go Backend (server) - API + MCP at ${apiUrl}/mcp ..." -ForegroundColor Cyan
     Start-Process powershell -WorkingDirectory $serverPath -ArgumentList "-NoExit", "-Command", "go run ./cmd/vvs-server"
 } else {
     Write-Host "Warning: server directory not found. Skipping Go Backend." -ForegroundColor Yellow
@@ -29,5 +29,5 @@ if (Test-Path $serverPath) {
 Write-Host ""
 Write-Host "Services launched in new windows." -ForegroundColor Green
 Write-Host "  Web:  http://localhost:3000" -ForegroundColor White
-Write-Host "  API:  $apiUrl/health" -ForegroundColor White
-Write-Host "  MCP:  $apiUrl/mcp  (Connect AI in TopNav, or point Cursor/Claude here)" -ForegroundColor White
+Write-Host "  API:  ${apiUrl}/health" -ForegroundColor White
+Write-Host "  MCP:  ${apiUrl}/mcp  (Connect AI in TopNav; point Cursor or Claude here)" -ForegroundColor White

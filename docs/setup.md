@@ -159,6 +159,15 @@ go run ./cmd/vvs-server
 # curl http://localhost:8080/registry/nodes
 ```
 
+### Connect Cursor (or Claude) to local MCP
+
+1. Start the Go server: `.\tools\start_app.ps1` (or `go run ./cmd/vvs-server` from `server/`)
+2. Copy `tools/mcp.cursor.example.json` to `.cursor/mcp.json` in the repo root (or merge the `VVS` entry into `%USERPROFILE%\.cursor\mcp.json`)
+3. Reload Cursor (**Settings → MCP** or restart the IDE)
+4. MCP URL: `http://localhost:8080/mcp` — no auth token for local Phase 1 dev
+
+Available tools: `list_available_nodes`, `list_syntax_packs`, `get_graph`, `add_node`, `remove_node`, `connect_pins`, `generate_code`, `save_project`.
+
 ---
 
 ## Troubleshooting
@@ -175,4 +184,5 @@ go run ./cmd/vvs-server
 
 ## Next
 
-→ **[quickstart.md](quickstart.md)** — start the app and open your first graph
+→ **[quickstart.md](quickstart.md)** — start the app and open your first graph  
+→ **[deployment.md](deployment.md)** — self-hosted Supabase + Go VPS architecture (locked)

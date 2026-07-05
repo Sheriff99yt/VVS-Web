@@ -39,21 +39,28 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 | **Project environments** | `@vvs/environment-templates` — VS Code–style templates, Environment API browse/spawn, built-in Python/JS packs — **shipped**; [environment_templates.md](environment_templates.md) |
 | **On-disk projects** | `.vvs/` overlay in existing repos — split JSON layout, `integration.json` emit paths, File System Access API (Chrome/Edge) — **shipped (browser)**; cloud sync still Phase 2 |
 
-**Status:** Phase 1 is **shipped** for the browser editor, v1 client transpiler, text-shaped graphs, project environments, folder-based `.vvs/` projects, OpenAPI/AsyncAPI import UI, overload picker, and syntax pack lock settings. Cloud auth (Supabase), full production MCP deployment, and WebSocket collaboration move to Phase 2+ — see [current_state.md](current_state.md) and the in-app **Development roadmap**.
+**Status:** Phase 1 is **shipped** for the browser editor, v1 client transpiler, text-shaped graphs, project environments, folder-based `.vvs/` projects, OpenAPI/AsyncAPI import UI, overload picker, syntax pack lock settings, **local Go HTTP API**, and **local MCP**. Phase 2 adds **self-hosted Supabase (Auth + Postgres) + durable `pgx` persistence** — see [deployment.md](deployment.md).
 
 ---
 
 ## Phase 2 — Accounts, persistence & MCP
 
-**Goal:** Projects sync to the cloud; external AI tools edit graphs via MCP.
+**Goal:** Projects sync to the cloud; external AI tools edit graphs via MCP with production auth.
+
+**Deployment (locked):** [deployment.md](deployment.md) — self-hosted Supabase on VPS; Go + `pgx`; no PostgREST for app paths.
 
 | Track | Deliverables |
 |-------|----------------|
-| **Auth** | Supabase (or self-hosted) accounts, project ownership |
-| **API** | Go REST service — projects, graphs, syntax registry |
-| **MCP** | `ListNodes`, `GetGraph`, `AddNode`, `ConnectPins`, `GenerateCode`, … |
+| **Auth** | Self-hosted **GoTrue** — GitHub OAuth + email v1; JWT verified in Go |
+| **Database** | Self-hosted **Postgres** — `projects` JSONB snapshots via **`pgx`** in Go |
+| **API** | Go REST — same `/api/projects`, compile, registry (replace in-memory store) |
+| **MCP** | Production `/mcp` with Bearer JWT; tools scoped per user |
+| **Editor sync** | Authenticated mode: Go/Postgres source of truth; localStorage as cache/draft |
+| **Ops** | Dev VPS + live VPS; Caddy TLS; Postgres backups; optional static web on shared hosting |
 | **PWA** | Offline graph editing + cached syntax registry (IndexedDB) |
-| **Connect AI** | TopNav modal — Phase 1 local MCP at `http://localhost:8080/mcp` when Go server runs (`NEXT_PUBLIC_API_MODE=http`) |
+| **Connect AI** | TopNav modal — local MCP in dev; HTTPS MCP URL + token in prod |
+
+**Not in Phase 2:** PostgREST for CRUD, Supabase Realtime (collab is Phase 4 Go WebSockets), Redis.
 
 ---
 
@@ -75,9 +82,10 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 
 **Goal:** Multiple authors on one graph in real time.
 
-- WebSocket sync (Go)
+- **Go WebSocket** server (not Supabase Realtime for product paths)
 - Presence (cursors, selection)
 - Conflict strategy (CRDT / OT / scoped last-write — TBD for v1)
+- Operation log on top of Postgres document storage (may split graph rows per tab)
 
 ---
 
@@ -122,7 +130,7 @@ This is a **first-class product surface** for Unreal teams, but output remains *
 | **Languages** | GDScript, Rust, C#; **syntax packs** + agent-assisted maintenance + optional Tree-sitter parse validation — see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
 | **Templates & standards** | OpenAPI/AsyncAPI → environment manifest import; TypeSpec emitter; Backstage catalog; devcontainer linkage |
 | **Mobile UX** | Touch gestures, radial menus, magnetic pin snap |
-| **Enterprise** | Self-hosted deploy, moderation, audit logs |
+| **Enterprise** | Self-hosted Supabase + Go on VPS ([deployment.md](deployment.md)), moderation, audit logs |
 
 ---
 
@@ -138,6 +146,7 @@ This is a **first-class product surface** for Unreal teams, but output remains *
 ## How to follow progress
 
 - **Implementation truth:** [current_state.md](current_state.md)
+- **Deployment & persistence:** [deployment.md](deployment.md)
 - **Agent / contributor backlog:** `.agents/memory/incomplete-ui.md` (UI gaps)
 - **Architecture:** [vision.md](vision.md), [visual_to_text_fidelity.md](visual_to_text_fidelity.md), [project_requirements.md](project_requirements.md)
 

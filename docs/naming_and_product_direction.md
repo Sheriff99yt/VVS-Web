@@ -27,7 +27,7 @@ VVS is a **visual way to compose logic** that **generates ordinary source code**
 - Export to standard files (`.py`, `.js`, `.ts`, `.cpp`, JSON graph).
 - Embed in **any** product — generated modules import like hand-written code; no VVS VM.
 - **Bring your own AI** (Cursor, Claude, Codex, etc.) via MCP — predictable text diffs when graphs change.
-- **Bring your own backend** later (Supabase, self-hosted) — graphs are data, not a walled garden.
+- **Bring your own backend** — self-hosted Supabase (Postgres + Auth) + Go on VPS ([deployment.md](deployment.md)); graphs are data, not a walled garden.
 
 ### 4. Familiar to anyone who has seen node editors
 

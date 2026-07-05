@@ -6,7 +6,7 @@ Stable facts agents should assume without re-exploring the tree.
 
 - Monorepo root: `VVS Web/` — **public MIT repo** (see `CONTRIBUTING.md`)
 - Implemented packages: `packages/graph-types`, `packages/syntax-registry`, `packages/language-profiles`, `packages/syntax-packs`, `packages/transpiler`, `packages/environment-templates`
-- Go server: `server/` — registry HTTP + Phase 1 project API / MCP (in progress on other tracks)
+- Go server: `server/` — registry HTTP, project API, local MCP; **Phase 2:** `pgx` → self-hosted Supabase Postgres ([deployment.md](../../docs/deployment.md))
 
 ## Frontend entry points
 
@@ -40,12 +40,12 @@ Stable facts agents should assume without re-exploring the tree.
 | `syntax-packs` | `resolve.ts`, `rosetta/` |
 | `transpiler` | `lower/graphToIr.ts`, `print/`, `emit/` |
 
-## MCP & HTTP (Phase 1)
+## MCP & HTTP (Phase 1 local / Phase 2 VPS)
 
-- MCP URL (Connect AI modal): `http://localhost:8080/mcp`
+- MCP URL (Connect AI modal): `http://localhost:8080/mcp` — production: HTTPS + JWT ([deployment.md](../../docs/deployment.md))
 - API base: `NEXT_PUBLIC_API_URL` default `http://localhost:8080`
 - HTTP mode: `NEXT_PUBLIC_API_MODE=http` — `VvsApi.saveProject`, `loadProject`, `listProjects`, `compileProject`, `probeMcp`
-- Transpiler CLI (server-side compile bridge): `cd packages/transpiler && bun run generate:cli` (other agent)
+- Persistence target: Go **`pgx`** → self-hosted Postgres JSONB — not PostgREST
 
 ## Agent assets
 

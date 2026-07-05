@@ -4,9 +4,12 @@ import React, { useState } from 'react';
 import { CheckCircle2, Circle, CircleDashed, ExternalLink } from 'lucide-react';
 import {
   FUTURE_FEATURE_SECTIONS,
+  ROADMAP_PHASES,
   SHIPPED_FEATURE_SECTIONS,
   type RoadmapItem,
   type RoadmapItemStatus,
+  type RoadmapPhase,
+  type RoadmapSection,
 } from '@/lib/developmentRoadmap';
 
 type RoadmapTab = 'features' | 'future';
@@ -30,6 +33,18 @@ const STATUS_META: Record<
     className: 'text-zinc-400 bg-zinc-800/50 border-zinc-700/80',
     icon: <Circle size={11} className="text-zinc-500 shrink-0" />,
   },
+};
+
+const PHASE_STATUS_STYLE: Record<RoadmapPhase['status'], string> = {
+  shipped: 'border-emerald-500/30 bg-emerald-500/5',
+  active: 'border-indigo-500/40 bg-indigo-500/10 ring-1 ring-indigo-500/20',
+  planned: 'border-zinc-700/80 bg-zinc-900/40',
+};
+
+const PHASE_STATUS_LABEL: Record<RoadmapPhase['status'], string> = {
+  shipped: 'Shipped',
+  active: 'Active',
+  planned: 'Planned',
 };
 
 function RoadmapItemRow({ item, showStatus }: { item: RoadmapItem; showStatus: boolean }) {
@@ -62,13 +77,29 @@ function RoadmapSectionBlock({
   section,
   showStatus,
 }: {
-  section: (typeof SHIPPED_FEATURE_SECTIONS)[number];
+  section: RoadmapSection;
   showStatus: boolean;
 }) {
+  const isActive = section.emphasis === 'active';
+
   return (
-    <section className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
-      <h3 className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/80 bg-zinc-900/40">
-        {section.title}
+    <section
+      className={`bg-zinc-950 border rounded-lg overflow-hidden ${
+        isActive ? 'border-indigo-500/35 shadow-[0_0_0_1px_rgba(99,102,241,0.08)]' : 'border-zinc-800'
+      }`}
+    >
+      <h3 className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/80 bg-zinc-900/40 flex items-center gap-2 flex-wrap">
+        <span className={isActive ? 'text-indigo-300/90' : undefined}>{section.title}</span>
+        {section.phase ? (
+          <span className="text-[9px] font-normal normal-case tracking-normal text-zinc-600">
+            Phase {section.phase}
+          </span>
+        ) : null}
+        {isActive ? (
+          <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border text-indigo-300/90 bg-indigo-500/10 border-indigo-500/30">
+            Current focus
+          </span>
+        ) : null}
       </h3>
       <ul className="px-4">
         {section.items.map((item) => (
@@ -79,31 +110,77 @@ function RoadmapSectionBlock({
   );
 }
 
+function PhaseOverviewStrip() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      {ROADMAP_PHASES.map((phase) => (
+        <div
+          key={phase.id}
+          className={`rounded-md border px-3 py-2.5 ${PHASE_STATUS_STYLE[phase.status]}`}
+        >
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <span className="text-[10px] font-semibold text-zinc-300">
+              Phase {phase.number}
+            </span>
+            <span
+              className={`text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border ${
+                phase.status === 'shipped'
+                  ? 'text-emerald-400/90 bg-emerald-500/10 border-emerald-500/25'
+                  : phase.status === 'active'
+                    ? 'text-indigo-300/90 bg-indigo-500/10 border-indigo-500/30'
+                    : 'text-zinc-500 bg-zinc-800/50 border-zinc-700/80'
+              }`}
+            >
+              {PHASE_STATUS_LABEL[phase.status]}
+            </span>
+          </div>
+          <p className="text-[11px] font-medium text-zinc-200 leading-snug">{phase.title}</p>
+          <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{phase.summary}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function RoadmapView() {
   const [tab, setTab] = useState<RoadmapTab>('features');
 
   return (
     <div className="h-full overflow-y-auto bg-zinc-950">
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <header className="space-y-2">
+        <header className="space-y-3">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            What ships in this build versus what we are building next — including text-shaped graphs,
-            syntax packs & Rosetta goldens, project environments, git-friendly{' '}
-            <span className="font-mono text-zinc-400">.vvs/</span> folder projects, and planned cloud
-            sync. For full phase timelines and strategy, see{' '}
+            <span className="text-emerald-400/90 font-medium">Phase 1 shipped</span> — text-shaped
+            graphs, syntax packs,{' '}
+            <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go API, and MCP.{' '}
+            <span className="text-indigo-300/90 font-medium">Phase 2 (active)</span> — self-hosted
+            Supabase on VPS, Go <span className="font-mono text-zinc-400">pgx</span>, JWT auth,
+            production MCP. Full strategy in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"
               rel="noopener noreferrer"
               className="text-indigo-400/90 hover:text-indigo-300 inline-flex items-center gap-0.5"
             >
-              docs/roadmap.md
+              roadmap.md
+              <ExternalLink size={10} />
+            </a>{' '}
+            and deployment architecture in{' '}
+            <a
+              href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/deployment.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-400/90 hover:text-indigo-300 inline-flex items-center gap-0.5"
+            >
+              deployment.md
               <ExternalLink size={10} />
             </a>
             .
           </p>
         </header>
+
+        <PhaseOverviewStrip />
 
         <div className="flex gap-1 p-0.5 bg-zinc-900 border border-zinc-800 rounded-md w-fit">
           <button
@@ -115,7 +192,7 @@ export function RoadmapView() {
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            Features
+            Shipped (Phase 1)
           </button>
           <button
             type="button"
