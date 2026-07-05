@@ -140,7 +140,7 @@ export function isValidWireConnection(
   return evaluateWireConnection(connection, nodes, edges).ok;
 }
 
-/** UE-style: one wire per input pin — replace existing connection on the same target handle. */
+/** One wire per input pin — replaces any existing link on that target handle. */
 export function edgesWithoutTargetHandle(
   edges: VVSEdge[],
   targetNodeId: string,
@@ -149,6 +149,36 @@ export function edgesWithoutTargetHandle(
   return edges.filter(
     (e) => !(e.target === targetNodeId && e.targetHandle === targetHandleId)
   );
+}
+
+/** Linear flow: one execution wire per output pin — replaces downstream when rewiring. */
+export function edgesWithoutSourceHandle(
+  edges: VVSEdge[],
+  sourceNodeId: string,
+  sourceHandleId: string
+): VVSEdge[] {
+  return edges.filter(
+    (e) =>
+      !(
+        e.source === sourceNodeId &&
+        e.sourceHandle === sourceHandleId &&
+        e.data?.pinType === 'execution'
+      )
+  );
+}
+
+function pruneEdgesForConnection(
+  edges: VVSEdge[],
+  evaluation: Extract<WireEvaluation, { ok: true }>
+): VVSEdge[] {
+  let next = edges;
+  if (evaluation.target.pinId != null) {
+    next = edgesWithoutTargetHandle(next, evaluation.target.nodeId, evaluation.target.pinId);
+  }
+  if (evaluation.pinType === 'execution' && evaluation.source.pinId != null) {
+    next = edgesWithoutSourceHandle(next, evaluation.source.nodeId, evaluation.source.pinId);
+  }
+  return next;
 }
 
 export function createWireEdge(
@@ -172,19 +202,30 @@ export function applyWireConnection(
   connection: WireConnectionAttempt,
   nodes: VVSNode[],
   edges: VVSEdge[]
-): { edges: VVSEdge[]; edge: VVSEdge } | { error: WireRejectionReason } {
+): { edges: VVSEdge[]; edge: VVSEdge; chainBreak?: { droppedSourceId: string; targetId: string } } | { error: WireRejectionReason } {
   const evaluation = evaluateWireConnection(connection, nodes, edges);
   if (!evaluation.ok) {
     return { error: evaluation.reason };
   }
 
-  const pruned =
-    evaluation.target.pinId != null
-      ? edgesWithoutTargetHandle(edges, evaluation.target.nodeId, evaluation.target.pinId)
-      : edges;
+  let chainBreak: { droppedSourceId: string; targetId: string } | undefined;
+  if (evaluation.pinType === 'execution') {
+    const dropped = edges.find(
+      (e) =>
+        e.target === evaluation.target.nodeId &&
+        e.data?.pinType === 'execution' &&
+        (e.targetHandle === evaluation.target.pinId || e.targetHandle == null) &&
+        e.source !== evaluation.source.nodeId
+    );
+    if (dropped) {
+      chainBreak = { droppedSourceId: dropped.source, targetId: dropped.target };
+    }
+  }
+
+  const pruned = pruneEdgesForConnection(edges, evaluation);
 
   const edge = createWireEdge(connection, evaluation.pinType);
-  return { edges: [...pruned, edge], edge };
+  return { edges: [...pruned, edge], edge, chainBreak };
 }
 
 export function connectionFromReactFlow(connection: Connection): WireConnectionAttempt {

@@ -6,6 +6,8 @@ import { EditorLayout } from '@/components/layout/EditorLayout';
 import { useEditorBootstrap } from '@/lib/editorBootstrapSubscribe';
 import { loadProjectFromStore } from '@/lib/projectStore';
 import type { EditorBootstrap } from '@/types/projectRegistry';
+import type { VVSNode, VVSEdge } from '@/types/graph';
+import type { GraphDocument } from '@/lib/graphDefaults';
 
 function EditorBootstrapLoader({
   bootstrap,
@@ -21,9 +23,9 @@ function EditorBootstrapLoader({
       projectSource={bootstrap.source}
       initialSnapshot={bootstrap.snapshot}
       initialView={bootstrap.initialView}
-      initialNodes={mainDoc.nodes}
-      initialEdges={mainDoc.edges}
-      initialDocuments={documents}
+      initialNodes={mainDoc.nodes as VVSNode[]}
+      initialEdges={mainDoc.edges as VVSEdge[]}
+      initialDocuments={documents as Record<string, GraphDocument>}
     />
   );
 }

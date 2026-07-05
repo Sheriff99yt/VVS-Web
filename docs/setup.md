@@ -29,7 +29,7 @@ cd VVS-Web
 The script will:
 
 1. Install or verify **Bun**, **Go** (optional), and **Git**
-2. Run **`bun install`** in `apps/web`
+2. Run **`bun install`** at the **repository root** (Bun workspaces: `apps/web` + `packages/*`)
 3. Create **`apps/web/.env.local`** from `.env.example` if missing
 4. Auto-detect your **LAN IPv4** and set `DEV_ALLOWED_ORIGIN` (for phone/tablet testing)
 5. Run **`go mod download`** in `server/` when Go is available
@@ -43,17 +43,17 @@ Restart your terminal if Bun or Go was just installed.
 ```bash
 # 1. Clone
 git clone https://github.com/Sheriff99yt/VVS-Web.git
-cd VVS-Web/apps/web
+cd VVS-Web
 
-# 2. Install JS dependencies
+# 2. Install JS dependencies (root workspaces — web + packages)
 bun install
 
 # 3. Local env (gitignored — copy template)
-cp .env.example .env.local
-# Edit .env.local — set DEV_ALLOWED_ORIGIN to your LAN IP if you use http://192.168.x.x:3000
+cp apps/web/.env.example apps/web/.env.local
+# Edit apps/web/.env.local — set DEV_ALLOWED_ORIGIN to your LAN IP if you use http://192.168.x.x:3000
 
 # 4. Optional Go server
-cd ../../server
+cd server
 go mod download
 ```
 
@@ -120,9 +120,27 @@ Or with GitHub CLI:
 gh repo create Sheriff99yt/VVS-Web --public --source=. --remote=origin --push
 ```
 
+### GitHub Pages preview (one-time)
+
+After the first push, enable Pages or the deploy workflow will fail with **404 Not Found**:
+
+1. **Settings → Pages → Build and deployment → Source:** **GitHub Actions**
+2. Or via CLI: `gh api -X POST repos/Sheriff99yt/VVS-Web/pages -f build_type=workflow`
+
+Preview URL: **https://sheriff99yt.github.io/VVS-Web/** (deployed by `.github/workflows/pages.yml` on each push to `main`).
+
 ---
 
 ## Verify installation
+
+```powershell
+# From repository root
+bun install
+bun run build
+bun test packages
+```
+
+Or from `apps/web` only:
 
 ```powershell
 cd apps\web
@@ -135,9 +153,10 @@ Optional server check:
 
 ```powershell
 cd server
-go build ./...
+go test ./...
 go run ./cmd/vvs-server
 # curl http://localhost:8080/health
+# curl http://localhost:8080/registry/nodes
 ```
 
 ---

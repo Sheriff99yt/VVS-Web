@@ -3,9 +3,9 @@
 Tracked gaps between **what the shell shows** and **what the UI skill / product matrix requires**.  
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
-**Last updated:** 2026-07-01  
-**Depth-first:** Section **9 done**; Call Function nodes + multifile complex example shipped. **Next: Section 7** (status chrome / A2).  
-**Score:** 42 / 48 done · 6 open
+**Last updated:** 2026-07-05  
+**Depth-first:** Section **7 done**; Section **3 polish done**. **Frontend UI backlog complete.**  
+**Score:** 48 / 48 done · 0 open
 
 ## Status legend
 
@@ -56,10 +56,10 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 | U9 | Comment box editing | **Done** | `VVSCommentNode.tsx`, color + label in inspector |
 | U10 | Comment ungroup | **Done** | Ctrl+Shift+U, View menu, `ungroupSelectionInComment` |
 | U11 | Pin geometry — array type | **Done** | `data_array` in `types/graph.ts`, `VVSNode.module.css` |
-| U12 | System clipboard paste | **Open** | `navigator.clipboard` not wired |
+| U12 | System clipboard paste | **Done** | `graphClipboard.ts`, `GraphCanvas.tsx` — OS clipboard + in-app fallback |
 | U13 | Cut / Duplicate in Edit menu | **Done** | `TopNav.tsx`, `graphActions.ts`, Ctrl+X / Ctrl+D |
-| U14 | Wire deletion affordance | **Open** | Alt+click only; no hint or edge menu |
-| U15 | Multi-graph dirty indicator | **Open** | Global `compileState` only |
+| U14 | Wire deletion affordance | **Done** | Alt+click, right-click menu, Delete key, canvas hint |
+| U15 | Multi-graph dirty indicator | **Done** | `dirtyTabIds` in `ProjectContext`; tab bar + tree dots |
 
 ---
 
@@ -97,13 +97,13 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ---
 
-## 7. Status chrome & Connect AI
+## 7. Status chrome & Connect AI — **Done**
 
-| # | Item | Status | Gap | Files |
-|---|------|--------|-----|-------|
-| U29 | MCP connection test | **Open** | Modal copy-only (= API **A2**) | `TopNav.tsx` |
-| U30 | Health-aware status bar | **Open** | Hardcoded disconnected until A2 | `StatusBar.tsx` |
-| U31 | Sync / autosave indicator | **Open** | No saved timestamp in chrome | `StatusBar.tsx` |
+| # | Item | Status | Key files |
+|---|------|--------|-----------|
+| U29 | MCP connection test | **Done** | `TopNav.tsx`, `VvsApi.probeMcp()` — mock honest fail + http probe |
+| U30 | Health-aware status bar | **Done** | `StatusBar.tsx`, `useApiHealth.ts` — mock offline / http poll |
+| U31 | Sync / autosave indicator | **Done** | `lastSavedAt` in `ProjectContext`; `formatSavedAt.ts` |
 
 ---
 
@@ -147,9 +147,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-1. **Section 7:** U29–U31 (= A2 health, autosave chrome)
-2. **Section 3 polish (optional):** U12, U14, U15
-3. **Section 8:** U32
+_All UI backlog rows complete (2026-07-05). **Mock codegen depth (M1):** Call Function, Branch, per-function bodies — done. Next: `packages/transpiler` scaffold or more node types._
 
 ---
 

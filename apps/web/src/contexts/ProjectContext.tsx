@@ -2,30 +2,23 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { GraphVariable } from '@/types/graph';
+import type { ProjectEventDefinition } from '@/types/graph';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import type { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import type { ProjectSource } from '@/types/projectRegistry';
 
-export type SelectionType = 'node' | 'variable' | 'graph';
-export type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse' | 'json';
-export type SimulationState = 'idle' | 'playing' | 'paused';
+import type { FunctionSymbol, GraphTab, TargetLanguage } from '@vvs/graph-types';
+
+export type { TargetLanguage, GraphTab, FunctionSymbol };
+export type SelectionType = 'node' | 'variable' | 'event' | 'function' | 'graph';
 
 export interface SelectionState {
   type: SelectionType;
   id: string | null;
 }
 
-interface ProjectFunction {
-  id: string;
-  name: string;
-}
-
-export interface GraphTab {
-  id: string;
-  type: 'main' | 'function' | 'macro';
-  name: string;
-}
+interface ProjectFunction extends FunctionSymbol {}
 
 interface ProjectContextValue {
   projectId: string;
@@ -33,6 +26,8 @@ interface ProjectContextValue {
 
   variables: GraphVariable[];
   setVariables: React.Dispatch<React.SetStateAction<GraphVariable[]>>;
+  events: ProjectEventDefinition[];
+  setEvents: React.Dispatch<React.SetStateAction<ProjectEventDefinition[]>>;
   functions: ProjectFunction[];
   setFunctions: React.Dispatch<React.SetStateAction<ProjectFunction[]>>;
   selection: SelectionState;
@@ -48,13 +43,23 @@ interface ProjectContextValue {
   compileState: 'clean' | 'dirty' | 'compiling' | 'success' | 'error';
   setCompileState: React.Dispatch<React.SetStateAction<'clean' | 'dirty' | 'compiling' | 'success' | 'error'>>;
 
+  /** Per-graph-tab uncompiled changes (U15) */
+  dirtyTabIds: Record<string, true>;
+  markTabDirty: (tabId: string) => void;
+  markTabClean: (tabId: string) => void;
+  isTabDirty: (tabId: string) => boolean;
+  resetDirtyTabs: () => void;
+
+  /** Last local save timestamp for status chrome (U31) */
+  lastSavedAt: string | null;
+  setLastSavedAt: React.Dispatch<React.SetStateAction<string | null>>;
+
   autoCompile: boolean;
   setAutoCompile: React.Dispatch<React.SetStateAction<boolean>>;
+  autoSave: boolean;
+  setAutoSave: React.Dispatch<React.SetStateAction<boolean>>;
   targetLanguage: TargetLanguage;
   setTargetLanguage: React.Dispatch<React.SetStateAction<TargetLanguage>>;
-
-  simulationState: SimulationState;
-  setSimulationState: React.Dispatch<React.SetStateAction<SimulationState>>;
 
   undoTrigger: number;
   triggerUndo: () => void;
@@ -67,6 +72,8 @@ interface ProjectContextValue {
 
   validationErrors: ValidationMessage[];
   setValidationErrors: React.Dispatch<React.SetStateAction<ValidationMessage[]>>;
+  validationWarnings: ValidationMessage[];
+  setValidationWarnings: React.Dispatch<React.SetStateAction<ValidationMessage[]>>;
 
   installedLibrary: InstalledLibraryEntry[];
   setInstalledLibrary: React.Dispatch<React.SetStateAction<InstalledLibraryEntry[]>>;
@@ -93,6 +100,7 @@ export function ProjectProvider({
   initialSnapshot,
 }: ProjectProviderProps) {
   const [variables, setVariables] = useState<GraphVariable[]>(initialSnapshot.variables);
+  const [events, setEvents] = useState<ProjectEventDefinition[]>(initialSnapshot.events ?? []);
   const [functions, setFunctions] = useState<ProjectFunction[]>(initialSnapshot.functions);
   const [selection, setSelection] = useState<SelectionState>({ type: 'graph', id: null });
   const [openTabs, setOpenTabs] = useState<GraphTab[]>(
@@ -106,12 +114,31 @@ export function ProjectProvider({
 
   const [projectDetails, setProjectDetails] = useState(initialSnapshot.projectDetails);
 
-  const [simulationState, setSimulationState] = useState<SimulationState>('idle');
   const [compileState, setCompileStateInner] = useState<'clean' | 'dirty' | 'compiling' | 'success' | 'error'>(
     projectSource === 'new' ? 'clean' : 'success'
   );
+  const [dirtyTabIds, setDirtyTabIds] = useState<Record<string, true>>({});
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(initialSnapshot.savedAt ?? null);
+
+  const markTabDirty = useCallback((tabId: string) => {
+    setDirtyTabIds((prev) => (prev[tabId] ? prev : { ...prev, [tabId]: true }));
+  }, []);
+
+  const markTabClean = useCallback((tabId: string) => {
+    setDirtyTabIds((prev) => {
+      if (!prev[tabId]) return prev;
+      const next = { ...prev };
+      delete next[tabId];
+      return next;
+    });
+  }, []);
+
+  const isTabDirty = useCallback((tabId: string) => Boolean(dirtyTabIds[tabId]), [dirtyTabIds]);
+
+  const resetDirtyTabs = useCallback(() => setDirtyTabIds({}), []);
 
   const [autoCompile, setAutoCompile] = useState(initialSnapshot.autoCompile);
+  const [autoSave, setAutoSave] = useState(initialSnapshot.autoSave ?? false);
 
   const setCompileState = useCallback(
     (action: React.SetStateAction<'clean' | 'dirty' | 'compiling' | 'success' | 'error'>) => {
@@ -134,6 +161,7 @@ export function ProjectProvider({
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationMessage[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<ValidationMessage[]>([]);
   const [installedLibrary, setInstalledLibrary] = useState<InstalledLibraryEntry[]>(
     initialSnapshot.installedLibrary ?? []
   );
@@ -165,6 +193,13 @@ export function ProjectProvider({
     window.dispatchEvent(new CustomEvent('vvs:compile-state', { detail: { state: compileState } }));
   }, [compileState]);
 
+  useEffect(() => {
+    setCompileStateInner((prev) => {
+      if (prev === 'compiling') return prev;
+      return dirtyTabIds[activeGraphTab] ? 'dirty' : prev === 'error' ? 'error' : 'success';
+    });
+  }, [activeGraphTab, dirtyTabIds]);
+
   return (
     <ProjectContext.Provider
       value={{
@@ -172,6 +207,8 @@ export function ProjectProvider({
         projectSource,
         variables,
         setVariables,
+        events,
+        setEvents,
         functions,
         setFunctions,
         selection,
@@ -184,12 +221,19 @@ export function ProjectProvider({
         setProjectDetails,
         compileState,
         setCompileState,
+        dirtyTabIds,
+        markTabDirty,
+        markTabClean,
+        isTabDirty,
+        resetDirtyTabs,
+        lastSavedAt,
+        setLastSavedAt,
         autoCompile,
         setAutoCompile,
+        autoSave,
+        setAutoSave,
         targetLanguage,
         setTargetLanguage,
-        simulationState,
-        setSimulationState,
         undoTrigger,
         triggerUndo,
         redoTrigger,
@@ -200,6 +244,8 @@ export function ProjectProvider({
         setCanRedo,
         validationErrors,
         setValidationErrors,
+        validationWarnings,
+        setValidationWarnings,
         installedLibrary,
         setInstalledLibrary,
         referenceRootGraphId,

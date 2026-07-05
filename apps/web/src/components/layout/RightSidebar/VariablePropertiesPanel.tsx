@@ -4,7 +4,10 @@ import { VariableType, defaultValueForVariableType } from '@/lib/variableDefault
 
 interface VariablePropertiesPanelProps {
   variable: GraphVariable;
-  onChange: (key: 'name' | 'type' | 'defaultValue', value: string | number | boolean | Record<string, unknown>) => void;
+  onChange: (
+    key: 'name' | 'type' | 'defaultValue' | 'binding' | 'readonly',
+    value: string | number | boolean | Record<string, unknown>
+  ) => void;
 }
 
 export function VariablePropertiesPanel({ variable, onChange }: VariablePropertiesPanelProps) {
@@ -14,11 +17,9 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
       : '{}';
 
   return (
-    <div className="text-sm text-zinc-300 space-y-4">
-      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">Variable Details</p>
-
+    <div className="text-sm text-zinc-300 space-y-3">
       <div className="space-y-1.5">
-        <label className="text-[11px] font-medium text-zinc-400">Variable Name</label>
+        <label className="text-[11px] font-medium text-zinc-400">Name</label>
         <input
           type="text"
           value={variable.name}
@@ -28,7 +29,7 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[11px] font-medium text-zinc-400">Variable Type</label>
+        <label className="text-[11px] font-medium text-zinc-400">Type</label>
         <select
           value={variable.type}
           onChange={(e) => {
@@ -46,7 +47,37 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[11px] font-medium text-zinc-400">Default Value</label>
+        <label className="text-[11px] font-medium text-zinc-400">Binding</label>
+        <div className="flex gap-2">
+          {(['instance', 'static'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => onChange('binding', mode)}
+              className={`flex-1 px-2 py-1.5 text-xs rounded border transition-colors ${
+                (variable.binding ?? 'instance') === mode
+                  ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+              }`}
+            >
+              {mode === 'instance' ? 'Instance' : 'Static'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={variable.readonly ?? false}
+          onChange={(e) => onChange('readonly', e.target.checked)}
+          className="accent-zinc-500 bg-zinc-900 border-zinc-800"
+        />
+        Read-only
+      </label>
+
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-medium text-zinc-400">Default</label>
 
         {variable.type === 'string' && (
           <input

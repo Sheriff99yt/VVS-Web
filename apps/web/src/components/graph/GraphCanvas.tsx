@@ -7,22 +7,28 @@ import '@xyflow/react/dist/style.css';
 import { useGraphEdit } from '@/contexts/GraphEditContext';
 import { useEditorView } from '@/contexts/EditorViewContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
-import { useLatestRef } from '@/hooks/useLatestRef';
 import { VVSNode } from './VVSNode';
 import { VVSEdge } from './VVSEdge';
 import { VVSNode as VVSNodeType, VVSEdge as VVSEdgeType, PinType } from '@/types/graph';
 import { NodeContextMenu } from './NodeContextMenu';
 import { LibraryNodeTemplate } from '@/types/ui';
 import { useProject } from '@/contexts/ProjectContext';
-import { useOnSelectionChange } from '@xyflow/react';
+import { useOnSelectionChange, type OnSelectionChangeParams } from '@xyflow/react';
 import { VVSCommentNode } from './VVSCommentNode';
 import { VVSRerouteNode } from './VVSRerouteNode';
 import { GraphAction } from '@/lib/graphActions';
-import { buildExecutionOrder, findSimulationStartNode } from '@/lib/executionOrder';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, isLinkedGraphNode } from '@/lib/linkedGraphNodes';
 import { GraphNodeSearch } from './GraphNodeSearch';
+import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT } from '@/components/layout/GraphFloatingDetails';
+import { GraphFloatingCompilerLog } from '@/components/layout/GraphFloatingCompilerLog';
+import { buildEventNodeData } from '@/lib/eventHelpers';
+import {
+  applyFunctionCallBinding,
+  FUNCTION_RENAMED_EVENT,
+  syncCallNodesForFunction,
+} from '@/lib/functionHelpers';
 
 import {
   applyWireConnection,
@@ -38,7 +44,14 @@ import {
   resolveCrossGraphTarget,
   wouldCrossGraphDependencyCycle,
 } from '@/lib/graphRelations';
+import { extractSelectionToFunction } from '@/lib/extractToFunction';
+import { resolve as resolveKind } from '@vvs/syntax-registry';
 import { listMacroEntries } from '@/lib/projectTree';
+import {
+  readSystemGraphClipboard,
+  writeSystemGraphClipboard,
+  type GraphClipboardPayload,
+} from '@/lib/graphClipboard';
 
 function wrapSelectionInComment(
   nodes: VVSNodeType[],
@@ -124,7 +137,11 @@ function GraphCanvasInner() {
     activeGraphTab,
     openTabs,
     functions,
-    simulationState,
+    events,
+    setFunctions,
+    setOpenTabs,
+    setCompileState,
+    markTabDirty,
   } = useProject();
 
   const { pendingCanvasFocus, clearPendingCanvasFocus } = useEditorNavigation();
@@ -138,22 +155,34 @@ function GraphCanvasInner() {
     setEdges,
     setNodesWithHistory,
     setEdgesWithHistory,
+    importGraphTab,
   } = useGraphEdit();
 
   const { getDocuments } = useGraphWorkspace();
 
   const { screenToFlowPosition, getNode, fitView } = useReactFlow();
 
-  useOnSelectionChange({
-    onChange: ({ nodes: selectedNodes }) => {
-      if (!isCanvasActive) return;
+  const isCanvasActiveRef = React.useRef(isCanvasActive);
+  isCanvasActiveRef.current = isCanvasActive;
+
+  const handleSelectionChange = useCallback(
+    ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
+      if (!isCanvasActiveRef.current) return;
       if (selectedNodes.length > 0) {
-        setSelection({ type: 'node', id: selectedNodes[0].id });
+        const id = selectedNodes[0]!.id;
+        setSelection((prev) =>
+          prev.type === 'node' && prev.id === id ? prev : { type: 'node', id }
+        );
       } else {
-        setSelection({ type: 'graph', id: null });
+        setSelection((prev) =>
+          prev.type === 'graph' && prev.id === null ? prev : { type: 'graph', id: null }
+        );
       }
     },
-  });
+    [setSelection]
+  );
+
+  useOnSelectionChange({ onChange: handleSelectionChange });
 
   const [menu, setMenu] = useState<{
     x: number;
@@ -170,21 +199,30 @@ function GraphCanvasInner() {
     variable: import('@/types/graph').GraphVariable;
   } | null>(null);
 
-  const [clipboard, setClipboard] = useState<{ nodes: VVSNodeType[]; edges: VVSEdgeType[] } | null>(null);
+  const [clipboard, setClipboard] = useState<GraphClipboardPayload | null>(null);
 
-  const nodesRef = useLatestRef(nodes);
-  const edgesRef = useLatestRef(edges);
-  const simStepRef = React.useRef(0);
+  const [edgeMenu, setEdgeMenu] = useState<{
+    x: number;
+    y: number;
+    edgeId: string;
+  } | null>(null);
 
   const focusGraphNode = useCallback(
     (nodeId: string) => {
-      setNodes((nds) =>
-        nds.map((n) => ({
+      setNodes((nds) => {
+        const alreadyFocused =
+          nds.length > 0 &&
+          nds.filter((n) => n.selected).length === 1 &&
+          nds.some((n) => n.id === nodeId && n.selected);
+        if (alreadyFocused) return nds;
+        return nds.map((n) => ({
           ...n,
           selected: n.id === nodeId,
-        }))
+        }));
+      });
+      setSelection((prev) =>
+        prev.type === 'node' && prev.id === nodeId ? prev : { type: 'node', id: nodeId }
       );
-      setSelection({ type: 'node', id: nodeId });
       requestAnimationFrame(() => {
         fitView({ nodes: [{ id: nodeId }], padding: 0.6, duration: 200 });
       });
@@ -192,12 +230,21 @@ function GraphCanvasInner() {
     [setNodes, setSelection, fitView]
   );
 
+  const processedFocusKeyRef = React.useRef<string | null>(null);
+
   React.useEffect(() => {
-    if (!pendingCanvasFocus || pendingCanvasFocus.graphTab !== activeGraphTab) return;
-    const nodeExists = nodes.some((n) => n.id === pendingCanvasFocus.nodeId);
-    if (nodeExists) {
-      focusGraphNode(pendingCanvasFocus.nodeId);
+    if (!pendingCanvasFocus || pendingCanvasFocus.graphTab !== activeGraphTab) {
+      processedFocusKeyRef.current = null;
+      return;
     }
+    const focusKey = `${pendingCanvasFocus.graphTab}:${pendingCanvasFocus.nodeId}`;
+    if (processedFocusKeyRef.current === focusKey) return;
+
+    const nodeExists = nodes.some((n) => n.id === pendingCanvasFocus.nodeId);
+    if (!nodeExists) return;
+
+    processedFocusKeyRef.current = focusKey;
+    focusGraphNode(pendingCanvasFocus.nodeId);
     clearPendingCanvasFocus();
   }, [pendingCanvasFocus, activeGraphTab, nodes, focusGraphNode, clearPendingCanvasFocus]);
 
@@ -211,61 +258,6 @@ function GraphCanvasInner() {
   );
   const edgeTypes = useMemo(() => ({ vvs_standard_edge: VVSEdge }), []);
 
-  const clearSimulationHighlight = useCallback(() => {
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.data.isSimulating ? { ...n, data: { ...n.data, isSimulating: false } } : n
-      )
-    );
-  }, [setNodes]);
-
-  const advanceSimulationStep = useCallback(() => {
-    const currentNodes = nodesRef.current;
-    const currentEdges = edgesRef.current;
-    const startNode = findSimulationStartNode(currentNodes);
-    if (!startNode) return;
-
-    const execOrder = buildExecutionOrder(startNode.id, currentNodes, currentEdges);
-    if (execOrder.length === 0) return;
-
-    const activeId = execOrder[simStepRef.current % execOrder.length];
-    const activeLabel = currentNodes.find((n) => n.id === activeId)?.data.label ?? activeId;
-
-    setNodes((nds) =>
-      nds.map((n) => ({
-        ...n,
-        data: { ...n.data, isSimulating: n.id === activeId },
-      }))
-    );
-    window.dispatchEvent(
-      new CustomEvent('vvs:simulation-log', {
-        detail: { message: `Step ${simStepRef.current + 1}: ${activeLabel}` },
-      })
-    );
-    simStepRef.current += 1;
-  }, [setNodes]);
-
-  React.useEffect(() => {
-    if (simulationState === 'idle') {
-      simStepRef.current = 0;
-      clearSimulationHighlight();
-    } else if (simulationState === 'paused') {
-      clearSimulationHighlight();
-    }
-  }, [simulationState, clearSimulationHighlight]);
-
-  React.useEffect(() => {
-    if (simulationState !== 'playing') return;
-    const interval = window.setInterval(advanceSimulationStep, 900);
-    return () => window.clearInterval(interval);
-  }, [simulationState, advanceSimulationStep]);
-
-  React.useEffect(() => {
-    const onStep = () => advanceSimulationStep();
-    window.addEventListener('vvs:simulation-step', onStep);
-    return () => window.removeEventListener('vvs:simulation-step', onStep);
-  }, [advanceSimulationStep]);
-
   const onConnect = useCallback(
     (params: Connection | Edge) => {
       const attempt = connectionFromReactFlow(params as Connection);
@@ -273,6 +265,12 @@ function GraphCanvasInner() {
       if ('error' in result) {
         dispatchEditorWarning(wireRejectionMessage(result.error));
         return;
+      }
+      if (result.chainBreak) {
+        dispatchEditorWarning(
+          'Flow rewired — previous upstream disconnected. Use a Call node for shared logic.',
+          'Flow'
+        );
       }
       setEdgesWithHistory(result.edges);
     },
@@ -332,16 +330,41 @@ function GraphCanvasInner() {
   const onPaneClick = useCallback(() => {
     if (menu) setMenu(null);
     if (variableMenu) setVariableMenu(null);
-  }, [menu, variableMenu]);
+    if (edgeMenu) setEdgeMenu(null);
+  }, [menu, variableMenu, edgeMenu]);
+
+  const deleteEdgeById = useCallback(
+    (edgeId: string) => {
+      setEdgesWithHistory((eds) => eds.filter((e) => e.id !== edgeId));
+      setEdgeMenu(null);
+    },
+    [setEdgesWithHistory]
+  );
 
   const onEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       if (event.altKey) {
-        setEdgesWithHistory((eds) => eds.filter((e) => e.id !== edge.id));
+        deleteEdgeById(edge.id);
+        return;
       }
+      setEdges((eds) =>
+        eds.map((e) => ({
+          ...e,
+          selected: e.id === edge.id,
+        }))
+      );
+      setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+      setEdgeMenu(null);
     },
-    [setEdgesWithHistory]
+    [deleteEdgeById, setEdges, setNodes]
   );
+
+  const onEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.preventDefault();
+    setEdgeMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
+    setMenu(null);
+    setVariableMenu(null);
+  }, []);
 
   const onEdgeDoubleClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
@@ -372,6 +395,10 @@ function GraphCanvasInner() {
         });
       }
 
+      const kindDef = resolveKind(template.type, template.kindVersion);
+      const inputs = template.inputs || kindDef?.inputs || [];
+      const outputs = template.outputs || kindDef?.outputs || [];
+
       const newNode: VVSNodeType = {
         id: `node-${Date.now()}`,
         type: 'vvs_standard_node',
@@ -379,13 +406,25 @@ function GraphCanvasInner() {
         data: {
           label: template.label,
           category: template.category,
-          inputs: template.inputs || [],
-          outputs: template.outputs || [],
+          inputs,
+          outputs,
           inlineValues: defaultInlineValues,
+          kindId: template.type,
+          kindVersion: template.kindVersion ?? kindDef?.kindVersion,
+          resolvedPorts: { inputs, outputs },
+          properties: {},
           ...(template.linkedGraphId ? { linkedGraphId: template.linkedGraphId } : {}),
           ...(template.linkKind ? { linkKind: template.linkKind } : {}),
+          ...(template.graphBinding ? { graphBinding: template.graphBinding } : {}),
         },
       };
+
+      if (template.linkKind === 'call_function' && template.linkedGraphId) {
+        const func = functions.find((f) => f.id === template.linkedGraphId);
+        if (func) {
+          newNode.data = applyFunctionCallBinding(newNode.data, func);
+        }
+      }
 
       const macros = listMacroEntries(openTabs);
       const crossTarget = resolveCrossGraphTarget(
@@ -503,6 +542,7 @@ function GraphCanvasInner() {
       variable: import('@/types/graph').GraphVariable,
       flowPosition: { x: number; y: number }
     ) => {
+      const kindId = type === 'Get' ? 'variable_get' : 'variable_set';
       const newNode: VVSNodeType = {
         id: `node-${Date.now()}`,
         type: 'vvs_standard_node',
@@ -510,27 +550,61 @@ function GraphCanvasInner() {
         data: {
           label: `${type} ${variable.name}`,
           category: 'Variables',
+          kindId,
+          properties: { variableName: variable.name },
           inputs:
             type === 'Set'
               ? [
                   { id: 'exec_in', label: '', type: 'execution' },
-                  { id: 'in_val', label: 'Value', type: `data_${variable.type}` as PinType },
+                  { id: 'val', label: 'New Value', type: `data_${variable.type}` as PinType },
                 ]
               : [],
           outputs:
+            type === 'Get'
+              ? [{ id: 'val', label: variable.name, type: `data_${variable.type}` as PinType }]
+              : [{ id: 'exec_out', label: '', type: 'execution' }],
+          inlineValues:
             type === 'Set'
-              ? [
-                  { id: 'exec_out', label: '', type: 'execution' },
-                  { id: 'out_val', label: '', type: `data_${variable.type}` as PinType },
-                ]
-              : [{ id: 'out_val', label: '', type: `data_${variable.type}` as PinType }],
-          inlineValues: {},
+              ? {
+                  val:
+                    typeof variable.defaultValue === 'string' ||
+                    typeof variable.defaultValue === 'number' ||
+                    typeof variable.defaultValue === 'boolean'
+                      ? variable.defaultValue
+                      : 0,
+                }
+              : {},
         },
       };
       setNodesWithHistory((nds) => nds.concat(newNode));
       setVariableMenu(null);
     },
     [setNodesWithHistory]
+  );
+
+  const pastePayload = useCallback(
+    (payload: GraphClipboardPayload) => {
+      const offset = 50;
+      const newNodes = payload.nodes.map((n) => ({
+        ...n,
+        id: `${n.type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        position: { x: n.position.x + offset, y: n.position.y + offset },
+        selected: true,
+        parentId: undefined,
+        expandParent: undefined,
+      }));
+      const idMap = new Map(payload.nodes.map((n, i) => [n.id, newNodes[i].id]));
+      const newEdges = payload.edges.map((e) => ({
+        ...e,
+        id: `e-${idMap.get(e.source) || e.source}-${idMap.get(e.target) || e.target}-${Date.now()}`,
+        source: idMap.get(e.source) || e.source,
+        target: idMap.get(e.target) || e.target,
+        selected: true,
+      }));
+      setNodesWithHistory((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
+      setEdgesWithHistory((eds) => [...eds.map((e) => ({ ...e, selected: false })), ...newEdges]);
+    },
+    [setNodesWithHistory, setEdgesWithHistory]
   );
 
   const handleCopy = useCallback(() => {
@@ -540,31 +614,21 @@ function GraphCanvasInner() {
         selectedNodes.some((n) => n.id === e.source) &&
         selectedNodes.some((n) => n.id === e.target)
     );
-    if (selectedNodes.length > 0) setClipboard({ nodes: selectedNodes, edges: selectedEdges });
+    if (selectedNodes.length === 0) return;
+    const payload: GraphClipboardPayload = { version: 1, nodes: selectedNodes, edges: selectedEdges };
+    setClipboard(payload);
+    void writeSystemGraphClipboard(selectedNodes, selectedEdges);
   }, [nodes, edges]);
 
-  const handlePaste = useCallback(() => {
-    if (!clipboard) return;
-    const offset = 50;
-    const newNodes = clipboard.nodes.map((n) => ({
-      ...n,
-      id: `${n.type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      position: { x: n.position.x + offset, y: n.position.y + offset },
-      selected: true,
-      parentId: undefined,
-      expandParent: undefined,
-    }));
-    const idMap = new Map(clipboard.nodes.map((n, i) => [n.id, newNodes[i].id]));
-    const newEdges = clipboard.edges.map((e) => ({
-      ...e,
-      id: `e-${idMap.get(e.source) || e.source}-${idMap.get(e.target) || e.target}-${Date.now()}`,
-      source: idMap.get(e.source) || e.source,
-      target: idMap.get(e.target) || e.target,
-      selected: true,
-    }));
-    setNodesWithHistory((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
-    setEdgesWithHistory((eds) => [...eds.map((e) => ({ ...e, selected: false })), ...newEdges]);
-  }, [clipboard, setNodesWithHistory, setEdgesWithHistory]);
+  const handlePaste = useCallback(async () => {
+    const systemPayload = await readSystemGraphClipboard();
+    if (systemPayload) {
+      setClipboard(systemPayload);
+      pastePayload(systemPayload);
+      return;
+    }
+    if (clipboard) pastePayload(clipboard);
+  }, [clipboard, pastePayload]);
 
   const handleDuplicate = useCallback(() => {
     const selectedNodes = nodes.filter((n) => n.selected);
@@ -611,14 +675,41 @@ function GraphCanvasInner() {
         nds.map((n) => {
           if (n.type !== 'vvs_standard_node' || n.data.category !== 'Variables') return n;
           const label = n.data.label;
-          if (label === `Get ${oldName}`) return { ...n, data: { ...n.data, label: `Get ${newName}` } };
-          if (label === `Set ${oldName}`) return { ...n, data: { ...n.data, label: `Set ${newName}` } };
+          if (label === `Get ${oldName}`) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                label: `Get ${newName}`,
+                properties: { ...n.data.properties, variableName: newName },
+              },
+            };
+          }
+          if (label === `Set ${oldName}`) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                label: `Set ${newName}`,
+                properties: { ...n.data.properties, variableName: newName },
+              },
+            };
+          }
           return n;
         })
       );
     };
     window.addEventListener('vvs:variable-renamed', handleVariableRenamed);
     return () => window.removeEventListener('vvs:variable-renamed', handleVariableRenamed);
+  }, [setNodesWithHistory]);
+
+  React.useEffect(() => {
+    const handleFunctionRenamed = (event: Event) => {
+      const { func } = (event as CustomEvent<{ func: import('@/types/graph').FunctionSymbol }>).detail;
+      setNodesWithHistory((nds) => syncCallNodesForFunction(nds, func) as VVSNodeType[]);
+    };
+    window.addEventListener(FUNCTION_RENAMED_EVENT, handleFunctionRenamed);
+    return () => window.removeEventListener(FUNCTION_RENAMED_EVENT, handleFunctionRenamed);
   }, [setNodesWithHistory]);
 
   React.useEffect(() => {
@@ -648,20 +739,49 @@ function GraphCanvasInner() {
     return () => window.removeEventListener('vvs:node-action', handleNodeAction);
   }, [setNodesWithHistory, setEdgesWithHistory]);
 
+  const handleExtractToFunction = useCallback(() => {
+    const result = extractSelectionToFunction(nodes, edges);
+    if ('error' in result) {
+      dispatchEditorWarning(result.error, 'Extract');
+      return;
+    }
+    setFunctions((prev) => [...prev, result.func]);
+    setOpenTabs((prev) => (prev.some((t) => t.id === result.tab.id) ? prev : [...prev, result.tab]));
+    importGraphTab(result.tab, result.functionDocument);
+    setNodesWithHistory(result.nextNodes);
+    setEdgesWithHistory(result.nextEdges);
+    markTabDirty(activeGraphTab);
+    markTabDirty(result.tab.id);
+    setCompileState('dirty');
+    dispatchEditorWarning(`Extracted "${result.func.name}" — call node inserted.`, 'Extract');
+  }, [
+    nodes,
+    edges,
+    setFunctions,
+    setOpenTabs,
+    importGraphTab,
+    setNodesWithHistory,
+    setEdgesWithHistory,
+    markTabDirty,
+    activeGraphTab,
+    setCompileState,
+  ]);
+
   React.useEffect(() => {
     const handleGraphAction = (event: Event) => {
       const action = (event as CustomEvent<{ action: GraphAction }>).detail.action;
       if (action === 'copy') handleCopy();
-      if (action === 'paste') handlePaste();
+      if (action === 'paste') void handlePaste();
       if (action === 'cut') handleCut();
       if (action === 'duplicate') handleDuplicate();
       if (action === 'zoom-fit') fitView({ duration: 300 });
       if (action === 'group-comment') wrapSelectionInComment(nodes, setNodesWithHistory);
       if (action === 'ungroup-comment') ungroupSelectionInComment(nodes, setNodesWithHistory);
+      if (action === 'extract-function') handleExtractToFunction();
     };
     window.addEventListener('vvs:graph-action', handleGraphAction);
     return () => window.removeEventListener('vvs:graph-action', handleGraphAction);
-  }, [nodes, handleCopy, handlePaste, handleCut, handleDuplicate, fitView, setNodesWithHistory]);
+  }, [nodes, handleCopy, handlePaste, handleCut, handleDuplicate, fitView, setNodesWithHistory, handleExtractToFunction]);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -674,6 +794,11 @@ function GraphCanvasInner() {
       }
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        const selectedEdges = edges.filter((edge) => edge.selected);
+        if (selectedEdges.length > 0) {
+          const selectedIds = new Set(selectedEdges.map((edge) => edge.id));
+          setEdgesWithHistory((eds) => eds.filter((edge) => !selectedIds.has(edge.id)));
+        }
         setNodesWithHistory((nds) => nds.filter((n) => !n.selected));
         setEdgesWithHistory((eds) =>
           eds.filter(
@@ -691,7 +816,7 @@ function GraphCanvasInner() {
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        handlePaste();
+        void handlePaste();
         return;
       }
 
@@ -727,6 +852,12 @@ function GraphCanvasInner() {
         return;
       }
 
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        handleExtractToFunction();
+        return;
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'u') {
         e.preventDefault();
         ungroupSelectionInComment(nodes, setNodesWithHistory);
@@ -734,7 +865,7 @@ function GraphCanvasInner() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nodes, handleCopy, handlePaste, handleCut, handleDuplicate, setNodesWithHistory, setEdgesWithHistory, fitView, screenToFlowPosition]);
+  }, [nodes, edges, handleCopy, handlePaste, handleCut, handleDuplicate, handleExtractToFunction, setNodesWithHistory, setEdgesWithHistory, fitView, screenToFlowPosition]);
 
   const onNodeDoubleClick = useCallback(
     (_: React.MouseEvent, node: VVSNodeType) => {
@@ -746,6 +877,32 @@ function GraphCanvasInner() {
     [getDocuments]
   );
 
+  React.useEffect(() => {
+    const onSpawnEventNode = (event: Event) => {
+      const detail = (event as CustomEvent<{ eventId: string; role: 'define' | 'dispatch' }>).detail;
+      const projectEvent = events.find((e) => e.id === detail.eventId);
+      if (!projectEvent) return;
+
+      const pane = document.querySelector('.react-flow');
+      const bounds = pane?.getBoundingClientRect();
+      const x = bounds ? bounds.left + bounds.width / 2 : window.innerWidth / 2;
+      const y = bounds ? bounds.top + bounds.height / 2 : window.innerHeight / 2;
+      const flowPosition = screenToFlowPosition({ x, y });
+      const nodeId = `node-${Date.now()}`;
+      const newNode: VVSNodeType = {
+        id: nodeId,
+        type: 'vvs_standard_node',
+        position: flowPosition,
+        data: buildEventNodeData(projectEvent, detail.role),
+      };
+      setNodesWithHistory((nds) => nds.concat(newNode));
+      setSelection({ type: 'node', id: nodeId });
+    };
+
+    window.addEventListener(SPAWN_EVENT_NODE_EVENT, onSpawnEventNode);
+    return () => window.removeEventListener(SPAWN_EVENT_NODE_EVENT, onSpawnEventNode);
+  }, [events, screenToFlowPosition, setNodesWithHistory, setSelection]);
+
   return (
     <div
       className="relative w-full h-full"
@@ -754,6 +911,11 @@ function GraphCanvasInner() {
       onDrop={onDrop}
     >
       <GraphNodeSearch />
+      <GraphFloatingDetails />
+      <GraphFloatingCompilerLog />
+      <div className="absolute bottom-2 left-2 z-10 pointer-events-none text-[10px] text-zinc-600 bg-zinc-950/80 border border-zinc-800/80 rounded px-2 py-1">
+        Alt+click or right-click wire to delete · Delete key removes selection
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -767,10 +929,14 @@ function GraphCanvasInner() {
         onNodeDoubleClick={onNodeDoubleClick}
         onEdgeClick={onEdgeClick}
         onEdgeDoubleClick={onEdgeDoubleClick}
+        onEdgeContextMenu={onEdgeContextMenu}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         colorMode="dark"
         fitView
+        noWheelClassName="nowheel"
+        noPanClassName="nopan"
+        noDragClassName="nodrag"
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#333" />
         <Controls />
@@ -824,6 +990,20 @@ function GraphCanvasInner() {
           </div>
         )}
       </ReactFlow>
+      {edgeMenu && (
+        <div
+          className="fixed z-[60] bg-zinc-900 border border-zinc-700 rounded shadow-xl overflow-hidden text-xs text-white min-w-[140px]"
+          style={{ top: edgeMenu.y, left: edgeMenu.x }}
+        >
+          <button
+            type="button"
+            className="w-full text-left px-4 py-2 hover:bg-zinc-800 text-red-300 transition-colors"
+            onClick={() => deleteEdgeById(edgeMenu.edgeId)}
+          >
+            Delete wire
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import { ProjectSnapshot } from '@/types/projectSnapshot';
+import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import { defaultTabMetadata } from '@/lib/graphDefaults';
 import { VVSNode, VVSEdge } from '@/types/graph';
+import { createFunctionSymbol } from '@/lib/functionTabs';
 
 const MAIN_NODES: VVSNode[] = [
   {
@@ -137,6 +138,8 @@ const MAIN_NODES: VVSNode[] = [
     data: {
       label: 'On damage',
       category: 'Events',
+      kindId: 'event_define',
+      properties: { eventId: 'evt-damage', eventName: 'damage' },
       inputs: [],
       outputs: [
         { id: 'exec_out', label: '', type: 'execution' },
@@ -535,7 +538,7 @@ const RESET_GAME_EDGES: VVSEdge[] = [
 /** Multi-graph project — function calls via Call Function nodes (mock multifile layout). */
 export function createComplexExampleSnapshot(): ProjectSnapshot {
   return {
-    version: 1,
+    version: 2,
     savedAt: new Date().toISOString(),
     projectDetails: {
       moduleName: 'GameSession',
@@ -548,9 +551,16 @@ export function createComplexExampleSnapshot(): ProjectSnapshot {
       { id: 'v3', name: 'IsAlive', type: 'boolean', defaultValue: true },
       { id: 'v4', name: 'PlayerName', type: 'string', defaultValue: 'Hero' },
     ],
+    events: [
+      {
+        id: 'evt-damage',
+        name: 'damage',
+        parameters: [{ id: 'damage', label: 'DamageAmount', type: 'data_number' }],
+      },
+    ],
     functions: [
-      { id: 'f1', name: 'ApplyDamage' },
-      { id: 'f2', name: 'ResetGame' },
+      createFunctionSymbol('ApplyDamage', 'f1'),
+      createFunctionSymbol('ResetGame', 'f2'),
     ],
     openTabs: [
       { id: 'main', type: 'main', name: 'Main graph' },
@@ -560,6 +570,7 @@ export function createComplexExampleSnapshot(): ProjectSnapshot {
     activeGraphTab: 'main',
     targetLanguage: 'python',
     autoCompile: true,
+    autoSave: false,
     documents: {
       main: {
         nodes: MAIN_NODES,

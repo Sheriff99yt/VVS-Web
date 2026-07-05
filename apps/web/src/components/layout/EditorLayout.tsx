@@ -3,14 +3,12 @@
 import React from 'react';
 import { TopNav } from './TopNav';
 import { GraphExplorer } from './GraphExplorer';
-import { RightSidebar } from './RightSidebar';
 import { CodePreviewPanel } from './CodePreviewPanel';
 import { GraphTabBar } from './GraphTabBar';
 import { GraphBreadcrumb } from './GraphBreadcrumb';
 import { StatusBar } from './StatusBar';
 import { LibraryView } from '../views/LibraryView';
 import { ReferencesView } from '../views/ReferencesView';
-import { OutputConsolePanel } from './OutputConsolePanel';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { ReactFlowProvider } from '@xyflow/react';
 import { ProjectProvider } from '@/contexts/ProjectContext';
@@ -20,6 +18,7 @@ import { EditorViewProvider } from '@/contexts/EditorViewContext';
 import { EditorNavigationProvider } from '@/contexts/EditorNavigationContext';
 import { GraphWorkspaceHost } from '@/components/graph/GraphWorkspaceHost';
 import GraphCanvas from '@/components/graph/GraphCanvas';
+import { GraphSettingsModal } from '@/components/layout/GraphSettingsModal';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import type { ProjectSource } from '@/types/projectRegistry';
 import type { GraphDocument } from '@/lib/graphDefaults';
@@ -40,7 +39,7 @@ import type { EditorViewTab } from '@/types/editorNavigation';
 export type { EditorViewTab };
 
 function CanvasWorkspace() {
-  const { consolePanelRef, codePanelRef } = useEditorPanels();
+  const { codePanelRef } = useEditorPanels();
 
   return (
     <PanelGroup orientation="horizontal" className="w-full h-full">
@@ -51,55 +50,28 @@ function CanvasWorkspace() {
       <PanelResizeHandle className="w-1 cursor-col-resize bg-zinc-950 border-x border-zinc-800/50 hover:bg-zinc-800 transition-colors" />
 
       <Panel id="center" defaultSize={55} minSize={30}>
-        <PanelGroup id="center-split" orientation="vertical">
-          <Panel id="main-view" defaultSize={88} minSize={30}>
-            <main className="w-full h-full relative bg-zinc-950 flex flex-col min-h-0 min-w-0">
-              <div className="flex flex-col shrink-0 w-full z-40 relative">
-                <GraphBreadcrumb />
-                <GraphTabBar />
-              </div>
-              <div className="flex-1 relative overflow-hidden min-h-0 min-w-0">
-                <GraphCanvas />
-              </div>
-            </main>
-          </Panel>
-
-          <PanelResizeHandle className="h-1 cursor-row-resize bg-zinc-950 border-y border-zinc-800/50 hover:bg-zinc-800 transition-colors" />
-
-          <Panel
-            id="output-console"
-            defaultSize={12}
-            minSize={5}
-            collapsible
-            collapsedSize={0}
-            panelRef={consolePanelRef}
-          >
-            <OutputConsolePanel />
-          </Panel>
-        </PanelGroup>
+        <main className="w-full h-full relative bg-zinc-950 flex flex-col min-h-0 min-w-0">
+          <div className="flex flex-col shrink-0 w-full z-40 relative">
+            <GraphBreadcrumb />
+            <GraphTabBar />
+          </div>
+          <div className="flex-1 relative overflow-hidden min-h-0 min-w-0">
+            <GraphCanvas />
+          </div>
+        </main>
       </Panel>
 
       <PanelResizeHandle className="w-1 cursor-col-resize bg-zinc-950 border-x border-zinc-800/50 hover:bg-zinc-800 transition-colors" />
 
-      <Panel id="right" defaultSize={25} minSize={20}>
-        <PanelGroup id="right-split" orientation="vertical">
-          <Panel id="properties" defaultSize={55} minSize={20}>
-            <RightSidebar />
-          </Panel>
-
-          <PanelResizeHandle className="h-1 cursor-row-resize bg-zinc-950 border-y border-zinc-800/50 hover:bg-zinc-800 transition-colors" />
-
-          <Panel
-            id="code"
-            defaultSize={45}
-            minSize={15}
-            collapsible
-            collapsedSize={0}
-            panelRef={codePanelRef}
-          >
-            <CodePreviewPanel />
-          </Panel>
-        </PanelGroup>
+      <Panel
+        id="right"
+        defaultSize={28}
+        minSize={18}
+        collapsible
+        collapsedSize={0}
+        panelRef={codePanelRef}
+      >
+        <CodePreviewPanel />
       </Panel>
     </PanelGroup>
   );
@@ -130,7 +102,11 @@ export function EditorLayout({
         <GraphWorkspaceHost
           initialNodes={initialNodes}
           initialEdges={initialEdges}
-          initialDocuments={initialDocuments ?? initialSnapshot.documents}
+          initialDocuments={
+            (initialDocuments ?? initialSnapshot.documents) as
+              | Record<string, GraphDocument>
+              | undefined
+          }
         >
           <EditorViewProvider activeView={activeTab}>
             <EditorNavigationProvider editorView={activeTab} setEditorView={setActiveTab}>
@@ -158,6 +134,7 @@ export function EditorLayout({
 
                 <StatusBar />
               </div>
+              <GraphSettingsModal />
             </EditorPanelProvider>
             </EditorNavigationProvider>
           </EditorViewProvider>

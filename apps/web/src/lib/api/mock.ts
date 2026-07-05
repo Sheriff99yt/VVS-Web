@@ -33,3 +33,17 @@ export async function mockCompileProject(): Promise<{ ok: true }> {
   await delay(800);
   return { ok: true };
 }
+
+export interface McpProbeResult {
+  ok: boolean;
+  message: string;
+}
+
+export async function mockProbeMcp(_url: string): Promise<McpProbeResult> {
+  await delay(500);
+  return {
+    ok: false,
+    message:
+      'MCP is unavailable in offline mode. A Go MCP server is required (Phase 2) — local graph editing still works.',
+  };
+}

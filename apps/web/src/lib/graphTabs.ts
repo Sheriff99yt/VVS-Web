@@ -1,4 +1,4 @@
-import { GraphTab } from '@/contexts/ProjectContext';
+import type { GraphTab } from '@vvs/graph-types';
 import type { Dispatch, SetStateAction } from 'react';
 import { formatFunctionTabName } from './functionTabs';
 

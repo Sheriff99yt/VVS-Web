@@ -4,7 +4,7 @@ import { defaultTabMetadata } from '@/lib/graphDefaults';
 /** Minimal starter — On Start wired to a single Print String node. */
 export function createSimpleExampleSnapshot(): ProjectSnapshot {
   return {
-    version: 1,
+    version: 2,
     savedAt: new Date().toISOString(),
     projectDetails: {
       moduleName: 'HelloWorld',
@@ -12,11 +12,13 @@ export function createSimpleExampleSnapshot(): ProjectSnapshot {
       description: 'Simple example — one event and one action',
     },
     variables: [],
+    events: [],
     functions: [],
     openTabs: [{ id: 'main', type: 'main', name: 'Main graph' }],
     activeGraphTab: 'main',
     targetLanguage: 'python',
     autoCompile: true,
+    autoSave: false,
     documents: {
       main: {
         nodes: [

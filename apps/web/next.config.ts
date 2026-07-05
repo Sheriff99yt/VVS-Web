@@ -38,6 +38,7 @@ const isGithubPages = process.env.GITHUB_PAGES === 'true';
 const githubPagesBasePath = '/VVS-Web';
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['@vvs/graph-types', '@vvs/syntax-registry', '@vvs/language-profiles', '@vvs/transpiler'],
   ...(isGithubPages
     ? {
         output: 'export',

@@ -31,9 +31,9 @@ Before adding visible UI, answer:
 
 ### 1. Collapsed chrome + status toggles
 
-- Secondary panels (log, code preview) start **collapsed**.
-- Status bar or View menu provides **Log** / **Code** toggles.
-- Auto-expand on workflow events; user can collapse after.
+- **Compiler log** starts **collapsed**; expands on compile/error.
+- **Code preview** stays **open by default** in Canvas (`docs/node_system.md`) — user may collapse via StatusBar **Code** toggle.
+- Status bar provides **Log** / **Code** toggles.
 
 **VVS:** `contexts/EditorPanelContext.tsx`, `StatusBar.tsx`, collapsible `Panel`s in `EditorLayout.tsx`.
 

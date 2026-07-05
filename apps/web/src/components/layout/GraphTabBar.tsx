@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { FilePlus, Code2, ChevronDown } from 'lucide-react';
-import { createFunctionId, formatFunctionTabName } from '@/lib/functionTabs';
+import { createFunctionSymbol, formatFunctionTabName } from '@/lib/functionTabs';
 
 export function GraphTabBar() {
-  const { openTabs, activeGraphTab, setOpenTabs, functions, setFunctions } = useProject();
+  const { openTabs, activeGraphTab, setOpenTabs, functions, setFunctions, isTabDirty } = useProject();
   const { navigate } = useEditorNavigation();
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -40,9 +40,10 @@ export function GraphTabBar() {
     let tabName = name;
 
     if (type === 'function' && !tabId) {
-      tabId = createFunctionId();
-      tabName = tabName || 'NewFunction';
-      setFunctions((prev) => [...prev, { id: tabId!, name: tabName! }]);
+      const func = createFunctionSymbol(tabName || 'NewFunction');
+      tabId = func.id;
+      tabName = func.name;
+      setFunctions((prev) => [...prev, func]);
     } else {
       tabId = tabId || `graph-${Date.now()}`;
       tabName = tabName || `New ${type === 'function' ? 'Function' : 'Macro'}`;
@@ -84,6 +85,9 @@ export function GraphTabBar() {
             <span className={`text-[11px] font-semibold whitespace-nowrap ${activeGraphTab === tab.id ? 'text-zinc-200' : 'text-zinc-500'}`}>
               {tab.name}
             </span>
+            {isTabDirty(tab.id) ? (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Uncompiled changes" />
+            ) : null}
             {tab.id !== 'main' && (
               <button 
                 onClick={(e) => handleClose(e, tab.id)}
@@ -108,26 +112,23 @@ export function GraphTabBar() {
         </button>
 
         {showMenu && (
-          <div className="absolute top-full left-0 origin-top-left mt-2 w-56 bg-zinc-900 border border-zinc-700 shadow-2xl rounded-md py-1 z-50">
-            
-            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-500 tracking-wider">CREATE NEW</div>
+          <div className="absolute top-full left-0 origin-top-left mt-2 w-48 bg-zinc-900 border border-zinc-700 shadow-2xl rounded-md py-1 z-50">
             <button 
               onClick={() => openNewTab('function')}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-              Function Graph
+              Function
             </button>
             <button 
               onClick={() => openNewTab('macro')}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              Macro Graph
+              Macro
             </button>
 
             <div className="h-px bg-zinc-800 my-1.5 mx-2" />
-            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-500 tracking-wider">OPEN EXISTING</div>
             
             <div className="max-h-48 overflow-y-auto">
               {functions.length > 0 ? functions.map(func => (
@@ -140,10 +141,10 @@ export function GraphTabBar() {
                     <Code2 size={12} className="text-zinc-500 group-hover:text-indigo-400 transition-colors" />
                     <span>{func.name}</span>
                   </div>
-                  {openTabs.some(t => t.id === func.id) && <span className="text-[9px] text-emerald-500 bg-emerald-500/10 px-1.5 rounded">OPEN</span>}
+                  {openTabs.some(t => t.id === func.id) && <span className="text-[9px] text-emerald-500">●</span>}
                 </button>
               )) : (
-                <div className="px-3 py-2 text-xs text-zinc-500 italic">No existing functions found.</div>
+                <div className="px-3 py-2 text-xs text-zinc-500 italic">None</div>
               )}
             </div>
           </div>

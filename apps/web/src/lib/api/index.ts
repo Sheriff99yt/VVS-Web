@@ -3,10 +3,12 @@ import {
   mockCompileProject,
   mockGetHealth,
   mockLoadProject,
+  mockProbeMcp,
   mockSaveProject,
   type HealthResponse,
+  type McpProbeResult,
 } from './mock';
-import { httpGetHealth, httpLoadProject, httpSaveProject } from './client';
+import { httpGetHealth, httpLoadProject, httpProbeMcp, httpSaveProject } from './client';
 
 export type ApiMode = 'mock' | 'http';
 
@@ -34,7 +36,11 @@ export const VvsApi = {
   compileProject(): Promise<{ ok: true }> {
     return mockCompileProject();
   },
+
+  probeMcp(url: string): Promise<McpProbeResult> {
+    return getApiMode() === 'http' ? httpProbeMcp(url) : mockProbeMcp(url);
+  },
 };
 
 export { ApiError } from './errors';
-export type { HealthResponse };
+export type { HealthResponse, McpProbeResult };

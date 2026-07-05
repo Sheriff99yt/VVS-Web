@@ -5,7 +5,8 @@ export type GraphAction =
   | 'duplicate'
   | 'zoom-fit'
   | 'group-comment'
-  | 'ungroup-comment';
+  | 'ungroup-comment'
+  | 'extract-function';
 
 export function dispatchGraphAction(action: GraphAction) {
   window.dispatchEvent(new CustomEvent('vvs:graph-action', { detail: { action } }));

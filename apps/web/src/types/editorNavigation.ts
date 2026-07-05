@@ -6,7 +6,7 @@ export const VVS_NAVIGATION_VERSION = 1 as const;
 export type NavigationHistoryMode = 'push' | 'replace' | 'none';
 
 export interface VvsNavigationSelection {
-  type: 'node' | 'variable' | 'graph';
+  type: 'node' | 'variable' | 'event' | 'function' | 'graph';
   id: string | null;
 }
 

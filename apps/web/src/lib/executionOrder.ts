@@ -34,7 +34,11 @@ export function buildExecutionOrder(
 
 export function findSimulationStartNode(nodes: VVSNode[]): VVSNode | undefined {
   return (
-    nodes.find((n) => n.type === 'vvs_standard_node' && n.data.label === 'On Start') ??
+    nodes.find(
+      (n) =>
+        n.type === 'vvs_standard_node' &&
+        (n.data.kindId === 'event_on_start' || n.data.label === 'On Start')
+    ) ??
     nodes.find((n) => n.type === 'vvs_standard_node' && n.data.category === 'Events')
   );
 }

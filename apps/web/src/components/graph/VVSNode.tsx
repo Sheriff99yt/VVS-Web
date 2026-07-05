@@ -1,24 +1,47 @@
 'use client';
 
-import React from 'react';
-import { Handle, Position, NodeProps, NodeToolbar } from '@xyflow/react';
-import { VVSNodeData, PinDefinition } from '@/types/graph';
+import React, { useCallback } from 'react';
+import { Position, NodeToolbar, NodeProps, useReactFlow } from '@xyflow/react';
 import { Copy, Trash2, MessageSquarePlus } from 'lucide-react';
+import { VVSNodeData } from '@/types/graph';
 import { dispatchGraphAction, dispatchNodeAction } from '@/lib/graphActions';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
+import { getNodeDisplayTitle } from '@/lib/nodeKind';
+import { NodePinRow } from './NodePinRow';
+import { GraphWheelShield } from './GraphWheelShield';
 import styles from './VVSNode.module.css';
 
-export function VVSNodeComponent({ id, data, selected }: NodeProps<import('@xyflow/react').Node<VVSNodeData>>) {
+interface VVSNodeBodyProps {
+  id: string;
+  data: VVSNodeData;
+  selected: boolean;
+}
+
+function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
+  const { updateNodeData } = useReactFlow();
   const linkedTargetLabel = linkedGraphTargetLabel(data);
   const isImportNode = data.linkKind === 'import_module';
   const hasPins = data.inputs.length > 0 || data.outputs.length > 0;
+  const title = getNodeDisplayTitle(data);
+
+  const handleInlineChange = useCallback(
+    (pinId: string, value: string | number | boolean) => {
+      updateNodeData(id, {
+        inlineValues: {
+          ...(data.inlineValues ?? {}),
+          [pinId]: value,
+        },
+      });
+    },
+    [data.inlineValues, id, updateNodeData]
+  );
 
   return (
     <>
       <NodeToolbar
         isVisible={selected}
         position={Position.Top}
-        className="flex gap-1 p-1 bg-zinc-900 border border-zinc-700 rounded-md shadow-xl"
+        className="flex gap-1 p-1 bg-zinc-900 border border-zinc-700 rounded-md shadow-xl nowheel nopan nodrag"
       >
         <button
           onClick={() => dispatchNodeAction('duplicate-node', id)}
@@ -50,7 +73,7 @@ export function VVSNodeComponent({ id, data, selected }: NodeProps<import('@xyfl
       >
         <div className={styles.header}>
           <div className={styles.titleBlock}>
-            <span className={styles.title}>{data.label}</span>
+            <span className={styles.title}>{title}</span>
             {linkedTargetLabel && (
               <span
                 className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}
@@ -63,56 +86,36 @@ export function VVSNodeComponent({ id, data, selected }: NodeProps<import('@xyfl
         </div>
 
         <div className={`${styles.body} ${!hasPins ? styles.bodyPinless : ''}`}>
-          <div className={`${styles.column} ${styles.leftColumn}`}>
-            {data.inputs.map((input: PinDefinition) => {
-              const hasInlineValue =
-                input.type !== 'execution' && data.inlineValues && data.inlineValues[input.id] !== undefined;
-              const inlineValueStr = hasInlineValue ? String(data.inlineValues[input.id]) : '';
-              return (
-                <div key={input.id} className={styles.pinRow}>
-                  <Handle
-                    type="target"
-                    position={Position.Left}
-                    id={input.id}
-                    className={`${styles.handle} ${styles.handleLeft} ${input.type === 'execution' ? styles.handleExecution : ''}`}
-                    data-pintype={input.type}
-                  />
-                  <span className={styles.pinLabel} style={{ marginLeft: 8 }}>
-                    {input.label}
-                  </span>
-                  {hasInlineValue && (
-                    <span
-                      className="ml-1 px-1 py-0.5 bg-zinc-950/50 rounded border border-zinc-700 text-[9px] text-zinc-400 max-w-[60px] truncate"
-                      title={inlineValueStr}
-                    >
-                      {inlineValueStr}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <GraphWheelShield className={`${styles.column} ${styles.leftColumn}`}>
+            {data.inputs.map((input) => (
+              <NodePinRow
+                key={input.id}
+                nodeId={id}
+                pin={input}
+                direction="input"
+                inlineValue={data.inlineValues?.[input.id]}
+                onInlineChange={handleInlineChange}
+              />
+            ))}
+          </GraphWheelShield>
 
           <div className={`${styles.column} ${styles.rightColumn}`}>
-            {data.outputs.map((output: PinDefinition) => (
-              <div key={output.id} className={styles.pinRow}>
-                <span className={styles.pinLabel} style={{ marginRight: 8 }}>
-                  {output.label}
-                </span>
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={output.id}
-                  className={`${styles.handle} ${styles.handleRight} ${output.type === 'execution' ? styles.handleExecution : ''}`}
-                  data-pintype={output.type}
-                />
-              </div>
+            {data.outputs.map((output) => (
+              <NodePinRow key={output.id} nodeId={id} pin={output} direction="output" />
             ))}
           </div>
         </div>
       </div>
     </>
   );
+}
+
+export function VVSNodeComponent({
+  id,
+  data,
+  selected,
+}: NodeProps<import('@xyflow/react').Node<VVSNodeData>>) {
+  return <VVSNodeBody id={id} data={data} selected={Boolean(selected)} />;
 }
 
 export const VVSNode = React.memo(VVSNodeComponent);

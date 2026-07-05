@@ -13,43 +13,34 @@ import React, {
 import type { PanelImperativeHandle } from 'react-resizable-panels';
 
 interface EditorPanelContextValue {
-  consolePanelRef: RefObject<PanelImperativeHandle | null>;
   codePanelRef: RefObject<PanelImperativeHandle | null>;
-  consoleOpen: boolean;
   codeOpen: boolean;
-  toggleConsole: () => void;
   toggleCode: () => void;
-  expandConsole: () => void;
   expandCode: () => void;
+  compilerLogOpen: boolean;
+  setCompilerLogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleCompilerLog: () => void;
+  expandCompilerLog: () => void;
+  /** @deprecated use compilerLogOpen */
+  consoleOpen: boolean;
+  /** @deprecated use toggleCompilerLog */
+  toggleConsole: () => void;
+  /** @deprecated use expandCompilerLog */
+  expandConsole: () => void;
 }
 
 const EditorPanelContext = createContext<EditorPanelContextValue | null>(null);
 
 export function EditorPanelProvider({ children }: { children: ReactNode }) {
-  const consolePanelRef = useRef<PanelImperativeHandle>(null);
   const codePanelRef = useRef<PanelImperativeHandle>(null);
-  const [consoleOpen, setConsoleOpen] = useState(false);
-  const [codeOpen, setCodeOpen] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(true);
+  const [compilerLogOpen, setCompilerLogOpen] = useState(false);
   const [panelsReady, setPanelsReady] = useState(false);
-
-  const expandConsole = useCallback(() => {
-    consolePanelRef.current?.expand();
-    setConsoleOpen(true);
-  }, []);
 
   const expandCode = useCallback(() => {
     codePanelRef.current?.expand();
     setCodeOpen(true);
   }, []);
-
-  const toggleConsole = useCallback(() => {
-    if (consolePanelRef.current?.isCollapsed()) {
-      expandConsole();
-    } else {
-      consolePanelRef.current?.collapse();
-      setConsoleOpen(false);
-    }
-  }, [expandConsole]);
 
   const toggleCode = useCallback(() => {
     if (codePanelRef.current?.isCollapsed()) {
@@ -60,10 +51,18 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
     }
   }, [expandCode]);
 
+  const expandCompilerLog = useCallback(() => {
+    setCompilerLogOpen(true);
+  }, []);
+
+  const toggleCompilerLog = useCallback(() => {
+    setCompilerLogOpen((open) => !open);
+  }, []);
+
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      consolePanelRef.current?.collapse();
-      codePanelRef.current?.collapse();
+      codePanelRef.current?.expand();
+      setCodeOpen(true);
       setPanelsReady(true);
     });
     return () => cancelAnimationFrame(frame);
@@ -75,14 +74,11 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
     const onCompileState = (event: Event) => {
       const state = (event as CustomEvent<{ state: string }>).detail.state;
       if (state === 'compiling' || state === 'error') {
-        expandConsole();
-      }
-      if (state === 'success') {
-        expandCode();
+        expandCompilerLog();
       }
     };
 
-    const onValidation = () => expandConsole();
+    const onValidation = () => expandCompilerLog();
 
     window.addEventListener('vvs:compile-state', onCompileState);
     window.addEventListener('vvs:validation-result', onValidation);
@@ -90,19 +86,22 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('vvs:compile-state', onCompileState);
       window.removeEventListener('vvs:validation-result', onValidation);
     };
-  }, [panelsReady, expandConsole, expandCode]);
+  }, [panelsReady, expandCompilerLog]);
 
   return (
     <EditorPanelContext.Provider
       value={{
-        consolePanelRef,
         codePanelRef,
-        consoleOpen,
         codeOpen,
-        toggleConsole,
         toggleCode,
-        expandConsole,
         expandCode,
+        compilerLogOpen,
+        setCompilerLogOpen,
+        toggleCompilerLog,
+        expandCompilerLog,
+        consoleOpen: compilerLogOpen,
+        toggleConsole: toggleCompilerLog,
+        expandConsole: expandCompilerLog,
       }}
     >
       {children}

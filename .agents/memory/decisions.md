@@ -41,6 +41,30 @@ Still open: File New/Import polish, mock validator, Library backend, MCP connect
 - **UE6 editor plugin (Phase 5)** — in-engine canvas + UE integration; **reuses Phase 1 Verse emitter**, not a separate codegen path
 - **Web UI stays engine-neutral** — UE-specific affordances belong in plugin docs/surface, not generic web copy
 
+## Node system & codegen (July 2026)
+
+- **Canonical spec:** `docs/node_system.md` — registry, ports, pin types, `TranspileResult`, selection highlight
+- **Port strategy:** Hybrid (`kindId` + `kindVersion`, registry resolve, optional snapshot on save)
+- **Pin types:** Logical types at wire layer; per-language mapping in emitter only
+- **Selection → code:** `sourceMap` from one generate pass — **no** re-transpile on select; **shipped** in CodePreviewPanel
+- **Code panel:** Open by default; **CodeMirror 6** via `GeneratedCodeView` facade (§11 `docs/node_system.md`); Monaco swappable later
+- **Dynamic calls:** One kind `vvs.project.call_function` + `graphBinding`
+
+## Cross-language redesign (July 2026)
+
+Shipped in monorepo packages + web UI:
+
+- **`@vvs/graph-types`** — `ProjectSnapshot` v2, `FunctionSymbol`/overloads, `Diagnostic`, `analyzeProject`
+- **`@vvs/syntax-registry`** — `core-pack.json`, `list`/`resolve`/`expandProjectSymbols`; spawn sets `kindId`, `kindVersion`, `resolvedPorts`
+- **`@vvs/language-profiles`** — `analyzePortability` per target language; see `docs/language_profiles.md`
+- **`@vvs/transpiler`** — codegen + snapshot tests; web imports via `mockCodegen.ts` facade
+- **Function UI** — `FunctionPropertiesPanel`, overload tree rows, `functionHelpers` pin sync, `selection.type: 'function'`
+- **Portability UX** — warnings in compiler log, code preview badge, status bar (non-blocking)
+- **Extract to function** — Ctrl+Shift+E / View menu
+- **Go registry** — `GET /registry/nodes`, `GET /registry/core-pack` (MCP transport TBD)
+
+Still partial: full analyze→lower→emit IR modules, ambiguous overload picker on call nodes, removing all label-based semantics from hot paths.
+
 ## Architecture
 
 - Transpiler: pure TypeScript in `packages/transpiler`, three-stage pipeline, zero React deps
@@ -57,6 +81,7 @@ Still open: File New/Import polish, mock validator, Library backend, MCP connect
 - **`ProjectTree` navigation modes** — `canvas`: single-click selects; `references`: single-click focuses reference graph; both: double-click opens in Canvas
 - **Cycle prevention** — wire cycles (`graphCycles.ts`) and cross-graph dependency cycles (`graphRelations.ts`) block connects and node label changes
 - **Centralized wiring** — `graphWiring.ts` owns pin compatibility, connection validation, single-wire-per-input, reroute split, and user-facing rejection messages; `GraphCanvas` delegates `onConnect`, `isValidConnection`, spawn-wire, and edge double-click through it
+- **Linear flow chains (intentional)** — unlike UE Blueprint wire splicing, rewiring exec into the middle of `A → B → C` drops `A → B`; one exec in/out per handle. Encourages functions/shared graphs over duplicated linear chains. Documented in `docs/node_system.md` §5; tested in `graphWiring.test.ts`
 - **References** is a **top-level TopNav view**, not a left-panel category — do not re-add `ReferenceViewer` to `ProjectTree`
 
 ## Editor navigation history (July 2026)

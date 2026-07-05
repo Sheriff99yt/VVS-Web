@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { NodeChange, EdgeChange } from '@xyflow/react';
 import { useGraphState } from '@/hooks/useGraphState';
 import { useGraphTabSync } from '@/hooks/useGraphTabSync';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
@@ -40,25 +41,79 @@ export function GraphWorkspaceHost({
     setActiveGraphTab,
     setOpenTabs,
     setFunctions,
+    markTabDirty,
   } = useProject();
 
   const { registerWorkspace } = useGraphWorkspace();
 
+  const markCurrentTabDirty = useCallback(() => {
+    markTabDirty(activeGraphTab);
+    setCompileState('dirty');
+  }, [markTabDirty, activeGraphTab, setCompileState]);
+
   const {
     nodes,
     edges,
-    onNodesChange,
-    onEdgesChange,
+    onNodesChange: onNodesChangeBase,
+    onEdgesChange: onEdgesChangeBase,
     setNodes,
     setEdges,
-    setNodesWithHistory,
-    setEdgesWithHistory,
+    setNodesWithHistory: setNodesWithHistoryBase,
+    setEdgesWithHistory: setEdgesWithHistoryBase,
     undo,
     redo,
     canUndo,
     canRedo,
     clearHistory,
   } = useGraphState(initialNodes, initialEdges);
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange<VVSNode>[]) => {
+      const isSignificant = changes.some(
+        (c) =>
+          c.type === 'add' ||
+          c.type === 'remove' ||
+          (c.type === 'position' && c.dragging === false)
+      );
+      onNodesChangeBase(changes);
+      if (isSignificant) markCurrentTabDirty();
+    },
+    [onNodesChangeBase, markCurrentTabDirty]
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange<VVSEdge>[]) => {
+      const isSignificant = changes.some((c) => c.type === 'add' || c.type === 'remove');
+      onEdgesChangeBase(changes);
+      if (isSignificant) markCurrentTabDirty();
+    },
+    [onEdgesChangeBase, markCurrentTabDirty]
+  );
+
+  const setNodesWithHistory = useCallback(
+    (updater: React.SetStateAction<VVSNode[]>) => {
+      setNodesWithHistoryBase(updater);
+      markCurrentTabDirty();
+    },
+    [setNodesWithHistoryBase, markCurrentTabDirty]
+  );
+
+  const setEdgesWithHistory = useCallback(
+    (updater: React.SetStateAction<VVSEdge[]>) => {
+      setEdgesWithHistoryBase(updater);
+      markCurrentTabDirty();
+    },
+    [setEdgesWithHistoryBase, markCurrentTabDirty]
+  );
+
+  const getMainMetadata = useCallback(
+    () => ({
+      moduleName: projectDetails.moduleName,
+      extendsType: projectDetails.extendsType,
+      description: projectDetails.description,
+    }),
+    [projectDetails.moduleName, projectDetails.extendsType, projectDetails.description]
+  );
 
   const {
     getAllDocuments,
@@ -76,32 +131,40 @@ export function GraphWorkspaceHost({
     setEdges,
     clearHistory,
     initialMain: { nodes: initialNodes, edges: initialEdges },
-    getMainMetadata: () => ({
-      moduleName: projectDetails.moduleName,
-      extendsType: projectDetails.extendsType,
-      description: projectDetails.description,
-    }),
+    getMainMetadata,
   });
 
-  useEffect(() => {
-    registerWorkspace({
-      getDocuments: getAllDocuments,
-      loadDocuments: loadAllDocuments,
-      importGraphDocument: importGraphTab,
-      getActiveTabMetadata,
-      updateActiveTabMetadata,
-      subscribeMetadata,
-    });
-    return () => registerWorkspace(null);
-  }, [
-    registerWorkspace,
+  const tabSyncRef = useRef({
     getAllDocuments,
     loadAllDocuments,
     importGraphTab,
     getActiveTabMetadata,
     updateActiveTabMetadata,
     subscribeMetadata,
-  ]);
+  });
+  tabSyncRef.current = {
+    getAllDocuments,
+    loadAllDocuments,
+    importGraphTab,
+    getActiveTabMetadata,
+    updateActiveTabMetadata,
+    subscribeMetadata,
+  };
+
+  useEffect(() => {
+    registerWorkspace({
+      getDocuments: () => tabSyncRef.current.getAllDocuments(),
+      loadDocuments: (documents, activeTab) =>
+        tabSyncRef.current.loadAllDocuments(documents, activeTab),
+      importGraphDocument: (tab, document) =>
+        tabSyncRef.current.importGraphTab(tab, document),
+      getActiveTabMetadata: () => tabSyncRef.current.getActiveTabMetadata(),
+      updateActiveTabMetadata: (patch) =>
+        tabSyncRef.current.updateActiveTabMetadata(patch),
+      subscribeMetadata: (listener) => tabSyncRef.current.subscribeMetadata(listener),
+    });
+    return () => registerWorkspace(null);
+  }, [registerWorkspace]);
 
   const documentsHydratedRef = useRef(false);
   useEffect(() => {
@@ -122,11 +185,12 @@ export function GraphWorkspaceHost({
       setActiveGraphTab(tab.id);
       setSelection({ type: 'graph', id: tab.id });
       importGraphTab(tab, document);
+      markTabDirty(tab.id);
       setCompileState('dirty');
     };
     window.addEventListener('vvs:import-library-graph', onImport);
     return () => window.removeEventListener('vvs:import-library-graph', onImport);
-  }, [importGraphTab, setFunctions, setOpenTabs, setActiveGraphTab, setSelection, setCompileState]);
+  }, [importGraphTab, setFunctions, setOpenTabs, setActiveGraphTab, setSelection, setCompileState, markTabDirty]);
 
   useEffect(() => {
     setCanUndo(canUndo);
@@ -134,16 +198,18 @@ export function GraphWorkspaceHost({
   }, [canUndo, canRedo, setCanUndo, setCanRedo]);
 
   useEffect(() => {
-    if (undoTrigger > 0) undo();
-  }, [undoTrigger, undo]);
+    if (undoTrigger > 0) {
+      undo();
+      markCurrentTabDirty();
+    }
+  }, [undoTrigger, undo, markCurrentTabDirty]);
 
   useEffect(() => {
-    if (redoTrigger > 0) redo();
-  }, [redoTrigger, redo]);
-
-  useEffect(() => {
-    setCompileState('dirty');
-  }, [nodes, edges, setCompileState]);
+    if (redoTrigger > 0) {
+      redo();
+      markCurrentTabDirty();
+    }
+  }, [redoTrigger, redo, markCurrentTabDirty]);
 
   const editValue = React.useMemo(
     () => ({

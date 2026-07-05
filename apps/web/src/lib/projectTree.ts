@@ -2,6 +2,9 @@ import { GraphTab, TargetLanguage } from '@/contexts/ProjectContext';
 import { GraphDocument } from '@/lib/graphDefaults';
 import { graphDisplayName, generatedFileName } from './graphTabs';
 
+import type { ProjectEventDefinition } from '@/types/graph';
+import { findGraphWithEventDefine } from './eventHelpers';
+
 const LIFECYCLE_EVENT_LABELS = new Set(['On Start', 'On Update']);
 
 export interface EventDispatcherEntry {
@@ -10,7 +13,31 @@ export interface EventDispatcherEntry {
   graphId: string;
 }
 
+/** List project events for the tree. Falls back to scanning graphs for legacy projects. */
 export function listEventDispatchers(
+  events: ProjectEventDefinition[],
+  documents: Record<string, GraphDocument> | null
+): EventDispatcherEntry[] {
+  if (events.length > 0) {
+    return events
+      .map((event) => ({
+        id: event.id,
+        label: eventDisplayName(event.name),
+        graphId: findGraphWithEventDefine(event.id, documents) ?? 'main',
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  return listLegacyEventDispatchers(documents);
+}
+
+function eventDisplayName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return 'Custom event';
+  return trimmed.toLowerCase().startsWith('on ') ? trimmed : `On ${trimmed}`;
+}
+
+function listLegacyEventDispatchers(
   documents: Record<string, GraphDocument> | null
 ): EventDispatcherEntry[] {
   if (!documents) return [];

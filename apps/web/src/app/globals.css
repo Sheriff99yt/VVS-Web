@@ -69,3 +69,14 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Generated code panel — force dark CodeMirror surface (uiw defaults to light) */
+.vvs-code-mirror,
+.vvs-code-mirror .cm-editor,
+.vvs-code-mirror .cm-scroller {
+  background-color: #09090b;
+}
+.vvs-code-mirror .cm-gutters {
+  background-color: #0c0c0e;
+  border-right: 1px solid #27272a;
+}

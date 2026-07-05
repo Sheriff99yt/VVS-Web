@@ -2,13 +2,14 @@ import { GraphTab } from '@/contexts/ProjectContext';
 import { GraphDocument } from '@/lib/graphDefaults';
 import { LibraryAsset } from '@/types/libraryAsset';
 import { LIBRARY_GRAPH_FIXTURES } from './libraryCatalog';
-import { createFunctionId, formatFunctionTabName } from './functionTabs';
+import { createFunctionSymbol } from './functionTabs';
+import type { FunctionSymbol } from '@vvs/graph-types';
 import { createMacroId } from './graphTabs';
 
 export interface LibraryImportPayload {
   tab: GraphTab;
   document: GraphDocument;
-  functionEntry?: { id: string; name: string };
+  functionEntry?: FunctionSymbol;
 }
 
 export function buildLibraryImport(asset: LibraryAsset): LibraryImportPayload | null {
@@ -20,11 +21,11 @@ export function buildLibraryImport(asset: LibraryAsset): LibraryImportPayload | 
   const safeName = asset.title.replace(/[^a-zA-Z0-9]+/g, '').slice(0, 24) || 'Imported';
 
   if (asset.importKind === 'function_graph') {
-    const id = createFunctionId();
+    const func = createFunctionSymbol(safeName);
     return {
-      tab: { id, type: 'function', name: formatFunctionTabName(safeName) },
+      tab: { id: func.id, type: 'function', name: `Function: ${safeName}` },
       document: structuredClone(fixture),
-      functionEntry: { id, name: safeName },
+      functionEntry: func,
     };
   }
 

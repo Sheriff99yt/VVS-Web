@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Settings2 } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { buildGraphBreadcrumb } from '@/lib/projectTree';
 import { formatFunctionTabName } from '@/lib/functionTabs';
+import { GRAPH_SETTINGS_EVENT } from './GraphSettingsModal';
 
 export function GraphBreadcrumb() {
   const {
@@ -53,6 +54,7 @@ export function GraphBreadcrumb() {
 
   return (
     <div className="flex items-center gap-1 px-3 h-7 shrink-0 bg-zinc-950 border-b border-zinc-800/80 text-[11px]">
+      <div className="flex items-center gap-1 min-w-0 flex-1">
       {segments.map((seg, i) => (
         <React.Fragment key={`${seg.label}-${i}`}>
           {i > 0 && <ChevronRight size={12} className="text-zinc-600 shrink-0" />}
@@ -69,6 +71,15 @@ export function GraphBreadcrumb() {
           </button>
         </React.Fragment>
       ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new CustomEvent(GRAPH_SETTINGS_EVENT))}
+        className="shrink-0 p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors"
+        title="Graph settings"
+      >
+        <Settings2 size={13} />
+      </button>
     </div>
   );
 }

@@ -2,7 +2,8 @@
   background-color: #18181b; /* Modern Zinc-900 */
   border: 1px solid #27272a; /* Zinc-800 */
   border-radius: 12px;
-  min-width: 160px;
+  min-width: 180px;
+  max-width: 260px;
   font-family: var(--font-sans);
   color: var(--vvs-text-primary);
   overflow: hidden;
@@ -39,6 +40,7 @@
 .nodeContainer[data-category="Math"] .header { background: linear-gradient(to right, var(--vvs-cat-math), rgba(24,24,27,0)); }
 .nodeContainer[data-category="Action"] .header { background: linear-gradient(to right, var(--vvs-cat-action), rgba(24,24,27,0)); }
 .nodeContainer[data-category="Project"] .header { background: linear-gradient(to right, var(--vvs-cat-project, #818cf8), rgba(24,24,27,0)); }
+.nodeContainer[data-category="Variables"] .header { background: linear-gradient(to right, var(--vvs-cat-variables, #6366f1), rgba(24,24,27,0)); }
 .nodeContainer[data-category="Imports"] .header { background: linear-gradient(to right, var(--vvs-cat-imports, #14b8a6), rgba(24,24,27,0)); }
 
 .titleBlock {
@@ -100,12 +102,103 @@
   align-items: center;
   position: relative;
   font-size: 11px;
-  height: 16px;
+  min-height: 20px;
+  gap: 6px;
+  width: 100%;
 }
 
 .pinLabel {
   color: #a1a1aa; /* Zinc-400 */
   font-weight: 500;
+  white-space: nowrap;
+}
+
+.inlineField {
+  width: 52px;
+  min-width: 40px;
+  max-width: 88px;
+  margin-left: auto;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: #e4e4e7;
+  background: #09090b;
+  border: 1px solid #3f3f46;
+  border-radius: 4px;
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.inlineFieldNumber {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.inlineField::-webkit-outer-spin-button,
+.inlineField::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inlineField:focus {
+  border-color: #6366f1;
+}
+
+.inlineFieldWide {
+  width: 72px;
+  max-width: 120px;
+}
+
+.inlineShield {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.inlineCheckbox {
+  margin-left: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.inlineCheckboxInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.inlineCheckboxBox {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid #52525b;
+  background: #09090b;
+  transform: rotate(45deg);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.inlineCheckboxInput:checked + .inlineCheckboxBox {
+  background: var(--vvs-pin-data_boolean, #e879f9);
+  border-color: #f0abfc;
+}
+
+.inlineCheckboxInput:focus-visible + .inlineCheckboxBox {
+  outline: 1px solid #818cf8;
+  outline-offset: 2px;
+}
+
+.leftColumn .pinRow {
+  padding-right: 4px;
 }
 
 /* Base style for minimal handles */

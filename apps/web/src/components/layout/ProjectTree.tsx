@@ -17,7 +17,8 @@ import {
   Radio,
 } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
-import { createFunctionId } from '@/lib/functionTabs';
+import { createFunctionSymbol } from '@/lib/functionTabs';
+import { overloadDisplayLabel } from '@/lib/functionTabs';
 import {
   createMacroId,
   openFunctionGraphTab,
@@ -33,6 +34,7 @@ import {
   listMacroEntries,
   listEventDispatchers,
 } from '@/lib/projectTree';
+import { createEventId } from '@/lib/eventHelpers';
 
 type CategoryKey =
   | 'graphs'
@@ -348,6 +350,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const {
     variables,
     setVariables,
+    events,
+    setEvents,
     functions,
     setFunctions,
     setSelection,
@@ -358,7 +362,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     projectDetails,
     targetLanguage,
     openTabs,
-    compileState,
+    isTabDirty,
     focusReference,
     referenceRootGraphId,
     referenceVariableName,
@@ -378,13 +382,15 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const [isAddingVariable, setIsAddingVariable] = useState(false);
   const [newVarName, setNewVarName] = useState('');
   const [newVarType, setNewVarType] = useState<VariableType>('string');
+  const [isAddingEvent, setIsAddingEvent] = useState(false);
+  const [newEventName, setNewEventName] = useState('');
   const [isAddingFunction, setIsAddingFunction] = useState(false);
   const [newFuncName, setNewFuncName] = useState('');
   const [isAddingMacro, setIsAddingMacro] = useState(false);
   const [newMacroName, setNewMacroName] = useState('');
 
   const macros = useMemo(() => listMacroEntries(openTabs), [openTabs]);
-  const dispatchers = useMemo(() => listEventDispatchers(documents), [documents]);
+  const dispatchers = useMemo(() => listEventDispatchers(events, documents), [events, documents]);
   const generatedExports = useMemo(
     () =>
       listGeneratedExports(
@@ -531,12 +537,28 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     setExpanded((s) => ({ ...s, variables: true }));
   };
 
+  const handleSaveEvent = () => {
+    const name = newEventName.trim().replace(/^on\s+/i, '');
+    if (!name) return;
+    setEvents([
+      ...events,
+      {
+        id: createEventId(),
+        name,
+        parameters: [],
+      },
+    ]);
+    setNewEventName('');
+    setIsAddingEvent(false);
+    setExpanded((s) => ({ ...s, dispatchers: true }));
+  };
+
   const handleSaveFunction = () => {
     if (!newFuncName.trim()) return;
-    const func = { id: createFunctionId(), name: newFuncName.trim() };
+    const func = createFunctionSymbol(newFuncName.trim());
     setFunctions([...functions, func]);
     openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
-    setSelection({ type: 'graph', id: func.id });
+    setSelection({ type: 'function', id: func.id });
     setNewFuncName('');
     setIsAddingFunction(false);
     setExpanded((s) => ({ ...s, functions: true }));
@@ -611,21 +633,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     <div className={`${INDENT.l1} text-[10px] text-zinc-600 italic py-1 pr-2`}>{text}</div>
   );
 
-  const rowHint = isReferenceMode
-    ? 'Click to focus reference graph · Double-click to open in canvas'
-    : 'Click to select · Double-click to open graph';
+  const rowHint = isReferenceMode ? 'Click focus · dbl-click open' : 'Click select · dbl-click open';
 
   return (
     <div className="w-full h-full bg-zinc-950 flex flex-col border-r border-zinc-800 min-h-0 min-w-[200px]">
-      <div className="flex-none px-3 pt-2.5 pb-2 border-b border-zinc-800">
-        <div className="text-[10px] uppercase tracking-wide text-zinc-600 mb-0.5">Project</div>
+      <div className="flex-none px-3 pt-2 pb-1.5 border-b border-zinc-800">
         <div className="text-[12px] font-medium text-zinc-100 truncate" title={projectDetails.moduleName}>
           {projectDetails.moduleName || 'Untitled'}
         </div>
       </div>
 
-      <div className="flex-none flex items-center gap-1 px-2 py-2 border-b border-zinc-800/60">
-        <PanelFilter value={filterQuery} onChange={setFilterQuery} placeholder="Filter members…" />
+      <div className="flex-none flex items-center gap-1 px-2 py-1.5 border-b border-zinc-800/60">
+        <PanelFilter value={filterQuery} onChange={setFilterQuery} placeholder="Filter…" />
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 py-0.5">
@@ -641,12 +660,12 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             <TreeRow
               active={isGraphReferenceActive('main')}
               icon={<div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />}
-              label="Event Graph"
+              label="Main"
               hint={rowHint}
               onSelect={() => selectGraph('main')}
               onOpen={() => openGraph('main', 'main')}
               suffix={
-                activeGraphTab === 'main' && compileState === 'dirty' ? (
+                isTabDirty('main') ? (
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Uncompiled changes" />
                 ) : null
               }
@@ -675,35 +694,59 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               () => setIsAddingFunction(false)
             )}
           {filteredFunctions.length === 0 && !isAddingFunction
-            ? emptyHint(functions.length === 0 ? 'No functions yet.' : 'No match.')
+            ? emptyHint(functions.length === 0 ? 'Empty' : '—')
             : filteredFunctions.map((f) => (
-                <TreeRow
-                  key={f.id}
-                  active={isGraphReferenceActive(f.id)}
-                  icon={<div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
-                  label={f.name}
-                  hint={rowHint}
-                  onSelect={() => selectGraph(f.id)}
-                  onOpen={() => openGraph(f.id, 'function')}
-                  suffix={
-                    <div className="flex items-center gap-1 shrink-0">
-                      {activeGraphTab === f.id && compileState === 'dirty' ? (
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      ) : null}
-                      <button
-                        type="button"
-                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                        title="Remove function"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteFunction(f.id);
-                        }}
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    </div>
-                  }
-                />
+                <React.Fragment key={f.id}>
+                  <TreeRow
+                    active={selection.type === 'function' && selection.id === f.id}
+                    icon={<div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
+                    label={f.overloads.length > 1 ? `${f.name} · ${f.overloads.length}` : f.name}
+                    hint={rowHint}
+                    onSelect={() => setSelection({ type: 'function', id: f.id })}
+                    onOpen={() => openGraph(f.id, 'function')}
+                    suffix={
+                      <div className="flex items-center gap-1 shrink-0">
+                        {f.binding !== 'instance' ? (
+                          <span className="text-[9px] text-zinc-600 uppercase">{f.binding}</span>
+                        ) : null}
+                        {isTabDirty(f.id) ? (
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        ) : null}
+                        <button
+                          type="button"
+                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
+                          title="Remove function"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteFunction(f.id);
+                          }}
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    }
+                  />
+                  {f.overloads.length > 1
+                    ? f.overloads.map((overload) => (
+                        <TreeRow
+                          key={overload.id}
+                          depth="l2"
+                          active={activeGraphTab === (overload.graphTabId ?? f.id)}
+                          icon={<div className="w-1 h-1 rounded-full bg-indigo-400/60 shrink-0 ml-2" />}
+                          label={overloadDisplayLabel(overload)}
+                          hint={rowHint}
+                          onSelect={() => {
+                            setSelection({ type: 'function', id: f.id });
+                            setActiveGraphTab(overload.graphTabId ?? f.id);
+                          }}
+                          onOpen={() => {
+                            setActiveGraphTab(overload.graphTabId ?? f.id);
+                            openGraph(overload.graphTabId ?? f.id, 'function');
+                          }}
+                        />
+                      ))
+                    : null}
+                </React.Fragment>
               ))}
         </CategorySection>
 
@@ -726,19 +769,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               () => setIsAddingMacro(false)
             )}
           {filteredMacros.length === 0 && !isAddingMacro
-            ? emptyHint(macros.length === 0 ? 'No macros yet.' : 'No match.')
+            ? emptyHint(macros.length === 0 ? 'Empty' : '—')
             : filteredMacros.map((m) => (
                 <TreeRow
                   key={m.id}
                   active={isGraphReferenceActive(m.id)}
                   icon={<div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />}
-                  label={m.name}
+                  label={`${m.name} · macro`}
                   hint={rowHint}
                   onSelect={() => selectGraph(m.id)}
                   onOpen={() => openGraph(m.id, 'macro')}
                   suffix={
                     <div className="flex items-center gap-1 shrink-0">
-                      {activeGraphTab === m.id && compileState === 'dirty' ? (
+                      {isTabDirty(m.id) ? (
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                       ) : null}
                       <button
@@ -829,11 +872,38 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           icon={<Radio size={12} className="text-violet-400/80 shrink-0" />}
           expanded={expanded.dispatchers}
           onToggle={() => toggleCategory('dispatchers')}
+          onAdd={() => setIsAddingEvent(true)}
+          addLabel="New event"
         >
-          {filteredDispatchers.length === 0
+          {isAddingEvent && (
+            <div className={`${INDENT.l1} py-1 pr-2 space-y-1`}>
+              <input
+                type="text"
+                placeholder="Event name (e.g. damage)"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
+                value={newEventName}
+                onChange={(e) => setNewEventName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveEvent();
+                  if (e.key === 'Escape') setIsAddingEvent(false);
+                }}
+              />
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  className="bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 rounded"
+                  onClick={handleSaveEvent}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
+          {filteredDispatchers.length === 0 && !isAddingEvent
             ? emptyHint(
                 dispatchers.length === 0
-                  ? 'Add Custom event nodes to declare dispatchers.'
+                  ? 'Add project events, then place On / Dispatch nodes in graphs.'
                   : 'No match.'
               )
             : filteredDispatchers.map((d) => (
@@ -841,8 +911,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   key={d.id}
                   icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
                   label={d.label}
+                  active={selection.type === 'event' && selection.id === d.id}
                   hint={rowHint}
-                  onSelect={() => selectGraph(d.graphId)}
+                  onSelect={() => setSelection({ type: 'event', id: d.id })}
                   onOpen={() => openGraphById(d.graphId)}
                 />
               ))}
@@ -857,7 +928,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           onToggle={() => toggleCategory('generated')}
         >
           {generatedExports.length === 0
-            ? emptyHint('Generate code to see export filenames.')
+            ? emptyHint('Filenames follow the active target language and module name.')
             : generatedExports
                 .filter((e) => matchesFilter(`${e.fileName} ${e.graphLabel}`, q))
                 .map((entry) => (
@@ -879,10 +950,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         </CategorySection>
       </div>
 
-      <div className="flex-none px-3 py-1.5 border-t border-zinc-800 text-[9px] text-zinc-600 leading-relaxed">
-        {isReferenceMode
-          ? 'Click to focus reference graph · Double-click to open in canvas'
-          : 'Click to select · Double-click to open graph'}
+      <div className="flex-none px-3 py-1 border-t border-zinc-800 text-[9px] text-zinc-600 text-center">
+        {isReferenceMode ? 'Click · dbl-click open' : 'Click · dbl-click open'}
       </div>
     </div>
   );

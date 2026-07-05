@@ -19,6 +19,14 @@ Get the VVS editor running in a few minutes. First-time machine setup: **[setup.
 ### Manual (any OS)
 
 ```bash
+# From repository root (installs apps/web + packages/*)
+bun install
+bun run dev
+```
+
+Or from `apps/web`:
+
+```bash
 cd apps/web
 bun install          # first time only
 bun run dev
@@ -38,8 +46,9 @@ The terminal prints a **Network** URL for LAN access (e.g. `http://192.168.x.x:3
 2. **Examples → Game Session** — multi-graph demo (variables, functions, branching)  
 3. **Right-click canvas** — spawn nodes from the context menu  
 4. **Connect pins** — drag from output to input (execution + data wires)  
-5. **Generate** (TopNav) — mock code preview in the console panel  
-6. **File → Save** — persists to browser **localStorage** (offline mock mode)
+5. **Generate** (TopNav) — runs validation + `@vvs/transpiler` code preview  
+6. **Functions** — add in Project tree; inspect overloads; spawn **Call {name}** from context menu  
+7. **File → Save** — persists **ProjectSnapshot v2** to browser **localStorage** (offline mock mode)
 
 Projects appear under **Recent projects** on the start screen.
 

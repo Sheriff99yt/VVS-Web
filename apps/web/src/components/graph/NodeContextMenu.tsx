@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search } from 'lucide-react';
-import { MOCK_CATEGORIES } from '@/lib/nodeCatalog';
-import { buildProjectNodeCategories } from '@/lib/projectNodeCatalog';
+import { buildCoreCategories } from '@/lib/nodeCatalog';
 import { LibraryNodeTemplate } from '@/types/ui';
-import { GraphTab } from '@/contexts/ProjectContext';
+import type { FunctionSymbol, GraphTab } from '@/types/graph';
 
 interface NodeContextMenuProps {
   x: number;
@@ -14,7 +13,7 @@ interface NodeContextMenuProps {
   onSelect: (template: LibraryNodeTemplate) => void;
   filter?: { pinType: string; lookingFor: 'input' | 'output' };
   currentGraphId: string;
-  functions: { id: string; name: string }[];
+  functions: FunctionSymbol[];
   openTabs: GraphTab[];
 }
 
@@ -33,11 +32,8 @@ export function NodeContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const allCategories = useMemo(
-    () => [
-      ...MOCK_CATEGORIES,
-      ...buildProjectNodeCategories({ currentGraphId, functions, openTabs }),
-    ],
-    [functions, currentGraphId, openTabs]
+    () => buildCoreCategories(currentGraphId, functions, filter?.pinType ? { id: 'filter', label: '', type: filter.pinType as import('@/types/graph').PinType } : undefined),
+    [functions, currentGraphId, filter?.pinType]
   );
 
   // Focus search input on mount

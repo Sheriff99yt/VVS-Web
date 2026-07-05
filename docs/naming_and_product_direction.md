@@ -47,7 +47,7 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Sub-canvas | **Graph tab** | Blueprint tab | e.g. Main graph, function graphs |
 | Node catalog spawn | **Add node** / context menu | — | From `nodeCatalog` |
 | Connection point | **Port** (or pin in code types) | — | `execution` = **flow** port in UI copy when helpful |
-| Execution wire | **Flow** connection | Exec wire | White / primary control flow |
+| Execution wire | **Flow** connection | Exec wire | **Linear** — one in / one out per handle; rewire breaks chain (see [node_system.md](node_system.md) §5) |
 | Data wire | **Data** connection | — | Typed by value (string, number, …) |
 | Run entry hook | **On Start** | BeginPlay, Event BeginPlay | Program / graph entry |
 | Per-frame hook | **On Update** | Event Tick, Tick | Optional; name for loop/frame |

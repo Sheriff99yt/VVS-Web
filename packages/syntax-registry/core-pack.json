@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "kinds": [
+    {
+      "kindId": "event_on_start",
+      "kindVersion": 1,
+      "category": "Events",
+      "title": "On Start",
+      "semantics": "event.entry.start",
+      "inputs": [],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+    },
+    {
+      "kindId": "event_on_update",
+      "kindVersion": 1,
+      "category": "Events",
+      "title": "On Update",
+      "semantics": "event.entry.update",
+      "inputs": [],
+      "outputs": [
+        { "id": "exec_out", "label": "", "type": "execution" },
+        { "id": "out_delta", "label": "Delta time", "type": "data_number" }
+      ]
+    },
+    {
+      "kindId": "event_define",
+      "kindVersion": 1,
+      "category": "Events",
+      "title": "On Event",
+      "semantics": "event.define",
+      "inputs": [],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+    },
+    {
+      "kindId": "event_dispatch",
+      "kindVersion": 1,
+      "category": "Events",
+      "title": "Dispatch Event",
+      "semantics": "event.dispatch",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+    },
+    {
+      "kindId": "flow_branch",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Branch",
+      "semantics": "flow.branch",
+      "inputs": [
+        { "id": "exec_in", "label": "", "type": "execution" },
+        { "id": "condition", "label": "Condition", "type": "data_boolean" }
+      ],
+      "outputs": [
+        { "id": "true_exec", "label": "True", "type": "execution" },
+        { "id": "false_exec", "label": "False", "type": "execution" }
+      ]
+    },
+    {
+      "kindId": "action_print",
+      "kindVersion": 1,
+      "category": "Action",
+      "title": "Print String",
+      "semantics": "action.print",
+      "inputs": [
+        { "id": "exec_in", "label": "", "type": "execution" },
+        { "id": "in_str", "label": "String", "type": "data_string" }
+      ],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+    },
+    {
+      "kindId": "math_add",
+      "kindVersion": 1,
+      "category": "Math",
+      "title": "Math Add",
+      "semantics": "math.binary",
+      "mathOp": "add",
+      "inputs": [
+        { "id": "a", "label": "A", "type": "data_number" },
+        { "id": "b", "label": "B", "type": "data_number" }
+      ],
+      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+    },
+    {
+      "kindId": "math_subtract",
+      "kindVersion": 1,
+      "category": "Math",
+      "title": "Math Subtract",
+      "semantics": "math.binary",
+      "mathOp": "subtract",
+      "inputs": [
+        { "id": "a", "label": "A", "type": "data_number" },
+        { "id": "b", "label": "B", "type": "data_number" }
+      ],
+      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+    },
+    {
+      "kindId": "math_multiply",
+      "kindVersion": 1,
+      "category": "Math",
+      "title": "Math Multiply",
+      "semantics": "math.binary",
+      "mathOp": "multiply",
+      "inputs": [
+        { "id": "a", "label": "A", "type": "data_number" },
+        { "id": "b", "label": "B", "type": "data_number" }
+      ],
+      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+    },
+    {
+      "kindId": "math_divide",
+      "kindVersion": 1,
+      "category": "Math",
+      "title": "Math Divide",
+      "semantics": "math.binary",
+      "mathOp": "divide",
+      "inputs": [
+        { "id": "a", "label": "A", "type": "data_number" },
+        { "id": "b", "label": "B", "type": "data_number" }
+      ],
+      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+    },
+    {
+      "kindId": "variable_get",
+      "kindVersion": 1,
+      "category": "Variables",
+      "title": "Get Variable",
+      "semantics": "variable.get",
+      "inputs": [],
+      "outputs": [{ "id": "val", "label": "Value", "type": "data_any" }]
+    },
+    {
+      "kindId": "variable_set",
+      "kindVersion": 1,
+      "category": "Variables",
+      "title": "Set Variable",
+      "semantics": "variable.set",
+      "inputs": [
+        { "id": "exec_in", "label": "", "type": "execution" },
+        { "id": "val", "label": "New Value", "type": "data_any" }
+      ],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+    },
+    {
+      "kindId": "vvs.project.call_function",
+      "kindVersion": 1,
+      "category": "Project",
+      "title": "Call Function",
+      "semantics": "project.call",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "dynamic": true
+    },
+    {
+      "kindId": "vvs.project.import_module",
+      "kindVersion": 1,
+      "category": "Imports",
+      "title": "Import Module",
+      "semantics": "project.import",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "dynamic": true
+    },
+    {
+      "kindId": "vvs.project.use_macro",
+      "kindVersion": 1,
+      "category": "Project",
+      "title": "Use Macro",
+      "semantics": "project.macro",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "dynamic": true
+    }
+  ]
+}

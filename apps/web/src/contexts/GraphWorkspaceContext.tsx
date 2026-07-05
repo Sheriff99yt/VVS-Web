@@ -43,7 +43,6 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
         workspaceBridgeRef.current = api.subscribeMetadata(() => {
           notifyMetadataListeners();
         });
-        notifyMetadataListeners();
       }
     },
     [notifyMetadataListeners]
@@ -76,7 +75,6 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
 
   const subscribeMetadata = useCallback((listener: () => void) => {
     metadataListenersRef.current.add(listener);
-    listener();
     return () => {
       metadataListenersRef.current.delete(listener);
     };

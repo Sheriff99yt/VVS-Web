@@ -37,6 +37,8 @@ description: Triggers when building user-facing features, Next.js components, or
 ### Mock / offline chrome
 
 - Status bar: `MCP: DISCONNECTED`, `OFFLINE MODE`
+- **Code preview panel:** open by default in Canvas (see `docs/node_system.md`)
+- Compiler log: collapsed by default; expands on compile/error
 - No fake CPU/MEM metrics or “sync active” indicators
 - No `animate-pulse` on connection dots; no heavy `backdrop-filter` on modals
 
@@ -93,8 +95,10 @@ Whenever building or evaluating the UI panels, ensure the following professional
 ### 5. Code Preview Panel
 - Read-only generated code for the active target language.
 - Language selection lives in **Graph Properties**, not in the code panel header.
+- **Code panel is open by default** in Canvas mode (see `docs/node_system.md`).
 - Until `packages/transpiler` exists, mock templates in `CodePreviewPanel` are acceptable.
-- **Progressive disclosure:** panel starts collapsed; opens on compile success or via StatusBar **Code** toggle. See [`vvs_progressive_disclosure`](../vvs_progressive_disclosure/SKILL.md).
+- Selection highlight uses `TranspileResult.sourceMap` (planned) — one generate pass, UI-only highlight.
+- **Progressive disclosure:** compiler log collapses until errors/compile; user may collapse code via StatusBar **Code** toggle.
 
 # Show Data When Needed
 

@@ -1,0 +1,13 @@
+{
+  "name": "vvs-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter web dev",
+    "build": "bun run --filter web build",
+    "test": "bun test packages && bun run --filter web test"
+  }
+}

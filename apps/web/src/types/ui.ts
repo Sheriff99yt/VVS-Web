@@ -3,10 +3,11 @@ export interface LibraryCategory {
   items: LibraryNodeTemplate[];
 }
 
-import { PinDefinition } from './graph';
+import { PinDefinition, GraphBinding } from './graph';
 
 export interface LibraryNodeTemplate {
-  type: string;             
+  type: string;
+  kindVersion?: number;
   label: string;
   category: string;
   description?: string;
@@ -14,6 +15,7 @@ export interface LibraryNodeTemplate {
   outputs?: PinDefinition[];
   linkedGraphId?: string;
   linkKind?: 'call_function' | 'use_macro' | 'import_module';
+  graphBinding?: GraphBinding;
 }
 
 export interface CodePreviewState {

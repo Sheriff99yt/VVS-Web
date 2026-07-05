@@ -1,0 +1,690 @@
+# VVS Node System — Architecture & Extensibility
+
+Canonical spec for the **data-driven node model**, **port strategy**, **pin types**, **code generation contracts**, and **selection → code UX**. Complements [vision.md](vision.md) (logic vs syntax), [project_requirements.md](project_requirements.md) (transpiler stages), and [current_state.md](current_state.md) (what ships today).
+
+**Status:** Approved direction (July 2026). **Cross-language redesign shipped (July 2026):** shared packages, `FunctionSymbol`, unified registry, portability warnings, transpiler package. Legacy label adapters remain for old saves; full IR split is partial — see [current_state.md](current_state.md).
+
+---
+
+## 1. Problem statement (today)
+
+The editor shell is ahead of the node model. Spawn catalogs, graph instances, and codegen are not yet connected through a single registry contract.
+
+```mermaid
+flowchart LR
+  subgraph catalogs ["Catalogs (code)"]
+    NC[nodeCatalog.ts]
+    PNC[projectNodeCatalog.ts]
+  end
+
+  subgraph instance ["Graph instance"]
+    ND["VVSNodeData: label, category, pins copied"]
+  end
+
+  subgraph codegen ["Codegen"]
+    MC[mockCodegen.ts — label string matching]
+  end
+
+  NC -->|spawn| ND
+  PNC -->|spawn| ND
+  ND --> MC
+```
+
+| Gap | Why it blocks extendability |
+|-----|------------------------------|
+| No stable **node kind ID** on instances | Catalog has `type: 'math_add'`; graph stores only `label: 'Math Add'` |
+| **Definition duplicated** into instance | Pins copied at spawn; pack updates do not apply to existing nodes |
+| **Semantics in UI strings** | Codegen uses `label.startsWith('Set ')` — breaks renames, i18n, community packs |
+| **Multiple catalogs** | No single source of truth for UI, MCP, and transpiler |
+| **Logic + syntax coupled in mock** | Language-specific `if` / `print` beside graph walking |
+| **Types only in apps/web** | `packages/graph-types` and `packages/syntax-registry` are placeholders |
+
+---
+
+## 2. Target model: definition → instance → IR
+
+Three layers, one graph schema — same model for web, MCP, and UE plugin ([roadmap.md](roadmap.md) Phase 5).
+
+```mermaid
+flowchart TB
+  subgraph registry ["Node registry (data)"]
+    CorePack["Core pack"]
+    ProjectPack["Project-derived nodes"]
+    CommunityPack["Community node packs"]
+    EnginePack["Engine packs (UE / Verse — later)"]
+  end
+
+  subgraph graph ["Graph document (JSON)"]
+    Instance["Node instance: kindId + version + bindings + properties"]
+  end
+
+  subgraph transpiler ["packages/transpiler (pure TypeScript)"]
+    Analyze["Stage A: Graph analysis"]
+    Lower["Stage B: Lowering → IR"]
+    Emit["Stage C: Emit (syntax profile)"]
+  end
+
+  registry -->|"resolve kindId"| Lower
+  Instance --> Analyze --> Lower --> Emit
+```
+
+### 2.1 Node definition (registry)
+
+Lives in `packages/syntax-registry` (fixture JSON in repo today; later JSONB + IndexedDB). **Not** in React components.
+
+| Field | Purpose |
+|-------|---------|
+| `kindId` | Stable id, e.g. `vvs.flow.branch` |
+| `version` | Schema evolution / migration |
+| `display` | Title, category, description (UI only) |
+| `ports` | Pin schema: id, label, direction, logical type |
+| `properties` | Inline fields when unwired |
+| `semantics` | **Lowering rule** — data, not label strings |
+
+**Extension rule (Open/Closed):** a new node = new registry row (+ IR shape if needed). No edits to `GraphCanvas` or DAG analysis.
+
+**Semantics examples:**
+
+| `semantics` | Example |
+|-------------|---------|
+| `{ lowering: 'builtin', rule: 'flow.branch' }` | Branch |
+| `{ lowering: 'builtin', rule: 'action.print' }` | Print String |
+| `{ lowering: 'call_graph', linkKind: 'call_function' }` | Call ApplyDamage |
+| `{ lowering: 'variable', mode: 'get' \| 'set' }` | Variable nodes |
+| `{ lowering: 'event', role: 'entry' \| 'tick' \| 'custom' }` | On Start, On Update |
+
+### 2.2 Node instance (graph JSON)
+
+What the user placed on the canvas:
+
+```typescript
+interface GraphNodeInstance {
+  id: string;                      // canvas id
+  kindId: string;                  // "vvs.flow.branch"
+  kindVersion: number;
+  labelOverride?: string;          // display only
+  properties: Record<string, unknown>;
+  graphBinding?: {                  // project / cross-graph
+    graphId: string;
+    linkKind: 'call_function' | 'use_macro' | 'import_module';
+  };
+}
+```
+
+Wires remain **edges** (React Flow). Ports are resolved from registry + optional snapshot (see §4).
+
+### 2.3 IR (transpiler internal)
+
+Language-agnostic structures from [project_requirements.md](project_requirements.md) §2.2:
+
+`IfStatement`, `CallFunction`, `AssignVariable`, `BinaryOp`, `Print`, `Sequence`, …
+
+Each IR node carries **`sourceGraphNodeId`** for source maps and selection highlighting (§6).
+
+---
+
+## 3. Registry composition
+
+```mermaid
+flowchart TB
+  Effective["Effective registry"]
+  Core["Core pack (shipped JSON)"]
+  Packs["Installed node packs"]
+  Project["Project-derived (Call X, Import Y)"]
+  Engine["Engine profile (optional, Phase 5)"]
+
+  Core --> Effective
+  Packs --> Effective
+  Project --> Effective
+  Engine --> Effective
+```
+
+| Source | Example | How produced |
+|--------|---------|--------------|
+| **Core pack** | Branch, Print, Math Add | Repo JSON |
+| **Project-derived** | Call ApplyDamage | Template `vvs.project.call_function` + `functions[]` |
+| **Community pack** | Movement templates | Pack manifest + definitions |
+| **Engine pack** | Verse API nodes | Separate pack; web UI stays engine-neutral |
+
+`NodeContextMenu` becomes **`registry.list({ graphId, filterPin })`** — not hardcoded `MOCK_CATEGORIES`.
+
+MCP `ListAvailableNodes` returns the **same registry view** so AI cannot hallucinate nodes ([project_requirements.md](project_requirements.md) §3.4).
+
+**Dynamic nodes:** one kind `vvs.project.call_function` + `graphBinding` (not one kindId per function).
+
+---
+
+## 4. Port strategy (locked: hybrid)
+
+**Ports** are input/output sockets on a node (execution, Condition, A, B, …). The port strategy answers: *when reopening a project, where do port definitions come from?*
+
+### Options compared
+
+| Strategy | Behavior | Pros | Cons |
+|----------|----------|------|------|
+| **A — Derive live** | Ports always from registry `kindId` | Pack fixes apply everywhere | Breaking pack changes break old graphs |
+| **B — Snapshot on save** | Ports copied at spawn, never change | Maximum stability | Duplication; no live pack improvements |
+| **C — Hybrid** ✅ | Instance stores `kindId` + `kindVersion`; registry resolves ports; optional snapshot on save | Stable + evolvable | Slightly more loader logic |
+
+### Hybrid behavior (approved)
+
+```mermaid
+flowchart TD
+  Load["Load graph instance"]
+  Resolve["Resolve ports: registry kindId@version"]
+  Snap{"Snapshot present?"}
+  Merge["Merge snapshot if version mismatch"]
+  Render["Render + validate wires"]
+  Save["On save: persist kindVersion + optional resolvedPorts"]
+
+  Load --> Resolve --> Snap
+  Snap -->|yes| Merge --> Render
+  Snap -->|no| Render
+  Render --> Save
+```
+
+| Concern | Behavior |
+|---------|----------|
+| User reopens project | Pins match what they saved |
+| Pack adds optional pin | Old nodes unchanged until upgrade |
+| Pack breaking change | Bump `kindVersion`; migrate or show “outdated node” |
+| Wire validation | Uses **resolved** port list |
+| User effort | **None** — users never edit port JSON |
+
+---
+
+## 5. Pin type system (locked: logical types)
+
+**Goal:** least user effort, maximum compatibility across Python, JavaScript, C++, Verse, and future emitters. Users ask *“can I plug this wire here?”* — not *“is this Verse `logic`?”*
+
+### Three layers
+
+```mermaid
+flowchart TB
+  subgraph ui ["UI / wiring layer"]
+    U1["Execution · Text · Number · Yes/No · Any · List · Reference"]
+  end
+
+  subgraph ir ["Graph / IR layer"]
+    I1["Logical value kinds + flow"]
+  end
+
+  subgraph emit ["Emitter layer (hidden)"]
+    E1["Python str · JS string · C++ std::string · Verse string · …"]
+  end
+
+  ui --> ir --> emit
+```
+
+The graph is **language-agnostic** ([vision.md](vision.md)). Only Stage C maps logical types to language types.
+
+### User-facing pin kinds (v1)
+
+| Logical type | User sees | Wires to |
+|--------------|-----------|----------|
+| **Execution** | Chevron / square pin | Execution only |
+| **Text** | Circle (string) | Text, **Any** |
+| **Number** | Hexagon | Number, **Any** |
+| **Yes/No** | Diamond | Yes/No, **Any** |
+| **Any** | Generic data | Any non-execution |
+| **List** | Grid / stack | List, **Any** |
+| **Reference** | Object handle | Reference, **Any** |
+
+Current code names (`data_string`, `data_number`, …) map to this table; product copy uses friendly names per [naming_and_product_direction.md](naming_and_product_direction.md).
+
+### Wiring rules (maximum forgiveness)
+
+1. **Execution is strict** — exec ↔ exec only.
+2. **Any is permissive** — connects to any non-execution pin.
+3. **Same family connects freely** — number ↔ number, text ↔ text, etc.
+4. **No user cast nodes in v1** — emitter inserts conversions; optional compiler log warning.
+5. **Shape + color** convey type — do not rely on text labels alone ([vvs_ui_development](../.agents/skills/vvs_ui_development/SKILL.md)).
+
+### Flow chain semantics (intentional — not Unreal Blueprint)
+
+VVS uses **linear flow chains**, not Blueprint-style wire splicing or implicit merge.
+
+| Rule | Behavior |
+|------|----------|
+| **One flow in** | Each execution **input** accepts one wire. A new connection **replaces** the previous upstream link. |
+| **One flow out** | Each execution **output** (per handle) drives **one** next node. Rewiring replaces the old downstream link. |
+| **Insert in the middle** | Wiring `A → B → C` then connecting `X → B` **drops** `A → B`. `A` is no longer in that sequence — it is not auto-merged or spliced like UE. |
+| **Branch nodes** | `true` / `false` (or equivalent) are separate output handles; each obeys the same single-wire rule. |
+
+**Why:** Copy-pasting long linear chains produces redundant generated code. Breaking the chain on rewire pushes authors toward **functions**, **macros**, and **shared graphs** for repeated behavior — normal software practice, not engine-event spaghetti.
+
+Implementation: `apps/web/src/lib/graphWiring.ts` (`edgesWithoutTargetHandle`, `edgesWithoutSourceHandle`).
+
+```mermaid
+flowchart LR
+  subgraph before ["Before: A → B → C"]
+    A1[A] --> B1[B] --> C1[C]
+  end
+
+  subgraph after ["After X → B: chain breaks at B"]
+    A2[A]
+    X2[X] --> B2[B] --> C2[C]
+  end
+```
+
+**Do not** add Blueprint-style “drop on wire to insert” without an explicit product decision — it conflicts with this principle.
+
+### Language mapping (emitter only)
+
+| Logical | Python | JavaScript | C++ | Verse |
+|---------|--------|------------|-----|-------|
+| Text | `str` | `string` | `std::string` | `string` |
+| Number | `int` / `float` | `number` | `float` | `float` |
+| Yes/No | `bool` | `boolean` | `bool` | `logic` |
+| Any | untyped / `Any` | `unknown` | `auto` | loose |
+| List | `list` | `Array` | `std::vector` | (profile) |
+
+Variables use the **same logical types**; Get/Set inherit the variable type on their data pin.
+
+### Avoid (too much user effort)
+
+- Per-language pin types on the canvas
+- Mandatory cast nodes for common mismatches
+- Different wire rules per target language
+- Large numeric subtyping in the UI (int32, float64, …)
+
+---
+
+## 6. Code generation contract & selection UX
+
+### Code panel default (locked)
+
+The **generated code panel is open by default** in Canvas mode. It is part of the primary authoring loop (graph + code together). The **compiler log** stays collapsed until errors or compile events.
+
+Do **not** re-collapse code on mount. See [current_state.md](current_state.md).
+
+### Do not regenerate on selection
+
+Passing `selectedNodeId` into the transpiler couples codegen to UI state — violates Dependency Inversion and breaks multi-language emitters.
+
+**Approved approach:** one transpile per Generate → structured result → UI highlights from metadata.
+
+```mermaid
+sequenceDiagram
+  participant Canvas
+  participant ProjectContext
+  participant Transpiler
+  participant CodePreview
+
+  Note over Transpiler: Once per Generate
+  Canvas->>ProjectContext: User clicks Generate
+  ProjectContext->>Transpiler: transpile(graph, language)
+  Transpiler-->>ProjectContext: TranspileResult
+  ProjectContext->>CodePreview: files + sourceMap
+
+  Note over CodePreview: On every selection (no re-transpile)
+  Canvas->>ProjectContext: setSelection(nodeId)
+  ProjectContext->>CodePreview: selection changed
+  CodePreview->>CodePreview: highlight sourceMap[nodeId], scroll
+```
+
+### TranspileResult (canonical contract)
+
+Defined in `packages/graph-types` (stub today: `apps/web/src/types/transpile.ts`).
+
+```typescript
+interface TranspileResult {
+  files: { path: string; content: string }[];
+  sourceMap: Record<string, SourceRange[]>;
+  fragments?: Record<string, string>;  // optional inspector snippets
+}
+
+interface SourceRange {
+  filePath: string;
+  startLine: number;
+  startCol: number;
+  endLine: number;
+  endCol: number;
+}
+```
+
+| Piece | Owner | When |
+|-------|-------|------|
+| Language formatting (indent, braces) | Emitter + syntax profile | Generate |
+| Selection highlight (CSS on lines) | `CodePreviewPanel` | Select node |
+| Inspector snippet | `fragments[nodeId]` | Select node |
+| Re-transpile on select | **Not used** | — |
+
+### Selection UX rules
+
+| Rule | Behavior |
+|------|----------|
+| Code panel | Open by default in Canvas |
+| Highlight | Uses last **successful** Generate when graph is clean or auto-generate on |
+| Dirty graph | Show “out of date”; highlight stale map or dim |
+| Pure expression nodes (Get) | `fragments` or “used on line N” in inspector |
+| Branch | Highlight full `if` block |
+| Later | Click line → select node (reverse `sourceMap`) |
+
+```mermaid
+flowchart LR
+  subgraph once ["Once per Generate"]
+    G[Graph] --> T[Transpiler]
+    T --> F[files.content]
+    T --> M[sourceMap]
+    T --> R[fragments optional]
+  end
+
+  subgraph ui ["On selection"]
+    S[selection.id] --> M
+    M --> H[CSS highlight + scroll]
+    S --> R
+    R --> I[Inspector snippet]
+  end
+```
+
+---
+
+## 7. Package boundaries
+
+```mermaid
+flowchart TB
+  subgraph web ["apps/web"]
+    UI[React Flow UI]
+    Preview[CodePreviewPanel]
+  end
+
+  subgraph packages ["packages/"]
+    GT[graph-types]
+    SR[syntax-registry]
+    TR[transpiler]
+  end
+
+  subgraph server ["server/ (later)"]
+    API[Registry API + MCP]
+  end
+
+  UI --> SR
+  UI --> GT
+  Preview --> TR
+  TR --> SR
+  TR --> GT
+  API --> SR
+```
+
+| Package | Responsibility |
+|---------|----------------|
+| `graph-types` | `GraphDocument`, `NodeInstance`, `TranspileResult`, `ProjectSnapshot` |
+| `syntax-registry` | `NodeDefinition`, packs, `resolve()`, project expansion |
+| `transpiler` | analyze → lower → emit; **zero React** |
+| `apps/web` | Render instances; highlight from `sourceMap` |
+| `server` | Serve registry; MCP `ListAvailableNodes` (Phase 2) |
+
+---
+
+## 8. Migration path (frontend-first)
+
+No backend required for early phases.
+
+```mermaid
+flowchart TD
+  R1["R1 — Contracts + core-pack.json + NodeRegistry mock loader"]
+  R2["R2 — Dual-write instances (kindId + legacy label)"]
+  R3["R3 — Transpiler v0 + TranspileResult + sourceMap"]
+  R4["R4 — Drop label-based codegen"]
+  R5["R5 — Community pack install + IndexedDB cache"]
+
+  R1 --> R2 --> R3 --> R4 --> R5
+```
+
+| Phase | Deliverable |
+|-------|-------------|
+| **R1** | Types, `core-pack.json` mirroring `nodeCatalog`, `NodeRegistry` interface |
+| **R2** | Spawn sets `kindId`; adapter infers from label for old saves |
+| **R3** | `packages/transpiler` scaffold; snapshot tests; `sourceMap`; code highlight UX |
+| **R4** | Ports from registry; remove `mockCodegen` label switches |
+| **R5** | Pack manifests; offline cache |
+
+---
+
+## 9. How the pieces connect
+
+```mermaid
+flowchart TB
+  Sel["Node selected"]
+  SM["sourceMap from last TranspileResult"]
+  HL["Code panel highlight"]
+  Ports["Hybrid port resolution"]
+  Pins["Logical pin compatibility"]
+  Emit["Emitter language mapping"]
+
+  Sel --> SM --> HL
+  Ports --> Pins --> Emit
+  Emit --> SM
+```
+
+---
+
+## 10. Decisions log
+
+### Locked (approved July 2026)
+
+| Decision | Choice |
+|----------|--------|
+| Port strategy | **Hybrid** — `kindId` + `kindVersion`; resolve from registry; optional snapshot on save |
+| Pin types | **Logical types** at wire layer; language mapping in emitter only |
+| Dynamic call nodes | **One kind** `vvs.project.call_function` + `graphBinding` |
+| Selection → code | **`TranspileResult.sourceMap`**; no re-transpile on select |
+| Code panel | **Open by default** in Canvas |
+| Regenerate for highlight | **Rejected** — presentation stays in UI |
+
+### Still open (recommendations)
+
+| Question | Recommendation | Why |
+|----------|----------------|-----|
+| **First implementation slice** | **Done (July 2026):** `TranspileResult`, `sourceMap`, CodeMirror panel, selection highlight, `kindId` dual-write on spawn |
+| **Code panel package** | **CodeMirror 6** behind `GeneratedCodeView` facade — see §11 |
+| **`docs/node_system.md` maintenance** | Update when R1–R5 land | This file is canonical |
+| **Dev-only source markers** (`// @vvs:node-id`) | **No** for export; use `sourceMap` only | Keeps copy/paste clean |
+| **Monorepo workspaces** | Add root `package.json` workspaces when extracting `packages/*` | Not blocking R1 in `apps/web` |
+| **Progressive disclosure vs code panel** | Code panel exempt — always visible in Canvas; log stays event-driven | Product decision July 2026 |
+
+---
+
+## 11. Code panel technology (locked)
+
+The generated code panel uses a **swappable view** behind `GeneratedCodeViewProps` — transpiler output stays independent of the editor widget.
+
+### Choice: CodeMirror 6 (via `@uiw/react-codemirror`)
+
+| Option | Pros | Cons | Verdict |
+|--------|------|------|---------|
+| **CodeMirror 6** ✅ | Modular bundle, line decorations, read-only mode, widely adopted, good React bindings | Verse has no official grammar (interim: Python-like) | **Default implementation** |
+| **Monaco** | VS Code parity, rich IDE features | Heavy bundle (~2MB+), worker setup in Next.js | Swap-in later if needed |
+| **Prism / `<pre>`** | Tiny | No line decorations API; DIY scroll/highlight | Retired |
+
+### Architecture
+
+```mermaid
+flowchart LR
+  TR[TranspileResult] --> CPP[CodePreviewPanel]
+  CPP --> GCV[GeneratedCodeView interface]
+  GCV --> CM[CodeMirrorGeneratedCodeView]
+  GCV -.->|future| MON[MonacoGeneratedCodeView]
+  SEL[selection.id] --> CPP
+  CPP -->|sourceMap nodeId| CM
+```
+
+| File | Role |
+|------|------|
+| `types/transpile.ts` | `TranspileResult`, `SourceRange` |
+| `components/code/types.ts` | `GeneratedCodeViewProps` |
+| `components/code/GeneratedCodeView.tsx` | Facade — swap implementation here |
+| `components/code/CodeMirrorGeneratedCodeView.tsx` | CodeMirror 6 + line highlight |
+| `lib/codeEditorLanguages.ts` | `TargetLanguage` → CM language extensions |
+
+**Rules:**
+
+- UI passes `value`, `language`, `highlightRanges` only — never `selectedNodeId` into transpiler.
+- Highlight = CSS line decoration from `sourceMap`, not regenerated formatted text.
+- Copy/export uses raw `files[].content` (no UI markers).
+- To switch to Monaco: implement `MonacoGeneratedCodeView` with the same props; change one export in `GeneratedCodeView.tsx`.
+
+---
+
+## 12. Event dispatchers (custom events)
+
+**Status:** Phase 1 implemented (July 2026) — project-level `events[]`, **Define** and **Dispatch** node kinds, direct-call emit in mock codegen. Multicast **Bind** nodes remain phase 2.
+
+Unreal **Event Dispatchers** are one engine’s name for a universal pattern: **named signals with typed parameters, subscribers, and a broadcast**. VVS models that in the **graph + IR**; language-specific idioms live only in the **emitter**.
+
+### 12.1 Lifecycle vs custom events
+
+| Kind | Registry role | Example | Emission strategy |
+|------|---------------|---------|-------------------|
+| **Lifecycle** | `event.entry.start` / `event.entry.update` | On Start, On Update | Engine hook → single handler method |
+| **Custom event** | `event.define` / `event.dispatch` | On damage, Dispatch damage | Direct call (phase 1) or callback list (phase 2) |
+
+Lifecycle nodes are **not** listed in the project Events tree. Custom events are **first-class project data** (`events[]`), referenced by `eventId` on graph nodes.
+
+### 12.2 Abstract model (language-neutral)
+
+```text
+EventDefinition(id, name, parameters)
+Define(eventId)     → handler entry + output pins = parameters
+Dispatch(eventId)   → exec + input pins = parameters
+```
+
+Same idea across ecosystems:
+
+| Ecosystem | Usual name | VVS IR equivalent |
+|-----------|------------|-------------------|
+| Unreal | Event Dispatcher | `EventHandler` + `DispatchEvent` |
+| C# / .NET | `event`, `EventHandler` | `EventHandler` + `DispatchEvent` |
+| JavaScript | `EventEmitter` | `DispatchEvent` → `emitter.emit` |
+| Python | signals / callbacks | `DispatchEvent` → `self.on_*()` |
+
+### 12.3 Project data
+
+```typescript
+interface ProjectEventDefinition {
+  id: string;              // stable: "evt_on_damage"
+  name: string;            // display stem: "damage" → UI "On damage"
+  parameters: { id: string; label: string; type: PinType }[];
+}
+```
+
+Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. Legacy graphs without `events[]` are repaired on load by inferring definitions from existing **Define** nodes.
+
+### 12.4 Node kinds (registry)
+
+| kindId | UI title | Role |
+|--------|----------|------|
+| `event_on_start` | On Start | Lifecycle entry |
+| `event_on_update` | On Update | Lifecycle tick |
+| `event_define` | On … | Handler entry; `properties.eventId` |
+| `event_dispatch` | Dispatch … | Broadcast; `properties.eventId` |
+| `event_custom` | *(legacy alias)* | Migrated to `event_define` |
+
+Semantics (not label strings):
+
+```json
+{ "lowering": "event", "role": "define" | "dispatch" | "entry" | "tick" }
+```
+
+### 12.5 Authoring → IR → emit
+
+```mermaid
+flowchart LR
+  subgraph project ["Project data"]
+    ED["EventDefinition\nOn damage + params"]
+  end
+
+  subgraph graph ["Graph"]
+    DEF["Define node\nOn damage"]
+    DISP["Dispatch node\nDispatch damage"]
+    BODY["Print, Branch, …"]
+  end
+
+  subgraph ir ["IR (transpiler)"]
+    H["EventHandler"]
+    D["DispatchEvent"]
+  end
+
+  subgraph emit ["Emitter (per language)"]
+    PY["def on_damage(self, amt)\nself.on_damage(amt)"]
+    JS["onDamage(amt)\nthis.onDamage(amt)"]
+  end
+
+  ED --> DEF
+  ED --> DISP
+  DEF --> H
+  DISP --> D
+  BODY --> H
+  H --> PY
+  H --> JS
+  D --> PY
+  D --> JS
+```
+
+**Phase 1 (direct call):** one handler per event → emitter generates a method and `self.on_<name>(args)` at dispatch sites.
+
+**Phase 2 (multicast):** multiple handlers or dynamic bind → IR carries subscriber lists; emitter uses callback vectors / `EventEmitter`.
+
+### 12.6 Selection → code highlight
+
+Uses the same `TranspileResult.sourceMap` contract (§6):
+
+| Node | Highlight target |
+|------|------------------|
+| **Define** | Full handler block (`def on_damage(self, …):` …) |
+| **Dispatch** | Dispatch call line |
+| **Parameter pins** | Argument sub-expressions (`ExprSpan`) |
+
+No re-transpile on selection.
+
+### 12.7 Cross-language emit (phase 1)
+
+| Target | Define | Dispatch |
+|--------|--------|----------|
+| Python | `def on_damage(self, amount):` | `self.on_damage(amount)` |
+| JavaScript | `on_damage(amount) {` | `this.on_damage(amount);` |
+| C++ | `void on_damage(float amount) {` | `on_damage(amount);` |
+| Verse | `on_damage<override>(Amount : float) : void =` | `on_damage(Amount)` |
+
+Parameter names are derived from event parameter labels (snake_case in Python, camelCase optional later in profiles).
+
+### 12.8 Naming (locked)
+
+| Layer | Term |
+|-------|------|
+| **UI** | Events / **On …** / **Dispatch …** |
+| **Project JSON** | `events[]`, `eventId` |
+| **Registry** | `event_define`, `event_dispatch` |
+| **IR** | `EventDefinition`, `EventHandler`, `DispatchEvent` |
+| **Tree section** | Event Dispatchers (UE-familiar label; canonical type is `events[]`) |
+
+---
+
+## 13. Symbols, bindings, and portability (July 2026)
+
+**Canonical types:** `@vvs/graph-types` — `FunctionSymbol`, `GraphBinding`, `ProjectSnapshot` v2.
+
+| Symbol | Inspector | Pin sync |
+|--------|-----------|----------|
+| Variable | `VariablePropertiesPanel` | Get/Set nodes |
+| Event | `EventPropertiesPanel` | Define/Dispatch |
+| Function | `FunctionPropertiesPanel` | Call nodes + function entry |
+
+**Portability:** `@vvs/language-profiles` + `runProjectAnalysis()` warn when graph features are unsupported for the selected target. See [language_profiles.md](language_profiles.md).
+
+**Registry:** `@vvs/syntax-registry` + `core-pack.json` — single spawn catalog; dynamic `vvs.project.call_function` + `graphBinding`.
+
+---
+
+## Related documents
+
+| Document | Topic |
+|----------|-------|
+| [vision.md](vision.md) | Logic vs syntax, three layers |
+| [project_requirements.md](project_requirements.md) | Transpiler stages, syntax registry |
+| [roadmap.md](roadmap.md) | Phases, UE plugin |
+| [current_state.md](current_state.md) | Shipped vs planned |
+| [naming_and_product_direction.md](naming_and_product_direction.md) | UI vocabulary |
+| `.agents/skills/vvs_solid_principles/SKILL.md` | OCP, DIP for registry + transpiler |
+| `.agents/skills/vvs_transpiler_development/SKILL.md` | Pipeline + snapshot tests |
