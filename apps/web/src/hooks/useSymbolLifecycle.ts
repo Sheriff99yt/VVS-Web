@@ -20,6 +20,12 @@ import {
   type SymbolDeleteMode,
 } from '@/lib/symbolLifecycle';
 import { formatFunctionTabName } from '@/lib/functionTabs';
+import {
+  insertDefineNodeForEvent,
+  insertDefineNodeForFunction,
+  insertDefineNodeForVariable,
+} from '@/lib/defineNodeSync';
+import { activeClass } from '@/lib/classScope';
 
 export function useSymbolLifecycle() {
   const {
@@ -31,6 +37,8 @@ export function useSymbolLifecycle() {
     setEvents,
     openTabs,
     setOpenTabs,
+    classes,
+    activeClassId,
     activeGraphTab,
     setActiveGraphTab,
     selection,
@@ -39,8 +47,8 @@ export function useSymbolLifecycle() {
   const { getDocuments, patchAllDocuments } = useGraphWorkspace();
 
   const getSymbolsState = useCallback(
-    () => ({ variables, functions, events, openTabs }),
-    [variables, functions, events, openTabs]
+    () => ({ variables, functions, events, openTabs, classes, activeClassId }),
+    [variables, functions, events, openTabs, classes, activeClassId]
   );
 
   const applyDocuments = useCallback(
@@ -48,6 +56,52 @@ export function useSymbolLifecycle() {
       patchAllDocuments(() => nextDocuments);
     },
     [patchAllDocuments]
+  );
+
+  const dualWriteDefineNode = useCallback(
+    (
+      documents: Record<string, GraphDocument>,
+      kind: 'variable' | 'function' | 'event',
+      symbol: VariableSymbol | FunctionSymbol | ProjectEventDefinition
+    ) => {
+      const cls = activeClass(classes, activeClassId);
+      if (!cls) return documents;
+      if (kind === 'variable') {
+        return insertDefineNodeForVariable(documents, cls, symbol as VariableSymbol);
+      }
+      if (kind === 'function') {
+        return insertDefineNodeForFunction(documents, cls, symbol as FunctionSymbol);
+      }
+      return insertDefineNodeForEvent(documents, cls, symbol as ProjectEventDefinition);
+    },
+    [classes, activeClassId]
+  );
+
+  const addVariableWithDefine = useCallback(
+    (variable: VariableSymbol) => {
+      setVariables((list) => [...list, variable]);
+      const documents = getDocuments() ?? { main: { nodes: [], edges: [] } };
+      applyDocuments(dualWriteDefineNode(documents, 'variable', variable));
+    },
+    [setVariables, getDocuments, applyDocuments, dualWriteDefineNode]
+  );
+
+  const addFunctionWithDefine = useCallback(
+    (func: FunctionSymbol) => {
+      setFunctions((list) => [...list, func]);
+      const documents = getDocuments() ?? { main: { nodes: [], edges: [] } };
+      applyDocuments(dualWriteDefineNode(documents, 'function', func));
+    },
+    [setFunctions, getDocuments, applyDocuments, dualWriteDefineNode]
+  );
+
+  const addEventWithDefine = useCallback(
+    (event: ProjectEventDefinition) => {
+      setEvents((list) => [...list, event]);
+      const documents = getDocuments() ?? { main: { nodes: [], edges: [] } };
+      applyDocuments(dualWriteDefineNode(documents, 'event', event));
+    },
+    [setEvents, getDocuments, applyDocuments, dualWriteDefineNode]
   );
 
   const deleteSymbol = useCallback(
@@ -194,5 +248,8 @@ export function useSymbolLifecycle() {
     deleteAllBrokenForRef,
     fixBrokenNode,
     fixAllBrokenRefs,
+    addVariableWithDefine,
+    addFunctionWithDefine,
+    addEventWithDefine,
   };
 }

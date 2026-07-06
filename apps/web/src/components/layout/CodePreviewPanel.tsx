@@ -16,6 +16,8 @@ import { VVSNode, VVSEdge } from '@/types/graph';
 import { generateMockTranspileResult } from '@/lib/mockCodegen';
 import type { TranspileResult } from '@/types/transpile';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
+import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
+import { MAIN_GRAPH_CONTAINER_ID, MAIN_CLASS_ID, classHomeGraphId } from '@/lib/classScope';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
 import type { CodeHighlightRange } from '@/components/code/types';
@@ -107,6 +109,8 @@ export function CodePreviewPanel() {
     crossOverMode,
     environmentId,
     integration,
+    classes,
+    activeClassId,
   } = useProject();
   const { getActiveTabMetadata } = useGraphWorkspace();
   const documents = useGraphDocuments();
@@ -117,18 +121,34 @@ export function CodePreviewPanel() {
   const lastCleanResultRef = useRef<TranspileResult | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const activeDocument = documents?.[activeGraphTab] ?? documents?.main ?? null;
+  const activeDocument =
+    documents?.[activeGraphTab] ??
+    documents?.[MAIN_GRAPH_CONTAINER_ID] ??
+    null;
+
+  const activeTab = openTabs.find((t) => t.id === activeGraphTab);
+  const isOrgGraph = isOrgOnlyGraphTab(activeGraphTab);
 
   const liveResult = useMemo(() => {
+    if (isOrgGraph) {
+      return {
+        language: targetLanguage,
+        files: [],
+        sourceMap: {},
+      } satisfies TranspileResult;
+    }
+
     const nodes = (activeDocument?.nodes ?? []) as VVSNode[];
     const edges = (activeDocument?.edges ?? []) as VVSEdge[];
     const tabMeta = getActiveTabMetadata();
-    const activeTab = openTabs.find((t) => t.id === activeGraphTab);
-    const isMain = activeGraphTab === 'main';
+    const mainClass = classes.find((c) => c.id === MAIN_CLASS_ID);
+    const isModuleGraph =
+      activeGraphTab === 'main' ||
+      (mainClass != null && activeGraphTab === classHomeGraphId(mainClass));
 
     return generateMockTranspileResult({
-      moduleName: isMain ? projectDetails.moduleName : tabMeta?.moduleName ?? activeTab?.name ?? 'Graph',
-      extendsType: isMain ? projectDetails.extendsType : tabMeta?.extendsType ?? '',
+      moduleName: isModuleGraph ? projectDetails.moduleName : tabMeta?.moduleName ?? activeTab?.name ?? 'Graph',
+      extendsType: isModuleGraph ? projectDetails.extendsType : tabMeta?.extendsType ?? '',
       targetLanguage,
       variables,
       projectEvents: events,
@@ -146,6 +166,9 @@ export function CodePreviewPanel() {
     getActiveTabMetadata,
     openTabs,
     activeGraphTab,
+    activeTab,
+    isOrgGraph,
+    targetLanguage,
     projectDetails,
     targetLanguage,
     variables,
@@ -154,6 +177,7 @@ export function CodePreviewPanel() {
     documents,
     environmentId,
     integration,
+    classes,
   ]);
 
   useEffect(() => {
@@ -163,6 +187,8 @@ export function CodePreviewPanel() {
       functions,
       events,
       variables,
+      classes,
+      activeClassId,
       openTabs,
       projectDetails,
       targetLanguage,
@@ -172,7 +198,7 @@ export function CodePreviewPanel() {
     setValidationWarnings((prev) =>
       warningsEqual(prev, analysis.warnings) ? prev : analysis.warnings
     );
-  }, [documents, functions, events, variables, openTabs, projectDetails, targetLanguage, crossOverMode, environmentId, setValidationWarnings]);
+  }, [documents, functions, events, variables, classes, activeClassId, openTabs, projectDetails, targetLanguage, crossOverMode, environmentId, setValidationWarnings]);
 
   useEffect(() => {
     if (compileState === 'success' || compileState === 'clean') {
@@ -390,7 +416,11 @@ export function CodePreviewPanel() {
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">
             <FileCode2 size={20} className="text-zinc-700" />
-            <p className="text-[11px] text-zinc-500">Wire nodes to preview code.</p>
+            <p className="text-[11px] text-zinc-500">
+              {isOrgGraph
+                ? 'Visual organization graph — no generated code. Open a class graph to preview output.'
+                : 'Wire nodes to preview code.'}
+            </p>
           </div>
         ) : (
           <div className={`h-full transition-opacity duration-150 ${isStale ? 'opacity-55' : 'opacity-100'}`}>

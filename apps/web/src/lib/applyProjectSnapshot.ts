@@ -1,15 +1,17 @@
 import { ProjectSnapshot } from '@/types/projectSnapshot';
-import { GraphTab, TargetLanguage } from '@/contexts/ProjectContext';
+import { GraphTab, TargetLanguage, ClassSymbol } from '@/contexts/ProjectContext';
 import { GraphVariable, ProjectEventDefinition, FunctionSymbol } from '@/types/graph';
 import { GraphDocument } from '@/lib/graphDefaults';
 import { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { Dispatch, SetStateAction } from 'react';
-import { createDefaultIntegration, type ProjectIntegrationConfig, type SyntaxPackLock } from '@vvs/graph-types';
+import { createDefaultIntegration, normalizeProjectSnapshot, type ProjectIntegrationConfig, type SyntaxPackLock } from '@vvs/graph-types';
 
 export interface SnapshotApplyTarget {
   setVariables: Dispatch<SetStateAction<GraphVariable[]>>;
   setEvents: Dispatch<SetStateAction<ProjectEventDefinition[]>>;
   setFunctions: Dispatch<SetStateAction<FunctionSymbol[]>>;
+  setClasses: Dispatch<SetStateAction<ClassSymbol[]>>;
+  setActiveClassId: Dispatch<SetStateAction<string>>;
   setOpenTabs: Dispatch<SetStateAction<GraphTab[]>>;
   setActiveGraphTab: (tabId: string) => void;
   setProjectDetails: (details: { moduleName: string; extendsType: string; description: string }) => void;
@@ -17,7 +19,7 @@ export interface SnapshotApplyTarget {
   setAutoCompile: (value: boolean) => void;
   setAutoSave: (value: boolean) => void;
   setSelection: (selection: {
-    type: 'node' | 'variable' | 'event' | 'function' | 'graph';
+    type: 'node' | 'variable' | 'event' | 'function' | 'graph' | 'class';
     id: string | null;
   }) => void;
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
@@ -28,31 +30,34 @@ export interface SnapshotApplyTarget {
 }
 
 export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: SnapshotApplyTarget): void {
-  target.setVariables(snapshot.variables);
-  target.setEvents(snapshot.events ?? []);
-  target.setFunctions(snapshot.functions);
+  const normalized = normalizeProjectSnapshot(snapshot) ?? snapshot;
+  target.setVariables(normalized.variables);
+  target.setEvents(normalized.events ?? []);
+  target.setFunctions(normalized.functions);
+  target.setClasses(normalized.classes);
+  target.setActiveClassId(normalized.activeClassId);
   target.setOpenTabs(
-    snapshot.openTabs.length > 0 ? snapshot.openTabs : [{ id: 'main', type: 'main', name: 'Main graph' }]
+    normalized.openTabs.length > 0 ? normalized.openTabs : [{ id: 'main', type: 'main', name: 'Main graph' }]
   );
-  const activeTab = snapshot.activeGraphTab || 'main';
+  const activeTab = normalized.activeGraphTab || 'main';
   target.setActiveGraphTab(activeTab);
-  target.setProjectDetails(snapshot.projectDetails);
-  target.setTargetLanguage(snapshot.targetLanguage);
-  target.setAutoCompile(snapshot.autoCompile);
-  target.setAutoSave(snapshot.autoSave ?? false);
+  target.setProjectDetails(normalized.projectDetails);
+  target.setTargetLanguage(normalized.targetLanguage);
+  target.setAutoCompile(normalized.autoCompile);
+  target.setAutoSave(normalized.autoSave ?? false);
   target.setSelection({ type: 'graph', id: null });
-  target.loadDocuments(snapshot.documents as Record<string, GraphDocument>, activeTab);
-  target.setInstalledLibrary(snapshot.installedLibrary ?? []);
-  target.setEnvironmentLink(snapshot.environmentId, snapshot.environmentVersion);
+  target.loadDocuments(normalized.documents as Record<string, GraphDocument>, activeTab);
+  target.setInstalledLibrary(normalized.installedLibrary ?? []);
+  target.setEnvironmentLink(normalized.environmentId, normalized.environmentVersion);
   target.setIntegration(
-    snapshot.integration ??
+    normalized.integration ??
       createDefaultIntegration({
-        environmentId: snapshot.environmentId,
-        environmentVersion: snapshot.environmentVersion,
-        moduleName: snapshot.projectDetails.moduleName,
-        defaultTarget: snapshot.targetLanguage,
+        environmentId: normalized.environmentId,
+        environmentVersion: normalized.environmentVersion,
+        moduleName: normalized.projectDetails.moduleName,
+        defaultTarget: normalized.targetLanguage,
         adoptExisting: true,
       })
   );
-  target.setSyntaxPackLock?.(snapshot.syntaxPackLock);
+  target.setSyntaxPackLock?.(normalized.syntaxPackLock);
 }

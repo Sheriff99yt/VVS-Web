@@ -1,9 +1,18 @@
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
+import {
+  createClassSymbol,
+  createGraphContainer,
+  MAIN_CLASS_ID,
+  MAIN_GRAPH_CONTAINER_ID,
+  normalizeGraphContainers,
+  PROJECT_MAP_CONTAINER_NAME,
+} from '@vvs/graph-types';
 import { defaultTabMetadata } from '@/lib/graphDefaults';
 import type { VVSNode, VVSEdge } from '@/types/graph';
 import { createFunctionSymbol } from '@/lib/functionTabs';
 import { createVariableSymbol } from '@vvs/graph-types';
 import {
+  classDefineNode,
   convertToStringNode,
   boundCallFunction,
   boundEventDefine,
@@ -12,13 +21,17 @@ import {
   boundVariableSet,
   branchNode,
   dataEdge,
+  eventMemberDefineNode,
   exampleDocument,
   execEdge,
+  functionDefineNode,
   functionEntryNode,
   getUserInputNode,
+  graphRefNode,
   mathAddNode,
   onStartNode,
   printStringNode,
+  varDefineNode,
 } from '@/lib/examples/exampleGraphBuild';
 
 const VAR_A = createVariableSymbol('A', { id: 'var-a', type: 'data_number' });
@@ -46,7 +59,70 @@ const EVT_CLEAR = {
   parameters: [] as { id: string; label: string; type: 'data_number' }[],
 };
 
+const CALCULATOR_CONTAINER_ID = 'calc-calculator-graph';
+const CALCULATOR_CONTAINER = createGraphContainer('Calculator', { id: CALCULATOR_CONTAINER_ID });
+
+const MAIN_CLASS = createClassSymbol('Calculator', {
+  id: MAIN_CLASS_ID,
+  containerId: CALCULATOR_CONTAINER_ID,
+});
+
+const UI_FLOW_CONTAINER_ID = 'calc-ui-flow-container';
+const UI_FLOW_CONTAINER = createGraphContainer('UI flow', { id: UI_FLOW_CONTAINER_ID });
+
+const RESULT_PANEL_CLASS_ID = 'calc-result-panel-class';
+const RESULT_PANEL_CLASS = createClassSymbol('ResultPanel', {
+  id: RESULT_PANEL_CLASS_ID,
+  containerId: UI_FLOW_CONTAINER_ID,
+});
+
+const MAP_NODES: VVSNode[] = [
+  graphRefNode('calc-ref-calculator', { x: 80, y: 80 }, {
+    label: 'Calculator',
+    containerId: CALCULATOR_CONTAINER_ID,
+  }),
+  graphRefNode('calc-ref-ui-flow', { x: 360, y: 80 }, {
+    label: 'UI flow',
+    containerId: UI_FLOW_CONTAINER_ID,
+  }),
+];
+
+const RESULT_PANEL_NODES: VVSNode[] = [
+  classDefineNode('calc-panel-class-define', { x: 40, y: -80 }, RESULT_PANEL_CLASS),
+  onStartNode('calc-panel-start', { x: 60, y: 80 }),
+  printStringNode('calc-panel-print', { x: 320, y: 80 }, 'Result panel ready'),
+];
+
+const RESULT_PANEL_EDGES: VVSEdge[] = [
+  execEdge('calc-panel-e-start-print', 'calc-panel-start', 'calc-panel-print'),
+];
+
+/** Canvas define chain — declarations in graph order (above runtime flow). */
+const DEFINE_CHAIN_NODES: VVSNode[] = [
+  classDefineNode('calc-class-define', { x: 40, y: -120 }, MAIN_CLASS),
+  varDefineNode('calc-var-a-define', { x: 240, y: -120 }, VAR_A),
+  varDefineNode('calc-var-b-define', { x: 440, y: -120 }, VAR_B),
+  varDefineNode('calc-var-result-define', { x: 640, y: -120 }, VAR_RESULT),
+  varDefineNode('calc-var-show-define', { x: 840, y: -120 }, VAR_SHOW),
+  functionDefineNode('calc-fn-add-define', { x: 1040, y: -120 }, FN_ADD),
+  functionDefineNode('calc-fn-clear-define', { x: 1240, y: -120 }, FN_CLEAR),
+  eventMemberDefineNode('calc-evt-calc-member', { x: 1440, y: -120 }, EVT_CALCULATE),
+  eventMemberDefineNode('calc-evt-clear-member', { x: 1640, y: -120 }, EVT_CLEAR),
+];
+
+const DEFINE_CHAIN_EDGES: VVSEdge[] = [
+  execEdge('calc-def-e-class-a', 'calc-class-define', 'calc-var-a-define'),
+  execEdge('calc-def-e-a-b', 'calc-var-a-define', 'calc-var-b-define'),
+  execEdge('calc-def-e-b-result', 'calc-var-b-define', 'calc-var-result-define'),
+  execEdge('calc-def-e-result-show', 'calc-var-result-define', 'calc-var-show-define'),
+  execEdge('calc-def-e-show-add', 'calc-var-show-define', 'calc-fn-add-define'),
+  execEdge('calc-def-e-add-clear', 'calc-fn-add-define', 'calc-fn-clear-define'),
+  execEdge('calc-def-e-clear-calc', 'calc-fn-clear-define', 'calc-evt-calc-member'),
+  execEdge('calc-def-e-calc-clear', 'calc-evt-calc-member', 'calc-evt-clear-member'),
+];
+
 const MAIN_NODES: VVSNode[] = [
+  ...DEFINE_CHAIN_NODES,
   onStartNode('calc-start', { x: 40, y: 40 }),
   getUserInputNode('calc-input-a', { x: 240, y: 40 }, { prompt: 'Enter A:', inputKind: 'number' }),
   boundVariableSet('calc-set-a', { x: 480, y: 40 }, VAR_A),
@@ -70,6 +146,7 @@ const MAIN_NODES: VVSNode[] = [
 ];
 
 const MAIN_EDGES: VVSEdge[] = [
+  ...DEFINE_CHAIN_EDGES,
   execEdge('calc-e-start-input-a', 'calc-start', 'calc-input-a'),
   execEdge('calc-e-input-a-set-a', 'calc-input-a', 'calc-set-a'),
   dataEdge('calc-e-input-a-val', 'calc-input-a', 'calc-set-a', 'value', 'val'),
@@ -119,33 +196,48 @@ const CLEAR_EDGES: VVSEdge[] = [
   execEdge('calc-clear-e-b-result', 'calc-clear-b', 'calc-clear-result'),
 ];
 
-/** Multi-graph calculator — user input, variables, functions, events, branch, and dispatch. */
+/** Multi-graph calculator — define chain, user input, functions, events, branch, and dispatch. */
 export function createComplexExampleSnapshot(): ProjectSnapshot {
+  const stamp = <T>(item: T): T & { classId: string } => ({ ...item, classId: MAIN_CLASS_ID });
+
   return {
-    version: 2,
+    version: 3,
     savedAt: new Date().toISOString(),
     projectDetails: {
       moduleName: 'Calculator',
       extendsType: '',
       description:
-        'Complex example — prompt for A and B, add via function, print Result, then clear',
+        'Complex example — canvas define chain, prompt for A and B, add via function, print Result, then clear',
     },
-    variables: [VAR_A, VAR_B, VAR_RESULT, VAR_SHOW],
-    events: [EVT_CALCULATE, EVT_CLEAR],
-    functions: [FN_ADD, FN_CLEAR],
+    classes: [MAIN_CLASS, RESULT_PANEL_CLASS],
+    activeClassId: MAIN_CLASS_ID,
+    graphContainers: normalizeGraphContainers([CALCULATOR_CONTAINER, UI_FLOW_CONTAINER]),
+    variables: [VAR_A, VAR_B, VAR_RESULT, VAR_SHOW].map(stamp),
+    events: [EVT_CALCULATE, EVT_CLEAR].map(stamp),
+    functions: [FN_ADD, FN_CLEAR].map(stamp),
     openTabs: [
-      { id: 'main', type: 'main', name: 'Main graph' },
+      { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: PROJECT_MAP_CONTAINER_NAME },
+      { id: CALCULATOR_CONTAINER_ID, type: 'container', name: 'Calculator' },
+      { id: UI_FLOW_CONTAINER_ID, type: 'container', name: 'UI flow' },
       { id: 'fn-add', type: 'function', name: 'Function: Add' },
       { id: 'fn-clear', type: 'function', name: 'Function: Clear' },
     ],
-    activeGraphTab: 'main',
+    activeGraphTab: MAIN_GRAPH_CONTAINER_ID,
     targetLanguage: 'python',
     autoCompile: true,
     autoSave: false,
     documents: {
-      main: {
+      [MAIN_GRAPH_CONTAINER_ID]: {
+        ...exampleDocument(MAP_NODES, []),
+        metadata: defaultTabMetadata('container', PROJECT_MAP_CONTAINER_NAME),
+      },
+      [CALCULATOR_CONTAINER_ID]: {
         ...exampleDocument(MAIN_NODES, MAIN_EDGES),
-        metadata: defaultTabMetadata('main', 'Main graph'),
+        metadata: defaultTabMetadata('container', 'Calculator'),
+      },
+      [UI_FLOW_CONTAINER_ID]: {
+        ...exampleDocument(RESULT_PANEL_NODES, RESULT_PANEL_EDGES),
+        metadata: defaultTabMetadata('container', 'UI flow'),
       },
       'fn-add': {
         ...exampleDocument(ADD_NODES, ADD_EDGES),

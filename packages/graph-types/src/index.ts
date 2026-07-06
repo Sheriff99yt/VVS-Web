@@ -13,3 +13,4 @@ export * from './symbolRefs';
 export * from './integration';
 export * from './projectFolder';
 export * from './codegenTarget';
+export * from './defineNodes';

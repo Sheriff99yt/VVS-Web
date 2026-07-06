@@ -12,13 +12,19 @@ import type { VVSNode, VVSEdge } from '@/types/graph';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import { ProjectFolderProvider } from '@/contexts/ProjectFolderContext';
 
+import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+
 function EditorBootstrapLoader({
   bootstrap,
 }: {
   bootstrap: EditorBootstrap;
 }) {
   const documents = bootstrap.snapshot.documents ?? {};
-  const mainDoc = documents.main ?? { nodes: [], edges: [] };
+  const activeTab = bootstrap.snapshot.activeGraphTab;
+  const initialDoc =
+    documents[activeTab] ??
+    documents[MAIN_GRAPH_CONTAINER_ID] ??
+    { nodes: [], edges: [] };
 
   return (
     <ProjectFolderProvider
@@ -31,8 +37,8 @@ function EditorBootstrapLoader({
         projectSource={bootstrap.source}
         initialSnapshot={bootstrap.snapshot}
         initialView={bootstrap.initialView}
-        initialNodes={mainDoc.nodes as VVSNode[]}
-        initialEdges={mainDoc.edges as VVSEdge[]}
+        initialNodes={initialDoc.nodes as VVSNode[]}
+        initialEdges={initialDoc.edges as VVSEdge[]}
         initialDocuments={documents as Record<string, GraphDocument>}
       />
     </ProjectFolderProvider>

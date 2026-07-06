@@ -11,9 +11,18 @@ import { GraphTab } from '@/contexts/ProjectContext';
 import { graphDisplayName } from '@/lib/graphTabs';
 import { useLatestRef } from '@/hooks/useLatestRef';
 import { clearEdgeSelectionFlags, clearNodeSelectionFlags } from '@/lib/graphSelection';
+import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
-function documentTabType(tabType: GraphTab['type'] | undefined): 'main' | 'function' {
-  return tabType === 'main' ? 'main' : 'function';
+function documentTabType(
+  tabType: GraphTab['type'] | undefined
+): 'main' | 'function' | 'container' {
+  if (tabType === 'main') return 'main';
+  if (tabType === 'container') return 'container';
+  return 'function';
+}
+
+function isPinnedDocumentTab(tabId: string, graphContainerIds: ReadonlySet<string>): boolean {
+  return tabId === 'main' || tabId === MAIN_GRAPH_CONTAINER_ID || graphContainerIds.has(tabId);
 }
 
 function cloneDocument(doc: GraphDocument): GraphDocument {
@@ -27,6 +36,7 @@ function cloneDocument(doc: GraphDocument): GraphDocument {
 interface UseGraphTabSyncOptions {
   activeGraphTab: string;
   openTabs: GraphTab[];
+  graphContainerIds: string[];
   nodes: VVSNode[];
   edges: VVSEdge[];
   setNodes: React.Dispatch<React.SetStateAction<VVSNode[]>>;
@@ -41,6 +51,7 @@ interface UseGraphTabSyncOptions {
 export function useGraphTabSync({
   activeGraphTab,
   openTabs,
+  graphContainerIds,
   nodes,
   edges,
   setNodes,
@@ -51,12 +62,20 @@ export function useGraphTabSync({
   isDraggingRef,
 }: UseGraphTabSyncOptions) {
   const documentsRef = useRef<Map<string, GraphDocument>>(
-    new Map([['main', cloneDocument(withDefaultMetadata(initialMain, 'main', 'Main graph'))]])
+    new Map([
+      ['main', cloneDocument(withDefaultMetadata(initialMain, 'main', 'Main graph'))],
+      [MAIN_GRAPH_CONTAINER_ID, { nodes: [], edges: [] }],
+    ])
   );
   const prevTabRef = useRef(activeGraphTab);
   const nodesRef = useLatestRef(nodes);
   const edgesRef = useLatestRef(edges);
   const metadataListenersRef = useRef(new Set<() => void>());
+  const graphContainerIdsRef = useLatestRef(graphContainerIds);
+
+  const containerIdSet = useCallback((): ReadonlySet<string> => {
+    return new Set(graphContainerIdsRef.current);
+  }, [graphContainerIdsRef]);
 
   const notifyMetadata = useCallback(() => {
     metadataListenersRef.current.forEach((listener) => listener());
@@ -119,8 +138,9 @@ export function useGraphTabSync({
 
   const updateActiveTabMetadata = useCallback(
     (patch: Partial<GraphTabMetadata>) => {
-      if (activeGraphTab === 'main') return;
       const tabMeta = openTabs.find((t) => t.id === activeGraphTab);
+      if (activeGraphTab === 'main' || activeGraphTab === MAIN_GRAPH_CONTAINER_ID) return;
+      if (containerIdSet().has(activeGraphTab) && tabMeta?.type === 'container') return;
       const doc = documentsRef.current.get(activeGraphTab) ?? {
         nodes: structuredClone(nodesRef.current),
         edges: structuredClone(edgesRef.current),
@@ -170,15 +190,17 @@ export function useGraphTabSync({
 
   useEffect(() => {
     const openIds = new Set(openTabs.map((tab) => tab.id));
+    const containers = containerIdSet();
     let changed = false;
     documentsRef.current.forEach((_, tabId) => {
-      if (tabId !== 'main' && !openIds.has(tabId)) {
+      if (isPinnedDocumentTab(tabId, containers)) return;
+      if (!openIds.has(tabId)) {
         documentsRef.current.delete(tabId);
         changed = true;
       }
     });
     if (changed) notifyMetadata();
-  }, [openTabs, notifyMetadata]);
+  }, [openTabs, notifyMetadata, containerIdSet]);
 
   useEffect(() => {
     if (prevTabRef.current === activeGraphTab) return;

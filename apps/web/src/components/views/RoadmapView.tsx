@@ -152,7 +152,8 @@ export function RoadmapView() {
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
             <span className="text-emerald-400/90 font-medium">Phase 1 shipped</span> — syntax packs,
-            IR transpiler, text-shaped graphs,{' '}
+            IR transpiler, text-shaped graphs, graph-as-canvas multi-class model (classes declared on
+            container graphs, not separate tabs),{' '}
             <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go HTTP API, and
             local MCP.{' '}
             <span className="text-indigo-300/90 font-medium">Phase 2 near complete in-repo</span> —

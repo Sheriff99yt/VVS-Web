@@ -2,11 +2,11 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { NodeProps, useReactFlow } from '@xyflow/react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, FolderOpen } from 'lucide-react';
 import { VVSNodeData } from '@/types/graph';
 import { useProject } from '@/contexts/ProjectContext';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
-import { getNodeDisplayTitle } from '@/lib/nodeKind';
+import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
 import { NodePinRow } from './NodePinRow';
 import { GraphWheelShield } from './GraphWheelShield';
 import styles from './VVSNode.module.css';
@@ -31,6 +31,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
     [validationWarnings, id, activeGraphTab]
   );
   const linkedTargetLabel = linkedGraphTargetLabel(data);
+  const isGraphRef = resolveNodeKindId(data) === 'graph_ref' || data.linkKind === 'graph_ref';
   const isImportNode = data.linkKind === 'import_module';
   const hasPins = data.inputs.length > 0 || data.outputs.length > 0;
   const title = getNodeDisplayTitle(data);
@@ -55,6 +56,9 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
       >
         <div className={styles.header}>
           <div className={`${styles.titleBlock} flex items-center gap-1.5 min-w-0`}>
+            {isGraphRef ? (
+              <FolderOpen size={12} className="text-emerald-400/90 shrink-0" aria-hidden />
+            ) : null}
             <span className={`${styles.title} truncate`}>{title}</span>
             {hasBrokenRef ? (
               <span title="Unresolved symbol reference">
@@ -64,7 +68,13 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
             {linkedTargetLabel && (
               <span
                 className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}
-                title={isImportNode ? 'Double-click to open module' : 'Double-click to open graph'}
+                title={
+                  isGraphRef
+                    ? 'Double-click to open referenced graph'
+                    : isImportNode
+                      ? 'Double-click to open module'
+                      : 'Double-click to open graph'
+                }
               >
                 {isImportNode ? `↳ ${linkedTargetLabel}` : `→ ${linkedTargetLabel}`}
               </span>

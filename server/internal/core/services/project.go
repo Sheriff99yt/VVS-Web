@@ -20,13 +20,15 @@ func LoadProject(ctx context.Context, st store.ProjectStore, id string) (*domain
 		}
 		return nil, err
 	}
+	domain.NormalizeSnapshot(&snap)
 	return &snap, nil
 }
 
 // SaveProject persists a snapshot under the given project id for the request user.
 func SaveProject(ctx context.Context, st store.ProjectStore, id string, snap domain.ProjectSnapshot) error {
+	domain.NormalizeSnapshot(&snap)
 	if snap.Version == 0 {
-		snap.Version = 2
+		snap.Version = 3
 	}
 	if snap.SavedAt == "" {
 		snap.SavedAt = time.Now().UTC().Format(time.RFC3339)

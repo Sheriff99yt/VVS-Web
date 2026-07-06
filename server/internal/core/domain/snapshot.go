@@ -13,12 +13,14 @@ type ProjectIntegrationConfig struct {
 	OutputRoot string `json:"outputRoot,omitempty"`
 }
 
-// ProjectSnapshot v2 aligns with @vvs/graph-types ProjectSnapshot.
+// ProjectSnapshot v3 aligns with @vvs/graph-types ProjectSnapshot.
 type ProjectSnapshot struct {
 	Version            int                        `json:"version"`
 	ProjectID          string                     `json:"projectId,omitempty"`
 	SavedAt            string                     `json:"savedAt"`
 	ProjectDetails     ProjectDetails             `json:"projectDetails"`
+	Classes            []ClassSymbol              `json:"classes,omitempty"`
+	ActiveClassId      string                     `json:"activeClassId,omitempty"`
 	Variables          []GraphVariable            `json:"variables"`
 	Events             []ProjectEventDefinition   `json:"events"`
 	Functions          []FunctionSymbol           `json:"functions"`
@@ -68,6 +70,17 @@ type ProjectDetails struct {
 	Description string `json:"description"`
 }
 
+// ClassSymbol mirrors @vvs/graph-types ClassSymbol.
+type ClassSymbol struct {
+	Kind        string `json:"kind"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	ExtendsType string `json:"extendsType,omitempty"`
+	Description string `json:"description,omitempty"`
+	GraphTabID  string `json:"graphTabId,omitempty"`
+	Visibility  string `json:"visibility,omitempty"`
+}
+
 type GraphTab struct {
 	ID   string `json:"id"`
 	Type string `json:"type"`
@@ -93,10 +106,12 @@ type GraphVariable struct {
 	DefaultValue interface{} `json:"defaultValue,omitempty"`
 	Binding      string      `json:"binding,omitempty"`
 	Readonly     bool        `json:"readonly,omitempty"`
+	ClassID      string      `json:"classId,omitempty"`
 }
 
 type ProjectEventDefinition struct {
 	ID         string            `json:"id"`
 	Name       string            `json:"name"`
 	Parameters []SymbolParameter `json:"parameters"`
+	ClassID    string            `json:"classId,omitempty"`
 }

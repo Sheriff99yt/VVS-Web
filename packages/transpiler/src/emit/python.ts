@@ -9,6 +9,7 @@ import {
   functionNeedsAsync,
   printContextForIr,
 } from './helpers';
+import { appendIrMembers, appendLegacyPreamble, tagClassDeclLine } from './members';
 import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
 
 function appendPythonStartHandler(sink: CodeSink, ir: IrModule, sourceGraphNodeId: string, body: IrStatement[]): void {
@@ -33,27 +34,16 @@ function appendPythonEventHandler(sink: CodeSink, ir: IrModule, handler: IrEvent
 export function emitPythonModule(sink: CodeSink, ir: IrModule): void {
   appendHoistedImports(sink, ir);
   const bases = ir.extendsType ? `(${ir.extendsType})` : '';
+  const classLineStart = sink.lineCount + 1;
   sink.appendRaw(`class ${ir.moduleName}${bases}:`);
+  tagClassDeclLine(sink, ir, classLineStart);
   if (ir.needsEventHelper) {
     appendPythonEventHelper(sink);
   }
-  if (ir.variables.length > 0) {
-    sink.appendRaw('    # Variables');
-    for (const v of ir.variables) {
-      const val =
-        typeof v.defaultValue === 'string'
-          ? `"${v.defaultValue}"`
-          : typeof v.defaultValue === 'boolean'
-            ? v.defaultValue
-              ? 'True'
-              : 'False'
-            : v.defaultValue;
-      sink.appendRaw(`        self.${v.name} = ${val}`);
-    }
-  }
-  for (const f of ir.functions) {
-    sink.appendRaw(`\n${formatFunctionDefHeader(f, 'python', functionNeedsAsync(ir, f.id))}`);
-    appendFunctionBody(sink, ir, f.id, '        pass', ir.environmentManifest);
+  if (ir.useLegacyPreamble) {
+    appendLegacyPreamble(sink, ir);
+  } else {
+    appendIrMembers(sink, ir);
   }
   const bodyCtx = printContextForIr(ir, bodyIndent('python'), ir.environmentManifest);
   if (ir.startEvent?.isExplicitStartEvent) {

@@ -11,7 +11,7 @@ export function createFunctionId(): string {
 
 export function createFunctionSymbol(
   name: string,
-  options?: { id?: string; binding?: FunctionBinding }
+  options?: { id?: string; binding?: FunctionBinding; classId?: string }
 ): FunctionSymbol {
   const funcId = options?.id ?? createFunctionId();
   const overload = createDefaultOverload();
@@ -22,6 +22,7 @@ export function createFunctionSymbol(
     binding: options?.binding ?? 'instance',
     visibility: 'public',
     overloads: [{ ...overload, graphTabId: funcId }],
+    classId: options?.classId,
   };
 }
 

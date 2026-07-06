@@ -11,6 +11,7 @@ import { VVSNode } from './VVSNode';
 import { VVSEdge } from './VVSEdge';
 import { VVSNode as VVSNodeType, VVSEdge as VVSEdgeType, PinType } from '@/types/graph';
 import { NodeContextMenu } from './NodeContextMenu';
+import { CanvasDropMenu } from './CanvasDropMenu';
 import { LibraryNodeTemplate } from '@/types/ui';
 import { useProject } from '@/contexts/ProjectContext';
 import { VVSCommentNode } from './VVSCommentNode';
@@ -43,6 +44,7 @@ import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import {
   applyWireConnection,
   connectionFromReactFlow,
+  createUniqueEdgeId,
   findCompatiblePin,
   isValidWireConnection,
   pinTypeFromDragHandle,
@@ -66,6 +68,23 @@ import {
 import { useSyncProjectSelection } from '@/hooks/useSyncProjectSelection';
 import { useGraphKeyboardShortcuts } from '@/hooks/useGraphKeyboardShortcuts';
 import { GraphShortcutsHelp } from './GraphShortcutsHelp';
+import { activeClass, classGraphTabId, isOnClassHomeGraph } from '@/lib/classScope';
+import {
+  hasDefineNodeForClass,
+  hasDefineNodeForFunction,
+  hasDefineNodeForVariable,
+  insertClassDefineNode,
+  insertDefineNodeForFunction,
+  insertDefineNodeForVariable,
+} from '@/lib/defineNodeSync';
+import type { FunctionSymbol, GraphVariable, ClassSymbol } from '@/types/graph';
+import { CLASS_DRAG_MIME, parseClassDragPayload } from '@/lib/classHelpers';
+import { TREE_DRAG_MIME, parseGraphContainerDragPayload } from '@/lib/treeDrag';
+import {
+  buildGraphRefNodeData,
+  isGraphRefNode,
+  openGraphRefTarget,
+} from '@/lib/graphRefHelpers';
 
 function wrapSelectionInComment(
   nodes: VVSNodeType[],
@@ -160,6 +179,11 @@ function GraphCanvasInner() {
     openTabs,
     functions,
     events,
+    classes,
+    activeClassId,
+    setActiveClassId,
+    graphContainers,
+    setActiveGraphTab,
     setFunctions,
     setOpenTabs,
     setCompileState,
@@ -187,7 +211,7 @@ function GraphCanvasInner() {
     importGraphTab,
   } = useGraphEdit();
 
-  const { getDocuments } = useGraphWorkspace();
+  const { getDocuments, patchAllDocuments } = useGraphWorkspace();
 
   const { screenToFlowPosition, getNode, fitView } = useReactFlow();
 
@@ -214,8 +238,51 @@ function GraphCanvasInner() {
     x: number;
     y: number;
     flowPosition: { x: number; y: number };
-    variable: import('@/types/graph').GraphVariable;
+    variable: GraphVariable;
   } | null>(null);
+
+  const [functionMenu, setFunctionMenu] = useState<{
+    x: number;
+    y: number;
+    flowPosition: { x: number; y: number };
+    func: FunctionSymbol;
+    overloadId: string;
+  } | null>(null);
+
+  const [classMenu, setClassMenu] = useState<{
+    x: number;
+    y: number;
+    flowPosition: { x: number; y: number };
+    cls: ClassSymbol;
+  } | null>(null);
+
+  const [containerMenu, setContainerMenu] = useState<{
+    x: number;
+    y: number;
+    flowPosition: { x: number; y: number };
+    containerId: string;
+    containerName: string;
+  } | null>(null);
+
+  const currentClass = useMemo(
+    () => activeClass(classes, activeClassId),
+    [classes, activeClassId]
+  );
+  const onActiveClassGraph = isOnClassHomeGraph(activeGraphTab, currentClass);
+
+  const documentsSnapshot = getDocuments() ?? {};
+  const variableDeclareExists =
+    variableMenu && currentClass
+      ? hasDefineNodeForVariable(documentsSnapshot, currentClass, variableMenu.variable.id)
+      : false;
+  const functionDeclareExists =
+    functionMenu && currentClass
+      ? hasDefineNodeForFunction(documentsSnapshot, currentClass, functionMenu.func.id)
+      : false;
+  const classDeclareExists =
+    classMenu != null
+      ? hasDefineNodeForClass(documentsSnapshot, classMenu.cls)
+      : false;
 
   const [clipboard, setClipboard] = useState<GraphClipboardPayload | null>(null);
 
@@ -349,8 +416,11 @@ function GraphCanvasInner() {
   const onPaneClick = useCallback(() => {
     if (menu) setMenu(null);
     if (variableMenu) setVariableMenu(null);
+    if (functionMenu) setFunctionMenu(null);
+    if (classMenu) setClassMenu(null);
+    if (containerMenu) setContainerMenu(null);
     if (edgeMenu) setEdgeMenu(null);
-  }, [menu, variableMenu, edgeMenu]);
+  }, [menu, variableMenu, functionMenu, classMenu, containerMenu, edgeMenu]);
 
   /** Sync inspector immediately on click (onSelectionChange can lag; re-click same node does not re-fire). */
   const onNodeClick = useCallback(
@@ -386,6 +456,9 @@ function GraphCanvasInner() {
     setEdgeMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
     setMenu(null);
     setVariableMenu(null);
+    setFunctionMenu(null);
+    setClassMenu(null);
+    setContainerMenu(null);
   }, []);
 
   const onEdgeDoubleClick = useCallback(
@@ -544,9 +617,16 @@ function GraphCanvasInner() {
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = event.dataTransfer.types.includes(FUNCTION_OVERLOAD_DRAG_MIME)
-      ? 'copy'
-      : 'move';
+    if (
+      event.dataTransfer.types.includes(FUNCTION_OVERLOAD_DRAG_MIME) ||
+      event.dataTransfer.types.includes(CLASS_DRAG_MIME) ||
+      event.dataTransfer.types.includes(TREE_DRAG_MIME.graphContainer) ||
+      event.dataTransfer.types.includes(TREE_DRAG_MIME.variable)
+    ) {
+      event.dataTransfer.dropEffect = 'copy';
+      return;
+    }
+    event.dataTransfer.dropEffect = 'move';
   }, []);
 
   const onDrop = useCallback(
@@ -562,81 +642,217 @@ function GraphCanvasInner() {
           const func = functions.find((f) => f.id === functionId);
           if (!func) return;
 
-          const boundData = applyFunctionCallBinding(
-            {
-              label: '',
-              category: 'Project',
-              inputs: [],
-              outputs: [],
-              inlineValues: {},
-            },
-            func,
-            overloadId
-          );
-
-          const crossTarget = resolveCrossGraphTarget(
-            activeGraphTab,
-            {
-              label: boundData.label,
-              linkedGraphId: func.id,
-              linkKind: 'call_function',
-            },
-            functions,
-            []
-          );
-          if (
-            crossTarget &&
-            wouldCrossGraphDependencyCycle(
-              getDocuments() ?? {},
-              functions,
-              [],
-              activeGraphTab,
-              crossTarget.targetGraphId
-            )
-          ) {
-            dispatchEditorWarning('Circular cross-graph reference is not allowed.');
-            return;
-          }
-
           const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-          const newNode: VVSNodeType = {
-            id: `node-${Date.now()}`,
-            type: 'vvs_standard_node',
-            position,
-            data: boundData,
-          };
-          setNodesWithHistory((nds) => [...nds, newNode]);
+          setFunctionMenu({
+            x: event.clientX,
+            y: event.clientY,
+            flowPosition: position,
+            func,
+            overloadId,
+          });
         } catch (e) {
           console.error('Failed to parse dropped function overload', e);
         }
         return;
       }
 
-      const variableDataStr = event.dataTransfer.getData('application/vvs-variable');
-      if (!variableDataStr) return;
+      const variableDataStr = event.dataTransfer.getData(TREE_DRAG_MIME.variable);
+      if (variableDataStr) {
+        try {
+          const variable = JSON.parse(variableDataStr);
+          const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+          setVariableMenu({ x: event.clientX, y: event.clientY, flowPosition: position, variable });
+        } catch (e) {
+          console.error('Failed to parse dropped variable', e);
+        }
+        return;
+      }
 
-      try {
-        const variable = JSON.parse(variableDataStr);
+      const containerDataStr = event.dataTransfer.getData(TREE_DRAG_MIME.graphContainer);
+      if (containerDataStr) {
+        const payload = parseGraphContainerDragPayload(containerDataStr);
+        if (!payload) return;
+        const container = graphContainers.find((c) => c.id === payload.containerId);
+        if (!container) return;
         const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-        setVariableMenu({ x: event.clientX, y: event.clientY, flowPosition: position, variable });
-      } catch (e) {
-        console.error('Failed to parse dropped variable', e);
+        setContainerMenu({
+          x: event.clientX,
+          y: event.clientY,
+          flowPosition: position,
+          containerId: container.id,
+          containerName: container.name,
+        });
+        return;
+      }
+
+      const classDataStr = event.dataTransfer.getData(CLASS_DRAG_MIME);
+      if (classDataStr) {
+        const payload = parseClassDragPayload(classDataStr);
+        if (!payload) return;
+        const cls = classes.find((c) => c.id === payload.classId);
+        if (!cls) return;
+        const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+        setClassMenu({ x: event.clientX, y: event.clientY, flowPosition: position, cls });
       }
     },
+    [classes, functions, graphContainers, screenToFlowPosition]
+  );
+
+  const handleSpawnGraphRef = useCallback(
+    (
+      options: {
+        label: string;
+        classId?: string;
+        containerId?: string;
+        graphTabId?: string;
+      },
+      flowPosition: { x: number; y: number }
+    ) => {
+      const newNode: VVSNodeType = {
+        id: `node-${Date.now()}`,
+        type: 'vvs_standard_node',
+        position: flowPosition,
+        data: normalizeNodeData(buildGraphRefNodeData(options)),
+      };
+      setNodesWithHistory((nds) => [...nds, newNode]);
+      setClassMenu(null);
+      setContainerMenu(null);
+    },
+    [setNodesWithHistory]
+  );
+
+  const handleSpawnFunctionCall = useCallback(
+    (func: FunctionSymbol, overloadId: string, flowPosition: { x: number; y: number }) => {
+      const boundData = applyFunctionCallBinding(
+        {
+          label: '',
+          category: 'Project',
+          inputs: [],
+          outputs: [],
+          inlineValues: {},
+        },
+        func,
+        overloadId
+      );
+
+      const crossTarget = resolveCrossGraphTarget(
+        activeGraphTab,
+        {
+          label: boundData.label,
+          linkedGraphId: func.id,
+          linkKind: 'call_function',
+        },
+        functions,
+        []
+      );
+      if (
+        crossTarget &&
+        wouldCrossGraphDependencyCycle(
+          getDocuments() ?? {},
+          functions,
+          [],
+          activeGraphTab,
+          crossTarget.targetGraphId
+        )
+      ) {
+        dispatchEditorWarning('Circular cross-graph reference is not allowed.');
+        setFunctionMenu(null);
+        return;
+      }
+
+      const newNode: VVSNodeType = {
+        id: `node-${Date.now()}`,
+        type: 'vvs_standard_node',
+        position: flowPosition,
+        data: boundData,
+      };
+      setNodesWithHistory((nds) => [...nds, newNode]);
+      setFunctionMenu(null);
+    },
+    [activeGraphTab, functions, getDocuments, setNodesWithHistory]
+  );
+
+  const handleDeclareVariable = useCallback(
+    (variable: GraphVariable) => {
+      const cls = activeClass(classes, activeClassId);
+      if (!cls) return;
+      const documents = getDocuments() ?? {};
+      if (hasDefineNodeForVariable(documents, cls, variable.id)) {
+        setVariableMenu(null);
+        return;
+      }
+      const next = insertDefineNodeForVariable(documents, cls, variable);
+      patchAllDocuments(() => next);
+      markTabDirty(classGraphTabId(cls));
+      setCompileState('dirty');
+      setVariableMenu(null);
+    },
     [
-      activeGraphTab,
-      functions,
+      classes,
+      activeClassId,
       getDocuments,
-      openTabs,
-      screenToFlowPosition,
-      setNodesWithHistory,
+      patchAllDocuments,
+      markTabDirty,
+      setCompileState,
+    ]
+  );
+
+  const handleDeclareFunction = useCallback(
+    (func: FunctionSymbol) => {
+      const cls = activeClass(classes, activeClassId);
+      if (!cls) return;
+      const documents = getDocuments() ?? {};
+      if (hasDefineNodeForFunction(documents, cls, func.id)) {
+        setFunctionMenu(null);
+        return;
+      }
+      const next = insertDefineNodeForFunction(documents, cls, func);
+      patchAllDocuments(() => next);
+      markTabDirty(classGraphTabId(cls));
+      setCompileState('dirty');
+      setFunctionMenu(null);
+    },
+    [
+      classes,
+      activeClassId,
+      getDocuments,
+      patchAllDocuments,
+      markTabDirty,
+      setCompileState,
+    ]
+  );
+
+  const handleDeclareClass = useCallback(
+    (cls: ClassSymbol) => {
+      const documents = getDocuments() ?? {};
+      if (hasDefineNodeForClass(documents, cls)) {
+        setClassMenu(null);
+        return;
+      }
+      const next = insertClassDefineNode(documents, cls);
+      patchAllDocuments(() => next);
+      markTabDirty(classGraphTabId(cls));
+      setCompileState('dirty');
+      setActiveClassId(cls.id);
+      setActiveGraphTab(classGraphTabId(cls));
+      setSelection({ type: 'class', id: cls.id });
+      setClassMenu(null);
+    },
+    [
+      getDocuments,
+      patchAllDocuments,
+      markTabDirty,
+      setCompileState,
+      setActiveClassId,
+      setActiveGraphTab,
+      setSelection,
     ]
   );
 
   const handleSpawnVariableNode = useCallback(
     (
       type: 'Get' | 'Set',
-      variable: import('@/types/graph').GraphVariable,
+      variable: GraphVariable,
       flowPosition: { x: number; y: number }
     ) => {
       if (type === 'Set' && variable.flags?.readonly) {
@@ -689,9 +905,13 @@ function GraphCanvasInner() {
         expandParent: undefined,
       }));
       const idMap = new Map(payload.nodes.map((n, i) => [n.id, newNodes[i].id]));
-      const newEdges = payload.edges.map((e) => ({
+      const newEdges = payload.edges.map((e, i) => ({
         ...e,
-        id: `e-${idMap.get(e.source) || e.source}-${idMap.get(e.target) || e.target}-${Date.now()}`,
+        id: createUniqueEdgeId(
+          idMap.get(e.source) || e.source,
+          idMap.get(e.target) || e.target,
+          { index: i }
+        ),
         source: idMap.get(e.source) || e.source,
         target: idMap.get(e.target) || e.target,
         selected: true,
@@ -743,9 +963,9 @@ function GraphCanvasInner() {
       expandParent: undefined,
     }));
     const idMap = new Map(selectedNodes.map((n, i) => [n.id, newNodes[i].id]));
-    const newEdges = selectedEdges.map((e) => ({
+    const newEdges = selectedEdges.map((e, i) => ({
       ...e,
-      id: `e-${idMap.get(e.source)}-${idMap.get(e.target)}-${Date.now()}`,
+      id: createUniqueEdgeId(idMap.get(e.source)!, idMap.get(e.target)!, { index: i }),
       source: idMap.get(e.source)!,
       target: idMap.get(e.target)!,
       selected: true,
@@ -911,12 +1131,30 @@ function GraphCanvasInner() {
 
   const onNodeDoubleClick = useCallback(
     (_: React.MouseEvent, node: VVSNodeType) => {
+      if (isGraphRefNode(node.data)) {
+        openGraphRefTarget(node.data, {
+          classes,
+          graphContainers,
+          setActiveClassId,
+          setActiveGraphTab,
+          setOpenTabs,
+          containerName: (id) => graphContainers.find((c) => c.id === id)?.name,
+        });
+        return;
+      }
       if (!isLinkedGraphNode(node.data) || !node.data.linkedGraphId) return;
       const entryId = findGraphEntryNodeId(getDocuments() ?? {}, node.data.linkedGraphId);
       if (!entryId) return;
       dispatchNavigateToNode(node.data.linkedGraphId, entryId);
     },
-    [getDocuments]
+    [
+      classes,
+      getDocuments,
+      graphContainers,
+      setActiveClassId,
+      setActiveGraphTab,
+      setOpenTabs,
+    ]
   );
 
   React.useEffect(() => {
@@ -1064,31 +1302,124 @@ function GraphCanvasInner() {
             targetLanguage={targetLanguage}
           />
         )}
-        {variableMenu && (
-          <div
-            className="absolute z-50 bg-zinc-900 border border-zinc-700 rounded shadow-xl overflow-hidden text-xs text-white"
-            style={{ top: variableMenu.y, left: variableMenu.x }}
-          >
-            <button
-              className="w-full text-left px-4 py-2 hover:bg-zinc-800 transition-colors"
-              onClick={() =>
-                handleSpawnVariableNode('Get', variableMenu.variable, variableMenu.flowPosition)
-              }
-            >
-              Get {variableMenu.variable.name}
-            </button>
-            <div className="h-[1px] bg-zinc-800 w-full" />
-            <button
-              className="w-full text-left px-4 py-2 hover:bg-zinc-800 transition-colors"
-              onClick={() =>
-                handleSpawnVariableNode('Set', variableMenu.variable, variableMenu.flowPosition)
-              }
-            >
-              Set {variableMenu.variable.name}
-            </button>
-          </div>
-        )}
       </ReactFlow>
+      {variableMenu && (
+        <CanvasDropMenu
+          x={variableMenu.x}
+          y={variableMenu.y}
+          onClose={() => setVariableMenu(null)}
+          dividersBefore={onActiveClassGraph ? ['declare-variable'] : []}
+          items={[
+            {
+              id: 'get-variable',
+              label: `Get ${variableMenu.variable.name}`,
+              onClick: () =>
+                handleSpawnVariableNode('Get', variableMenu.variable, variableMenu.flowPosition),
+            },
+            {
+              id: 'set-variable',
+              label: `Set ${variableMenu.variable.name}`,
+              onClick: () =>
+                handleSpawnVariableNode('Set', variableMenu.variable, variableMenu.flowPosition),
+            },
+            ...(onActiveClassGraph
+              ? [
+                  {
+                    id: 'declare-variable',
+                    label: `Declare ${variableMenu.variable.name}`,
+                    disabled: variableDeclareExists,
+                    title: variableDeclareExists
+                      ? 'Define node already exists on class graph'
+                      : undefined,
+                    onClick: () => handleDeclareVariable(variableMenu.variable),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      )}
+      {functionMenu && (
+        <CanvasDropMenu
+          x={functionMenu.x}
+          y={functionMenu.y}
+          onClose={() => setFunctionMenu(null)}
+          dividersBefore={onActiveClassGraph ? ['declare-function'] : []}
+          items={[
+            {
+              id: 'call-function',
+              label: `Call ${functionMenu.func.name}`,
+              onClick: () =>
+                handleSpawnFunctionCall(
+                  functionMenu.func,
+                  functionMenu.overloadId,
+                  functionMenu.flowPosition
+                ),
+            },
+            ...(onActiveClassGraph
+              ? [
+                  {
+                    id: 'declare-function',
+                    label: `Declare ${functionMenu.func.name}`,
+                    disabled: functionDeclareExists,
+                    title: functionDeclareExists
+                      ? 'Define node already exists on class graph'
+                      : undefined,
+                    onClick: () => handleDeclareFunction(functionMenu.func),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      )}
+      {classMenu && (
+        <CanvasDropMenu
+          x={classMenu.x}
+          y={classMenu.y}
+          onClose={() => setClassMenu(null)}
+          dividersBefore={['open-class-ref']}
+          items={[
+            {
+              id: 'declare-class',
+              label: `Declare ${classMenu.cls.name}`,
+              disabled: classDeclareExists,
+              title: classDeclareExists
+                ? 'Class define node already exists on this class graph'
+                : undefined,
+              onClick: () => handleDeclareClass(classMenu.cls),
+            },
+            {
+              id: 'open-class-ref',
+              label: `Open reference to ${classMenu.cls.name}`,
+              onClick: () =>
+                handleSpawnGraphRef(
+                  { label: classMenu.cls.name, classId: classMenu.cls.id },
+                  classMenu.flowPosition
+                ),
+            },
+          ]}
+        />
+      )}
+      {containerMenu && (
+        <CanvasDropMenu
+          x={containerMenu.x}
+          y={containerMenu.y}
+          onClose={() => setContainerMenu(null)}
+          items={[
+            {
+              id: 'open-container-ref',
+              label: `Open reference to ${containerMenu.containerName}`,
+              onClick: () =>
+                handleSpawnGraphRef(
+                  {
+                    label: containerMenu.containerName,
+                    containerId: containerMenu.containerId,
+                  },
+                  containerMenu.flowPosition
+                ),
+            },
+          ]}
+        />
+      )}
       {edgeMenu && (
         <div
           className="fixed z-[60] bg-zinc-900 border border-zinc-700 rounded shadow-xl overflow-hidden text-xs text-white min-w-[140px]"

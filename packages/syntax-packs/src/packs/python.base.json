@@ -5,6 +5,10 @@
   "templates": {
     "Print": { "quasi": "print({value})" },
     "Assign": { "quasi": "self.{target} = {value}" },
-    "CallInstance": { "quasi": "self.{callee}()" }
+    "CallInstance": { "quasi": "self.{callee}()" },
+    "ClassDefine": { "quasi": "class {name}:" },
+    "VarDefine": { "quasi": "self.{name} = {default}" },
+    "FunctionDefine": { "quasi": "def {name}(self):" },
+    "EventDefine": { "quasi": "# event {name}" }
   }
 }

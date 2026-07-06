@@ -1,4 +1,3 @@
-import { variableDataTypeToLegacyEmitKind } from '@vvs/graph-types';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrModule, IrStatement } from '../ir/types';
 import {
@@ -8,6 +7,7 @@ import {
   formatFunctionDefHeader,
   printContextForIr,
 } from './helpers';
+import { appendIrMembers, appendLegacyPreamble, tagClassDeclLine } from './members';
 import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
 
 function appendCppStartHandler(sink: CodeSink, ir: IrModule, sourceGraphNodeId: string, body: IrStatement[]): void {
@@ -35,18 +35,14 @@ function appendCppEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHan
 export function emitCppModule(sink: CodeSink, ir: IrModule): void {
   appendHoistedImports(sink, ir);
   const base = ir.extendsType ? ` : public ${ir.extendsType}` : '';
+  const classLineStart = sink.lineCount + 1;
   sink.appendRaw(`class ${ir.moduleName}${base} {`);
+  tagClassDeclLine(sink, ir, classLineStart);
   sink.appendRaw('public:');
-  for (const v of ir.variables) {
-    const emitKind = variableDataTypeToLegacyEmitKind(v.type);
-    const type =
-      emitKind === 'number' ? 'float' : emitKind === 'string' ? 'std::string' : emitKind === 'boolean' ? 'bool' : 'auto';
-    sink.appendRaw(`    ${type} ${v.name};`);
-  }
-  for (const f of ir.functions) {
-    sink.appendRaw(`\n${formatFunctionDefHeader(f, 'cpp')}`);
-    appendFunctionBody(sink, ir, f.id, '        // empty', ir.environmentManifest);
-    sink.appendRaw('    }');
+  if (ir.useLegacyPreamble) {
+    appendLegacyPreamble(sink, ir);
+  } else {
+    appendIrMembers(sink, ir);
   }
   const bodyCtx = printContextForIr(ir, bodyIndent('cpp'), ir.environmentManifest);
   if (ir.startEvent?.isExplicitStartEvent) {

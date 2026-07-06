@@ -330,6 +330,112 @@
       "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
     },
     {
+      "kindId": "class_define",
+      "kindVersion": 1,
+      "category": "Project",
+      "title": "Define Class",
+      "semantics": "class.define",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "propertySchema": [
+        { "key": "name", "label": "Class name", "type": "string", "default": "MyClass" },
+        { "key": "extendsType", "label": "Extends", "type": "string", "default": "" },
+        {
+          "key": "visibility",
+          "label": "Visibility",
+          "type": "enum",
+          "enumValues": ["public", "private"],
+          "default": "public"
+        }
+      ]
+    },
+    {
+      "kindId": "var_define",
+      "kindVersion": 1,
+      "category": "Variables",
+      "title": "Define Variable",
+      "semantics": "variable.define",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "propertySchema": [
+        { "key": "symbolId", "label": "Symbol id", "type": "string", "default": "" },
+        { "key": "name", "label": "Name", "type": "string", "default": "Variable" },
+        {
+          "key": "type",
+          "label": "Type",
+          "type": "enum",
+          "enumValues": [
+            "data_string",
+            "data_number",
+            "data_boolean",
+            "data_object",
+            "data_array",
+            "data_any"
+          ],
+          "default": "data_string"
+        },
+        { "key": "default", "label": "Default", "type": "string", "default": "" },
+        {
+          "key": "binding",
+          "label": "Binding",
+          "type": "enum",
+          "enumValues": ["instance", "static", "module"],
+          "default": "instance"
+        }
+      ]
+    },
+    {
+      "kindId": "function_define",
+      "kindVersion": 1,
+      "category": "Project",
+      "title": "Define Function",
+      "semantics": "function.define",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "propertySchema": [
+        { "key": "symbolId", "label": "Symbol id", "type": "string", "default": "" },
+        { "key": "name", "label": "Name", "type": "string", "default": "Function" },
+        {
+          "key": "binding",
+          "label": "Binding",
+          "type": "enum",
+          "enumValues": ["instance", "static", "module"],
+          "default": "instance"
+        },
+        { "key": "returnType", "label": "Return type", "type": "string", "default": "void" },
+        { "key": "graphTabId", "label": "Body graph tab", "type": "string", "default": "" }
+      ]
+    },
+    {
+      "kindId": "event_member_define",
+      "kindVersion": 1,
+      "category": "Events",
+      "title": "Define Event",
+      "semantics": "event.member.define",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "propertySchema": [
+        { "key": "symbolId", "label": "Symbol id", "type": "string", "default": "" },
+        { "key": "name", "label": "Name", "type": "string", "default": "event" },
+        { "key": "eventId", "label": "Event id", "type": "string", "default": "" }
+      ]
+    },
+    {
+      "kindId": "graph_ref",
+      "kindVersion": 1,
+      "category": "Project",
+      "title": "Graph Reference",
+      "semantics": "project.graph_ref",
+      "inputs": [],
+      "outputs": [],
+      "propertySchema": [
+        { "key": "classId", "label": "Class id", "type": "string", "default": "" },
+        { "key": "containerId", "label": "Graph folder id", "type": "string", "default": "" },
+        { "key": "graphTabId", "label": "Graph tab id", "type": "string", "default": "" },
+        { "key": "refLabel", "label": "Label", "type": "string", "default": "" }
+      ]
+    },
+    {
       "kindId": "vvs.project.call_function",
       "kindVersion": 1,
       "category": "Project",

@@ -31,6 +31,7 @@ export function GraphWorkspaceHost({
   const {
     activeGraphTab,
     openTabs,
+    graphContainers,
     projectDetails,
     setSelection,
     undoTrigger,
@@ -90,6 +91,7 @@ export function GraphWorkspaceHost({
   } = useGraphTabSync({
     activeGraphTab,
     openTabs,
+    graphContainerIds: graphContainers.map((container) => container.id),
     nodes,
     edges,
     setNodes,

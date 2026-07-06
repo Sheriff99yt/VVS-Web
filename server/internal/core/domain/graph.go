@@ -47,12 +47,13 @@ type GraphBinding struct {
 
 // FunctionSymbol is the server-side mirror of packages/graph-types FunctionSymbol.
 type FunctionSymbol struct {
-	Kind       string            `json:"kind"`
-	ID         string            `json:"id"`
-	Name       string            `json:"name"`
-	Binding    string            `json:"binding"`
-	Visibility string            `json:"visibility"`
+	Kind       string             `json:"kind"`
+	ID         string             `json:"id"`
+	Name       string             `json:"name"`
+	Binding    string             `json:"binding"`
+	Visibility string             `json:"visibility"`
 	Overloads  []FunctionOverload `json:"overloads"`
+	ClassID    string             `json:"classId,omitempty"`
 }
 
 type FunctionOverload struct {

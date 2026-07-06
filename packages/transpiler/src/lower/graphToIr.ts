@@ -21,6 +21,7 @@ import {
   resolveEventForNode,
 } from '../nodeHelpers';
 import type { CodegenContext } from '../generate';
+import { buildIrMembers, resolveActiveClass } from './buildMembers';
 import type {
   IrEventHandler,
   IrExpr,
@@ -67,7 +68,9 @@ function eventKeyForNode(
 }
 
 function isCodegenNode(node: GraphNode): boolean {
-  return node.type === 'vvs_standard_node';
+  if (node.type !== 'vvs_standard_node') return false;
+  if (resolveNodeKindId(node.data) === 'graph_ref') return false;
+  return true;
 }
 
 function getDataEdgeToPin(
@@ -529,7 +532,12 @@ export function buildIrStatements(
   return statements;
 }
 
-function auxiliaryEventNodes(nodes: GraphNode[], mainOrder: string[]): GraphNode[] {
+function auxiliaryEventNodes(
+  nodes: GraphNode[],
+  mainOrder: string[],
+  excludeEventIds: Set<string>,
+  projectEvents: ProjectEventDefinition[]
+): GraphNode[] {
   return nodes.filter((n) => {
     if (!isCodegenNode(n)) return false;
     const kindId = resolveNodeKindId(n.data);
@@ -542,7 +550,10 @@ function auxiliaryEventNodes(nodes: GraphNode[], mainOrder: string[]): GraphNode
     ) {
       return false;
     }
-    return !mainOrder.includes(n.id) && !n.data.linkedGraphId;
+    if (mainOrder.includes(n.id) || n.data.linkedGraphId) return false;
+    const eventDef = resolveEventForNode(n.data, projectEvents);
+    if (eventDef && excludeEventIds.has(eventDef.id)) return false;
+    return true;
   });
 }
 
@@ -711,7 +722,15 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     { ...lowerCtx, nodes: graphNodes, edges },
     skipIds
   );
-  const handlerNodes = auxiliaryEventNodes(graphNodes, execOrder);
+  const memberBuild = buildIrMembers(ctx, graphNodes, edges, lowerCtx);
+  const activeClass = resolveActiveClass(ctx);
+
+  const handlerNodes = auxiliaryEventNodes(
+    graphNodes,
+    execOrder,
+    memberBuild.memberEventIds,
+    projectEvents
+  );
 
   const eventHandlers: IrEventHandler[] = handlerNodes.map((e) => {
     const subOrder = buildExecutionOrder(e.id, graphNodes, edges);
@@ -763,6 +782,10 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     execOrder,
     handlerNodeLabels: handlerNodes.map((e) => e.data.label),
     environmentManifest,
+    members: memberBuild.members,
+    useLegacyPreamble: memberBuild.useLegacyPreamble,
+    compileWarnings: memberBuild.compileWarnings,
+    activeClass,
   };
 }
 

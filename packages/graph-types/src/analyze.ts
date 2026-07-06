@@ -5,6 +5,7 @@ import type {
   VariableSymbol,
   TargetLanguage,
   CrossOverArchitectureMode,
+  ClassSymbol,
 } from './symbols';
 import { collectPortabilityFeatures, portabilityFeaturesForVariable } from './symbols';
 import {
@@ -13,12 +14,20 @@ import {
   type ResolvedSymbolRef,
 } from './symbolRefs';
 import { edgePinTypes, pinsAreCompatible } from './pinCompatibility';
+import {
+  findDefineNodesForSymbol,
+  isMemberDefineKind,
+  resolveNodeKindId,
+} from './defineNodes';
+import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId } from './symbols';
 
 export interface AnalyzeProjectInput {
   documents: Record<string, GraphDocument>;
   functions: FunctionSymbol[];
-  events: { id: string; name: string }[];
+  events: { id: string; name: string; classId?: string }[];
   variables?: VariableSymbol[];
+  classes?: ClassSymbol[];
+  activeClassId?: string;
   openTabs?: { id: string; type: string; name: string }[];
   projectDetails: { extendsType: string };
   targetLanguage: TargetLanguage;
@@ -48,6 +57,14 @@ function hasIncomingExecution(
   );
 }
 
+function isExecChainHead(doc: GraphDocument, nodeId: string, kindId: string): boolean {
+  if (kindId === 'event_on_start' || kindId === 'event_on_update' || kindId === 'class_define') {
+    return true;
+  }
+  if (!isMemberDefineKind(kindId)) return false;
+  return !hasIncomingExecution(doc.edges, nodeId, 'exec_in');
+}
+
 function validateDocument(tabId: string, doc: GraphDocument): Diagnostic[] {
   const messages: Diagnostic[] = [];
   const { nodes, edges } = doc;
@@ -55,8 +72,10 @@ function validateDocument(tabId: string, doc: GraphDocument): Diagnostic[] {
   for (const node of nodes) {
     if (!isGraphNode(node)) continue;
 
+    const kindId = resolveNodeKindId(node.data);
     const execInputs = node.data.inputs?.filter((pin) => pin.type === 'execution') ?? [];
     for (const pin of execInputs) {
+      if (isExecChainHead(doc, node.id, kindId)) continue;
       if (!hasIncomingExecution(edges, node.id, pin.id)) {
         messages.push({
           level: 'error',
@@ -307,16 +326,6 @@ function unresolvedRefLabel(ref: ResolvedSymbolRef): string {
   return ref.symbolId;
 }
 
-function resolveNodeKindId(data: GraphDocument['nodes'][number]['data']): string {
-  if (typeof data.kindId === 'string' && data.kindId) return data.kindId;
-  if (data.label.startsWith('Dispatch ')) return 'event_dispatch';
-  if (data.label.startsWith('Emit ')) return 'event_emit';
-  if (data.label.startsWith('Subscribe ')) return 'event_subscribe';
-  if (data.label === 'Wait') return 'action_wait';
-  if (data.label === 'Await Wait') return 'action_await_wait';
-  return data.kindId ?? '';
-}
-
 function functionIsAsync(func: FunctionSymbol, doc: GraphDocument): boolean {
   if (func.flags?.async) return true;
   return doc.nodes.some(
@@ -535,10 +544,75 @@ function validateEnvironmentSemantics(input: AnalyzeProjectInput): Diagnostic[] 
   return messages;
 }
 
+function symbolClassId(item: { classId?: string }): string {
+  return item.classId ?? MAIN_CLASS_ID;
+}
+
+function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  const variables = input.variables ?? [];
+  const classes = input.classes ?? [];
+  if (classes.length === 0) return messages;
+
+  for (const cls of classes) {
+    const tabId = classHomeGraphId(cls);
+    const doc = input.documents[tabId];
+    if (!doc) continue;
+
+    const classVariables = variables.filter((v) => symbolClassId(v) === cls.id);
+    const classFunctions = input.functions.filter((f) => symbolClassId(f) === cls.id);
+    const classEvents = input.events.filter((e) => symbolClassId(e) === cls.id);
+
+    for (const variable of classVariables) {
+      if (findDefineNodesForSymbol(doc, 'variable', variable.id).length > 0) continue;
+      messages.push({
+        level: 'warning',
+        message: `Variable "${variable.name}" has no var_define node on class graph "${cls.name}".`,
+        tabId,
+        symbolId: variable.id,
+        source: 'semantic',
+        code: 'DEFINE_NODE_MISSING',
+      });
+    }
+
+    for (const func of classFunctions) {
+      if (findDefineNodesForSymbol(doc, 'function', func.id).length > 0) continue;
+      messages.push({
+        level: 'warning',
+        message: `Function "${func.name}" has no function_define node on class graph "${cls.name}".`,
+        tabId,
+        symbolId: func.id,
+        source: 'semantic',
+        code: 'DEFINE_NODE_MISSING',
+      });
+    }
+
+    for (const event of classEvents) {
+      if (findDefineNodesForSymbol(doc, 'event', event.id).length > 0) continue;
+      messages.push({
+        level: 'warning',
+        message: `Event "${event.name}" has no define event node on class graph "${cls.name}".`,
+        tabId,
+        symbolId: event.id,
+        source: 'semantic',
+        code: 'DEFINE_NODE_MISSING',
+      });
+    }
+  }
+
+  return messages;
+}
+
 export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   const diagnostics: Diagnostic[] = [];
+  const containerTabIds = new Set(
+    (input.openTabs ?? []).filter((tab) => tab.type === 'container').map((tab) => tab.id)
+  );
 
   for (const [tabId, doc] of Object.entries(input.documents)) {
+    if (containerTabIds.has(tabId)) {
+      continue;
+    }
     diagnostics.push(...validateDocument(tabId, doc));
   }
 
@@ -549,6 +623,7 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   diagnostics.push(...validateWaitAndAsyncNodes(input));
   diagnostics.push(...validateMulticastEvents(input));
   diagnostics.push(...validateEnvironmentSemantics(input));
+  diagnostics.push(...validateDefineNodeSync(input));
 
   if (input.portabilityDiagnostics) {
     diagnostics.push(...input.portabilityDiagnostics);

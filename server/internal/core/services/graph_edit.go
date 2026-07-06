@@ -37,20 +37,33 @@ func ValidateConnection(sourcePin, targetPin domain.PinDefinition) bool {
 	return sourceType == targetType
 }
 
-func resolveTabID(snap *domain.ProjectSnapshot, tabID string) string {
+func resolveTabID(snap *domain.ProjectSnapshot, tabID, classID string) (string, error) {
 	if tabID != "" {
-		return tabID
+		return tabID, nil
 	}
-	return snap.ActiveGraphTab
+	if classID != "" {
+		cls := domain.FindClass(snap, classID)
+		if cls == nil {
+			return "", ErrClassNotFound
+		}
+		return domain.ClassGraphTabID(*cls), nil
+	}
+	if snap.ActiveGraphTab != "" {
+		return snap.ActiveGraphTab, nil
+	}
+	return "main", nil
 }
 
-func documentForTab(snap *domain.ProjectSnapshot, tabID string) (*domain.GraphDocument, error) {
-	id := resolveTabID(snap, tabID)
+func documentForTab(snap *domain.ProjectSnapshot, tabID, classID string) (*domain.GraphDocument, string, error) {
+	id, err := resolveTabID(snap, tabID, classID)
+	if err != nil {
+		return nil, "", err
+	}
 	doc, ok := snap.Documents[id]
 	if !ok {
-		return nil, ErrGraphTabNotFound
+		return nil, "", ErrGraphTabNotFound
 	}
-	return &doc, nil
+	return &doc, id, nil
 }
 
 func findNode(doc *domain.GraphDocument, nodeID string) (*domain.Node, int) {
@@ -81,7 +94,8 @@ func findInputPin(node domain.Node, handleID string) *domain.PinDefinition {
 }
 
 // AddNode spawns a registry kind into the target graph tab.
-func AddNode(ctx context.Context, st store.ProjectStore, projectID, tabID, kindID string, x, y float64) (*domain.Node, error) {
+// When tabID is empty and classID is set, the class graph tab is used.
+func AddNode(ctx context.Context, st store.ProjectStore, projectID, tabID, classID, kindID string, x, y float64) (*domain.Node, error) {
 	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return nil, err
@@ -92,7 +106,7 @@ func AddNode(ctx context.Context, st store.ProjectStore, projectID, tabID, kindI
 		return nil, err
 	}
 
-	doc, err := documentForTab(snap, tabID)
+	doc, resolvedTab, err := documentForTab(snap, tabID, classID)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +128,7 @@ func AddNode(ctx context.Context, st store.ProjectStore, projectID, tabID, kindI
 	}
 
 	doc.Nodes = append(doc.Nodes, node)
-	snap.Documents[resolveTabID(snap, tabID)] = *doc
+	snap.Documents[resolvedTab] = *doc
 	if err := SaveProject(ctx, st, projectID, *snap); err != nil {
 		return nil, err
 	}
@@ -122,12 +136,12 @@ func AddNode(ctx context.Context, st store.ProjectStore, projectID, tabID, kindI
 }
 
 // RemoveNode deletes a node and any connected edges from the target graph tab.
-func RemoveNode(ctx context.Context, st store.ProjectStore, projectID, tabID, nodeID string) error {
+func RemoveNode(ctx context.Context, st store.ProjectStore, projectID, tabID, classID, nodeID string) error {
 	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return err
 	}
-	doc, err := documentForTab(snap, tabID)
+	doc, resolvedTab, err := documentForTab(snap, tabID, classID)
 	if err != nil {
 		return err
 	}
@@ -150,17 +164,17 @@ func RemoveNode(ctx context.Context, st store.ProjectStore, projectID, tabID, no
 
 	doc.Nodes = filteredNodes
 	doc.Edges = filteredEdges
-	snap.Documents[resolveTabID(snap, tabID)] = *doc
+	snap.Documents[resolvedTab] = *doc
 	return SaveProject(ctx, st, projectID, *snap)
 }
 
 // ConnectPins validates and adds an edge between two nodes.
-func ConnectPins(ctx context.Context, st store.ProjectStore, projectID, tabID string, edge domain.Edge) (*domain.Edge, error) {
+func ConnectPins(ctx context.Context, st store.ProjectStore, projectID, tabID, classID string, edge domain.Edge) (*domain.Edge, error) {
 	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return nil, err
 	}
-	doc, err := documentForTab(snap, tabID)
+	doc, resolvedTab, err := documentForTab(snap, tabID, classID)
 	if err != nil {
 		return nil, err
 	}
@@ -201,21 +215,20 @@ func ConnectPins(ctx context.Context, st store.ProjectStore, projectID, tabID st
 	edge.Data.PinType = sourcePin.Type
 
 	doc.Edges = append(doc.Edges, edge)
-	snap.Documents[resolveTabID(snap, tabID)] = *doc
+	snap.Documents[resolvedTab] = *doc
 	if err := SaveProject(ctx, st, projectID, *snap); err != nil {
 		return nil, err
 	}
 	return &edge, nil
 }
 
-// GetGraphDocument returns the active or specified graph tab document.
-func GetGraphDocument(ctx context.Context, st store.ProjectStore, projectID, tabID string) (*domain.GraphDocument, string, error) {
+// GetGraphDocument returns the active, specified, or class-scoped graph tab document.
+func GetGraphDocument(ctx context.Context, st store.ProjectStore, projectID, tabID, classID string) (*domain.GraphDocument, string, error) {
 	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return nil, "", err
 	}
-	resolved := resolveTabID(snap, tabID)
-	doc, err := documentForTab(snap, resolved)
+	doc, resolved, err := documentForTab(snap, tabID, classID)
 	if err != nil {
 		return nil, "", err
 	}

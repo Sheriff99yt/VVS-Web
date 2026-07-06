@@ -2,7 +2,9 @@ export type {
   ProjectSnapshot,
   ProjectSnapshotV1,
   ProjectSnapshotV2,
+  ProjectSnapshotV3,
   InstalledLibraryEntry,
+  ClassSymbol,
 } from '@vvs/graph-types';
 export {
   normalizeProjectSnapshot,
@@ -10,4 +12,6 @@ export {
   createEmptyProjectSnapshot,
   toPersistedSnapshot,
   defaultTabMetadata,
+  MAIN_CLASS_ID,
+  createClassSymbol,
 } from '@vvs/graph-types';

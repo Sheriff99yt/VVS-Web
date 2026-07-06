@@ -27,6 +27,10 @@ import { applyEventDefineBinding, applyEventDispatchBinding, applyEventEmitBindi
 import { createFunctionSymbol } from '@/lib/functionTabs';
 import { formatFunctionTabName } from '@/lib/functionTabs';
 import { resolveNodeKindId } from '@/lib/nodeKind';
+import {
+  removeDefineNodesForSymbol,
+  syncDefineNodesForSymbol,
+} from '@/lib/defineNodeSync';
 
 function asCoreDocuments(docs: Record<string, GraphDocument>): Record<string, CoreGraphDocument> {
   return docs as unknown as Record<string, CoreGraphDocument>;
@@ -101,6 +105,14 @@ export function planSymbolDelete(
     }
   }
 
+  if (kind === 'variable' || kind === 'function' || kind === 'event') {
+    nextDocuments = removeDefineNodesForSymbol(
+      nextDocuments,
+      kind,
+      symbolId
+    );
+  }
+
   return { nextSymbols, nextDocuments, closeTabIds };
 }
 
@@ -139,39 +151,42 @@ export function applyVariableRenameToDocuments(
   documents: Record<string, GraphDocument>,
   variable: VariableSymbol
 ): Record<string, GraphDocument> {
-  return fromCoreDocuments(
+  const renamed = fromCoreDocuments(
     mapDocuments(asCoreDocuments(documents), (_tabId, node) => {
       const ref = resolveNodeSymbolRef(node);
       if (!ref || ref.kind !== 'variable' || ref.symbolId !== variable.id) return node;
       return syncNodeForVariable(node as GraphNode, variable);
     })
   );
+  return syncDefineNodesForSymbol(renamed, 'variable', variable);
 }
 
 export function applyFunctionUpdateToDocuments(
   documents: Record<string, GraphDocument>,
   func: FunctionSymbol
 ): Record<string, GraphDocument> {
-  return fromCoreDocuments(
+  const updated = fromCoreDocuments(
     mapDocuments(asCoreDocuments(documents), (_tabId, node) => {
       const ref = resolveNodeSymbolRef(node);
       if (!ref || ref.kind !== 'function' || ref.symbolId !== func.id) return node;
       return syncNodeForFunction(node as GraphNode, func);
     })
   );
+  return syncDefineNodesForSymbol(updated, 'function', func);
 }
 
 export function applyEventUpdateToDocuments(
   documents: Record<string, GraphDocument>,
   event: ProjectEventDefinition
 ): Record<string, GraphDocument> {
-  return fromCoreDocuments(
+  const updated = fromCoreDocuments(
     mapDocuments(asCoreDocuments(documents), (_tabId, node) => {
       const ref = resolveNodeSymbolRef(node);
       if (!ref || ref.kind !== 'event' || ref.symbolId !== event.id) return node;
       return syncNodeForEvent(node as GraphNode, event);
     })
   );
+  return syncDefineNodesForSymbol(updated, 'event', event);
 }
 
 export function deleteBrokenNodeFromDocuments(

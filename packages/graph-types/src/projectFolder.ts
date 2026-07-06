@@ -22,7 +22,7 @@ export interface VvsProjectManifest {
   description: string;
   defaultTarget: string;
   module: { name: string; extends: string };
-  settings: { autoCompile: boolean; autoSave: boolean };
+  settings: { autoCompile: boolean; autoSave: boolean; activeClassId?: string };
   graphs: {
     main: string;
     functions: Record<string, string>;

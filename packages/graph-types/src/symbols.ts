@@ -56,6 +56,133 @@ export interface FunctionOverload {
   graphTabId?: string;
 }
 
+/** Default class id for v2→v3 migration and single-class projects. */
+export const MAIN_CLASS_ID = 'main-class';
+
+/** Default project-map graph container — first-class canvas at documents[MAIN_GRAPH_CONTAINER_ID]. */
+export const MAIN_GRAPH_CONTAINER_ID = 'main-graph';
+
+export const PROJECT_MAP_CONTAINER_NAME = 'Project map';
+
+/** Virtual folder for grouping classes in the project tree — does not affect codegen. */
+export interface GraphContainer {
+  id: string;
+  name: string;
+}
+
+export function createGraphContainerId(): string {
+  return `graph-container-${Date.now()}`;
+}
+
+export function createGraphContainer(
+  name: string,
+  options?: { id?: string }
+): GraphContainer {
+  return {
+    id: options?.id ?? createGraphContainerId(),
+    name: name.trim() || 'New graph',
+  };
+}
+
+function normalizeContainerDisplayName(container: GraphContainer): GraphContainer {
+  if (
+    container.id === MAIN_GRAPH_CONTAINER_ID &&
+    (container.name === 'Main graph' || container.name.trim() === '')
+  ) {
+    return { ...container, name: PROJECT_MAP_CONTAINER_NAME };
+  }
+  return container;
+}
+
+export function normalizeGraphContainers(raw: unknown): GraphContainer[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [createGraphContainer(PROJECT_MAP_CONTAINER_NAME, { id: MAIN_GRAPH_CONTAINER_ID })];
+  }
+  const containers = raw
+    .filter((item): item is GraphContainer => {
+      return (
+        item != null &&
+        typeof item === 'object' &&
+        typeof (item as GraphContainer).id === 'string' &&
+        typeof (item as GraphContainer).name === 'string'
+      );
+    })
+    .map((item) => normalizeContainerDisplayName({ id: item.id, name: item.name }));
+  if (!containers.some((c) => c.id === MAIN_GRAPH_CONTAINER_ID)) {
+    containers.unshift(
+      createGraphContainer(PROJECT_MAP_CONTAINER_NAME, { id: MAIN_GRAPH_CONTAINER_ID })
+    );
+  }
+  return containers;
+}
+
+export interface ClassSymbol {
+  kind: 'class';
+  id: string;
+  name: string;
+  extendsType?: string;
+  description?: string;
+  /** @deprecated Legacy canvas key — use containerId as the class home graph document. */
+  graphTabId?: string;
+  /** Graph canvas that hosts this class define chain and runtime nodes. */
+  containerId?: string;
+  visibility?: SymbolVisibility;
+}
+
+export function classHomeGraphId(cls: ClassSymbol): string {
+  return cls.containerId ?? MAIN_GRAPH_CONTAINER_ID;
+}
+
+export function createClassId(): string {
+  return `class-${Date.now()}`;
+}
+
+export function createClassSymbol(
+  name: string,
+  options?: {
+    id?: string;
+    extendsType?: string;
+    description?: string;
+    graphTabId?: string;
+    containerId?: string;
+    visibility?: SymbolVisibility;
+  }
+): ClassSymbol {
+  const id = options?.id ?? createClassId();
+  return {
+    kind: 'class',
+    id,
+    name,
+    extendsType: options?.extendsType,
+    description: options?.description,
+    graphTabId: options?.graphTabId,
+    containerId: options?.containerId ?? MAIN_GRAPH_CONTAINER_ID,
+    visibility: options?.visibility ?? 'public',
+  };
+}
+
+export function normalizeClassSymbols(raw: unknown): ClassSymbol[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    if (item && typeof item === 'object' && (item as ClassSymbol).kind === 'class') {
+      const cls = item as ClassSymbol;
+      const id = typeof cls.id === 'string' ? cls.id : createClassId();
+      return {
+        kind: 'class' as const,
+        id,
+        name: typeof cls.name === 'string' ? cls.name : 'Untitled',
+        extendsType: typeof cls.extendsType === 'string' ? cls.extendsType : undefined,
+        description: typeof cls.description === 'string' ? cls.description : undefined,
+        graphTabId: typeof cls.graphTabId === 'string' ? cls.graphTabId : undefined,
+        containerId:
+          typeof cls.containerId === 'string' ? cls.containerId : MAIN_GRAPH_CONTAINER_ID,
+        visibility: cls.visibility === 'private' ? 'private' : 'public',
+      };
+    }
+    return createClassSymbol('Untitled');
+  });
+}
+
 export interface FunctionSymbol {
   kind: 'function';
   id: string;
@@ -64,6 +191,8 @@ export interface FunctionSymbol {
   visibility: SymbolVisibility;
   overloads: FunctionOverload[];
   flags?: { virtual?: boolean; async?: boolean };
+  /** Planned: owning class — see ClassSymbol and docs/design/multi_class_symbols.md */
+  classId?: string;
 }
 
 export interface VariableSymbol {
@@ -75,6 +204,8 @@ export interface VariableSymbol {
   binding: VariableBinding;
   visibility: SymbolVisibility;
   flags?: { readonly?: boolean };
+  /** Planned: owning class — see ClassSymbol and docs/design/multi_class_symbols.md */
+  classId?: string;
 }
 
 /** @deprecated use VariableSymbol */
@@ -86,6 +217,7 @@ export function createVariableSymbol(
     id?: string;
     type?: VariableDataType;
     binding?: VariableBinding;
+    classId?: string;
   }
 ): VariableSymbol {
   const type = options?.type ?? 'data_string';
@@ -97,6 +229,7 @@ export function createVariableSymbol(
     binding: options?.binding ?? 'instance',
     visibility: 'public',
     defaultValue: undefined,
+    classId: options?.classId,
   };
 }
 
@@ -150,12 +283,20 @@ export interface ProjectEventDefinition {
   id: string;
   name: string;
   parameters: SymbolParameter[];
+  /** Planned: owning class — see ClassSymbol and docs/design/multi_class_symbols.md */
+  classId?: string;
 }
 
 export interface GraphTab {
   id: string;
-  type: 'main' | 'function' | 'macro';
+  type: 'main' | 'function' | 'macro' | 'class' | 'graph' | 'container';
   name: string;
+  /** Owning class for main, class, and auxiliary graph tabs. */
+  classId?: string;
+}
+
+export function createGraphTabId(): string {
+  return `graph-${Date.now()}`;
 }
 
 export interface GraphTabMetadata {
@@ -168,6 +309,27 @@ export interface GraphDocument {
   nodes: GraphNode[];
   edges: GraphEdge[];
   metadata?: GraphTabMetadata;
+}
+
+export function containerTabFor(container: GraphContainer): GraphTab {
+  return { id: container.id, type: 'container', name: container.name };
+}
+
+export function isGraphContainerTabId(tabId: string, containers: GraphContainer[]): boolean {
+  return containers.some((container) => container.id === tabId);
+}
+
+export function ensureContainerDocuments(
+  containers: GraphContainer[],
+  documents: Record<string, GraphDocument>
+): Record<string, GraphDocument> {
+  const next = { ...documents };
+  for (const container of containers) {
+    if (!next[container.id]) {
+      next[container.id] = { nodes: [], edges: [] };
+    }
+  }
+  return next;
 }
 
 export function createOverloadId(): string {

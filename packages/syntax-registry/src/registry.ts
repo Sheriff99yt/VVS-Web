@@ -25,6 +25,10 @@ export type NodeSemantics =
   | 'math.binary'
   | 'variable.get'
   | 'variable.set'
+  | 'variable.define'
+  | 'class.define'
+  | 'function.define'
+  | 'event.member.define'
   | 'project.call'
   | 'project.import'
   | 'env.call_native'
@@ -199,6 +203,10 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'Math Subtract') return 'math_subtract';
   if (label === 'Math Multiply') return 'math_multiply';
   if (label === 'Math Divide') return 'math_divide';
+  if (label.startsWith('Define Class')) return 'class_define';
+  if (label.startsWith('Define Variable')) return 'var_define';
+  if (label.startsWith('Define Function')) return 'function_define';
+  if (label.startsWith('Define ')) return 'event_member_define';
   if (label.startsWith('Get ')) return 'variable_get';
   if (label.startsWith('Set ')) return 'variable_set';
   if (label.startsWith('Call ')) return 'vvs.project.call_function';

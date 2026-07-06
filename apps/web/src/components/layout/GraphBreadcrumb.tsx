@@ -6,7 +6,9 @@ import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { buildGraphBreadcrumb } from '@/lib/projectTree';
 import { formatFunctionTabName } from '@/lib/functionTabs';
+import { openGraphContainerTab } from '@/lib/graphTabs';
 import { GRAPH_SETTINGS_EVENT } from './GraphSettingsModal';
+import { classHomeGraphId, MAIN_GRAPH_CONTAINER_ID } from '@/lib/classScope';
 
 export function GraphBreadcrumb() {
   const {
@@ -15,23 +17,50 @@ export function GraphBreadcrumb() {
     openTabs,
     setOpenTabs,
     functions,
+    classes,
+    activeClassId,
+    graphContainers,
+    setActiveGraphTab,
   } = useProject();
   const { navigate } = useEditorNavigation();
 
   const segments = buildGraphBreadcrumb(
     projectDetails.moduleName,
     activeGraphTab,
-    openTabs
+    openTabs,
+    classes,
+    activeClassId
   );
 
   const navigateToGraph = (graphId?: string) => {
-    if (!graphId || graphId === 'main') {
+    if (!graphId) {
+      navigate({
+        graphTab: MAIN_GRAPH_CONTAINER_ID,
+        editorView: 'canvas',
+        selection: { type: 'graph', id: MAIN_GRAPH_CONTAINER_ID },
+      });
+      return;
+    }
+
+    const container = graphContainers.find((c) => c.id === graphId);
+    if (container) {
+      openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
+      navigate({
+        graphTab: container.id,
+        editorView: 'canvas',
+        selection: { type: 'graph', id: container.id },
+      });
+      return;
+    }
+
+    if (graphId === 'main') {
       navigate({ graphTab: 'main', editorView: 'canvas', selection: { type: 'graph', id: null } });
       return;
     }
 
     const tab = openTabs.find((t) => t.id === graphId);
     const func = functions.find((f) => f.id === graphId);
+    const cls = classes.find((c) => classHomeGraphId(c) === graphId || c.id === graphId);
     if (func && !openTabs.some((t) => t.id === graphId)) {
       setOpenTabs((prev) => [
         ...prev,
@@ -39,12 +68,17 @@ export function GraphBreadcrumb() {
       ]);
     } else if (tab && !openTabs.some((t) => t.id === graphId)) {
       setOpenTabs((prev) => [...prev, tab]);
+    } else if (cls) {
+      const container = graphContainers.find((c) => c.id === classHomeGraphId(cls));
+      if (container) {
+        openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
+      }
     }
 
     navigate({
       graphTab: graphId,
       editorView: 'canvas',
-      selection: { type: 'graph', id: graphId },
+      selection: { type: 'graph', id: graphId === 'main' ? null : graphId },
     });
   };
 
@@ -56,7 +90,7 @@ export function GraphBreadcrumb() {
           {i > 0 && <ChevronRight size={12} className="text-zinc-600 shrink-0" />}
           <button
             type="button"
-            onClick={() => navigateToGraph(seg.graphId ?? (i === 0 ? 'main' : undefined))}
+            onClick={() => navigateToGraph(seg.graphId ?? (i === 0 ? undefined : seg.graphId))}
             className={`truncate max-w-[140px] transition-colors ${
               i === segments.length - 1
                 ? 'text-zinc-200 font-medium'

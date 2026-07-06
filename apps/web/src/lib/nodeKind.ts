@@ -28,6 +28,33 @@ export function getNodeDisplayTitle(data: VVSNodeData): string {
     const name = getVariableName(data);
     return name ? `Get ${name}` : def?.title ?? data.label;
   }
+  if (kindId === 'var_define') {
+    const name =
+      typeof data.properties?.name === 'string'
+        ? data.properties.name
+        : getVariableName(data);
+    return name ? `Define ${name}` : def?.title ?? data.label;
+  }
+  if (kindId === 'function_define') {
+    const fn = data.properties?.name;
+    if (typeof fn === 'string' && fn) return `Define ${fn}`;
+    return def?.title ?? data.label;
+  }
+  if (kindId === 'class_define') {
+    const cls = data.properties?.name;
+    if (typeof cls === 'string' && cls) return `Class ${cls}`;
+    return def?.title ?? data.label;
+  }
+  if (kindId === 'graph_ref') {
+    const refLabel = data.properties?.refLabel;
+    if (typeof refLabel === 'string' && refLabel.trim()) return refLabel.trim();
+    return def?.title ?? data.label;
+  }
+  if (kindId === 'event_member_define') {
+    const name = data.properties?.name;
+    if (typeof name === 'string' && name) return `Define ${name}`;
+    return def?.title ?? data.label;
+  }
   if (kindId === 'variable_set') {
     const name = getVariableName(data);
     return name ? `Set ${name}` : def?.title ?? data.label;

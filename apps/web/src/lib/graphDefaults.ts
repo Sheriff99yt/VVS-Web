@@ -12,10 +12,18 @@ export interface GraphDocument {
   metadata?: GraphTabMetadata;
 }
 
-export function defaultTabMetadata(tabType: 'main' | 'function', tabName: string): GraphTabMetadata {
+export function defaultTabMetadata(
+  tabType: 'main' | 'function' | 'class' | 'container',
+  tabName: string
+): GraphTabMetadata {
   const cleanName = tabName.replace(/^Function:\s*/, '');
   return {
-    moduleName: tabType === 'main' ? 'PlayerController' : cleanName || 'Graph',
+    moduleName:
+      tabType === 'main'
+        ? 'PlayerController'
+        : tabType === 'container'
+          ? cleanName || 'Project map'
+          : cleanName || 'Graph',
     extendsType: '',
     description: '',
   };
@@ -23,7 +31,7 @@ export function defaultTabMetadata(tabType: 'main' | 'function', tabName: string
 
 export function withDefaultMetadata(
   doc: GraphDocument,
-  tabType: 'main' | 'function',
+  tabType: 'main' | 'function' | 'class' | 'container',
   tabName: string
 ): GraphDocument {
   return {
@@ -58,7 +66,7 @@ export function createFunctionGraph(name: string): GraphDocument {
 }
 
 export function createDefaultGraphForTab(
-  tabType: 'main' | 'function',
+  tabType: 'main' | 'function' | 'container',
   tabName: string,
   fallback?: GraphDocument
 ): GraphDocument {

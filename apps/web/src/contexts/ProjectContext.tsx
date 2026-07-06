@@ -8,12 +8,12 @@ import type { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import type { ProjectSource } from '@/types/projectRegistry';
 
-import type { FunctionSymbol, GraphTab, TargetLanguage, CrossOverArchitectureMode, ProjectIntegrationConfig, SyntaxPackLock } from '@vvs/graph-types';
-import { createDefaultIntegration } from '@vvs/graph-types';
+import type { FunctionSymbol, GraphTab, TargetLanguage, CrossOverArchitectureMode, ProjectIntegrationConfig, SyntaxPackLock, ClassSymbol, GraphContainer } from '@vvs/graph-types';
+import { createDefaultIntegration, normalizeProjectSnapshot, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { readCrossOverMode } from '@/lib/crossOverPreferences';
 
-export type { TargetLanguage, GraphTab, FunctionSymbol };
-export type SelectionType = 'node' | 'variable' | 'event' | 'function' | 'graph';
+export type { TargetLanguage, GraphTab, FunctionSymbol, ClassSymbol, GraphContainer };
+export type SelectionType = 'node' | 'variable' | 'event' | 'function' | 'graph' | 'class';
 
 export interface SelectionState {
   type: SelectionType;
@@ -32,6 +32,12 @@ interface ProjectContextValue {
   setEvents: React.Dispatch<React.SetStateAction<ProjectEventDefinition[]>>;
   functions: ProjectFunction[];
   setFunctions: React.Dispatch<React.SetStateAction<ProjectFunction[]>>;
+  classes: ClassSymbol[];
+  setClasses: React.Dispatch<React.SetStateAction<ClassSymbol[]>>;
+  graphContainers: GraphContainer[];
+  setGraphContainers: React.Dispatch<React.SetStateAction<GraphContainer[]>>;
+  activeClassId: string;
+  setActiveClassId: React.Dispatch<React.SetStateAction<string>>;
   selection: SelectionState;
   setSelection: React.Dispatch<React.SetStateAction<SelectionState>>;
   /** All selected graph node ids on the active canvas (primary first). */
@@ -117,27 +123,34 @@ export function ProjectProvider({
   projectSource,
   initialSnapshot,
 }: ProjectProviderProps) {
-  const [variables, setVariables] = useState<GraphVariable[]>(initialSnapshot.variables);
-  const [events, setEvents] = useState<ProjectEventDefinition[]>(initialSnapshot.events ?? []);
-  const [functions, setFunctions] = useState<ProjectFunction[]>(initialSnapshot.functions);
+  const snapshot = normalizeProjectSnapshot(initialSnapshot) ?? initialSnapshot;
+
+  const [variables, setVariables] = useState<GraphVariable[]>(snapshot.variables);
+  const [events, setEvents] = useState<ProjectEventDefinition[]>(snapshot.events ?? []);
+  const [functions, setFunctions] = useState<ProjectFunction[]>(snapshot.functions);
+  const [classes, setClasses] = useState<ClassSymbol[]>(snapshot.classes);
+  const [graphContainers, setGraphContainers] = useState<GraphContainer[]>(
+    snapshot.graphContainers
+  );
+  const [activeClassId, setActiveClassId] = useState<string>(snapshot.activeClassId);
   const [selection, setSelection] = useState<SelectionState>({ type: 'graph', id: null });
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [openTabs, setOpenTabs] = useState<GraphTab[]>(
-    initialSnapshot.openTabs.length > 0
-      ? initialSnapshot.openTabs
+    snapshot.openTabs.length > 0
+      ? snapshot.openTabs
       : [{ id: 'main', type: 'main', name: 'Main graph' }]
   );
   const [activeGraphTab, setActiveGraphTabInner] = useState<string>(
-    initialSnapshot.activeGraphTab || 'main'
+    snapshot.activeGraphTab || MAIN_GRAPH_CONTAINER_ID
   );
 
-  const [projectDetails, setProjectDetails] = useState(initialSnapshot.projectDetails);
+  const [projectDetails, setProjectDetails] = useState(snapshot.projectDetails);
 
   const [compileState, setCompileStateInner] = useState<'clean' | 'dirty' | 'compiling' | 'success' | 'error'>(
     projectSource === 'new' ? 'clean' : 'success'
   );
   const [dirtyTabIds, setDirtyTabIds] = useState<Record<string, true>>({});
-  const [lastSavedAt, setLastSavedAt] = useState<string | null>(initialSnapshot.savedAt ?? null);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(snapshot.savedAt ?? null);
 
   const markTabDirty = useCallback((tabId: string) => {
     setDirtyTabIds((prev) => (prev[tabId] ? prev : { ...prev, [tabId]: true }));
@@ -156,8 +169,8 @@ export function ProjectProvider({
 
   const resetDirtyTabs = useCallback(() => setDirtyTabIds({}), []);
 
-  const [autoCompile, setAutoCompile] = useState(initialSnapshot.autoCompile);
-  const [autoSave, setAutoSave] = useState(initialSnapshot.autoSave ?? false);
+  const [autoCompile, setAutoCompile] = useState(snapshot.autoCompile);
+  const [autoSave, setAutoSave] = useState(snapshot.autoSave ?? false);
 
   const setCompileState = useCallback(
     (action: React.SetStateAction<'clean' | 'dirty' | 'compiling' | 'success' | 'error'>) => {
@@ -171,7 +184,7 @@ export function ProjectProvider({
     },
     [autoCompile]
   );
-  const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>(initialSnapshot.targetLanguage);
+  const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>(snapshot.targetLanguage);
   const [crossOverMode, setCrossOverMode] = useState<CrossOverArchitectureMode>(() => readCrossOverMode());
 
   const [undoTrigger, setUndoTrigger] = useState(0);
@@ -183,29 +196,29 @@ export function ProjectProvider({
   const [validationErrors, setValidationErrors] = useState<ValidationMessage[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<ValidationMessage[]>([]);
   const [installedLibrary, setInstalledLibrary] = useState<InstalledLibraryEntry[]>(
-    initialSnapshot.installedLibrary ?? []
+    snapshot.installedLibrary ?? []
   );
   const [environmentId, setEnvironmentId] = useState<string | undefined>(
-    initialSnapshot.environmentId
+    snapshot.environmentId
   );
   const [environmentVersion, setEnvironmentVersion] = useState<string | undefined>(
-    initialSnapshot.environmentVersion
+    snapshot.environmentVersion
   );
 
   const [integration, setIntegration] = useState<ProjectIntegrationConfig>(
     () =>
-      initialSnapshot.integration ??
+      snapshot.integration ??
       createDefaultIntegration({
-        environmentId: initialSnapshot.environmentId,
-        environmentVersion: initialSnapshot.environmentVersion,
-        moduleName: initialSnapshot.projectDetails.moduleName,
-        defaultTarget: initialSnapshot.targetLanguage,
+        environmentId: snapshot.environmentId,
+        environmentVersion: snapshot.environmentVersion,
+        moduleName: snapshot.projectDetails.moduleName,
+        defaultTarget: snapshot.targetLanguage,
         adoptExisting: true,
       })
   );
 
   const [syntaxPackLock, setSyntaxPackLock] = useState<SyntaxPackLock | undefined>(
-    initialSnapshot.syntaxPackLock
+    snapshot.syntaxPackLock
   );
 
   const setEnvironmentLink = useCallback((id: string | undefined, version?: string) => {
@@ -213,7 +226,7 @@ export function ProjectProvider({
     setEnvironmentVersion(version);
   }, []);
 
-  const initialTab = initialSnapshot.activeGraphTab || 'main';
+  const initialTab = snapshot.activeGraphTab || MAIN_GRAPH_CONTAINER_ID;
   const [referenceRootGraphId, setReferenceRootGraphId] = useState(initialTab);
   const [referenceVariableName, setReferenceVariableName] = useState<string | null>(null);
 
@@ -258,6 +271,12 @@ export function ProjectProvider({
         setEvents,
         functions,
         setFunctions,
+        classes,
+        setClasses,
+        graphContainers,
+        setGraphContainers,
+        activeClassId,
+        setActiveClassId,
         selection,
         setSelection,
         selectedNodeIds,

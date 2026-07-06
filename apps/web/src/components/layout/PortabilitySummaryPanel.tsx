@@ -17,6 +17,8 @@ export function PortabilitySummaryPanel() {
     events,
     openTabs,
     projectDetails,
+    classes,
+    activeClassId,
     validationErrors,
     validationWarnings,
   } = useProject();
@@ -29,12 +31,14 @@ export function PortabilitySummaryPanel() {
       functions,
       events,
       variables,
+      classes,
+      activeClassId,
       openTabs,
       projectDetails,
       targetLanguage,
       crossOver: crossOverMode,
     });
-  }, [documents, functions, events, variables, openTabs, projectDetails, targetLanguage, crossOverMode]);
+  }, [documents, functions, events, variables, classes, activeClassId, openTabs, projectDetails, targetLanguage, crossOverMode]);
 
   const profile = getLanguageProfile(targetLanguage);
   const errorCount = analysis?.errors.length ?? validationErrors.length;

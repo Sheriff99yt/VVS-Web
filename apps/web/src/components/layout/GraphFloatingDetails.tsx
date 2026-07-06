@@ -9,6 +9,7 @@ import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, isLinkedGraphNode, linkedGraphInspectorLabel } from '@/lib/linkedGraphNodes';
 import { resolveImportableGraphName } from '@/lib/projectNodeCatalog';
 import { CallNodeOverloadPanel } from './RightSidebar/CallNodeOverloadPanel';
+import { resolveVariableForNode } from '@/lib/variableHelpers';
 import { resolveFunctionForNode } from '@/lib/functionHelpers';
 import { normalizeNodeData, resolveNodeKindId } from '@/lib/nodeKind';
 import { getNodeKindDefinition } from '@/lib/nodeRegistry';
@@ -232,6 +233,11 @@ function GraphFloatingDetailsPanel() {
   const boundEvent = nodeData ? resolveEventForNode(nodeData.data, events) : undefined;
   const boundFunction = nodeData ? resolveFunctionForNode(nodeData.data, functions) : undefined;
   const isCallFunctionNode = nodeKindId === 'vvs.project.call_function';
+  const isVarDefineNode = nodeKindId === 'var_define';
+  const isFunctionDefineNode = nodeKindId === 'function_define';
+  const isEventMemberDefineNode = nodeKindId === 'event_member_define';
+  const isClassDefineNode = nodeKindId === 'class_define';
+  const boundVariable = nodeData ? resolveVariableForNode(nodeData.data, variables) : undefined;
   const isCommentNode = nodeData?.type === 'vvs_comment_node';
   const isRerouteNode = nodeData?.type === 'vvs_reroute_node';
 
@@ -374,6 +380,41 @@ function GraphFloatingDetailsPanel() {
 
       {selection.type === 'node' && nodeData && selectedNodeId && (
         <>
+          {isVarDefineNode && boundVariable ? (
+            <div className="mb-2 pb-2 border-b border-zinc-800/80">
+              <VariablePropertiesPanel variable={boundVariable} onChange={handleVariableChange} />
+            </div>
+          ) : null}
+
+          {isFunctionDefineNode && boundFunction ? (
+            <div className="mb-2 pb-2 border-b border-zinc-800/80">
+              <FunctionPropertiesPanel
+                func={boundFunction}
+                onChange={handleFunctionChange}
+                onOpenGraph={(overloadId) => {
+                  const tabId =
+                    boundFunction.overloads.find((o) => o.id === overloadId)?.graphTabId ??
+                    boundFunction.id;
+                  openFunctionGraphTab(boundFunction, setOpenTabs, setActiveGraphTab);
+                  setActiveGraphTab(tabId);
+                }}
+              />
+            </div>
+          ) : null}
+
+          {isEventMemberDefineNode && boundEvent ? (
+            <div className="mb-2 pb-2 border-b border-zinc-800/80">
+              <EventPropertiesPanel
+                event={boundEvent}
+                onChange={handleEventChange}
+                onSpawnDefine={() => spawnEventNode('define')}
+                onSpawnSubscribe={() => spawnEventNode('subscribe')}
+                onSpawnEmit={() => spawnEventNode('emit')}
+                onSpawnDispatch={() => spawnEventNode('dispatch')}
+              />
+            </div>
+          ) : null}
+
           {eventNodeRole && (
             <div className="mb-2 pb-2 border-b border-zinc-800/80">
               <EventNodeBindingPanel

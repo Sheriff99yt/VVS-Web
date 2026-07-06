@@ -1,4 +1,4 @@
-import type { GraphNode, GraphEdge, VariableSymbol, FunctionSymbol, ProjectEventDefinition, TargetLanguage, GraphDocument, TranspileResult, ProjectIntegrationConfig } from '@vvs/graph-types';
+import type { GraphNode, GraphEdge, VariableSymbol, FunctionSymbol, ProjectEventDefinition, TargetLanguage, GraphDocument, TranspileResult, ProjectIntegrationConfig, ClassSymbol } from '@vvs/graph-types';
 import { resolveModuleEmitPath, resolveHostEmitPath, shouldEmitHostFile } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { loadEnvironmentManifest, renderHostFileTemplate } from '@vvs/environment-templates';
@@ -19,6 +19,8 @@ export interface CodegenContext {
   tabLabel?: string;
   tabId?: string;
   documents?: Record<string, GraphDocument>;
+  classes?: ClassSymbol[];
+  activeClassId?: string;
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
   integration?: ProjectIntegrationConfig;

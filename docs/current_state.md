@@ -25,7 +25,7 @@ Last aligned with codebase: **July 2026** (text-shaped graphs direction locked; 
 VVS Web/
 ├── apps/web/              # Next.js 16 + React 19 editor
 ├── packages/
-│   ├── graph-types/       # ProjectSnapshot v2, symbols, analyzeProject, CodegenTarget, Diagnostic
+│   ├── graph-types/       # ProjectSnapshot v3 (v1/v2 loader), ClassSymbol, analyzeProject, CodegenTarget
 │   ├── syntax-registry/   # core-pack.json, list/resolve/expandProjectSymbols
 │   ├── language-profiles/ # per-target portability matrix + capabilities + analyzePortability
 │   ├── syntax-packs/      # versioned print templates, Rosetta goldens, fidelity linter
@@ -152,11 +152,11 @@ Orphan: `components/layout/ReferenceViewer.tsx` — superseded by `ReferencesVie
 | Control | Location | Notes |
 |---------|----------|-------|
 | **Auto Generate** toggle | TopNav | When on, debounced validate & transpile on graph dirty; when off, use **Generate** or Ctrl+G |
-| **Auto Save** toggle | TopNav | When on, debounced persist **ProjectSnapshot v2** (local + cloud when signed in); when off, use **Save** or Ctrl+S |
+| **Auto Save** toggle | TopNav | When on, debounced persist **ProjectSnapshot v3** (local + cloud when signed in); when off, use **Save** or Ctrl+S |
 | **Save** / **Generate** | TopNav (action segment) | Manual save project / manual generate — same as File → Save project and Edit → Generate |
 | Sync code preview | Edit menu (Ctrl+Shift+S) | Refresh code preview from graph without full validation pipeline |
 | Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
-| Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v2** JSON (folder, localStorage, or cloud) |
+| Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
 | Connect AI | TopNav modal | MCP URL copy + **Test connection**; MCP stays disconnected in mock mode |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
 
@@ -201,7 +201,8 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Example templates (Hello World, Calculator) | Done — `simpleExample.ts`, `complexExample.ts`, integrity tests |
 | Example template integrity tests | Done — `complexExample.test.ts` (analyze + wiring + 4-language codegen) |
 | Call Function nodes (`vvs.project.call_function` + `graphBinding`) | Done |
-| Function symbols + overloads (`FunctionSymbol`, snapshot v2) | Done — tree, inspector, pin sync |
+| Function symbols + overloads (`FunctionSymbol`, snapshot v3) | Done — tree, inspector, pin sync; symbols carry optional `classId` |
+| Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Graphs** section in ProjectTree (double-click graph opens graph canvas; double-click class opens codegen canvas), class-scoped symbol lists, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. Canvas define nodes + ordered transpiler emit. Go/MCP: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
 | Pin type validation on connect | Done |
 | Wire / cross-graph cycle prevention | Done — `graphCycles.ts`, `graphRelations.ts` |
 | Linear flow chains (break on middle rewire) | Done — `graphWiring.ts` + editor warning |
@@ -210,7 +211,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Generated export folder (left panel) | Done — `Generated` section lists per-graph output files |
 | Reference viewer (top-level view) | Done — `ReferencesView`, UE5 focus graph + tree |
 | Project breadcrumb | Done — `GraphBreadcrumb` above tab bar |
-| Graph tabs (main / function) | Done — per-tab documents + `GraphTabMetadata`; legacy macro tabs migrate on load |
+| Graph tabs (main / function / container) | Done — per-tab documents + `GraphTabMetadata`; Project map (`main-graph`) pinned; legacy macro tabs migrate on load |
 | Undo/redo | Done |
 | Comment nodes + grouping | Done — color, ungroup, inspector label |
 | Drag variable → spawn Get/Set | Done |
@@ -218,7 +219,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Copy/paste / Cut / Duplicate | Done — in-app + system clipboard (`graphClipboard.ts`) |
 | Simulation stepping | Done — mock highlight, pause, single-step |
 | Pin geometry (distinct shapes) | Done — incl. `data_array`; inline pin widgets |
-| Mock project save/load | Done — `ProjectSnapshot` v2 + v1 normalizer |
+| Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
 | Code preview | Done — CodeMirror 6; `sourceMap` selection highlight; portability warning badge |
@@ -322,11 +323,12 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 **Phase 2 (near complete):** Self-hosted Postgres via **`pgx`** + JWT auth middleware + GoTrue docker stack — see [deployment.md](deployment.md) and [setup.md](setup.md#phase-2--supabase-auth-gotrue-optional).
 
 - `internal/core/domain/graph.go` — nodes, `GraphBinding`, `FunctionSymbol`
-- `internal/core/domain/snapshot.go` — `ProjectSnapshot` v2 mirror
+- `internal/core/domain/snapshot.go` — `ProjectSnapshot` v3 mirror (`classes[]`, `activeClassId`, symbol `classId`)
+- `internal/core/domain/migrate_v3.go` — v2→v3 normalize on load/save (synthetic `main-class`)
 - `internal/core/registry/` — embedded `core-pack.json`, environments, syntax-packs
 - `internal/core/store/` — `ProjectStore` interface; `MemoryStore` (default) + `PostgresStore` (`DATABASE_URL`); migration `001_projects.sql`
 - `internal/core/auth/` — JWT middleware (`AUTH_REQUIRED`, `SUPABASE_JWT_SECRET`); dev user when auth off
-- `internal/core/services/` — project, graph_edit, compile (pure functions; user-scoped via `context`)
+- `internal/core/services/` — project, graph_edit, compile, **class** (pure functions; user-scoped via `context`)
 - `internal/transport/http/` — projects, compile, CORS (`Authorization` header)
 - `internal/transport/mcp/` — MCP tools (thin wrappers; pass `ctx` to services); session-scoped user auth via SSE hooks
 - `cmd/vvs-server/main.go` — `OpenFromEnv`, auth middleware, health shows `store` + `auth` mode

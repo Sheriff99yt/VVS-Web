@@ -9,6 +9,7 @@ import {
   type ProjectEventDefinition,
   type VariableSymbol,
   type CrossOverArchitectureMode,
+  type ClassSymbol,
 } from '@vvs/graph-types';
 import {
   analyzePortability,
@@ -24,6 +25,8 @@ export interface ProjectAnalysisInput {
   functions: FunctionSymbol[];
   events: ProjectEventDefinition[];
   variables?: VariableSymbol[];
+  classes?: ClassSymbol[];
+  activeClassId?: string;
   openTabs?: GraphTab[];
   projectDetails: { extendsType: string };
   targetLanguage: TargetLanguage;
@@ -57,8 +60,10 @@ export function runProjectAnalysis(input: ProjectAnalysisInput): {
   const result = analyzeProject({
     documents: input.documents,
     functions: input.functions,
-    events: input.events.map((e) => ({ id: e.id, name: e.name })),
+    events: input.events.map((e) => ({ id: e.id, name: e.name, classId: e.classId })),
     variables,
+    classes: input.classes,
+    activeClassId: input.activeClassId,
     openTabs: input.openTabs,
     projectDetails: input.projectDetails,
     targetLanguage: input.targetLanguage,

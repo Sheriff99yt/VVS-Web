@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { VVSEdge, VVSNode } from '@/types/graph';
-import { applyWireConnection } from './graphWiring';
+import { applyWireConnection, createUniqueEdgeId } from './graphWiring';
 
 function execNode(id: string, label: string): VVSNode {
   return {
@@ -28,6 +28,17 @@ function execEdge(source: string, target: string, id?: string): VVSEdge {
     data: { pinType: 'execution' },
   };
 }
+
+describe('createUniqueEdgeId', () => {
+  test('generates distinct ids for same node pair in a batch', () => {
+    const source = 'vvs_standard_node-1';
+    const target = 'vvs_standard_node-2';
+    const ids = Array.from({ length: 5 }, (_, i) =>
+      createUniqueEdgeId(source, target, { index: i })
+    );
+    expect(new Set(ids).size).toBe(5);
+  });
+});
 
 describe('applyWireConnection flow semantics', () => {
   test('rewiring into the middle of a chain drops the previous upstream link', () => {

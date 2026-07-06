@@ -1,4 +1,5 @@
 import type {
+  ClassSymbol,
   FunctionSymbol,
   ProjectEventDefinition,
   VariableSymbol,
@@ -10,6 +11,7 @@ import { normalizeNodeData } from '@/lib/nodeKind';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { applyFunctionCallBinding } from '@/lib/functionHelpers';
 import { applyEventDefineBinding, applyEventDispatchBinding } from '@/lib/eventHelpers';
+import { buildGraphRefNodeData } from '@/lib/graphRefHelpers';
 
 const EXEC_OUT = { id: 'exec_out', label: '', type: 'execution' as const };
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
@@ -277,4 +279,108 @@ export function functionEntryNode(
     outputs: [EXEC_OUT],
     inlineValues: {},
   });
+}
+
+export function classDefineNode(
+  id: string,
+  position: { x: number; y: number },
+  cls: ClassSymbol
+): VVSNode {
+  return exampleNode(id, position, {
+    label: `Class ${cls.name}`,
+    category: 'Project',
+    kindId: 'class_define',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
+    properties: {
+      name: cls.name,
+      extendsType: cls.extendsType ?? '',
+      visibility: cls.visibility ?? 'public',
+    },
+  });
+}
+
+export function varDefineNode(
+  id: string,
+  position: { x: number; y: number },
+  variable: VariableSymbol
+): VVSNode {
+  return exampleNode(id, position, {
+    label: `Define ${variable.name}`,
+    category: 'Variables',
+    kindId: 'var_define',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
+    graphBinding: { kind: 'variable_ref', symbolId: variable.id },
+    properties: {
+      symbolId: variable.id,
+      name: variable.name,
+      type: variable.type,
+      default: variable.defaultValue,
+      binding: variable.binding,
+      variableName: variable.name,
+    },
+  });
+}
+
+export function functionDefineNode(
+  id: string,
+  position: { x: number; y: number },
+  func: FunctionSymbol
+): VVSNode {
+  const overload = func.overloads[0];
+  return exampleNode(id, position, {
+    label: `Define ${func.name}`,
+    category: 'Project',
+    kindId: 'function_define',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
+    linkedGraphId: func.id,
+    linkKind: 'call_function',
+    graphBinding: { kind: 'call_function', symbolId: func.id, overloadId: overload?.id },
+    properties: {
+      symbolId: func.id,
+      name: func.name,
+      binding: func.binding,
+      returnType: overload?.returnType,
+      graphTabId: overload?.graphTabId ?? func.id,
+    },
+  });
+}
+
+export function eventMemberDefineNode(
+  id: string,
+  position: { x: number; y: number },
+  event: ProjectEventDefinition
+): VVSNode {
+  return exampleNode(id, position, {
+    label: `Define ${event.name}`,
+    category: 'Events',
+    kindId: 'event_member_define',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
+    properties: {
+      symbolId: event.id,
+      name: event.name,
+      eventId: event.id,
+      eventName: event.name,
+    },
+  });
+}
+
+export function graphRefNode(
+  id: string,
+  position: { x: number; y: number },
+  options: {
+    label: string;
+    classId?: string;
+    containerId?: string;
+    graphTabId?: string;
+  }
+): VVSNode {
+  return exampleNode(id, position, buildGraphRefNodeData(options));
 }

@@ -1,4 +1,3 @@
-import { variableDataTypeToLegacyEmitKind, type VariableSymbol } from '@vvs/graph-types';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrModule, IrStatement } from '../ir/types';
 import {
@@ -8,15 +7,8 @@ import {
   formatFunctionDefHeader,
   printContextForIr,
 } from './helpers';
+import { appendIrMembers, appendLegacyPreamble, tagClassDeclLine } from './members';
 import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
-
-function verseType(variable: VariableSymbol): string {
-  const emitKind = variableDataTypeToLegacyEmitKind(variable.type);
-  if (emitKind === 'number') return 'float';
-  if (emitKind === 'string') return 'string';
-  if (emitKind === 'boolean') return 'logic';
-  return 'any';
-}
 
 function appendVerseStartHandler(sink: CodeSink, ir: IrModule, sourceGraphNodeId: string, body: IrStatement[]): void {
   const startLine = sink.lineCount + 1;
@@ -43,14 +35,13 @@ function appendVerseEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventH
 export function emitVerseModule(sink: CodeSink, ir: IrModule): void {
   appendHoistedImports(sink, ir);
   const base = ir.extendsType ? `(${ir.extendsType})` : '';
+  const classLineStart = sink.lineCount + 1;
   sink.appendRaw(`${ir.moduleName} := class${base}:`);
-  for (const v of ir.variables) {
-    const val = typeof v.defaultValue === 'string' ? `"${v.defaultValue}"` : v.defaultValue;
-    sink.appendRaw(`    var ${v.name} : ${verseType(v)} = ${val}`);
-  }
-  for (const f of ir.functions) {
-    sink.appendRaw(`\n${formatFunctionDefHeader(f, 'verse')}`);
-    appendFunctionBody(sink, ir, f.id, '        # empty', ir.environmentManifest);
+  tagClassDeclLine(sink, ir, classLineStart);
+  if (ir.useLegacyPreamble) {
+    appendLegacyPreamble(sink, ir);
+  } else {
+    appendIrMembers(sink, ir);
   }
   const bodyCtx = printContextForIr(ir, bodyIndent('verse'), ir.environmentManifest);
   if (ir.startEvent?.isExplicitStartEvent) {

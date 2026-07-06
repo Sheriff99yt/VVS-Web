@@ -1,4 +1,5 @@
 import type {
+  ClassSymbol,
   FunctionSymbol,
   GraphDocument,
   ProjectEventDefinition,
@@ -231,6 +232,49 @@ export interface IrStartEvent {
   isExplicitStartEvent: boolean;
 }
 
+/** Canvas-ordered member declaration from define nodes on the class graph. */
+export type IrMemberDecl =
+  | {
+      kind: 'ClassDecl';
+      sourceGraphNodeId: string;
+      name: string;
+      extendsType?: string;
+    }
+  | {
+      kind: 'VariableDecl';
+      sourceGraphNodeId: string;
+      symbol: VariableSymbol;
+    }
+  | {
+      kind: 'FunctionDecl';
+      sourceGraphNodeId: string;
+      symbol: FunctionSymbol;
+    }
+  | {
+      kind: 'EventDecl';
+      sourceGraphNodeId: string;
+      symbol: ProjectEventDefinition;
+      handlerName: string;
+      paramNames: string[];
+      body: IrStatement[];
+    };
+
+export interface IrClass {
+  classId: string;
+  name: string;
+  extendsType?: string;
+  members: IrMemberDecl[];
+  onStartBody: IrStatement[];
+  eventHandlers: IrEventHandler[];
+  functionBodies: Record<string, IrStatement[]>;
+}
+
+export interface IrProject {
+  classes: IrClass[];
+  targetLanguage: TargetLanguage;
+  codegenTarget?: CodegenTarget;
+}
+
 export interface IrModule {
   moduleName: string;
   extendsType: string;
@@ -254,4 +298,10 @@ export interface IrModule {
   execOrder: string[];
   handlerNodeLabels: string[];
   environmentManifest?: import('@vvs/environment-templates').ProjectEnvironmentManifest;
+  /** Ordered canvas define nodes; empty when useLegacyPreamble is true. */
+  members: IrMemberDecl[];
+  /** Sidebar preamble fallback when the class graph has no define nodes. */
+  useLegacyPreamble: boolean;
+  compileWarnings?: string[];
+  activeClass?: ClassSymbol;
 }

@@ -1,24 +1,35 @@
 import { describe, expect, test } from 'bun:test';
-import { generateMockCode, generateMockTranspileResult } from './generate';
+import { graphToIr } from './lower/graphToIr';
+import { generateMockCode, generateMockTranspileResult, type CodegenContext } from './generate';
 import { createComplexExampleSnapshot } from '../../../apps/web/src/lib/examples/complexExample';
+import { createSimpleExampleSnapshot } from '../../../apps/web/src/lib/examples/simpleExample';
+
+function mainCtx(
+  snapshot: ReturnType<typeof createComplexExampleSnapshot>,
+  overrides: Partial<CodegenContext> = {}
+): CodegenContext {
+  const main = snapshot.documents!.main;
+  return {
+    moduleName: snapshot.projectDetails.moduleName,
+    extendsType: snapshot.projectDetails.extendsType,
+    targetLanguage: 'python',
+    variables: snapshot.variables,
+    projectEvents: snapshot.events,
+    functions: snapshot.functions,
+    nodes: main.nodes,
+    edges: main.edges,
+    tabId: 'main',
+    documents: snapshot.documents,
+    classes: snapshot.classes,
+    activeClassId: snapshot.activeClassId,
+    ...overrides,
+  };
+}
 
 describe('generateMockCode', () => {
   test('complex example main graph emits call_function and branch', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
-
-    const code = generateMockCode({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
-      documents: snapshot.documents,
-    });
+    const code = generateMockCode(mainCtx(snapshot));
 
     expect(code).toContain('self.Add()');
     expect(code).toContain('def Add(self):');
@@ -32,6 +43,73 @@ describe('generateMockCode', () => {
     expect(code).toContain('print(str(self.Result))');
     expect(code).toContain('self.Clear()');
     expect(code).not.toContain('import ');
+    expect(code).not.toContain('# Variables');
+  });
+
+  test('canvas define chain emits members in graph order', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const code = generateMockCode(mainCtx(snapshot));
+    const lines = code.split('\n');
+
+    const lineA = lines.findIndex((l) => l.includes('self.A ='));
+    const lineB = lines.findIndex((l) => l.includes('self.B ='));
+    const lineResult = lines.findIndex((l) => l.includes('self.Result ='));
+    const lineShow = lines.findIndex((l) => l.includes('self.ShowResult ='));
+    const lineAdd = lines.findIndex((l) => l.includes('def Add(self):'));
+    const lineClear = lines.findIndex((l) => l.includes('def Clear(self):'));
+    const lineOnStart = lines.findIndex((l) => l.includes('def on_start(self):'));
+
+    expect(lineA).toBeGreaterThan(-1);
+    expect(lineB).toBeGreaterThan(lineA);
+    expect(lineResult).toBeGreaterThan(lineB);
+    expect(lineShow).toBeGreaterThan(lineResult);
+    expect(lineAdd).toBeGreaterThan(lineShow);
+    expect(lineClear).toBeGreaterThan(lineAdd);
+    expect(lineOnStart).toBeGreaterThan(lineClear);
+  });
+
+  test('var_define nodes map to declaration lines in sourceMap', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const result = generateMockTranspileResult(mainCtx(snapshot));
+
+    expect(result.sourceMap['calc-var-a-define']?.length).toBeGreaterThan(0);
+    expect(result.fragments?.['calc-var-a-define']).toContain('self.A');
+    expect(result.sourceMap['calc-class-define']?.length).toBeGreaterThan(0);
+  });
+
+  test('legacy fallback uses sidebar preamble when no define nodes', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const main = snapshot.documents!.main;
+    const legacyNodes = main.nodes.filter(
+      (n) =>
+        n.data.kindId !== 'class_define' &&
+        n.data.kindId !== 'var_define' &&
+        n.data.kindId !== 'function_define' &&
+        n.data.kindId !== 'event_member_define'
+    );
+
+    const ir = graphToIr(
+      {
+        ...mainCtx(snapshot),
+        nodes: legacyNodes,
+        edges: main.edges.filter(
+          (e) =>
+            !e.id.startsWith('calc-def-e-')
+        ),
+      },
+      'Calculator.py'
+    );
+
+    expect(ir.useLegacyPreamble).toBe(true);
+    expect(ir.members).toEqual([]);
+    expect(ir.compileWarnings).toContain('DECLARATION_NOT_ON_CANVAS');
+
+    const code = generateMockCode({
+      ...mainCtx(snapshot),
+      nodes: legacyNodes,
+      edges: main.edges.filter((e) => !e.id.startsWith('calc-def-e-')),
+    });
+    expect(code).toContain('# Variables');
   });
 
   test('function tab emits standalone function body', () => {
@@ -49,6 +127,8 @@ describe('generateMockCode', () => {
       edges: addTab.edges,
       tabId: 'fn-add',
       documents: snapshot.documents,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
     });
 
     expect(code).toContain('def Add(self):');
@@ -58,20 +138,7 @@ describe('generateMockCode', () => {
 
   test('transpile result includes sourceMap for statement nodes', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
-
-    const result = generateMockTranspileResult({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
-      documents: snapshot.documents,
-    });
+    const result = generateMockTranspileResult(mainCtx(snapshot));
 
     expect(result.files[0]?.content.length).toBeGreaterThan(0);
     expect(Object.keys(result.sourceMap).length).toBeGreaterThan(0);
@@ -79,24 +146,11 @@ describe('generateMockCode', () => {
     expect(result.fragments?.['calc-set-a']).toContain('A');
   });
 
-  test('event define nodes map to full handler block in sourceMap', () => {
+  test('event member define nodes map to full handler block in sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
+    const result = generateMockTranspileResult(mainCtx(snapshot));
 
-    const result = generateMockTranspileResult({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
-      documents: snapshot.documents,
-    });
-
-    const handlerRanges = result.sourceMap['calc-define'];
+    const handlerRanges = result.sourceMap['calc-evt-calc-member'];
     expect(handlerRanges?.length).toBeGreaterThan(0);
 
     const content = result.files[0]!.content;
@@ -105,25 +159,12 @@ describe('generateMockCode', () => {
     expect(handlerLine).toBeGreaterThan(0);
     expect(handlerRanges![0]!.startLine).toBeLessThanOrEqual(handlerLine);
     expect(handlerRanges![0]!.endLine).toBeGreaterThanOrEqual(handlerLine);
-    expect(result.fragments?.['calc-define']).toContain('on_calculate');
+    expect(result.fragments?.['calc-evt-calc-member']).toContain('on_calculate');
   });
 
   test('On Start maps to on_start handler not run', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
-
-    const result = generateMockTranspileResult({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
-      documents: snapshot.documents,
-    });
+    const result = generateMockTranspileResult(mainCtx(snapshot));
 
     const content = result.files[0]!.content;
     expect(content).toContain('def on_start(self):');
@@ -179,16 +220,9 @@ describe('generateMockCode', () => {
     ];
 
     const result = generateMockTranspileResult({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
+      ...mainCtx(snapshot),
       nodes,
       edges,
-      tabId: 'main',
-      documents: snapshot.documents,
     });
 
     const content = result.files[0]!.content;
@@ -198,8 +232,20 @@ describe('generateMockCode', () => {
 
   test('nested branch body nodes map to sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
+    const result = generateMockTranspileResult(mainCtx(snapshot));
 
+    expect(result.sourceMap['calc-print-done']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-print-result']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-to-string']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-get-result']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-print-skip']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-dispatch-clear']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-get-show']?.length).toBeGreaterThan(0);
+  });
+
+  test('simple example class_define maps to class line', () => {
+    const snapshot = createSimpleExampleSnapshot();
+    const main = snapshot.documents!.main;
     const result = generateMockTranspileResult({
       moduleName: snapshot.projectDetails.moduleName,
       extendsType: snapshot.projectDetails.extendsType,
@@ -211,15 +257,12 @@ describe('generateMockCode', () => {
       edges: main.edges,
       tabId: 'main',
       documents: snapshot.documents,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
     });
 
-    expect(result.sourceMap['calc-print-done']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['calc-print-result']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['calc-to-string']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['calc-get-result']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['calc-print-skip']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['calc-dispatch-clear']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['calc-get-show']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['ex-class-define']?.length).toBeGreaterThan(0);
+    expect(result.files[0]!.content).toContain('class HelloWorld');
   });
 
   test('import nodes hoist to line 1 with sourceMap and skip body', () => {

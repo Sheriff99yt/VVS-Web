@@ -176,13 +176,16 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'tabs',
         title: 'Multi-graph tabs',
-        description: 'Main and function graphs with per-tab documents and metadata.',
+        description:
+          'Container graph tabs (Project map, module graphs), function graphs, per-tab documents; drag-reorder tabs; close any tab except pinned Project map — no per-class canvas tabs.',
+        status: 'done',
       },
       {
         id: 'tree',
         title: 'Project explorer',
         description:
-          'Graphs, functions, variables, project events (subscriber counts), Environment API browser, generated exports.',
+          'Graph folders → classes as symbols; single-click opens a graph canvas; class row selects active class and opens its home graph; functions, variables, events, Environment API, generated exports.',
+        status: 'done',
       },
       {
         id: 'search',
@@ -256,7 +259,15 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'clipboard',
         title: 'Clipboard workflow',
-        description: 'Cut, copy, paste, duplicate (in-app + OS clipboard); extract selection to function (Ctrl+Shift+E).',
+        description:
+          'Cut, copy, paste, duplicate (in-app + OS clipboard) with unique edge IDs on batch paste; extract selection to function (Ctrl+Shift+E).',
+      },
+      {
+        id: 'symbol-drag-spawn',
+        title: 'Drag symbols to canvas',
+        description:
+          'Variables: Get / Set / Declare. Functions: Call / Declare. Classes: Declare (class_define on the container graph define chain). Declare inserts define nodes on the class home graph only.',
+        status: 'done',
       },
       {
         id: 'pins-ui',
@@ -361,6 +372,55 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
   {
+    id: 'multi-class',
+    title: 'Multi-class & canvas-defined symbols',
+    emphasis: 'shipped',
+    items: [
+      {
+        id: 'snapshot-v3',
+        title: 'ProjectSnapshot v3',
+        description:
+          'classes[], activeClassId, graphContainers[]; classId on symbols; classHomeGraphId = containerId (graphTabId deprecated); v1/v2 loaders upgrade and merge legacy class/main documents into home graphs.',
+        status: 'done',
+      },
+      {
+        id: 'graph-containers',
+        title: 'Graph-as-canvas model',
+        description:
+          'Each graphContainer is a real canvas (`documents[container.id]`). Project map (`main-graph`) is organizational — graph_ref navigation only, no codegen. Module graphs (e.g. Calculator) hold class_define chains plus runtime flow. Classes are symbols nested under graphs, not separate tabs.',
+        status: 'done',
+      },
+      {
+        id: 'class-lifecycle',
+        title: 'Class management',
+        description:
+          'Create, rename, delete, and move classes between graph folders; selecting a class opens its container graph and sets activeClassId; Functions/Variables sections scoped to active class.',
+        status: 'done',
+      },
+      {
+        id: 'define-nodes',
+        title: 'Canvas define nodes',
+        description:
+          'class_define, var_define, function_define, event_member_define on the container graph exec chain; panel↔canvas dual-write via defineNodeSync; legacy class tabs and documents.main migrate to home graphs on load.',
+        status: 'done',
+      },
+      {
+        id: 'ordered-emit',
+        title: 'Ordered member emit',
+        description:
+          'Transpiler walks define chain for declaration order; legacy sidebar preamble fallback when no define nodes; Calculator/Hello examples rewritten.',
+        status: 'done',
+      },
+      {
+        id: 'go-mcp-classes',
+        title: 'Go v3 + MCP class tools',
+        description:
+          'Domain v3 normalize; list_classes / add_class MCP tools; optional class_id on get_graph and add_node.',
+        status: 'done',
+      },
+    ],
+  },
+  {
     id: 'workflow',
     title: 'Project workflow',
     items: [
@@ -368,7 +428,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'save',
         title: 'Save & load',
         description:
-          'ProjectSnapshot v2 — browser localStorage for quick projects, or git-friendly `.vvs/` folder layout on disk (split graphs, symbols, integration.json). Import/export JSON.',
+          'ProjectSnapshot v3 — browser localStorage for quick projects, or git-friendly `.vvs/` folder layout on disk (split graphs, symbols, integration.json). Import/export JSON.',
       },
       {
         id: 'project-folder',
@@ -422,7 +482,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'codemirror',
         title: 'Code preview panel',
         description:
-          'CodeMirror 6 with syntax highlighting, transpiler-driven output, and multi-file tabs (module + host entry).',
+          'CodeMirror 6 with syntax highlighting, transpiler-driven output, and multi-file tabs; Project map tab skips codegen; module graphs codegen from container document.',
+        status: 'done',
       },
       {
         id: 'error-nav',
@@ -439,7 +500,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'graph-types',
         title: '@vvs/graph-types',
         description:
-          'Shared snapshot v2, symbols, diagnostics, analyzeProject, ProjectIntegrationConfig, `.vvs/` folder constants, portability feature tags.',
+          'Shared snapshot v3, ClassSymbol, GraphContainer, classHomeGraphId, defineNodes helpers, analyzeProject, legacy class-tab migration, `.vvs/` folder constants.',
+        status: 'done',
       },
       {
         id: 'syntax-registry',
@@ -473,7 +535,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'server-registry',
         title: 'Go registry API',
         description:
-          'Health, core-pack nodes, environments, syntax-packs catalog; domain snapshot v2 mirror; ListAvailableNodes + ListSyntaxPacks tests.',
+          'Health, core-pack nodes, environments, syntax-packs catalog; domain snapshot v3 mirror; ListAvailableNodes + ListSyntaxPacks tests.',
       },
       {
         id: 'server-http',
@@ -491,7 +553,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'server-mcp',
         title: 'MCP server (local + JWT)',
         description:
-          'SSE at /mcp — list_available_nodes, list_syntax_packs, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; session auth propagation when Bearer token set.',
+          'SSE at /mcp — list_available_nodes, list_syntax_packs, list_classes, add_class, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; class_id scoping; session auth when Bearer set.',
       },
       {
         id: 'dev-startup',
@@ -626,6 +688,51 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Project settings to pin syntaxPackLock per target family (schema exists in .vvs/project.json).',
         status: 'done',
+      },
+    ],
+  },
+  {
+    id: 'multi-class-future',
+    title: 'Multi-class — next',
+    items: [
+      {
+        id: 'drag-class-between-folders',
+        title: 'Drag classes between graph folders',
+        description: 'Move ClassSymbol rows between graphContainers in the project tree.',
+        status: 'done',
+      },
+      {
+        id: 'class-declare-drag',
+        title: 'Class declare on drag',
+        description:
+          'Drag a class from the tree onto its home container graph to insert a class_define node on the define chain.',
+        status: 'done',
+      },
+      {
+        id: 'secondary-class-codegen',
+        title: 'Secondary class codegen on container graphs',
+        description:
+          'Full module emit for non-main classes on their home graph (e.g. ResultPanel on UI flow) — Calculator example split across graphs.',
+        status: 'partial',
+      },
+      {
+        id: 'cross-class-refs',
+        title: 'Cross-class references',
+        description: 'Explicit import/call across classes; cross-class event dispatch.',
+        status: 'planned',
+      },
+      {
+        id: 'event-declare-drag',
+        title: 'Event declare on drag',
+        description: 'Extend drag-to-canvas menu with Declare for project events (event_member_define).',
+        status: 'planned',
+      },
+      {
+        id: 'legacy-main-doc',
+        title: 'Retire documents.main in examples & I/O',
+        description:
+          'Finish migrating simpleExample, project-folder save/load, and environment templates to container graph documents only.',
+        status: 'partial',
       },
     ],
   },

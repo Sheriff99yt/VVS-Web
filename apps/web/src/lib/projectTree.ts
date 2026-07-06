@@ -1,4 +1,6 @@
 import { GraphTab, TargetLanguage } from '@/contexts/ProjectContext';
+import type { ClassSymbol } from '@vvs/graph-types';
+import { activeClass as resolveActiveClass, classGraphTabId } from '@/lib/classScope';
 import { GraphDocument } from '@/lib/graphDefaults';
 import { graphDisplayName, generatedFileName } from './graphTabs';
 
@@ -88,7 +90,7 @@ export interface MacroEntry {
 export interface GeneratedExportEntry {
   graphId: string;
   graphLabel: string;
-  graphType: 'main' | 'function' | 'macro';
+  graphType: 'main' | 'function' | 'macro' | 'class' | 'graph';
   fileName: string;
 }
 
@@ -99,12 +101,14 @@ export function listGeneratedExports(
   moduleName: string,
   targetLanguage: TargetLanguage
 ): GeneratedExportEntry[] {
-  return listAllGraphTabs(openTabs, functions, documents).map((tab) => ({
-    graphId: tab.id,
-    graphLabel: graphDisplayName(tab),
-    graphType: tab.type,
-    fileName: generatedFileName(tab, moduleName, targetLanguage),
-  }));
+  return listAllGraphTabs(openTabs, functions, documents)
+    .filter((tab) => tab.type !== 'container')
+    .map((tab) => ({
+      graphId: tab.id,
+      graphLabel: graphDisplayName(tab),
+      graphType: tab.type as GeneratedExportEntry['graphType'],
+      fileName: generatedFileName(tab, moduleName, targetLanguage),
+    }));
 }
 
 /** @deprecated Macro authoring removed — always returns []. */
@@ -127,7 +131,9 @@ export function listAllGraphTabs(
   }
 
   for (const tab of openTabs) {
-    if (tab.type === 'function' && !byId.has(tab.id)) byId.set(tab.id, tab);
+    if ((tab.type === 'function' || tab.type === 'class') && !byId.has(tab.id)) {
+      byId.set(tab.id, tab);
+    }
   }
 
   if (documents) {
@@ -147,9 +153,11 @@ export interface BreadcrumbSegment {
 }
 
 export function buildGraphBreadcrumb(
-  moduleName: string,
+  projectName: string,
   activeGraphTab: string,
-  openTabs: GraphTab[]
+  openTabs: GraphTab[],
+  classes: ClassSymbol[],
+  activeClassId: string
 ): BreadcrumbSegment[] {
   const tab = openTabs.find((t) => t.id === activeGraphTab) ?? {
     id: 'main',
@@ -157,14 +165,31 @@ export function buildGraphBreadcrumb(
     name: 'Main graph',
   };
 
-  const segments: BreadcrumbSegment[] = [{ label: moduleName || 'Untitled' }];
+  const segments: BreadcrumbSegment[] = [{ label: projectName || 'Untitled' }];
 
-  if (tab.type === 'main') {
-    segments.push({ label: 'Main graph', graphId: 'main' });
+  if (tab.type === 'container') {
+    segments.push({ label: tab.name, graphId: tab.id });
     return segments;
   }
 
-  segments.push({ label: 'Functions' });
+  const cls = resolveActiveClass(classes, activeClassId);
+  const className = cls?.name ?? projectName;
+
+  if (classes.length > 1 || cls) {
+    segments.push({
+      label: className,
+      graphId: cls ? classGraphTabId(cls) : 'main',
+    });
+  }
+
+  if (tab.type === 'main' || tab.type === 'class') {
+    segments.push({
+      label: tab.type === 'class' ? tab.name : 'Main graph',
+      graphId: tab.id,
+    });
+    return segments;
+  }
+
   segments.push({ label: graphDisplayName(tab), graphId: tab.id });
   return segments;
 }

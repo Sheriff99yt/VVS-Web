@@ -69,11 +69,11 @@ func TestGraphEditAddConnectRemove(t *testing.T) {
 		t.Fatalf("SaveProject: %v", err)
 	}
 
-	start, err := services.AddNode(ctx, st, "default", "main", "event_on_start", 10, 20)
+	start, err := services.AddNode(ctx, st, "default", "main", "", "event_on_start", 10, 20)
 	if err != nil {
 		t.Fatalf("AddNode start: %v", err)
 	}
-	printNode, err := services.AddNode(ctx, st, "default", "main", "action_print", 200, 20)
+	printNode, err := services.AddNode(ctx, st, "default", "main", "", "action_print", 200, 20)
 	if err != nil {
 		t.Fatalf("AddNode print: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestGraphEditAddConnectRemove(t *testing.T) {
 		SourceHandle: "exec_out",
 		TargetHandle: "exec_in",
 	}
-	created, err := services.ConnectPins(ctx, st, "default", "main", edge)
+	created, err := services.ConnectPins(ctx, st, "default", "main", "", edge)
 	if err != nil {
 		t.Fatalf("ConnectPins: %v", err)
 	}
@@ -92,7 +92,7 @@ func TestGraphEditAddConnectRemove(t *testing.T) {
 		t.Fatalf("expected execution pin type, got %s", created.Data.PinType)
 	}
 
-	doc, tabID, err := services.GetGraphDocument(ctx, st, "default", "")
+	doc, tabID, err := services.GetGraphDocument(ctx, st, "default", "", "")
 	if err != nil {
 		t.Fatalf("GetGraphDocument: %v", err)
 	}
@@ -103,10 +103,10 @@ func TestGraphEditAddConnectRemove(t *testing.T) {
 		t.Fatalf("unexpected graph state: %+v", doc)
 	}
 
-	if err := services.RemoveNode(ctx, st, "default", "main", printNode.ID); err != nil {
+	if err := services.RemoveNode(ctx, st, "default", "main", "", printNode.ID); err != nil {
 		t.Fatalf("RemoveNode: %v", err)
 	}
-	doc, _, err = services.GetGraphDocument(ctx, st, "default", "main")
+	doc, _, err = services.GetGraphDocument(ctx, st, "default", "main", "")
 	if err != nil {
 		t.Fatalf("GetGraphDocument after remove: %v", err)
 	}

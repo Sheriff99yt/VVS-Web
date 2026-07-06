@@ -176,13 +176,23 @@ function pruneEdgesForConnection(
   return next;
 }
 
+export function createUniqueEdgeId(
+  source: string,
+  target: string,
+  options?: { prefix?: string; index?: number }
+): string {
+  const prefix = options?.prefix ?? 'e';
+  const index = options?.index ?? 0;
+  return `${prefix}-${source}-${target}-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
 export function createWireEdge(
   connection: WireConnectionAttempt,
   pinType: PinType,
   edgeId?: string
 ): VVSEdge {
   return {
-    id: edgeId ?? `e-${connection.source}-${connection.target}-${Date.now()}`,
+    id: edgeId ?? createUniqueEdgeId(connection.source, connection.target),
     source: connection.source,
     target: connection.target,
     sourceHandle: connection.sourceHandle ?? null,
@@ -285,7 +295,7 @@ export function splitEdgeWithReroute(
 
   const edges: VVSEdge[] = [
     {
-      id: `e-${edge.source}-${node.id}-${Date.now()}`,
+      id: createUniqueEdgeId(edge.source, node.id, { index: 0 }),
       source: edge.source,
       sourceHandle: edge.sourceHandle,
       target: node.id,
@@ -294,7 +304,7 @@ export function splitEdgeWithReroute(
       data: edgeData,
     },
     {
-      id: `e-${node.id}-${edge.target}-${Date.now()}`,
+      id: createUniqueEdgeId(node.id, edge.target, { index: 1 }),
       source: node.id,
       sourceHandle: 'out',
       target: edge.target,

@@ -86,6 +86,42 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
     return { kind: 'function', symbolId, displayName };
   }
 
+  if (kindId === 'var_define') {
+    const symbolId =
+      data.graphBinding?.kind === 'variable_ref'
+        ? data.graphBinding.symbolId
+        : typeof data.properties?.symbolId === 'string'
+          ? data.properties.symbolId
+          : undefined;
+    if (!symbolId) return null;
+    const displayName =
+      typeof data.properties?.name === 'string' ? data.properties.name : undefined;
+    return { kind: 'variable', symbolId, displayName };
+  }
+
+  if (kindId === 'function_define') {
+    const symbolId =
+      data.graphBinding?.symbolId ??
+      (typeof data.properties?.symbolId === 'string' ? data.properties.symbolId : undefined);
+    if (!symbolId) return null;
+    const displayName =
+      typeof data.properties?.name === 'string' ? data.properties.name : undefined;
+    return { kind: 'function', symbolId, displayName };
+  }
+
+  if (kindId === 'event_member_define') {
+    const symbolId =
+      typeof data.properties?.symbolId === 'string'
+        ? data.properties.symbolId
+        : typeof data.properties?.eventId === 'string'
+          ? data.properties.eventId
+          : undefined;
+    if (!symbolId) return null;
+    const displayName =
+      typeof data.properties?.name === 'string' ? data.properties.name : undefined;
+    return { kind: 'event', symbolId, displayName };
+  }
+
   if (kindId === 'event_define' || kindId === 'event_custom' || kindId === 'event_dispatch' || kindId === 'event_emit' || kindId === 'event_subscribe') {
     const eventId =
       typeof data.properties?.eventId === 'string' ? data.properties.eventId : undefined;

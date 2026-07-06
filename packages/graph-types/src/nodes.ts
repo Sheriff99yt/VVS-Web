@@ -7,7 +7,8 @@ export interface GraphBinding {
     | 'import_module'
     | 'variable_ref'
     | 'env_native'
-    | 'env_event';
+    | 'env_event'
+    | 'graph_ref';
   symbolId: string;
   overloadId?: string;
   /** Manifest method id for env_native / overrideable handlers */

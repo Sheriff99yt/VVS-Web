@@ -7,6 +7,8 @@ import type { CodegenContext } from './generate';
 
 type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse';
 
+const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
+
 function transpileMain(
   snapshot: ReturnType<typeof createSimpleExampleSnapshot>,
   targetLanguage: TargetLanguage
@@ -23,6 +25,31 @@ function transpileMain(
     edges: main.edges,
     tabId: 'main',
     documents: snapshot.documents,
+    classes: snapshot.classes,
+    activeClassId: snapshot.activeClassId,
+  };
+  return generateMockTranspileResult(ctx);
+}
+
+function transpileComplexCalculator(
+  snapshot: ReturnType<typeof createComplexExampleSnapshot>,
+  targetLanguage: TargetLanguage
+) {
+  const calc = snapshot.documents![CALCULATOR_GRAPH_ID];
+  if (!calc) throw new Error(`missing ${CALCULATOR_GRAPH_ID}`);
+  const ctx: CodegenContext = {
+    moduleName: snapshot.projectDetails.moduleName,
+    extendsType: snapshot.projectDetails.extendsType,
+    targetLanguage,
+    variables: snapshot.variables,
+    projectEvents: snapshot.events,
+    functions: snapshot.functions,
+    nodes: calc.nodes,
+    edges: calc.edges,
+    tabId: CALCULATOR_GRAPH_ID,
+    documents: snapshot.documents,
+    classes: snapshot.classes,
+    activeClassId: snapshot.activeClassId,
   };
   return generateMockTranspileResult(ctx);
 }
@@ -74,7 +101,7 @@ describe('example template snapshots', () => {
 
     test(`complex example transpiles for ${lang}`, () => {
       const snapshot = createComplexExampleSnapshot();
-      const result = transpileMain(snapshot, lang);
+      const result = transpileComplexCalculator(snapshot, lang);
       const content = result.files[0]!.content;
 
       expect(content.length).toBeGreaterThan(0);

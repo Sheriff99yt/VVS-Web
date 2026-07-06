@@ -2,6 +2,7 @@ import type { GraphDocument } from '@/lib/graphDefaults';
 import type { VVSNodeData } from '@/types/graph';
 
 export function isLinkedGraphNode(data: VVSNodeData): boolean {
+  if (data.linkKind === 'graph_ref') return false;
   return Boolean(data.linkedGraphId && data.linkKind);
 }
 
@@ -16,6 +17,12 @@ export function linkedGraphTargetLabel(data: VVSNodeData): string | null {
       return data.label.replace(/^Import\s+/, '') || data.linkedGraphId;
     case 'use_macro':
       return data.label.replace(/^(Macro:|Use\s+)/, '') || data.linkedGraphId;
+    case 'graph_ref':
+      return (
+        (typeof data.properties?.refLabel === 'string' && data.properties.refLabel) ||
+        data.label ||
+        data.linkedGraphId
+      );
     default:
       return data.linkedGraphId;
   }
@@ -41,6 +48,8 @@ export function linkedGraphInspectorLabel(linkKind: VVSNodeData['linkKind']): st
       return 'Imported module';
     case 'use_macro':
       return 'Target macro';
+    case 'graph_ref':
+      return 'Referenced graph';
     default:
       return 'Linked graph';
   }

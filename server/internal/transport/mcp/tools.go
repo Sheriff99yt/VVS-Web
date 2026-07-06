@@ -24,6 +24,8 @@ type Deps struct {
 func RegisterTools(s *mcpserver.MCPServer, deps Deps) {
 	registerListAvailableNodes(s)
 	registerListSyntaxPacks(s)
+	registerListClasses(s, deps)
+	registerAddClass(s, deps)
 	registerGetGraph(s, deps)
 	registerAddNode(s, deps)
 	registerRemoveNode(s, deps)
@@ -58,11 +60,56 @@ func registerListSyntaxPacks(s *mcpserver.MCPServer) {
 	})
 }
 
+func registerListClasses(s *mcpserver.MCPServer, deps Deps) {
+	tool := mcp.NewTool("list_classes",
+		mcp.WithDescription("List class symbols in a project snapshot"),
+		mcp.WithString("project_id", mcp.Required(), mcp.Description("Project id")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		projectID, err := req.RequireString("project_id")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		classes, activeClassID, err := services.ListClasses(ctx, deps.Store, projectID)
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		return jsonToolResult(map[string]interface{}{
+			"classes":        classes,
+			"activeClassId":  activeClassID,
+		})
+	})
+}
+
+func registerAddClass(s *mcpserver.MCPServer, deps Deps) {
+	tool := mcp.NewTool("add_class",
+		mcp.WithDescription("Create a new class with an empty class graph tab"),
+		mcp.WithString("project_id", mcp.Required()),
+		mcp.WithString("name", mcp.Required(), mcp.Description("Display name for the new class")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		projectID, err := req.RequireString("project_id")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		name, err := req.RequireString("name")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		cls, err := services.AddClass(ctx, deps.Store, projectID, name)
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		return jsonToolResult(map[string]interface{}{"class": cls})
+	})
+}
+
 func registerGetGraph(s *mcpserver.MCPServer, deps Deps) {
 	tool := mcp.NewTool("get_graph",
-		mcp.WithDescription("Load the active or specified graph tab document from a project"),
+		mcp.WithDescription("Load the active, specified, or class-scoped graph tab document from a project"),
 		mcp.WithString("project_id", mcp.Required(), mcp.Description("Project id")),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
+		mcp.WithString("class_id", mcp.Description("Class id — resolves to the class graph tab when tab_id is omitted")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
@@ -70,19 +117,22 @@ func registerGetGraph(s *mcpserver.MCPServer, deps Deps) {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		tabID := req.GetString("tab_id", "")
+		classID := req.GetString("class_id", "")
 
 		snap, err := services.LoadProject(ctx, deps.Store, projectID)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		doc, resolvedTab, err := services.GetGraphDocument(ctx, deps.Store, projectID, tabID)
+		doc, resolvedTab, err := services.GetGraphDocument(ctx, deps.Store, projectID, tabID, classID)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		return jsonToolResult(map[string]interface{}{
 			"projectId":        projectID,
 			"activeGraphTab":   snap.ActiveGraphTab,
+			"activeClassId":    snap.ActiveClassId,
 			"tabId":            resolvedTab,
+			"classId":          classID,
 			"targetLanguage":   snap.TargetLanguage,
 			"moduleName":       snap.ProjectDetails.ModuleName,
 			"nodes":            doc.Nodes,
@@ -99,6 +149,7 @@ func registerAddNode(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithNumber("x", mcp.Description("Canvas X position")),
 		mcp.WithNumber("y", mcp.Description("Canvas Y position")),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
+		mcp.WithString("class_id", mcp.Description("Class id — targets the class graph tab when tab_id is omitted")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
@@ -112,8 +163,9 @@ func registerAddNode(s *mcpserver.MCPServer, deps Deps) {
 		x := req.GetFloat("x", 0)
 		y := req.GetFloat("y", 0)
 		tabID := req.GetString("tab_id", "")
+		classID := req.GetString("class_id", "")
 
-		node, err := services.AddNode(ctx, deps.Store, projectID, tabID, kindID, x, y)
+		node, err := services.AddNode(ctx, deps.Store, projectID, tabID, classID, kindID, x, y)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
@@ -127,6 +179,7 @@ func registerRemoveNode(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("project_id", mcp.Required()),
 		mcp.WithString("node_id", mcp.Required()),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
+		mcp.WithString("class_id", mcp.Description("Class id — targets the class graph tab when tab_id is omitted")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
@@ -138,8 +191,9 @@ func registerRemoveNode(s *mcpserver.MCPServer, deps Deps) {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		tabID := req.GetString("tab_id", "")
+		classID := req.GetString("class_id", "")
 
-		if err := services.RemoveNode(ctx, deps.Store, projectID, tabID, nodeID); err != nil {
+		if err := services.RemoveNode(ctx, deps.Store, projectID, tabID, classID, nodeID); err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		return jsonToolResult(map[string]interface{}{"ok": true})
@@ -155,6 +209,7 @@ func registerConnectPins(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("source_handle", mcp.Required()),
 		mcp.WithString("target_handle", mcp.Required()),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
+		mcp.WithString("class_id", mcp.Description("Class id — targets the class graph tab when tab_id is omitted")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
@@ -178,6 +233,7 @@ func registerConnectPins(s *mcpserver.MCPServer, deps Deps) {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		tabID := req.GetString("tab_id", "")
+		classID := req.GetString("class_id", "")
 
 		edge := domain.Edge{
 			Source:       source,
@@ -185,7 +241,7 @@ func registerConnectPins(s *mcpserver.MCPServer, deps Deps) {
 			SourceHandle: sourceHandle,
 			TargetHandle: targetHandle,
 		}
-		created, err := services.ConnectPins(ctx, deps.Store, projectID, tabID, edge)
+		created, err := services.ConnectPins(ctx, deps.Store, projectID, tabID, classID, edge)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
@@ -213,9 +269,9 @@ func registerGenerateCode(s *mcpserver.MCPServer, deps Deps) {
 
 func registerSaveProject(s *mcpserver.MCPServer, deps Deps) {
 	tool := mcp.NewTool("save_project",
-		mcp.WithDescription("Persist a full ProjectSnapshot v2 document"),
+		mcp.WithDescription("Persist a full ProjectSnapshot v3 document"),
 		mcp.WithString("project_id", mcp.Required()),
-		mcp.WithObject("snapshot", mcp.Required(), mcp.Description("ProjectSnapshot v2 JSON object")),
+		mcp.WithObject("snapshot", mcp.Required(), mcp.Description("ProjectSnapshot v3 JSON object")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")

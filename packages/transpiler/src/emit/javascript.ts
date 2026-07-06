@@ -9,6 +9,7 @@ import {
   functionNeedsAsync,
   printContextForIr,
 } from './helpers';
+import { appendIrMembers, appendLegacyPreamble, tagClassDeclLine } from './members';
 import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
 
 function appendJsStartHandler(sink: CodeSink, ir: IrModule, sourceGraphNodeId: string, body: IrStatement[]): void {
@@ -35,18 +36,16 @@ function appendJsEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHand
 export function emitJavascriptModule(sink: CodeSink, ir: IrModule): void {
   appendHoistedImports(sink, ir);
   const extendsClause = ir.extendsType ? ` extends ${ir.extendsType}` : '';
+  const classLineStart = sink.lineCount + 1;
   sink.appendRaw(`class ${ir.moduleName}${extendsClause} {`);
+  tagClassDeclLine(sink, ir, classLineStart);
   if (ir.needsEventHelper) {
     appendJavascriptEventHelper(sink);
   }
-  for (const v of ir.variables) {
-    const val = typeof v.defaultValue === 'string' ? `"${v.defaultValue}"` : v.defaultValue;
-    sink.appendRaw(`    this.${v.name} = ${val};`);
-  }
-  for (const f of ir.functions) {
-    sink.appendRaw(`\n${formatFunctionDefHeader(f, 'javascript', functionNeedsAsync(ir, f.id))}`);
-    appendFunctionBody(sink, ir, f.id, '    // empty', ir.environmentManifest);
-    sink.appendRaw('  }');
+  if (ir.useLegacyPreamble) {
+    appendLegacyPreamble(sink, ir);
+  } else {
+    appendIrMembers(sink, ir);
   }
   const bodyCtx = printContextForIr(ir, bodyIndent('javascript'), ir.environmentManifest);
   if (ir.startEvent?.isExplicitStartEvent) {

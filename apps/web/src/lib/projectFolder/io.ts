@@ -54,6 +54,7 @@ function buildManifest(snapshot: ProjectSnapshot): VvsProjectManifest {
     settings: {
       autoCompile: snapshot.autoCompile,
       autoSave: snapshot.autoSave ?? false,
+      activeClassId: snapshot.activeClassId,
     },
     graphs: {
       main: 'graphs/main.graph.json',
@@ -117,6 +118,9 @@ export async function loadProjectFromFolder(
   const functions =
     (await readJsonFile<ProjectSnapshot['functions']>(root, `${SYMBOLS_DIR}/functions.json`)) ??
     [];
+  const classes =
+    (await readJsonFile<ProjectSnapshot['classes']>(root, `${SYMBOLS_DIR}/classes.json`)) ??
+    undefined;
 
   const documents: ProjectSnapshot['documents'] = {};
   const mainDoc = await readJsonFile<ProjectSnapshot['documents'][string]>(
@@ -133,7 +137,26 @@ export async function loadProjectFromFolder(
     if (doc) documents[fnId] = doc;
   }
 
+  if (classes) {
+    for (const cls of classes) {
+      const tabId = cls.graphTabId ?? cls.id;
+      if (tabId === 'main' || documents[tabId]) continue;
+      const rel = `graphs/${sanitizeFileStem(cls.name)}.class.graph.json`;
+      const doc = await readJsonFile<ProjectSnapshot['documents'][string]>(root, `${VVS_DIR}/${rel}`);
+      if (doc) documents[tabId] = doc;
+    }
+  }
+
   const openTabs: GraphTab[] = [{ id: 'main', type: 'main', name: 'Main graph' }];
+  if (classes) {
+    for (const cls of classes) {
+      const tabId = cls.graphTabId ?? cls.id;
+      if (tabId === 'main') continue;
+      if (documents[tabId]) {
+        openTabs.push({ id: tabId, type: 'class', name: cls.name });
+      }
+    }
+  }
   for (const tab of Object.keys(documents)) {
     if (tab === 'main') continue;
     const fn = functions.find((f) => f.id === tab);
@@ -148,13 +171,18 @@ export async function loadProjectFromFolder(
   const envVersion = integration.environmentVersion;
 
   const snapshot = normalizeProjectSnapshot({
-    version: 2,
+    version: classes ? 3 : 2,
     savedAt: new Date().toISOString(),
     projectDetails: {
       moduleName: manifest.module.name,
       extendsType: manifest.module.extends,
       description: manifest.description,
     },
+    classes,
+    activeClassId:
+      typeof manifest.settings.activeClassId === 'string'
+        ? manifest.settings.activeClassId
+        : undefined,
     variables,
     events,
     functions,
@@ -195,16 +223,21 @@ export async function saveProjectToFolder(
   }
 
   for (const tab of persisted.openTabs) {
-    if (tab.type !== 'function') continue;
+    if (tab.type !== 'function' && tab.type !== 'class') continue;
+    if (tab.id === 'main') continue;
     const doc = persisted.documents[tab.id];
     if (!doc) continue;
-    const rel = functionGraphRelativePath(tab);
+    const rel =
+      tab.type === 'class'
+        ? `graphs/${sanitizeFileStem(tab.name)}.class.graph.json`
+        : functionGraphRelativePath(tab);
     await writeJsonFile(root, `${VVS_DIR}/${rel}`, doc);
   }
 
   await writeJsonFile(root, `${SYMBOLS_DIR}/variables.json`, persisted.variables);
   await writeJsonFile(root, `${SYMBOLS_DIR}/events.json`, persisted.events ?? []);
   await writeJsonFile(root, `${SYMBOLS_DIR}/functions.json`, persisted.functions);
+  await writeJsonFile(root, `${SYMBOLS_DIR}/classes.json`, persisted.classes);
 }
 
 export async function createProjectInFolder(

@@ -1,11 +1,27 @@
 import { describe, expect, test } from 'bun:test';
 import { migrateTextShapedAlignment } from './fidelityMigration';
 import type { ProjectSnapshot } from './snapshot';
+import { createClassSymbol, MAIN_CLASS_ID } from './symbols';
+
+function v3Fixture(
+  partial: Omit<ProjectSnapshot, 'version' | 'classes' | 'activeClassId'>
+): ProjectSnapshot {
+  return {
+    ...partial,
+    version: 3,
+    classes: [
+      createClassSymbol(partial.projectDetails.moduleName, {
+        id: MAIN_CLASS_ID,
+        graphTabId: 'main',
+      }),
+    ],
+    activeClassId: MAIN_CLASS_ID,
+  };
+}
 
 describe('migrateTextShapedAlignment', () => {
   test('macro tab becomes function tab with symbol', () => {
-    const snapshot: ProjectSnapshot = {
-      version: 2,
+    const snapshot = v3Fixture({
       savedAt: new Date().toISOString(),
       projectDetails: { moduleName: 'Test', extendsType: '', description: '' },
       variables: [],
@@ -68,7 +84,7 @@ describe('migrateTextShapedAlignment', () => {
         },
       },
       installedLibrary: [],
-    };
+    });
 
     const migrated = migrateTextShapedAlignment(snapshot);
     expect(migrated.openTabs.find((t) => t.id === 'macro-1')?.type).toBe('function');
@@ -81,8 +97,7 @@ describe('migrateTextShapedAlignment', () => {
   });
 
   test('use_macro node becomes call_function', () => {
-    const snapshot: ProjectSnapshot = {
-      version: 2,
+    const snapshot = v3Fixture({
       savedAt: new Date().toISOString(),
       projectDetails: { moduleName: 'Test', extendsType: '', description: '' },
       variables: [],
@@ -117,7 +132,7 @@ describe('migrateTextShapedAlignment', () => {
         },
       },
       installedLibrary: [],
-    };
+    });
 
     const migrated = migrateTextShapedAlignment(snapshot);
     const node = migrated.documents.main!.nodes[0]!;
@@ -128,8 +143,7 @@ describe('migrateTextShapedAlignment', () => {
   });
 
   test('event_dispatch node becomes event_emit', () => {
-    const snapshot: ProjectSnapshot = {
-      version: 2,
+    const snapshot = v3Fixture({
       savedAt: new Date().toISOString(),
       projectDetails: { moduleName: 'Test', extendsType: '', description: '' },
       variables: [],
@@ -162,7 +176,7 @@ describe('migrateTextShapedAlignment', () => {
         },
       },
       installedLibrary: [],
-    };
+    });
 
     const migrated = migrateTextShapedAlignment(snapshot);
     const node = migrated.documents.main!.nodes[0]!;
