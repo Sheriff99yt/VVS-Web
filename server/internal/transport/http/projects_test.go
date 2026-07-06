@@ -2,16 +2,22 @@ package httptransport_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"vvs-server/internal/core/auth"
 	"vvs-server/internal/core/domain"
 	"vvs-server/internal/core/services"
 	"vvs-server/internal/core/store"
 	httptransport "vvs-server/internal/transport/http"
 )
+
+func withDevUser(req *http.Request) *http.Request {
+	return req.WithContext(auth.WithUserID(req.Context(), auth.DevUserID))
+}
 
 func TestProjectsHandlerCRUD(t *testing.T) {
 	st := store.NewMemoryStore()
@@ -30,7 +36,7 @@ func TestProjectsHandlerCRUD(t *testing.T) {
 	}
 	body, _ := json.Marshal(snap)
 
-	putReq := httptest.NewRequest(http.MethodPut, "/api/projects/demo", bytes.NewReader(body))
+	putReq := withDevUser(httptest.NewRequest(http.MethodPut, "/api/projects/demo", bytes.NewReader(body)))
 	putReq.Header.Set("Content-Type", "application/json")
 	putRec := httptest.NewRecorder()
 	handler.ServeHTTP(putRec, putReq)
@@ -38,7 +44,7 @@ func TestProjectsHandlerCRUD(t *testing.T) {
 		t.Fatalf("PUT status %d: %s", putRec.Code, putRec.Body.String())
 	}
 
-	getReq := httptest.NewRequest(http.MethodGet, "/api/projects/demo", nil)
+	getReq := withDevUser(httptest.NewRequest(http.MethodGet, "/api/projects/demo", nil))
 	getRec := httptest.NewRecorder()
 	handler.ServeHTTP(getRec, getReq)
 	if getRec.Code != http.StatusOK {
@@ -52,7 +58,7 @@ func TestProjectsHandlerCRUD(t *testing.T) {
 		t.Fatalf("expected HTTPTest, got %s", loaded.ProjectDetails.ModuleName)
 	}
 
-	listReq := httptest.NewRequest(http.MethodGet, "/api/projects", nil)
+	listReq := withDevUser(httptest.NewRequest(http.MethodGet, "/api/projects", nil))
 	listRec := httptest.NewRecorder()
 	handler.ServeHTTP(listRec, listReq)
 	if listRec.Code != http.StatusOK {
@@ -72,7 +78,8 @@ func (stubRunner) Compile(snapshotJSON []byte) ([]byte, error) {
 
 func TestCompileHandler(t *testing.T) {
 	st := store.NewMemoryStore()
-	_ = services.SaveProject(st, "demo", domain.ProjectSnapshot{
+	ctx := auth.WithUserID(context.Background(), auth.DevUserID)
+	_ = services.SaveProject(ctx, st, "demo", domain.ProjectSnapshot{
 		Version:        2,
 		ActiveGraphTab: "main",
 		TargetLanguage: "python",
@@ -80,7 +87,7 @@ func TestCompileHandler(t *testing.T) {
 	})
 
 	handler := httptransport.NewCompileHandler(st, stubRunner{})
-	req := httptest.NewRequest(http.MethodPost, "/api/projects/demo/compile", nil)
+	req := withDevUser(httptest.NewRequest(http.MethodPost, "/api/projects/demo/compile", nil))
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {

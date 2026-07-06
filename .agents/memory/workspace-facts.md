@@ -6,13 +6,15 @@ Stable facts agents should assume without re-exploring the tree.
 
 - Monorepo root: `VVS Web/` — **public MIT repo** (see `CONTRIBUTING.md`)
 - Implemented packages: `packages/graph-types`, `packages/syntax-registry`, `packages/language-profiles`, `packages/syntax-packs`, `packages/transpiler`, `packages/environment-templates`
-- Go server: `server/` — registry HTTP, project API, local MCP; **Phase 2:** `pgx` → self-hosted Supabase Postgres ([deployment.md](../../docs/deployment.md))
+- Go server: `server/` — registry HTTP, project REST, compile, local MCP SSE; **Phase 2:** `ProjectStore` (`MemoryStore` | `PostgresStore` via `pgx`), JWT middleware ([deployment.md](../../docs/deployment.md))
 
 ## Frontend entry points
 
 - App shell: `apps/web/src/components/layout/EditorLayout.tsx` — mounts `GraphWorkspaceHost`, `EnvironmentImportModal`
-- Graph edit canvas: `apps/web/src/components/graph/GraphCanvas.tsx`
+- Start screen: `apps/web/src/components/start/StartScreen.tsx` — examples, explore, recents, `AuthButton`
+- Graph edit canvas: `apps/web/src/components/graph/GraphCanvas.tsx` — includes `GraphSelectionToolbar`
 - Floating inspector: `apps/web/src/components/layout/GraphFloatingDetails.tsx` — includes `CallNodeOverloadPanel`
+- Auth UI: `components/auth/AuthButton.tsx`, `hooks/useAuthSession.ts`, `lib/auth/session.ts`, `lib/auth/supabaseClient.ts`
 - Graph settings: `GraphSettingsModal.tsx` — codegen target, COA, syntax pack lock, environment link
 - Project state: `apps/web/src/contexts/ProjectContext.tsx` — includes `syntaxPackLock`
 - API facade: `apps/web/src/lib/api/` — mock + HTTP via `NEXT_PUBLIC_API_MODE`
@@ -30,6 +32,8 @@ Stable facts agents should assume without re-exploring the tree.
 | `environmentCatalog.ts` | Bootstrap built-in + imported environment manifests |
 | `examples/simpleExample.ts` | Hello World template |
 | `examples/complexExample.ts` | Calculator template |
+| `exampleProjects.ts` | StartScreen `EXAMPLE_PROJECTS` cards |
+| `recentProjectsSubscribe.ts` | Deferred localStorage recents (`useSyncExternalStore`) |
 
 ## Key packages
 
@@ -44,8 +48,10 @@ Stable facts agents should assume without re-exploring the tree.
 
 - MCP URL (Connect AI modal): `http://localhost:8080/mcp` — production: HTTPS + JWT ([deployment.md](../../docs/deployment.md))
 - API base: `NEXT_PUBLIC_API_URL` default `http://localhost:8080`
-- HTTP mode: `NEXT_PUBLIC_API_MODE=http` — `VvsApi.saveProject`, `loadProject`, `listProjects`, `compileProject`, `probeMcp`
-- Persistence target: Go **`pgx`** → self-hosted Postgres JSONB — not PostgREST
+- HTTP mode: `NEXT_PUBLIC_API_MODE=http` — `VvsApi.saveProject`, `loadProject`, `listProjects`, `compileProject`, `probeMcp`, `getHealth`
+- Auth env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — JWT in `sessionStorage` → Bearer on project APIs
+- Go env: `DATABASE_URL` (postgres), `AUTH_REQUIRED`, `SUPABASE_JWT_SECRET`
+- Persistence: Go **`pgx`** → self-hosted Postgres JSONB — **not** PostgREST
 
 ## Agent assets
 

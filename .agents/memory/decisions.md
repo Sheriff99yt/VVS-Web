@@ -31,7 +31,7 @@ Choices agents must not undo without explicit user approval.
 - **UI-first skeleton** with mock data until contracts are stable
 - **Depth-first UI backlog** — complete sections in `incomplete-ui.md` order (1→8); finish open rows in a section before skipping ahead
 - **One slice per API loop iteration** — see `docs/ui_api_delivery_loop.md`
-- UI components should call **`VvsApi` facade** (not direct `MockApi`) once A1/U20 is implemented; TopNav still uses `MockApi` until then
+- UI components call **`VvsApi` facade** — TopNav `persistSnapshot` uses `VvsApi.saveProject` in HTTP mode
 - **TopNav → canvas** uses `graphActions` custom events, not synthetic `KeyboardEvent`
 
 ## Graph editor (skeleton phase status)
@@ -44,7 +44,7 @@ Done for daily editing UX (sections 1–3 of `incomplete-ui.md`):
 - `data_array` pin geometry; simulation mock highlight
 - Centralized wire validation in `graphWiring.ts` (single-wire-per-input, cycle guards)
 
-Still open: File New/Import polish, Library backend, **PostgresStore + VPS deploy** — see `docs/deployment.md` and `incomplete-ui.md` sections 4–8.
+Still open: Library backend, **production VPS deploy** (PostgresStore + JWT middleware shipped locally) — see `docs/deployment.md` and `docs/ui_api_delivery_loop.md`.
 
 ## Public repository & product direction
 
@@ -77,7 +77,7 @@ Shipped in monorepo packages + web UI:
 - **Extract to function** — Ctrl+Shift+E / View menu
 - **Go registry** — `GET /registry/nodes`, `GET /registry/core-pack` (MCP transport TBD)
 
-Still partial: full analyze→lower→emit IR module split, ambiguous overload picker on call nodes, removing all label-based semantics from hot paths.
+Still partial: syntax pack MCP tools (`propose_syntax_delta`, `run_rosetta` wire TBD); JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today).
 
 ## Node design: property schema & conversion (July 2026)
 

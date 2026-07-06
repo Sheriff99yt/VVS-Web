@@ -159,6 +159,79 @@ go run ./cmd/vvs-server
 # curl http://localhost:8080/registry/nodes
 ```
 
+### Phase 2 — Postgres persistence (optional)
+
+Local dev defaults to an **in-memory** project store (no database). To test **Postgres** persistence:
+
+```powershell
+# From repository root — Postgres + GoTrue auth gateway
+docker compose up -d postgres gotrue auth-gateway
+```
+
+Set these env vars when starting the Go server (PowerShell example):
+
+```powershell
+$env:DATABASE_URL = "postgres://vvs:vvs_dev_password@localhost:5432/vvs?sslmode=disable"
+$env:SUPABASE_JWT_SECRET = "super-secret-jwt-token-with-at-least-32-characters-long"
+$env:AUTH_REQUIRED = "false"   # dev mode — uses DEV_USER_ID when no Bearer token
+cd server
+go run ./cmd/vvs-server
+```
+
+`GET /health` reports `"store": "postgres"` and `"auth": "dev"` when configured correctly.
+
+To test **auth-required** mode (rejects unauthenticated API/MCP calls):
+
+```powershell
+$env:AUTH_REQUIRED = "true"
+$env:SUPABASE_JWT_SECRET = "super-secret-jwt-token-with-at-least-32-characters-long"
+# Bearer token must match GoTrue JWT secret above
+```
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `DATABASE_URL` | No | Postgres connection string; omit for in-memory store |
+| `AUTH_REQUIRED` | No | `true` = reject requests without valid JWT; default `false` |
+| `SUPABASE_JWT_SECRET` | When `AUTH_REQUIRED=true` or Bearer tokens present | HS256 secret — **must match** GoTrue `GOTRUE_JWT_SECRET` in docker-compose |
+| `DEV_USER_ID` | No | UUID used when `AUTH_REQUIRED=false` and no Bearer token (default: fixed dev UUID) |
+
+### Phase 2 — Supabase Auth (GoTrue, optional)
+
+Minimal self-hosted auth for local/VPS dev (Postgres + GoTrue + nginx `/auth/v1` gateway):
+
+```powershell
+docker compose up -d postgres gotrue auth-gateway
+```
+
+Add to `apps/web/.env.local` (see `.env.example` for the standard dev anon key):
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+```
+
+GoTrue dev settings (in `docker-compose.yml`):
+
+- `GOTRUE_MAILER_AUTOCONFIRM=true` — email sign-up works without SMTP
+- `GOTRUE_JWT_SECRET` — must match Go server `SUPABASE_JWT_SECRET`
+
+**GitHub OAuth (optional v1):** create a GitHub OAuth app with callback `http://localhost:54321/auth/v1/callback`, then:
+
+```powershell
+$env:GOTRUE_EXTERNAL_GITHUB_ENABLED = "true"
+$env:GOTRUE_GITHUB_CLIENT_ID = "your-client-id"
+$env:GOTRUE_GITHUB_CLIENT_SECRET = "your-client-secret"
+docker compose up -d gotrue auth-gateway
+```
+
+In `apps/web/.env.local`: `NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=true`
+
+Without GitHub env vars, **email/password auth works** for v1.
+
+Frontend: set `NEXT_PUBLIC_API_MODE=http` in `apps/web/.env.local`. Sign in via **AuthButton** (TopNav); the access token is stored in `session.ts` and sent as `Authorization: Bearer …` on project APIs and MCP probe. When signed in, the editor loads/saves via Go API first (Postgres) with localStorage as cache.
+
+Production MCP: set `NEXT_PUBLIC_MCP_URL=https://api.your-domain/mcp` and pass the same Bearer token in your IDE MCP config when `AUTH_REQUIRED=true`.
+
 ### Connect Cursor (or Claude) to local MCP
 
 1. Start the Go server: `.\tools\start_app.ps1` (or `go run ./cmd/vvs-server` from `server/`)

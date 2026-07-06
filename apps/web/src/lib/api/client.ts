@@ -1,4 +1,5 @@
 import { ProjectSnapshot } from '@/types/projectSnapshot';
+import { authHeaders } from '@/lib/auth/session';
 import { ApiError } from './errors';
 import type {
   HealthResponse,
@@ -20,14 +21,20 @@ async function parseJson<T>(res: Response): Promise<T> {
 }
 
 export async function httpGetHealth(): Promise<HealthResponse> {
-  const res = await fetch(`${getBaseUrl()}/health`);
+  const res = await fetch(`${getBaseUrl()}/health`, {
+    headers: apiHeaders(),
+  });
   return parseJson<HealthResponse>(res);
+}
+
+function apiHeaders(extra?: Record<string, string>): Record<string, string> {
+  return { ...authHeaders(), ...extra };
 }
 
 export async function httpSaveProject(projectId: string, snapshot: ProjectSnapshot): Promise<boolean> {
   const res = await fetch(`${getBaseUrl()}/api/projects/${encodeURIComponent(projectId)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: apiHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(snapshot),
   });
   await parseJson(res);
@@ -35,23 +42,40 @@ export async function httpSaveProject(projectId: string, snapshot: ProjectSnapsh
 }
 
 export async function httpLoadProject(projectId: string): Promise<ProjectSnapshot | null> {
-  const res = await fetch(`${getBaseUrl()}/api/projects/${encodeURIComponent(projectId)}`);
+  const res = await fetch(`${getBaseUrl()}/api/projects/${encodeURIComponent(projectId)}`, {
+    headers: apiHeaders(),
+  });
   if (res.status === 404) return null;
   return parseJson<ProjectSnapshot>(res);
 }
 
 export async function httpListProjects(): Promise<ProjectListEntry[]> {
-  const res = await fetch(`${getBaseUrl()}/api/projects`);
-  return parseJson<ProjectListEntry[]>(res);
+  const res = await fetch(`${getBaseUrl()}/api/projects`, {
+    headers: apiHeaders(),
+  });
+  const data = await parseJson<{ projects: ProjectListEntry[] }>(res);
+  return data.projects ?? [];
 }
 
 export async function httpCompileProject(projectId: string): Promise<{ ok: true }> {
   const res = await fetch(
     `${getBaseUrl()}/api/projects/${encodeURIComponent(projectId)}/compile`,
-    { method: 'POST' }
+    { method: 'POST', headers: apiHeaders() }
   );
-  await parseJson(res);
-  return { ok: true };
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new ApiError(
+        'Project not found on server — save the project first (Ctrl+S), then generate again.',
+        404
+      );
+    }
+    const detail = (await res.text()).trim();
+    throw new ApiError(
+      detail ? `Compile failed: ${detail}` : `Compile failed: ${res.status} ${res.statusText}`,
+      res.status
+    );
+  }
+  return res.json() as Promise<{ ok: true }>;
 }
 
 export async function httpImportEnvironment(
@@ -65,12 +89,19 @@ export async function httpImportEnvironment(
   return parseJson<EnvironmentCatalogEntry>(res);
 }
 
-export async function httpProbeMcp(url: string): Promise<McpProbeResult> {
+export async function httpProbeMcp(
+  url: string,
+  extraHeaders?: Record<string, string>
+): Promise<McpProbeResult> {
   try {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 5000);
 
-    const res = await fetch(url, { method: 'GET', signal: controller.signal });
+    const res = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: extraHeaders,
+    });
     window.clearTimeout(timeout);
 
     if (res.ok) {

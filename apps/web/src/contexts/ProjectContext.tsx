@@ -34,6 +34,9 @@ interface ProjectContextValue {
   setFunctions: React.Dispatch<React.SetStateAction<ProjectFunction[]>>;
   selection: SelectionState;
   setSelection: React.Dispatch<React.SetStateAction<SelectionState>>;
+  /** All selected graph node ids on the active canvas (primary first). */
+  selectedNodeIds: string[];
+  setSelectedNodeIds: React.Dispatch<React.SetStateAction<string[]>>;
   openTabs: GraphTab[];
   setOpenTabs: React.Dispatch<React.SetStateAction<GraphTab[]>>;
   activeGraphTab: string;
@@ -118,6 +121,7 @@ export function ProjectProvider({
   const [events, setEvents] = useState<ProjectEventDefinition[]>(initialSnapshot.events ?? []);
   const [functions, setFunctions] = useState<ProjectFunction[]>(initialSnapshot.functions);
   const [selection, setSelection] = useState<SelectionState>({ type: 'graph', id: null });
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [openTabs, setOpenTabs] = useState<GraphTab[]>(
     initialSnapshot.openTabs.length > 0
       ? initialSnapshot.openTabs
@@ -256,6 +260,8 @@ export function ProjectProvider({
         setFunctions,
         selection,
         setSelection,
+        selectedNodeIds,
+        setSelectedNodeIds,
         openTabs,
         setOpenTabs,
         activeGraphTab,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getRecentProjectEntry, loadProjectFromStore, loadProjectDraft } from '@/lib/projectStore';
+import { getRecentProjectEntry, loadProjectFromStore } from '@/lib/projectStore';
+import { loadProjectPreferred } from '@/lib/cloudPersistence';
 import {
   getFolderHandle,
   loadProjectFromFolder,
@@ -8,8 +9,11 @@ import {
 import type { EditorBootstrap } from '@/types/projectRegistry';
 import { isFolderRecentEntry } from '@/types/projectRegistry';
 
-function resolveLocalBootstrap(projectId: string, view: string | null): EditorBootstrap | null {
-  const snapshot = loadProjectFromStore(projectId) ?? loadProjectDraft(projectId);
+async function resolveLocalBootstrapAsync(
+  projectId: string,
+  view: string | null
+): Promise<EditorBootstrap | null> {
+  const snapshot = await loadProjectPreferred(projectId);
   if (!snapshot) return null;
   const entry = getRecentProjectEntry(projectId);
   const isDraft = loadProjectFromStore(projectId) === null;
@@ -84,7 +88,7 @@ export function useEditorBootstrap(
       if (isFolderRecentEntry(entry ?? { id: projectId, moduleName: '', savedAt: '', source: 'recent' }) || storedHandle) {
         resolved = await resolveFolderBootstrap(projectId, view);
       } else {
-        resolved = resolveLocalBootstrap(projectId, view);
+        resolved = await resolveLocalBootstrapAsync(projectId, view);
       }
 
       if (!cancelled) {

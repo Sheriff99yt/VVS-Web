@@ -12,8 +12,11 @@ import {
   Library,
   FolderPlus,
   FolderSearch,
+  BookOpen,
+  Map,
 } from 'lucide-react';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
+import { EXAMPLE_PROJECTS, type ExampleLevel } from '@/lib/exampleProjects';
 import {
   createProjectId,
   loadProjectFromStore,
@@ -35,7 +38,6 @@ import {
   createProjectInFolder,
   folderKeyFromHandleName,
   getFolderHandle,
-  isFolderPickerSupported,
   loadProjectFromFolder,
   pickProjectFolder,
   storeFolderHandle,
@@ -44,6 +46,7 @@ import {
   linkLocalProjectToFolder,
 } from '@/lib/projectFolder';
 import { ProjectFolderBrowserModal } from '@/components/start/ProjectFolderBrowserModal';
+import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 
 function openLocalInEditor(
   router: ReturnType<typeof useRouter>,
@@ -74,6 +77,18 @@ function openFolderInEditor(
   router.push(`/editor?${params.toString()}`);
 }
 
+function openEditorView(
+  router: ReturnType<typeof useRouter>,
+  view: 'library' | 'roadmap',
+  section?: string
+) {
+  const id = createProjectId();
+  saveProjectDraft(id, createEmptyProjectSnapshot());
+  const params = new URLSearchParams({ id, view });
+  if (section) params.set('section', section);
+  router.push(`/editor?${params.toString()}`);
+}
+
 const SOURCE_LABEL: Record<RecentProjectEntry['source'], string> = {
   new: 'New',
   recent: 'Saved',
@@ -86,7 +101,7 @@ export function StartScreen() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recent = useRecentProjects();
-  const [folderPickerReady, setFolderPickerReady] = useState(false);
+  const folderPickerReady = useFolderPickerSupported();
   const [folderBrowser, setFolderBrowser] = useState<{
     handle: FileSystemDirectoryHandle;
     projectName: string;
@@ -94,7 +109,6 @@ export function StartScreen() {
 
   useEffect(() => {
     initRecentProjects();
-    setFolderPickerReady(isFolderPickerSupported());
   }, []);
 
   const refreshRecent = () => notifyRecentProjectsChanged();
@@ -102,6 +116,21 @@ export function StartScreen() {
   const handleNewProject = () => {
     const id = createProjectId();
     openLocalInEditor(router, id, createEmptyProjectSnapshot(), 'new');
+  };
+
+  const handleOpenExample = (level: ExampleLevel) => {
+    try {
+      const def = EXAMPLE_PROJECTS.find((e) => e.level === level);
+      if (!def) return;
+      const id = createProjectId();
+      openLocalInEditor(router, id, def.create(), 'demo');
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : 'Could not open this example. Check browser storage settings and try again.'
+      );
+    }
   };
 
   const handleNewProjectFolder = async () => {
@@ -150,12 +179,6 @@ export function StartScreen() {
       folderLabel: handle.name,
     });
     openFolderInEditor(router, folderKey);
-  };
-
-  const handleOpenLibrary = () => {
-    const id = createProjectId();
-    saveProjectDraft(id, createEmptyProjectSnapshot());
-    router.push(`/editor?id=${id}&view=library&section=templates`);
   };
 
   const handleOpenRecent = async (entry: RecentProjectEntry) => {
@@ -277,76 +300,148 @@ export function StartScreen() {
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-8 py-10 space-y-8">
-          <button
-            type="button"
-            onClick={handleOpenLibrary}
-            className="w-full flex items-center gap-4 p-5 rounded-lg border border-indigo-500/30 bg-indigo-500/5 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-colors text-left group"
-          >
-            <div className="p-3 rounded-lg bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-500/25 transition-colors">
-              <Library size={24} />
+        <div className="max-w-5xl mx-auto px-8 py-10 space-y-10">
+          <section>
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">
+              Start
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {folderPickerReady ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleNewProjectFolder()}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50 text-sm text-emerald-200 transition-colors"
+                  >
+                    <FolderPlus size={16} className="text-emerald-400" />
+                    New project in folder
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleOpenProjectFolder()}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
+                  >
+                    <FolderOpen size={16} className="text-blue-400" />
+                    Open project folder
+                  </button>
+                </>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleNewProject}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
+              >
+                <FilePlus size={16} className="text-emerald-400" />
+                New blank project
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
+              >
+                <Upload size={16} className="text-blue-400" />
+                Open file
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-zinc-100">Browse project templates</div>
-              <div className="text-xs text-zinc-500 mt-0.5">
-                Environments, examples, and community assets — organized by category
-              </div>
-            </div>
-            <ChevronRight size={18} className="text-zinc-600 shrink-0 group-hover:text-indigo-400 transition-colors" />
-          </button>
+          </section>
 
-          <div className="flex flex-wrap gap-2">
-            {folderPickerReady ? (
-              <>
+          <section>
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <BookOpen size={14} /> Examples
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {EXAMPLE_PROJECTS.map((example) => (
                 <button
+                  key={example.id}
                   type="button"
-                  onClick={() => void handleNewProjectFolder()}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50 text-sm text-emerald-200 transition-colors"
+                  onClick={() => handleOpenExample(example.level)}
+                  className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group"
                 >
-                  <FolderPlus size={16} className="text-emerald-400" />
-                  New project in folder
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded ${
+                        example.level === 'simple'
+                          ? 'text-emerald-400 bg-emerald-500/10'
+                          : 'text-indigo-400 bg-indigo-500/10'
+                      }`}
+                    >
+                      {example.level === 'simple' ? 'Simple' : 'Complex'}
+                    </span>
+                    <span className="text-[11px] text-zinc-600 font-mono">{example.moduleName}</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-100 mt-2 group-hover:text-white transition-colors">
+                    {example.title}
+                  </h3>
+                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{example.description}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {example.highlights.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[10px] text-zinc-500 bg-zinc-800/80 px-2 py-0.5 rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void handleOpenProjectFolder()}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
-                >
-                  <FolderOpen size={16} className="text-blue-400" />
-                  Open project folder
-                </button>
-              </>
-            ) : null}
-            <button
-              type="button"
-              onClick={handleNewProject}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
-            >
-              <FilePlus size={16} className="text-emerald-400" />
-              New blank project
-            </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
-            >
-              <Upload size={16} className="text-blue-400" />
-              Open file
-            </button>
-          </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">
+              Explore
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => openEditorView(router, 'library', 'templates')}
+                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-indigo-500/40 transition-colors text-left group"
+              >
+                <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
+                  <Library size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-zinc-100">Library</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">
+                    Project templates, environments, and community assets
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-indigo-400 transition-colors" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openEditorView(router, 'roadmap')}
+                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-500/40 transition-colors text-left group"
+              >
+                <div className="p-2 rounded bg-zinc-500/10 text-zinc-300 group-hover:bg-zinc-500/20 transition-colors">
+                  <Map size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-zinc-100">Roadmap</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">
+                    Shipped features and what&apos;s coming next
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-zinc-300 transition-colors" />
+              </button>
+            </div>
+          </section>
 
           <section>
             <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-4">
               <Clock size={14} /> Recent projects
             </h2>
             {recent.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-zinc-800 py-16 text-center">
+              <div className="rounded-lg border border-dashed border-zinc-800 py-12 text-center">
                 <p className="text-zinc-500 text-sm mb-3">No recent projects yet.</p>
                 <button
                   type="button"
-                  onClick={handleOpenLibrary}
+                  onClick={() => handleOpenExample('simple')}
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
-                  Pick a template from the library →
+                  Try the Hello World example →
                 </button>
               </div>
             ) : (

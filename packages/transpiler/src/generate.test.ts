@@ -196,6 +196,32 @@ describe('generateMockCode', () => {
     expect(result.sourceMap['calc-dispatch']?.length).toBeGreaterThan(0);
   });
 
+  test('nested branch body nodes map to sourceMap', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const main = snapshot.documents!.main;
+
+    const result = generateMockTranspileResult({
+      moduleName: snapshot.projectDetails.moduleName,
+      extendsType: snapshot.projectDetails.extendsType,
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      nodes: main.nodes,
+      edges: main.edges,
+      tabId: 'main',
+      documents: snapshot.documents,
+    });
+
+    expect(result.sourceMap['calc-print-done']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-print-result']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-to-string']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-get-result']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-print-skip']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-dispatch-clear']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-get-show']?.length).toBeGreaterThan(0);
+  });
+
   test('import nodes hoist to line 1 with sourceMap and skip body', () => {
     const nodes = [
       {

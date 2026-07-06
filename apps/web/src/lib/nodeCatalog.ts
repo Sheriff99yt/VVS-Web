@@ -1,7 +1,14 @@
 import { list } from '@vvs/syntax-registry';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
-import type { LibraryCategory } from '@/types/ui';
+import type { LibraryCategory, LibraryNodeTemplate } from '@/types/ui';
 import type { FunctionSymbol, TargetLanguage } from '@/types/graph';
+
+/** Stable React key for spawn menu rows (kindId alone is not unique for dynamic symbols). */
+export function spawnMenuItemKey(item: LibraryNodeTemplate, index: number): string {
+  const symbolId = item.linkedGraphId ?? item.graphBinding?.symbolId;
+  if (symbolId) return `${item.type}:${symbolId}`;
+  return `${item.type}:${item.label}:${index}`;
+}
 
 /** Core spawn categories from the unified registry (canonical pin ids). */
 export function buildCoreCategories(

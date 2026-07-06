@@ -11,11 +11,11 @@ import (
 )
 
 type CompileHandler struct {
-	Store  *store.MemoryStore
+	Store  store.ProjectStore
 	Runner services.TranspilerRunner
 }
 
-func NewCompileHandler(st *store.MemoryStore, runner services.TranspilerRunner) *CompileHandler {
+func NewCompileHandler(st store.ProjectStore, runner services.TranspilerRunner) *CompileHandler {
 	return &CompileHandler{Store: st, Runner: runner}
 }
 
@@ -33,7 +33,7 @@ func (h *CompileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := services.CompileProject(h.Store, id, h.Runner)
+	result, err := services.CompileProject(r.Context(), h.Store, id, h.Runner)
 	if err != nil {
 		if errors.Is(err, services.ErrProjectNotFound) {
 			http.Error(w, "project not found", http.StatusNotFound)

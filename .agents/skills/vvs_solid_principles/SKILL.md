@@ -64,7 +64,7 @@ Companion rules: `docs/naming_and_product_direction.md` · `docs/ui_api_delivery
 | Abstraction | Implementations must… |
 |-------------|------------------------|
 | `VvsApi` (mock / http) | Same return types, same errors for missing project |
-| `GraphRepository` (memory / Supabase) | `GetGraph` / `SaveGraph` honor same invariants |
+| `ProjectStore` (memory / postgres) | `Get` / `Save` / `List` honor same invariants; user-scoped by `userID` |
 | Transpiler emitter | Same IR in → valid code out; no emitter that skips validation others enforce |
 
 **Smell:** Mock save succeeds but HTTP save returns a different JSON shape — UI breaks when toggling `NEXT_PUBLIC_API_MODE`.
@@ -75,7 +75,7 @@ Companion rules: `docs/naming_and_product_direction.md` · `docs/ui_api_delivery
 
 **Depend only on methods you use.**
 
-**Go:** Keep `server/internal/core/ports` split — do not merge `GraphRepository`, `LibraryRepository`, `WebSocketHub`, `MCPServer` into one mega-interface.
+**Go:** Keep store/service boundaries split — `ProjectStore` is narrow persistence; services own domain rules. Do not merge store, library, WebSocket, and MCP concerns into one mega-interface.
 
 **Frontend:** Avoid a single `useApp()` god hook exporting 40 fields. Prefer `useProject()` for project scope; graph hooks for canvas.
 
@@ -94,11 +94,11 @@ UI components  →  VvsApi (abstraction)
                       ↓
               mock.ts | client.ts (details)
 
-HTTP handlers  →  GraphService (abstraction)
+HTTP handlers  →  project/compile services (abstraction)
                       ↓
-              GraphRepository (port)
+              ProjectStore (port)
                       ↓
-              postgres | memory (details)
+              PostgresStore | MemoryStore (details)
 
 Transpiler       →  Emitter interface
                       ↓

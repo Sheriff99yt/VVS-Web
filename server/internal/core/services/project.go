@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -10,17 +11,20 @@ import (
 
 var ErrProjectNotFound = errors.New("project not found")
 
-// LoadProject returns a stored snapshot by project id.
-func LoadProject(st *store.MemoryStore, id string) (*domain.ProjectSnapshot, error) {
-	snap, ok := st.Get(id)
-	if !ok {
-		return nil, ErrProjectNotFound
+// LoadProject returns a stored snapshot by project id for the request user.
+func LoadProject(ctx context.Context, st store.ProjectStore, id string) (*domain.ProjectSnapshot, error) {
+	snap, err := st.Get(ctx, userIDFrom(ctx), id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrProjectNotFound
+		}
+		return nil, err
 	}
 	return &snap, nil
 }
 
-// SaveProject persists a snapshot under the given project id.
-func SaveProject(st *store.MemoryStore, id string, snap domain.ProjectSnapshot) error {
+// SaveProject persists a snapshot under the given project id for the request user.
+func SaveProject(ctx context.Context, st store.ProjectStore, id string, snap domain.ProjectSnapshot) error {
 	if snap.Version == 0 {
 		snap.Version = 2
 	}
@@ -33,24 +37,10 @@ func SaveProject(st *store.MemoryStore, id string, snap domain.ProjectSnapshot) 
 	if _, ok := snap.Documents["main"]; !ok {
 		snap.Documents["main"] = domain.GraphDocument{Nodes: []domain.Node{}, Edges: []domain.Edge{}}
 	}
-	st.Save(id, snap)
-	return nil
+	return st.Save(ctx, userIDFrom(ctx), id, snap)
 }
 
-// ListProjects returns summaries for all stored projects.
-func ListProjects(st *store.MemoryStore) []domain.ProjectSummary {
-	ids := st.List()
-	out := make([]domain.ProjectSummary, 0, len(ids))
-	for _, id := range ids {
-		snap, ok := st.Get(id)
-		if !ok {
-			continue
-		}
-		out = append(out, domain.ProjectSummary{
-			ID:         id,
-			ModuleName: snap.ProjectDetails.ModuleName,
-			SavedAt:    snap.SavedAt,
-		})
-	}
-	return out
+// ListProjects returns summaries for all projects owned by the request user.
+func ListProjects(ctx context.Context, st store.ProjectStore) ([]domain.ProjectSummary, error) {
+	return st.List(ctx, userIDFrom(ctx))
 }

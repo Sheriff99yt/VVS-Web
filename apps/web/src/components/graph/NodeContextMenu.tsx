@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search } from 'lucide-react';
-import { buildCoreCategories } from '@/lib/nodeCatalog';
+import { buildCoreCategories, spawnMenuItemKey } from '@/lib/nodeCatalog';
 import { LibraryNodeTemplate } from '@/types/ui';
 import type { FunctionSymbol, GraphTab, TargetLanguage } from '@/types/graph';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
@@ -148,9 +148,9 @@ export function NodeContextMenu({
           <div key={category.name}>
             <h3 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 px-2">{category.name}</h3>
             <div className="space-y-1">
-              {category.items.map(item => (
+              {category.items.map((item, index) => (
                 <button
-                  key={item.type}
+                  key={spawnMenuItemKey(item, index)}
                   onClick={() => {
                     onSelect(item);
                     onClose();

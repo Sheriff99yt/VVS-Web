@@ -8,6 +8,9 @@ import {
 export interface HealthResponse {
   status: string;
   service: string;
+  store?: 'memory' | 'postgres';
+  auth?: 'dev' | 'required';
+  userId?: string;
 }
 
 export interface EnvironmentCatalogEntry {
@@ -26,7 +29,7 @@ function delay(ms: number): Promise<void> {
 
 export async function mockGetHealth(): Promise<HealthResponse> {
   await delay(50);
-  return { status: 'ok', service: 'vvs-mock' };
+  return { status: 'ok', service: 'vvs-mock', store: 'memory', auth: 'dev' };
 }
 
 export async function mockSaveProject(

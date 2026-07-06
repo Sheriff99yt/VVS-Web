@@ -35,7 +35,7 @@ Before adding visible UI, answer:
 - **Code preview** stays **open by default** in Canvas (`docs/node_system.md`) — user may collapse via StatusBar **Code** toggle.
 - Status bar provides **Log** / **Code** toggles.
 
-**VVS:** `contexts/EditorPanelContext.tsx`, `StatusBar.tsx`, collapsible `Panel`s in `EditorLayout.tsx`.
+**VVS:** `contexts/EditorPanelContext.tsx`, `StatusBar.tsx`, floating `FloatingPanelShell` overlays on canvas.
 
 ### 2. Compact affordance → expanded surface
 
@@ -44,33 +44,40 @@ Before adding visible UI, answer:
 
 **VVS:** `GraphNodeSearch.tsx` — icon-only circle → expands to search field + dropdown; **Ctrl+K** to open.
 
+**VVS:** `GraphSelectionToolbar.tsx` — appears only when node(s) selected; hidden otherwise.
+
 ### 3. Tree sections collapsed by default
 
 - Navigation section open (e.g. Graphs).
-- Everything else (Functions, Variables, Generated, References) **collapsed** until expanded.
+- Everything else (Functions, Variables, Generated) **collapsed** until expanded.
 - Nested detail (export filename, cross-refs) only under an **expanded graph row**.
 
 **VVS:** `ProjectTree.tsx` — tabbed panel (Graphs / Variables / Browse); flat graph list; icon filter expands on demand.
 
 ### 4. Context-aware inspector
 
-- **No selection:** idle hint, not a full settings form.
-- **Node / variable selected:** show inspector immediately.
-- **Graph settings:** behind explicit action ("Graph settings…").
+- **No selection:** panel hidden (not an empty form).
+- **Node / variable selected:** show floating inspector immediately.
+- **Graph settings:** behind explicit action (breadcrumb settings icon → `GraphSettingsModal`).
 
-**VVS:** `GraphFloatingDetails.tsx` — floating panel on canvas; `PropertySchemaPanel` (Settings) + `NodePinsPanel` (pins); force-expand on broken symbol ref.
+**VVS:** `GraphFloatingDetails.tsx` — floating panel on canvas; `PropertySchemaPanel` + `NodePinsPanel`; force-expand on broken symbol ref.
 
 ### 5. Secondary indexes behind disclosure
 
-- Show scoped data first (active graph's references).
-- Project-wide index behind "Show all…" / chevron expand.
+- Show scoped data first (active graph's references in References view).
+- Project-wide index behind expand / depth filters.
 
-**VVS:** `ReferenceViewer.tsx` — `showAllLinks` toggle.
+**VVS:** `ReferencesView` + `ReferenceGraphCanvas` — UE5 focus layout; type/depth filters. Do **not** use orphan `ReferenceViewer.tsx`.
 
 ### 6. Event-driven reveal (not always-on listeners)
 
-- Dispatch domain events (`vvs:compile-state`, `vvs:validation-result`).
+- Dispatch domain events (`vvs:compile-state`, `vvs:validation-result`, `graphActions`).
 - Panel provider subscribes and expands once; avoid polling or permanent split space.
+
+### 7. StartScreen sectioning
+
+- **Start** actions visible; **Examples** and **Explore** as separate sections — user chooses depth.
+- Folder picker buttons hidden until `useFolderPickerSupported` confirms FS Access (avoids SSR/hydration flash).
 
 ## Implementation checklist
 
@@ -84,6 +91,7 @@ When adding or changing UI in `apps/web`:
 - [ ] Tree lists use collapsed sections; counts OK in headers, not full lists
 - [ ] Auto-reveal only on meaningful events (error, compile, validation)
 - [ ] User can dismiss / collapse after auto-reveal
+- [ ] Browser-only APIs gated post-mount (folder picker, localStorage lists)
 - [ ] No new always-visible panel without justification in the checklist above
 - [ ] Matches minimalist rules in vvs_ui_development (no heavy chrome)
 ```
@@ -96,34 +104,37 @@ When adding or changing UI in `apps/web`:
 - Expanding all tree sections on load.
 - Empty tables, placeholder forms, or "coming soon" blocks in the main path.
 - Auto-opening modals or drawers without user action or a blocking error.
+- Reading `localStorage` during SSR render (use deferred `useSyncExternalStore` pattern).
 
 ## Where to wire new features
 
 | Need | Prefer |
 |------|--------|
-| New bottom/right panel | `EditorPanelContext` + collapsible `Panel` + StatusBar toggle |
+| New floating panel | `FloatingPanelShell` + StatusBar toggle or selection gate |
 | New project-tree group | `ProjectTree` section with `expanded: false` default |
 | New canvas overlay | Compact trigger → overlay; dismiss on Escape / outside click |
-| New inspector mode | Extend `selection` in `ProjectContext`; idle state in `RightSidebar` |
+| New inspector mode | Extend `selection` in `ProjectContext`; idle = hidden in `GraphFloatingDetails` |
 | New workflow feedback | Custom event + single subscriber that expands the right panel |
 
 ## Code touchpoints (canonical)
 
 | Area | Files |
 |------|--------|
-| Panel collapse/toggles | `EditorPanelContext.tsx`, `EditorLayout.tsx`, `StatusBar.tsx` |
+| Panel collapse/toggles | `EditorPanelContext.tsx`, `EditorLayout.tsx`, `StatusBar.tsx`, `FloatingPanelShell.tsx` |
 | Node search overlay | `GraphNodeSearch.tsx`, `lib/nodeOutliner.ts` |
+| Selection toolbar | `GraphSelectionToolbar.tsx`, `hooks/useGraphNodeSelection.ts` |
 | Project tree | `ProjectTree.tsx`, `lib/projectTree.ts` |
-| Inspector | `RightSidebar.tsx`, `RightSidebar/*PropertiesPanel.tsx` |
-| References | `ReferenceViewer.tsx`, `lib/graphRelations.ts` |
+| Floating inspector | `GraphFloatingDetails.tsx`, `*PropertiesPanel.tsx`, `PropertySchemaPanel.tsx` |
+| References view | `ReferencesView.tsx`, `ReferenceGraphCanvas.tsx`, `lib/referenceGraphLayout.ts` |
+| StartScreen / recents | `StartScreen.tsx`, `recentProjectsSubscribe.ts`, `useFolderPickerSupported.ts` |
 
 ## Review prompt (for PRs / self-check)
 
 > "If I open a new project and do nothing, what do I see?"  
-> Answer should be: canvas, collapsed chrome, collapsed tree sections, idle inspector — **not** logs, code, full variable lists, or settings forms.
+> Answer should be: canvas, collapsed chrome, collapsed tree sections, hidden inspector — **not** logs, full variable lists, selection toolbar, or settings forms.
 
 ## Related docs
 
 - Shell matrix: [`vvs_ui_development`](../vvs_ui_development/SKILL.md)
 - Implementation snapshot: [`docs/current_state.md`](../../../docs/current_state.md)
-- UI backlog: [`.agents/memory/incomplete-ui.md`](../../memory/incomplete-ui.md)
+- UI backlog: [`.agents/memory/incomplete-ui.md`](../../memory/incomplete-ui.md) — **48/48 done** (July 2026)

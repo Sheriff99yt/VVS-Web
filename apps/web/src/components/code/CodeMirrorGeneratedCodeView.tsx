@@ -5,7 +5,7 @@ import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
 import { StateField, StateEffect, RangeSetBuilder } from '@codemirror/state';
 import type { SourceRange } from '@/types/transpile';
-import type { GeneratedCodeViewProps } from './types';
+import type { CodeHighlightRange, GeneratedCodeViewProps } from './types';
 import { getCodeMirrorExtensions } from '@/lib/codeEditorLanguages';
 import { vvsCodeMirrorTheme } from './codeMirrorTheme';
 
@@ -46,7 +46,7 @@ function isFullLineRange(doc: EditorView['state']['doc'], range: SourceRange): b
 /** Line + inline mark decorations from transpiler source ranges. */
 function buildHighlightDecorations(
   view: EditorView,
-  ranges: GeneratedCodeViewProps['highlightRanges']
+  ranges: CodeHighlightRange[] | undefined
 ): DecorationSet {
   if (!ranges?.length) return Decoration.none;
 
@@ -61,10 +61,32 @@ function buildHighlightDecorations(
 
     if (isFullLineRange(doc, range)) {
       const line = doc.line(range.startLine);
+      if (range.colors) {
+        entries.push({
+          from: line.from,
+          to: line.from,
+          deco: Decoration.line({
+            attributes: {
+              style: `background-color: ${range.colors.lineBg}; box-shadow: inset 2px 0 0 ${range.colors.accent};`,
+            },
+          }),
+        });
+      } else {
+        entries.push({
+          from: line.from,
+          to: line.from,
+          deco: Decoration.line({ class: 'cm-vvs-node-highlight' }),
+        });
+      }
+    } else if (range.colors) {
       entries.push({
-        from: line.from,
-        to: line.from,
-        deco: Decoration.line({ class: 'cm-vvs-node-highlight' }),
+        from: extents.from,
+        to: extents.to,
+        deco: Decoration.mark({
+          attributes: {
+            style: `background-color: ${range.colors.markBg}; border-radius: 2px; box-shadow: inset 0 -1px 0 ${range.colors.accent};`,
+          },
+        }),
       });
     } else {
       entries.push({
@@ -86,7 +108,7 @@ function buildHighlightDecorations(
 
 function applyHighlightEffects(
   view: EditorView,
-  ranges: GeneratedCodeViewProps['highlightRanges']
+  ranges: CodeHighlightRange[] | undefined
 ): void {
   const deco = buildHighlightDecorations(view, ranges);
   const effects: StateEffect<unknown>[] = [setHighlightEffect.of(deco)];

@@ -10,6 +10,7 @@ import {
 import { GraphTab } from '@/contexts/ProjectContext';
 import { graphDisplayName } from '@/lib/graphTabs';
 import { useLatestRef } from '@/hooks/useLatestRef';
+import { clearEdgeSelectionFlags, clearNodeSelectionFlags } from '@/lib/graphSelection';
 
 function documentTabType(tabType: GraphTab['type'] | undefined): 'main' | 'function' {
   return tabType === 'main' ? 'main' : 'function';
@@ -33,6 +34,8 @@ interface UseGraphTabSyncOptions {
   clearHistory: () => void;
   initialMain: GraphDocument;
   getMainMetadata: () => GraphTabMetadata;
+  /** When true, skip debounced document revision notifications (during node drag). */
+  isDraggingRef?: React.RefObject<boolean>;
 }
 
 export function useGraphTabSync({
@@ -45,6 +48,7 @@ export function useGraphTabSync({
   clearHistory,
   initialMain,
   getMainMetadata,
+  isDraggingRef,
 }: UseGraphTabSyncOptions) {
   const documentsRef = useRef<Map<string, GraphDocument>>(
     new Map([['main', cloneDocument(withDefaultMetadata(initialMain, 'main', 'Main graph'))]])
@@ -78,8 +82,8 @@ export function useGraphTabSync({
           defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph');
 
     documentsRef.current.set(tabId, {
-      nodes: structuredClone(nodesRef.current),
-      edges: structuredClone(edgesRef.current),
+      nodes: clearNodeSelectionFlags(structuredClone(nodesRef.current)),
+      edges: clearEdgeSelectionFlags(structuredClone(edgesRef.current)),
       metadata,
     });
   }, [getMainMetadata, openTabs]);
@@ -101,8 +105,8 @@ export function useGraphTabSync({
       prevTabRef.current = activeTab;
       const doc = documentsRef.current.get(activeTab) ?? { nodes: [], edges: [] };
       const loaded = cloneDocument(doc);
-      setNodes(loaded.nodes);
-      setEdges(loaded.edges);
+      setNodes(clearNodeSelectionFlags(loaded.nodes));
+      setEdges(clearEdgeSelectionFlags(loaded.edges));
       clearHistory();
       notifyMetadata();
     },
@@ -136,10 +140,33 @@ export function useGraphTabSync({
     return () => metadataListenersRef.current.delete(listener);
   }, []);
 
+  const metadataSyncTimerRef = useRef<number | null>(null);
+
+  const scheduleMetadataSync = useCallback(
+    (immediate = false) => {
+      if (metadataSyncTimerRef.current !== null) {
+        window.clearTimeout(metadataSyncTimerRef.current);
+        metadataSyncTimerRef.current = null;
+      }
+      const run = () => notifyMetadata();
+      if (immediate) {
+        run();
+        return;
+      }
+      if (isDraggingRef?.current) return;
+      metadataSyncTimerRef.current = window.setTimeout(run, 120);
+    },
+    [notifyMetadata, isDraggingRef]
+  );
+
   useEffect(() => {
-    const timer = window.setTimeout(() => notifyMetadata(), 120);
-    return () => window.clearTimeout(timer);
-  }, [nodes, edges, notifyMetadata]);
+    scheduleMetadataSync();
+    return () => {
+      if (metadataSyncTimerRef.current !== null) {
+        window.clearTimeout(metadataSyncTimerRef.current);
+      }
+    };
+  }, [nodes, edges, scheduleMetadataSync]);
 
   useEffect(() => {
     const openIds = new Set(openTabs.map((tab) => tab.id));
@@ -169,8 +196,8 @@ export function useGraphTabSync({
     }
 
     const loaded = cloneDocument(nextDoc);
-    setNodes(loaded.nodes);
-    setEdges(loaded.edges);
+    setNodes(clearNodeSelectionFlags(loaded.nodes));
+    setEdges(clearEdgeSelectionFlags(loaded.edges));
     clearHistory();
     prevTabRef.current = activeGraphTab;
     notifyMetadata();
@@ -191,8 +218,8 @@ export function useGraphTabSync({
       const name = graphDisplayName(tab);
       const doc = withDefaultMetadata(cloneDocument(document), tabType, name);
       documentsRef.current.set(tab.id, doc);
-      setNodes(doc.nodes);
-      setEdges(doc.edges);
+      setNodes(clearNodeSelectionFlags(doc.nodes));
+      setEdges(clearEdgeSelectionFlags(doc.edges));
       prevTabRef.current = tab.id;
       clearHistory();
       notifyMetadata();
@@ -216,8 +243,8 @@ export function useGraphTabSync({
       );
       const activeDoc = documentsRef.current.get(activeGraphTab) ?? { nodes: [], edges: [] };
       const loaded = cloneDocument(activeDoc);
-      setNodes(loaded.nodes);
-      setEdges(loaded.edges);
+      setNodes(clearNodeSelectionFlags(loaded.nodes));
+      setEdges(clearEdgeSelectionFlags(loaded.edges));
       clearHistory();
       notifyMetadata();
       const affected =
@@ -236,5 +263,6 @@ export function useGraphTabSync({
     updateActiveTabMetadata,
     subscribeMetadata,
     importGraphTab,
+    scheduleMetadataSync,
   };
 }

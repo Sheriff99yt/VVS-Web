@@ -15,6 +15,7 @@ import {
   type ProjectListEntry,
   type ImportEnvironmentRequest,
 } from './mock';
+import { authHeaders } from '@/lib/auth/session';
 import {
   httpGetHealth,
   httpLoadProject,
@@ -68,7 +69,9 @@ export const VvsApi = {
   },
 
   probeMcp(url: string): Promise<McpProbeResult> {
-    return getApiMode() === 'http' ? httpProbeMcp(url) : mockProbeMcp(url);
+    return getApiMode() === 'http'
+      ? httpProbeMcp(url, authHeaders())
+      : mockProbeMcp(url);
   },
 
   listEnvironments(): Promise<EnvironmentCatalogEntry[]> {

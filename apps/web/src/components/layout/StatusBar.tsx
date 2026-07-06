@@ -1,30 +1,42 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader2, Terminal, FileCode2, FolderTree, Map, WifiOff, AlertCircle, CheckCircle2, CircleDashed } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { useEditorView } from '@/contexts/EditorViewContext';
 import { dispatchFocusFirstValidationError } from '@/lib/graphNavigation';
 import { useApiHealth } from '@/hooks/useApiHealth';
+import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { formatSavedAt } from '@/lib/formatSavedAt';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
-import { isFolderPickerSupported } from '@/lib/projectFolder';
 import { dispatchSaveOnDiskPrompt } from '@/lib/promoteProjectToDisk';
 
 function apiModeShort(
   apiMode: ReturnType<typeof useApiHealth>['apiMode'],
   healthState: ReturnType<typeof useApiHealth>['healthState'],
-  serviceName: string | null
+  serviceName: string | null,
+  storeMode: string | null,
+  authMode: string | null,
+  userId: string | null
 ): { label: string; className?: string; title?: string } {
   if (apiMode === 'mock') return { label: 'Offline', className: 'text-zinc-500' };
   if (healthState === 'checking') return { label: 'API…', className: 'text-zinc-500' };
-  if (healthState === 'connected')
+  if (healthState === 'connected') {
+    const details = [
+      serviceName ? `${serviceName} healthy` : 'API server connected',
+      storeMode ? `store: ${storeMode}` : null,
+      authMode ? `auth: ${authMode}` : null,
+      userId ? `user: ${userId.slice(0, 8)}…` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
     return {
       label: serviceName ? `API · ${serviceName}` : 'API',
       className: 'text-emerald-500/90',
-      title: serviceName ? `${serviceName} healthy` : 'API server connected',
+      title: details,
     };
+  }
   return { label: 'API unreachable', className: 'text-amber-500/90', title: 'Could not reach API health endpoint' };
 }
 
@@ -34,7 +46,8 @@ export function StatusBar() {
   const { consoleOpen, codeOpen, graphNavOpen, graphChromeOpen, toggleConsole, toggleCode, toggleGraphNav, toggleGraphChrome, setCompilerLogOpen } =
     useEditorPanels();
   const { isCanvasActive } = useEditorView();
-  const { apiMode, healthState, serviceName } = useApiHealth();
+  const { apiMode, healthState, serviceName, storeMode, authMode, userId } = useApiHealth();
+  const folderPickerReady = useFolderPickerSupported();
 
   const errorCount = validationErrors.length;
   const warningCount = validationWarnings.length;
@@ -42,8 +55,12 @@ export function StatusBar() {
   const isCompiling = compileState === 'compiling';
   const isDirty = compileState === 'dirty';
 
-  const savedLabel = formatSavedAt(lastSavedAt);
-  const api = apiModeShort(apiMode, healthState, serviceName);
+  const [savedLabel, setSavedLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSavedLabel(formatSavedAt(lastSavedAt));
+  }, [lastSavedAt]);
+  const api = apiModeShort(apiMode, healthState, serviceName, storeMode, authMode, userId);
 
   const statusTitle =
     hasErrors && errorCount > 0
@@ -73,7 +90,7 @@ export function StatusBar() {
             COA
           </span>
         ) : null}
-        {!isFolderProject && isFolderPickerSupported() ? (
+        {!isFolderProject && folderPickerReady ? (
           <>
             <div className="w-px h-3 bg-zinc-800" />
             <button

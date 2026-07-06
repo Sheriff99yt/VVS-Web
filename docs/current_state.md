@@ -61,7 +61,7 @@ When **Canvas** is active, the full editor chrome is visible:
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│ TopNav: File · Edit · View · Auto Generate|Save · Generate … │
+│ TopNav: File · Edit · View · [Auto save|Save] [Auto generate|Generate] … │
 ├──────────┬───────────────────────────────┬───────────────────┤
 │ Project  │ GraphTabBar                   │ Code preview      │
 │ tree     │ GraphCanvas (React Flow)      │ (@vvs/transpiler) │
@@ -151,11 +151,12 @@ Orphan: `components/layout/ReferenceViewer.tsx` — superseded by `ReferencesVie
 
 | Control | Location | Notes |
 |---------|----------|-------|
-| **Auto Generate** toggle | TopNav | When on, debounced compile on graph dirty; when off, use **Generate** or Ctrl+G |
-| **Auto Save** toggle | TopNav | When on, code preview stays synced with the graph; when off, use **Save** or Ctrl+Shift+S |
-| **Save** | TopNav | Sync code preview with current graph (not project JSON) |
-| Validate & compile | Edit menu (Ctrl+G) | `runProjectAnalysis()` — structural + semantic + portability; transpile only if no errors |
-| Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v2** JSON |
+| **Auto Generate** toggle | TopNav | When on, debounced validate & transpile on graph dirty; when off, use **Generate** or Ctrl+G |
+| **Auto Save** toggle | TopNav | When on, debounced persist **ProjectSnapshot v2** (local + cloud when signed in); when off, use **Save** or Ctrl+S |
+| **Save** / **Generate** | TopNav (action segment) | Manual save project / manual generate — same as File → Save project and Edit → Generate |
+| Sync code preview | Edit menu (Ctrl+Shift+S) | Refresh code preview from graph without full validation pipeline |
+| Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
+| Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v2** JSON (folder, localStorage, or cloud) |
 | Connect AI | TopNav modal | MCP URL copy + **Test connection**; MCP stays disconnected in mock mode |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
 
@@ -306,9 +307,9 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Syntax pack MCP tools | `server/` Go | **Partial** — `GET /registry/syntax-packs` + catalog; full MCP wire + propose/run_rosetta TBD |
 | Tree-sitter parse validation | CI | **Deferred** — optional validator, not syntax author |
 | `language-profiles/profiles/*.json` | packages | Profiles in TypeScript today; JSON packs optional |
-| Supabase auth / persistence | Go + **self-hosted Supabase** (`pgx`) | **Planned Phase 2** — [deployment.md](deployment.md); in-memory store today |
-| MCP server transport | `server/` Go | **Done (local)** — SSE at `/mcp`; production JWT + VPS deploy Phase 2 |
-| HTTP project REST | `server/` Go | **Done (local)** — in-memory `GET/PUT /api/projects`, `POST …/compile`; **PostgresStore** Phase 2 |
+| Supabase auth / persistence | Go + **self-hosted Supabase** (`pgx`) | **Near complete (Phase 2)** — PostgresStore, JWT middleware, GoTrue docker stack, cloud save/load when authenticated, MCP session auth; full VPS/Caddy deploy + GitHub OAuth config optional — [deployment.md](deployment.md) |
+| MCP server transport | `server/` Go | **Done (local)** — SSE at `/mcp`; production JWT + HTTPS deploy TBD |
+| HTTP project REST | `server/` Go | **Done** — `GET/PUT /api/projects`, `POST …/compile`; memory or Postgres via `DATABASE_URL` |
 | WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
 | PWA / offline sync | — | Not started |
 | Community library backend | Supabase + pgvector | UI skeleton only |
@@ -318,18 +319,21 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 
 ## Backend (`server/`) — API, registry, local MCP
 
-**Phase 2 target:** Self-hosted Supabase Postgres + GoTrue; Go persists via **`pgx`** — see [deployment.md](deployment.md).
+**Phase 2 (near complete):** Self-hosted Postgres via **`pgx`** + JWT auth middleware + GoTrue docker stack — see [deployment.md](deployment.md) and [setup.md](setup.md#phase-2--supabase-auth-gotrue-optional).
 
 - `internal/core/domain/graph.go` — nodes, `GraphBinding`, `FunctionSymbol`
 - `internal/core/domain/snapshot.go` — `ProjectSnapshot` v2 mirror
 - `internal/core/registry/` — embedded `core-pack.json`, environments, syntax-packs
-- `internal/core/store/memory.go` — in-memory projects (Phase 1); **`PostgresStore` TBD**
-- `internal/core/services/` — project, graph_edit, compile (pure functions)
-- `internal/transport/http/` — projects, compile, CORS
-- `internal/transport/mcp/` — MCP tools (thin wrappers)
-- `cmd/vvs-server/main.go` — health, registry, `/api/projects`, `/mcp`
+- `internal/core/store/` — `ProjectStore` interface; `MemoryStore` (default) + `PostgresStore` (`DATABASE_URL`); migration `001_projects.sql`
+- `internal/core/auth/` — JWT middleware (`AUTH_REQUIRED`, `SUPABASE_JWT_SECRET`); dev user when auth off
+- `internal/core/services/` — project, graph_edit, compile (pure functions; user-scoped via `context`)
+- `internal/transport/http/` — projects, compile, CORS (`Authorization` header)
+- `internal/transport/mcp/` — MCP tools (thin wrappers; pass `ctx` to services); session-scoped user auth via SSE hooks
+- `cmd/vvs-server/main.go` — `OpenFromEnv`, auth middleware, health shows `store` + `auth` mode
+- `migrations/` — embedded SQL for Postgres bootstrap
 
-Frontend `NEXT_PUBLIC_API_MODE=http` calls project save/load/list/compile against Go. MCP URL: `http://localhost:8080/mcp` (local dev).
+**Local dev defaults:** no `DATABASE_URL` → memory store; `AUTH_REQUIRED=false` → `DevUserID`.  
+**Frontend:** `NEXT_PUBLIC_API_MODE=http` + `apps/web/src/lib/api/client.ts` sends Bearer token on project APIs; `session.ts` holds access token; `AuthButton` (TopNav + StartScreen) signs in via Supabase GoTrue when env set; `cloudPersistence.ts` prefers Go API save/load when authenticated; **Auto save** toggle debounces full snapshot persist (local + cloud).
 
 ---
 

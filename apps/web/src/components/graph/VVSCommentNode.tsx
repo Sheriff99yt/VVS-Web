@@ -3,27 +3,32 @@
 import React from 'react';
 import { NodeProps, NodeResizer } from '@xyflow/react';
 import { VVSNodeData } from '@/types/graph';
+import styles from './VVSCommentNode.module.css';
 
-export function VVSCommentNode({ selected, data }: NodeProps<import('@xyflow/react').Node<VVSNodeData>>) {
+export function VVSCommentNode({
+  selected,
+  data,
+}: NodeProps<import('@xyflow/react').Node<VVSNodeData>>) {
+  const isSelected = Boolean(selected);
+  const customBorder = !isSelected && data.commentColor ? `${data.commentColor}99` : undefined;
+
   return (
     <>
-      <NodeResizer 
-        color="#3f3f46" 
-        isVisible={selected} 
-        minWidth={200} 
-        minHeight={100} 
+      <NodeResizer
+        color={isSelected ? 'var(--vvs-node-border-selected)' : '#3f3f46'}
+        isVisible={isSelected}
+        minWidth={200}
+        minHeight={100}
       />
       <div
-        className="w-full h-full bg-zinc-900/60 border-2 rounded-xl flex flex-col relative"
+        className={`${styles.container} ${isSelected ? styles.containerSelected : ''}`}
         style={{
-          borderColor: data.commentColor ? `${data.commentColor}99` : 'rgba(63, 63, 70, 0.5)',
-          backgroundColor: data.commentColor ? `${data.commentColor}14` : undefined,
+          ...(customBorder ? { borderColor: customBorder } : {}),
+          ...(data.commentColor ? { backgroundColor: `${data.commentColor}14` } : {}),
         }}
       >
-        <div className="px-4 py-2 text-lg font-bold text-white/90 cursor-grab active:cursor-grabbing border-b border-white/10">
-          {data.label || 'Comment Box'}
-        </div>
-        <div className="flex-1" />
+        <div className={styles.header}>{data.label || 'Comment Box'}</div>
+        <div className={styles.body} />
       </div>
     </>
   );

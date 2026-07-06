@@ -11,7 +11,7 @@ import React, {
   type RefObject,
 } from 'react';
 import type { PanelImperativeHandle } from 'react-resizable-panels';
-import { readUiPreference, readUiPreferences, writeUiPreferences } from '@/lib/uiPreferences';
+import { DEFAULT_UI_PREFERENCES, readUiPreferences, writeUiPreferences } from '@/lib/uiPreferences';
 
 interface EditorPanelContextValue {
   graphNavPanelRef: RefObject<PanelImperativeHandle | null>;
@@ -41,10 +41,10 @@ const EditorPanelContext = createContext<EditorPanelContextValue | null>(null);
 export function EditorPanelProvider({ children }: { children: ReactNode }) {
   const graphNavPanelRef = useRef<PanelImperativeHandle>(null);
   const codePanelRef = useRef<PanelImperativeHandle>(null);
-  const [graphNavOpen, setGraphNavOpen] = useState(() => readUiPreference('graphNavOpen'));
-  const [graphChromeOpen, setGraphChromeOpen] = useState(() => readUiPreference('graphChromeOpen'));
-  const [codeOpen, setCodeOpen] = useState(() => readUiPreference('codeOpen'));
-  const [compilerLogOpen, setCompilerLogOpen] = useState(() => readUiPreference('compilerLogOpen'));
+  const [graphNavOpen, setGraphNavOpen] = useState(DEFAULT_UI_PREFERENCES.graphNavOpen);
+  const [graphChromeOpen, setGraphChromeOpen] = useState(DEFAULT_UI_PREFERENCES.graphChromeOpen);
+  const [codeOpen, setCodeOpen] = useState(DEFAULT_UI_PREFERENCES.codeOpen);
+  const [compilerLogOpen, setCompilerLogOpen] = useState(DEFAULT_UI_PREFERENCES.compilerLogOpen);
   const [panelsReady, setPanelsReady] = useState(false);
 
   const expandGraphNav = useCallback(() => {

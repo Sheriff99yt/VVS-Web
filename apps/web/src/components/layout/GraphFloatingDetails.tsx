@@ -43,7 +43,7 @@ function CompactSummary({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] text-zinc-500 leading-relaxed">{children}</p>;
 }
 
-export function GraphFloatingDetails() {
+function GraphFloatingDetailsPanel() {
   const {
     selection,
     setSelection,
@@ -434,3 +434,5 @@ export function GraphFloatingDetails() {
     </FloatingPanelShell>
   );
 }
+
+export const GraphFloatingDetails = React.memo(GraphFloatingDetailsPanel);

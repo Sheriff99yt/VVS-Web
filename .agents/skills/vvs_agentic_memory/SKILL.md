@@ -12,11 +12,24 @@ description: Triggers when reading or updating agent memory, starting a delivery
 ## When to read (start of task)
 
 1. `docs/visual_to_text_fidelity.md` — **text-shaped graphs** (locked direction — read before codegen/features)
-2. `docs/current_state.md` — implementation truth (includes **graph system architecture**)
-3. `docs/node_system.md` — nodes, pins, conversion, property schema
-4. `.agents/memory/workspace-facts.md` — entry points, contexts, events
-5. `.agents/memory/incomplete-ui.md` — **open UI work** (if doing UI slices)
-6. `.agents/memory/decisions.md` — do not violate locked choices (incl. text-shaped graphs)
+2. `docs/current_state.md` — **canonical implementation truth** (UI shell, graph isolation, backend Phase 2, transpiler/syntax packs)
+3. `docs/deployment.md` — **Phase 2 persistence/auth** (Go+pgx, self-hosted Supabase, no PostgREST for app CRUD)
+4. `docs/node_system.md` — nodes, pins, conversion, property schema
+5. `.agents/memory/workspace-facts.md` — entry points, contexts, events, auth/API paths
+6. `.agents/memory/incomplete-ui.md` — **open UI work** (if doing UI slices; **48/48 done** July 2026)
+7. `.agents/memory/decisions.md` — do not violate locked choices (incl. text-shaped graphs, deploy stack)
+
+**Skill cross-refs** (read when task matches trigger):
+
+| Task | Skill |
+|------|--------|
+| Go API, MCP, Postgres | `vvs_backend_development/SKILL.md` |
+| Wire UI to HTTP/auth | `vvs_ui_api_loop/SKILL.md` |
+| Editor shell, React Flow | `vvs_ui_development/SKILL.md` |
+| Panels, collapse, trees | `vvs_progressive_disclosure/SKILL.md` |
+| Monorepo deps, deploy | `vvs_architecture_boundaries/SKILL.md` |
+| Syntax packs / Rosetta | `vvs_syntax_packs/SKILL.md` |
+| Transpiler pipeline | `vvs_transpiler_development/SKILL.md` |
 
 ## When to write (end of task)
 
@@ -26,8 +39,10 @@ Update **only** if the session produced durable changes:
 |------|------------|
 | `incomplete-ui.md` | Completed or discovered a UI gap; change row status or add row |
 | `decisions.md` | User or team locked a new architectural/product rule |
-| `workspace-facts.md` | New canonical paths, packages, or build commands |
+| `workspace-facts.md` | New canonical paths, packages, env vars, or build commands |
 | `index.json` | Any memory file changed — bump `lastUpdated` |
+| `docs/current_state.md` | Implementation changed (prefer over duplicating in memory) |
+| `.agents/skills/*/SKILL.md` | Durable pattern/trigger change agents must follow (link docs, don't copy) |
 
 ## Do not
 
@@ -43,3 +58,4 @@ After each UI/API loop iteration:
 2. Set next slice from `docs/ui_api_delivery_loop.md` backlog
 3. Update `docs/current_state.md` if implementation changed
 4. Update `decisions.md` if product direction or fidelity rules changed
+5. Update relevant skill if a new canonical path or anti-pattern emerged

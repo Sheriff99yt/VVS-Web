@@ -3,15 +3,17 @@ export type GraphAction =
   | 'paste'
   | 'cut'
   | 'duplicate'
+  | 'delete-selection'
+  | 'disconnect-selection'
+  | 'focus-selection'
   | 'zoom-fit'
   | 'group-comment'
   | 'ungroup-comment'
-  | 'extract-function';
+  | 'extract-function'
+  | 'select-all'
+  | 'select-similar';
 
 export function dispatchGraphAction(action: GraphAction) {
   window.dispatchEvent(new CustomEvent('vvs:graph-action', { detail: { action } }));
 }
 
-export function dispatchNodeAction(action: 'duplicate-node' | 'delete-node', nodeId: string) {
-  window.dispatchEvent(new CustomEvent('vvs:node-action', { detail: { action, nodeId } }));
-}

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -80,8 +81,8 @@ func findInputPin(node domain.Node, handleID string) *domain.PinDefinition {
 }
 
 // AddNode spawns a registry kind into the target graph tab.
-func AddNode(st *store.MemoryStore, projectID, tabID, kindID string, x, y float64) (*domain.Node, error) {
-	snap, err := LoadProject(st, projectID)
+func AddNode(ctx context.Context, st store.ProjectStore, projectID, tabID, kindID string, x, y float64) (*domain.Node, error) {
+	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -114,15 +115,15 @@ func AddNode(st *store.MemoryStore, projectID, tabID, kindID string, x, y float6
 
 	doc.Nodes = append(doc.Nodes, node)
 	snap.Documents[resolveTabID(snap, tabID)] = *doc
-	if err := SaveProject(st, projectID, *snap); err != nil {
+	if err := SaveProject(ctx, st, projectID, *snap); err != nil {
 		return nil, err
 	}
 	return &node, nil
 }
 
 // RemoveNode deletes a node and any connected edges from the target graph tab.
-func RemoveNode(st *store.MemoryStore, projectID, tabID, nodeID string) error {
-	snap, err := LoadProject(st, projectID)
+func RemoveNode(ctx context.Context, st store.ProjectStore, projectID, tabID, nodeID string) error {
+	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return err
 	}
@@ -150,12 +151,12 @@ func RemoveNode(st *store.MemoryStore, projectID, tabID, nodeID string) error {
 	doc.Nodes = filteredNodes
 	doc.Edges = filteredEdges
 	snap.Documents[resolveTabID(snap, tabID)] = *doc
-	return SaveProject(st, projectID, *snap)
+	return SaveProject(ctx, st, projectID, *snap)
 }
 
 // ConnectPins validates and adds an edge between two nodes.
-func ConnectPins(st *store.MemoryStore, projectID, tabID string, edge domain.Edge) (*domain.Edge, error) {
-	snap, err := LoadProject(st, projectID)
+func ConnectPins(ctx context.Context, st store.ProjectStore, projectID, tabID string, edge domain.Edge) (*domain.Edge, error) {
+	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -201,15 +202,15 @@ func ConnectPins(st *store.MemoryStore, projectID, tabID string, edge domain.Edg
 
 	doc.Edges = append(doc.Edges, edge)
 	snap.Documents[resolveTabID(snap, tabID)] = *doc
-	if err := SaveProject(st, projectID, *snap); err != nil {
+	if err := SaveProject(ctx, st, projectID, *snap); err != nil {
 		return nil, err
 	}
 	return &edge, nil
 }
 
 // GetGraphDocument returns the active or specified graph tab document.
-func GetGraphDocument(st *store.MemoryStore, projectID, tabID string) (*domain.GraphDocument, string, error) {
-	snap, err := LoadProject(st, projectID)
+func GetGraphDocument(ctx context.Context, st store.ProjectStore, projectID, tabID string) (*domain.GraphDocument, string, error) {
+	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return nil, "", err
 	}

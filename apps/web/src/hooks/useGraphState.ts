@@ -55,8 +55,20 @@ export function useGraphState(initialNodes: VVSNode[] = [], initialEdges: VVSEdg
           c.type === 'remove' ||
           (c.type === 'position' && c.dragging === false)
       );
-      if (isSignificant) saveSnapshot();
+      const isDragEnd = changes.some(
+        (c) => c.type === 'position' && c.dragging === false
+      );
+
       onNodesChangeReactFlow(changes);
+
+      if (isSignificant) {
+        const save = () => saveSnapshot();
+        if (isDragEnd) {
+          requestAnimationFrame(save);
+        } else {
+          save();
+        }
+      }
     },
     [onNodesChangeReactFlow, saveSnapshot]
   );

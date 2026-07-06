@@ -21,6 +21,9 @@ if (Test-Path $webPath) {
 $serverPath = Join-Path $projectRoot "server"
 if (Test-Path $serverPath) {
     Write-Host "Starting Go Backend (server) - API + MCP at ${apiUrl}/mcp ..." -ForegroundColor Cyan
+    # Default: in-memory store (no DATABASE_URL). To test Postgres persistence:
+    #   docker compose up -d postgres
+    #   $env:DATABASE_URL = "postgres://vvs:vvs_dev_password@localhost:5432/vvs?sslmode=disable"
     Start-Process powershell -WorkingDirectory $serverPath -ArgumentList "-NoExit", "-Command", "go run ./cmd/vvs-server"
 } else {
     Write-Host "Warning: server directory not found. Skipping Go Backend." -ForegroundColor Yellow

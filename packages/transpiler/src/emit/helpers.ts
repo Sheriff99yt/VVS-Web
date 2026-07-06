@@ -3,7 +3,8 @@ import { defaultCodegenTarget } from '@vvs/graph-types';
 import { parameterCodegenName } from '../nodeHelpers';
 import { CodeSink } from '../codeSink';
 import type { IrAwaitWait, IrEventHandler, IrModule, IrStatement } from '../ir/types';
-import { createPrintContext, printStatements, type PrintContext } from '../print';
+import { createPrintContext, type PrintContext } from '../print';
+import { appendIrStatements } from './sinkStatements';
 import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 
@@ -69,20 +70,7 @@ export function printContextForIr(
   );
 }
 
-export function appendIrStatements(
-  sink: CodeSink,
-  statements: IrStatement[],
-  printCtx: PrintContext
-): void {
-  const printed = printStatements(statements, printCtx);
-  sink.appendTaggedMany(
-    printed.map((p, i) => ({
-      nodeId: statements[i]!.sourceGraphNodeId,
-      text: p.text,
-      expressionSpans: p.expressionSpans,
-    }))
-  );
-}
+export { appendIrStatements } from './sinkStatements';
 
 export function appendHoistedImports(sink: CodeSink, ir: IrModule, environmentManifest?: ProjectEnvironmentManifest): void {
   if (ir.imports.length === 0) return;

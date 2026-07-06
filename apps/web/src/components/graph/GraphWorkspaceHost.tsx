@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, startTransition } from 'react';
 import { NodeChange, EdgeChange } from '@xyflow/react';
 import { useGraphState } from '@/hooks/useGraphState';
 import { useGraphTabSync } from '@/hooks/useGraphTabSync';
@@ -51,6 +51,8 @@ export function GraphWorkspaceHost({
     setCompileState('dirty');
   }, [markTabDirty, activeGraphTab, setCompileState]);
 
+  const isDraggingRef = useRef(false);
+
   const {
     nodes,
     edges,
@@ -67,8 +69,47 @@ export function GraphWorkspaceHost({
     clearHistory,
   } = useGraphState(initialNodes, initialEdges);
 
+  const getMainMetadata = useCallback(
+    () => ({
+      moduleName: projectDetails.moduleName,
+      extendsType: projectDetails.extendsType,
+      description: projectDetails.description,
+    }),
+    [projectDetails.moduleName, projectDetails.extendsType, projectDetails.description]
+  );
+
+  const {
+    getAllDocuments,
+    loadAllDocuments,
+    patchAllDocuments,
+    getActiveTabMetadata,
+    updateActiveTabMetadata,
+    subscribeMetadata,
+    importGraphTab,
+    scheduleMetadataSync,
+  } = useGraphTabSync({
+    activeGraphTab,
+    openTabs,
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    clearHistory,
+    initialMain: { nodes: initialNodes, edges: initialEdges },
+    getMainMetadata,
+    isDraggingRef,
+  });
+
   const onNodesChange = useCallback(
     (changes: NodeChange<VVSNode>[]) => {
+      const isDragging = changes.some(
+        (c) => c.type === 'position' && c.dragging === true
+      );
+      const dragEnded = changes.some(
+        (c) => c.type === 'position' && c.dragging === false
+      );
+      isDraggingRef.current = isDragging;
+
       const isSignificant = changes.some(
         (c) =>
           c.type === 'add' ||
@@ -76,9 +117,14 @@ export function GraphWorkspaceHost({
           (c.type === 'position' && c.dragging === false)
       );
       onNodesChangeBase(changes);
-      if (isSignificant) markCurrentTabDirty();
+      if (isSignificant) {
+        startTransition(() => markCurrentTabDirty());
+      }
+      if (dragEnded) {
+        requestAnimationFrame(() => scheduleMetadataSync(true));
+      }
     },
-    [onNodesChangeBase, markCurrentTabDirty]
+    [onNodesChangeBase, markCurrentTabDirty, scheduleMetadataSync]
   );
 
   const onEdgesChange = useCallback(
@@ -105,35 +151,6 @@ export function GraphWorkspaceHost({
     },
     [setEdgesWithHistoryBase, markCurrentTabDirty]
   );
-
-  const getMainMetadata = useCallback(
-    () => ({
-      moduleName: projectDetails.moduleName,
-      extendsType: projectDetails.extendsType,
-      description: projectDetails.description,
-    }),
-    [projectDetails.moduleName, projectDetails.extendsType, projectDetails.description]
-  );
-
-  const {
-    getAllDocuments,
-    loadAllDocuments,
-    patchAllDocuments,
-    getActiveTabMetadata,
-    updateActiveTabMetadata,
-    subscribeMetadata,
-    importGraphTab,
-  } = useGraphTabSync({
-    activeGraphTab,
-    openTabs,
-    nodes,
-    edges,
-    setNodes,
-    setEdges,
-    clearHistory,
-    initialMain: { nodes: initialNodes, edges: initialEdges },
-    getMainMetadata,
-  });
 
   const tabSyncRef = useRef({
     getAllDocuments,

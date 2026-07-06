@@ -39,7 +39,7 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 | **Project environments** | `@vvs/environment-templates` — VS Code–style templates, Environment API browse/spawn, built-in Python/JS packs — **shipped**; [environment_templates.md](environment_templates.md) |
 | **On-disk projects** | `.vvs/` overlay in existing repos — split JSON layout, `integration.json` emit paths, File System Access API (Chrome/Edge) — **shipped (browser)**; cloud sync still Phase 2 |
 
-**Status:** Phase 1 is **shipped** for the browser editor, v1 client transpiler, text-shaped graphs, project environments, folder-based `.vvs/` projects, OpenAPI/AsyncAPI import UI, overload picker, syntax pack lock settings, **local Go HTTP API**, and **local MCP**. Phase 2 adds **self-hosted Supabase (Auth + Postgres) + durable `pgx` persistence** — see [deployment.md](deployment.md).
+**Status:** Phase 1 is **shipped** for the browser editor, v1 client transpiler, text-shaped graphs, project environments, folder-based `.vvs/` projects, OpenAPI/AsyncAPI import UI, overload picker, syntax pack lock settings, **local Go HTTP API**, and **local MCP**. Phase 2 adds **self-hosted Supabase (Auth + Postgres) + durable `pgx` persistence** — **near complete** in repo (GoTrue docker stack, cloud sync when authenticated, MCP JWT); full VPS/Caddy deploy remains ops follow-up — see [deployment.md](deployment.md).
 
 ---
 
@@ -60,7 +60,9 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 | **PWA** | Offline graph editing + cached syntax registry (IndexedDB) |
 | **Connect AI** | TopNav modal — local MCP in dev; HTTPS MCP URL + token in prod |
 
-**Not in Phase 2:** PostgREST for CRUD, Supabase Realtime (collab is Phase 4 Go WebSockets), Redis.
+**Not in Phase 2:** PostgREST for CRUD, Supabase Realtime (collab is Phase 4 Go WebSockets), Redis, PWA offline sync.
+
+**Phase 2 repo status (July 2026):** PostgresStore, JWT middleware, GoTrue docker-compose stack, authenticated cloud save/load, MCP session auth propagation, Connect AI prod guidance — **shipped in repo**. Remaining for production: VPS Compose + Caddy TLS, GitHub OAuth credentials, daily backups automation.
 
 ---
 

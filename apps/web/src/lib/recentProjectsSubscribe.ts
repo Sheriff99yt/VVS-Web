@@ -18,9 +18,6 @@ function refreshSnapshot(): void {
 }
 
 function getRecentSnapshot(): RecentProjectEntry[] {
-  if (typeof window !== 'undefined' && !clientSnapshotReady) {
-    refreshSnapshot();
-  }
   return cachedSnapshot;
 }
 
@@ -29,8 +26,9 @@ function getServerRecentSnapshot(): RecentProjectEntry[] {
 }
 
 export function subscribeRecentProjects(onStoreChange: () => void): () => void {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && !clientSnapshotReady) {
     refreshSnapshot();
+    queueMicrotask(onStoreChange);
   }
   listeners.add(onStoreChange);
   return () => listeners.delete(onStoreChange);

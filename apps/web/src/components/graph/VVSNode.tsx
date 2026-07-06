@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { Position, NodeToolbar, NodeProps, useReactFlow } from '@xyflow/react';
-import { AlertTriangle, Copy, Trash2, MessageSquarePlus } from 'lucide-react';
+import { NodeProps, useReactFlow } from '@xyflow/react';
+import { AlertTriangle } from 'lucide-react';
 import { VVSNodeData } from '@/types/graph';
 import { useProject } from '@/contexts/ProjectContext';
-import { dispatchGraphAction, dispatchNodeAction } from '@/lib/graphActions';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle } from '@/lib/nodeKind';
 import { NodePinRow } from './NodePinRow';
@@ -50,35 +49,6 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
 
   return (
     <>
-      <NodeToolbar
-        isVisible={selected}
-        position={Position.Top}
-        className="flex gap-1 p-1 bg-zinc-900 border border-zinc-700 rounded-md shadow-xl nowheel nopan nodrag"
-      >
-        <button
-          onClick={() => dispatchNodeAction('duplicate-node', id)}
-          className="p-1.5 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded transition-colors"
-          title="Duplicate"
-        >
-          <Copy size={14} />
-        </button>
-        <button
-          onClick={() => dispatchGraphAction('group-comment')}
-          className="p-1.5 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded transition-colors"
-          title="Group in Comment"
-        >
-          <MessageSquarePlus size={14} />
-        </button>
-        <div className="w-px bg-zinc-800 my-1 mx-0.5" />
-        <button
-          onClick={() => dispatchNodeAction('delete-node', id)}
-          className="p-1.5 hover:bg-red-900/50 text-red-400 hover:text-red-300 rounded transition-colors"
-          title="Delete"
-        >
-          <Trash2 size={14} />
-        </button>
-      </NodeToolbar>
-
       <div
         className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''}`}
         data-category={data.category}

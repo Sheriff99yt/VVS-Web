@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Handle, Position, useStore } from '@xyflow/react';
+import React, { useMemo } from 'react';
+import { Handle, Position, useStore, type Edge } from '@xyflow/react';
 import type { PinDefinition } from '@/types/graph';
 import { NodePinInlineWidget } from './NodePinInlineWidget';
 import styles from './VVSNode.module.css';
@@ -14,13 +14,19 @@ interface NodePinRowProps {
   onInlineChange?: (pinId: string, value: string | number | boolean) => void;
 }
 
+const selectEdges = (state: { edges: Edge[] }) => state.edges;
+const edgesEqual = (a: Edge[], b: Edge[]) => a === b;
+
 function usePinWired(nodeId: string, pinId: string, direction: 'input' | 'output'): boolean {
-  return useStore((state) =>
-    state.edges.some((edge) =>
-      direction === 'input'
-        ? edge.target === nodeId && edge.targetHandle === pinId
-        : edge.source === nodeId && edge.sourceHandle === pinId
-    )
+  const edges = useStore(selectEdges, edgesEqual);
+  return useMemo(
+    () =>
+      edges.some((edge) =>
+        direction === 'input'
+          ? edge.target === nodeId && edge.targetHandle === pinId
+          : edge.source === nodeId && edge.sourceHandle === pinId
+      ),
+    [edges, nodeId, pinId, direction]
   );
 }
 

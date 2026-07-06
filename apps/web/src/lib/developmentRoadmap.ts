@@ -38,7 +38,8 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     number: 2,
     id: 'phase-2',
     title: 'Cloud + persistence',
-    summary: 'Self-hosted Supabase on VPS, Go pgx, JWT auth, production MCP',
+    summary:
+      'Near complete in-repo — PostgresStore, GoTrue docker, cloud save/load, MCP JWT, AuthButton; VPS deploy + ops remain',
     status: 'active',
   },
   {
@@ -86,7 +87,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen — new/open folder (.vvs/ overlay), recent projects (browser or folder), import JSON, library shortcut. Library browse uses session drafts (no spurious recents).',
+          'Start screen — new/open folder (.vvs/ overlay), recent projects, import JSON, Hello World & Calculator example cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
       },
       {
         id: 'nav-history',
@@ -102,7 +103,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'status-bar',
         title: 'Status bar chrome',
-        description: 'API/offline indicator, saved time, graph nav & minimap toggles, code & log toggles, error jump.',
+        description:
+          'API/offline indicator with HealthResponse store, auth mode, and userId (HTTP mode); saved time, graph nav & minimap toggles, code & log toggles, error jump.',
       },
       {
         id: 'panel-layout',
@@ -115,9 +117,16 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         description: 'Details (top-right) and compiler log (bottom-right) with compact/expanded modes.',
       },
       {
+        id: 'auth-button',
+        title: 'Sign in (Supabase GoTrue)',
+        description:
+          'AuthButton in TopNav + StartScreen — email/password when NEXT_PUBLIC_SUPABASE_URL is set; GitHub OAuth optional via env flag.',
+      },
+      {
         id: 'auto-workflow',
-        title: 'Auto-compile & auto-sync',
-        description: 'TopNav toggles for debounced compile and code-preview sync.',
+        title: 'Auto save & auto generate',
+        description:
+          'TopNav split toggle + action buttons — [Auto save|Save] and [Auto generate|Generate]; debounced persist (local + cloud when signed in) and compile.',
       },
     ],
   },
@@ -129,6 +138,40 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'canvas',
         title: 'React Flow canvas',
         description: 'Custom nodes, edges, reroutes, comments, grouping, undo/redo, dirty tab indicators.',
+      },
+      {
+        id: 'selection-toolbar',
+        title: 'Selection toolbar',
+        description:
+          'Canvas-level GraphSelectionToolbar — copy, delete, comment, and ungroup actions when nodes are selected (selection-only overlay).',
+      },
+      {
+        id: 'graph-shortcuts',
+        title: 'Keyboard shortcuts & help',
+        description:
+          'Central graphShortcuts registry; useGraphKeyboardShortcuts; ? overlay (GraphShortcutsHelp) lists canvas + project bindings.',
+      },
+      {
+        id: 'select-all-similar',
+        title: 'Select all & select similar',
+        description: 'Ctrl+A selects all nodes on the active graph; Ctrl+Shift+A selects nodes sharing the same kindId.',
+      },
+      {
+        id: 'selection-highlight-sync',
+        title: 'Selection highlight sync',
+        description:
+          'Comment, reroute, and tab switches keep canvas selection, floating details, and code preview highlights in sync.',
+      },
+      {
+        id: 'canvas-perf',
+        title: 'Canvas interaction perf',
+        description:
+          'Drag/click optimizations — reduced re-renders during node moves and selection changes on large graphs.',
+      },
+      {
+        id: 'spawn-menu-keys',
+        title: 'Spawn menu key handling',
+        description: 'Space spawn menu no longer fires duplicate nodes when the key repeats or overlaps with search.',
       },
       {
         id: 'tabs',
@@ -197,7 +240,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'http-api-ui',
         title: 'HTTP mode wiring',
-        description: 'VvsApi listProjects, compileProject, save/load; StatusBar shows API health when NEXT_PUBLIC_API_MODE=http.',
+        description:
+          'VvsApi listProjects, compileProject, save/load with Bearer token via authHeaders(); StatusBar polls /health when NEXT_PUBLIC_API_MODE=http.',
       },
       {
         id: 'mcp-ui',
@@ -301,7 +345,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'source-map',
         title: 'Codegen source map',
-        description: 'Selection in code preview highlights originating graph nodes and expressions.',
+        description:
+          'Nested branch/import/event ranges in transpiler sourceMap; multi-select code highlight with per-node category colors in CodeMirror.',
       },
       {
         id: 'portability',
@@ -365,7 +410,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'api-facade',
         title: 'VvsApi facade',
         description:
-          'Mock (localStorage) and HTTP (Go) transports — save, load, list, compile, health, MCP probe when NEXT_PUBLIC_API_MODE=http.',
+          'Mock (localStorage) and HTTP (Go) transports — save, load, list, compile, health, MCP probe; Bearer token on HTTP when session is set.',
+      },
+      {
+        id: 'save-before-compile',
+        title: 'Save-before-compile (HTTP)',
+        description:
+          'Generate persists snapshot to Go API before POST …/compile so server-side compile always sees the latest graph.',
       },
       {
         id: 'codemirror',
@@ -426,15 +477,21 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'server-http',
-        title: 'Go project HTTP API (Phase 1)',
+        title: 'Go project HTTP API',
         description:
-          'In-memory store — GET/PUT /api/projects, list projects, POST …/compile via transpiler CLI; CORS for local Next.js dev.',
+          'ProjectStore port — MemoryStore (default) or PostgresStore (DATABASE_URL); GET/PUT /api/projects, list, POST …/compile; CORS + Authorization header.',
+      },
+      {
+        id: 'server-auth',
+        title: 'JWT auth middleware',
+        description:
+          'Go middleware — AUTH_REQUIRED + SUPABASE_JWT_SECRET; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
       },
       {
         id: 'server-mcp',
-        title: 'Local MCP server (Phase 1)',
+        title: 'MCP server (local + JWT)',
         description:
-          'SSE at http://localhost:8080/mcp — list_available_nodes, list_syntax_packs, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; thin wrappers over pure Go services.',
+          'SSE at /mcp — list_available_nodes, list_syntax_packs, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; session auth propagation when Bearer token set.',
       },
       {
         id: 'dev-startup',
@@ -452,49 +509,77 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     id: 'phase-2-deploy',
     phase: 2,
     emphasis: 'active',
-    title: 'Phase 2 — Self-hosted cloud (active)',
+    title: 'Phase 2 — Self-hosted cloud (near complete)',
     items: [
       {
         id: 'arch-locked',
         title: 'Deployment architecture (locked)',
         description:
           'Self-hosted Supabase (Postgres + GoTrue) on VPS; Go is the only product API via pgx — PostgREST not used for editor/MCP paths. docs/deployment.md',
-        status: 'partial',
-      },
-      {
-        id: 'self-hosted-deploy',
-        title: 'Supabase Docker on VPS',
-        description:
-          'Dev VPS + live VPS Compose stacks; Caddy TLS; shared hosting limited to static web assets only.',
-        status: 'planned',
+        status: 'done',
       },
       {
         id: 'postgres-store',
-        title: 'PostgresStore (pgx)',
+        title: 'ProjectStore + PostgresStore (pgx)',
         description:
-          'projects table with JSONB ProjectSnapshot v2; replaces in-memory store; same /api/projects + MCP services.',
+          'ProjectStore interface with MemoryStore (default) and PostgresStore (DATABASE_URL); embedded migrations; docker-compose Postgres + GoTrue for local dev.',
+        status: 'done',
+      },
+      {
+        id: 'auth-middleware',
+        title: 'JWT auth middleware & dev user',
+        description:
+          'Go JWT verification (SUPABASE_JWT_SECRET); AUTH_REQUIRED flag; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
+        status: 'done',
+      },
+      {
+        id: 'bearer-client',
+        title: 'Bearer token in VvsApi client',
+        description:
+          'session.ts holds Supabase access token; authHeaders() attaches Authorization on project APIs; refreshes on AUTH_CHANGED_EVENT.',
+        status: 'done',
+      },
+      {
+        id: 'auth-button-ui',
+        title: 'Minimal Supabase login UI',
+        description:
+          'AuthButton in TopNav + StartScreen — email/password sign-in via Supabase client when NEXT_PUBLIC_SUPABASE_URL and ANON_KEY are set.',
+        status: 'done',
+      },
+      {
+        id: 'health-store-auth',
+        title: 'Health chrome (store / auth / user)',
+        description:
+          'GET /health returns store + auth mode + userId; StatusBar and useApiHealth surface honest connection details in HTTP mode.',
+        status: 'done',
+      },
+      {
+        id: 'self-hosted-deploy',
+        title: 'Full Supabase Docker on VPS',
+        description:
+          'Dev VPS + live VPS Compose stacks (GoTrue, Kong, Studio); Caddy TLS; shared hosting limited to static web assets only.',
         status: 'planned',
       },
       {
-        id: 'auth',
-        title: 'Auth & project ownership',
+        id: 'github-oauth',
+        title: 'GitHub OAuth + email auth',
         description:
-          'GoTrue — GitHub OAuth + email v1; Go JWT middleware (JWKS) on HTTP + production MCP; row scoping by user_id.',
-        status: 'planned',
+          'GoTrue GitHub provider wired in docker-compose; AuthButton shows GitHub when NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=true. Email/password is v1 default.',
+        status: 'partial',
       },
       {
         id: 'editor-cloud-sync',
         title: 'Editor cloud source of truth',
         description:
-          'Authenticated sessions load/save via Go API by default; localStorage as offline cache — no MCP vs browser drift.',
-        status: 'planned',
+          'Authenticated sessions load/save via Go API first (cloudPersistence.ts); debounced cloud autosave; localStorage as offline cache.',
+        status: 'done',
       },
       {
         id: 'mcp-prod',
         title: 'Production MCP (HTTPS + JWT)',
         description:
-          'Same tools as local dev; Bearer token required on /mcp in prod; Connect AI modal documents live URL.',
-        status: 'planned',
+          'MCP session auth propagation; Connect AI modal documents prod URL + Bearer token; probe sends auth when signed in.',
+        status: 'done',
       },
       {
         id: 'ops-backups',

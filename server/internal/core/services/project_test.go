@@ -1,13 +1,19 @@
 package services_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
+	"vvs-server/internal/core/auth"
 	"vvs-server/internal/core/domain"
 	"vvs-server/internal/core/services"
 	"vvs-server/internal/core/store"
 )
+
+func testCtx() context.Context {
+	return auth.WithUserID(context.Background(), auth.DevUserID)
+}
 
 func sampleSnapshot() domain.ProjectSnapshot {
 	return domain.ProjectSnapshot{
@@ -27,13 +33,14 @@ func sampleSnapshot() domain.ProjectSnapshot {
 
 func TestSaveLoadListProject(t *testing.T) {
 	st := store.NewMemoryStore()
+	ctx := testCtx()
 	snap := sampleSnapshot()
 
-	if err := services.SaveProject(st, "proj-1", snap); err != nil {
+	if err := services.SaveProject(ctx, st, "proj-1", snap); err != nil {
 		t.Fatalf("SaveProject: %v", err)
 	}
 
-	loaded, err := services.LoadProject(st, "proj-1")
+	loaded, err := services.LoadProject(ctx, st, "proj-1")
 	if err != nil {
 		t.Fatalf("LoadProject: %v", err)
 	}
@@ -41,28 +48,32 @@ func TestSaveLoadListProject(t *testing.T) {
 		t.Fatalf("expected TestModule, got %s", loaded.ProjectDetails.ModuleName)
 	}
 
-	list := services.ListProjects(st)
+	list, err := services.ListProjects(ctx, st)
+	if err != nil {
+		t.Fatalf("ListProjects: %v", err)
+	}
 	if len(list) != 1 || list[0].ID != "proj-1" {
 		t.Fatalf("unexpected list: %+v", list)
 	}
 
-	if _, err := services.LoadProject(st, "missing"); err == nil {
+	if _, err := services.LoadProject(ctx, st, "missing"); err == nil {
 		t.Fatal("expected not found error")
 	}
 }
 
 func TestGraphEditAddConnectRemove(t *testing.T) {
 	st := store.NewMemoryStore()
+	ctx := testCtx()
 	snap := sampleSnapshot()
-	if err := services.SaveProject(st, "default", snap); err != nil {
+	if err := services.SaveProject(ctx, st, "default", snap); err != nil {
 		t.Fatalf("SaveProject: %v", err)
 	}
 
-	start, err := services.AddNode(st, "default", "main", "event_on_start", 10, 20)
+	start, err := services.AddNode(ctx, st, "default", "main", "event_on_start", 10, 20)
 	if err != nil {
 		t.Fatalf("AddNode start: %v", err)
 	}
-	printNode, err := services.AddNode(st, "default", "main", "action_print", 200, 20)
+	printNode, err := services.AddNode(ctx, st, "default", "main", "action_print", 200, 20)
 	if err != nil {
 		t.Fatalf("AddNode print: %v", err)
 	}
@@ -73,7 +84,7 @@ func TestGraphEditAddConnectRemove(t *testing.T) {
 		SourceHandle: "exec_out",
 		TargetHandle: "exec_in",
 	}
-	created, err := services.ConnectPins(st, "default", "main", edge)
+	created, err := services.ConnectPins(ctx, st, "default", "main", edge)
 	if err != nil {
 		t.Fatalf("ConnectPins: %v", err)
 	}
@@ -81,7 +92,7 @@ func TestGraphEditAddConnectRemove(t *testing.T) {
 		t.Fatalf("expected execution pin type, got %s", created.Data.PinType)
 	}
 
-	doc, tabID, err := services.GetGraphDocument(st, "default", "")
+	doc, tabID, err := services.GetGraphDocument(ctx, st, "default", "")
 	if err != nil {
 		t.Fatalf("GetGraphDocument: %v", err)
 	}
@@ -92,10 +103,10 @@ func TestGraphEditAddConnectRemove(t *testing.T) {
 		t.Fatalf("unexpected graph state: %+v", doc)
 	}
 
-	if err := services.RemoveNode(st, "default", "main", printNode.ID); err != nil {
+	if err := services.RemoveNode(ctx, st, "default", "main", printNode.ID); err != nil {
 		t.Fatalf("RemoveNode: %v", err)
 	}
-	doc, _, err = services.GetGraphDocument(st, "default", "main")
+	doc, _, err = services.GetGraphDocument(ctx, st, "default", "main")
 	if err != nil {
 		t.Fatalf("GetGraphDocument after remove: %v", err)
 	}
@@ -138,22 +149,38 @@ func (f fakeRunner) Compile(_ []byte) ([]byte, error) {
 
 func TestCompileProject(t *testing.T) {
 	st := store.NewMemoryStore()
+	ctx := testCtx()
 	snap := sampleSnapshot()
-	if err := services.SaveProject(st, "default", snap); err != nil {
+	if err := services.SaveProject(ctx, st, "default", snap); err != nil {
 		t.Fatalf("SaveProject: %v", err)
 	}
 
 	expected := domain.TranspileResult{
-		Language: "python",
-		Files:    []domain.GeneratedFile{{Path: "test.py", Content: "print('hi')"}},
+		Language:  "python",
+		Files:     []domain.GeneratedFile{{Path: "test.py", Content: "print('hi')"}},
 		SourceMap: map[string][]domain.SourceRange{},
 	}
 	payload, _ := json.Marshal(expected)
-	result, err := services.CompileProject(st, "default", fakeRunner{output: payload})
+	result, err := services.CompileProject(ctx, st, "default", fakeRunner{output: payload})
 	if err != nil {
 		t.Fatalf("CompileProject: %v", err)
 	}
 	if len(result.Files) != 1 || result.Files[0].Content != "print('hi')" {
 		t.Fatalf("unexpected compile result: %+v", result)
+	}
+}
+
+func TestUserScopedProjects(t *testing.T) {
+	st := store.NewMemoryStore()
+	snap := sampleSnapshot()
+
+	userA := auth.WithUserID(context.Background(), "00000000-0000-0000-0000-0000000000aa")
+	userB := auth.WithUserID(context.Background(), "00000000-0000-0000-0000-0000000000bb")
+
+	if err := services.SaveProject(userA, st, "shared-id", snap); err != nil {
+		t.Fatalf("SaveProject userA: %v", err)
+	}
+	if _, err := services.LoadProject(userB, st, "shared-id"); err == nil {
+		t.Fatal("user B should not see user A project")
 	}
 }

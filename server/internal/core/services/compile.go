@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -74,8 +75,8 @@ func FindRepoRoot() (string, error) {
 }
 
 // CompileProject runs the transpiler CLI against a stored project snapshot.
-func CompileProject(st *store.MemoryStore, projectID string, runner TranspilerRunner) (*domain.TranspileResult, error) {
-	snap, err := LoadProject(st, projectID)
+func CompileProject(ctx context.Context, st store.ProjectStore, projectID string, runner TranspilerRunner) (*domain.TranspileResult, error) {
+	snap, err := LoadProject(ctx, st, projectID)
 	if err != nil {
 		return nil, err
 	}

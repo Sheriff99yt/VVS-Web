@@ -10,6 +10,7 @@ import {
   nodeCategoryColor,
   nodeDisplayLabel,
 } from '@/lib/nodeOutliner';
+import { shortcutTitle } from '@/lib/graphShortcuts';
 
 const MAX_RESULTS = 12;
 
@@ -105,7 +106,7 @@ export function GraphNodeSearch() {
           type="button"
           onClick={openSearch}
           className="pointer-events-auto flex items-center justify-center w-8 h-8 rounded-full bg-zinc-900/90 border border-zinc-700/80 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600 transition-colors shadow-md"
-          title="Search nodes (Ctrl+K)"
+          title={shortcutTitle('node-search')}
           aria-label="Search nodes"
         >
           <Search size={14} />

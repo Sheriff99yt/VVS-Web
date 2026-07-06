@@ -1,22 +1,28 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Zap, RefreshCw, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput } from 'lucide-react';
+import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
-import { VvsApi, getApiMode } from '@/lib/api';
+import { VvsApi, getApiMode, ApiError } from '@/lib/api';
 import { dispatchGraphAction } from '@/lib/graphActions';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { ProjectSnapshot, isProjectSnapshot } from '@/types/projectSnapshot';
 import { applyProjectSnapshot } from '@/lib/applyProjectSnapshot';
 import { dispatchEditorNavigate } from '@/lib/editorNavigate';
 import { useRouter } from 'next/navigation';
-import { saveProjectToStore, upsertRecentProject, isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
-import { saveProjectToFolder, isFolderPickerSupported } from '@/lib/projectFolder';
+import { upsertRecentProject, isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
+import { persistProjectSnapshot } from '@/lib/cloudPersistence';
+import { saveProjectToFolder } from '@/lib/projectFolder';
+import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { promoteBrowserProjectToDisk, SAVE_ON_DISK_PROMPT_EVENT } from '@/lib/promoteProjectToDisk';
 import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDialog';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
+import { AuthButton } from '@/components/auth/AuthButton';
+import { getAccessToken } from '@/lib/auth/session';
+import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
+import { shortcutTitle } from '@/lib/graphShortcuts';
 
 import type { EditorViewTab } from '@/types/editorNavigation';
 
@@ -30,12 +36,16 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [showMCPModal, setShowMCPModal] = useState(false);
   const [mcpProbeState, setMcpProbeState] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const [mcpProbeMessage, setMcpProbeMessage] = useState<string | null>(null);
-  const mcpUrl = 'http://localhost:8080/mcp';
+  const mcpUrl =
+    process.env.NEXT_PUBLIC_MCP_URL?.trim() ||
+    `${process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:8080'}/mcp`;
   const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | null>(null);
   const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
   const [saveOnDiskPromptMode, setSaveOnDiskPromptMode] = useState<'close' | 'manual'>('close');
   const [saveOnDiskBusy, setSaveOnDiskBusy] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderPickerAvailable = useFolderPickerSupported();
 
   const {
     canUndo, canRedo, triggerUndo, triggerRedo,
@@ -115,7 +125,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   );
 
   const persistSnapshot = useCallback(
-    async (snapshot: ProjectSnapshot): Promise<string> => {
+    async (
+      snapshot: ProjectSnapshot,
+      options?: { requireApiSave?: boolean }
+    ): Promise<string> => {
       if (isFolderProject && folderHandle) {
         await saveProjectToFolder(folderHandle, snapshot);
         upsertRecentProject({
@@ -126,10 +139,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           storage: 'folder',
           folderLabel: folderLabel ?? folderHandle.name,
         });
+        if (getApiMode() === 'http') {
+          await persistProjectSnapshot(projectId, snapshot, projectSource, options);
+        }
         return snapshot.savedAt;
       }
-      const saved = saveProjectToStore(projectId, snapshot, projectSource);
-      await VvsApi.saveProject(snapshot, projectId);
+      const saved = await persistProjectSnapshot(projectId, snapshot, projectSource, options);
       return saved.savedAt;
     },
     [isFolderProject, folderHandle, folderLabel, projectId, projectSource]
@@ -213,19 +228,24 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const handleSave = useCallback(async () => {
     const snapshot = buildSnapshot();
     if (!snapshot) return;
-    const savedAt = await persistSnapshot(snapshot);
-    setLastSavedAt(savedAt);
-    setOpenMenu(null);
+    setSaveBusy(true);
+    try {
+      const savedAt = await persistSnapshot(snapshot);
+      setLastSavedAt(savedAt);
+      setOpenMenu(null);
+    } finally {
+      setSaveBusy(false);
+    }
   }, [buildSnapshot, persistSnapshot, setLastSavedAt]);
 
   const handleCompile = useCallback(async () => {
     if (compileState === 'compiling') return;
 
-    const documents = getDocuments();
-    if (!documents) return;
+    const snapshot = buildSnapshot();
+    if (!snapshot) return;
 
     const analysis = runProjectAnalysis({
-      documents,
+      documents: snapshot.documents,
       functions,
       events,
       variables,
@@ -251,29 +271,43 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setValidationWarnings(analysis.warnings);
     setCompileState('compiling');
     try {
+      if (getApiMode() === 'http') {
+        const savedAt = await persistSnapshot(snapshot, { requireApiSave: true });
+        setLastSavedAt(savedAt);
+      }
       await VvsApi.compileProject(projectId);
       setValidationErrors([]);
       setValidationWarnings(analysis.warnings);
       markTabClean(activeGraphTab);
       setCompileState('success');
-    } catch {
+    } catch (err) {
       setCompileState('error');
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Generate failed.';
+      setValidationErrors([{ level: 'error', message }]);
     }
   }, [
     activeGraphTab,
+    buildSnapshot,
     compileState,
     events,
     functions,
-    getDocuments,
     markTabClean,
+    persistSnapshot,
     projectDetails,
     projectId,
     setCompileState,
+    setLastSavedAt,
     setValidationErrors,
     setValidationWarnings,
     targetLanguage,
     crossOverMode,
     variables,
+    openTabs,
   ]);
 
   const handleCommitPreview = useCallback(() => {
@@ -281,17 +315,14 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setOpenMenu(null);
   }, []);
 
-  const buildSnapshotRef = useRef(buildSnapshot);
-  buildSnapshotRef.current = buildSnapshot;
+  const handleCommitPreviewRef = useRef(handleCommitPreview);
+  handleCommitPreviewRef.current = handleCommitPreview;
 
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
 
   const handleCompileRef = useRef(handleCompile);
   handleCompileRef.current = handleCompile;
-
-  const handleCommitPreviewRef = useRef(handleCommitPreview);
-  handleCommitPreviewRef.current = handleCommitPreview;
 
   useEffect(() => {
     if (!autoCompile) return;
@@ -306,8 +337,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     if (!autoSave) return;
     if (Object.keys(dirtyTabIds).length === 0) return;
     const timer = window.setTimeout(() => {
-      handleCommitPreviewRef.current();
-    }, 400);
+      void handleSaveRef.current();
+    }, 800);
     return () => window.clearTimeout(timer);
   }, [autoSave, dirtyTabIds, variables, events, functions, projectDetails, openTabs, targetLanguage]);
 
@@ -422,10 +453,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     }
   };
 
-  const togglePillClass = (on: boolean) =>
-    on
-      ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-      : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:text-zinc-300 hover:border-zinc-700';
+  const autoSaveTitle = autoSave
+    ? 'Auto save on — debounced project snapshot to local storage and cloud when signed in'
+    : 'Auto save off — click Save or use Ctrl+S';
+  const autoGenerateTitle = autoCompile
+    ? 'Auto generate on — debounced validate and transpile on graph changes'
+    : 'Auto generate off — click Generate or use Ctrl+G';
 
   const handleExport = () => {
     const snapshot = buildSnapshot();
@@ -466,9 +499,9 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'file' ? null : 'file')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'file' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>File</button>
               {openMenu === 'file' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={handleSave} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { void handleSave(); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Save size={12} className="shrink-0 opacity-70" />
-                    Save
+                    Save project
                     <span className="ml-auto text-[9px] text-zinc-600">Ctrl+S</span>
                   </button>
                   <button onClick={handleExport} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
@@ -495,39 +528,45 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
                   <button onClick={() => { void handleCompile(); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Zap size={12} className="shrink-0 opacity-70" />
-                    Compile
+                    Generate
                     <span className="ml-auto text-[9px] text-zinc-600">Ctrl+G</span>
                   </button>
                   <button onClick={() => { handleCommitPreview(); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <RefreshCw size={12} className="shrink-0 opacity-70" />
-                    Sync preview
+                    Sync code preview
                     <span className="ml-auto text-[9px] text-zinc-600">⇧S</span>
                   </button>
                   <div className="h-px bg-zinc-800 my-1" />
                   <button onClick={() => { triggerUndo(); setOpenMenu(null); }} disabled={!canUndo} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
                     <Undo2 size={12} className="shrink-0 opacity-70" />
                     Undo
+                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+Z</span>
                   </button>
                   <button onClick={() => { triggerRedo(); setOpenMenu(null); }} disabled={!canRedo} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
                     <Redo2 size={12} className="shrink-0 opacity-70" />
                     Redo
+                    <span className="ml-auto text-[9px] text-zinc-600">⇧Z</span>
                   </button>
                   <div className="h-px bg-zinc-800 my-1" />
                   <button onClick={() => { dispatchGraphAction('cut'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Scissors size={12} className="shrink-0 opacity-70" />
                     Cut
+                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+X</span>
                   </button>
                   <button onClick={() => { dispatchGraphAction('copy'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Copy size={12} className="shrink-0 opacity-70" />
                     Copy
+                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+C</span>
                   </button>
                   <button onClick={() => { dispatchGraphAction('paste'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <ClipboardPaste size={12} className="shrink-0 opacity-70" />
                     Paste
+                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+V</span>
                   </button>
                   <button onClick={() => { dispatchGraphAction('duplicate'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Files size={12} className="shrink-0 opacity-70" />
                     Duplicate
+                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+D</span>
                   </button>
                 </div>
               )}
@@ -540,6 +579,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   <button onClick={() => { dispatchGraphAction('zoom-fit'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <ZoomIn size={12} className="shrink-0 opacity-70" />
                     Zoom to fit
+                    <span className="ml-auto text-[9px] text-zinc-600">Shift+F</span>
+                  </button>
+                  <button onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                    <ZoomIn size={12} className="shrink-0 opacity-70" />
+                    Frame selection
+                    <span className="ml-auto text-[9px] text-zinc-600">F</span>
                   </button>
                   <button onClick={() => { dispatchGraphAction('group-comment'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Group size={12} className="shrink-0 opacity-70" />
@@ -554,6 +599,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     <Ungroup size={12} className="shrink-0 opacity-70" />
                     Ungroup
                     <span className="ml-auto text-[9px] text-zinc-600">⇧U</span>
+                  </button>
+                  <button onClick={() => { dispatchGraphAction('disconnect-selection'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                    Disconnect wires
+                    <span className="ml-auto text-[9px] text-zinc-600">Alt+D</span>
                   </button>
                 </div>
               )}
@@ -596,34 +645,20 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
         <div className="flex items-center gap-2">
           {activeTab === 'canvas' && (
-            <>
-              <button
-                type="button"
-                onClick={() => setAutoCompile(!autoCompile)}
-                className={`p-1.5 rounded border transition-colors ${togglePillClass(autoCompile)}`}
-                title={autoCompile ? 'Auto-compile on' : 'Auto-compile off (Ctrl+G)'}
-                aria-pressed={autoCompile}
-              >
-                <Zap size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setAutoSave(!autoSave)}
-                className={`p-1.5 rounded border transition-colors ${togglePillClass(autoSave)}`}
-                title={autoSave ? 'Auto-sync preview on' : 'Auto-sync off (Ctrl+Shift+S)'}
-                aria-pressed={autoSave}
-              >
-                <RefreshCw size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={handleCommitPreview}
-                className="p-1.5 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
-                title="Sync preview (Ctrl+Shift+S)"
-              >
-                <Save size={14} />
-              </button>
-            </>
+            <TopNavWorkflowControls
+              autoSave={autoSave}
+              onAutoSaveToggle={() => setAutoSave(!autoSave)}
+              autoSaveTitle={autoSaveTitle}
+              onSaveNow={() => void handleSave()}
+              saveNowTitle={shortcutTitle('save-project')}
+              saveBusy={saveBusy}
+              autoGenerate={autoCompile}
+              onAutoGenerateToggle={() => setAutoCompile(!autoCompile)}
+              autoGenerateTitle={autoGenerateTitle}
+              onGenerateNow={() => void handleCompile()}
+              generateNowTitle={shortcutTitle('compile')}
+              generateBusy={compileState === 'compiling'}
+            />
           )}
 
           <button
@@ -633,6 +668,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           >
             <Bot size={14} />
           </button>
+          <AuthButton />
         </div>
       </header>
 
@@ -648,9 +684,22 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                 Connect your IDE (Cursor, Claude Desktop, or Windsurf) to this VVS session so AI can read and write node graphs via MCP.
               </p>
               <p className="text-[11px] text-zinc-500 leading-relaxed">
-                Phase 1: run the local Go server with{' '}
-                <span className="font-mono text-zinc-400">NEXT_PUBLIC_API_MODE=http</span>, then use Test connection below. No auth token required for local dev.
+                <span className="text-zinc-400">Local dev:</span> run the Go server with{' '}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_API_MODE=http</span> — no auth token required when{' '}
+                <span className="font-mono text-zinc-400">AUTH_REQUIRED=false</span>.
               </p>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
+                <span className="text-zinc-400">Production:</span> use your HTTPS API host, e.g.{' '}
+                <span className="font-mono text-zinc-400">https://api.your-domain/mcp</span>. Set{' '}
+                <span className="font-mono text-zinc-400">NEXT_PUBLIC_MCP_URL</span> in{' '}
+                <span className="font-mono text-zinc-400">.env.local</span>. When signed in, Test connection sends your Bearer token; add the same header in your IDE MCP config when{' '}
+                <span className="font-mono text-zinc-400">AUTH_REQUIRED=true</span>.
+              </p>
+              {getAccessToken() ? (
+                <p className="text-[11px] text-emerald-400/90">
+                  Signed in — MCP probe includes your access token.
+                </p>
+              ) : null}
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">MCP Server URL</label>
                 <div className="flex items-center gap-2">
@@ -715,7 +764,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         projectName={projectDetails.moduleName || 'Untitled'}
         isDraft={isProjectDraftOnly(projectId)}
         saving={saveOnDiskBusy}
-        folderPickerAvailable={isFolderPickerSupported()}
+        folderPickerAvailable={folderPickerAvailable}
         onSaveOnDisk={() => void handleSaveOnDisk()}
         onCancel={handleDismissSaveOnDiskPrompt}
       />

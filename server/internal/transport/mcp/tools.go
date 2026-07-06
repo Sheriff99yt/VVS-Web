@@ -16,7 +16,7 @@ import (
 
 // Deps holds shared dependencies for MCP tool handlers.
 type Deps struct {
-	Store  *store.MemoryStore
+	Store  store.ProjectStore
 	Runner services.TranspilerRunner
 }
 
@@ -64,18 +64,18 @@ func registerGetGraph(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("project_id", mcp.Required(), mcp.Description("Project id")),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
 	)
-	s.AddTool(tool, func(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		tabID := req.GetString("tab_id", "")
 
-		snap, err := services.LoadProject(deps.Store, projectID)
+		snap, err := services.LoadProject(ctx, deps.Store, projectID)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		doc, resolvedTab, err := services.GetGraphDocument(deps.Store, projectID, tabID)
+		doc, resolvedTab, err := services.GetGraphDocument(ctx, deps.Store, projectID, tabID)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
@@ -100,7 +100,7 @@ func registerAddNode(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithNumber("y", mcp.Description("Canvas Y position")),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
 	)
-	s.AddTool(tool, func(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -113,7 +113,7 @@ func registerAddNode(s *mcpserver.MCPServer, deps Deps) {
 		y := req.GetFloat("y", 0)
 		tabID := req.GetString("tab_id", "")
 
-		node, err := services.AddNode(deps.Store, projectID, tabID, kindID, x, y)
+		node, err := services.AddNode(ctx, deps.Store, projectID, tabID, kindID, x, y)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
@@ -128,7 +128,7 @@ func registerRemoveNode(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("node_id", mcp.Required()),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
 	)
-	s.AddTool(tool, func(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -139,7 +139,7 @@ func registerRemoveNode(s *mcpserver.MCPServer, deps Deps) {
 		}
 		tabID := req.GetString("tab_id", "")
 
-		if err := services.RemoveNode(deps.Store, projectID, tabID, nodeID); err != nil {
+		if err := services.RemoveNode(ctx, deps.Store, projectID, tabID, nodeID); err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		return jsonToolResult(map[string]interface{}{"ok": true})
@@ -156,7 +156,7 @@ func registerConnectPins(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("target_handle", mcp.Required()),
 		mcp.WithString("tab_id", mcp.Description("Graph tab id (defaults to activeGraphTab)")),
 	)
-	s.AddTool(tool, func(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -185,7 +185,7 @@ func registerConnectPins(s *mcpserver.MCPServer, deps Deps) {
 			SourceHandle: sourceHandle,
 			TargetHandle: targetHandle,
 		}
-		created, err := services.ConnectPins(deps.Store, projectID, tabID, edge)
+		created, err := services.ConnectPins(ctx, deps.Store, projectID, tabID, edge)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
@@ -198,12 +198,12 @@ func registerGenerateCode(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithDescription("Compile the stored project snapshot via the transpiler CLI"),
 		mcp.WithString("project_id", mcp.Required()),
 	)
-	s.AddTool(tool, func(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		result, err := services.CompileProject(deps.Store, projectID, deps.Runner)
+		result, err := services.CompileProject(ctx, deps.Store, projectID, deps.Runner)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
@@ -217,7 +217,7 @@ func registerSaveProject(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("project_id", mcp.Required()),
 		mcp.WithObject("snapshot", mcp.Required(), mcp.Description("ProjectSnapshot v2 JSON object")),
 	)
-	s.AddTool(tool, func(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -234,7 +234,7 @@ func registerSaveProject(s *mcpserver.MCPServer, deps Deps) {
 		if err := json.Unmarshal(payload, &snap); err != nil {
 			return mcp.NewToolResultError("invalid snapshot: " + err.Error()), nil
 		}
-		if err := services.SaveProject(deps.Store, projectID, snap); err != nil {
+		if err := services.SaveProject(ctx, deps.Store, projectID, snap); err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		return jsonToolResult(map[string]interface{}{"ok": true})

@@ -18,48 +18,86 @@ description: Triggers when building user-facing features, Next.js components, or
 
 | View | Mode |
 |------|------|
-| **Canvas** | Full editor chrome (explorer, canvas, console, properties, code preview) |
-| **References** | UE5-style reference viewer — own layout; edit canvas unmounted |
+| **Canvas** | Full editor chrome (explorer, canvas, floating panels, code preview) |
+| **References** | UE5-style reference viewer — own layout; edit canvas **unmounted** |
 | **Library** | Full-width community UI only — hide editor side panels |
+| **Roadmap** | In-app shipped vs coming-soon summary (not a duplicate of `docs/roadmap.md`) |
 
-**Do not add:** Roadmap tab, Integrations tab, or duplicate node catalogs in Library.
+**Do not add:** Integrations tab, or duplicate node catalogs in Library.
+
+### Graph domain isolation
+
+Edit and reference canvases **must not share one React Flow store**. See `docs/current_state.md` § Graph system architecture.
+
+```text
+GraphWorkspaceHost (always mounted, no React Flow)
+├── useGraphState + useGraphTabSync
+└── GraphEditContext → GraphCanvas (Canvas view only)
+
+Canvas:     ReactFlowProvider (edit) → GraphCanvas + GraphSelectionToolbar
+References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
+```
+
+- `CodePreviewPanel` reads documents via `useGraphDocuments`, not React Flow `useStore`
+- `referenceRootGraphId` updates via `focusReference()` only — not from `activeGraphTab`
+- Orphan: `ReferenceViewer.tsx` — superseded by `ReferencesView`; do not re-add to left panel
 
 ### TopNav (Canvas only)
 
-- **File:** New, Save, Load, Export JSON (mock save/load via `api-mock.ts`)
-- **Edit:** Undo, Redo
-- **View:** Zoom to Fit
-- **Compile** button with dirty/compiling/success/error states
-- **Connect AI** modal (MCP URL — show disconnected until backend exists)
+- **File:** New, Save project, Load, Export JSON; folder save when FS Access available
+- **Edit:** Undo, Redo, Validate & compile (Ctrl+G), Extract to function
+- **View:** Zoom to Fit, panel toggles
+- **Auto Generate** / **Auto Save** toggles — debounced compile / code sync when on; manual **Generate** / **Save** when off
+- **Connect AI** modal — MCP URL + **Test connection** via `VvsApi.probeMcp`
+- **AuthButton** — sign-in when `NEXT_PUBLIC_SUPABASE_*` configured
 
-**Removed:** Play/Pause/Stop simulation controls (no runtime yet). **Do not re-add** without real execution backend.
+**Removed:** Play/Pause/Stop simulation toolbar (mock stepping exists elsewhere). **Do not re-add** `GraphToolbar`.
 
-**Do not add:** `GraphToolbar` or duplicate Compile/Save elsewhere.
+### StartScreen (`components/start/StartScreen.tsx`)
+
+- **Start:** New blank, Open file, folder picker buttons (gated by `useFolderPickerSupported`)
+- **Examples:** `EXAMPLE_PROJECTS` from `lib/exampleProjects.ts` — Hello World (simple), Calculator (complex)
+- **Explore:** shortcuts to Library and Roadmap views in editor
+- **Recent:** via `useRecentProjects()` — deferred localStorage hydration (see below)
+- **AuthButton** when Supabase configured
+
+### Canvas selection toolbar
+
+`GraphSelectionToolbar.tsx` — floating actions above selected node(s) via `ViewportPortal`:
+
+- Duplicate, group/ungroup comment, delete
+- Driven by `useGraphNodeSelection`; actions via `dispatchGraphAction`
 
 ### Mock / offline chrome
 
-- Status bar: `MCP: DISCONNECTED`, `OFFLINE MODE`
-- **Code preview panel:** open by default in Canvas (see `docs/node_system.md`)
-- Compiler log: collapsed by default; expands on compile/error
-- No fake CPU/MEM metrics or “sync active” indicators
+- Status bar: honest **offline/disconnected** — no fake CPU/sync metrics
+- `useApiHealth` + `VvsApi.getHealth` — show `store`/`auth` when HTTP mode
+- **Code preview:** open by default in Canvas (see `docs/node_system.md`)
+- Compiler log: collapsed by default; expands on compile/error (StatusBar **Log** toggle)
 - No `animate-pulse` on connection dots; no heavy `backdrop-filter` on modals
+
+### Hydration patterns (mandatory for browser-only APIs)
+
+- **`useFolderPickerSupported`** — returns `false` during SSR and first paint; `useEffect` sets true after mount when FS Access API exists
+- **`recentProjectsSubscribe.ts`** — stable empty SSR snapshot; `useSyncExternalStore` refreshes from localStorage only after client subscribe
+- **Never** read `localStorage` / `sessionStorage` / `window.showDirectoryPicker` during render on server
 
 ### Node spawning
 
-- Spawnable nodes: `@vvs/syntax-registry` via `lib/nodeCatalog.ts` → canvas context menu (`NodeContextMenu`)
-- Core categories include **Events**, **Action**, **Conversion**, **Flow Control**, **Math**, **Variables**, plus **Project · Calls**
-- **Conversion** nodes (`To String`, `To Number`) are pure data — wire between Get and Print; never skip them for numeric print
-- **Reuse:** prefer **Function** + **Call Function**; macro tabs are **legacy** — do not add UX that depends on invisible macro expand
+- Spawnable nodes: `@vvs/syntax-registry` via `lib/nodeCatalog.ts` → canvas context menu
+- **Conversion** nodes — wire between Get and Print; never skip for numeric print
+- **Reuse:** Function + Call Function; macro tabs are **legacy**
 - Library view: community scripts only — not a second local node browser
 
 # Modular & Maintainable Implementation (Frontend)
 
-- Strictly divide Server Components (data fetching) from Client Components (interactive UI/React Flow). 
-- Isolate complex state (e.g., Xyflow logic) into custom hooks. Keep React UI components "dumb" and purely presentational where possible.
+- Strictly divide Server Components (data fetching) from Client Components (interactive UI/React Flow).
+- Isolate complex state (Xyflow, tab sync, selection) into custom hooks. Keep React UI components "dumb" where possible.
+- TopNav → canvas actions use `graphActions` custom events, not synthetic `KeyboardEvent`.
 
 # Design & Styling Rules (OVERRIDE GLOBAL AESTHETICS)
 
-- **Mandatory Minimalist UI**: Disregard any global instructions to use "glassmorphism", "rich effects", or "dynamic animations". 
+- **Mandatory Minimalist UI**: Disregard any global instructions to use "glassmorphism", "rich effects", or "dynamic animations".
 - **Light CSS & Animations**: Keep CSS extremely lightweight. Avoid heavy `box-shadow`, `backdrop-filter`, or complex gradients. Use only "lite" CSS transitions (`0.15s ease`) for visual feedback, and only trigger them when needed (e.g., user hover or selection). Never use constant/infinite animations.
 - **Clean Visual Feedback**: Focus on function over form. Use clear, subtle state changes (e.g., solid 1px borders, subtle opacity changes, or simple flat colors) for hover and selection states.
 - **Modern & Functional**: The UI should feel like a modern, professional developer tool—clean, legible, and un-distracting.
@@ -71,43 +109,39 @@ description: Triggers when building user-facing features, Next.js components, or
 Whenever building or evaluating the UI panels, ensure the following professional Visual Scripting features and use-cases are accounted for:
 
 ### 1. Left Panel (Project)
-- **UE-style category tree** (single scrollable panel): Graphs · Functions · Macros · Variables · Event Dispatchers · Generated.
-- **References** is a **top-level TopNav view**, not a left-panel category — the same `ProjectTree` appears in References mode with `mode="references"` (single-click focuses reference graph).
-- **Graphs** holds the primary **Event Graph**; functions/macros live in their own categories (not nested under Graphs).
-- **Variable Lifecycle Management**: Users must be able to add, edit (Name, Type, Default Value), and delete local variables.
-- **Function/Event Sub-graphs**: Users must be able to create custom macros/functions, which open in separate graph tabs.
-- **Drag-and-Drop Spawning**: Users must be able to drag a variable from the list and drop it on the canvas to spawn a contextual `Get`/`Set` node.
-- **Navigation modes:** `ProjectTree` / `GraphExplorer` accepts `mode: 'canvas' | 'references'` — canvas single-click selects; references single-click calls `focusReference()`; double-click always opens graph in Canvas.
-- **Progressive disclosure:** Generated collapsed by default; per-category + on row headers.
+- **UE-style category tree** (single scrollable panel): Graphs · Functions · Variables · Event Dispatchers · Generated.
+- **References** is a **top-level TopNav view**, not a left-panel category — `ProjectTree` uses `mode="references"` (single-click focuses reference graph).
+- **Variable Lifecycle Management**: add, edit (Name, Type, Default Value), delete local variables.
+- **Function/Event Sub-graphs**: custom functions open in separate graph tabs.
+- **Drag-and-Drop Spawning**: drag variable → spawn Get/Set node on canvas.
+- **Navigation modes:** `mode: 'canvas' | 'references'` — canvas single-click selects; references single-click `focusReference()`; double-click opens in Canvas.
+- **Progressive disclosure:** Generated collapsed by default; per-category + row headers.
 
-### 2. Right Panel (Properties Inspector)
+### 2. Floating inspector (canvas overlay)
 
-- **Floating details** on canvas: `GraphFloatingDetails.tsx` (not a docked right sidebar in Canvas mode)
+- **`GraphFloatingDetails.tsx`** — not a docked right sidebar in Canvas mode
 - **Context-Aware Forms** — selection drives panel content:
-  - *Selected Node*: **Settings** (`PropertySchemaPanel` when kind has `propertySchema`) → **Pins** (`NodePinsPanel`) → binding plugins (event define/dispatch, broken-ref repair)
-  - *Selected Variable*: `VariablePropertiesPanel`
-  - *Selected Function / Event*: respective property panels
+  - *Selected Node*: Settings (`PropertySchemaPanel`) → Pins (`NodePinsPanel`) → binding plugins
+  - *Selected Variable / Function / Event*: respective property panels
   - *No Selection*: panel hidden; graph settings via breadcrumb **settings** modal (`GraphSettingsModal`)
-- **Get User Input** exposes `inputKind` / placeholder in Settings; prompt stays on pin
-- **Progressive disclosure:** compact summary when collapsed; force-expand when broken ref selected
+- **Call overload picker:** `CallNodeOverloadPanel` when `func.overloads.length > 1`
+- **Progressive disclosure:** compact summary when collapsed; force-expand on broken ref
 
 ### 3. Center Panel (Graph Canvas & Interaction)
-- **Context-Sensitive Spawning**: Dragging a wire into empty space must open the Context Menu automatically, filtered to ONLY show nodes compatible with that wire's data type.
-- **Comment Grouping**: Users must be able to select multiple nodes and wrap them in a colored, resizable Comment Box for documentation.
-- **Reroute Pins**: Double-clicking an edge must spawn a transparent reroute node to organize complex spaghetti wiring.
-- **Copy/Paste**: Full clipboard support for nodes and wires.
+- **GraphSelectionToolbar** — selection-scoped duplicate/group/delete
+- **Context-Sensitive Spawning**: wire into empty space → filtered context menu
+- **Comment Grouping**, **Reroute Pins**, **Copy/Paste/Cut/Duplicate**
 
 ### 4. Top Navigation Bar
-- **Generate/Validation Pipeline**: Prominent Generate button with clear visual states (Dirty → Compiling → Success/Error).
-- **Connect AI**: MCP connection modal — not a separate Integrations page.
+- **Generate/Validation Pipeline**: Auto Generate toggle + manual Generate; dirty/compiling/success/error states
+- **Connect AI**: MCP modal — not a separate Integrations page
+- **AuthButton** when cloud auth configured
 
 ### 5. Code Preview Panel
-- Read-only generated code for the active target language.
-- Language selection lives in **Graph Properties**, not in the code panel header.
-- **Code panel is open by default** in Canvas mode (see `docs/node_system.md`).
-- Codegen via `@vvs/transpiler` (facade: `lib/mockCodegen.ts`).
-- Selection highlight uses `TranspileResult.sourceMap` + expression spans — **code panel must match graph** (text-shaped fidelity)
-- **Progressive disclosure:** compiler log collapses until errors/compile; user may collapse code via StatusBar **Code** toggle.
+- Read-only generated code; target language in **Graph Properties** / settings modal
+- Codegen via `@vvs/transpiler` (facade: `lib/mockCodegen.ts`)
+- Selection highlight: `TranspileResult.sourceMap` + expression spans
+- **Progressive disclosure:** compiler log collapses until errors; StatusBar **Code** toggle
 
 # Show Data When Needed
 

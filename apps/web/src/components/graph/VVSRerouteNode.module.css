@@ -31,8 +31,9 @@
 .dot[data-pintype='data_object'] { background-color: var(--vvs-pin-data_object); }
 .dot[data-pintype='data_any'] { background-color: var(--vvs-pin-data_any); }
 
-.rerouteSelected .dot {
+.rerouteSelected {
   box-shadow: 0 0 0 2px var(--vvs-node-border-selected);
+  border-radius: 4px;
 }
 
 .handle {

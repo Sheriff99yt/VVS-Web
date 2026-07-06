@@ -151,12 +151,14 @@ export function RoadmapView() {
         <header className="space-y-3">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            <span className="text-emerald-400/90 font-medium">Phase 1 shipped</span> — text-shaped
-            graphs, syntax packs,{' '}
-            <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go API, and MCP.{' '}
-            <span className="text-indigo-300/90 font-medium">Phase 2 (active)</span> — self-hosted
-            Supabase on VPS, Go <span className="font-mono text-zinc-400">pgx</span>, JWT auth,
-            production MCP. Full strategy in{' '}
+            <span className="text-emerald-400/90 font-medium">Phase 1 shipped</span> — syntax packs,
+            IR transpiler, text-shaped graphs,{' '}
+            <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go HTTP API, and
+            local MCP.{' '}
+            <span className="text-indigo-300/90 font-medium">Phase 2 near complete in-repo</span> —
+            PostgresStore, GoTrue docker stack, authenticated cloud save/load, AuthButton, MCP JWT;
+            remaining: full Supabase VPS compose, GitHub OAuth credentials, daily backups. Full
+            strategy in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"

@@ -18,7 +18,9 @@ import type { TranspileResult } from '@/types/transpile';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
+import type { CodeHighlightRange } from '@/components/code/types';
 import { CopyPathButton } from '@/components/ui/CopyPathButton';
+import { nodeHighlightColor, DEFAULT_NODE_HIGHLIGHT } from '@/lib/nodeHighlightColor';
 
 import type { TargetLanguage } from '@/contexts/ProjectContext';
 
@@ -62,11 +64,34 @@ function warningsEqual(a: ValidationMessage[], b: ValidationMessage[]): boolean 
   });
 }
 
+function buildColoredHighlightRanges(
+  selectedNodeIds: string[],
+  sourceMap: TranspileResult['sourceMap'],
+  filePath: string,
+  nodesById: Map<string, VVSNode>
+): CodeHighlightRange[] | undefined {
+  const entries: CodeHighlightRange[] = [];
+
+  for (const nodeId of selectedNodeIds) {
+    const ranges = sourceMap[nodeId];
+    if (!ranges?.length) continue;
+
+    const node = nodesById.get(nodeId);
+    const colors = node ? nodeHighlightColor(node) : DEFAULT_NODE_HIGHLIGHT;
+
+    for (const range of ranges) {
+      if (range.filePath !== filePath) continue;
+      entries.push({ ...range, colors });
+    }
+  }
+
+  return entries.length > 0 ? entries : undefined;
+}
+
 export function CodePreviewPanel() {
   const {
     compileState,
     autoCompile,
-    autoSave,
     targetLanguage,
     setTargetLanguage,
     variables,
@@ -76,6 +101,7 @@ export function CodePreviewPanel() {
     activeGraphTab,
     openTabs,
     selection,
+    selectedNodeIds,
     validationWarnings,
     setValidationWarnings,
     crossOverMode,
@@ -163,12 +189,6 @@ export function CodePreviewPanel() {
   }, [liveResult]);
 
   useEffect(() => {
-    if (autoSave) {
-      lastCleanResultRef.current = liveResult;
-    }
-  }, [autoSave, liveResult]);
-
-  useEffect(() => {
     const onCompileState = (event: Event) => {
       const { state } = (event as CustomEvent<{ state: string }>).detail;
       if (state === 'compiling') {
@@ -185,9 +205,9 @@ export function CodePreviewPanel() {
     };
   }, []);
 
-  const isStale = compileState === 'dirty' && !autoCompile && !autoSave;
+  const isStale = compileState === 'dirty' && !autoCompile;
   const isCompiling = compileState === 'compiling';
-  const showLivePreview = autoSave || autoCompile || !isStale;
+  const showLivePreview = autoCompile || !isStale;
   const displayResult =
     isCompiling && heldResult
       ? heldResult
@@ -208,16 +228,46 @@ export function CodePreviewPanel() {
   const mappedNodeCount = countMappedNodes(displayResult);
   const lines = lineCount(generatedCode);
 
-  const selectedNodeId = selection.type === 'node' ? selection.id : null;
-  const highlightRanges = selectedNodeId ? sourceMap[selectedNodeId] : undefined;
-  const hasSelectionLink = Boolean(selectedNodeId && highlightRanges?.length);
+  const graphNodes = (activeDocument?.nodes ?? []) as VVSNode[];
+  const nodesById = useMemo(() => {
+    const map = new Map<string, VVSNode>();
+    for (const node of graphNodes) {
+      map.set(node.id, node);
+    }
+    return map;
+  }, [graphNodes]);
+
+  const isNodeSelection = selection.type === 'node';
+  const highlightRanges = useMemo(
+    () =>
+      isNodeSelection
+        ? buildColoredHighlightRanges(selectedNodeIds, sourceMap, filePath, nodesById)
+        : undefined,
+    [isNodeSelection, selectedNodeIds, sourceMap, filePath, nodesById]
+  );
+  const hasSelectionLink = Boolean(highlightRanges?.length);
+
+  useEffect(() => {
+    if (!isNodeSelection || selectedNodeIds.length === 0) return;
+
+    for (const nodeId of selectedNodeIds) {
+      const ranges = sourceMap[nodeId];
+      if (!ranges?.length) continue;
+      const targetPath = ranges[0]!.filePath;
+      const fileIndex = displayResult.files.findIndex((file) => file.path === targetPath);
+      if (fileIndex >= 0 && fileIndex !== safeFileIndex) {
+        setActiveFileIndex(fileIndex);
+      }
+      break;
+    }
+  }, [isNodeSelection, selectedNodeIds, sourceMap, displayResult.files, safeFileIndex]);
 
   const languageAccent = LANGUAGE_ACCENT[targetLanguage] ?? LANGUAGE_ACCENT.json;
 
   const syncTitle = isCompiling
     ? 'Generating…'
     : isStale
-      ? 'Preview paused — sync or enable auto-sync'
+      ? 'Preview paused — generate or enable auto generate'
       : compileState === 'error'
         ? 'Compile errors'
         : 'In sync';

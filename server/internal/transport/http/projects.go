@@ -12,10 +12,10 @@ import (
 )
 
 type ProjectsHandler struct {
-	Store *store.MemoryStore
+	Store store.ProjectStore
 }
 
-func NewProjectsHandler(st *store.MemoryStore) *ProjectsHandler {
+func NewProjectsHandler(st store.ProjectStore) *ProjectsHandler {
 	return &ProjectsHandler{Store: st}
 }
 
@@ -43,16 +43,20 @@ func (h *ProjectsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *ProjectsHandler) handleList(w http.ResponseWriter, _ *http.Request) {
-	summaries := services.ListProjects(h.Store)
+func (h *ProjectsHandler) handleList(w http.ResponseWriter, r *http.Request) {
+	summaries, err := services.ListProjects(r.Context(), h.Store)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"projects": summaries,
 	})
 }
 
-func (h *ProjectsHandler) handleGet(w http.ResponseWriter, _ *http.Request, id string) {
-	snap, err := services.LoadProject(h.Store, id)
+func (h *ProjectsHandler) handleGet(w http.ResponseWriter, r *http.Request, id string) {
+	snap, err := services.LoadProject(r.Context(), h.Store, id)
 	if err != nil {
 		if errors.Is(err, services.ErrProjectNotFound) {
 			http.Error(w, "project not found", http.StatusNotFound)
@@ -71,7 +75,7 @@ func (h *ProjectsHandler) handlePut(w http.ResponseWriter, r *http.Request, id s
 		http.Error(w, "invalid JSON body", http.StatusBadRequest)
 		return
 	}
-	if err := services.SaveProject(h.Store, id, snap); err != nil {
+	if err := services.SaveProject(r.Context(), h.Store, id, snap); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
