@@ -377,7 +377,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'text-shaped',
         title: 'Text-shaped graphs',
         description:
-          'Canvas is the codegen source of truth — IR pipeline, ordered define-chain emit, hoisted imports, Wait/Await Wait, Subscribe/Emit; every behavioral node maps to visible export text with sourceMap.',
+          'Canvas is the codegen source of truth — IR pipeline, ordered define-chain emit, hoisted imports, Wait/Await Wait, event Dispatch (direct call); every behavioral node maps to visible export text with sourceMap. Emit/Subscribe hidden-runtime nodes blocked.',
         status: 'done',
       },
       {
@@ -390,7 +390,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'events',
         title: 'Custom & entry events',
         description:
-          'events[] with role entry | custom; event_member_define + event_define handlers + dispatch nodes; tree + New event here…; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog.',
+          'events[] with role entry | custom; event_member_define + event_define handlers + dispatch nodes (direct call); Emit/Subscribe blocked (HIDDEN_EVENT_RUNTIME_UNSUPPORTED); tree + New event here…; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog.',
         status: 'done',
       },
       {
@@ -419,7 +419,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'syntax-packs',
         title: 'Syntax packs & Rosetta suite',
         description:
-          '@vvs/syntax-packs — base JSON print templates, capability overlays (e.g. ES2022), 15 Rosetta constructs (print, branch, assign, call, convert, dispatch, wait, loops, subscribe/emit, await, import, call_native), fidelity linter, generate:rosetta script.',
+          '@vvs/syntax-packs — base JSON print templates, capability overlays (e.g. ES2022), Rosetta constructs (print, branch, assign, call, convert, dispatch, wait, loops, await, import, call_native; subscribe/emit fixtures for blocked kinds), fidelity linter, generate:rosetta script.',
       },
       {
         id: 'codegen-target',
@@ -443,7 +443,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'analysis',
         title: 'Project analysis',
         description:
-          'analyzeProject diagnostics (DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, ORPHAN_DEFINE_NODE, PROGRAM_ENTRY_MISSING, PROGRAM_ENTRY_NOT_ON_CANVAS, LIFECYCLE_NODE_DEPRECATED, UNRESOLVED_SYMBOL_REF); portability scan; compile gate blocks Generate on fidelity errors.',
+          'analyzeProject diagnostics (DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, ORPHAN_DEFINE_NODE, PROGRAM_ENTRY_MISSING, PROGRAM_ENTRY_NOT_ON_CANVAS, LIFECYCLE_NODE_DEPRECATED, HIDDEN_EVENT_RUNTIME_UNSUPPORTED, MULTICAST_REQUIRES_SUBSCRIBE, UNRESOLVED_SYMBOL_REF); portability scan; compile gate blocks Generate on fidelity errors.',
         status: 'done',
       },
     ],
@@ -720,6 +720,34 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'import_class node + cross-class CallFunction lowering with CROSS_CLASS_CALL_WITHOUT_IMPORT analyzer warning; cross-class event dispatch still planned.',
         status: 'partial',
+      },
+    ],
+  },
+  {
+    id: 'unified-symbols',
+    title: 'Unified symbol model & portability UX',
+    phase: 3,
+    items: [
+      {
+        id: 'node-effectiveness',
+        title: 'Node effectiveness indicators',
+        description:
+          'Show all catalog nodes; dim + badge when ineffective for codegen target (or future COA set). Resolver driven by language profiles + registry portabilityFeatures.',
+        status: 'planned',
+      },
+      {
+        id: 'coa-deferred',
+        title: 'Cross Over Architecture (COA)',
+        description:
+          'Deferred — COA_SHIPPED false. Prerequisites: node effectiveness UI, multi-target export, documented compile policy. Single-target portability warnings shipped today.',
+        status: 'planned',
+      },
+      {
+        id: 'symbol-spawn-ux',
+        title: 'Declare / implement / invoke spawn UX',
+        description:
+          'Consistent authoring affordances for variables, functions, and events on define chain + flow. Spec: docs/design/unified_symbol_model.md.',
+        status: 'planned',
       },
     ],
   },

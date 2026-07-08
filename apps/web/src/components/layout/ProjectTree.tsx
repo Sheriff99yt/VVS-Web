@@ -1568,7 +1568,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   icon={<Radio size={10} className="text-indigo-400/70 shrink-0" />}
                   label={event.name}
                   meta="event"
-                  hint="Spawn handler or subscribe"
+                  hint="Spawn handler"
                   suffix={
                     !isReferenceMode ? (
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
@@ -1582,17 +1582,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                           }}
                         >
                           Handler
-                        </button>
-                        <button
-                          type="button"
-                          className="px-1 py-0.5 rounded text-[8px] bg-zinc-800 text-zinc-300 border border-zinc-700"
-                          title="Add subscribe"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            dispatchSpawnEnvironmentNode('event_subscribe', event.id);
-                          }}
-                        >
-                          Sub
                         </button>
                       </div>
                     ) : null

@@ -6,7 +6,7 @@ import { getNodeKindDefinition } from '@/lib/nodeRegistry';
 
 export const SPAWN_ENV_NODE_EVENT = 'vvs:spawn-env-node';
 
-export type EnvironmentSpawnAction = 'call_native' | 'event_handler' | 'event_subscribe';
+export type EnvironmentSpawnAction = 'call_native' | 'event_handler';
 
 export function buildEnvironmentNodeData(
   manifest: ProjectEnvironmentManifest,

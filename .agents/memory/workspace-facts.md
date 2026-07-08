@@ -15,7 +15,8 @@ Stable facts agents should assume without re-exploring the tree.
 - Graph edit canvas: `apps/web/src/components/graph/GraphCanvas.tsx` — includes `GraphSelectionToolbar`
 - Floating inspector: `apps/web/src/components/layout/GraphFloatingDetails.tsx` — includes `CallNodeOverloadPanel`
 - Auth UI: `components/auth/AuthButton.tsx`, `hooks/useAuthSession.ts`, `lib/auth/session.ts`, `lib/auth/supabaseClient.ts`
-- Graph settings: `GraphSettingsModal.tsx` — codegen target, COA, syntax pack lock, environment link
+- Graph settings: `GraphSettingsModal.tsx` — codegen target, portability summary, COA (planned), syntax pack lock, environment link
+- Unified symbol architecture: `docs/design/unified_symbol_model.md` — declare/implement/invoke; COA deferred (`apps/web/src/lib/coaPolicy.ts`)
 - Project state: `apps/web/src/contexts/ProjectContext.tsx` — includes `syntaxPackLock`
 - API facade: `apps/web/src/lib/api/` — mock + HTTP via `NEXT_PUBLIC_API_MODE`
 
@@ -65,6 +66,10 @@ Stable facts agents should assume without re-exploring the tree.
 | `DEFINE_NODE_MISSING` | error | Symbol in table without matching define node on `classHomeGraphId` |
 | `DECLARATION_NOT_ON_CANVAS` | error | Symbols exist but class graph has no define chain |
 | `ORPHAN_DEFINE_NODE` | error | Define node on canvas with `symbolId` not in symbol table |
+| `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` | error | `event_emit` or `event_subscribe` node — hidden runtime helper; use Define + Dispatch |
+| `MULTICAST_REQUIRES_SUBSCRIBE` | error | Multiple `event_define` handlers for same event without visible multicast pattern |
+
+**Event model (enforced):** `event_dispatch` → direct handler call; no `_emit` / `_subscribe` injection; `event_emit` / `event_subscribe` excluded from spawn catalog (`SPAWN_EXCLUDED_KINDS` in `@vvs/syntax-registry`).
 
 - Transpiler emit: `appendIrMembers` / `ir.members` from define chain only — **no** `appendLegacyPreamble`
 - Panel dual-write: `defineNodeSync`, `useSymbolLifecycle`, `add*WithDefine` in `ProjectTree.tsx` / `GraphCanvas.tsx`

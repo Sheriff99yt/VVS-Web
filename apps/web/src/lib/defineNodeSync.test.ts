@@ -19,13 +19,14 @@ describe('defineNodeSync', () => {
         [MAIN_GRAPH_CONTAINER_ID]: {
           nodes: [
             {
-              id: 'start',
+              id: 'entry',
               type: 'vvs_standard_node',
               position: { x: 0, y: 120 },
               data: {
-                label: 'On Start',
+                label: 'On start',
                 category: 'Events',
-                kindId: 'event_on_start',
+                kindId: 'event_define',
+                properties: { eventId: 'evt-start', eventName: 'start' },
                 inputs: [],
                 outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
                 inlineValues: {},
@@ -43,6 +44,6 @@ describe('defineNodeSync', () => {
     const defineNode = doc.nodes.find((n) => n.data.kindId === 'var_define');
     expect(defineNode).toBeDefined();
     expect(defineNode?.data.properties?.symbolId).toBe(variable.id);
-    expect(doc.edges.some((e) => e.source === defineNode!.id && e.target === 'start')).toBe(true);
+    expect(doc.edges.some((e) => e.source === defineNode!.id && e.target === 'entry')).toBe(true);
   });
 });

@@ -293,9 +293,7 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   ) {
     return 'CallFunction';
   }
-  if (kindId === 'event_dispatch') return 'DispatchEvent';
-  if (kindId === 'event_emit') return 'EmitEvent';
-  if (kindId === 'event_subscribe') return 'SubscribeEvent';
+  if (kindId === 'event_dispatch' || kindId === 'event_emit') return 'DispatchEvent';
   if (kindId === 'action_wait' || kindId === 'action_await_wait') return 'AwaitWait';
   if (kindId === 'flow_branch') return 'IfBranch';
   if (kindId === 'flow_for') return 'ForLoop';
@@ -355,11 +353,13 @@ function lowerStatement(
     };
   }
 
-  if (kindId === 'event_dispatch') {
+  if (kindId === 'event_dispatch' || kindId === 'event_emit') {
     const eventDef = resolveEventForNode(node.data, projectEvents);
     const handler = eventDef
       ? eventHandlerName(eventDef.name)
-      : handlerNameFromEventNode(node, projectEvents);
+      : kindId === 'event_emit'
+        ? eventKeyForNode(node, projectEvents)
+        : handlerNameFromEventNode(node, projectEvents);
     const paramIds =
       eventDef?.parameters.map((p) => p.id) ??
       node.data.inputs.filter((p) => p.type !== 'execution').map((p) => p.id);
@@ -372,25 +372,8 @@ function lowerStatement(
     };
   }
 
-  if (kindId === 'event_emit') {
-    const eventKey = eventKeyForNode(node, projectEvents);
-    const eventDef = resolveEventForNode(node.data, projectEvents);
-    const paramIds =
-      eventDef?.parameters.map((p) => p.id) ??
-      node.data.inputs.filter((p) => p.type !== 'execution').map((p) => p.id);
-    const args = paramIds.map((pinId) => resolvePinValueExpr(node, pinId, ctx, 0));
-    return { kind: 'EmitEvent', sourceGraphNodeId: node.id, eventKey, args };
-  }
-
   if (kindId === 'event_subscribe') {
-    const eventKey = eventKeyForNode(node, projectEvents);
-    const handler = eventKey;
-    return {
-      kind: 'SubscribeEvent',
-      sourceGraphNodeId: node.id,
-      eventKey,
-      handlerName: handler,
-    };
+    return null;
   }
 
   if (kindId === 'action_wait' || kindId === 'action_await_wait') {
@@ -713,10 +696,6 @@ function collectClassImports(
   return imports;
 }
 
-function moduleUsesEventBus(statements: IrStatement[]): boolean {
-  return statements.some((s) => s.kind === 'EmitEvent' || s.kind === 'SubscribeEvent');
-}
-
 function collectAllCodegenNodes(
   graphNodes: GraphNode[],
   documents: Record<string, import('@vvs/graph-types').GraphDocument> | undefined,
@@ -730,23 +709,6 @@ function collectAllCodegenNodes(
     all.push(...doc.nodes.filter(isCodegenNode).map((n) => ({ ...n, data: normalizeNodeData(n.data) })));
   }
   return all;
-}
-
-function moduleNeedsEventHelper(
-  memberBuild: BuildMembersResult,
-  functionBodies: Record<string, IrStatement[]>,
-  eventHandlers: IrEventHandler[]
-): boolean {
-  for (const member of memberBuild.members) {
-    if (member.kind === 'EventDecl' && moduleUsesEventBus(member.body)) return true;
-  }
-  for (const body of Object.values(functionBodies)) {
-    if (moduleUsesEventBus(body)) return true;
-  }
-  for (const handler of eventHandlers) {
-    if (moduleUsesEventBus(handler.body)) return true;
-  }
-  return false;
 }
 
 /** Body indent for event handler statements (applied at print time). */
@@ -829,7 +791,6 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     ...collectModuleImports(allNodes),
     ...collectClassImports(allNodes, ctx.classes, ctx.projectModuleName ?? moduleName),
   ];
-  const needsEventHelper = moduleNeedsEventHelper(memberBuild, functionBodies, eventHandlers);
 
   return {
     moduleName,
@@ -846,7 +807,6 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     projectEvents,
     documents,
     imports,
-    needsEventHelper,
     onStartBody: [],
     eventHandlers,
     functionBodies,

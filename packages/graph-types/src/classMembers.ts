@@ -2,10 +2,10 @@ import type {
   ClassSymbol,
   FunctionSymbol,
   GraphDocument,
-  GraphNode,
   ProjectEventDefinition,
   VariableSymbol,
 } from './symbols';
+import type { GraphNode } from './nodes';
 import {
   collectMemberDefineNodeIds,
   defineNodeSymbolId,

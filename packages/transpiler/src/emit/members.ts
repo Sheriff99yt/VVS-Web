@@ -222,3 +222,10 @@ export function tagClassDeclLine(sink: CodeSink, ir: IrModule, classLineStart: n
   if (!classDecl) return;
   sink.tagRange(classDecl.sourceGraphNodeId, classLineStart, classLineStart, `class ${ir.moduleName}`);
 }
+
+/** Tag a structural class shell line (e.g. C++ `public:`, closing `};`) to the class define node. */
+export function tagClassStructuralLine(sink: CodeSink, ir: IrModule, line: number): void {
+  const classDecl = ir.members.find((m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl');
+  if (!classDecl) return;
+  sink.tagRange(classDecl.sourceGraphNodeId, line, line);
+}

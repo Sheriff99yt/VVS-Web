@@ -120,36 +120,9 @@ function migrateDocumentNodes(doc: GraphDocument): GraphDocument {
       if (isUseMacroNode(next)) {
         next = { ...next, data: migrateUseMacroNodeData(next.data) };
       }
-      next = migrateEventDispatchNode(next);
       next = normalizeGraphNode(next);
       return next;
     }),
-  };
-}
-
-function migrateEventDispatchNode(node: GraphNode): GraphNode {
-  if (node.type !== 'vvs_standard_node') return node;
-  const kindId = node.data.kindId ?? '';
-  if (kindId !== 'event_dispatch' && !node.data.label.startsWith('Dispatch ')) {
-    return node;
-  }
-  const eventId =
-    typeof node.data.properties?.eventId === 'string' ? node.data.properties.eventId : undefined;
-  const eventName =
-    typeof node.data.properties?.eventName === 'string' ? node.data.properties.eventName : undefined;
-  const label = node.data.label.replace(/^Dispatch\s+/, 'Emit ');
-  return {
-    ...node,
-    data: {
-      ...node.data,
-      kindId: 'event_emit',
-      label,
-      properties: {
-        ...node.data.properties,
-        eventId,
-        eventName,
-      },
-    },
   };
 }
 

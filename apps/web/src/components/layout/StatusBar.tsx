@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader2, Terminal, FileCode2, FolderTree, Map, WifiOff, AlertCircle, CheckCircle2, CircleDashed } from 'lucide-react';
+import { isCoaAuthoringActive } from '@/lib/coaPolicy';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { useEditorView } from '@/contexts/EditorViewContext';
@@ -82,7 +83,7 @@ export function StatusBar() {
           {apiMode === 'mock' ? <WifiOff size={10} /> : null}
           {api.label}
         </span>
-        {crossOverMode.enabled ? (
+        {isCoaAuthoringActive(crossOverMode) ? (
           <span
             className="px-1.5 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
             title={`Cross Over Architecture: ${crossOverMode.allowedLanguages.join(', ')}`}

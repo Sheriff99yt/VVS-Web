@@ -1,7 +1,7 @@
-    {
-      // sequence
-        console.log("first");
-        console.log("second");
-    };
+      {
+        // sequence
+          console.log("first");
+          console.log("second");
+      };
   }
 }

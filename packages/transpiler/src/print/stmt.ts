@@ -4,7 +4,6 @@ import type {
   IrCallFunction,
   IrCallNative,
   IrDispatchEvent,
-  IrEmitEvent,
   IrForLoop,
   IrIfBranch,
   IrModuleImport,
@@ -13,7 +12,6 @@ import type {
   IrSequence,
   IrStructuredStatement,
   IrStatement,
-  IrSubscribeEvent,
   IrSwitch,
   IrWhileLoop,
 } from '../ir/types';
@@ -457,55 +455,6 @@ export function createStmtPrinters(
         return { text: `${prefix}${merged.text})`, expressionSpans: offsetSpans(merged.spans, prefix.length) };
       }
       return { text: `${indent}// dispatch ${s.handlerName}`, expressionSpans: [] };
-    },
-
-    EmitEvent: (stmt, ctx) => {
-      if (stmt.kind !== 'EmitEvent') return null;
-      const s = stmt as IrEmitEvent;
-      const argExprs = s.args.map((a) => printExpr(a, ctx));
-      const merged = mergeArgs(argExprs);
-      const { indent, family } = ctx;
-      const argSuffix = merged.text ? `, ${merged.text}` : '';
-      if (family === 'python') {
-        const prefix = `${indent}self._emit('${s.eventKey}'${argSuffix})`;
-        return { text: prefix, expressionSpans: offsetSpans(merged.spans, prefix.indexOf('(') + 1) };
-      }
-      if (family === 'javascript') {
-        const prefix = `${indent}this._emit('${s.eventKey}'${argSuffix});`;
-        return { text: prefix, expressionSpans: offsetSpans(merged.spans, prefix.indexOf('(') + 1) };
-      }
-      if (family === 'cpp') {
-        return { text: `${indent}// emit('${s.eventKey}'${argSuffix})`, expressionSpans: [] };
-      }
-      if (family === 'verse') {
-        return { text: `${indent}# emit ${s.eventKey}`, expressionSpans: [] };
-      }
-      return { text: `${indent}// emit ${s.eventKey}`, expressionSpans: [] };
-    },
-
-    SubscribeEvent: (stmt, ctx) => {
-      if (stmt.kind !== 'SubscribeEvent') return null;
-      const s = stmt as IrSubscribeEvent;
-      const { indent, family } = ctx;
-      if (family === 'python') {
-        return {
-          text: `${indent}self._subscribe('${s.eventKey}', self.on_${s.handlerName})`,
-          expressionSpans: [],
-        };
-      }
-      if (family === 'javascript') {
-        return {
-          text: `${indent}this._subscribe('${s.eventKey}', this.on_${s.handlerName}.bind(this));`,
-          expressionSpans: [],
-        };
-      }
-      if (family === 'cpp') {
-        return { text: `${indent}// subscribe('${s.eventKey}', on_${s.handlerName})`, expressionSpans: [] };
-      }
-      if (family === 'verse') {
-        return { text: `${indent}# subscribe ${s.eventKey}`, expressionSpans: [] };
-      }
-      return { text: `${indent}// subscribe ${s.eventKey}`, expressionSpans: [] };
     },
 
     AwaitWait: (stmt, ctx) => {

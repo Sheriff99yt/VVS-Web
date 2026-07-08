@@ -86,9 +86,11 @@ export function resolve(kindId: string, _version?: number): NodeKindDefinition |
   return undefined;
 }
 
+const SPAWN_EXCLUDED_KINDS = new Set(['event_on_start', 'event_emit', 'event_subscribe']);
+
 export function listCoreKinds(): NodeKindDefinition[] {
   return [...KIND_MAP.values()].filter(
-    (k) => !k.dynamic && k.kindId !== 'event_on_start'
+    (k) => !k.dynamic && !SPAWN_EXCLUDED_KINDS.has(k.kindId)
   );
 }
 

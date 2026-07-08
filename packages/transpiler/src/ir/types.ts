@@ -303,7 +303,6 @@ export interface IrModule {
   documents?: Record<string, GraphDocument>;
   startEvent?: IrStartEvent;
   imports: IrStatement[];
-  needsEventHelper?: boolean;
   onStartBody: IrStatement[];
   eventHandlers: IrEventHandler[];
   functionBodies: Record<string, IrStatement[]>;

@@ -48,18 +48,27 @@ const PHASE_STATUS_LABEL: Record<RoadmapPhase['status'], string> = {
   planned: 'Planned',
 };
 
-function RoadmapItemRow({ item, showStatus }: { item: RoadmapItem; showStatus: boolean }) {
-  const status = item.status ?? (showStatus ? 'planned' : 'done');
+function RoadmapItemRow({
+  item,
+  showStatus,
+  defaultStatus,
+}: {
+  item: RoadmapItem;
+  showStatus: boolean;
+  defaultStatus: RoadmapItemStatus;
+}) {
+  const status = item.status ?? defaultStatus;
   const meta = STATUS_META[status];
+  const showBadge = showStatus || item.status != null;
 
   return (
     <li className="py-2.5 border-b border-zinc-800/60 last:border-b-0">
       <div className="flex items-start gap-2">
-        {showStatus ? meta.icon : <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />}
+        {showBadge ? meta.icon : <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[12px] font-medium text-zinc-200">{item.title}</span>
-            {showStatus ? (
+            {showBadge ? (
               <span
                 className={`text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border ${meta.className}`}
               >
@@ -77,20 +86,33 @@ function RoadmapItemRow({ item, showStatus }: { item: RoadmapItem; showStatus: b
 function RoadmapSectionBlock({
   section,
   showStatus,
+  defaultStatus,
 }: {
   section: RoadmapSection;
   showStatus: boolean;
+  defaultStatus: RoadmapItemStatus;
 }) {
   const isActive = section.emphasis === 'active';
+  const isShipped = section.emphasis === 'shipped';
 
   return (
     <section
       className={`bg-zinc-950 border rounded-lg overflow-hidden ${
-        isActive ? 'border-indigo-500/35 shadow-[0_0_0_1px_rgba(99,102,241,0.08)]' : 'border-zinc-800'
+        isActive
+          ? 'border-indigo-500/35 shadow-[0_0_0_1px_rgba(99,102,241,0.08)]'
+          : isShipped
+            ? 'border-emerald-500/25 shadow-[0_0_0_1px_rgba(16,185,129,0.06)]'
+            : 'border-zinc-800'
       }`}
     >
       <h3 className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/80 bg-zinc-900/40 flex items-center gap-2 flex-wrap">
-        <span className={isActive ? 'text-indigo-300/90' : undefined}>{section.title}</span>
+        <span
+          className={
+            isActive ? 'text-indigo-300/90' : isShipped ? 'text-emerald-300/90' : undefined
+          }
+        >
+          {section.title}
+        </span>
         {section.phase ? (
           <span className="text-[9px] font-normal normal-case tracking-normal text-zinc-600">
             Phase {section.phase}
@@ -101,13 +123,62 @@ function RoadmapSectionBlock({
             Current focus
           </span>
         ) : null}
+        {isShipped ? (
+          <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border text-emerald-400/90 bg-emerald-500/10 border-emerald-500/25">
+            Shipped
+          </span>
+        ) : null}
       </h3>
       <ul className="px-4">
         {section.items.map((item) => (
-          <RoadmapItemRow key={item.id} item={item} showStatus={showStatus} />
+          <RoadmapItemRow
+            key={item.id}
+            item={item}
+            showStatus={showStatus}
+            defaultStatus={defaultStatus}
+          />
         ))}
       </ul>
     </section>
+  );
+}
+
+function EventFidelityCallout() {
+  return (
+    <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-4 py-3 space-y-2">
+      <p className="text-[11px] font-medium text-emerald-300/90">
+        Event fidelity refactor — shipped (Phase 1)
+      </p>
+      <ul className="text-[11px] text-zinc-500 space-y-1">
+        <li className="flex items-start gap-2">
+          <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            <span className="text-zinc-300">Dispatch</span> — visible direct handler calls (
+            <span className="font-mono text-zinc-400">self.on_*()</span>) from{' '}
+            <span className="font-mono text-zinc-400">event_dispatch</span> nodes
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <Circle size={11} className="text-rose-400/80 shrink-0 mt-0.5" />
+          <span>
+            <span className="text-zinc-300">Emit / Subscribe</span> — rejected; hidden runtime
+            blocked via{' '}
+            <span className="font-mono text-zinc-400">HIDDEN_EVENT_RUNTIME_UNSUPPORTED</span> (no
+            spawn catalog entry)
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <Circle size={11} className="text-rose-400/80 shrink-0 mt-0.5" />
+          <span>
+            No transpiler <span className="font-mono text-zinc-400">_emit</span> /{' '}
+            <span className="font-mono text-zinc-400">_subscribe</span> injection — multicast
+            conflicts surface{' '}
+            <span className="font-mono text-zinc-400">MULTICAST_REQUIRES_SUBSCRIBE</span>, not
+            hidden helpers
+          </span>
+        </li>
+      </ul>
+    </div>
   );
 }
 
@@ -273,11 +344,16 @@ export function RoadmapView() {
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
             <span className="text-emerald-400/90 font-medium">Phase 1 closed</span> — syntax packs,
-            IR transpiler, text-shaped graphs,{' '}
+            IR transpiler, <span className="text-zinc-300">text-shaped graphs</span> (fidelity
+            alignment shipped July 2026),{' '}
             <span className="text-zinc-300">canvas-as-source-of-truth codegen</span> (every export line
             maps to a graph node), graph-as-canvas multi-class model,{' '}
             <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go HTTP API, and
-            local MCP.{' '}
+            local MCP. Event model:{' '}
+            <span className="text-emerald-400/80">Dispatch</span> (direct{' '}
+            <span className="font-mono text-zinc-400">self.on_*()</span> calls) is shipped;{' '}
+            <span className="text-rose-400/80">Emit/Subscribe</span> hidden-runtime nodes are
+            rejected.{' '}
             <span className="text-indigo-300/90 font-medium">Phases 1 and 2 are closed</span>{' '}
             — PostgresStore, JWT auth, authenticated cloud save/load, AuthButton, and MCP auth are
             done.{' '}
@@ -309,6 +385,8 @@ export function RoadmapView() {
             .
           </p>
         </header>
+
+        <EventFidelityCallout />
 
         <PhaseOverviewStrip />
 
@@ -343,6 +421,7 @@ export function RoadmapView() {
               key={section.id}
               section={section}
               showStatus={tab === 'future'}
+              defaultStatus={tab === 'features' ? 'done' : 'planned'}
             />
           ))}
         </div>

@@ -19,6 +19,7 @@ import {
 import type { ValidationMessage } from './graphValidator';
 import type { GraphTab } from '@/contexts/ProjectContext';
 import { environmentAnalysisContext } from '@/lib/environmentContext';
+import { effectiveCrossOverMode } from '@/lib/coaPolicy';
 
 export interface ProjectAnalysisInput {
   documents: Record<string, GraphDocument>;
@@ -50,8 +51,9 @@ export function runProjectAnalysis(input: ProjectAnalysisInput): {
     ...analyzePortability(features, input.targetLanguage),
     ...analyzeVariablePortabilityDiagnostics(variableFeatureSets, input.targetLanguage),
   ];
+  const crossOver = effectiveCrossOverMode(input.crossOver ?? { enabled: false, allowedLanguages: [] });
   const crossOverDiagnostics = analyzeCrossOverDiagnostics(
-    input.crossOver,
+    crossOver,
     features,
     variableFeatureSets
   );
@@ -60,7 +62,7 @@ export function runProjectAnalysis(input: ProjectAnalysisInput): {
   const result = analyzeProject({
     documents: input.documents,
     functions: input.functions,
-    events: input.events.map((e) => ({ id: e.id, name: e.name, classId: e.classId })),
+    events: input.events,
     variables,
     classes: input.classes,
     activeClassId: input.activeClassId,
@@ -68,7 +70,7 @@ export function runProjectAnalysis(input: ProjectAnalysisInput): {
     projectDetails: input.projectDetails,
     targetLanguage: input.targetLanguage,
     portabilityDiagnostics,
-    crossOver: input.crossOver,
+    crossOver,
     crossOverDiagnostics,
     ...envContext,
   });

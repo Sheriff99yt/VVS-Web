@@ -35,7 +35,7 @@ UE6 editor plugin (in-engine)      →   Scale + polish
 | **Languages v1** | Python, JavaScript/TypeScript, C++, **Verse** — client transpiler + web code preview |
 | **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; multi-file output (module + host entry) |
 | **Quality** | Snapshot tests on generated code; **Rosetta golden suite** + fidelity linter in `@vvs/syntax-packs`; graph validation (`PIN_TYPE_MISMATCH`, portability) |
-| **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, Subscribe/Emit multicast, **explicit program entry** (`role: 'entry'`, no hidden `on_start`) — **shipped** |
+| **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, **event Dispatch** (direct call), **explicit program entry** (`role: 'entry'`, no hidden `on_start`) — **shipped**; Emit/Subscribe multicast **rejected** (hidden runtime) |
 | **Project environments** | `@vvs/environment-templates` — VS Code–style templates, Environment API browse/spawn, built-in Python/JS packs — **shipped**; [environment_templates.md](environment_templates.md) |
 | **On-disk projects** | `.vvs/` overlay in existing repos — split JSON layout, `integration.json` emit paths, File System Access API (Chrome/Edge) — **shipped (browser)**; cloud sync still Phase 2 |
 

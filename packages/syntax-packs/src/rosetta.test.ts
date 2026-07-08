@@ -50,8 +50,6 @@ const SPAN_EXPECTATIONS: Record<string, { sourceMapIds: string[]; contentAnchors
   while: { sourceMapIds: ['while-loop'], contentAnchors: ['while ', 'loop'] },
   switch: { sourceMapIds: ['switch-node'], contentAnchors: ['_vvs_sel', 'one'] },
   sequence: { sourceMapIds: ['seq'], contentAnchors: ['sequence', 'first', 'second'] },
-  subscribe: { sourceMapIds: ['sub-tick'], contentAnchors: ['_subscribe'] },
-  emit: { sourceMapIds: ['emit-go'], contentAnchors: ['_emit'] },
   await_wait: { sourceMapIds: ['await-2s'], contentAnchors: ['await', 'sleep'] },
   import_module: { sourceMapIds: ['import-utils'], contentAnchors: ['utils'] },
   call_native: { sourceMapIds: ['native-print'], contentAnchors: ['print('] },

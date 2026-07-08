@@ -4,7 +4,6 @@ import {
   appendFunctionBody,
   appendHoistedImports,
   appendIrStatements,
-  appendJavascriptEventHelper,
   formatFunctionDefHeader,
   functionNeedsAsync,
   printContextForIr,
@@ -29,9 +28,6 @@ export function emitJavascriptModule(sink: CodeSink, ir: IrModule): void {
   const classLineStart = sink.lineCount + 1;
   sink.appendRaw(`class ${ir.moduleName}${extendsClause} {`);
   tagClassDeclLine(sink, ir, classLineStart);
-  if (ir.needsEventHelper) {
-    appendJavascriptEventHelper(sink);
-  }
   appendIrMembers(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendJsEventHandler(sink, ir, handler);

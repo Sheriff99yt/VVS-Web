@@ -30,8 +30,9 @@ export type SymbolVisibility = 'public' | 'private';
 export type VariableBinding = 'instance' | 'static' | 'module';
 
 /**
- * Future Cross Over Architecture mode — restrict authoring to features valid
- * across `allowedLanguages` so switching codegen target stays error-free.
+ * Cross Over Architecture mode — **deferred** (see docs/design/unified_symbol_model.md).
+ * When shipped: restrict authoring to features valid across `allowedLanguages`.
+ * Today: single-target portability via `@vvs/language-profiles` only.
  */
 export interface CrossOverArchitectureMode {
   enabled: boolean;

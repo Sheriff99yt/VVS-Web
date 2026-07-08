@@ -265,7 +265,7 @@ function GraphFloatingDetailsPanel() {
 
   const title = isBrokenRefSelection ? `Broken reference — ${baseTitle}` : baseTitle;
 
-  const spawnEventNode = (role: 'define' | 'dispatch' | 'emit' | 'subscribe') => {
+  const spawnEventNode = (role: 'define' | 'dispatch') => {
     if (!selectedEvent) return;
     window.dispatchEvent(
       new CustomEvent(SPAWN_EVENT_NODE_EVENT, {
@@ -372,8 +372,6 @@ function GraphFloatingDetailsPanel() {
           event={selectedEvent}
           onChange={handleEventChange}
           onSpawnDefine={() => spawnEventNode('define')}
-          onSpawnSubscribe={() => spawnEventNode('subscribe')}
-          onSpawnEmit={() => spawnEventNode('emit')}
           onSpawnDispatch={() => spawnEventNode('dispatch')}
         />
       )}
@@ -408,8 +406,6 @@ function GraphFloatingDetailsPanel() {
                 event={boundEvent}
                 onChange={handleEventChange}
                 onSpawnDefine={() => spawnEventNode('define')}
-                onSpawnSubscribe={() => spawnEventNode('subscribe')}
-                onSpawnEmit={() => spawnEventNode('emit')}
                 onSpawnDispatch={() => spawnEventNode('dispatch')}
               />
             </div>

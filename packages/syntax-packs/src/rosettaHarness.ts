@@ -1,8 +1,15 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
-import { generateMockTranspileResult } from '@vvs/transpiler';
-import type { GraphEdge, GraphNode, ProjectEventDefinition, FunctionSymbol, VariableSymbol } from '@vvs/graph-types';
+import { generateMockTranspileResult, withTestEntryGraph } from '@vvs/transpiler';
+import {
+  resolveNodeKindId,
+  type GraphEdge,
+  type GraphNode,
+  type ProjectEventDefinition,
+  type FunctionSymbol,
+  type VariableSymbol,
+} from '@vvs/graph-types';
 
 export type LanguageFamily = 'python' | 'javascript' | 'cpp' | 'verse';
 
@@ -108,17 +115,39 @@ export function extractGoldenBody(
   return extractOnStartBody(content, family);
 }
 
+function stripLegacyOnStart(
+  nodes: GraphNode[],
+  edges: GraphEdge[]
+): { nodes: GraphNode[]; edges: GraphEdge[]; flowTargetId?: string } {
+  const legacyStart = nodes.find((n) => resolveNodeKindId(n.data) === 'event_on_start');
+  if (!legacyStart) return { nodes, edges };
+
+  const outEdge = edges.find(
+    (e) => e.source === legacyStart.id && e.data?.pinType === 'execution'
+  );
+  return {
+    nodes: nodes.filter((n) => n.id !== legacyStart.id),
+    edges: edges.filter((e) => e.source !== legacyStart.id && e.target !== legacyStart.id),
+    flowTargetId: outEdge?.target,
+  };
+}
+
 export function transpileRosettaFixture(fixture: RosettaFixture, family: LanguageFamily) {
-  return generateMockTranspileResult({
+  const { nodes, edges, flowTargetId } = stripLegacyOnStart(fixture.nodes, fixture.edges);
+  const base = {
     moduleName: fixture.moduleName,
     extendsType: fixture.extendsType ?? '',
     targetLanguage: family,
     variables: fixture.variables ?? [],
     functions: fixture.functions ?? [],
     projectEvents: fixture.events ?? [],
-    nodes: fixture.nodes,
-    edges: fixture.edges,
-    tabId: 'main',
+    nodes,
+    edges,
     environmentId: fixture.environmentId,
-  });
+  };
+
+  const hasLegacyEntry = fixture.nodes.some((n) => resolveNodeKindId(n.data) === 'event_on_start');
+  const ctx = hasLegacyEntry ? withTestEntryGraph(base, flowTargetId) : base;
+
+  return generateMockTranspileResult(ctx);
 }

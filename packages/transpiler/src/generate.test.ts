@@ -52,6 +52,8 @@ describe('generateMockCode', () => {
     expect(code).toContain('def on_clear(self):');
     expect(code).toContain('print(str(self.Result))');
     expect(code).toContain('self.Clear()');
+    expect(code).not.toContain('_emit');
+    expect(code).not.toContain('_subscribe');
     expect(code).not.toContain('import ');
     expect(code).not.toContain('# Variables');
   });
@@ -511,5 +513,30 @@ describe('generateMockCode', () => {
     });
 
     expect(code).toContain('virtual void Add(');
+  });
+
+  test('cpp sourceMap endCol includes trailing punctuation on declaration lines', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const result = generateMockTranspileResult(mainCtx(snapshot, { targetLanguage: 'cpp' }));
+    const content = result.files[0]!.content;
+    const lines = content.split('\n');
+
+    const varRange = result.sourceMap['calc-var-a-define']?.[0];
+    expect(varRange).toBeDefined();
+    const varLine = lines[varRange!.startLine - 1] ?? '';
+    expect(varLine.trimEnd()).toMatch(/;$/);
+    expect(varRange!.endCol).toBe(varLine.length + 1);
+
+    const classRanges = result.sourceMap['calc-class-define'] ?? [];
+    expect(classRanges.length).toBeGreaterThanOrEqual(2);
+    const publicRange = classRanges.find((r) => lines[r.startLine - 1]?.trim() === 'public:');
+    expect(publicRange).toBeDefined();
+    expect(publicRange!.endCol).toBe('public:'.length + 1);
+
+    const handlerRange = result.sourceMap['calc-evt-calc-member']?.[0];
+    expect(handlerRange).toBeDefined();
+    const handlerCloseLine = lines[handlerRange!.endLine - 1] ?? '';
+    expect(handlerCloseLine.trimEnd()).toMatch(/}$/);
+    expect(handlerRange!.endCol).toBe(handlerCloseLine.length + 1);
   });
 });

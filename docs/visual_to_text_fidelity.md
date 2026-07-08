@@ -46,6 +46,7 @@ If you cannot select a node and highlight the corresponding line in the code pan
 | `appendLegacyPreamble` — emit from `ir.variables` / `ir.functions` without define nodes | **Removed** — strict mode only |
 | `useLegacyPreamble` fallback when class graph has no define chain | **Removed** |
 | Symbol table as codegen source of truth | **Rejected** — canvas define nodes required |
+| Hidden event runtime (`_emit`, `_subscribe`, `event_emit`, `event_subscribe`) | **Rejected** — `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` blocks Generate |
 
 Transpiler contract: walk `ir.members` from the define chain via `appendIrMembers` only. Analyzer blocks Generate on `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, and `ORPHAN_DEFINE_NODE`.
 
@@ -77,6 +78,7 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 - Macro **inline expansion** that duplicates nodes without labeled regions in text
 - **Latent / delay** behavior with no matching `sleep`, `await`, or timer in output
 - Auto-cast at wire time in codegen (editor may warn; graph must show **Conversion** nodes)
+- Hidden event runtime helpers (`_emit`, `_subscribe`, `event_emit`, `event_subscribe`) — use **Define** + **Dispatch** (direct call) only
 
 ### 3. Reuse = functions and modules, not invisible paste
 
@@ -95,7 +97,7 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 | **Function** | Sub-graph + Call | `def foo(...): ... return ...` + `foo(...)` |
 | **Event handler** | Define node | `def on_event(self, ...):` |
 | **Program entry** | `role: 'entry'` event + define chain | `def on_start(self):` — **only** when user declared entry on the class graph |
-| **Event signal** | Dispatch node | `self.on_event(...)` or explicit `emit(...)` (profile) |
+| **Event signal** | Dispatch node | `self.on_event(...)` — direct handler call; no hidden `emit` / `_emit` runtime |
 | **Lifecycle tick** | On Update node | `on_update` / tick handler — still a visible method when wired |
 
 Sync vs async rules follow **target language**, not a hidden VM:
@@ -223,7 +225,8 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 
 - Conversion nodes — explicit calls, `sourceMap` spans
 - Call Function — visible methods and calls (macro/`use_macro` removed; migration on load)
-- Event Define, Emit, Subscribe — visible handlers, registration, and broadcast lines
+- Event Define + Dispatch — visible handler methods and direct call lines (`self.on_<name>(…)`)
+- No hidden event runtime — `event_emit` / `event_subscribe` blocked (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does not inject `_emit` / `_subscribe`
 - Import Module — hoisted to file top with `sourceMap` on import line
 - Wait / Await Wait — explicit sleep/await in export; async function flag
 - Pin validation — graph shows type fixes via **Conversion** nodes
@@ -240,7 +243,8 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 
 | Item | Status |
 |------|--------|
-| `event_dispatch` | Still lowers; migration rewrites to `event_emit` on normalize |
+| `event_emit` / `event_subscribe` | Legacy graphs may still contain nodes — analyzer blocks Generate; kinds excluded from spawn catalog |
+| `event_dispatch` | Supported — lowers to direct handler call |
 | Macro tabs in old saves | Migrated to function tabs on load |
 | Sidebar preamble (`appendLegacyPreamble`) | **Removed** — strict canvas-only emit |
 

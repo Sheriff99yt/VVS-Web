@@ -4,4 +4,5 @@ export {
   generateMockCode,
   generateProjectTranspileResult,
 } from './generate';
+export { withTestEntryGraph } from './testEntryGraph';
 export * from './pipeline';

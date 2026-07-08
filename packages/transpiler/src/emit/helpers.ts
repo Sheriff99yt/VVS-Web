@@ -80,30 +80,6 @@ export function appendHoistedImports(sink: CodeSink, ir: IrModule, environmentMa
   sink.appendRaw('');
 }
 
-export function appendPythonEventHelper(sink: CodeSink): void {
-  sink.appendRaw('    def _subscribe(self, event, handler):');
-  sink.appendRaw('        if not hasattr(self, "_vvs_handlers"):');
-  sink.appendRaw('            self._vvs_handlers = {}');
-  sink.appendRaw('        self._vvs_handlers.setdefault(event, []).append(handler)');
-  sink.appendRaw('');
-  sink.appendRaw('    def _emit(self, event, *args):');
-  sink.appendRaw('        for handler in getattr(self, "_vvs_handlers", {}).get(event, []):');
-  sink.appendRaw('            handler(*args)');
-}
-
-export function appendJavascriptEventHelper(sink: CodeSink): void {
-  sink.appendRaw('  _subscribe(event, handler) {');
-  sink.appendRaw('    this._vvsHandlers = this._vvsHandlers || {};');
-  sink.appendRaw('    (this._vvsHandlers[event] = this._vvsHandlers[event] || []).push(handler);');
-  sink.appendRaw('  }');
-  sink.appendRaw('');
-  sink.appendRaw('  _emit(event, ...args) {');
-  sink.appendRaw('    for (const handler of (this._vvsHandlers?.[event] || [])) {');
-  sink.appendRaw('      handler(...args);');
-  sink.appendRaw('    }');
-  sink.appendRaw('  }');
-}
-
 export function appendFunctionBody(
   sink: CodeSink,
   ir: IrModule,

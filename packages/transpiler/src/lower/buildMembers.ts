@@ -24,9 +24,12 @@ import { buildIrStatements } from './graphToIr';
 interface BuildMembersContext {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  functions: { id: string; name: string }[];
+  functions: FunctionSymbol[];
   projectEvents: ProjectEventDefinition[];
   environmentManifest?: import('@vvs/environment-templates').ProjectEnvironmentManifest;
+  classes?: ClassSymbol[];
+  activeClassId?: string;
+  projectModuleName?: string;
 }
 
 function resolveActiveClass(ctx: CodegenContext): ClassSymbol {

@@ -4,7 +4,6 @@ import {
   appendFunctionBody,
   appendHoistedImports,
   appendIrStatements,
-  appendPythonEventHelper,
   formatFunctionDefHeader,
   functionNeedsAsync,
   printContextForIr,
@@ -28,9 +27,6 @@ export function emitPythonModule(sink: CodeSink, ir: IrModule): void {
   const classLineStart = sink.lineCount + 1;
   sink.appendRaw(`class ${ir.moduleName}${bases}:`);
   tagClassDeclLine(sink, ir, classLineStart);
-  if (ir.needsEventHelper) {
-    appendPythonEventHelper(sink);
-  }
   appendIrMembers(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendPythonEventHandler(sink, ir, handler);

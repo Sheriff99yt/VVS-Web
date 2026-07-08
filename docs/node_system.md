@@ -202,6 +202,8 @@ Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push 
 | `DEFINE_NODE_MISSING` | Symbol in table but no matching define node on `classHomeGraphId` |
 | `DECLARATION_NOT_ON_CANVAS` | Symbols exist but class graph has no define chain |
 | `ORPHAN_DEFINE_NODE` | Define node on canvas with `symbolId` not in symbol table |
+| `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` | `event_emit` or `event_subscribe` on canvas — hidden runtime helper |
+| `MULTICAST_REQUIRES_SUBSCRIBE` | Multiple `event_define` handlers for same event without visible multicast |
 
 #### Visual → text mapping
 
@@ -209,7 +211,7 @@ Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push 
 |--------|------|-------|
 | **Call Function** | `self.foo(args)` | One call node → one call site |
 | **Define** (event) | `def on_foo(self, …):` | Handler body |
-| **Dispatch** | `self.on_foo(…)` | Explicit line; phase 2 may add **Subscribe** + **Emit** |
+| **Dispatch** | `self.on_foo(…)` | Direct handler call — one visible line per dispatch node |
 | **Conversion** | `str(x)`, etc. | Never folded into consumers |
 | **var_define** / **function_define** | `self.x = …` / `def foo(…):` | Declaration position from exec chain order |
 | **Macro (legacy)** | **Deprecated** | Must become **Function + Call** — no compile-time paste |
@@ -633,7 +635,7 @@ flowchart LR
 
 ## 12. Event dispatchers (custom events)
 
-**Status:** Phase 1 implemented (July 2026) — project-level `events[]`, **Define** and **Dispatch** node kinds, direct-call emit in `@vvs/transpiler`. Multicast **Bind** nodes remain phase 2.
+**Status:** Shipped (July 2026) — project-level `events[]`, **Define** and **Dispatch** node kinds, direct-call emit in `@vvs/transpiler`. **Emit** / **Subscribe** kinds exist in the registry for legacy graphs only — **blocked** from spawn and codegen (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe` helpers.
 
 Unreal **Event Dispatchers** are one engine’s name for a universal pattern: **named signals with typed parameters, subscribers, and a broadcast**. VVS models that in the **graph + IR**; language-specific idioms live only in the **emitter**.
 
@@ -687,7 +689,9 @@ Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. 
 | `event_on_start` | On Start | **Deprecated** — use `role: 'entry'` event + define chain |
 | `event_on_update` | On Update | Lifecycle tick (engine hook) |
 | `event_define` | On … | Handler entry; `properties.eventId` |
-| `event_dispatch` | Dispatch … | Broadcast; `properties.eventId` |
+| `event_dispatch` | Dispatch … | Direct handler call; `properties.eventId` — **supported** |
+| `event_emit` | Emit … | **Blocked** — hidden runtime helper; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` |
+| `event_subscribe` | Subscribe … | **Blocked** — hidden runtime helper; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` |
 | `action_print` | Print String | Sync stdout/log |
 | `action_get_input` | Get User Input | Blocking input; `propertySchema` + `value` out |
 | `convert_to_string` | To String | Explicit `str()` / `String()` / `std::to_string` — expression node |
@@ -735,9 +739,9 @@ flowchart LR
   D --> JS
 ```
 
-**Phase 1 (direct call):** one handler per event → emitter generates a method and `self.on_<name>(args)` at dispatch sites.
+**Enforced model (direct call):** one `event_define` handler per event → emitter generates a method and `self.on_<name>(args)` at dispatch sites. Multiple handlers for the same event without a visible multicast pattern → `MULTICAST_REQUIRES_SUBSCRIBE` error (no hidden callback list).
 
-**Phase 2 (multicast):** multiple handlers or dynamic bind → IR carries subscriber lists; emitter uses callback vectors / `EventEmitter`.
+**Rejected:** `event_emit` / `event_subscribe` and transpiler-injected `_emit` / `_subscribe` helpers — violate text-shaped fidelity ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)). Future multicast must be explicit, highlightable lines — not hidden runtime.
 
 ### 12.6 Selection → code highlight
 

@@ -1347,9 +1347,9 @@ function GraphCanvasInner() {
 
   React.useEffect(() => {
     const onSpawnEventNode = (event: Event) => {
-      const detail = (event as CustomEvent<{ eventId: string; role: 'define' | 'dispatch' | 'emit' | 'subscribe' }>).detail;
+      const detail = (event as CustomEvent<{ eventId: string; role: 'define' | 'dispatch' }>).detail;
       const projectEvent = events.find((e) => e.id === detail.eventId);
-      if (!projectEvent) return;
+      if (!projectEvent || (detail.role !== 'define' && detail.role !== 'dispatch')) return;
 
       const pane = document.querySelector('.react-flow');
       const bounds = pane?.getBoundingClientRect();

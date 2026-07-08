@@ -218,7 +218,8 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Example templates (Hello World, Calculator) | Done — `simpleExample.ts`, `complexExample.ts`, integrity tests |
 | Example template integrity tests | Done — `complexExample.test.ts` (analyze + wiring + 4-language codegen) |
 | Call Function nodes (`vvs.project.call_function` + `graphBinding`) | Done |
-| Dispatch event nodes (`event_dispatch` + `graphBinding.kind: dispatch_event`) | Done — per-event spawn in context menu / tree drag; canvas-first **New event here…** on class graph |
+| Dispatch event nodes (`event_dispatch` + `graphBinding.kind: dispatch_event`) | Done — per-event spawn in context menu / tree drag; canvas-first **New event here…** on class graph; emits direct handler call (`self.on_<name>(…)`) |
+| Event emit/subscribe nodes (`event_emit`, `event_subscribe`) | **Blocked** — excluded from spawn catalog; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` blocks Generate; no `_emit` / `_subscribe` injection in transpiler |
 | Program entry (`events[]` `role: 'entry'`) | Done — `event_member_define` + `event_define` on class graph; `on_start` only from canvas; legacy `event_on_start` deprecated; new class/project bootstraps entry via `createClassHomeBootstrap` |
 | Function symbols + overloads (`FunctionSymbol`, snapshot v3) | Done — tree, inspector, pin sync; symbols carry optional `classId` |
 | Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Graphs** section in ProjectTree (double-click graph opens graph canvas; double-click class opens codegen canvas), class-scoped symbol lists, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. Canvas define nodes + ordered transpiler emit. Go/MCP: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
@@ -226,7 +227,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Wire / cross-graph cycle prevention | Done — `graphCycles.ts`, `graphRelations.ts` |
 | Linear flow chains (break on middle rewire) | Done — `graphWiring.ts` + editor warning |
 | Extract selection to function | Done — `extractToFunction.ts`, Ctrl+Shift+E |
-| Variable/function/event lists in explorer | Done — **ProjectTree**: Functions → **Events** → Variables; event rows show dispatch + subscriber counts; drag event to spawn dispatch node |
+| Variable/function/event lists in explorer | Done — **ProjectTree**: Functions → **Events** → Variables; event rows show dispatch counts (and legacy subscriber counts for old graphs); drag event spawns **Dispatch** only |
 | Generated export folder (left panel) | Done — `Generated` section lists per-graph output files |
 | Reference viewer (top-level view) | Done — `ReferencesView`, UE5 focus graph + tree |
 | Project breadcrumb | Done — `GraphBreadcrumb` above tab bar |
@@ -329,7 +330,8 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Define nodes** | `class_define`, `var_define`, `function_define`, `event_member_define` on `classHomeGraphId` exec chain |
 | **Program entry** | `events[]` with `role: 'entry'` — same `event_member_define` + `event_define` pattern as custom events; codegen `on_start` **only** when user wired entry on canvas; legacy `event_on_start` → `LIFECYCLE_NODE_DEPRECATED`; **no** transpiler-injected empty `on_start()` |
 | **Compile gate** | `analyzeProject` errors block Generate in TopNav when `!analysis.ok` |
-| **Strict diagnostics** | `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED` |
+| **Event model** | **Dispatch** supported (direct call); **Emit** / **Subscribe** blocked — no hidden `_emit` / `_subscribe` runtime; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` |
+| **Strict diagnostics** | `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE` |
 | **sourceMap** | Every emitted declaration and statement maps to a canvas `nodeId` for code-panel highlight |
 
 Calculator and Hello World examples pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.

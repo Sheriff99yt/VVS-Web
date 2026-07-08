@@ -10,7 +10,8 @@ Choices agents must not undo without explicit user approval.
 - **Fidelity contract:** No compile-time paste, no hidden casts, no latent VM steps absent from export
 - **Integration goal:** Generated files embed in **any** third-party stack (IDE, git, CI, MCP) — **no VVS runtime required**
 - **Reuse:** **Function + Call Function** — not Blueprint macro inline expansion
-- **Events:** Define/Dispatch → visible handler methods and call/emit lines; **program entry** (`role: 'entry'`) uses the same define pattern and emits `on_start` only from canvas — no hidden lifecycle shortcut; phase 2 multicast = **Subscribe + Emit** nodes, not hidden callback lists
+- **Events:** Define/Dispatch → visible handler methods and direct call lines (`self.on_<name>(…)`); **program entry** (`role: 'entry'`) uses the same define pattern and emits `on_start` only from canvas — no hidden lifecycle shortcut
+- **Event runtime (July 2026 — enforced):** `event_emit` / `event_subscribe` **blocked** (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe`; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` error — no hidden callback lists
 - **Timing (future):** **Wait** / **Await Wait** nodes + async graph flag — explicit in text, not latent Delay
 - **Macro tabs / `use_macro`:** **Deprecated as codegen concept** — migrate to Function + Call (UI may linger until alignment plan ships)
 - **Rejected:** Blueprint-faithful semantics (macro expand, latent delay, VM-only behavior) — breaks visual↔text trust and third-party embedding
@@ -25,9 +26,18 @@ Choices agents must not undo without explicit user approval.
 - **Declare vs use:** Define nodes (`class_define`, `var_define`, `function_define`, `event_member_define`) emit declarations; Get/Set/Call/dispatch emit usage
 - **No sidebar preamble:** `appendLegacyPreamble` and `useLegacyPreamble` are **removed** — transpiler uses `appendIrMembers` / `ir.members` only
 - **Dual-write required:** Panel create paths must spawn define nodes (`defineNodeSync`, `useSymbolLifecycle`) — no symbol-only creates
-- **Strict analyzer errors (block Generate):** `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`
+- **Strict analyzer errors (block Generate):** `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE`
 - **Program entry:** `events[]` with `role: 'entry'` — user declares start via `event_member_define` + `event_define` on the class graph (same pattern as custom events); transpiler emits `on_start` only from canvas; legacy `event_on_start` nodes error on load/analysis; **no** empty `on_start()` injection
 - **Do not undo:** No backward-compat fallback that emits from symbol arrays without define nodes
+
+## Unified symbol model & COA (July 2026)
+
+**Canonical spec:** `docs/design/unified_symbol_model.md`
+
+- **Declare → implement → invoke** — variables (2 nodes), functions (define + tab + call), events (member define + handler define + dispatch)
+- **Canvas only** for codegen; panel rows are indexes with dual-write
+- **COA deferred** — `COA_SHIPPED = false`; single-target portability warnings shipped; full COA requires node effectiveness UI + multi-emit first
+- **Future subscribe/emit** — only if each node emits one visible line (no hidden runtime)
 
 ## Product UI (July 2026 revision)
 

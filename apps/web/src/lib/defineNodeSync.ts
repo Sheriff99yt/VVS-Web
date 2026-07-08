@@ -39,24 +39,11 @@ function createEdge(source: string, target: string): VVSEdge {
   };
 }
 
-function findEntryHandlerNode(
-  doc: GraphDocument,
-  events: ProjectEventDefinition[]
-): VVSNode | undefined {
-  const entry = findProgramEntryEvent(events);
-  if (entry) {
-    const handler = doc.nodes.find(
-      (n) =>
-        n.type === 'vvs_standard_node' &&
-        (n.data.kindId === 'event_define' || n.data.kindId === 'event_custom') &&
-        n.data.properties?.eventId === entry.id
-    );
-    if (handler) return handler;
-  }
+function findEntryHandlerNode(doc: GraphDocument): VVSNode | undefined {
   return doc.nodes.find(
     (n) =>
       n.type === 'vvs_standard_node' &&
-      (n.data.kindId === 'event_on_start' || n.data.label === 'On Start')
+      (n.data.kindId === 'event_define' || n.data.kindId === 'event_custom')
   );
 }
 
@@ -165,7 +152,7 @@ function insertNodeOnMemberChain(
     return { ...doc, nodes, edges };
   }
 
-  const entryHandler = findEntryHandlerNode(doc, []);
+  const entryHandler = findEntryHandlerNode(doc);
   if (entryHandler) {
     const intoStart = edges.filter(
       (e) =>

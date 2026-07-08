@@ -186,6 +186,7 @@ export function applyEventDispatchBinding(
   };
 }
 
+/** @deprecated Legacy emit nodes — use `applyEventDispatchBinding` for new spawns. */
 export function applyEventEmitBinding(
   data: VVSNodeData,
   event: ProjectEventDefinition
@@ -198,6 +199,7 @@ export function applyEventEmitBinding(
   };
 }
 
+/** @deprecated Legacy subscribe nodes — use event_define handlers + event_dispatch. */
 export function subscribeNodeInputs(parameters: EventParameter[]): PinDefinition[] {
   return [
     { id: 'exec_in', label: '', type: 'execution' },
@@ -206,6 +208,7 @@ export function subscribeNodeInputs(parameters: EventParameter[]): PinDefinition
   ];
 }
 
+/** @deprecated Legacy subscribe nodes — use event_define handlers + event_dispatch. */
 export function applyEventSubscribeBinding(
   data: VVSNodeData,
   event: ProjectEventDefinition
@@ -224,33 +227,18 @@ export function applyEventSubscribeBinding(
 
 export function buildEventNodeData(
   event: ProjectEventDefinition,
-  role: 'define' | 'dispatch' | 'emit' | 'subscribe'
+  role: 'define' | 'dispatch'
 ): VVSNodeData {
   const base: VVSNodeData = {
     label:
-      role === 'define'
-        ? eventDisplayName(event.name)
-        : role === 'subscribe'
-          ? `Subscribe ${event.name}`
-          : role === 'emit'
-            ? `Emit ${event.name}`
-            : `Dispatch ${event.name}`,
+      role === 'define' ? eventDisplayName(event.name) : `Dispatch ${event.name}`,
     category: 'Events',
-    kindId:
-      role === 'define'
-        ? 'event_define'
-        : role === 'subscribe'
-          ? 'event_subscribe'
-          : role === 'emit'
-            ? 'event_emit'
-            : 'event_dispatch',
+    kindId: role === 'define' ? 'event_define' : 'event_dispatch',
     properties: { eventId: event.id, eventName: event.name },
     inputs: [],
     outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
     inlineValues: {},
   };
   if (role === 'define') return applyEventDefineBinding(base, event);
-  if (role === 'subscribe') return applyEventSubscribeBinding(base, event);
-  if (role === 'emit') return applyEventEmitBinding(base, event);
   return applyEventDispatchBinding(base, event);
 }

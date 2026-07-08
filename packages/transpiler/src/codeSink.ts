@@ -40,7 +40,7 @@ export class CodeSink {
       startLine,
       startCol: 1,
       endLine,
-      endCol: Math.max(1, lastLine.length),
+      endCol: Math.max(1, lastLine.length + 1),
     };
     if (!this.sourceMap[tag.nodeId]) this.sourceMap[tag.nodeId] = [];
     this.sourceMap[tag.nodeId].push(range);
@@ -111,7 +111,7 @@ export class CodeSink {
       startLine,
       startCol: 1,
       endLine,
-      endCol: Math.max(1, lastLine.length),
+      endCol: Math.max(1, lastLine.length + 1),
     };
     if (!this.sourceMap[nodeId]) this.sourceMap[nodeId] = [];
     this.sourceMap[nodeId].push(range);

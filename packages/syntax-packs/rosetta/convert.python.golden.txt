@@ -1,1 +1,1 @@
-        print(str(self.Score))
+            print(str(self.Score))

@@ -10,6 +10,20 @@ VVS graphs are **language-neutral**. Features that do not map cleanly to every t
 
 Warnings do **not** block compile unless paired with structural errors.
 
+## Cross Over Architecture (deferred)
+
+**COA is not a shipped product toggle.** The settings panel shows “Planned”; `COA_SHIPPED` is `false` in `apps/web/src/lib/coaPolicy.ts`.
+
+**Shipped today:** single **codegen target** + portability warnings for that target only.
+
+**Future COA** (see [design/unified_symbol_model.md](design/unified_symbol_model.md)):
+
+- Node effectiveness indicators (dim / badge per language)
+- Multi-target export from one graph
+- Optional authoring limits across a language set
+
+The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation remains for when COA ships; it is not wired to block Generate while deferred.
+
 ## Fidelity and portability
 
 - The **editor** enforces strict pin compatibility (see `docs/node_system.md` §2.2b).

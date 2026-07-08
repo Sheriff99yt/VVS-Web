@@ -66,6 +66,8 @@ function isFeatureCoaSafe(feature: PortabilityFeature, languages: TargetLanguage
 /**
  * Cross Over Architecture validation — errors when project uses features that are not
  * supported (native or emulated) across every allowed language.
+ * **Deferred in product UI** — see `apps/web/src/lib/coaPolicy.ts` and
+ * `docs/design/unified_symbol_model.md`. Implementation kept for future COA ship.
  */
 export function analyzeCrossOverDiagnostics(
   mode: CrossOverArchitectureMode | undefined,

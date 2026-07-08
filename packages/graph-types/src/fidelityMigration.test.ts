@@ -142,7 +142,7 @@ describe('migrateTextShapedAlignment', () => {
     expect(node.data.graphBinding?.kind).toBe('call_function');
   });
 
-  test('event_dispatch node becomes event_emit', () => {
+  test('event_dispatch node is preserved during migration', () => {
     const snapshot = v3Fixture({
       savedAt: new Date().toISOString(),
       projectDetails: { moduleName: 'Test', extendsType: '', description: '' },
@@ -180,8 +180,8 @@ describe('migrateTextShapedAlignment', () => {
 
     const migrated = migrateTextShapedAlignment(snapshot);
     const node = migrated.documents.main!.nodes[0]!;
-    expect(node.data.kindId).toBe('event_emit');
-    expect(node.data.label).toBe('Emit Calculate');
+    expect(node.data.kindId).toBe('event_dispatch');
+    expect(node.data.label).toBe('Dispatch Calculate');
     expect(node.data.properties?.eventId).toBe('evt-1');
   });
 });

@@ -30,8 +30,8 @@ export function CodegenTargetPanel() {
         ))}
       </select>
       <p className="text-[10px] text-zinc-600 leading-relaxed">
-        Generated code and portability warnings use this language. COA mode (below) adds
-        multi-language authoring limits.
+        Generated code and portability warnings use this language. Multi-language Cross Over
+        Architecture is planned — see settings below.
       </p>
     </div>
   );

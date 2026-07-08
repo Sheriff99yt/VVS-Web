@@ -7,6 +7,7 @@ import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { getLanguageProfile } from '@vvs/language-profiles';
 import { LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
+import { isCoaAuthoringActive } from '@/lib/coaPolicy';
 
 export function PortabilitySummaryPanel() {
   const {
@@ -54,7 +55,7 @@ export function PortabilitySummaryPanel() {
           <span className="px-1.5 py-0.5 rounded border border-zinc-800 bg-zinc-900 text-zinc-400">
             Target: {profile.displayName}
           </span>
-          {crossOverMode.enabled ? (
+          {isCoaAuthoringActive(crossOverMode) ? (
             <span className="px-1.5 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 text-indigo-200">
               COA on
             </span>

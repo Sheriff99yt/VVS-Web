@@ -1,3 +1,0 @@
-    this._subscribe('tick', this.on_tick.bind(this));
-  }
-}

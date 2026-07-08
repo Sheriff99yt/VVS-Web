@@ -6,6 +6,7 @@ import type {
   TargetLanguage,
   CrossOverArchitectureMode,
   ClassSymbol,
+  ProjectEventDefinition,
 } from './symbols';
 import { collectPortabilityFeatures, portabilityFeaturesForVariable } from './symbols';
 import {
@@ -28,7 +29,7 @@ import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryE
 export interface AnalyzeProjectInput {
   documents: Record<string, GraphDocument>;
   functions: FunctionSymbol[];
-  events: { id: string; name: string; classId?: string }[];
+  events: ProjectEventDefinition[];
   variables?: VariableSymbol[];
   classes?: ClassSymbol[];
   activeClassId?: string;
@@ -400,7 +401,7 @@ function validateWaitAndAsyncNodes(input: AnalyzeProjectInput): Diagnostic[] {
 
 function resolveEventIdFromNode(
   node: GraphDocument['nodes'][number],
-  events: { id: string; name: string }[]
+  events: ProjectEventDefinition[]
 ): string | undefined {
   const eventId = node.data.properties?.eventId;
   if (typeof eventId === 'string' && eventId) return eventId;
@@ -448,12 +449,39 @@ function validateMulticastEvents(input: AnalyzeProjectInput): Diagnostic[] {
   for (const [eventId, info] of defineCountByEvent) {
     if (info.count > 1 && !subscribeEventIds.has(eventId)) {
       messages.push({
-        level: 'warning',
-        message: `Multiple handlers for the same event require a Subscribe node (event: ${eventId})`,
+        level: 'error',
+        message: `Multiple handlers for the same event cannot be dispatched without a hidden runtime helper (event: ${eventId}) — use a single event_define handler per event.`,
         tabId: info.tabId,
         nodeId: info.nodeId,
         source: 'semantic',
         code: 'MULTICAST_REQUIRES_SUBSCRIBE',
+      });
+    }
+  }
+
+  return messages;
+}
+
+const HIDDEN_EVENT_RUNTIME_KINDS = new Set(['event_emit', 'event_subscribe']);
+
+function validateHiddenEventRuntimeNodes(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+
+  for (const [tabId, doc] of Object.entries(input.documents)) {
+    for (const node of doc.nodes) {
+      if (node.type !== 'vvs_standard_node') continue;
+      const kindId = resolveNodeKindId(node.data);
+      if (!HIDDEN_EVENT_RUNTIME_KINDS.has(kindId)) continue;
+
+      const action = kindId === 'event_subscribe' ? 'Subscribe' : 'Emit';
+
+      messages.push({
+        level: 'error',
+        message: `${action} event nodes rely on a hidden runtime helper and are not supported for code generation — use event_define handlers and direct calls instead.`,
+        tabId,
+        nodeId: node.id,
+        source: 'semantic',
+        code: 'HIDDEN_EVENT_RUNTIME_UNSUPPORTED',
       });
     }
   }
@@ -556,7 +584,7 @@ function classHasSymbols(
   cls: ClassSymbol,
   variables: VariableSymbol[],
   functions: FunctionSymbol[],
-  events: { id: string; classId?: string }[]
+  events: ProjectEventDefinition[]
 ): boolean {
   return (
     variables.some((v) => symbolClassId(v) === cls.id) ||
@@ -571,7 +599,7 @@ function validateOrphanDefineNodes(
   cls: ClassSymbol,
   variables: VariableSymbol[],
   functions: FunctionSymbol[],
-  events: { id: string; name: string; classId?: string }[]
+  events: ProjectEventDefinition[]
 ): Diagnostic[] {
   const messages: Diagnostic[] = [];
   const variableIds = new Set(
@@ -897,6 +925,7 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   diagnostics.push(...validateUnresolvedSymbolRefs(input));
   diagnostics.push(...validateWaitAndAsyncNodes(input));
   diagnostics.push(...validateMulticastEvents(input));
+  diagnostics.push(...validateHiddenEventRuntimeNodes(input));
   diagnostics.push(...validateEnvironmentSemantics(input));
   diagnostics.push(...validateDefineNodeSync(input));
   diagnostics.push(...validateCanvasDeclarations(input));
