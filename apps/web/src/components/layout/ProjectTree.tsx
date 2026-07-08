@@ -81,6 +81,7 @@ import {
   classScopedSymbols,
   classesForContainer,
   containerMatchesFilter,
+  symbolClassId,
 } from '@/lib/classScope';
 import type { GraphTab } from '@vvs/graph-types';
 import { getSymbolDisplayName } from '@/lib/symbolLifecycle';
@@ -379,6 +380,7 @@ function VariableRow({
   hint,
   onSelect,
   onOpen,
+  openOnSelect = false,
   onDelete,
 }: {
   variable: {
@@ -391,20 +393,31 @@ function VariableRow({
   isSelected: boolean;
   color: string;
   hint?: string;
-  onSelect: () => void;
-  onOpen: () => void;
+  onSelect?: () => void;
+  onOpen?: () => void;
+  openOnSelect?: boolean;
   onDelete?: () => void;
 }) {
   const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleClick = () => {
+    if (!onSelect && !onOpen) return;
+    if (openOnSelect && onOpen) {
+      onOpen();
+      return;
+    }
+    if (!onOpen) {
+      onSelect?.();
+      return;
+    }
     clickTimerRef.current = setTimeout(() => {
-      onSelect();
+      onSelect?.();
       clickTimerRef.current = null;
     }, SINGLE_CLICK_DELAY_MS);
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
+    if (!onOpen || openOnSelect) return;
     e.preventDefault();
     if (clickTimerRef.current) {
       clearTimeout(clickTimerRef.current);
@@ -420,7 +433,16 @@ function VariableRow({
       }`}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      title={hint ?? 'Click to select · Double-click to edit in inspector'}
+      title={
+        hint ??
+        (openOnSelect && onOpen
+          ? 'Click to open'
+          : onOpen
+            ? 'Click to select · Double-click to edit in inspector'
+            : onSelect
+              ? 'Click to select'
+              : undefined)
+      }
       draggable
       onDragStart={(e) => {
         configureCanvasDrag(e, {
@@ -586,8 +608,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   );
 
   const dispatchers = useMemo(
-    () => listEventDispatchers(classEvents, documents),
-    [classEvents, documents]
+    () => listEventDispatchers(classEvents, documents, classes),
+    [classEvents, documents, classes]
   );
   const generatedExports = useMemo(
     () =>
@@ -942,6 +964,38 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       setSelection({ type: 'variable', id: varId });
     },
     [setSelection]
+  );
+
+  const openVariableHomeGraph = useCallback(
+    (varId: string) => {
+      const variable = variables.find((v) => v.id === varId);
+      if (!variable) return;
+
+      setSelection({ type: 'variable', id: varId });
+      const cls = classes.find((c) => c.id === symbolClassId(variable));
+      if (!cls) return;
+
+      const tabId = classGraphTabId(cls);
+      setActiveClassId(cls.id);
+      const container = graphContainers.find((c) => c.id === classContainerId(cls));
+      if (container) {
+        openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
+      } else {
+        setActiveGraphTab(tabId);
+      }
+      focusReference(tabId, null);
+      dispatchSwitchEditorView('canvas');
+    },
+    [
+      variables,
+      classes,
+      graphContainers,
+      setSelection,
+      setActiveClassId,
+      setOpenTabs,
+      setActiveGraphTab,
+      focusReference,
+    ]
   );
 
   const selectVariable = isReferenceMode ? selectVariableForReferences : selectVariableInCanvas;
@@ -1818,10 +1872,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   hint={
                     isReferenceMode
                       ? 'Click to focus references · Double-click to edit in inspector'
-                      : 'Click to select · Double-click to edit in inspector'
+                      : 'Click to select and open class graph · Double-click to edit in inspector'
                   }
+                  openOnSelect={!isReferenceMode}
                   onSelect={() => selectVariable(v.id, v.name)}
-                  onOpen={() => setSelection({ type: 'variable', id: v.id })}
+                  onOpen={() => openVariableHomeGraph(v.id)}
                   onDelete={isReferenceMode ? undefined : () => handleDeleteVariable(v.id)}
                 />
               ))}
@@ -1876,9 +1931,13 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     d.subscriberCount > 0 ? `${d.label} · ${d.subscriberCount} sub` : d.label
                   }
                   active={selection.type === 'event' && selection.id === d.id}
-                  hint={rowHint}
+                  hint={isReferenceMode ? rowHint : 'Click to select and open graph'}
+                  openOnSelect={!isReferenceMode}
                   onSelect={() => setSelection({ type: 'event', id: d.id })}
-                  onOpen={() => openGraphById(d.graphId)}
+                  onOpen={() => {
+                    setSelection({ type: 'event', id: d.id });
+                    openGraphById(d.graphId);
+                  }}
                   suffix={
                     isReferenceMode ? undefined : (
                       <button

@@ -2,10 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { generateMockCode, generateMockTranspileResult } from './mockCodegen';
 import { createComplexExampleSnapshot } from './examples/complexExample';
 
+const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
+
 describe('generateMockCode', () => {
-  test('complex example main graph emits call_function and branch', () => {
+  test('complex example calculator graph emits call_function and branch', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
+    const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
 
     const code = generateMockCode({
       moduleName: snapshot.projectDetails.moduleName,
@@ -14,9 +16,9 @@ describe('generateMockCode', () => {
       variables: snapshot.variables,
       projectEvents: snapshot.events,
       functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
+      nodes: calcGraph.nodes,
+      edges: calcGraph.edges,
+      tabId: CALCULATOR_GRAPH_ID,
       documents: snapshot.documents,
     });
 
@@ -58,7 +60,7 @@ describe('generateMockCode', () => {
 
   test('transpile result includes sourceMap for statement nodes', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
+    const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
 
     const result = generateMockTranspileResult({
       moduleName: snapshot.projectDetails.moduleName,
@@ -67,9 +69,9 @@ describe('generateMockCode', () => {
       variables: snapshot.variables,
       projectEvents: snapshot.events,
       functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
+      nodes: calcGraph.nodes,
+      edges: calcGraph.edges,
+      tabId: CALCULATOR_GRAPH_ID,
       documents: snapshot.documents,
     });
 
@@ -79,9 +81,9 @@ describe('generateMockCode', () => {
     expect(result.fragments?.['calc-set-a']).toContain('A');
   });
 
-  test('event define nodes map to full handler block in sourceMap', () => {
+  test('event member define nodes map to full handler block in sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
+    const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
 
     const result = generateMockTranspileResult({
       moduleName: snapshot.projectDetails.moduleName,
@@ -90,13 +92,13 @@ describe('generateMockCode', () => {
       variables: snapshot.variables,
       projectEvents: snapshot.events,
       functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
+      nodes: calcGraph.nodes,
+      edges: calcGraph.edges,
+      tabId: CALCULATOR_GRAPH_ID,
       documents: snapshot.documents,
     });
 
-    const handlerRanges = result.sourceMap['calc-define'];
+    const handlerRanges = result.sourceMap['calc-evt-calc-member'];
     expect(handlerRanges?.length).toBeGreaterThan(0);
 
     const content = result.files[0]!.content;
@@ -105,12 +107,12 @@ describe('generateMockCode', () => {
     expect(handlerLine).toBeGreaterThan(0);
     expect(handlerRanges![0]!.startLine).toBeLessThanOrEqual(handlerLine);
     expect(handlerRanges![0]!.endLine).toBeGreaterThanOrEqual(handlerLine);
-    expect(result.fragments?.['calc-define']).toContain('on_calculate');
+    expect(result.fragments?.['calc-evt-calc-member']).toContain('on_calculate');
   });
 
   test('On Start maps to on_start handler not run', () => {
     const snapshot = createComplexExampleSnapshot();
-    const main = snapshot.documents!.main;
+    const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
 
     const result = generateMockTranspileResult({
       moduleName: snapshot.projectDetails.moduleName,
@@ -119,9 +121,9 @@ describe('generateMockCode', () => {
       variables: snapshot.variables,
       projectEvents: snapshot.events,
       functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: 'main',
+      nodes: calcGraph.nodes,
+      edges: calcGraph.edges,
+      tabId: CALCULATOR_GRAPH_ID,
       documents: snapshot.documents,
     });
 
@@ -162,8 +164,9 @@ describe('generateMockCode', () => {
 
   test('dispatch node emits parameterless call with sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
-    const start = snapshot.documents!.main.nodes.find((n) => n.id === 'calc-start')!;
-    const dispatchNode = snapshot.documents!.main.nodes.find((n) => n.id === 'calc-dispatch')!;
+    const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
+    const start = calcGraph.nodes.find((n) => n.id === 'calc-start')!;
+    const dispatchNode = calcGraph.nodes.find((n) => n.id === 'calc-dispatch')!;
 
     const nodes = [start, dispatchNode];
     const edges = [
@@ -187,7 +190,7 @@ describe('generateMockCode', () => {
       functions: snapshot.functions,
       nodes,
       edges,
-      tabId: 'main',
+      tabId: CALCULATOR_GRAPH_ID,
       documents: snapshot.documents,
     });
 

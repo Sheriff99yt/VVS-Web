@@ -160,7 +160,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'selection-highlight-sync',
         title: 'Selection highlight sync',
         description:
-          'Comment, reroute, and tab switches keep canvas selection, floating details, and code preview highlights in sync.',
+          'Comment, reroute, and tab switches keep canvas selection, floating details, and code preview highlights in sync. Project tree symbol selection (events, variables, functions) drives preview tab transpile and sourceMap highlight ranges.',
+        status: 'done',
       },
       {
         id: 'canvas-perf',
@@ -357,7 +358,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'source-map',
         title: 'Codegen source map',
         description:
-          'Nested branch/import/event ranges in transpiler sourceMap; multi-select code highlight with per-node category colors in CodeMirror.',
+          'Nested branch/import/event ranges in transpiler sourceMap; multi-select code highlight with per-node category colors in CodeMirror; tree symbol selection resolves graph node IDs via symbolCodegenLink.',
+        status: 'done',
       },
       {
         id: 'portability',

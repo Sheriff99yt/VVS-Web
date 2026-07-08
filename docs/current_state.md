@@ -222,7 +222,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
-| Code preview | Done — CodeMirror 6; `sourceMap` selection highlight; portability warning badge |
+| Code preview | Done — CodeMirror 6; canvas node and project-tree symbol selection highlight generated code via `sourceMap` (`symbolCodegenLink`); portability warning badge |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
 | Connect AI / health chrome | Done — `useApiHealth`, `VvsApi.probeMcp` (HTTP `/mcp` + health fallback), Phase 1 local MCP copy |

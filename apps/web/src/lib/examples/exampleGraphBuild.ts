@@ -275,6 +275,8 @@ export function functionEntryNode(
   return exampleNode(id, position, {
     label: func.name,
     category: 'Events',
+    kindId: 'function_entry',
+    properties: { functionId: func.id, symbolId: func.id, name: func.name },
     inputs: [],
     outputs: [EXEC_OUT],
     inlineValues: {},

@@ -1,6 +1,6 @@
 import { GraphTab, TargetLanguage } from '@/contexts/ProjectContext';
 import type { ClassSymbol } from '@vvs/graph-types';
-import { activeClass as resolveActiveClass, classGraphTabId } from '@/lib/classScope';
+import { activeClass as resolveActiveClass, classGraphTabId, classHomeGraphId, symbolClassId } from '@/lib/classScope';
 import { GraphDocument } from '@/lib/graphDefaults';
 import { graphDisplayName, generatedFileName } from './graphTabs';
 
@@ -36,20 +36,36 @@ function countEventSubscribers(
 /** List project events for the tree. Falls back to scanning graphs for legacy projects. */
 export function listEventDispatchers(
   events: ProjectEventDefinition[],
-  documents: Record<string, GraphDocument> | null
+  documents: Record<string, GraphDocument> | null,
+  classes: ClassSymbol[] = []
 ): EventDispatcherEntry[] {
   if (events.length > 0) {
     return events
       .map((event) => ({
         id: event.id,
         label: eventDisplayName(event.name),
-        graphId: findGraphWithEventDefine(event.id, documents) ?? 'main',
+        graphId: resolveEventHomeGraphId(event, documents, classes),
         subscriberCount: countEventSubscribers(event.id, documents),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
   return listLegacyEventDispatchers(documents);
+}
+
+function resolveEventHomeGraphId(
+  event: ProjectEventDefinition,
+  documents: Record<string, GraphDocument> | null,
+  classes: ClassSymbol[]
+): string {
+  const defineGraph = findGraphWithEventDefine(event.id, documents);
+  if (defineGraph) return defineGraph;
+
+  const classId = symbolClassId(event);
+  const cls = classes.find((c) => c.id === classId);
+  if (cls) return classHomeGraphId(cls);
+
+  return classHomeGraphId({ kind: 'class', id: classId, name: '' });
 }
 
 function eventDisplayName(name: string): string {

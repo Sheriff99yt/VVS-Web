@@ -109,6 +109,19 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
     return { kind: 'function', symbolId, displayName };
   }
 
+  if (kindId === 'function_entry') {
+    const symbolId =
+      data.graphBinding?.symbolId ??
+      (typeof data.properties?.functionId === 'string' ? data.properties.functionId : undefined) ??
+      (typeof data.properties?.symbolId === 'string' ? data.properties.symbolId : undefined);
+    if (!symbolId) return null;
+    const displayName =
+      typeof data.properties?.name === 'string'
+        ? data.properties.name
+        : data.label.trim() || undefined;
+    return { kind: 'function', symbolId, displayName };
+  }
+
   if (kindId === 'event_member_define') {
     const symbolId =
       typeof data.properties?.symbolId === 'string'

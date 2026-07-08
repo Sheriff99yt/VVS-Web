@@ -23,6 +23,7 @@ import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
 import type { CodeHighlightRange } from '@/components/code/types';
 import { CopyPathButton } from '@/components/ui/CopyPathButton';
 import { nodeHighlightColor, DEFAULT_NODE_HIGHLIGHT } from '@/lib/nodeHighlightColor';
+import { resolveSymbolCodegenLink } from '@/lib/symbolCodegenLink';
 
 import type { TargetLanguage } from '@/contexts/ProjectContext';
 
@@ -126,8 +127,39 @@ export function CodePreviewPanel() {
     documents?.[MAIN_GRAPH_CONTAINER_ID] ??
     null;
 
-  const activeTab = openTabs.find((t) => t.id === activeGraphTab);
-  const isOrgGraph = isOrgOnlyGraphTab(activeGraphTab);
+  const symbolLink = useMemo(
+    () =>
+      resolveSymbolCodegenLink({
+        selection,
+        documents: documents ?? null,
+        classes,
+        functions,
+        events,
+        variables,
+        activeGraphTab,
+        selectedNodeIds,
+      }),
+    [
+      selection,
+      documents,
+      classes,
+      functions,
+      events,
+      variables,
+      activeGraphTab,
+      selectedNodeIds,
+    ]
+  );
+
+  const previewTabId = symbolLink?.tabId ?? activeGraphTab;
+
+  const previewDocument =
+    documents?.[previewTabId] ??
+    documents?.[MAIN_GRAPH_CONTAINER_ID] ??
+    null;
+
+  const activeTab = openTabs.find((t) => t.id === previewTabId);
+  const isOrgGraph = isOrgOnlyGraphTab(previewTabId);
 
   const liveResult = useMemo(() => {
     if (isOrgGraph) {
@@ -138,13 +170,13 @@ export function CodePreviewPanel() {
       } satisfies TranspileResult;
     }
 
-    const nodes = (activeDocument?.nodes ?? []) as VVSNode[];
-    const edges = (activeDocument?.edges ?? []) as VVSEdge[];
+    const nodes = (previewDocument?.nodes ?? []) as VVSNode[];
+    const edges = (previewDocument?.edges ?? []) as VVSEdge[];
     const tabMeta = getActiveTabMetadata();
     const mainClass = classes.find((c) => c.id === MAIN_CLASS_ID);
     const isModuleGraph =
-      activeGraphTab === 'main' ||
-      (mainClass != null && activeGraphTab === classHomeGraphId(mainClass));
+      previewTabId === 'main' ||
+      (mainClass != null && previewTabId === classHomeGraphId(mainClass));
 
     return generateMockTranspileResult({
       moduleName: isModuleGraph ? projectDetails.moduleName : tabMeta?.moduleName ?? activeTab?.name ?? 'Graph',
@@ -156,21 +188,20 @@ export function CodePreviewPanel() {
       nodes,
       edges,
       tabLabel: activeTab?.name,
-      tabId: activeGraphTab,
+      tabId: previewTabId,
       documents: documents ?? undefined,
       environmentId,
       integration,
     });
   }, [
-    activeDocument,
+    previewDocument,
     getActiveTabMetadata,
     openTabs,
-    activeGraphTab,
+    previewTabId,
     activeTab,
     isOrgGraph,
     targetLanguage,
     projectDetails,
-    targetLanguage,
     variables,
     events,
     functions,
@@ -243,7 +274,7 @@ export function CodePreviewPanel() {
 
   useEffect(() => {
     setActiveFileIndex(0);
-  }, [displayResult.files.length, activeGraphTab, targetLanguage]);
+  }, [displayResult.files.length, previewTabId, targetLanguage]);
 
   const safeFileIndex = Math.min(activeFileIndex, Math.max(0, (displayResult?.files.length ?? 1) - 1));
   const activeFile = displayResult.files[safeFileIndex] ?? displayResult.files[0];
@@ -254,29 +285,33 @@ export function CodePreviewPanel() {
   const mappedNodeCount = countMappedNodes(displayResult);
   const lines = lineCount(generatedCode);
 
-  const graphNodes = (activeDocument?.nodes ?? []) as VVSNode[];
+  const previewNodes = (previewDocument?.nodes ?? []) as VVSNode[];
   const nodesById = useMemo(() => {
     const map = new Map<string, VVSNode>();
-    for (const node of graphNodes) {
+    for (const node of previewNodes) {
       map.set(node.id, node);
     }
     return map;
-  }, [graphNodes]);
+  }, [previewNodes]);
 
-  const isNodeSelection = selection.type === 'node';
+  const highlightNodeIds =
+    selection.type === 'node'
+      ? selectedNodeIds
+      : symbolLink?.highlightNodeIds ?? [];
+
   const highlightRanges = useMemo(
     () =>
-      isNodeSelection
-        ? buildColoredHighlightRanges(selectedNodeIds, sourceMap, filePath, nodesById)
+      highlightNodeIds.length > 0
+        ? buildColoredHighlightRanges(highlightNodeIds, sourceMap, filePath, nodesById)
         : undefined,
-    [isNodeSelection, selectedNodeIds, sourceMap, filePath, nodesById]
+    [highlightNodeIds, sourceMap, filePath, nodesById]
   );
   const hasSelectionLink = Boolean(highlightRanges?.length);
 
   useEffect(() => {
-    if (!isNodeSelection || selectedNodeIds.length === 0) return;
+    if (highlightNodeIds.length === 0) return;
 
-    for (const nodeId of selectedNodeIds) {
+    for (const nodeId of highlightNodeIds) {
       const ranges = sourceMap[nodeId];
       if (!ranges?.length) continue;
       const targetPath = ranges[0]!.filePath;
@@ -286,7 +321,7 @@ export function CodePreviewPanel() {
       }
       break;
     }
-  }, [isNodeSelection, selectedNodeIds, sourceMap, displayResult.files, safeFileIndex]);
+  }, [highlightNodeIds, sourceMap, displayResult.files, safeFileIndex]);
 
   const languageAccent = LANGUAGE_ACCENT[targetLanguage] ?? LANGUAGE_ACCENT.json;
 
