@@ -2,8 +2,9 @@ import type { GraphDocument, GraphTab, VariableSymbol, ProjectEventDefinition, F
 import type { ProjectIntegrationConfig } from './integration';
 import { normalizeIntegrationConfig } from './integration';
 import type { SyntaxPackLock } from './codegenTarget';
-import { normalizeFunctionSymbols, normalizeVariableSymbols, createClassSymbol, normalizeClassSymbols, MAIN_CLASS_ID, normalizeGraphContainers, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME, containerTabFor, ensureContainerDocuments, classHomeGraphId } from './symbols';
+import { normalizeFunctionSymbols, normalizeVariableSymbols, createClassSymbol, normalizeClassSymbols, MAIN_CLASS_ID, normalizeGraphContainers, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME, containerTabFor, ensureContainerDocuments, classHomeGraphId, createProgramEntryEvent } from './symbols';
 import type { GraphContainer } from './symbols';
+import type { GraphNode } from './nodes';
 import { migrateTextShapedAlignment } from './fidelityMigration';
 
 export interface InstalledLibraryEntry {
@@ -176,12 +177,111 @@ function upgradeSnapshotToV3(
   };
 }
 
+function createStarterClassDefineNode(cls: ClassSymbol): GraphNode {
+  const execIn = { id: 'exec_in', label: '', type: 'execution' as const };
+  const execOut = { id: 'exec_out', label: '', type: 'execution' as const };
+  return {
+    id: `class-define-${cls.id}`,
+    type: 'vvs_standard_node',
+    position: { x: 80, y: 40 },
+    data: {
+      label: `Class ${cls.name}`,
+      category: 'Project',
+      kindId: 'class_define',
+      inputs: [execIn],
+      outputs: [execOut],
+      inlineValues: {},
+      properties: {
+        name: cls.name,
+        extendsType: cls.extendsType ?? '',
+        visibility: cls.visibility ?? 'public',
+      },
+    },
+  };
+}
+
+function createEntryMemberDefineNode(entry: ProjectEventDefinition): GraphNode {
+  const execIn = { id: 'exec_in', label: '', type: 'execution' as const };
+  const execOut = { id: 'exec_out', label: '', type: 'execution' as const };
+  return {
+    id: `entry-member-${entry.id}`,
+    type: 'vvs_standard_node',
+    position: { x: 280, y: 40 },
+    data: {
+      label: 'Define start',
+      category: 'Events',
+      kindId: 'event_member_define',
+      inputs: [execIn],
+      outputs: [execOut],
+      inlineValues: {},
+      properties: {
+        symbolId: entry.id,
+        name: entry.name,
+        eventId: entry.id,
+        eventName: 'On start',
+      },
+    },
+  };
+}
+
+function createEntryHandlerDefineNode(entry: ProjectEventDefinition): GraphNode {
+  const execOut = { id: 'exec_out', label: '', type: 'execution' as const };
+  return {
+    id: `entry-handler-${entry.id}`,
+    type: 'vvs_standard_node',
+    position: { x: 80, y: 160 },
+    data: {
+      label: 'On start',
+      category: 'Events',
+      kindId: 'event_define',
+      inputs: [],
+      outputs: [execOut],
+      inlineValues: {},
+      properties: {
+        eventId: entry.id,
+        eventName: 'start',
+        symbolId: entry.id,
+      },
+    },
+  };
+}
+
+/** Bootstrap class home graph with explicit program entry (no hidden on_start). */
+export function createClassHomeBootstrap(
+  cls: ClassSymbol,
+  entry?: ProjectEventDefinition
+): { entry: ProjectEventDefinition; document: GraphDocument } {
+  const programEntry =
+    entry ?? createProgramEntryEvent({ id: `evt-start-${cls.id}`, classId: cls.id });
+  const classDefine = createStarterClassDefineNode(cls);
+  const entryMember = createEntryMemberDefineNode(programEntry);
+  const entryHandler = createEntryHandlerDefineNode(programEntry);
+  return {
+    entry: programEntry,
+    document: {
+      nodes: [classDefine, entryMember, entryHandler],
+      edges: [
+        {
+          id: `edge-class-entry-member-${cls.id}`,
+          source: classDefine.id,
+          target: entryMember.id,
+          sourceHandle: 'exec_out',
+          targetHandle: 'exec_in',
+          type: 'vvs_standard_edge',
+          data: { pinType: 'execution' },
+        },
+      ],
+    },
+  };
+}
+
 export function createEmptyProjectSnapshot(): ProjectSnapshot {
   const moduleName = 'Untitled';
   const mainClass = createClassSymbol(moduleName, {
     id: MAIN_CLASS_ID,
     containerId: MAIN_GRAPH_CONTAINER_ID,
   });
+  const { entry, document } = createClassHomeBootstrap(mainClass);
   return {
     version: 3,
     savedAt: new Date().toISOString(),
@@ -190,7 +290,7 @@ export function createEmptyProjectSnapshot(): ProjectSnapshot {
     activeClassId: MAIN_CLASS_ID,
     graphContainers: normalizeGraphContainers(undefined),
     variables: [],
-    events: [],
+    events: [entry],
     functions: [],
     openTabs: [
       { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: PROJECT_MAP_CONTAINER_NAME },
@@ -200,7 +300,7 @@ export function createEmptyProjectSnapshot(): ProjectSnapshot {
     autoCompile: true,
     autoSave: false,
     documents: {
-      [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] },
+      [MAIN_GRAPH_CONTAINER_ID]: document,
     },
     installedLibrary: [],
   };

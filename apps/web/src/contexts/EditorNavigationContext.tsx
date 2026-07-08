@@ -28,6 +28,9 @@ import {
   sanitizeNavigationFrame,
   writeNavigationHistory,
 } from '@/lib/editorNavigationHistory';
+import { resolveVariableFocusFrame } from '@/lib/editorFocus';
+import { openGraphContainerTab } from '@/lib/graphTabs';
+import { symbolClassId } from '@/lib/classScope';
 import type { EditorNavigateEventDetail } from '@/types/editorNavigation';
 import type { NavigateToNodeDetail } from '@/lib/graphNavigation';
 
@@ -62,6 +65,10 @@ export function EditorNavigationProvider({
     openTabs,
     setOpenTabs,
     functions,
+    variables,
+    classes,
+    graphContainers,
+    setActiveClassId,
     selection,
     setSelection,
     referenceRootGraphId,
@@ -108,6 +115,12 @@ export function EditorNavigationProvider({
       if (graphTab === 'main') return;
       if (openTabs.some((tab) => tab.id === graphTab)) return;
 
+      const container = graphContainers.find((c) => c.id === graphTab);
+      if (container) {
+        openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
+        return;
+      }
+
       const func = functions.find((f) => f.id === graphTab);
       if (func) {
         setOpenTabs((prev) => [
@@ -116,7 +129,7 @@ export function EditorNavigationProvider({
         ]);
       }
     },
-    [functions, openTabs, setOpenTabs]
+    [functions, graphContainers, openTabs, setActiveGraphTab, setOpenTabs]
   );
 
   const applyNavigationFrame = useCallback(
@@ -256,13 +269,16 @@ export function EditorNavigationProvider({
     const onNavigateToVariable = (event: Event) => {
       const { symbolId } = (event as CustomEvent<{ symbolId: string }>).detail;
       if (!symbolId) return;
-      navigate(
-        {
-          editorView: 'canvas',
-          selection: { type: 'variable', id: symbolId },
-        },
-        { history: 'push' }
-      );
+
+      const frame = resolveVariableFocusFrame(symbolId, variables, classes, graphContainers);
+      if (!frame) return;
+
+      const variable = variables.find((v) => v.id === symbolId);
+      if (variable) {
+        setActiveClassId(symbolClassId(variable));
+      }
+
+      navigate(frame, { history: 'push' });
     };
 
     const onSwitchEditorView = (event: Event) => {
@@ -280,7 +296,7 @@ export function EditorNavigationProvider({
       window.removeEventListener('vvs:navigate-to-variable', onNavigateToVariable);
       window.removeEventListener('vvs:switch-editor-view', onSwitchEditorView);
     };
-  }, [navigate]);
+  }, [classes, graphContainers, navigate, setActiveClassId, variables]);
 
   const value = useMemo(
     () => ({

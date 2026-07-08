@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { migrateLegacyFunction, MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME } from './symbols';
 import { normalizeProjectSnapshot, createEmptyProjectSnapshot } from './snapshot';
+import { analyzeProject } from './analyze';
 
 const v2Base = {
   version: 2 as const,
@@ -87,6 +88,27 @@ describe('normalizeProjectSnapshot', () => {
     expect(snap.graphContainers[0]?.name).toBe(PROJECT_MAP_CONTAINER_NAME);
     expect(snap.documents[MAIN_GRAPH_CONTAINER_ID]).toBeDefined();
     expect(snap.openTabs.some((tab) => tab.type === 'container')).toBe(true);
+    expect(
+      snap.documents[MAIN_GRAPH_CONTAINER_ID]?.nodes.some((n) => n.data.kindId === 'class_define')
+    ).toBe(true);
+  });
+
+  test('createEmptyProjectSnapshot passes strict canvas fidelity analysis', () => {
+    const snap = createEmptyProjectSnapshot();
+    const result = analyzeProject({
+      documents: snap.documents,
+      variables: snap.variables,
+      functions: snap.functions,
+      events: snap.events,
+      classes: snap.classes,
+      openTabs: snap.openTabs,
+      projectDetails: { extendsType: snap.projectDetails.extendsType },
+      targetLanguage: 'python',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.diagnostics.filter((d) => d.code === 'DEFINE_NODE_MISSING')).toHaveLength(0);
+    expect(result.diagnostics.filter((d) => d.code === 'DECLARATION_NOT_ON_CANVAS')).toHaveLength(0);
   });
 
   test('upgrades v2 snapshot with container documents and tabs', () => {

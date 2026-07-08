@@ -16,6 +16,7 @@ export function buildCoreCategories(
   functions: FunctionSymbol[],
   filterPin?: import('@/types/graph').PinDefinition,
   options?: {
+    events?: import('@/types/graph').ProjectEventDefinition[];
     environmentId?: string;
     environmentManifest?: ProjectEnvironmentManifest;
     targetLanguage?: TargetLanguage;
@@ -24,6 +25,7 @@ export function buildCoreCategories(
   return list({
     currentGraphId,
     functions,
+    events: options?.events,
     filterPin,
     environmentId: options?.environmentId,
     environmentManifest: options?.environmentManifest,

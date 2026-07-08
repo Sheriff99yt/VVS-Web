@@ -456,6 +456,19 @@
       "dynamic": true
     },
     {
+      "kindId": "import_class",
+      "kindVersion": 1,
+      "category": "Imports",
+      "title": "Import Class",
+      "semantics": "project.import_class",
+      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "propertySchema": {
+        "targetClassId": { "type": "string", "title": "Target class" },
+        "alias": { "type": "string", "title": "Alias" }
+      }
+    },
+    {
       "kindId": "env.call_native",
       "kindVersion": 1,
       "category": "Environment",

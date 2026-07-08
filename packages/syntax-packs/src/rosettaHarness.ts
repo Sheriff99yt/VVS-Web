@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { fileURLToPath } from 'url';
 import { generateMockTranspileResult } from '@vvs/transpiler';
 import type { GraphEdge, GraphNode, ProjectEventDefinition, FunctionSymbol, VariableSymbol } from '@vvs/graph-types';
 
@@ -24,7 +25,8 @@ export interface RosettaFixture {
 }
 
 export function rosettaDir(): string {
-  return join(import.meta.dir, '..', 'rosetta');
+  const here = fileURLToPath(new URL('.', import.meta.url));
+  return join(here, '..', 'rosetta');
 }
 
 export function loadRosettaFixture(name: string): RosettaFixture {

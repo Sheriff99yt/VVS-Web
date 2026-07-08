@@ -9,7 +9,10 @@ import { GraphEditProvider } from '@/contexts/GraphEditContext';
 import { useProject } from '@/contexts/ProjectContext';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { VVSNode, VVSEdge } from '@/types/graph';
-import type { LibraryImportPayload } from '@/lib/libraryImport';
+import {
+  dualWriteLibraryImportDefines,
+  type LibraryImportPayload,
+} from '@/lib/libraryImport';
 
 interface GraphWorkspaceHostProps {
   initialNodes?: VVSNode[];
@@ -43,6 +46,8 @@ export function GraphWorkspaceHost({
     setOpenTabs,
     setFunctions,
     markTabDirty,
+    classes,
+    activeClassId,
   } = useProject();
 
   const { registerWorkspace } = useGraphWorkspace();
@@ -213,7 +218,8 @@ export function GraphWorkspaceHost({
 
   useEffect(() => {
     const onImport = (event: Event) => {
-      const { tab, document, functionEntry } = (event as CustomEvent<LibraryImportPayload>).detail;
+      const payload = (event as CustomEvent<LibraryImportPayload>).detail;
+      const { tab, document, functionEntry } = payload;
       if (functionEntry) {
         setFunctions((prev) =>
           prev.some((f) => f.id === functionEntry.id) ? prev : [...prev, functionEntry]
@@ -223,12 +229,35 @@ export function GraphWorkspaceHost({
       setActiveGraphTab(tab.id);
       setSelection({ type: 'graph', id: tab.id });
       importGraphTab(tab, document);
+      if (functionEntry) {
+        const documents = tabSyncRef.current.getAllDocuments();
+        const withDefine = dualWriteLibraryImportDefines(
+          documents,
+          classes,
+          activeClassId,
+          payload
+        );
+        if (withDefine !== documents) {
+          patchAllDocumentsWithDirty(() => withDefine);
+        }
+      }
       markTabDirty(tab.id);
       setCompileState('dirty');
     };
     window.addEventListener('vvs:import-library-graph', onImport);
     return () => window.removeEventListener('vvs:import-library-graph', onImport);
-  }, [importGraphTab, setFunctions, setOpenTabs, setActiveGraphTab, setSelection, setCompileState, markTabDirty]);
+  }, [
+    importGraphTab,
+    setFunctions,
+    setOpenTabs,
+    setActiveGraphTab,
+    setSelection,
+    setCompileState,
+    markTabDirty,
+    classes,
+    activeClassId,
+    patchAllDocumentsWithDirty,
+  ]);
 
   useEffect(() => {
     setCanUndo(canUndo);

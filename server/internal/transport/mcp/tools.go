@@ -16,14 +16,19 @@ import (
 
 // Deps holds shared dependencies for MCP tool handlers.
 type Deps struct {
-	Store  store.ProjectStore
-	Runner services.TranspilerRunner
+	Store        store.ProjectStore
+	Runner       services.TranspilerRunner
+	SyntaxRunner services.SyntaxPackRunner
+	RepoRoot     string
 }
 
 // RegisterTools wires thin MCP tools over core services and registry pure functions.
 func RegisterTools(s *mcpserver.MCPServer, deps Deps) {
 	registerListAvailableNodes(s)
 	registerListSyntaxPacks(s)
+	registerProposeSyntaxDelta(s, deps)
+	registerRunRosettaSuite(s, deps)
+	registerValidateGeneratedParse(s, deps)
 	registerListClasses(s, deps)
 	registerAddClass(s, deps)
 	registerGetGraph(s, deps)
@@ -57,6 +62,83 @@ func registerListSyntaxPacks(s *mcpserver.MCPServer) {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		return jsonToolResult(map[string]interface{}{"packs": packs})
+	})
+}
+
+func registerProposeSyntaxDelta(s *mcpserver.MCPServer, deps Deps) {
+	tool := mcp.NewTool("propose_syntax_delta",
+		mcp.WithDescription("Validate and format a proposed syntax-pack template row change"),
+		mcp.WithString("pack_id", mcp.Required(), mcp.Description("Syntax pack id, e.g. python.base")),
+		mcp.WithString("template_key", mcp.Required(), mcp.Description("Template key, e.g. Print")),
+		mcp.WithString("quasi", mcp.Description("Quasi-quote template string")),
+		mcp.WithArray("lego", mcp.Description("Lego row slot array")),
+		mcp.WithString("rationale", mcp.Description("Why this syntax change is needed")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		packID, err := req.RequireString("pack_id")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		templateKey, err := req.RequireString("template_key")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		proposalReq := services.SyntaxDeltaProposalRequest{
+			PackID:      packID,
+			TemplateKey: templateKey,
+			Quasi:       req.GetString("quasi", ""),
+			Rationale:   req.GetString("rationale", ""),
+		}
+		if raw, ok := req.GetArguments()["lego"]; ok {
+			payload, err := json.Marshal(raw)
+			if err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
+			if err := json.Unmarshal(payload, &proposalReq.Lego); err != nil {
+				return mcp.NewToolResultError("invalid lego slots: " + err.Error()), nil
+			}
+		}
+		result, err := services.ProposeSyntaxDelta(ctx, deps.RepoRoot, proposalReq)
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		return jsonToolResult(result)
+	})
+}
+
+func registerRunRosettaSuite(s *mcpserver.MCPServer, deps Deps) {
+	tool := mcp.NewTool("run_rosetta_suite",
+		mcp.WithDescription("Run syntax-pack Rosetta golden checks"),
+		mcp.WithString("family", mcp.Description("Optional family filter: python, javascript, cpp, verse")),
+		mcp.WithString("fixture", mcp.Description("Optional fixture filter, e.g. print")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		result, err := services.RunRosettaSuite(ctx, deps.SyntaxRunner, services.RosettaSuiteOptions{
+			Family:  req.GetString("family", ""),
+			Fixture: req.GetString("fixture", ""),
+		})
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		return jsonToolResult(result)
+	})
+}
+
+func registerValidateGeneratedParse(s *mcpserver.MCPServer, deps Deps) {
+	tool := mcp.NewTool("validate_generated_parse",
+		mcp.WithDescription("Run Tree-sitter parse validation on generated Rosetta outputs"),
+		mcp.WithString("family", mcp.Description("Optional family filter: python or javascript")),
+		mcp.WithString("fixture", mcp.Description("Optional fixture filter, e.g. print")),
+	)
+	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		result, err := services.ValidateGeneratedParse(ctx, deps.SyntaxRunner, services.ParseValidationOptions{
+			Family:  req.GetString("family", ""),
+			Fixture: req.GetString("fixture", ""),
+		})
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		return jsonToolResult(result)
 	})
 }
 

@@ -6,9 +6,9 @@ import type {
   ProjectEventDefinition,
   VariableSymbol,
 } from '@vvs/graph-types';
-import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId } from '@vvs/graph-types';
+import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId, classForHomeGraphId } from '@vvs/graph-types';
 
-export { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId };
+export { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId, classForHomeGraphId };
 
 export function symbolClassId(item: { classId?: string }): string {
   return item.classId ?? MAIN_CLASS_ID;

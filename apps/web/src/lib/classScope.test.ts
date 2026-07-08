@@ -30,11 +30,11 @@ describe('classScope container helpers', () => {
     { id: 'graph-container-extra', name: 'Utilities' },
   ];
 
-  it('resolves class container and graph tab id', () => {
+  it('resolves class container and home graph id', () => {
     expect(classContainerId(mainClass)).toBe(MAIN_GRAPH_CONTAINER_ID);
     expect(classContainerId(extraClass)).toBe('graph-container-extra');
-    expect(classGraphTabId(mainClass)).toBe('main');
-    expect(classGraphTabId(extraClass)).toBe('class-extra');
+    expect(classGraphTabId(mainClass)).toBe(MAIN_GRAPH_CONTAINER_ID);
+    expect(classGraphTabId(extraClass)).toBe('graph-container-extra');
   });
 
   it('lists classes per graph container', () => {

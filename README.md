@@ -2,7 +2,7 @@
 
 > **Early public development (v0.1 skeleton)** — the graph editor is usable locally; transpiler, MCP, and cloud sync are planned. See [Where we are now](#where-we-are-now) · **Origin:** [Vision Visual Scripting (2021)](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
 
-**Visual programming that generates real code** — compose logic on a graph, export ordinary source, and integrate with the tools you already use: your IDE, git, CI, and AI assistants (via MCP).
+**Visual programming that generates real code** — compose logic on a graph, export ordinary source, and integrate with the tools you already use: your IDE, git, CI, and AI assistants (via MCP). **Canvas is the source of truth for generated code** — every export line maps to a graph node; symbol tables index only.
 
 VVS builds **on top of traditional development**, not instead of it. The graph is the authoring view; **text code stays the integration layer** — with **text-shaped fidelity** (what you draw is what you could type). See [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md).
 

@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createClassSymbol, createVariableSymbol } from '@vvs/graph-types';
+import { createClassSymbol, createVariableSymbol, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { analyzeClassMembers } from './classMembers';
 
 describe('analyzeClassMembers', () => {
   it('returns ordered members from class graph exec chain', () => {
-    const cls = createClassSymbol('Calculator', { id: 'main-class', graphTabId: 'main' });
+    const cls = createClassSymbol('Calculator', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
     const variable = createVariableSymbol('A', { id: 'var-a', classId: cls.id });
 
     const result = analyzeClassMembers(
@@ -14,7 +17,7 @@ describe('analyzeClassMembers', () => {
         functions: [],
         events: [],
         documents: {
-          main: {
+          [MAIN_GRAPH_CONTAINER_ID]: {
             nodes: [
               {
                 id: 'vd',

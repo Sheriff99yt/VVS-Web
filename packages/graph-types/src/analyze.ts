@@ -15,11 +15,15 @@ import {
 } from './symbolRefs';
 import { edgePinTypes, pinsAreCompatible } from './pinCompatibility';
 import {
+  classGraphHasDefineNodes,
+  defineNodeSymbolId,
   findDefineNodesForSymbol,
   isMemberDefineKind,
+  isMemberDefineNode,
   resolveNodeKindId,
 } from './defineNodes';
-import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId } from './symbols';
+import { analyzeClassMembers } from './classMembers';
+import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryEvent } from './symbols';
 
 export interface AnalyzeProjectInput {
   documents: Record<string, GraphDocument>;
@@ -306,7 +310,7 @@ function validateUnresolvedSymbolRefs(input: AnalyzeProjectInput): Diagnostic[] 
       if (!ref) continue;
       const label = unresolvedRefLabel(ref);
       messages.push({
-        level: 'warning',
+        level: 'error',
         message: `Unresolved ${ref.kind} reference: ${label}`,
         code: 'UNRESOLVED_SYMBOL_REF',
         tabId,
@@ -548,6 +552,76 @@ function symbolClassId(item: { classId?: string }): string {
   return item.classId ?? MAIN_CLASS_ID;
 }
 
+function classHasSymbols(
+  cls: ClassSymbol,
+  variables: VariableSymbol[],
+  functions: FunctionSymbol[],
+  events: { id: string; classId?: string }[]
+): boolean {
+  return (
+    variables.some((v) => symbolClassId(v) === cls.id) ||
+    functions.some((f) => symbolClassId(f) === cls.id) ||
+    events.some((e) => symbolClassId(e) === cls.id)
+  );
+}
+
+function validateOrphanDefineNodes(
+  tabId: string,
+  doc: GraphDocument,
+  cls: ClassSymbol,
+  variables: VariableSymbol[],
+  functions: FunctionSymbol[],
+  events: { id: string; name: string; classId?: string }[]
+): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  const variableIds = new Set(
+    variables.filter((v) => symbolClassId(v) === cls.id).map((v) => v.id)
+  );
+  const functionIds = new Set(
+    functions.filter((f) => symbolClassId(f) === cls.id).map((f) => f.id)
+  );
+  const eventIds = new Set(
+    events.filter((e) => symbolClassId(e) === cls.id).map((e) => e.id)
+  );
+
+  for (const node of doc.nodes) {
+    if (!isMemberDefineNode(node)) continue;
+    const kindId = resolveNodeKindId(node.data);
+    if (kindId === 'class_define') continue;
+
+    const symbolId = defineNodeSymbolId(node);
+    if (!symbolId) continue;
+
+    const kindLabel =
+      kindId === 'var_define'
+        ? 'variable'
+        : kindId === 'function_define'
+          ? 'function'
+          : 'event';
+
+    const known =
+      kindId === 'var_define'
+        ? variableIds.has(symbolId)
+        : kindId === 'function_define'
+          ? functionIds.has(symbolId)
+          : eventIds.has(symbolId);
+
+    if (known) continue;
+
+    messages.push({
+      level: 'error',
+      message: `Define node references unknown ${kindLabel} symbol "${symbolId}" on class graph "${cls.name}".`,
+      tabId,
+      nodeId: node.id,
+      symbolId,
+      source: 'semantic',
+      code: 'ORPHAN_DEFINE_NODE',
+    });
+  }
+
+  return messages;
+}
+
 function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
   const messages: Diagnostic[] = [];
   const variables = input.variables ?? [];
@@ -566,7 +640,7 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     for (const variable of classVariables) {
       if (findDefineNodesForSymbol(doc, 'variable', variable.id).length > 0) continue;
       messages.push({
-        level: 'warning',
+        level: 'error',
         message: `Variable "${variable.name}" has no var_define node on class graph "${cls.name}".`,
         tabId,
         symbolId: variable.id,
@@ -578,7 +652,7 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     for (const func of classFunctions) {
       if (findDefineNodesForSymbol(doc, 'function', func.id).length > 0) continue;
       messages.push({
-        level: 'warning',
+        level: 'error',
         message: `Function "${func.name}" has no function_define node on class graph "${cls.name}".`,
         tabId,
         symbolId: func.id,
@@ -590,12 +664,213 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     for (const event of classEvents) {
       if (findDefineNodesForSymbol(doc, 'event', event.id).length > 0) continue;
       messages.push({
-        level: 'warning',
+        level: 'error',
         message: `Event "${event.name}" has no define event node on class graph "${cls.name}".`,
         tabId,
         symbolId: event.id,
         source: 'semantic',
         code: 'DEFINE_NODE_MISSING',
+      });
+    }
+
+    messages.push(
+      ...validateOrphanDefineNodes(
+        tabId,
+        doc,
+        cls,
+        variables,
+        input.functions,
+        input.events
+      )
+    );
+  }
+
+  return messages;
+}
+
+function isCallFunctionNode(node: import('./nodes').GraphNode): boolean {
+  if (node.type !== 'vvs_standard_node') return false;
+  const kindId = resolveNodeKindId(node.data);
+  return (
+    kindId === 'vvs.project.call_function' ||
+    node.data.linkKind === 'call_function' ||
+    node.data.graphBinding?.kind === 'call_function' ||
+    node.data.graphBinding?.kind === 'call_class_function'
+  );
+}
+
+function isImportClassNode(node: import('./nodes').GraphNode): boolean {
+  if (node.type !== 'vvs_standard_node') return false;
+  const kindId = resolveNodeKindId(node.data);
+  return kindId === 'import_class' || node.data.graphBinding?.kind === 'import_class';
+}
+
+function validateCrossClassCalls(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  const classes = input.classes ?? [];
+  if (classes.length < 2) return messages;
+
+  const functionById = new Map(input.functions.map((f) => [f.id, f]));
+
+  for (const [tabId, doc] of Object.entries(input.documents)) {
+    const homeClass = classForHomeGraphId(classes, tabId);
+    if (!homeClass) continue;
+
+    const importedClassIds = new Set<string>();
+    for (const node of doc.nodes) {
+      if (!isImportClassNode(node)) continue;
+      const targetClassId =
+        (typeof node.data.properties?.targetClassId === 'string'
+          ? node.data.properties.targetClassId
+          : undefined) ?? node.data.graphBinding?.targetClassId;
+      if (targetClassId) importedClassIds.add(targetClassId);
+    }
+
+    for (const node of doc.nodes) {
+      if (!isCallFunctionNode(node)) continue;
+      const symbolId = node.data.graphBinding?.symbolId ?? node.data.linkedGraphId;
+      if (!symbolId) continue;
+      const fn = functionById.get(symbolId);
+      if (!fn) continue;
+      const fnClassId = fn.classId ?? MAIN_CLASS_ID;
+      if (fnClassId === homeClass.id) continue;
+      if (importedClassIds.has(fnClassId)) continue;
+      const targetClass = classes.find((c) => c.id === fnClassId);
+      messages.push({
+        level: 'warning',
+        message: `Cross-class call to ${targetClass?.name ?? fn.name} without import_class on this graph`,
+        code: 'CROSS_CLASS_CALL_WITHOUT_IMPORT',
+        tabId,
+        nodeId: node.id,
+        source: 'semantic',
+      });
+    }
+  }
+
+  return messages;
+}
+
+function validateVirtualFunctionFlags(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  for (const func of input.functions) {
+    if (!func.flags?.virtual) continue;
+    if (input.targetLanguage === 'python' || input.targetLanguage === 'javascript') {
+      messages.push({
+        level: 'warning',
+        message: `Virtual flag on "${func.name}" is not emitted for target "${input.targetLanguage}"`,
+        code: 'VIRTUAL_NOT_ON_TARGET',
+        source: 'semantic',
+        symbolId: func.id,
+      });
+    }
+  }
+  return messages;
+}
+
+function validateCanvasDeclarations(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  const variables = input.variables ?? [];
+  const classes = input.classes ?? [];
+  if (classes.length === 0) return messages;
+
+  const snapshot = {
+    classes,
+    documents: input.documents,
+    variables,
+    functions: input.functions,
+    events: input.events,
+  };
+
+  for (const cls of classes) {
+    const tabId = classHomeGraphId(cls);
+    const doc = input.documents[tabId];
+    const hasSymbols = classHasSymbols(cls, variables, input.functions, input.events);
+
+    if (!hasSymbols) continue;
+
+    if (!classGraphHasDefineNodes(doc)) {
+      messages.push({
+        level: 'error',
+        message: `Class "${cls.name}" has symbols but no define nodes on its class graph.`,
+        tabId,
+        source: 'semantic',
+        code: 'DECLARATION_NOT_ON_CANVAS',
+      });
+      continue;
+    }
+
+    const analysis = analyzeClassMembers(snapshot, cls.id);
+    if (analysis && analysis.orderedNodeIds.length === 0) {
+      messages.push({
+        level: 'error',
+        message: `Class "${cls.name}" has define nodes but no valid member declaration chain on its class graph.`,
+        tabId,
+        source: 'semantic',
+        code: 'DECLARATION_NOT_ON_CANVAS',
+      });
+    }
+  }
+
+  return messages;
+}
+
+function validateLegacyLifecycleNodes(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  for (const [tabId, doc] of Object.entries(input.documents)) {
+    for (const node of doc.nodes) {
+      if (node.type !== 'vvs_standard_node') continue;
+      const kindId = resolveNodeKindId(node.data);
+      if (kindId !== 'event_on_start' && node.data.label !== 'On Start') continue;
+      messages.push({
+        level: 'error',
+        message:
+          'Lifecycle "On Start" nodes are deprecated — declare a program entry event (role: entry) with event_member_define + event_define on the class graph.',
+        tabId,
+        nodeId: node.id,
+        source: 'semantic',
+        code: 'LIFECYCLE_NODE_DEPRECATED',
+      });
+    }
+  }
+  return messages;
+}
+
+function validateProgramEntry(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  const classes = input.classes ?? [];
+  const events = input.events ?? [];
+
+  for (const cls of classes) {
+    const tabId = classHomeGraphId(cls);
+    const doc = input.documents[tabId];
+    if (!classHasSymbols(cls, input.variables ?? [], input.functions, events)) {
+      continue;
+    }
+    const entry = findProgramEntryEvent(events, cls.id);
+    if (!entry) {
+      messages.push({
+        level: 'error',
+        message: `Class "${cls.name}" has no program entry event — add one from the Events panel (emits on_start for host runners).`,
+        tabId,
+        source: 'semantic',
+        code: 'PROGRAM_ENTRY_MISSING',
+      });
+      continue;
+    }
+    const hasMemberDefine =
+      doc?.nodes.some(
+        (n) =>
+          isMemberDefineNode(n) &&
+          n.data.kindId === 'event_member_define' &&
+          defineNodeSymbolId(n) === entry.id
+      ) ?? false;
+    if (!hasMemberDefine) {
+      messages.push({
+        level: 'error',
+        message: `Program entry for "${cls.name}" is missing event_member_define on the class graph.`,
+        tabId,
+        source: 'semantic',
+        code: 'PROGRAM_ENTRY_NOT_ON_CANVAS',
       });
     }
   }
@@ -624,6 +899,11 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   diagnostics.push(...validateMulticastEvents(input));
   diagnostics.push(...validateEnvironmentSemantics(input));
   diagnostics.push(...validateDefineNodeSync(input));
+  diagnostics.push(...validateCanvasDeclarations(input));
+  diagnostics.push(...validateProgramEntry(input));
+  diagnostics.push(...validateLegacyLifecycleNodes(input));
+  diagnostics.push(...validateCrossClassCalls(input));
+  diagnostics.push(...validateVirtualFunctionFlags(input));
 
   if (input.portabilityDiagnostics) {
     diagnostics.push(...input.portabilityDiagnostics);

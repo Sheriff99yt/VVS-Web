@@ -1,7 +1,8 @@
-import type { GraphDocument, GraphTab, FunctionSymbol } from './symbols';
-import { migrateLegacyFunction } from './symbols';
+import type { GraphDocument, GraphTab, FunctionSymbol, ClassSymbol, ProjectEventDefinition } from './symbols';
+import { migrateLegacyFunction, classHomeGraphId, createProgramEntryEvent, findProgramEntryEvent } from './symbols';
 import type { GraphNode } from './nodes';
 import type { ProjectSnapshot } from './snapshot';
+import { normalizeGraphNode } from './normalizeGraphNodeData';
 
 function stripMacroPrefix(name: string): string {
   return name.replace(/^Macro:\s*/, '').replace(/^Function:\s*/, '').trim();
@@ -120,54 +121,10 @@ function migrateDocumentNodes(doc: GraphDocument): GraphDocument {
         next = { ...next, data: migrateUseMacroNodeData(next.data) };
       }
       next = migrateEventDispatchNode(next);
-      next = backfillNodeKindId(next);
+      next = normalizeGraphNode(next);
       return next;
     }),
   };
-}
-
-/** Persist kindId on load when graphBinding or legacy labels imply a known kind. */
-function backfillNodeKindId(node: GraphNode): GraphNode {
-  if (node.type !== 'vvs_standard_node') return node;
-  const d = node.data;
-  if (d.kindId) return node;
-
-  let kindId: string | undefined;
-  const binding = d.graphBinding?.kind ?? d.linkKind;
-  if (binding === 'call_function' || d.graphBinding?.kind === 'call_function') {
-    kindId = 'vvs.project.call_function';
-  } else if (binding === 'import_module') {
-    kindId = 'vvs.project.import_module';
-  } else if (binding === 'use_macro') {
-    kindId = 'vvs.project.call_function';
-  } else if (d.graphBinding?.kind === 'env_native') {
-    kindId = 'env.call_native';
-  } else if (d.graphBinding?.kind === 'env_event') {
-    kindId = 'env.event_handler';
-  } else if (d.label === 'On Start') {
-    kindId = 'event_on_start';
-  } else if (d.label === 'On Update') {
-    kindId = 'event_on_update';
-  } else if (d.label.startsWith('On ')) {
-    kindId = 'event_define';
-  } else if (d.label.startsWith('Emit ')) {
-    kindId = 'event_emit';
-  } else if (d.label.startsWith('Dispatch ')) {
-    kindId = 'event_dispatch';
-  } else if (d.label.startsWith('Subscribe ')) {
-    kindId = 'event_subscribe';
-  } else if (d.label.startsWith('Get ')) {
-    kindId = 'variable_get';
-  } else if (d.label.startsWith('Set ')) {
-    kindId = 'variable_set';
-  } else if (d.label.startsWith('Call ')) {
-    kindId = 'vvs.project.call_function';
-  } else if (d.label.startsWith('Import ')) {
-    kindId = 'vvs.project.import_module';
-  }
-
-  if (!kindId) return node;
-  return { ...node, data: { ...d, kindId } };
 }
 
 function migrateEventDispatchNode(node: GraphNode): GraphNode {
@@ -205,6 +162,112 @@ function ensureFunctionForMacroTab(
   return [...functions, migrateLegacyFunction({ id: tab.id, name })];
 }
 
+function migrateLegacyOnStartInDocument(
+  doc: GraphDocument,
+  entry: ProjectEventDefinition
+): GraphDocument {
+  const legacy = doc.nodes.find(
+    (n) =>
+      n.type === 'vvs_standard_node' &&
+      (n.data.kindId === 'event_on_start' || n.data.label === 'On Start')
+  );
+  if (!legacy) return doc;
+
+  const nodes = doc.nodes.map((node) => {
+    if (node.id !== legacy.id) return node;
+    return normalizeGraphNode({
+      ...node,
+      data: {
+        ...node.data,
+        kindId: 'event_define',
+        label: 'On start',
+        category: 'Events',
+        properties: {
+          ...node.data.properties,
+          eventId: entry.id,
+          eventName: entry.name,
+          symbolId: entry.id,
+        },
+      },
+    });
+  });
+
+  const hasMember = nodes.some(
+    (n) =>
+      n.data.kindId === 'event_member_define' &&
+      n.data.properties?.symbolId === entry.id
+  );
+  if (hasMember) {
+    return { ...doc, nodes };
+  }
+
+  const classDefine = nodes.find((n) => n.data.kindId === 'class_define');
+  const execIn = { id: 'exec_in', label: '', type: 'execution' as const };
+  const execOut = { id: 'exec_out', label: '', type: 'execution' as const };
+  const memberNode = {
+    id: `entry-member-migrated-${entry.id}`,
+    type: 'vvs_standard_node' as const,
+    position: { x: (classDefine?.position.x ?? 80) + 200, y: classDefine?.position.y ?? 40 },
+    data: {
+      label: 'Define start',
+      category: 'Events',
+      kindId: 'event_member_define',
+      inputs: [execIn],
+      outputs: [execOut],
+      inlineValues: {},
+      properties: {
+        symbolId: entry.id,
+        name: entry.name,
+        eventId: entry.id,
+        eventName: 'On start',
+      },
+    },
+  };
+
+  const nextNodes = [...nodes, memberNode];
+  let edges = [...doc.edges];
+  if (classDefine) {
+    edges.push({
+      id: `migrated-entry-member-${entry.id}`,
+      source: classDefine.id,
+      target: memberNode.id,
+      sourceHandle: 'exec_out',
+      targetHandle: 'exec_in',
+      type: 'vvs_standard_edge',
+      data: { pinType: 'execution' },
+    });
+  }
+
+  return { ...doc, nodes: nextNodes, edges };
+}
+
+function migrateProgramEntryAlignment(snapshot: ProjectSnapshot): ProjectSnapshot {
+  let events = [...snapshot.events];
+  const documents: Record<string, GraphDocument> = { ...snapshot.documents };
+
+  for (const cls of snapshot.classes) {
+    const tabId = classHomeGraphId(cls);
+    const doc = documents[tabId];
+    if (!doc) continue;
+
+    const hasLegacy = doc.nodes.some(
+      (n) =>
+        n.type === 'vvs_standard_node' &&
+        (n.data.kindId === 'event_on_start' || n.data.label === 'On Start')
+    );
+    if (!hasLegacy) continue;
+
+    let entry = findProgramEntryEvent(events, cls.id);
+    if (!entry) {
+      entry = createProgramEntryEvent({ classId: cls.id });
+      events.push(entry);
+    }
+    documents[tabId] = migrateLegacyOnStartInDocument(doc, entry);
+  }
+
+  return { ...snapshot, events, documents };
+}
+
 /** Migrate macro tabs and use_macro nodes to text-shaped function + call semantics. */
 export function migrateTextShapedAlignment(snapshot: ProjectSnapshot): ProjectSnapshot {
   let functions = [...snapshot.functions];
@@ -233,12 +296,12 @@ export function migrateTextShapedAlignment(snapshot: ProjectSnapshot): ProjectSn
     documents[tabId] = migrateDocumentNodes(doc);
   }
 
-  return {
+  return migrateProgramEntryAlignment({
     ...snapshot,
     functions,
     openTabs,
     documents,
-  };
+  });
 }
 
 export function macroTabIdsFromSnapshot(snapshot: ProjectSnapshot): string[] {

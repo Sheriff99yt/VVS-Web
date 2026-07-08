@@ -6,10 +6,12 @@ import {
   createDefaultIntegration,
   normalizeIntegrationConfig,
   syncIntegrationEnvironment,
+  buildFolderGraphManifest,
+  classGraphRelativePath,
+  classHomeGraphId,
   type VvsProjectManifest,
   type ProjectIntegrationConfig,
   type ProjectSnapshot,
-  type GraphTab,
   normalizeProjectSnapshot,
   toPersistedSnapshot,
 } from '@vvs/graph-types';
@@ -23,27 +25,13 @@ import {
 
 const SYMBOLS_DIR = `${VVS_DIR}/symbols`;
 const GRAPHS_DIR = `${VVS_DIR}/graphs`;
-const FUNCTIONS_DIR = `${VVS_DIR}/graphs/functions`;
-
-function sanitizeFileStem(name: string): string {
-  return name.replace(/^Function:\s*/i, '').replace(/[^a-zA-Z0-9_-]+/g, '_') || 'Graph';
-}
-
-function functionGraphRelativePath(tab: GraphTab): string {
-  const stem = sanitizeFileStem(tab.name);
-  return `graphs/functions/${stem}.graph.json`;
-}
+const CONTAINERS_DIR = `${GRAPHS_DIR}/containers`;
+const FUNCTIONS_DIR = `${GRAPHS_DIR}/functions`;
 
 function buildManifest(snapshot: ProjectSnapshot): VvsProjectManifest {
-  const functionPaths: Record<string, string> = {};
-  for (const tab of snapshot.openTabs) {
-    if (tab.type === 'function') {
-      functionPaths[tab.id] = functionGraphRelativePath(tab);
-    }
-  }
   return {
     format: 'vvs.project',
-    formatVersion: 1,
+    formatVersion: 2,
     name: snapshot.projectDetails.moduleName || 'Untitled',
     description: snapshot.projectDetails.description,
     defaultTarget: snapshot.targetLanguage,
@@ -56,10 +44,8 @@ function buildManifest(snapshot: ProjectSnapshot): VvsProjectManifest {
       autoSave: snapshot.autoSave ?? false,
       activeClassId: snapshot.activeClassId,
     },
-    graphs: {
-      main: 'graphs/main.graph.json',
-      functions: functionPaths,
-    },
+    graphContainers: snapshot.graphContainers,
+    graphs: buildFolderGraphManifest(snapshot),
     ...(snapshot.syntaxPackLock ? { syntaxPackLock: snapshot.syntaxPackLock } : {}),
   };
 }
@@ -123,11 +109,22 @@ export async function loadProjectFromFolder(
     undefined;
 
   const documents: ProjectSnapshot['documents'] = {};
-  const mainDoc = await readJsonFile<ProjectSnapshot['documents'][string]>(
-    root,
-    `${VVS_DIR}/${manifest.graphs.main}`
-  );
-  if (mainDoc) documents.main = mainDoc;
+
+  for (const [containerId, relPath] of Object.entries(manifest.graphs.containers ?? {})) {
+    const doc = await readJsonFile<ProjectSnapshot['documents'][string]>(
+      root,
+      `${VVS_DIR}/${relPath}`
+    );
+    if (doc) documents[containerId] = doc;
+  }
+
+  if (manifest.graphs.main) {
+    const mainDoc = await readJsonFile<ProjectSnapshot['documents'][string]>(
+      root,
+      `${VVS_DIR}/${manifest.graphs.main}`
+    );
+    if (mainDoc) documents.main = mainDoc;
+  }
 
   for (const [fnId, relPath] of Object.entries(manifest.graphs.functions ?? {})) {
     const doc = await readJsonFile<ProjectSnapshot['documents'][string]>(
@@ -140,31 +137,13 @@ export async function loadProjectFromFolder(
   if (classes) {
     for (const cls of classes) {
       const tabId = cls.graphTabId ?? cls.id;
-      if (tabId === 'main' || documents[tabId]) continue;
-      const rel = `graphs/${sanitizeFileStem(cls.name)}.class.graph.json`;
+      const homeId = classHomeGraphId(cls);
+      if (tabId === 'main' || documents[tabId] || documents[homeId]) continue;
+      if (manifest.graphs.containers?.[homeId]) continue;
+      const rel = classGraphRelativePath(cls.name);
       const doc = await readJsonFile<ProjectSnapshot['documents'][string]>(root, `${VVS_DIR}/${rel}`);
       if (doc) documents[tabId] = doc;
     }
-  }
-
-  const openTabs: GraphTab[] = [{ id: 'main', type: 'main', name: 'Main graph' }];
-  if (classes) {
-    for (const cls of classes) {
-      const tabId = cls.graphTabId ?? cls.id;
-      if (tabId === 'main') continue;
-      if (documents[tabId]) {
-        openTabs.push({ id: tabId, type: 'class', name: cls.name });
-      }
-    }
-  }
-  for (const tab of Object.keys(documents)) {
-    if (tab === 'main') continue;
-    const fn = functions.find((f) => f.id === tab);
-    openTabs.push({
-      id: tab,
-      type: 'function',
-      name: fn ? `Function: ${fn.name}` : `Function: ${tab}`,
-    });
   }
 
   const envId = integration.environmentId;
@@ -179,6 +158,7 @@ export async function loadProjectFromFolder(
       description: manifest.description,
     },
     classes,
+    graphContainers: manifest.graphContainers,
     activeClassId:
       typeof manifest.settings.activeClassId === 'string'
         ? manifest.settings.activeClassId
@@ -186,8 +166,6 @@ export async function loadProjectFromFolder(
     variables,
     events,
     functions,
-    openTabs,
-    activeGraphTab: 'main',
     targetLanguage: manifest.defaultTarget,
     autoCompile: manifest.settings.autoCompile,
     autoSave: manifest.settings.autoSave,
@@ -210,27 +188,35 @@ export async function saveProjectToFolder(
   const persisted = toPersistedSnapshot(snapshot);
   const integration = integrationFromSnapshot(persisted);
   const manifest = buildManifest(persisted);
+  const graphManifest = manifest.graphs;
+  const savedContainerIds = new Set(Object.keys(graphManifest.containers ?? {}));
 
   await ensureDirPath(root, GRAPHS_DIR);
+  await ensureDirPath(root, CONTAINERS_DIR);
   await ensureDirPath(root, FUNCTIONS_DIR);
   await ensureDirPath(root, SYMBOLS_DIR);
 
   await writeJsonFile(root, VVS_PROJECT_FILE, manifest);
   await writeJsonFile(root, VVS_INTEGRATION_FILE, integration);
 
-  if (persisted.documents.main) {
-    await writeJsonFile(root, `${GRAPHS_DIR}/main.graph.json`, persisted.documents.main);
+  for (const [containerId, relPath] of Object.entries(graphManifest.containers ?? {})) {
+    const doc = persisted.documents[containerId];
+    if (!doc) continue;
+    await writeJsonFile(root, `${VVS_DIR}/${relPath}`, doc);
+  }
+
+  for (const [tabId, relPath] of Object.entries(graphManifest.functions)) {
+    const doc = persisted.documents[tabId];
+    if (!doc) continue;
+    await writeJsonFile(root, `${VVS_DIR}/${relPath}`, doc);
   }
 
   for (const tab of persisted.openTabs) {
-    if (tab.type !== 'function' && tab.type !== 'class') continue;
-    if (tab.id === 'main') continue;
+    if (tab.type !== 'class') continue;
+    if (savedContainerIds.has(tab.id)) continue;
     const doc = persisted.documents[tab.id];
     if (!doc) continue;
-    const rel =
-      tab.type === 'class'
-        ? `graphs/${sanitizeFileStem(tab.name)}.class.graph.json`
-        : functionGraphRelativePath(tab);
+    const rel = classGraphRelativePath(tab.name);
     await writeJsonFile(root, `${VVS_DIR}/${rel}`, doc);
   }
 

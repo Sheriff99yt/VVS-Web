@@ -1,4 +1,5 @@
-import type { GraphNode, GraphEdge, ProjectEventDefinition } from '@vvs/graph-types';
+import type { GraphNode, GraphEdge, ProjectEventDefinition, ClassSymbol, FunctionSymbol } from '@vvs/graph-types';
+import { MAIN_CLASS_ID } from '@vvs/graph-types';
 import { buildExecutionOrder, findSimulationStartNode } from '../analyze/graphOrder';
 import { getInputKind, inputTempVarName } from '../inputHelpers';
 import {
@@ -21,7 +22,7 @@ import {
   resolveEventForNode,
 } from '../nodeHelpers';
 import type { CodegenContext } from '../generate';
-import { buildIrMembers, resolveActiveClass } from './buildMembers';
+import { buildIrMembers, resolveActiveClass, type BuildMembersResult } from './buildMembers';
 import type {
   IrEventHandler,
   IrExpr,
@@ -37,14 +38,26 @@ import { defaultCodegenTarget } from '@vvs/graph-types';
 interface LowerContext {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  functions: { id: string; name: string }[];
+  functions: FunctionSymbol[];
   projectEvents: ProjectEventDefinition[];
   environmentManifest?: ProjectEnvironmentManifest;
+  classes?: ClassSymbol[];
+  activeClassId?: string;
+  projectModuleName?: string;
+}
+
+function isImportClassNode(node: GraphNode): boolean {
+  const kindId = resolveNodeKindId(node.data);
+  return kindId === 'import_class' || node.data.graphBinding?.kind === 'import_class';
 }
 
 function isImportNode(node: GraphNode): boolean {
   const kindId = resolveNodeKindId(node.data);
-  return kindId.startsWith('import_module_') || node.data.linkKind === 'import_module';
+  return (
+    kindId.startsWith('import_module_') ||
+    node.data.linkKind === 'import_module' ||
+    isImportClassNode(node)
+  );
 }
 
 function waitSeconds(node: GraphNode): string {
@@ -96,7 +109,7 @@ function firstInputPinId(node: GraphNode, candidates: string[]): string | undefi
 
 function resolveFunctionName(
   linkedGraphId: string,
-  functions: { id: string; name: string }[]
+  functions: FunctionSymbol[]
 ): string {
   return functions.find((f) => f.id === linkedGraphId)?.name ?? linkedGraphId;
 }
@@ -192,6 +205,24 @@ function moduleSlugFromImportNode(node: GraphNode): string {
   return label.replace(/\s+/g, '_').toLowerCase() || 'module';
 }
 
+function resolveClassModuleName(cls: ClassSymbol, projectModuleName?: string): string {
+  if (cls.id === MAIN_CLASS_ID && projectModuleName?.trim()) return projectModuleName;
+  return cls.name;
+}
+
+function targetClassIdFromNode(node: GraphNode): string | undefined {
+  const fromProps = node.data.properties?.targetClassId;
+  if (typeof fromProps === 'string' && fromProps.trim()) return fromProps;
+  const fromBinding = node.data.graphBinding?.targetClassId;
+  if (typeof fromBinding === 'string' && fromBinding.trim()) return fromBinding;
+  return undefined;
+}
+
+function importAliasFromNode(node: GraphNode): string | undefined {
+  const alias = node.data.properties?.alias;
+  return typeof alias === 'string' && alias.trim() ? alias.trim() : undefined;
+}
+
 function followExecFromHandle(
   nodeId: string,
   sourceHandle: string,
@@ -252,8 +283,10 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
 
   if (isImportNode(node)) return 'ModuleImport';
   if (
+    kindId === 'vvs.project.call_function' ||
     kindId.startsWith('call_function_') ||
     node.data.linkKind === 'call_function' ||
+    node.data.graphBinding?.kind === 'call_function' ||
     kindId.startsWith('use_macro_') ||
     node.data.linkKind === 'use_macro' ||
     kindId === 'vvs.project.use_macro'
@@ -291,8 +324,10 @@ function lowerStatement(
   if (isImportNode(node)) return null;
 
   if (
+    kindId === 'vvs.project.call_function' ||
     kindId.startsWith('call_function_') ||
     node.data.linkKind === 'call_function' ||
+    node.data.graphBinding?.kind === 'call_function' ||
     kindId.startsWith('use_macro_') ||
     node.data.linkKind === 'use_macro' ||
     kindId === 'vvs.project.use_macro'
@@ -301,12 +336,22 @@ function lowerStatement(
       return commentFallback(node.id, 'CallFunction', 'call (unlinked)');
     }
     const graphId = node.data.graphBinding?.symbolId ?? node.data.linkedGraphId ?? '';
-    const name = resolveFunctionName(graphId, functions);
+    const fn = functions.find((f) => f.id === graphId);
+    const name = fn?.name ?? resolveFunctionName(graphId, functions);
+    const fnClassId = fn?.classId ?? MAIN_CLASS_ID;
+    const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
+    const crossClass = fnClassId !== activeClassId;
+    const targetClass = crossClass ? ctx.classes?.find((c) => c.id === fnClassId) : undefined;
+    const staticCall = fn?.binding === 'static' || fn?.binding === 'module';
     return {
       kind: 'CallFunction',
       sourceGraphNodeId: node.id,
       calleeName: name,
-      instanceCall: true,
+      instanceCall: !staticCall,
+      crossClass,
+      targetClassName: targetClass
+        ? resolveClassModuleName(targetClass, ctx.projectModuleName)
+        : undefined,
     };
   }
 
@@ -623,6 +668,7 @@ function collectModuleImports(allNodes: GraphNode[]): IrStatement[] {
   const imports: IrStatement[] = [];
   for (const node of allNodes) {
     if (!isCodegenNode(node)) continue;
+    if (isImportClassNode(node)) continue;
     if (!isImportNode(node)) continue;
     const mod = moduleSlugFromImportNode(node);
     if (seen.has(mod)) continue;
@@ -631,6 +677,37 @@ function collectModuleImports(allNodes: GraphNode[]): IrStatement[] {
       kind: 'ModuleImport',
       sourceGraphNodeId: node.id,
       moduleSlug: mod,
+    });
+  }
+  return imports;
+}
+
+function collectClassImports(
+  allNodes: GraphNode[],
+  classes: ClassSymbol[] | undefined,
+  projectModuleName?: string
+): IrStatement[] {
+  if (!classes?.length) return [];
+  const seen = new Set<string>();
+  const imports: IrStatement[] = [];
+  for (const node of allNodes) {
+    if (!isCodegenNode(node) || !isImportClassNode(node)) continue;
+    const targetClassId = targetClassIdFromNode(node);
+    if (!targetClassId) continue;
+    const cls = classes.find((c) => c.id === targetClassId);
+    if (!cls) continue;
+    const className = cls.name;
+    const moduleName = resolveClassModuleName(cls, projectModuleName);
+    const alias = importAliasFromNode(node);
+    const key = `${moduleName}:${className}:${alias ?? ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    imports.push({
+      kind: 'ImportClass',
+      sourceGraphNodeId: node.id,
+      className,
+      moduleName,
+      alias,
     });
   }
   return imports;
@@ -656,11 +733,13 @@ function collectAllCodegenNodes(
 }
 
 function moduleNeedsEventHelper(
-  onStartBody: IrStatement[],
+  memberBuild: BuildMembersResult,
   functionBodies: Record<string, IrStatement[]>,
   eventHandlers: IrEventHandler[]
 ): boolean {
-  if (moduleUsesEventBus(onStartBody)) return true;
+  for (const member of memberBuild.members) {
+    if (member.kind === 'EventDecl' && moduleUsesEventBus(member.body)) return true;
+  }
   for (const body of Object.values(functionBodies)) {
     if (moduleUsesEventBus(body)) return true;
   }
@@ -706,6 +785,9 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     functions,
     projectEvents,
     environmentManifest,
+    classes: ctx.classes,
+    activeClassId: ctx.activeClassId,
+    projectModuleName: ctx.projectModuleName ?? moduleName,
   };
 
   const activeTabId = tabId ?? 'main';
@@ -714,20 +796,12 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
   const graphNodes = nodes
     .filter(isCodegenNode)
     .map((n) => ({ ...n, data: normalizeNodeData(n.data) }));
-  const start = findSimulationStartNode(graphNodes);
-  const execOrder = start ? buildExecutionOrder(start.id, graphNodes, edges) : [];
-  const skipIds = new Set<string>();
-  const onStartBody = buildIrStatements(
-    execOrder,
-    { ...lowerCtx, nodes: graphNodes, edges },
-    skipIds
-  );
   const memberBuild = buildIrMembers(ctx, graphNodes, edges, lowerCtx);
   const activeClass = resolveActiveClass(ctx);
 
   const handlerNodes = auxiliaryEventNodes(
     graphNodes,
-    execOrder,
+    [],
     memberBuild.memberEventIds,
     projectEvents
   );
@@ -751,8 +825,11 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
 
   const functionBodies = buildFunctionBodies(documents, functions, lowerCtx);
   const allNodes = collectAllCodegenNodes(graphNodes, documents, functions);
-  const imports = collectModuleImports(allNodes);
-  const needsEventHelper = moduleNeedsEventHelper(onStartBody, functionBodies, eventHandlers);
+  const imports = [
+    ...collectModuleImports(allNodes),
+    ...collectClassImports(allNodes, ctx.classes, ctx.projectModuleName ?? moduleName),
+  ];
+  const needsEventHelper = moduleNeedsEventHelper(memberBuild, functionBodies, eventHandlers);
 
   return {
     moduleName,
@@ -768,23 +845,15 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     functions,
     projectEvents,
     documents,
-    startEvent: start
-      ? {
-          sourceGraphNodeId: start.id,
-          isExplicitStartEvent: resolveNodeKindId(start.data) === 'event_on_start',
-        }
-      : undefined,
     imports,
     needsEventHelper,
-    onStartBody,
+    onStartBody: [],
     eventHandlers,
     functionBodies,
-    execOrder,
+    execOrder: [],
     handlerNodeLabels: handlerNodes.map((e) => e.data.label),
     environmentManifest,
     members: memberBuild.members,
-    useLegacyPreamble: memberBuild.useLegacyPreamble,
-    compileWarnings: memberBuild.compileWarnings,
     activeClass,
   };
 }

@@ -14,6 +14,14 @@ description: >-
 
 Pair with [`vvs_ui_development`](../vvs_ui_development/SKILL.md) for shell layout and styling.
 
+## Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- Code preview stays **open by default** — fidelity is the trust contract between graph and export
+- Project tree symbol rows are navigation/index — user discovers declarations on the canvas, not by inferring from sidebar alone
+- Progressive disclosure does not hide the code panel to avoid showing missing define-node coverage
+
 ## Decision rule
 
 Before adding visible UI, answer:

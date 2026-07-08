@@ -9,6 +9,7 @@ import type {
 import {
   classGraphHasDefineNodes,
   classHomeGraphId,
+  eventCodegenHandlerName,
   MAIN_CLASS_ID,
   resolveNodeKindId,
   type GraphDocument,
@@ -17,11 +18,7 @@ import { analyzeClassMembers, type ClassMemberEntry } from '../analyze/classMemb
 import { buildExecutionOrder } from '../analyze/graphOrder';
 import type { CodegenContext } from '../generate';
 import type { IrMemberDecl, IrStatement } from '../ir/types';
-import {
-  eventHandlerName,
-  parameterCodegenName,
-  resolveEventForNode as resolveEventForNodeHelper,
-} from '../nodeHelpers';
+import { parameterCodegenName, resolveEventForNode as resolveEventForNodeHelper } from '../nodeHelpers';
 import { buildIrStatements } from './graphToIr';
 
 interface BuildMembersContext {
@@ -148,7 +145,7 @@ function memberDeclFromEntry(
     case 'event': {
       const symbol = events.find((e) => e.id === entry.symbolId);
       if (!symbol) return undefined;
-      const handlerName = eventHandlerName(symbol.name);
+      const handlerName = eventCodegenHandlerName(symbol);
       const handlerNode = findEventHandlerNode(graphNodes, symbol);
       return {
         kind: 'EventDecl',
@@ -166,8 +163,6 @@ function memberDeclFromEntry(
 
 export interface BuildMembersResult {
   members: IrMemberDecl[];
-  useLegacyPreamble: boolean;
-  compileWarnings: string[];
   memberEventIds: Set<string>;
 }
 
@@ -184,8 +179,6 @@ export function buildIrMembers(
   if (!classGraphHasDefineNodes(analysisDoc)) {
     return {
       members: [],
-      useLegacyPreamble: true,
-      compileWarnings: ['DECLARATION_NOT_ON_CANVAS'],
       memberEventIds: new Set(),
     };
   }
@@ -202,8 +195,6 @@ export function buildIrMembers(
   if (!analysis || analysis.members.length === 0) {
     return {
       members: [],
-      useLegacyPreamble: true,
-      compileWarnings: ['DECLARATION_NOT_ON_CANVAS'],
       memberEventIds: new Set(),
     };
   }
@@ -239,8 +230,6 @@ export function buildIrMembers(
 
   return {
     members,
-    useLegacyPreamble: false,
-    compileWarnings: [],
     memberEventIds,
   };
 }

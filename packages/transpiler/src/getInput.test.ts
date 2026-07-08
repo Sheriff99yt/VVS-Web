@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { generateMockCode } from './generate';
+import { withTestEntryGraph } from './testEntryGraph';
 
 describe('action_get_input codegen', () => {
   const baseNode = {
@@ -23,60 +24,34 @@ describe('action_get_input codegen', () => {
     },
   };
 
-  const startNode = {
-    id: 'start-1',
-    type: 'vvs_standard_node' as const,
-    position: { x: 0, y: 0 },
-    data: {
-      label: 'On Start',
-      category: 'Events',
-      kindId: 'event_on_start',
-      inputs: [],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
-      inlineValues: {},
-    },
-  };
-
-  const edges = [
-    {
-      id: 'e1',
-      source: 'start-1',
-      target: 'input-1',
-      sourceHandle: 'exec_out',
-      targetHandle: 'exec_in',
-      type: 'vvs_standard_edge' as const,
-      data: { pinType: 'execution' as const },
-    },
-  ];
-
   test('python emits blocking input with temp variable', () => {
-    const code = generateMockCode({
-      moduleName: 'Demo',
-      extendsType: '',
-      targetLanguage: 'python',
-      variables: [],
-      projectEvents: [],
-      functions: [],
-      nodes: [startNode, baseNode],
-      edges,
-      tabId: 'main',
-    });
+    const code = generateMockCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [baseNode],
+        edges: [],
+      })
+    );
     expect(code).toContain('input("Enter your name:")');
     expect(code).toContain('_vvs_input_input_1');
   });
 
   test('javascript emits prompt for text input', () => {
-    const code = generateMockCode({
-      moduleName: 'Demo',
-      extendsType: '',
-      targetLanguage: 'javascript',
-      variables: [],
-      projectEvents: [],
-      functions: [],
-      nodes: [startNode, baseNode],
-      edges,
-      tabId: 'main',
-    });
+    const code = generateMockCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'javascript',
+        variables: [],
+        functions: [],
+        nodes: [baseNode],
+        edges: [],
+      })
+    );
     expect(code).toContain('prompt("Enter your name:")');
     expect(code).toContain('const _vvs_input_input_1');
   });
@@ -93,17 +68,17 @@ describe('action_get_input codegen', () => {
         ],
       },
     };
-    const code = generateMockCode({
-      moduleName: 'Demo',
-      extendsType: '',
-      targetLanguage: 'python',
-      variables: [],
-      projectEvents: [],
-      functions: [],
-      nodes: [startNode, numberNode],
-      edges,
-      tabId: 'main',
-    });
+    const code = generateMockCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [numberNode],
+        edges: [],
+      })
+    );
     expect(code).toContain('float(input("Enter your name:"))');
   });
 });

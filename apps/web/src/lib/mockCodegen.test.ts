@@ -130,8 +130,8 @@ describe('generateMockCode', () => {
     const content = result.files[0]!.content;
     expect(content).toContain('def on_start(self):');
     expect(content).not.toContain('def run(self):');
-    expect(result.sourceMap['calc-start']?.length).toBeGreaterThan(0);
-    expect(result.fragments?.['calc-start']).toContain('on_start');
+    expect(result.sourceMap['calc-evt-start-member']?.length).toBeGreaterThan(0);
+    expect(result.fragments?.['calc-evt-start-member']).toContain('on_start');
   });
 
   test('Add function graph maps get and math nodes to expression spans', () => {
@@ -165,14 +165,14 @@ describe('generateMockCode', () => {
   test('dispatch node emits parameterless call with sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
     const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
-    const start = calcGraph.nodes.find((n) => n.id === 'calc-start')!;
+    const start = calcGraph.nodes.find((n) => n.id === 'calc-start-handler')!;
     const dispatchNode = calcGraph.nodes.find((n) => n.id === 'calc-dispatch')!;
 
     const nodes = [start, dispatchNode];
     const edges = [
       {
         id: 'calc-edge-dispatch-test',
-        source: 'calc-start',
+        source: 'calc-start-handler',
         target: 'calc-dispatch',
         sourceHandle: 'exec_out',
         targetHandle: 'exec_in',
@@ -197,5 +197,71 @@ describe('generateMockCode', () => {
     const content = result.files[0]!.content;
     expect(content).toContain('self.on_calculate()');
     expect(result.sourceMap['calc-dispatch']?.length).toBeGreaterThan(0);
+  });
+
+  test('Calculator fidelity reference nodes have sourceMap coverage', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
+
+    const result = generateMockTranspileResult({
+      moduleName: snapshot.projectDetails.moduleName,
+      extendsType: snapshot.projectDetails.extendsType,
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      nodes: calcGraph.nodes,
+      edges: calcGraph.edges,
+      tabId: CALCULATOR_GRAPH_ID,
+      documents: snapshot.documents,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+    });
+
+    const expectations: [string, RegExp][] = [
+      ['calc-var-a-define', /self\.A/],
+      ['calc-fn-add-define', /Add/],
+      ['calc-evt-calc-member', /on_calculate/],
+      ['calc-dispatch', /on_calculate\(\)/],
+      ['calc-call-add', /Add\(/],
+      ['calc-set-a', /self\.A\s*=/],
+    ];
+
+    for (const [nodeId, pattern] of expectations) {
+      expect(result.sourceMap[nodeId]?.length).toBeGreaterThan(0);
+      expect(result.fragments?.[nodeId]).toMatch(pattern);
+    }
+  });
+
+  test('event_member_define declaration and event_define handler body stay linked', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
+    const handlerEntry = calcGraph.nodes.find((n) => n.id === 'calc-define');
+    expect(handlerEntry?.data.kindId).toBe('event_define');
+
+    const result = generateMockTranspileResult({
+      moduleName: snapshot.projectDetails.moduleName,
+      extendsType: snapshot.projectDetails.extendsType,
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      nodes: calcGraph.nodes,
+      edges: calcGraph.edges,
+      tabId: CALCULATOR_GRAPH_ID,
+      documents: snapshot.documents,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+    });
+
+    const memberRange = result.sourceMap['calc-evt-calc-member']![0]!;
+    const callRange = result.sourceMap['calc-call-add']![0]!;
+
+    expect(result.sourceMap['calc-evt-calc-member']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-call-add']?.length).toBeGreaterThan(0);
+    expect(result.fragments?.['calc-evt-calc-member']).toContain('on_calculate');
+    expect(result.fragments?.['calc-call-add']).toContain('Add');
+    expect(callRange.startLine).toBeGreaterThanOrEqual(memberRange.startLine);
+    expect(callRange.endLine).toBeLessThanOrEqual(memberRange.endLine);
   });
 });

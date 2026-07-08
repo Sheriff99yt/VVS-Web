@@ -10,20 +10,20 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
-import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { VVSNode, VVSEdge } from '@/types/graph';
 import { generateMockTranspileResult } from '@/lib/mockCodegen';
 import type { TranspileResult } from '@/types/transpile';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
-import { MAIN_GRAPH_CONTAINER_ID, MAIN_CLASS_ID, classHomeGraphId } from '@/lib/classScope';
+import { MAIN_GRAPH_CONTAINER_ID, classForHomeGraphId } from '@/lib/classScope';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
 import type { CodeHighlightRange } from '@/components/code/types';
 import { CopyPathButton } from '@/components/ui/CopyPathButton';
 import { nodeHighlightColor, DEFAULT_NODE_HIGHLIGHT } from '@/lib/nodeHighlightColor';
 import { resolveSymbolCodegenLink } from '@/lib/symbolCodegenLink';
+import { resolveCodePreviewHighlightNodeIds } from '@/lib/projectSelection';
 
 import type { TargetLanguage } from '@/contexts/ProjectContext';
 
@@ -113,7 +113,6 @@ export function CodePreviewPanel() {
     classes,
     activeClassId,
   } = useProject();
-  const { getActiveTabMetadata } = useGraphWorkspace();
   const documents = useGraphDocuments();
 
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
@@ -172,15 +171,13 @@ export function CodePreviewPanel() {
 
     const nodes = (previewDocument?.nodes ?? []) as VVSNode[];
     const edges = (previewDocument?.edges ?? []) as VVSEdge[];
-    const tabMeta = getActiveTabMetadata();
-    const mainClass = classes.find((c) => c.id === MAIN_CLASS_ID);
-    const isModuleGraph =
-      previewTabId === 'main' ||
-      (mainClass != null && previewTabId === classHomeGraphId(mainClass));
+    const previewMetadata = previewDocument?.metadata;
+    const homeClass = classForHomeGraphId(classes, previewTabId);
+    const isModuleGraph = homeClass != null || previewTabId === 'main';
 
     return generateMockTranspileResult({
-      moduleName: isModuleGraph ? projectDetails.moduleName : tabMeta?.moduleName ?? activeTab?.name ?? 'Graph',
-      extendsType: isModuleGraph ? projectDetails.extendsType : tabMeta?.extendsType ?? '',
+      moduleName: homeClass?.name ?? (isModuleGraph ? projectDetails.moduleName : previewMetadata?.moduleName ?? activeTab?.name ?? 'Graph'),
+      extendsType: homeClass?.extendsType ?? (isModuleGraph ? projectDetails.extendsType : previewMetadata?.extendsType ?? ''),
       targetLanguage,
       variables,
       projectEvents: events,
@@ -190,12 +187,13 @@ export function CodePreviewPanel() {
       tabLabel: activeTab?.name,
       tabId: previewTabId,
       documents: documents ?? undefined,
+      classes,
+      activeClassId: homeClass?.id ?? activeClassId,
       environmentId,
       integration,
     });
   }, [
     previewDocument,
-    getActiveTabMetadata,
     openTabs,
     previewTabId,
     activeTab,
@@ -294,10 +292,11 @@ export function CodePreviewPanel() {
     return map;
   }, [previewNodes]);
 
-  const highlightNodeIds =
-    selection.type === 'node'
-      ? selectedNodeIds
-      : symbolLink?.highlightNodeIds ?? [];
+  const highlightNodeIds = resolveCodePreviewHighlightNodeIds(
+    selection,
+    selectedNodeIds,
+    symbolLink?.highlightNodeIds
+  );
 
   const highlightRanges = useMemo(
     () =>

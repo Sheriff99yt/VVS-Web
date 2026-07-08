@@ -145,6 +145,23 @@ References view (mounted only when active):
 
 Orphan: `components/layout/ReferenceViewer.tsx` — superseded by `ReferencesView`; do not re-add to left panel.
 
+### Editor selection coordination (tree → canvas → code preview)
+
+Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirror highlights:
+
+| Layer | File | Role |
+|-------|------|------|
+| Focus API | `hooks/useEditorFocus.ts` | Tree/canvas entry: opens tabs + `navigate(canvasFocusFrame(...))` with explicit `selection` |
+| Pure helpers | `lib/editorFocus.ts` | `resolveClassHomeGraphTarget`, `canvasFocusFrame`, `resolveVariableFocusFrame` |
+| Selection invariants | `lib/projectSelection.ts` | `isTreeSymbolSelection`, `clearCanvasSelectionKeepTreeSymbol` |
+| Code preview link | `lib/symbolCodegenLink.ts` | Maps `selection` → `tabId` + `highlightNodeIds` via `collectSymbolUsages` |
+| Canvas sync | `hooks/useSyncProjectSelection.ts` | Mirrors React Flow selection; preserves tree symbols on deselect/tab change |
+| History | `contexts/EditorNavigationContext.tsx` | Versioned frames in `history.state`; `ensureGraphTabOpen` opens container + function tabs |
+
+**Flow:** ProjectTree / compiler log / graph_ref double-click → `useEditorFocus` → `EditorNavigationContext.navigate` → `ProjectContext.selection` + `activeGraphTab` → `CodePreviewPanel` resolves `symbolCodegenLink` (preview tab may differ from active canvas tab on project map) → `sourceMap` highlight ranges.
+
+**Invariants:** Tree symbol selection is never cleared by tab switches or React Flow deselect (`GraphCanvas` + `useSyncProjectSelection`). Tab bar / breadcrumb navigation sets `selection: { type: 'graph', ... }` intentionally. Browser back/forward restores all selection types including `event` / `function` / `class`.
+
 ---
 
 ### TopNav actions (Canvas only)
@@ -201,13 +218,15 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Example templates (Hello World, Calculator) | Done — `simpleExample.ts`, `complexExample.ts`, integrity tests |
 | Example template integrity tests | Done — `complexExample.test.ts` (analyze + wiring + 4-language codegen) |
 | Call Function nodes (`vvs.project.call_function` + `graphBinding`) | Done |
+| Dispatch event nodes (`event_dispatch` + `graphBinding.kind: dispatch_event`) | Done — per-event spawn in context menu / tree drag; canvas-first **New event here…** on class graph |
+| Program entry (`events[]` `role: 'entry'`) | Done — `event_member_define` + `event_define` on class graph; `on_start` only from canvas; legacy `event_on_start` deprecated; new class/project bootstraps entry via `createClassHomeBootstrap` |
 | Function symbols + overloads (`FunctionSymbol`, snapshot v3) | Done — tree, inspector, pin sync; symbols carry optional `classId` |
 | Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Graphs** section in ProjectTree (double-click graph opens graph canvas; double-click class opens codegen canvas), class-scoped symbol lists, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. Canvas define nodes + ordered transpiler emit. Go/MCP: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
 | Pin type validation on connect | Done |
 | Wire / cross-graph cycle prevention | Done — `graphCycles.ts`, `graphRelations.ts` |
 | Linear flow chains (break on middle rewire) | Done — `graphWiring.ts` + editor warning |
 | Extract selection to function | Done — `extractToFunction.ts`, Ctrl+Shift+E |
-| Variable/function/event lists in explorer | Done — **ProjectTree** (overload rows, subscriber counts) |
+| Variable/function/event lists in explorer | Done — **ProjectTree**: Functions → **Events** → Variables; event rows show dispatch + subscriber counts; drag event to spawn dispatch node |
 | Generated export folder (left panel) | Done — `Generated` section lists per-graph output files |
 | Reference viewer (top-level view) | Done — `ReferencesView`, UE5 focus graph + tree |
 | Project breadcrumb | Done — `GraphBreadcrumb` above tab bar |
@@ -215,6 +234,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Undo/redo | Done |
 | Comment nodes + grouping | Done — color, ungroup, inspector label |
 | Drag variable → spawn Get/Set | Done |
+| Drag event → spawn Dispatch | Done — tree → canvas drop |
 | Reroute pins | Done — `vvs_reroute_node` |
 | Copy/paste / Cut / Duplicate | Done — in-app + system clipboard (`graphClipboard.ts`) |
 | Simulation stepping | Done — mock highlight, pause, single-step |
@@ -223,6 +243,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
 | Code preview | Done — CodeMirror 6; canvas node and project-tree symbol selection highlight generated code via `sourceMap` (`symbolCodegenLink`); portability warning badge |
+| Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
 | Connect AI / health chrome | Done — `useApiHealth`, `VvsApi.probeMcp` (HTTP `/mcp` + health fallback), Phase 1 local MCP copy |
@@ -297,6 +318,22 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 
 **Not started:** Go MCP tools for syntax pack maintenance (`list_syntax_packs`, `propose_syntax_delta`, etc.) — names documented in `packages/syntax-packs/README.md`.
 
+### Codegen fidelity (strict)
+
+**Product promise:** The canvas is the source of truth for generated code — [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Canvas is the source of truth.
+
+| Rule | Implementation |
+|------|----------------|
+| **Emit path** | `appendIrMembers` / `ir.members` from define chain only — **no** sidebar preamble (`appendLegacyPreamble` removed) |
+| **Symbol tables** | `variables[]`, `functions[]`, `events[]` are indexes; panel creates **dual-write** define nodes via `defineNodeSync` / `useSymbolLifecycle` |
+| **Define nodes** | `class_define`, `var_define`, `function_define`, `event_member_define` on `classHomeGraphId` exec chain |
+| **Program entry** | `events[]` with `role: 'entry'` — same `event_member_define` + `event_define` pattern as custom events; codegen `on_start` **only** when user wired entry on canvas; legacy `event_on_start` → `LIFECYCLE_NODE_DEPRECATED`; **no** transpiler-injected empty `on_start()` |
+| **Compile gate** | `analyzeProject` errors block Generate in TopNav when `!analysis.ok` |
+| **Strict diagnostics** | `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED` |
+| **sourceMap** | Every emitted declaration and statement maps to a canvas `nodeId` for code-panel highlight |
+
+Calculator and Hello World examples pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
+
 ---
 
 | System | Planned location | Status |
@@ -305,10 +342,10 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Full IR pipeline (lower/emit split) | **Done** — structured IR v2 + `print/` + `emit/`; see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
 | Label-free legacy migration | apps/web + graph-types load | **Partial** — `kindId` backfill on load; binding-first `normalizeNodeData` |
 | Ambiguous overload resolver UI | Call node details | **Done** — overload dropdown in floating details |
-| Syntax pack MCP tools | `server/` Go | **Partial** — `GET /registry/syntax-packs` + catalog; full MCP wire + propose/run_rosetta TBD |
-| Tree-sitter parse validation | CI | **Deferred** — optional validator, not syntax author |
+| Syntax pack MCP tools | `server/` Go | **Done (local)** — `list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse` via thin MCP wrappers over services |
+| Tree-sitter parse validation | CI | **Done (Python/JS)** — validator-only check on Rosetta outputs; unsupported local runtimes skip gracefully |
 | `language-profiles/profiles/*.json` | packages | Profiles in TypeScript today; JSON packs optional |
-| Supabase auth / persistence | Go + **self-hosted Supabase** (`pgx`) | **Near complete (Phase 2)** — PostgresStore, JWT middleware, GoTrue docker stack, cloud save/load when authenticated, MCP session auth; full VPS/Caddy deploy + GitHub OAuth config optional — [deployment.md](deployment.md) |
+| Supabase auth / persistence | Go + **self-hosted Supabase** (`pgx`) | **Foundation shipped in repo (Phase 2a)** — PostgresStore, JWT middleware, GoTrue docker stack, cloud save/load when authenticated, MCP session auth; remaining Phase 2 tail = VPS/Caddy deploy, GitHub OAuth production config, backups, optional offline sync — [deployment.md](deployment.md) |
 | MCP server transport | `server/` Go | **Done (local)** — SSE at `/mcp`; production JWT + HTTPS deploy TBD |
 | HTTP project REST | `server/` Go | **Done** — `GET/PUT /api/projects`, `POST …/compile`; memory or Postgres via `DATABASE_URL` |
 | WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
@@ -320,7 +357,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 
 ## Backend (`server/`) — API, registry, local MCP
 
-**Phase 2 (near complete):** Self-hosted Postgres via **`pgx`** + JWT auth middleware + GoTrue docker stack — see [deployment.md](deployment.md) and [setup.md](setup.md#phase-2--supabase-auth-gotrue-optional).
+**Phase 2 foundation (shipped in repo):** Self-hosted Postgres via **`pgx`** + JWT auth middleware + GoTrue docker stack — see [deployment.md](deployment.md) and [setup.md](setup.md#phase-2--supabase-auth-gotrue-optional). Remaining active work is production deploy/ops.
 
 - `internal/core/domain/graph.go` — nodes, `GraphBinding`, `FunctionSymbol`
 - `internal/core/domain/snapshot.go` — `ProjectSnapshot` v3 mirror (`classes[]`, `activeClassId`, symbol `classId`)

@@ -37,17 +37,17 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
   {
     number: 2,
     id: 'phase-2',
-    title: 'Cloud + persistence',
+    title: 'Persistence, auth & MCP core',
     summary:
-      'Near complete in-repo — PostgresStore, GoTrue docker, cloud save/load, MCP JWT, AuthButton; VPS deploy + ops remain',
-    status: 'active',
+      'Core project persistence, JWT auth, and authenticated MCP flows are shipped in-repo',
+    status: 'shipped',
   },
   {
     number: 3,
     id: 'phase-3',
     title: 'Community library',
     summary: 'Upload, browse, pgvector semantic search',
-    status: 'planned',
+    status: 'active',
   },
   {
     number: 4,
@@ -74,6 +74,70 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
 
 /** Shipped editor and platform capabilities (aligned with docs/current_state.md). */
 export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
+  {
+    id: 'phase-2-foundation',
+    title: 'Phase 2 foundation — cloud in repo',
+    phase: 2,
+    emphasis: 'shipped',
+    items: [
+      {
+        id: 'phase2-arch-locked',
+        title: 'Deployment architecture (locked)',
+        description:
+          'Self-hosted Supabase (Postgres + GoTrue) on VPS; Go is the only product API via pgx — PostgREST not used for editor or MCP paths.',
+        status: 'done',
+      },
+      {
+        id: 'phase2-postgres-store',
+        title: 'ProjectStore + PostgresStore (pgx)',
+        description:
+          'ProjectStore interface with MemoryStore (default) and PostgresStore (DATABASE_URL); embedded migrations; docker-compose Postgres + GoTrue for local dev.',
+        status: 'done',
+      },
+      {
+        id: 'phase2-auth-middleware',
+        title: 'JWT auth middleware & dev user',
+        description:
+          'Go JWT verification (SUPABASE_JWT_SECRET); AUTH_REQUIRED flag; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
+        status: 'done',
+      },
+      {
+        id: 'phase2-bearer-client',
+        title: 'Bearer token in VvsApi client',
+        description:
+          'session.ts holds Supabase access token; authHeaders() attaches Authorization on project APIs; refreshes on AUTH_CHANGED_EVENT.',
+        status: 'done',
+      },
+      {
+        id: 'phase2-auth-button-ui',
+        title: 'Minimal Supabase login UI',
+        description:
+          'AuthButton in TopNav + StartScreen — email/password sign-in via Supabase client when NEXT_PUBLIC_SUPABASE_URL and ANON_KEY are set.',
+        status: 'done',
+      },
+      {
+        id: 'phase2-health-store-auth',
+        title: 'Health chrome (store / auth / user)',
+        description:
+          'GET /health returns store + auth mode + userId; StatusBar and useApiHealth surface honest connection details in HTTP mode.',
+        status: 'done',
+      },
+      {
+        id: 'phase2-editor-cloud-sync',
+        title: 'Editor cloud source of truth',
+        description:
+          'Authenticated sessions load/save via Go API first (cloudPersistence.ts); debounced cloud autosave; localStorage as offline cache.',
+        status: 'done',
+      },
+      {
+        id: 'phase2-mcp-prod',
+        title: 'Production MCP auth path',
+        description:
+          'MCP session auth propagation; Connect AI modal documents prod URL + Bearer token; probe sends auth when signed in.',
+        status: 'done',
+      },
+    ],
+  },
   {
     id: 'shell',
     title: 'App shell & navigation',
@@ -160,7 +224,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'selection-highlight-sync',
         title: 'Selection highlight sync',
         description:
-          'Comment, reroute, and tab switches keep canvas selection, floating details, and code preview highlights in sync. Project tree symbol selection (events, variables, functions) drives preview tab transpile and sourceMap highlight ranges.',
+          'Comment, reroute, and tab switches keep canvas selection, floating details, and code preview highlights in sync. Tree symbol selection drives preview transpile and sourceMap ranges; canvas node picks override tree focus for dispatch/call highlights.',
+        status: 'done',
+      },
+      {
+        id: 'editor-focus',
+        title: 'Editor focus coordinator',
+        description:
+          'useEditorFocus — single navigation API from Project tree to canvas tab + selection; browser back/forward restores event/function/class picks; no stale navigate() wiping symbol selection.',
         status: 'done',
       },
       {
@@ -185,7 +256,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'tree',
         title: 'Project explorer',
         description:
-          'Graph folders → classes as symbols; single-click opens a graph canvas; class row selects active class and opens its home graph; functions, variables, events, Environment API, generated exports.',
+          'Graph folders → classes; Functions → Events → Variables under active class; event rows with call child (drag for Call/Declare menu); Environment API and generated exports.',
         status: 'done',
       },
       {
@@ -267,7 +338,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-drag-spawn',
         title: 'Drag symbols to canvas',
         description:
-          'Variables: Get / Set / Declare. Functions: Call / Declare. Classes: Declare (class_define on the container graph define chain). Declare inserts define nodes on the class home graph only.',
+          'Variables: Get / Set / Declare. Functions: Call / Declare. Events: Call / Declare. Classes: Declare (class_define on the container graph define chain). Declare inserts define nodes on the class home graph only.',
         status: 'done',
       },
       {
@@ -306,7 +377,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'text-shaped',
         title: 'Text-shaped graphs',
         description:
-          'IR pipeline, hoisted imports, Wait/Await Wait, Subscribe/Emit multicast, macro removal — every node maps to visible export text.',
+          'Canvas is the codegen source of truth — IR pipeline, ordered define-chain emit, hoisted imports, Wait/Await Wait, Subscribe/Emit; every behavioral node maps to visible export text with sourceMap.',
+        status: 'done',
       },
       {
         id: 'environments',
@@ -316,9 +388,10 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'events',
-        title: 'Event dispatchers',
+        title: 'Custom & entry events',
         description:
-          'Project custom events plus manifest events; Define, Subscribe, Emit (legacy Dispatch); handler codegen.',
+          'events[] with role entry | custom; event_member_define + event_define handlers + dispatch nodes; tree + New event here…; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog.',
+        status: 'done',
       },
       {
         id: 'variables',
@@ -369,7 +442,9 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'analysis',
         title: 'Project analysis',
-        description: 'analyzeProject diagnostics, portability scan, compile gate before codegen.',
+        description:
+          'analyzeProject diagnostics (DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, ORPHAN_DEFINE_NODE, PROGRAM_ENTRY_MISSING, PROGRAM_ENTRY_NOT_ON_CANVAS, LIFECYCLE_NODE_DEPRECATED, UNRESOLVED_SYMBOL_REF); portability scan; compile gate blocks Generate on fidelity errors.',
+        status: 'done',
       },
     ],
   },
@@ -410,7 +485,21 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'ordered-emit',
         title: 'Ordered member emit',
         description:
-          'Transpiler walks define chain for declaration order; legacy sidebar preamble fallback when no define nodes; Calculator/Hello examples rewritten.',
+          'Transpiler walks define chain for declaration order via appendIrMembers / ir.members only; no sidebar preamble fallback.',
+        status: 'done',
+      },
+      {
+        id: 'canvas-source-of-truth',
+        title: 'Canvas source of truth',
+        description:
+          'Strict canvas-only codegen: symbol tables index only; DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, and ORPHAN_DEFINE_NODE block Generate; panel dual-write define nodes.',
+        status: 'done',
+      },
+      {
+        id: 'program-entry',
+        title: 'Explicit program entry',
+        description:
+          'User-defined program start: events[] role entry + event_member_define + event_define on class graph; on_start emitted only from canvas; legacy event_on_start deprecated (LIFECYCLE_NODE_DEPRECATED); no transpiler-injected empty on_start.',
         status: 'done',
       },
       {
@@ -571,52 +660,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'phase-2-deploy',
-    phase: 2,
-    emphasis: 'active',
-    title: 'Phase 2 — Self-hosted cloud (near complete)',
+    title: 'Deployment & operations',
     items: [
-      {
-        id: 'arch-locked',
-        title: 'Deployment architecture (locked)',
-        description:
-          'Self-hosted Supabase (Postgres + GoTrue) on VPS; Go is the only product API via pgx — PostgREST not used for editor/MCP paths. docs/deployment.md',
-        status: 'done',
-      },
-      {
-        id: 'postgres-store',
-        title: 'ProjectStore + PostgresStore (pgx)',
-        description:
-          'ProjectStore interface with MemoryStore (default) and PostgresStore (DATABASE_URL); embedded migrations; docker-compose Postgres + GoTrue for local dev.',
-        status: 'done',
-      },
-      {
-        id: 'auth-middleware',
-        title: 'JWT auth middleware & dev user',
-        description:
-          'Go JWT verification (SUPABASE_JWT_SECRET); AUTH_REQUIRED flag; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
-        status: 'done',
-      },
-      {
-        id: 'bearer-client',
-        title: 'Bearer token in VvsApi client',
-        description:
-          'session.ts holds Supabase access token; authHeaders() attaches Authorization on project APIs; refreshes on AUTH_CHANGED_EVENT.',
-        status: 'done',
-      },
-      {
-        id: 'auth-button-ui',
-        title: 'Minimal Supabase login UI',
-        description:
-          'AuthButton in TopNav + StartScreen — email/password sign-in via Supabase client when NEXT_PUBLIC_SUPABASE_URL and ANON_KEY are set.',
-        status: 'done',
-      },
-      {
-        id: 'health-store-auth',
-        title: 'Health chrome (store / auth / user)',
-        description:
-          'GET /health returns store + auth mode + userId; StatusBar and useApiHealth surface honest connection details in HTTP mode.',
-        status: 'done',
-      },
       {
         id: 'self-hosted-deploy',
         title: 'Full Supabase Docker on VPS',
@@ -630,20 +675,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'GoTrue GitHub provider wired in docker-compose; AuthButton shows GitHub when NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=true. Email/password is v1 default.',
         status: 'partial',
-      },
-      {
-        id: 'editor-cloud-sync',
-        title: 'Editor cloud source of truth',
-        description:
-          'Authenticated sessions load/save via Go API first (cloudPersistence.ts); debounced cloud autosave; localStorage as offline cache.',
-        status: 'done',
-      },
-      {
-        id: 'mcp-prod',
-        title: 'Production MCP (HTTPS + JWT)',
-        description:
-          'MCP session auth propagation; Connect AI modal documents prod URL + Bearer token; probe sends auth when signed in.',
-        status: 'done',
       },
       {
         id: 'ops-backups',
@@ -664,31 +695,17 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Syntax packs & agent maintenance',
     items: [
       {
-        id: 'rosetta-expand',
-        title: 'Expand Rosetta coverage',
-        description:
-          'Golden fixtures for subscribe/emit, await wait, env.call_native, imports, and control-flow loops — 15 constructs shipped across Python, JS, C++, Verse.',
-        status: 'done',
-      },
-      {
         id: 'syntax-pack-mcp',
         title: 'MCP syntax pack tools',
         description:
-          'list_syntax_packs + list_available_nodes shipped on local MCP; propose_syntax_delta, run_rosetta_suite, validate_generated_parse still Phase 2.',
-        status: 'partial',
+          'list_syntax_packs + list_available_nodes + propose_syntax_delta + run_rosetta_suite + validate_generated_parse available on local MCP.',
+        status: 'done',
       },
       {
         id: 'tree-sitter-ci',
         title: 'Tree-sitter parse validation',
         description:
-          'Optional CI parse check for Python/JS Rosetta output — validator-only; not syntax author.',
-        status: 'planned',
-      },
-      {
-        id: 'syntax-pack-ui',
-        title: 'Syntax pack lock in UI',
-        description:
-          'Project settings to pin syntaxPackLock per target family (schema exists in .vvs/project.json).',
+          'CI parse check for Python/JS Rosetta output — validator-only; not syntax author. Unsupported local runtimes report skipped instead of crashing.',
         status: 'done',
       },
     ],
@@ -698,42 +715,10 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Multi-class — next',
     items: [
       {
-        id: 'drag-class-between-folders',
-        title: 'Drag classes between graph folders',
-        description: 'Move ClassSymbol rows between graphContainers in the project tree.',
-        status: 'done',
-      },
-      {
-        id: 'class-declare-drag',
-        title: 'Class declare on drag',
-        description:
-          'Drag a class from the tree onto its home container graph to insert a class_define node on the define chain.',
-        status: 'done',
-      },
-      {
-        id: 'secondary-class-codegen',
-        title: 'Secondary class codegen on container graphs',
-        description:
-          'Full module emit for non-main classes on their home graph (e.g. ResultPanel on UI flow) — Calculator example split across graphs.',
-        status: 'partial',
-      },
-      {
         id: 'cross-class-refs',
         title: 'Cross-class references',
-        description: 'Explicit import/call across classes; cross-class event dispatch.',
-        status: 'planned',
-      },
-      {
-        id: 'event-declare-drag',
-        title: 'Event declare on drag',
-        description: 'Extend drag-to-canvas menu with Declare for project events (event_member_define).',
-        status: 'planned',
-      },
-      {
-        id: 'legacy-main-doc',
-        title: 'Retire documents.main in examples & I/O',
         description:
-          'Finish migrating simpleExample, project-folder save/load, and environment templates to container graph documents only.',
+          'import_class node + cross-class CallFunction lowering with CROSS_CLASS_CALL_WITHOUT_IMPORT analyzer warning; cross-class event dispatch still planned.',
         status: 'partial',
       },
     ],
@@ -742,12 +727,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     id: 'transpiler',
     title: 'Transpiler & languages',
     items: [
-      {
-        id: 'overload-picker',
-        title: 'Overload picker on call nodes',
-        description: 'Switch which overload a call node targets without re-dragging from the tree.',
-        status: 'done',
-      },
       {
         id: 'overload-codegen',
         title: 'Multi-overload codegen',
@@ -759,18 +738,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Function overrides (OOP)',
         description: 'Subclass methods overriding a parent symbol — distinct from overloads; parent link + validation.',
         status: 'planned',
-      },
-      {
-        id: 'virtual-async',
-        title: 'Virtual & async semantics',
-        description: 'Wire virtual/async flags through analysis and per-target codegen (today: flags + warnings only).',
-        status: 'partial',
-      },
-      {
-        id: 'legacy-migration',
-        title: 'Label-free graph migration',
-        description: 'Finish kindId-first paths; retire label-based adapters on old saves.',
-        status: 'partial',
       },
       {
         id: 'profiles-json',
@@ -790,13 +757,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     id: 'environment-standards',
     title: 'Environment templates & standards',
     items: [
-      {
-        id: 'env-openapi-asyncapi',
-        title: 'OpenAPI + AsyncAPI import',
-        description:
-          'CLI and editor UI import OpenAPI → methods and AsyncAPI → events; JSON Schema validation; x-vvs bindings.',
-        status: 'done',
-      },
       {
         id: 'env-typespec-emitter',
         title: 'TypeSpec → manifest emitter',
@@ -883,6 +843,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'community',
     phase: 3,
+    emphasis: 'active',
     title: 'Phase 3 — Community library',
     items: [
       {
@@ -973,3 +934,95 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
 ];
+
+export interface PhaseItemCounts {
+  done: number;
+  partial: number;
+  planned: number;
+  total: number;
+}
+
+export interface PhaseProgress {
+  phase: RoadmapPhase;
+  counts: PhaseItemCounts;
+  /** Weighted completion 0–100 (partial = 50%). */
+  percent: number;
+}
+
+export interface RoadmapProgressSummary {
+  phases: PhaseProgress[];
+  crossCutting: PhaseItemCounts;
+  /** Mean of phase percents (each phase weighted equally). */
+  overallPercent: number;
+}
+
+function countItemsByStatus(
+  items: RoadmapItem[],
+  defaultStatus: RoadmapItemStatus
+): PhaseItemCounts {
+  let done = 0;
+  let partial = 0;
+  let planned = 0;
+  for (const item of items) {
+    const status = item.status ?? defaultStatus;
+    if (status === 'done') done += 1;
+    else if (status === 'partial') partial += 1;
+    else planned += 1;
+  }
+  return { done, partial, planned, total: done + partial + planned };
+}
+
+function weightedPercent(counts: PhaseItemCounts): number {
+  if (counts.total === 0) return 0;
+  const weighted = counts.done + counts.partial * 0.5;
+  return Math.round((weighted / counts.total) * 100);
+}
+
+/** Item-level progress per public roadmap phase (aligned with Roadmap view tabs). */
+export function computeRoadmapProgress(): RoadmapProgressSummary {
+  const phase1Shipped = SHIPPED_FEATURE_SECTIONS.filter((section) => section.phase == null).flatMap(
+    (section) => section.items
+  );
+  const phase1Counts = countItemsByStatus(phase1Shipped, 'done');
+
+  const phases: PhaseProgress[] = ROADMAP_PHASES.map((phase) => {
+    if (phase.number === 1) {
+      return {
+        phase,
+        counts: phase1Counts,
+        percent: phase.status === 'shipped' ? 100 : weightedPercent(phase1Counts),
+      };
+    }
+
+    const shippedItems = SHIPPED_FEATURE_SECTIONS.filter((section) => section.phase === phase.number).flatMap(
+      (section) => section.items
+    );
+    const futureItems = FUTURE_FEATURE_SECTIONS.filter((section) => section.phase === phase.number).flatMap(
+      (section) => section.items
+    );
+    const shippedCounts = countItemsByStatus(shippedItems, 'done');
+    const futureCounts = countItemsByStatus(futureItems, 'planned');
+    const counts = {
+      done: shippedCounts.done + futureCounts.done,
+      partial: shippedCounts.partial + futureCounts.partial,
+      planned: shippedCounts.planned + futureCounts.planned,
+      total: shippedCounts.total + futureCounts.total,
+    };
+    return {
+      phase,
+      counts,
+      percent: weightedPercent(counts),
+    };
+  });
+
+  const crossCuttingItems = FUTURE_FEATURE_SECTIONS.filter((section) => section.phase == null).flatMap(
+    (section) => section.items
+  );
+  const crossCutting = countItemsByStatus(crossCuttingItems, 'planned');
+
+  const overallPercent = Math.round(
+    phases.reduce((sum, entry) => sum + entry.percent, 0) / phases.length
+  );
+
+  return { phases, crossCutting, overallPercent };
+}

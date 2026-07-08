@@ -5,10 +5,10 @@ Durable, agent-oriented context for VVS 2.0. This directory is **not** a substit
 ## Read order (start of session)
 
 1. [`../AGENTS.md`](../AGENTS.md) — architecture rules
-2. [`../../docs/visual_to_text_fidelity.md`](../../docs/visual_to_text_fidelity.md) — **text-shaped graphs** (locked direction)
+2. [`../../docs/visual_to_text_fidelity.md`](../../docs/visual_to_text_fidelity.md) — **text-shaped graphs** + **canvas is the source of truth** for codegen (locked direction; read before symbol/transpiler work)
 3. [`../../docs/current_state.md`](../../docs/current_state.md) — what exists today (source of truth for implementation)
 4. [`incomplete-ui.md`](incomplete-ui.md) — **open UI work** and depth-first section order
-5. [`decisions.md`](decisions.md) — locked choices
+5. [`decisions.md`](decisions.md) — locked choices (incl. canvas source of truth, no sidebar preamble)
 
 ## Files
 
@@ -43,5 +43,6 @@ Do not put personal preferences in team memory files.
 ## Related skills
 
 - `.agents/skills/vvs_agentic_memory/SKILL.md` — when to read/update this directory
+- `.agents/skills/vvs_visual_code_fidelity/SKILL.md` — canvas source of truth checklist before symbol/codegen work
 - `.agents/skills/vvs_ui_api_loop/SKILL.md` — contract-first UI→API slices
 - `docs/ui_api_delivery_loop.md` — full backlog and loop prompts

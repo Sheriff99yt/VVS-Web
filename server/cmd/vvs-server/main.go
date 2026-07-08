@@ -105,6 +105,7 @@ func main() {
 		log.Printf("warning: %v - compile/generate_code will fail until VVS_REPO_ROOT is set", err)
 	}
 	runner := services.NewCLITranspiler(repoRoot)
+	syntaxRunner := services.NewCLISyntaxPackRunner(repoRoot)
 
 	projectsHandler := httptransport.NewProjectsHandler(backend.Store)
 	compileHandler := httptransport.NewCompileHandler(backend.Store, runner)
@@ -113,8 +114,10 @@ func main() {
 	sessionHooks, sseContextFn := mcptransport.NewSessionAuthHooks(sessionAuth)
 	mcpServer := server.NewMCPServer("vvs-server", "1.0.0", server.WithHooks(sessionHooks))
 	mcptransport.RegisterTools(mcpServer, mcptransport.Deps{
-		Store:  backend.Store,
-		Runner: runner,
+		Store:        backend.Store,
+		Runner:       runner,
+		SyntaxRunner: syntaxRunner,
+		RepoRoot:     repoRoot,
 	})
 	sseServer := server.NewSSEServer(
 		mcpServer,

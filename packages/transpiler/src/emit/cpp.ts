@@ -1,5 +1,5 @@
 import { CodeSink } from '../codeSink';
-import type { IrEventHandler, IrModule, IrStatement } from '../ir/types';
+import type { IrEventHandler, IrModule } from '../ir/types';
 import {
   appendFunctionBody,
   appendHoistedImports,
@@ -7,18 +7,8 @@ import {
   formatFunctionDefHeader,
   printContextForIr,
 } from './helpers';
-import { appendIrMembers, appendLegacyPreamble, tagClassDeclLine } from './members';
-import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
-
-function appendCppStartHandler(sink: CodeSink, ir: IrModule, sourceGraphNodeId: string, body: IrStatement[]): void {
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw('\n    void on_start() {');
-  const ctx = printContextForIr(ir, bodyIndent('cpp'), ir.environmentManifest);
-  if (body.length === 0) sink.appendRaw('        // empty');
-  else appendIrStatements(sink, body, ctx);
-  sink.appendRaw('    }');
-  sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, 'void on_start()');
-}
+import { appendIrMembers, tagClassDeclLine } from './members';
+import { handlerBodyIndent } from '../lower/graphToIr';
 
 function appendCppEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHandler): void {
   const params = handler.paramNames.map((p) => `float ${p}`).join(', ');
@@ -39,20 +29,7 @@ export function emitCppModule(sink: CodeSink, ir: IrModule): void {
   sink.appendRaw(`class ${ir.moduleName}${base} {`);
   tagClassDeclLine(sink, ir, classLineStart);
   sink.appendRaw('public:');
-  if (ir.useLegacyPreamble) {
-    appendLegacyPreamble(sink, ir);
-  } else {
-    appendIrMembers(sink, ir);
-  }
-  const bodyCtx = printContextForIr(ir, bodyIndent('cpp'), ir.environmentManifest);
-  if (ir.startEvent?.isExplicitStartEvent) {
-    appendCppStartHandler(sink, ir, ir.startEvent.sourceGraphNodeId, ir.onStartBody);
-  } else {
-    sink.appendRaw('\n    void on_start() {');
-    if (ir.onStartBody.length === 0) sink.appendRaw('        // empty');
-    else appendIrStatements(sink, ir.onStartBody, bodyCtx);
-    sink.appendRaw('    }');
-  }
+  appendIrMembers(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendCppEventHandler(sink, ir, handler);
   }
@@ -61,7 +38,7 @@ export function emitCppModule(sink: CodeSink, ir: IrModule): void {
 
 export function emitCppFunctionTab(sink: CodeSink, ir: IrModule): void {
   const func = ir.activeFunction!;
-  sink.appendRaw(formatFunctionDefHeader(func, 'cpp'));
+  sink.appendRaw(formatFunctionDefHeader(func, 'cpp', false, Boolean(func.flags?.virtual)));
   appendFunctionBody(sink, ir, func.id, '        // empty', ir.environmentManifest);
   sink.appendRaw('    }');
 }

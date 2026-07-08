@@ -9,6 +9,14 @@ description: Triggers when editing syntax packs, print templates, Rosetta fixtur
 - **`docs/language_profiles.md`** — portability policy (profiles ≠ packs)
 - **`docs/visual_to_text_fidelity.md`** — one node → one locatable region; span registration required
 
+# Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- Print templates register spans for define-node emissions — `lintFidelity` in CI via `rosetta.test.ts`
+- Packs print what lowering places in `ir.members` — do not add hidden preamble templates for symbol tables
+- New define-node print rows must include `sourceGraphNodeId` span invariants
+
 # When to edit what
 
 | Change type | Edit | Do not edit |

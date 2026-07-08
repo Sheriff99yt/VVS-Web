@@ -1,10 +1,33 @@
 import {
   createEmptyProjectSnapshot,
   defaultTabMetadata,
+  MAIN_GRAPH_CONTAINER_ID,
+  PROJECT_MAP_CONTAINER_NAME,
   type ProjectSnapshot,
 } from '@vvs/graph-types';
 import { loadEnvironmentManifest } from './loader';
 import { resolveApiSurface } from './resolveApiSurface';
+
+function mergeStarterDocuments(
+  snapshot: ProjectSnapshot,
+  starterDocuments: NonNullable<NonNullable<ReturnType<typeof loadEnvironmentManifest>>['starter']>['documents']
+): void {
+  if (!starterDocuments) return;
+
+  const cloned = structuredClone(starterDocuments);
+  if (cloned.main) {
+    snapshot.documents[MAIN_GRAPH_CONTAINER_ID] = {
+      ...cloned.main,
+      metadata:
+        cloned.main.metadata ?? defaultTabMetadata('container', PROJECT_MAP_CONTAINER_NAME),
+    };
+    delete cloned.main;
+  }
+
+  for (const [tabId, doc] of Object.entries(cloned)) {
+    snapshot.documents[tabId] = doc;
+  }
+}
 
 export function createProjectFromEnvironment(environmentId: string): ProjectSnapshot | null {
   const manifest = loadEnvironmentManifest(environmentId);
@@ -23,11 +46,7 @@ export function createProjectFromEnvironment(environmentId: string): ProjectSnap
   };
   snapshot.targetLanguage = manifest.defaultTarget;
 
-  if (manifest.starter?.documents?.main) {
-    snapshot.documents.main = structuredClone(manifest.starter.documents.main);
-  } else if (manifest.starter?.documents) {
-    snapshot.documents = { ...snapshot.documents, ...structuredClone(manifest.starter.documents) };
-  }
+  mergeStarterDocuments(snapshot, manifest.starter?.documents);
 
   if (manifest.starter?.variables) {
     snapshot.variables = structuredClone(manifest.starter.variables);
@@ -39,7 +58,6 @@ export function createProjectFromEnvironment(environmentId: string): ProjectSnap
     snapshot.events = structuredClone(manifest.starter.events);
   }
 
-  snapshot.documents.main.metadata = defaultTabMetadata('main', 'Main graph');
   snapshot.installedLibrary = [
     {
       assetId: environmentId,

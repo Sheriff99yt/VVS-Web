@@ -1,4 +1,4 @@
-import type { PinDefinition, FunctionSymbol, GraphBinding, TargetLanguage } from '@vvs/graph-types';
+import type { PinDefinition, FunctionSymbol, GraphBinding, TargetLanguage, ProjectEventDefinition } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { expandEnvironmentSymbols as expandEnvSymbols } from '@vvs/environment-templates';
 import corePack from '../core-pack.json';
@@ -87,12 +87,15 @@ export function resolve(kindId: string, _version?: number): NodeKindDefinition |
 }
 
 export function listCoreKinds(): NodeKindDefinition[] {
-  return [...KIND_MAP.values()].filter((k) => !k.dynamic);
+  return [...KIND_MAP.values()].filter(
+    (k) => !k.dynamic && k.kindId !== 'event_on_start'
+  );
 }
 
 export interface ListRegistryOptions {
   currentGraphId: string;
   functions: FunctionSymbol[];
+  events?: ProjectEventDefinition[];
   filterPin?: PinDefinition;
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
@@ -139,6 +142,21 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
 
   if (callItems.length > 0) {
     categories.push({ name: 'Project · Calls', items: callItems });
+  }
+
+  const dispatchItems: SpawnNodeTemplate[] = (options.events ?? []).map((event) => ({
+    type: 'event_dispatch',
+    kindId: 'event_dispatch',
+    kindVersion: 1,
+    label: `Dispatch ${event.name}`,
+    category: 'Project',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    graphBinding: { kind: 'dispatch_event' as const, symbolId: event.id },
+  }));
+
+  if (dispatchItems.length > 0) {
+    categories.push({ name: 'Project · Events', items: dispatchItems });
   }
 
   return categories;
@@ -232,6 +250,9 @@ export function resolveNodeKindId(data: {
   }
   if (data.graphBinding?.kind === 'call_function' || data.linkKind === 'call_function') {
     return 'vvs.project.call_function';
+  }
+  if (data.graphBinding?.kind === 'dispatch_event') {
+    return 'event_dispatch';
   }
   if (data.graphBinding?.kind === 'import_module' || data.linkKind === 'import_module') {
     return 'vvs.project.import_module';

@@ -34,6 +34,9 @@ function resolveKindId(data: VVSNodeData): string {
   if (data.graphBinding?.kind === 'call_function' || data.linkKind === 'call_function') {
     return 'vvs.project.call_function';
   }
+  if (data.graphBinding?.kind === 'dispatch_event') {
+    return 'event_dispatch';
+  }
   if (data.graphBinding?.kind === 'use_macro' || data.linkKind === 'use_macro') {
     return 'vvs.project.call_function';
   }
@@ -135,9 +138,20 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
     return { kind: 'event', symbolId, displayName };
   }
 
-  if (kindId === 'event_define' || kindId === 'event_custom' || kindId === 'event_dispatch' || kindId === 'event_emit' || kindId === 'event_subscribe') {
+  if (
+    kindId === 'event_define' ||
+    kindId === 'event_custom' ||
+    kindId === 'event_dispatch' ||
+    kindId === 'event_emit' ||
+    kindId === 'event_subscribe' ||
+    data.graphBinding?.kind === 'dispatch_event'
+  ) {
     const eventId =
-      typeof data.properties?.eventId === 'string' ? data.properties.eventId : undefined;
+      data.graphBinding?.kind === 'dispatch_event'
+        ? data.graphBinding.symbolId
+        : typeof data.properties?.eventId === 'string'
+          ? data.properties.eventId
+          : undefined;
     if (eventId) {
       const displayName =
         typeof data.properties?.eventName === 'string' ? data.properties.eventName : undefined;

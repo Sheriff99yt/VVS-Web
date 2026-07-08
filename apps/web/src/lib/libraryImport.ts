@@ -3,10 +3,12 @@ import { GraphDocument } from '@/lib/graphDefaults';
 import { LibraryAsset } from '@/types/libraryAsset';
 import { LIBRARY_GRAPH_FIXTURES } from './libraryCatalog';
 import { createFunctionSymbol } from './functionTabs';
-import type { FunctionSymbol } from '@vvs/graph-types';
+import type { ClassSymbol, FunctionSymbol } from '@vvs/graph-types';
 import { loadEnvironmentManifest } from '@vvs/environment-templates';
 import { linkEnvironmentManifest } from './environmentCatalog';
 import type { TargetLanguage } from '@vvs/graph-types';
+import { activeClass } from '@/lib/classScope';
+import { insertDefineNodeForFunction } from '@/lib/defineNodeSync';
 
 export interface LibraryImportPayload {
   tab: GraphTab;
@@ -81,4 +83,17 @@ export function dispatchLibraryOpen(payload: LibraryOpenPayload): void {
     return;
   }
   dispatchLibraryImport(payload);
+}
+
+/** Dual-write function_define on the class home graph when importing a function tab. */
+export function dualWriteLibraryImportDefines(
+  documents: Record<string, GraphDocument>,
+  classes: ClassSymbol[],
+  activeClassId: string,
+  payload: LibraryImportPayload
+): Record<string, GraphDocument> {
+  if (!payload.functionEntry) return documents;
+  const cls = activeClass(classes, activeClassId);
+  if (!cls) return documents;
+  return insertDefineNodeForFunction(documents, cls, payload.functionEntry);
 }

@@ -79,5 +79,10 @@ describe('createProjectFromEnvironment', () => {
     expect(snapshot!.projectDetails.moduleName).toBe('App');
     expect(snapshot!.projectDetails.extendsType).toBe('object');
     expect(snapshot!.installedLibrary[0]?.environmentVersion).toBe('1.0.0');
+    expect(snapshot!.documents.main).toBeUndefined();
+    expect(snapshot!.documents['main-graph']).toBeDefined();
+    expect(
+      snapshot!.documents['main-graph']?.nodes.some((n) => n.data.kindId === 'class_define')
+    ).toBe(true);
   });
 });

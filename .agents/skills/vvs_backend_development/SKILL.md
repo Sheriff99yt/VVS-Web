@@ -26,6 +26,14 @@ description: Triggers when writing Go code, API handlers, or MCP tools in the se
 
 **Not started:** WebSocket collaboration, production VPS deploy, JWKS (HS256 via `SUPABASE_JWT_SECRET` today).
 
+# Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- MCP tools and graph_edit services must not mutate `variables[]` / `functions[]` / `events[]` without preserving or creating matching define nodes on graph documents
+- Compile endpoint uses same analyzer fidelity rules — errors block compile when strict codes present
+- Do not add server-side preamble emit from symbol arrays — browser transpiler follows `ir.members` only
+
 # Local dev defaults
 
 ```text

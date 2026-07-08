@@ -22,7 +22,8 @@ export function functionNeedsAsync(ir: IrModule, funcId: string): boolean {
 export function formatFunctionDefHeader(
   func: FunctionSymbol,
   targetLanguage: TargetLanguage,
-  isAsync = false
+  isAsync = false,
+  isVirtual = false
 ): string {
   const params = overloadParamNames(func);
   const binding = func.binding ?? 'instance';
@@ -39,7 +40,7 @@ export function formatFunctionDefHeader(
     return `${prefix}${asyncKw}${func.name}(${args}) {`;
   }
   if (targetLanguage === 'cpp') {
-    const prefix = binding === 'static' ? '    static ' : '    ';
+    const prefix = binding === 'static' ? '    static ' : isVirtual ? '    virtual ' : '    ';
     const args = params.join(', ');
     return `${prefix}void ${func.name}(${args}) {`;
   }

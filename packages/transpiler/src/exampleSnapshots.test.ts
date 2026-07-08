@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { analyzeProject } from '@vvs/graph-types';
+import { analyzeProject, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { generateMockTranspileResult } from './generate';
 import { createSimpleExampleSnapshot } from '../../../apps/web/src/lib/examples/simpleExample';
 import { createComplexExampleSnapshot } from '../../../apps/web/src/lib/examples/complexExample';
@@ -13,7 +13,8 @@ function transpileMain(
   snapshot: ReturnType<typeof createSimpleExampleSnapshot>,
   targetLanguage: TargetLanguage
 ) {
-  const main = snapshot.documents!.main;
+  const main = snapshot.documents![MAIN_GRAPH_CONTAINER_ID];
+  if (!main) throw new Error(`missing ${MAIN_GRAPH_CONTAINER_ID}`);
   const ctx: CodegenContext = {
     moduleName: snapshot.projectDetails.moduleName,
     extendsType: snapshot.projectDetails.extendsType,
@@ -23,7 +24,7 @@ function transpileMain(
     functions: snapshot.functions,
     nodes: main.nodes,
     edges: main.edges,
-    tabId: 'main',
+    tabId: MAIN_GRAPH_CONTAINER_ID,
     documents: snapshot.documents,
     classes: snapshot.classes,
     activeClassId: snapshot.activeClassId,

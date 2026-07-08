@@ -39,10 +39,22 @@ export function dispatchNodeInputs(parameters: EventParameter[]): PinDefinition[
   ];
 }
 
+export const EVENT_DRAG_MIME = 'application/vvs-event-dispatch';
+
+export interface EventDragPayload {
+  eventId: string;
+}
+
 export function resolveEventForNode(
   data: VVSNodeData,
   events: ProjectEventDefinition[]
 ): ProjectEventDefinition | undefined {
+  const bindingId =
+    data.graphBinding?.kind === 'dispatch_event' ? data.graphBinding.symbolId : undefined;
+  if (bindingId) {
+    return events.find((e) => e.id === bindingId);
+  }
+
   const eventId = data.properties?.eventId;
   if (typeof eventId === 'string') {
     return events.find((e) => e.id === eventId);
@@ -166,6 +178,7 @@ export function applyEventDispatchBinding(
     kindId: 'event_dispatch',
     category: 'Events',
     label: `Dispatch ${event.name}`,
+    graphBinding: { kind: 'dispatch_event', symbolId: event.id },
     properties: { ...(data.properties ?? {}), eventId: event.id, eventName: event.name },
     inputs,
     outputs: [{ id: 'exec_out', label: '', type: 'execution' }],

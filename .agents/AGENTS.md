@@ -20,6 +20,9 @@ When working on this project, strictly enforce the following architectural bound
 4. **Interface-First System Boundaries:**
    - The interface between the Graph and Code Generation must remain fully decoupled. Language definitions are data-driven (JSONB syntax registry), not hardcoded logic.
    - **Text-shaped graphs (locked):** Every behavioral node must map to a **visible, locatable** construct in generated code. See [`docs/visual_to_text_fidelity.md`](../docs/visual_to_text_fidelity.md).
+   - **Canvas source of truth (locked):** Never add transpiler paths that emit from symbol arrays (`variables[]`, `functions[]`, `events[]`) without matching define nodes on the class graph. Emit via `ir.members` / `appendIrMembers` only — **no** sidebar preamble (`appendLegacyPreamble`, `useLegacyPreamble`).
+   - **Dual-write on panel create:** Symbol CRUD in Project tree must create or update define nodes (`defineNodeSync`, `useSymbolLifecycle`, `add*WithDefine`) — symbol rows alone do not codegen.
+   - **Strict fidelity diagnostics:** `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, and `ORPHAN_DEFINE_NODE` must remain **errors** that block Generate when fidelity breaks.
    - **No implicit type coercion** — use explicit **Conversion** nodes on the graph; transpiler must not fold casts into Print/Set. See [`docs/node_system.md`](../docs/node_system.md) §2.2b.
    - **No Blueprint VM semantics** — no macro inline expansion, latent delays without matching AST nodes, or transforms that require a proprietary runtime to match the graph.
    - **Third-party integration** — generated output must import into arbitrary stacks (IDE, git, CI, MCP) without a VVS runtime.

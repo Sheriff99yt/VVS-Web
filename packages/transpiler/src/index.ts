@@ -1,3 +1,7 @@
-export type { CodegenContext } from './generate';
-export { generateMockTranspileResult, generateMockCode } from './generate';
+export type { CodegenContext, ProjectTranspileInput } from './generate';
+export {
+  generateMockTranspileResult,
+  generateMockCode,
+  generateProjectTranspileResult,
+} from './generate';
 export * from './pipeline';

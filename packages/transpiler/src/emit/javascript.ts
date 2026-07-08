@@ -1,5 +1,5 @@
 import { CodeSink } from '../codeSink';
-import type { IrEventHandler, IrModule, IrStatement } from '../ir/types';
+import type { IrEventHandler, IrModule } from '../ir/types';
 import {
   appendFunctionBody,
   appendHoistedImports,
@@ -9,18 +9,8 @@ import {
   functionNeedsAsync,
   printContextForIr,
 } from './helpers';
-import { appendIrMembers, appendLegacyPreamble, tagClassDeclLine } from './members';
-import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
-
-function appendJsStartHandler(sink: CodeSink, ir: IrModule, sourceGraphNodeId: string, body: IrStatement[]): void {
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw('\n  on_start() {');
-  const ctx = printContextForIr(ir, bodyIndent('javascript'), ir.environmentManifest);
-  if (body.length === 0) sink.appendRaw('    // empty');
-  else appendIrStatements(sink, body, ctx);
-  sink.appendRaw('  }');
-  sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, 'on_start() {');
-}
+import { appendIrMembers, tagClassDeclLine } from './members';
+import { handlerBodyIndent } from '../lower/graphToIr';
 
 function appendJsEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHandler): void {
   const params = handler.paramNames.join(', ');
@@ -42,20 +32,7 @@ export function emitJavascriptModule(sink: CodeSink, ir: IrModule): void {
   if (ir.needsEventHelper) {
     appendJavascriptEventHelper(sink);
   }
-  if (ir.useLegacyPreamble) {
-    appendLegacyPreamble(sink, ir);
-  } else {
-    appendIrMembers(sink, ir);
-  }
-  const bodyCtx = printContextForIr(ir, bodyIndent('javascript'), ir.environmentManifest);
-  if (ir.startEvent?.isExplicitStartEvent) {
-    appendJsStartHandler(sink, ir, ir.startEvent.sourceGraphNodeId, ir.onStartBody);
-  } else {
-    sink.appendRaw('\n  on_start() {');
-    if (ir.onStartBody.length === 0) sink.appendRaw('    // empty');
-    else appendIrStatements(sink, ir.onStartBody, bodyCtx);
-    sink.appendRaw('  }');
-  }
+  appendIrMembers(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendJsEventHandler(sink, ir, handler);
   }
@@ -64,7 +41,9 @@ export function emitJavascriptModule(sink: CodeSink, ir: IrModule): void {
 
 export function emitJavascriptFunctionTab(sink: CodeSink, ir: IrModule): void {
   const func = ir.activeFunction!;
-  sink.appendRaw(formatFunctionDefHeader(func, 'javascript', functionNeedsAsync(ir, func.id)));
+  sink.appendRaw(
+    formatFunctionDefHeader(func, 'javascript', functionNeedsAsync(ir, func.id), Boolean(func.flags?.virtual))
+  );
   appendFunctionBody(sink, ir, func.id, '    // empty', ir.environmentManifest);
   sink.appendRaw('  }');
 }

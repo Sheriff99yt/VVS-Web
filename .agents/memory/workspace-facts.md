@@ -32,6 +32,9 @@ Stable facts agents should assume without re-exploring the tree.
 | `environmentCatalog.ts` | Bootstrap built-in + imported environment manifests |
 | `examples/simpleExample.ts` | Hello World template |
 | `examples/complexExample.ts` | Calculator template |
+| `editorFocus.ts` | Tree/canvas focus frames; class home graph resolution |
+| `projectSelection.ts` | Tree symbol selection invariants |
+| `symbolCodegenLink.ts` | Selection → codegen tab + sourceMap node ids |
 | `exampleProjects.ts` | StartScreen `EXAMPLE_PROJECTS` cards |
 | `recentProjectsSubscribe.ts` | Deferred localStorage recents (`useSyncExternalStore`) |
 
@@ -52,6 +55,20 @@ Stable facts agents should assume without re-exploring the tree.
 - Auth env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — JWT in `sessionStorage` → Bearer on project APIs
 - Go env: `DATABASE_URL` (postgres), `AUTH_REQUIRED`, `SUPABASE_JWT_SECRET`
 - Persistence: Go **`pgx`** → self-hosted Postgres JSONB — **not** PostgREST
+
+## Codegen fidelity (strict)
+
+**Canvas is the source of truth** — see `docs/visual_to_text_fidelity.md` § Canvas is the source of truth.
+
+| Diagnostic | Level | Meaning |
+|------------|-------|---------|
+| `DEFINE_NODE_MISSING` | error | Symbol in table without matching define node on `classHomeGraphId` |
+| `DECLARATION_NOT_ON_CANVAS` | error | Symbols exist but class graph has no define chain |
+| `ORPHAN_DEFINE_NODE` | error | Define node on canvas with `symbolId` not in symbol table |
+
+- Transpiler emit: `appendIrMembers` / `ir.members` from define chain only — **no** `appendLegacyPreamble`
+- Panel dual-write: `defineNodeSync`, `useSymbolLifecycle`, `add*WithDefine` in `ProjectTree.tsx` / `GraphCanvas.tsx`
+- Compile gate: TopNav blocks Generate when `!analyzeProject(...).ok`
 
 ## Agent assets
 

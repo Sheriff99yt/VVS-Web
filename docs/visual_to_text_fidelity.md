@@ -15,6 +15,44 @@ This is a **major strategic choice**. It diverges from Unreal Engine Blueprint s
 
 ---
 
+## Canvas is the source of truth
+
+**The canvas is the source of truth for generated code.** Project panel symbol tables (`variables[]`, `functions[]`, `events[]`) are **indexes and CRUD shortcuts** — they never emit declarations on their own.
+
+| Concept | Role |
+|---------|------|
+| **Declare** | Define nodes on the class graph: `class_define`, `var_define`, `function_define`, `event_member_define` |
+| **Use** | Usage nodes where logic runs: Get/Set, Call Function, event dispatch, flow nodes |
+| **Panel row** | Metadata + navigation; dual-writes a define node when creating or renaming a symbol |
+| **Generated line** | Must map to a canvas node via `sourceGraphNodeId` / `sourceMap` |
+
+### Panel action → required canvas correlate
+
+| Panel / tree action | Required on canvas |
+|---------------------|-------------------|
+| + New variable | `var_define` on class home graph (exec chain) |
+| + New function | `function_define` on class home graph |
+| + New event | `event_member_define` on class home graph |
+| Declare from drop menu | Matching define node at drop position |
+| Get / Set / Call in flow | Usage nodes only — symbol must already have a define node |
+| Class formation | `class_define` on container graph |
+
+If you cannot select a node and highlight the corresponding line in the code panel, the system is wrong.
+
+### Rejected emit paths
+
+| Path | Status |
+|------|--------|
+| `appendLegacyPreamble` — emit from `ir.variables` / `ir.functions` without define nodes | **Removed** — strict mode only |
+| `useLegacyPreamble` fallback when class graph has no define chain | **Removed** |
+| Symbol table as codegen source of truth | **Rejected** — canvas define nodes required |
+
+Transpiler contract: walk `ir.members` from the define chain via `appendIrMembers` only. Analyzer blocks Generate on `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, and `ORPHAN_DEFINE_NODE`.
+
+**Agent / contributor gate:** Does this PR emit text without a canvas node? If yes — reject.
+
+---
+
 ## Core principles
 
 ### 1. Text code is the integration layer
@@ -56,8 +94,9 @@ This is a **major strategic choice**. It diverges from Unreal Engine Blueprint s
 |---------|--------|----------------------------|
 | **Function** | Sub-graph + Call | `def foo(...): ... return ...` + `foo(...)` |
 | **Event handler** | Define node | `def on_event(self, ...):` |
+| **Program entry** | `role: 'entry'` event + define chain | `def on_start(self):` — **only** when user declared entry on the class graph |
 | **Event signal** | Dispatch node | `self.on_event(...)` or explicit `emit(...)` (profile) |
-| **Lifecycle** | On Start / On Update | Entry methods the runtime calls — still visible methods |
+| **Lifecycle tick** | On Update node | `on_update` / tick handler — still a visible method when wired |
 
 Sync vs async rules follow **target language**, not a hidden VM:
 
@@ -83,7 +122,8 @@ Fidelity is what makes third-party integration possible. Hidden transforms make 
 Need reusable logic?
   └─ Returns a value or void?     → Function + Call
   └─ React to a named signal?     → Event Define + Dispatch (explicit line in code)
-  └─ Entry from runtime?          → Lifecycle node (On Start, On Update)
+  └─ Program start (host calls)?  → Entry event (`role: 'entry'`) + event_member_define + event_define on class graph
+  └─ Per-frame / tick hook?       → On Update lifecycle node (when target supports it)
   └─ Pause time?                  → Wait / Await Wait node (when shipped) — visible in text
   └─ Copy-paste visual pattern?   → Extract to Function — NOT macro expand
 ```
@@ -190,12 +230,19 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 - `sourceMap` selection highlight in code panel
 - IR pipeline — analyze → lower → emit in `packages/transpiler`
 
-**Legacy (backward compat only):**
+**Canvas-only declarations (strict, July 2026):**
+
+- Define nodes on class home graph are **required** for every symbol — analyzer errors block Generate
+- No sidebar preamble — `appendIrMembers` / `ir.members` only
+- Panel create paths **dual-write** define nodes (`defineNodeSync`)
+
+**Legacy (migration on load only — not emit fallback):**
 
 | Item | Status |
 |------|--------|
 | `event_dispatch` | Still lowers; migration rewrites to `event_emit` on normalize |
 | Macro tabs in old saves | Migrated to function tabs on load |
+| Sidebar preamble (`appendLegacyPreamble`) | **Removed** — strict canvas-only emit |
 
 ---
 
@@ -208,6 +255,7 @@ Before adding nodes, transpiler lowering, or UI copy:
 - [ ] Does this require a **VVS runtime** to behave as drawn? If yes — redesign.
 - [ ] Are we copying Blueprint **semantics** without Blueprint **honesty in text**? If yes — reject.
 - [ ] Is reuse implemented as **Call Function**, not invisible expand?
+- [ ] Does every emitted declaration or statement originate from a **canvas node** with `sourceMap` coverage? (No sidebar preamble.)
 
 ---
 

@@ -15,8 +15,8 @@ import {
   classDefineNode,
   convertToStringNode,
   boundCallFunction,
-  boundEventDefine,
   boundEventDispatch,
+  boundEventDefine,
   boundVariableGet,
   boundVariableSet,
   branchNode,
@@ -29,7 +29,6 @@ import {
   getUserInputNode,
   graphRefNode,
   mathAddNode,
-  onStartNode,
   printStringNode,
   varDefineNode,
 } from '@/lib/examples/exampleGraphBuild';
@@ -59,6 +58,13 @@ const EVT_CLEAR = {
   parameters: [] as { id: string; label: string; type: 'data_number' }[],
 };
 
+const EVT_START = {
+  id: 'evt-start',
+  name: 'start',
+  role: 'entry' as const,
+  parameters: [] as { id: string; label: string; type: 'data_number' }[],
+};
+
 const CALCULATOR_CONTAINER_ID = 'calc-calculator-graph';
 const CALCULATOR_CONTAINER = createGraphContainer('Calculator', { id: CALCULATOR_CONTAINER_ID });
 
@@ -76,6 +82,14 @@ const RESULT_PANEL_CLASS = createClassSymbol('ResultPanel', {
   containerId: UI_FLOW_CONTAINER_ID,
 });
 
+const EVT_PANEL_START = {
+  id: 'evt-panel-start',
+  name: 'start',
+  role: 'entry' as const,
+  parameters: [] as { id: string; label: string; type: 'data_number' }[],
+  classId: RESULT_PANEL_CLASS_ID,
+};
+
 const MAP_NODES: VVSNode[] = [
   graphRefNode('calc-ref-calculator', { x: 80, y: 80 }, {
     label: 'Calculator',
@@ -89,29 +103,34 @@ const MAP_NODES: VVSNode[] = [
 
 const RESULT_PANEL_NODES: VVSNode[] = [
   classDefineNode('calc-panel-class-define', { x: 40, y: -80 }, RESULT_PANEL_CLASS),
-  onStartNode('calc-panel-start', { x: 60, y: 80 }),
+  eventMemberDefineNode('calc-panel-start-member', { x: 200, y: -80 }, EVT_PANEL_START),
+  boundEventDefine('calc-panel-start-handler', { x: 60, y: 80 }, EVT_PANEL_START),
   printStringNode('calc-panel-print', { x: 320, y: 80 }, 'Result panel ready'),
 ];
 
 const RESULT_PANEL_EDGES: VVSEdge[] = [
-  execEdge('calc-panel-e-start-print', 'calc-panel-start', 'calc-panel-print'),
+  execEdge('calc-panel-e-class-member', 'calc-panel-class-define', 'calc-panel-start-member'),
+  execEdge('calc-panel-e-start-print', 'calc-panel-start-handler', 'calc-panel-print'),
 ];
 
 /** Canvas define chain — declarations in graph order (above runtime flow). */
 const DEFINE_CHAIN_NODES: VVSNode[] = [
   classDefineNode('calc-class-define', { x: 40, y: -120 }, MAIN_CLASS),
+  eventMemberDefineNode('calc-evt-start-member', { x: 140, y: -120 }, EVT_START),
   varDefineNode('calc-var-a-define', { x: 240, y: -120 }, VAR_A),
   varDefineNode('calc-var-b-define', { x: 440, y: -120 }, VAR_B),
   varDefineNode('calc-var-result-define', { x: 640, y: -120 }, VAR_RESULT),
   varDefineNode('calc-var-show-define', { x: 840, y: -120 }, VAR_SHOW),
   functionDefineNode('calc-fn-add-define', { x: 1040, y: -120 }, FN_ADD),
   functionDefineNode('calc-fn-clear-define', { x: 1240, y: -120 }, FN_CLEAR),
+  // Member declaration in class body — paired with event_define handler nodes below.
   eventMemberDefineNode('calc-evt-calc-member', { x: 1440, y: -120 }, EVT_CALCULATE),
   eventMemberDefineNode('calc-evt-clear-member', { x: 1640, y: -120 }, EVT_CLEAR),
 ];
 
 const DEFINE_CHAIN_EDGES: VVSEdge[] = [
-  execEdge('calc-def-e-class-a', 'calc-class-define', 'calc-var-a-define'),
+  execEdge('calc-def-e-class-start', 'calc-class-define', 'calc-evt-start-member'),
+  execEdge('calc-def-e-start-a', 'calc-evt-start-member', 'calc-var-a-define'),
   execEdge('calc-def-e-a-b', 'calc-var-a-define', 'calc-var-b-define'),
   execEdge('calc-def-e-b-result', 'calc-var-b-define', 'calc-var-result-define'),
   execEdge('calc-def-e-result-show', 'calc-var-result-define', 'calc-var-show-define'),
@@ -123,13 +142,18 @@ const DEFINE_CHAIN_EDGES: VVSEdge[] = [
 
 const MAIN_NODES: VVSNode[] = [
   ...DEFINE_CHAIN_NODES,
-  onStartNode('calc-start', { x: 40, y: 40 }),
+  // Program entry — same declare/handler pattern as calculate/clear (not lifecycle shortcut).
+  boundEventDefine('calc-start-handler', { x: 40, y: 40 }, EVT_START),
   getUserInputNode('calc-input-a', { x: 240, y: 40 }, { prompt: 'Enter A:', inputKind: 'number' }),
   boundVariableSet('calc-set-a', { x: 480, y: 40 }, VAR_A),
   getUserInputNode('calc-input-b', { x: 720, y: 40 }, { prompt: 'Enter B:', inputKind: 'number' }),
   boundVariableSet('calc-set-b', { x: 960, y: 40 }, VAR_B),
   boundVariableSet('calc-set-show', { x: 1200, y: 40 }, VAR_SHOW, true),
   boundEventDispatch('calc-dispatch', { x: 1440, y: 40 }, EVT_CALCULATE),
+  // Dual-node event pattern (calculate): event_member_define on the define chain
+  // (`calc-evt-calc-member`) owns the class-body declaration; event_define in flow
+  // (`calc-define`) is the handler entry for wiring the body. Both must stay — do
+  // not collapse into a single node or codegen/highlight fidelity breaks.
   boundEventDefine('calc-define', { x: 40, y: 280 }, EVT_CALCULATE),
   boundCallFunction('calc-call-add', { x: 320, y: 280 }, FN_ADD),
   boundVariableGet('calc-get-show', { x: 320, y: 420 }, VAR_SHOW),
@@ -147,7 +171,7 @@ const MAIN_NODES: VVSNode[] = [
 
 const MAIN_EDGES: VVSEdge[] = [
   ...DEFINE_CHAIN_EDGES,
-  execEdge('calc-e-start-input-a', 'calc-start', 'calc-input-a'),
+  execEdge('calc-e-start-input-a', 'calc-start-handler', 'calc-input-a'),
   execEdge('calc-e-input-a-set-a', 'calc-input-a', 'calc-set-a'),
   dataEdge('calc-e-input-a-val', 'calc-input-a', 'calc-set-a', 'value', 'val'),
   execEdge('calc-e-set-a-input-b', 'calc-set-a', 'calc-input-b'),
@@ -213,7 +237,7 @@ export function createComplexExampleSnapshot(): ProjectSnapshot {
     activeClassId: MAIN_CLASS_ID,
     graphContainers: normalizeGraphContainers([CALCULATOR_CONTAINER, UI_FLOW_CONTAINER]),
     variables: [VAR_A, VAR_B, VAR_RESULT, VAR_SHOW].map(stamp),
-    events: [EVT_CALCULATE, EVT_CLEAR].map(stamp),
+    events: [...[EVT_START, EVT_CALCULATE, EVT_CLEAR].map(stamp), EVT_PANEL_START],
     functions: [FN_ADD, FN_CLEAR].map(stamp),
     openTabs: [
       { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: PROJECT_MAP_CONTAINER_NAME },

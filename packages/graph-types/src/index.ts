@@ -14,3 +14,5 @@ export * from './integration';
 export * from './projectFolder';
 export * from './codegenTarget';
 export * from './defineNodes';
+export * from './classMembers';
+export * from './normalizeGraphNodeData';

@@ -133,6 +133,18 @@ export function classHomeGraphId(cls: ClassSymbol): string {
   return cls.containerId ?? MAIN_GRAPH_CONTAINER_ID;
 }
 
+/** Class whose home graph document id matches `graphId`. */
+export function classForHomeGraphId(
+  classes: ClassSymbol[],
+  graphId: string
+): ClassSymbol | undefined {
+  return classes.find((cls) => classHomeGraphId(cls) === graphId);
+}
+
+export function isClassHomeGraph(classes: ClassSymbol[], graphId: string): boolean {
+  return classForHomeGraphId(classes, graphId) != null;
+}
+
 export function createClassId(): string {
   return `class-${Date.now()}`;
 }
@@ -279,12 +291,50 @@ export function portabilityFeaturesForVariable(variable: VariableSymbol): Portab
   return features;
 }
 
+/** `entry` = program entry hook (emits `on_start`); `custom` or omitted = user event. */
+export type ProjectEventRole = 'entry' | 'custom';
+
 export interface ProjectEventDefinition {
   id: string;
   name: string;
   parameters: SymbolParameter[];
+  /** `entry` events declare the host-callable program entry (`on_start`). */
+  role?: ProjectEventRole;
   /** Planned: owning class — see ClassSymbol and docs/design/multi_class_symbols.md */
   classId?: string;
+}
+
+/** Handler stem for generated `on_{name}` methods — entry always maps to `start`. */
+export function eventCodegenHandlerName(event: Pick<ProjectEventDefinition, 'name' | 'role'>): string {
+  if (event.role === 'entry') return 'start';
+  const stem = event.name
+    .trim()
+    .replace(/^on\s+/i, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  return stem || 'event';
+}
+
+export function createProgramEntryEvent(options?: {
+  id?: string;
+  classId?: string;
+}): ProjectEventDefinition {
+  return {
+    id: options?.id ?? 'evt-start',
+    name: 'start',
+    role: 'entry',
+    parameters: [],
+    classId: options?.classId,
+  };
+}
+
+export function findProgramEntryEvent(
+  events: ProjectEventDefinition[],
+  classId?: string
+): ProjectEventDefinition | undefined {
+  return events.find(
+    (e) => e.role === 'entry' && (!classId || !e.classId || e.classId === classId)
+  );
 }
 
 export interface GraphTab {

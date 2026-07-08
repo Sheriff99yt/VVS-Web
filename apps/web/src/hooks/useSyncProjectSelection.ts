@@ -1,6 +1,7 @@
 import { useCallback, startTransition } from 'react';
 import { useOnSelectionChange, type OnSelectionChangeParams } from '@xyflow/react';
 import type { SelectionState } from '@/contexts/ProjectContext';
+import { selectionFromCanvasNodes } from '@/lib/projectSelection';
 
 interface UseSyncProjectSelectionOptions {
   isCanvasActive: boolean;
@@ -33,18 +34,7 @@ export function useSyncProjectSelection({
         const ids = selectedNodes.map((node) => node.id);
 
         setSelectedNodeIds((prev) => (nodeIdsEqual(prev, ids) ? prev : ids));
-
-        if (selectedNodes.length > 0) {
-          const id = selectedNodes[0]!.id;
-          setSelection((prev) =>
-            prev.type === 'node' && prev.id === id ? prev : { type: 'node', id }
-          );
-          return;
-        }
-
-        setSelection((prev) =>
-          prev.type === 'graph' && prev.id === null ? prev : { type: 'graph', id: null }
-        );
+        setSelection((prev) => selectionFromCanvasNodes(prev, ids));
       });
     },
     [isCanvasActive, setSelection, setSelectedNodeIds]

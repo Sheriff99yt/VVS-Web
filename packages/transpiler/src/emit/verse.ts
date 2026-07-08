@@ -1,5 +1,5 @@
 import { CodeSink } from '../codeSink';
-import type { IrEventHandler, IrModule, IrStatement } from '../ir/types';
+import type { IrEventHandler, IrModule } from '../ir/types';
 import {
   appendFunctionBody,
   appendHoistedImports,
@@ -7,17 +7,8 @@ import {
   formatFunctionDefHeader,
   printContextForIr,
 } from './helpers';
-import { appendIrMembers, appendLegacyPreamble, tagClassDeclLine } from './members';
-import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
-
-function appendVerseStartHandler(sink: CodeSink, ir: IrModule, sourceGraphNodeId: string, body: IrStatement[]): void {
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw('\n    on_start<override>() : void =');
-  const ctx = printContextForIr(ir, bodyIndent('verse'), ir.environmentManifest);
-  if (body.length === 0) sink.appendRaw('        # empty');
-  else appendIrStatements(sink, body, ctx);
-  sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, 'on_start()');
-}
+import { appendIrMembers, tagClassDeclLine } from './members';
+import { handlerBodyIndent } from '../lower/graphToIr';
 
 function appendVerseEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHandler): void {
   const params = handler.paramNames.map((p) => `${p} : float`).join(', ');
@@ -38,19 +29,7 @@ export function emitVerseModule(sink: CodeSink, ir: IrModule): void {
   const classLineStart = sink.lineCount + 1;
   sink.appendRaw(`${ir.moduleName} := class${base}:`);
   tagClassDeclLine(sink, ir, classLineStart);
-  if (ir.useLegacyPreamble) {
-    appendLegacyPreamble(sink, ir);
-  } else {
-    appendIrMembers(sink, ir);
-  }
-  const bodyCtx = printContextForIr(ir, bodyIndent('verse'), ir.environmentManifest);
-  if (ir.startEvent?.isExplicitStartEvent) {
-    appendVerseStartHandler(sink, ir, ir.startEvent.sourceGraphNodeId, ir.onStartBody);
-  } else {
-    sink.appendRaw('\n    on_start<override>() : void =');
-    if (ir.onStartBody.length === 0) sink.appendRaw('        # empty');
-    else appendIrStatements(sink, ir.onStartBody, bodyCtx);
-  }
+  appendIrMembers(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendVerseEventHandler(sink, ir, handler);
   }
@@ -58,6 +37,6 @@ export function emitVerseModule(sink: CodeSink, ir: IrModule): void {
 
 export function emitVerseFunctionTab(sink: CodeSink, ir: IrModule): void {
   const func = ir.activeFunction!;
-  sink.appendRaw(formatFunctionDefHeader(func, 'verse'));
+  sink.appendRaw(formatFunctionDefHeader(func, 'verse', false, Boolean(func.flags?.virtual)));
   appendFunctionBody(sink, ir, func.id, '        # empty', ir.environmentManifest);
 }

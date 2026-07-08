@@ -11,6 +11,31 @@ defaults:
     working-directory: apps/web
 
 jobs:
+  syntax-packs:
+    name: Syntax packs & parse validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Parse validation test
+        working-directory: packages/syntax-packs
+        run: bun test src/parseValidation.test.ts
+
+      - name: Tree-sitter parse validation
+        working-directory: packages/syntax-packs
+        run: bun run validate:parse
+
   web:
     name: Web build & lint
     runs-on: ubuntu-latest

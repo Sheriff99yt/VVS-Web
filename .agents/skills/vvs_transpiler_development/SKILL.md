@@ -20,6 +20,15 @@ description: Triggers when modifying or building the TypeScript code generation 
 - **Events:** Define → method body; Dispatch → explicit call/emit line
 - Generated code must run in **standard toolchains** without a VVS runtime
 
+# Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- Emit via **`appendIrMembers` / `ir.members` only** — walk the define chain; **no** `appendLegacyPreamble` or `useLegacyPreamble`
+- Every `IrStatement` / member decl needs **`sourceGraphNodeId`** — no emit from `ir.variables` / `ir.functions` without define nodes
+- Lowering produces members from `class_define`, `var_define`, `function_define`, `event_member_define` on the class home graph
+- **Checklist:** Does this PR emit text without a canvas node?
+
 # Canonical spec
 
 - **`docs/visual_to_text_fidelity.md`** — locked product direction, rejected Blueprint path

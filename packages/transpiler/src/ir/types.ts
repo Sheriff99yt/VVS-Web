@@ -23,6 +23,7 @@ export type IrStmtKind =
   | 'EventHandler'
   | 'DispatchEvent'
   | 'ModuleImport'
+  | 'ImportClass'
   | 'AwaitWait'
   | 'SubscribeEvent'
   | 'EmitEvent'
@@ -103,6 +104,9 @@ export interface IrCallFunction extends IrBase {
   calleeName: string;
   /** When true, emit as instance method call (self/this receiver). */
   instanceCall: boolean;
+  /** Owning class module name when calling across class boundaries. */
+  targetClassName?: string;
+  crossClass?: boolean;
 }
 
 export interface IrPrint extends IrBase {
@@ -189,6 +193,13 @@ export interface IrModuleImport extends IrBase {
   moduleSlug: string;
 }
 
+export interface IrImportClass extends IrBase {
+  kind: 'ImportClass';
+  className: string;
+  moduleName: string;
+  alias?: string;
+}
+
 export interface IrCallNative extends IrBase {
   kind: 'CallNative';
   manifestMethodId: string;
@@ -211,6 +222,7 @@ export type IrStructuredStatement =
   | IrPrint
   | IrDispatchEvent
   | IrModuleImport
+  | IrImportClass
   | IrAwaitWait
   | IrSubscribeEvent
   | IrEmitEvent
@@ -298,10 +310,7 @@ export interface IrModule {
   execOrder: string[];
   handlerNodeLabels: string[];
   environmentManifest?: import('@vvs/environment-templates').ProjectEnvironmentManifest;
-  /** Ordered canvas define nodes; empty when useLegacyPreamble is true. */
+  /** Ordered canvas define nodes; empty when the class graph has no define chain. */
   members: IrMemberDecl[];
-  /** Sidebar preamble fallback when the class graph has no define nodes. */
-  useLegacyPreamble: boolean;
-  compileWarnings?: string[];
   activeClass?: ClassSymbol;
 }

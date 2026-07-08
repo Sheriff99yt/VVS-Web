@@ -3,14 +3,23 @@
 import { useCallback } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
+import type { GraphDocument } from '@/lib/graphDefaults';
 import {
   createClassSymbol,
   MAIN_CLASS_ID,
   MAIN_GRAPH_CONTAINER_ID,
+  createClassHomeBootstrap,
+  createProgramEntryEvent,
+  classHomeGraphId,
   type ClassSymbol,
 } from '@vvs/graph-types';
 import { classGraphTabId, symbolsForClass } from '@/lib/classScope';
 import { openGraphContainerTab } from '@/lib/graphTabs';
+import {
+  insertClassDefineNode,
+  insertDefineNodeForEvent,
+  insertProgramEntryHandlerNode,
+} from '@/lib/defineNodeSync';
 
 export function useClassLifecycle() {
   const {
@@ -39,9 +48,25 @@ export function useClassLifecycle() {
     (name: string, containerId: string = MAIN_GRAPH_CONTAINER_ID) => {
       const trimmed = name.trim() || 'NewClass';
       const cls = createClassSymbol(trimmed, { containerId });
-      const homeGraphId = classGraphTabId(cls);
+      const homeGraphId = classHomeGraphId(cls);
+      const entry = createProgramEntryEvent({ id: `evt-start-${cls.id}`, classId: cls.id });
 
       setClasses((list) => [...list, cls]);
+      setEvents((list) => [...list, entry]);
+      patchAllDocuments((docs) => {
+        const existing = docs[homeGraphId];
+        const empty =
+          !existing || (existing.nodes.length === 0 && existing.edges.length === 0);
+        if (empty) {
+          const { document } = createClassHomeBootstrap(cls, entry);
+          return { ...docs, [homeGraphId]: document as unknown as GraphDocument };
+        }
+        let next = { ...docs };
+        next = insertClassDefineNode(next, cls);
+        next = insertDefineNodeForEvent(next, cls, entry);
+        next = insertProgramEntryHandlerNode(next, cls, entry);
+        return next;
+      });
       const container = graphContainers.find((c) => c.id === containerId);
       if (container) {
         openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
@@ -54,9 +79,11 @@ export function useClassLifecycle() {
     },
     [
       graphContainers,
+      patchAllDocuments,
       setActiveClassId,
       setActiveGraphTab,
       setClasses,
+      setEvents,
       setOpenTabs,
       setSelection,
     ]

@@ -10,6 +10,7 @@ import type {
 } from '@/types/graph';
 import {
   findMemberChainTail,
+  findProgramEntryEvent,
   isMemberDefineKind,
   MEMBER_DEFINE_KINDS,
 } from '@vvs/graph-types';
@@ -19,7 +20,7 @@ import { classHomeGraphId } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { resolveOverloadForCall } from '@/lib/functionHelpers';
-import { eventDisplayName } from '@/lib/eventHelpers';
+import { eventDisplayName, applyEventDefineBinding } from '@/lib/eventHelpers';
 
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
 const EXEC_OUT = { id: 'exec_out', label: '', type: 'execution' as const };
@@ -38,7 +39,20 @@ function createEdge(source: string, target: string): VVSEdge {
   };
 }
 
-function findOnStartNode(doc: GraphDocument): VVSNode | undefined {
+function findEntryHandlerNode(
+  doc: GraphDocument,
+  events: ProjectEventDefinition[]
+): VVSNode | undefined {
+  const entry = findProgramEntryEvent(events);
+  if (entry) {
+    const handler = doc.nodes.find(
+      (n) =>
+        n.type === 'vvs_standard_node' &&
+        (n.data.kindId === 'event_define' || n.data.kindId === 'event_custom') &&
+        n.data.properties?.eventId === entry.id
+    );
+    if (handler) return handler;
+  }
   return doc.nodes.find(
     (n) =>
       n.type === 'vvs_standard_node' &&
@@ -151,11 +165,11 @@ function insertNodeOnMemberChain(
     return { ...doc, nodes, edges };
   }
 
-  const onStart = findOnStartNode(doc);
-  if (onStart) {
+  const entryHandler = findEntryHandlerNode(doc, []);
+  if (entryHandler) {
     const intoStart = edges.filter(
       (e) =>
-        e.target === onStart.id &&
+        e.target === entryHandler.id &&
         e.data?.pinType === 'execution' &&
         (e.targetHandle === 'exec_in' || e.targetHandle == null)
     );
@@ -163,7 +177,7 @@ function insertNodeOnMemberChain(
     for (const inEdge of intoStart) {
       edges.push(createEdge(inEdge.source, node.id));
     }
-    edges.push(createEdge(node.id, onStart.id));
+    edges.push(createEdge(node.id, entryHandler.id));
     return { ...doc, nodes, edges };
   }
 
@@ -211,6 +225,21 @@ export function hasDefineNodeForFunction(
   return (
     doc?.nodes.some(
       (n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === functionId
+    ) ?? false
+  );
+}
+
+export function hasDefineNodeForEvent(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol,
+  eventId: string
+): boolean {
+  const tabId = classHomeGraphId(cls);
+  const doc = documents[tabId];
+  return (
+    doc?.nodes.some(
+      (n) =>
+        n.data.kindId === 'event_member_define' && n.data.properties?.symbolId === eventId
     ) ?? false
   );
 }
@@ -288,6 +317,49 @@ export function insertDefineNodeForEvent(
   return {
     ...documents,
     [tabId]: spawnDefineNode(doc, buildEventDefineData(event), defineCount * 72),
+  };
+}
+
+export function insertProgramEntryHandlerNode(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol,
+  event: ProjectEventDefinition
+): Record<string, GraphDocument> {
+  const tabId = classHomeGraphId(cls);
+  const doc = documents[tabId] ?? { nodes: [], edges: [] };
+  const exists = doc.nodes.some(
+    (n) =>
+      (n.data.kindId === 'event_define' || n.data.kindId === 'event_custom') &&
+      n.data.properties?.eventId === event.id
+  );
+  if (exists) return documents;
+
+  const handlerData = applyEventDefineBinding(
+    {
+      label: eventDisplayName(event.name),
+      category: 'Events',
+      kindId: 'event_define',
+      inputs: [],
+      outputs: [EXEC_OUT],
+      inlineValues: {},
+      properties: { eventId: event.id, eventName: event.name },
+    },
+    event
+  );
+
+  const node: VVSNode = {
+    id: `entry-handler-${event.id}`,
+    type: 'vvs_standard_node',
+    position: { x: 80, y: 160 },
+    data: {
+      ...handlerData,
+      resolvedPorts: { inputs: handlerData.inputs, outputs: handlerData.outputs },
+    },
+  };
+
+  return {
+    ...documents,
+    [tabId]: { ...doc, nodes: [...doc.nodes, node] },
   };
 }
 

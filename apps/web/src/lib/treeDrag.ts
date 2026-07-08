@@ -1,4 +1,5 @@
 import { CLASS_DRAG_MIME } from '@/lib/classHelpers';
+import { EVENT_DRAG_MIME } from '@/lib/eventHelpers';
 import { FUNCTION_OVERLOAD_DRAG_MIME } from '@/lib/functionHelpers';
 
 /** MIME types for project-tree drag sources. */
@@ -6,6 +7,7 @@ export const TREE_DRAG_MIME = {
   variable: 'application/vvs-variable',
   functionReorder: 'application/vvs-function',
   functionOverload: FUNCTION_OVERLOAD_DRAG_MIME,
+  eventDispatch: EVENT_DRAG_MIME,
   class: CLASS_DRAG_MIME,
   graphContainer: 'application/vvs-graph-container',
 } as const;

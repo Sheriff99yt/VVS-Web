@@ -35,11 +35,6 @@ import {
   commitFunctionSymbolUpdate,
 } from '@/lib/functionHelpers';
 import { PANEL_SCROLL_ATTR } from '@/components/graph/useBlockCanvasWheel';
-import {
-  openFunctionGraphTab,
-  openGraphContainerTab,
-  openMainGraph,
-} from '@/lib/graphTabs';
 import { defaultValueForVariableType, VariableType } from '@/lib/variableDefaults';
 import { mergeDemoVariables } from '@/lib/demoVariables';
 import {
@@ -48,14 +43,13 @@ import {
 } from '@/lib/variableCoaUi';
 import type { VariableBinding } from '@/types/graph';
 import { findGraphIdsUsingVariable } from '@/lib/graphRelations';
-import { dispatchSwitchEditorView } from '@/lib/editorNavigate';
-import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
+import { useEditorFocus } from '@/hooks/useEditorFocus';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import {
   listGeneratedExports,
   listEventDispatchers,
 } from '@/lib/projectTree';
-import { createEventId } from '@/lib/eventHelpers';
+import { createEventId, EVENT_DRAG_MIME, type EventDragPayload } from '@/lib/eventHelpers';
 import {
   dispatchSpawnEnvironmentNode,
   type EnvironmentSpawnAction,
@@ -91,8 +85,8 @@ type CategoryKey =
   | 'graphs'
   | 'environment'
   | 'functions'
+  | 'events'
   | 'variables'
-  | 'dispatchers'
   | 'generated';
 
 const INDENT = { root: 'pl-2', l1: 'pl-5', l2: 'pl-8' };
@@ -533,7 +527,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     environmentVersion,
   } = useProject();
 
-  const { navigate } = useEditorNavigation();
+  const editorFocus = useEditorFocus();
   const documents = useGraphDocuments();
   const { deleteSymbol, getUsageSummary, addVariableWithDefine, addFunctionWithDefine, addEventWithDefine } =
     useSymbolLifecycle();
@@ -567,8 +561,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     graphs: true,
     environment: true,
     functions: true,
+    events: false,
     variables: true,
-    dispatchers: false,
     generated: false,
   });
   const [expandedContainerIds, setExpandedContainerIds] = useState<Record<string, boolean>>({});
@@ -607,7 +601,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     [environmentManifest, targetLanguage]
   );
 
-  const dispatchers = useMemo(
+  const projectEvents = useMemo(
     () => listEventDispatchers(classEvents, documents, classes),
     [classEvents, documents, classes]
   );
@@ -618,9 +612,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         classFunctions,
         documents,
         projectDetails.moduleName,
-        targetLanguage
+        targetLanguage,
+        classes
       ),
-    [openTabs, classFunctions, documents, projectDetails.moduleName, targetLanguage]
+    [openTabs, classFunctions, documents, projectDetails.moduleName, targetLanguage, classes]
   );
 
   const q = filterQuery.trim().toLowerCase();
@@ -633,10 +628,20 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     () => classVariables.filter((v) => matchesFilter(v.name, q) || matchesFilter(v.type, q)),
     [classVariables, q]
   );
-  const filteredDispatchers = useMemo(
-    () => dispatchers.filter((d) => matchesFilter(d.label, q)),
-    [dispatchers, q]
+  const filteredEvents = useMemo(
+    () => projectEvents.filter((d) => matchesFilter(d.label, q)),
+    [projectEvents, q]
   );
+
+  useEffect(() => {
+    if (!q) return;
+    setExpanded((state) => ({
+      ...state,
+      ...(filteredFunctions.length > 0 && !state.functions ? { functions: true } : {}),
+      ...(filteredEvents.length > 0 && !state.events ? { events: true } : {}),
+      ...(filteredVariables.length > 0 && !state.variables ? { variables: true } : {}),
+    }));
+  }, [q, filteredFunctions.length, filteredEvents.length, filteredVariables.length]);
   const graphSectionCount = graphContainers.length;
 
   const containerMatches = useCallback(
@@ -656,57 +661,44 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const openGraph = useCallback(
     (graphId: string, type: 'main' | 'function' | 'class') => {
       if (type === 'main') {
-        openMainGraph(setActiveGraphTab);
-        setSelection({ type: 'graph', id: null });
+        editorFocus.focusMainGraph();
       } else if (type === 'class') {
-        setActiveGraphTab(graphId);
-        setSelection({ type: 'graph', id: null });
+        editorFocus.focusClassGraphTab(graphId);
       } else {
         const func = functions.find((f) => f.id === graphId);
-        if (func) openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
-        setSelection({ type: 'graph', id: graphId });
+        if (func) {
+          editorFocus.focusFunction(func, graphId);
+        } else {
+          editorFocus.focusFunctionGraphTab(graphId);
+        }
       }
-      focusReference(graphId, null);
-      dispatchSwitchEditorView('canvas');
     },
-    [focusReference, functions, setActiveGraphTab, setOpenTabs, setSelection]
+    [editorFocus, functions]
   );
 
   const openClassGraph = useCallback(
     (cls: ClassSymbol) => {
-      const tabId = classGraphTabId(cls);
-      setActiveClassId(cls.id);
-      const container = graphContainers.find((c) => c.id === classContainerId(cls));
-      if (container) {
-        openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
-      } else {
-        setActiveGraphTab(tabId);
-      }
-      setSelection({ type: 'class', id: cls.id });
-      focusReference(tabId, null);
-      navigate({
-        graphTab: tabId,
-        editorView: 'canvas',
-        selection: { type: 'class', id: cls.id },
-      });
+      editorFocus.focusClass(cls);
     },
-    [focusReference, graphContainers, navigate, setActiveClassId, setActiveGraphTab, setOpenTabs, setSelection]
+    [editorFocus]
+  );
+
+  const revealClassGraphInTree = useCallback(
+    (container: GraphContainer | undefined) => {
+      setExpanded((s) => ({ ...s, graphs: true }));
+      if (container) {
+        setExpandedContainerIds((prev) => ({ ...prev, [container.id]: true }));
+      }
+    },
+    []
   );
 
   const openGraphContainer = useCallback(
     (container: GraphContainer) => {
-      openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
-      setSelection({ type: 'graph', id: container.id });
-      focusReference(container.id, null);
-      navigate({
-        graphTab: container.id,
-        editorView: 'canvas',
-        selection: { type: 'graph', id: container.id },
-      });
-      setExpanded((s) => ({ ...s, graphs: true }));
-      setExpandedContainerIds((prev) => ({ ...prev, [container.id]: true }));
+      editorFocus.focusGraphContainer(container);
+      revealClassGraphInTree(container);
     },
-    [focusReference, navigate, setActiveGraphTab, setOpenTabs, setSelection]
+    [editorFocus, revealClassGraphInTree]
   );
 
   const openGraphById = useCallback(
@@ -859,22 +851,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const selectFunction = useCallback(
     (func: FunctionSymbol) => {
-      setSelection({ type: 'function', id: func.id });
-      openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
+      editorFocus.focusFunction(func);
       setExpanded((s) => ({ ...s, functions: true }));
     },
-    [setActiveGraphTab, setOpenTabs, setSelection]
+    [editorFocus]
   );
 
   const openFunctionOverloadGraph = useCallback(
     (func: FunctionSymbol, overloadId: string) => {
       const tabId =
         func.overloads.find((o) => o.id === overloadId)?.graphTabId ?? func.id;
-      openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
-      setActiveGraphTab(tabId);
-      dispatchSwitchEditorView('canvas');
+      editorFocus.focusFunction(func, tabId);
     },
-    [setActiveGraphTab, setOpenTabs]
+    [editorFocus]
   );
 
   const canReorderFunctions = !q;
@@ -885,13 +874,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       if (!func) return;
       const { func: next, graphTabId } = appendFunctionOverload(func);
       commitFunctionSymbolUpdate(next, setFunctions, setOpenTabs);
-      setSelection({ type: 'function', id: funcId });
-      openFunctionGraphTab(next, setOpenTabs, setActiveGraphTab);
-      setActiveGraphTab(graphTabId);
       setAddingOverloadForId(null);
-      dispatchSwitchEditorView('canvas');
+      editorFocus.focusFunction(next, graphTabId);
     },
-    [functions, setActiveGraphTab, setFunctions, setOpenTabs, setSelection]
+    [editorFocus, functions, setFunctions, setOpenTabs]
   );
 
   const handleFunctionDragStart = useCallback((e: React.DragEvent, funcId: string) => {
@@ -971,32 +957,48 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       const variable = variables.find((v) => v.id === varId);
       if (!variable) return;
 
-      setSelection({ type: 'variable', id: varId });
       const cls = classes.find((c) => c.id === symbolClassId(variable));
       if (!cls) return;
 
-      const tabId = classGraphTabId(cls);
-      setActiveClassId(cls.id);
-      const container = graphContainers.find((c) => c.id === classContainerId(cls));
-      if (container) {
-        openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
-      } else {
-        setActiveGraphTab(tabId);
-      }
-      focusReference(tabId, null);
-      dispatchSwitchEditorView('canvas');
+      const target = editorFocus.focusTreeSymbolOnClass(cls, { type: 'variable', id: varId });
+      revealClassGraphInTree(target.container);
     },
-    [
-      variables,
-      classes,
-      graphContainers,
-      setSelection,
-      setActiveClassId,
-      setOpenTabs,
-      setActiveGraphTab,
-      focusReference,
-    ]
+    [variables, classes, editorFocus, revealClassGraphInTree]
   );
+
+  const selectEvent = useCallback(
+    (eventId: string) => {
+      setSelection({ type: 'event', id: eventId });
+      setExpanded((s) => ({ ...s, events: true }));
+    },
+    [setSelection]
+  );
+
+  const openEventHomeGraph = useCallback(
+    (eventId: string) => {
+      const event = events.find((e) => e.id === eventId);
+      if (!event) return;
+
+      const cls = classes.find((c) => c.id === symbolClassId(event));
+      if (!cls) return;
+
+      const target = editorFocus.focusTreeSymbolOnClass(cls, { type: 'event', id: eventId });
+      revealClassGraphInTree(target.container);
+      setExpanded((s) => ({ ...s, events: true }));
+    },
+    [events, classes, editorFocus, revealClassGraphInTree]
+  );
+
+  const eventRowMeta = (entry: { dispatchCount: number; subscriberCount: number }) => {
+    const parts: string[] = [];
+    if (entry.dispatchCount > 0) {
+      parts.push(`${entry.dispatchCount} call${entry.dispatchCount === 1 ? '' : 's'}`);
+    }
+    if (entry.subscriberCount > 0) {
+      parts.push(`${entry.subscriberCount} sub`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : undefined;
+  };
 
   const selectVariable = isReferenceMode ? selectVariableForReferences : selectVariableInCanvas;
 
@@ -1082,7 +1084,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     });
     setNewEventName('');
     setIsAddingEvent(false);
-    setExpanded((s) => ({ ...s, dispatchers: true }));
+    setExpanded((s) => ({ ...s, events: true }));
   };
 
   const handleSaveFunction = () => {
@@ -1420,8 +1422,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                               label={renamingClassId === cls.id ? renameClassName : cls.name}
                               meta={
                                 isActive
-                                  ? `active · fn ${counts.functions} · var ${counts.variables}`
-                                  : `fn ${counts.functions} · var ${counts.variables}`
+                                  ? `active · fn ${counts.functions} · evt ${counts.events} · var ${counts.variables}`
+                                  : `fn ${counts.functions} · evt ${counts.events} · var ${counts.variables}`
                               }
                               hint="Click to select class and open its graph · Drag to declare or move"
                               openOnSelect
@@ -1771,17 +1773,109 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                           mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
                           payload: JSON.stringify(dragPayload),
                         }}
-                        onSelect={() => {
-                          selectFunction(f);
-                          setActiveGraphTab(overload.graphTabId ?? f.id);
-                        }}
-                        onOpen={() => openFunctionOverloadGraph(f, overload.id)}
+                        onSelect={() => openFunctionOverloadGraph(f, overload.id)}
                       />
                     );
                   })}
                   {addingOverloadForId === f.id ? renderOverloadCreateForm(f.id) : null}
                 </React.Fragment>
               ))}
+        </CategorySection>
+
+        {/* Events — class-scoped custom events */}
+        <CategorySection
+          title="Events"
+          count={classEvents.length}
+          icon={<Radio size={12} className="text-violet-400/80 shrink-0" />}
+          expanded={expanded.events}
+          onToggle={() => toggleCategory('events')}
+          onAdd={() => {
+            setIsAddingEvent(true);
+            setExpanded((s) => ({ ...s, events: true }));
+          }}
+          addLabel="New event"
+        >
+          {isAddingEvent && (
+            <div className={`${INDENT.l1} py-1 pr-2 space-y-1`}>
+              <input
+                type="text"
+                placeholder="Event name (e.g. calculate)"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
+                value={newEventName}
+                onChange={(e) => setNewEventName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveEvent();
+                  if (e.key === 'Escape') setIsAddingEvent(false);
+                }}
+              />
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  className="bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 rounded"
+                  onClick={handleSaveEvent}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
+          {filteredEvents.length === 0 && !isAddingEvent
+            ? emptyHint(
+                classEvents.length === 0
+                  ? 'No events yet — use + to add, then drag call to graph for Call or Declare.'
+                  : 'No match.'
+              )
+            : filteredEvents.map((entry) => {
+                const dragPayload: EventDragPayload = { eventId: entry.id };
+                return (
+                  <React.Fragment key={entry.id}>
+                    <TreeRow
+                      icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
+                      label={entry.label}
+                      meta={eventRowMeta(entry)}
+                      active={selection.type === 'event' && selection.id === entry.id}
+                      hint={
+                        isReferenceMode
+                          ? rowHint
+                          : 'Click to open handler (declare) on class graph'
+                      }
+                      openOnSelect={!isReferenceMode}
+                      onSelect={() => selectEvent(entry.id)}
+                      onOpen={() => openEventHomeGraph(entry.id)}
+                      suffix={
+                        isReferenceMode ? undefined : (
+                          <button
+                            type="button"
+                            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
+                            title="Remove event"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteEvent(entry.id);
+                            }}
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )
+                      }
+                    />
+                    {!isReferenceMode ? (
+                      <TreeRow
+                        depth="l2"
+                        icon={<div className="w-1 h-1 rounded-full bg-violet-400/60 shrink-0 ml-2" />}
+                        label="call"
+                        meta="drag to graph"
+                        hint="Drag to graph — choose Call or Declare"
+                        canvasDrag={{
+                          mimeType: EVENT_DRAG_MIME,
+                          payload: JSON.stringify(dragPayload),
+                        }}
+                        onSelect={() => selectEvent(entry.id)}
+                      />
+                    ) : null}
+                  </React.Fragment>
+                );
+              })}
         </CategorySection>
 
         {/* Variables */}
@@ -1882,81 +1976,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               ))}
         </CategorySection>
 
-        {/* Event dispatchers — custom events declared in graphs */}
-        <CategorySection
-          title="Event Dispatchers"
-          count={dispatchers.length}
-          icon={<Radio size={12} className="text-violet-400/80 shrink-0" />}
-          expanded={expanded.dispatchers}
-          onToggle={() => toggleCategory('dispatchers')}
-          onAdd={() => setIsAddingEvent(true)}
-          addLabel="New event"
-        >
-          {isAddingEvent && (
-            <div className={`${INDENT.l1} py-1 pr-2 space-y-1`}>
-              <input
-                type="text"
-                placeholder="Event name (e.g. damage)"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
-                value={newEventName}
-                onChange={(e) => setNewEventName(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveEvent();
-                  if (e.key === 'Escape') setIsAddingEvent(false);
-                }}
-              />
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  className="bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 rounded"
-                  onClick={handleSaveEvent}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
-          {filteredDispatchers.length === 0 && !isAddingEvent
-            ? emptyHint(
-                dispatchers.length === 0
-                  ? 'Add project events, then place On / Subscribe / Emit nodes in graphs.'
-                  : 'No match.'
-              )
-            : filteredDispatchers.map((d) => (
-                <TreeRow
-                  key={d.id}
-                  icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
-                  label={
-                    d.subscriberCount > 0 ? `${d.label} · ${d.subscriberCount} sub` : d.label
-                  }
-                  active={selection.type === 'event' && selection.id === d.id}
-                  hint={isReferenceMode ? rowHint : 'Click to select and open graph'}
-                  openOnSelect={!isReferenceMode}
-                  onSelect={() => setSelection({ type: 'event', id: d.id })}
-                  onOpen={() => {
-                    setSelection({ type: 'event', id: d.id });
-                    openGraphById(d.graphId);
-                  }}
-                  suffix={
-                    isReferenceMode ? undefined : (
-                      <button
-                        type="button"
-                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                        title="Remove event"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteEvent(d.id);
-                        }}
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    )
-                  }
-                />
-              ))}
-        </CategorySection>
-
         {/* Generated exports */}
         <CategorySection
           title="Generated"
@@ -1991,7 +2010,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       <div className="flex-none px-3 py-1 border-t border-zinc-800 text-[9px] text-zinc-600 text-center">
         {isReferenceMode
           ? 'Click · dbl-click open'
-          : 'Drag overload to graph · drag function grip to reorder'}
+          : 'Drag overload or event to graph · drag function grip to reorder'}
       </div>
 
       <SymbolDeleteDialog

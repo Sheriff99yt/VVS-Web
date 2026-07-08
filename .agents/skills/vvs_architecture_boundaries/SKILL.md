@@ -22,6 +22,14 @@ description: Triggers when creating new modules, adding dependencies, or establi
 
 Web re-exports types from `@vvs/graph-types` — do not duplicate graph shapes in `apps/web`.
 
+# Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- **`@vvs/graph-types` `analyzeProject`** owns fidelity diagnostics — transpiler consumes `ir.members` only
+- Do not move declaration emit into UI or symbol-table iteration — boundary is define chain → `buildIrMembers` → `appendIrMembers`
+- Cross-package: panel dual-write lives in `apps/web`; analyzer codes live in `graph-types`; emit in `transpiler`
+
 # Phase 2 persistence (locked)
 
 Canonical: [`docs/deployment.md`](../../../docs/deployment.md)

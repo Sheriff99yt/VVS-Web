@@ -90,7 +90,7 @@ Lives in `packages/syntax-registry` (fixture JSON in repo today; later JSONB + I
 | `{ lowering: 'builtin', rule: 'action.input.blocking' }` | Get User Input |
 | `{ lowering: 'call_graph', linkKind: 'call_function' }` | Call Function |
 | `{ lowering: 'variable', mode: 'get' \| 'set' }` | Variable nodes |
-| `{ lowering: 'event', role: 'entry' \| 'tick' \| 'custom' }` | On Start, On Update |
+| `{ lowering: 'event', role: 'entry' \| 'tick' \| 'custom' }` | Program entry (`role: 'entry'`), On Update, custom events |
 
 ### 2.2 Node instance (graph JSON)
 
@@ -183,7 +183,27 @@ Each conversion is **one graph node = one call in source**. The transpiler never
 
 ### 2.2c Text-shaped fidelity (locked)
 
-Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md).
+Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — **Canvas is the source of truth** for generated code.
+
+#### Sidebar vs canvas (strict)
+
+| Surface | Role in codegen | Emits text? |
+|---------|-----------------|-------------|
+| Project panel `variables[]` / `functions[]` / `events[]` | Index + CRUD; dual-writes define nodes | **No** — metadata only |
+| `var_define`, `function_define`, `event_member_define`, `class_define` | Declaration on class home graph exec chain | **Yes** — ordered `ir.members` |
+| `variable_get` / `variable_set`, Call Function, dispatch | Usage where logic runs | **Yes** — statements / expressions |
+
+Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push symbol rows without a canvas correlate.
+
+#### Strict analyzer codes (block Generate)
+
+| Code | Meaning |
+|------|---------|
+| `DEFINE_NODE_MISSING` | Symbol in table but no matching define node on `classHomeGraphId` |
+| `DECLARATION_NOT_ON_CANVAS` | Symbols exist but class graph has no define chain |
+| `ORPHAN_DEFINE_NODE` | Define node on canvas with `symbolId` not in symbol table |
+
+#### Visual → text mapping
 
 | Visual | Text | Notes |
 |--------|------|-------|
@@ -191,9 +211,10 @@ Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md).
 | **Define** (event) | `def on_foo(self, …):` | Handler body |
 | **Dispatch** | `self.on_foo(…)` | Explicit line; phase 2 may add **Subscribe** + **Emit** |
 | **Conversion** | `str(x)`, etc. | Never folded into consumers |
+| **var_define** / **function_define** | `self.x = …` / `def foo(…):` | Declaration position from exec chain order |
 | **Macro (legacy)** | **Deprecated** | Must become **Function + Call** — no compile-time paste |
 
-**Not supported:** Blueprint latent Delay, macro inline expansion, behavior that requires a VVS/UE VM to match the graph.
+**Not supported:** Blueprint latent Delay, macro inline expansion, sidebar preamble (`appendLegacyPreamble`), behavior that requires a VVS/UE VM to match the graph.
 
 ### 2.3 IR (transpiler internal)
 
@@ -616,14 +637,17 @@ flowchart LR
 
 Unreal **Event Dispatchers** are one engine’s name for a universal pattern: **named signals with typed parameters, subscribers, and a broadcast**. VVS models that in the **graph + IR**; language-specific idioms live only in the **emitter**.
 
-### 12.1 Lifecycle vs custom events
+### 12.1 Program entry vs custom events
 
-| Kind | Registry role | Example | Emission strategy |
-|------|---------------|---------|-------------------|
-| **Lifecycle** | `event.entry.start` / `event.entry.update` | On Start, On Update | Engine hook → single handler method |
-| **Custom event** | `event.define` / `event.dispatch` | On damage, Dispatch damage | Direct call (phase 1) or callback list (phase 2) |
+| Kind | `events[]` role | Canvas pattern | Codegen |
+|------|-----------------|----------------|---------|
+| **Program entry** | `role: 'entry'` | `event_member_define` + `event_define` (same as custom events) | `def on_start(self):` — only when user declared entry on the class graph |
+| **Custom event** | `role: 'custom'` (default) | `event_member_define` + `event_define` + `event_dispatch` | `def on_{name}(self, …)` |
+| **Lifecycle (deprecated)** | — | `event_on_start` node | **Removed** — analyzer error `LIFECYCLE_NODE_DEPRECATED` |
 
-Lifecycle nodes are **not** listed in the project Events tree. Custom events are **first-class project data** (`events[]`), referenced by `eventId` on graph nodes.
+Program entry is **first-class project data** (`events[]` with `role: 'entry'`), not a hidden lifecycle shortcut. The transpiler **never** injects an empty `on_start()`; host runners still call `App().on_start()` but that method exists only if the user wired an entry handler on canvas.
+
+Custom events remain listed in the project Events tree. Entry events appear there too (one per class when the class has symbols).
 
 ### 12.2 Abstract model (language-neutral)
 
@@ -649,6 +673,8 @@ interface ProjectEventDefinition {
   id: string;              // stable: "evt_on_damage"
   name: string;            // display stem: "damage" → UI "On damage"
   parameters: { id: string; label: string; type: PinType }[];
+  role?: 'entry' | 'custom'; // entry → codegen on_start; custom → on_{name}
+  classId?: string;        // owning class (multi-class projects)
 }
 ```
 
@@ -658,8 +684,8 @@ Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. 
 
 | kindId | UI title | Role |
 |--------|----------|------|
-| `event_on_start` | On Start | Lifecycle entry |
-| `event_on_update` | On Update | Lifecycle tick |
+| `event_on_start` | On Start | **Deprecated** — use `role: 'entry'` event + define chain |
+| `event_on_update` | On Update | Lifecycle tick (engine hook) |
 | `event_define` | On … | Handler entry; `properties.eventId` |
 | `event_dispatch` | Dispatch … | Broadcast; `properties.eventId` |
 | `action_print` | Print String | Sync stdout/log |

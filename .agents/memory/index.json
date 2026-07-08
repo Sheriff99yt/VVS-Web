@@ -1,8 +1,9 @@
 {
   "version": 1,
-  "lastUpdated": "2026-07-06",
+  "lastUpdated": "2026-07-08",
   "productDirection": "text-shaped-graphs",
   "canonicalDoc": "docs/visual_to_text_fidelity.md",
+  "fidelitySkill": ".agents/skills/vvs_visual_code_fidelity/SKILL.md",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
     "totalItems": 48,

@@ -211,7 +211,7 @@ describe('removeNodesAndEdges', () => {
 });
 
 describe('analyzeProject unresolved refs', () => {
-  test('emits UNRESOLVED_SYMBOL_REF warning', () => {
+  test('emits UNRESOLVED_SYMBOL_REF error', () => {
     const result = analyzeProject({
       documents: {
         main: {
@@ -241,5 +241,8 @@ describe('analyzeProject unresolved refs', () => {
       targetLanguage: 'python',
     });
     expect(result.diagnostics.some((d) => d.code === 'UNRESOLVED_SYMBOL_REF')).toBe(true);
+    const unresolved = result.diagnostics.find((d) => d.code === 'UNRESOLVED_SYMBOL_REF');
+    expect(unresolved?.level).toBe('error');
+    expect(result.ok).toBe(false);
   });
 });

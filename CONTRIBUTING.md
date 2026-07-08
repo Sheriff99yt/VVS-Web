@@ -9,6 +9,9 @@ Thank you for your interest in VVS. This repository is open for community collab
 1. Read **[docs/vision.md](docs/vision.md)** — why VVS exists and how it relates to text code and engine tooling.
 2. Read **[docs/current_state.md](docs/current_state.md)** — what is implemented today vs planned (avoid re-building removed UI or duplicate systems).
 3. Read **[docs/naming_and_product_direction.md](docs/naming_and_product_direction.md)** — vocabulary for the web editor (engine-specific terms belong in the UE plugin docs, not generic web UI copy).
+4. Read **[docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md)** — **canvas is the source of truth** for codegen; pass the fidelity checklist before transpiler or symbol-table features.
+
+**Contributor rule (codegen / symbols):** Every emitted declaration must originate from a canvas define node with `sourceMap` coverage. Do not reintroduce sidebar preamble emit (`appendLegacyPreamble`) or symbol-only creates without `defineNodeSync`. Panel rows are indexes — not codegen sources.
 
 ## Development setup
 

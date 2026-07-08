@@ -33,6 +33,16 @@ VVS is a **visual way to compose logic** that **generates ordinary source code**
 
 The UX borrows **canvas patterns** from node editors (wires, typed ports, flow) but **semantics follow text code** — functions, calls, handlers — not Unreal Blueprint VM rules (macro expand, latent delay).
 
+### 5. Canvas source of truth — symbol table ≠ codegen
+
+| Vocabulary | Meaning |
+|------------|---------|
+| **Declare** | Place a define node on the class graph (`var_define`, `function_define`, `event_member_define`, `class_define`) — this is what emits the declaration in generated code |
+| **Call** / **Use** | Place usage nodes (Get, Set, Call Function, dispatch) where logic runs |
+| **Project panel row** | Index + CRUD shortcut — dual-writes a define node; **not** a second source of truth for codegen |
+
+UI copy must not imply that adding a row in the Project tree alone puts a declaration in generated code. If it is not on the canvas, it is not in the export. Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Canvas is the source of truth.
+
 ---
 
 ## Official vocabulary
@@ -100,7 +110,7 @@ Do not use `BP_` prefixes, `BeginPlay`, or `AActor` in defaults or examples unle
 | Data | Verb or noun | Get variable, Set variable, Add |
 | Actions | Verb phrase | Print message, Call function |
 
-Node `type` ids stay snake_case (`event_on_start`); **labels** are user-facing.
+Node `type` ids stay snake_case (`event_define`, `event_member_define`); legacy `event_on_start` is deprecated — use `role: 'entry'` on `events[]` instead. **Labels** are user-facing.
 
 ---
 

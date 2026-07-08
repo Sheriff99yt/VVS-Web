@@ -17,6 +17,14 @@ Read **`docs/ui_api_delivery_loop.md`** before every iteration. Canonical state:
 6. **Verify**: `bun run build` in `apps/web`; `go test ./...` in `server` when Go changes.
 7. **Update** `docs/current_state.md` when a slice completes.
 
+## Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- Save/load and compile API paths must preserve define nodes on `classHomeGraphId` — no symbol-only snapshots
+- Compile gate respects `analyzeProject` fidelity errors (`DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`) — block Generate when `!analysis.ok`
+- MCP/HTTP compile must not strip define nodes or reintroduce sidebar preamble emit
+
 ## VvsApi facade (shipped)
 
 ```text

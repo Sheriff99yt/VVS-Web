@@ -6,7 +6,7 @@
  *   echo '{...}' | bun run generate:cli
  *   bun run generate:cli < snapshot.json
  */
-import { normalizeProjectSnapshot } from '@vvs/graph-types';
+import { normalizeProjectSnapshot, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { generateMockTranspileResult } from '../generate';
 
 async function readInput(): Promise<string> {
@@ -53,8 +53,8 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const tabId = snapshot.activeGraphTab || 'main';
-  const doc = snapshot.documents[tabId] ?? snapshot.documents.main;
+  const tabId = snapshot.activeGraphTab || MAIN_GRAPH_CONTAINER_ID;
+  const doc = snapshot.documents[tabId];
   if (!doc) {
     console.error(JSON.stringify({ error: `Graph document not found for tab: ${tabId}` }));
     process.exit(1);

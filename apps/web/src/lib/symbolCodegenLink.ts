@@ -171,7 +171,12 @@ export function resolveSymbolCodegenLink(input: {
     if (!func) return null;
 
     const classHomeTabId = resolveClassHomeTabId(symbolClassId(func), classes);
-    const tabId = resolveFunctionTabId(func, documents, classes);
+    const overloadTabIds = new Set(
+      func.overloads.map((overload) => overload.graphTabId ?? func.id)
+    );
+    const tabId = overloadTabIds.has(activeGraphTab)
+      ? activeGraphTab
+      : resolveFunctionTabId(func, documents, classes);
     const usages = collectSymbolUsages(documents, 'function', func.id);
     const highlightNodeIds = resolveFunctionHighlightNodes(
       usages,

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { buildCoreCategories, spawnMenuItemKey } from '@/lib/nodeCatalog';
 import { LibraryNodeTemplate } from '@/types/ui';
-import type { FunctionSymbol, GraphTab, TargetLanguage } from '@/types/graph';
+import type { FunctionSymbol, GraphTab, TargetLanguage, ProjectEventDefinition } from '@/types/graph';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 
 interface NodeContextMenuProps {
@@ -15,10 +15,13 @@ interface NodeContextMenuProps {
   filter?: { pinType: string; lookingFor: 'input' | 'output' };
   currentGraphId: string;
   functions: FunctionSymbol[];
+  events?: ProjectEventDefinition[];
   openTabs: GraphTab[];
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
   targetLanguage?: TargetLanguage;
+  canCreateEvent?: boolean;
+  onNewEventHere?: () => void;
 }
 
 export function NodeContextMenu({
@@ -29,10 +32,13 @@ export function NodeContextMenu({
   filter,
   currentGraphId,
   functions,
+  events,
   openTabs,
   environmentId,
   environmentManifest,
   targetLanguage,
+  canCreateEvent,
+  onNewEventHere,
 }: NodeContextMenuProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -51,12 +57,13 @@ export function NodeContextMenu({
             }
           : undefined,
         {
+          events,
           environmentId,
           environmentManifest,
           targetLanguage,
         }
       ),
-    [functions, currentGraphId, filter?.pinType, environmentId, environmentManifest, targetLanguage]
+    [functions, events, currentGraphId, filter?.pinType, environmentId, environmentManifest, targetLanguage]
   );
 
   // Focus search input on mount
@@ -144,6 +151,20 @@ export function NodeContextMenu({
       </div>
       
       <div className="flex-1 overflow-y-auto max-h-64 p-2 space-y-4">
+        {canCreateEvent && onNewEventHere ? (
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                onNewEventHere();
+                onClose();
+              }}
+              className="w-full text-left text-xs text-indigo-200 hover:bg-indigo-500/10 rounded px-2 py-1.5 transition-colors border border-indigo-500/20"
+            >
+              New event here…
+            </button>
+          </div>
+        ) : null}
         {filteredCategories.map(category => (
           <div key={category.name}>
             <h3 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 px-2">{category.name}</h3>

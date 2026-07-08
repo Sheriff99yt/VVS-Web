@@ -3,14 +3,19 @@ import type { PinDefinition, PinType } from './pins';
 export interface GraphBinding {
   kind:
     | 'call_function'
+    | 'call_class_function'
+    | 'dispatch_event'
     | 'use_macro'
     | 'import_module'
+    | 'import_class'
     | 'variable_ref'
     | 'env_native'
     | 'env_event'
     | 'graph_ref';
   symbolId: string;
   overloadId?: string;
+  /** Target class for cross-class import/call nodes. */
+  targetClassId?: string;
   /** Manifest method id for env_native / overrideable handlers */
   manifestMethodId?: string;
   /** Manifest event id for env_event handlers */

@@ -1,13 +1,16 @@
 import { describe, expect, test } from 'bun:test';
+import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createProjectFromEnvironment } from '@vvs/environment-templates';
 import { generateMockTranspileResult } from './generate';
+import { withTestEntryGraph } from './testEntryGraph';
 
 describe('environment multi-file transpile', () => {
   test('python console app emits module and main.py', () => {
     const snapshot = createProjectFromEnvironment('env.python.console-app');
     expect(snapshot).not.toBeNull();
 
-    const main = snapshot!.documents.main;
+    const main = snapshot!.documents[MAIN_GRAPH_CONTAINER_ID];
+    if (!main) throw new Error(`missing ${MAIN_GRAPH_CONTAINER_ID}`);
     const result = generateMockTranspileResult({
       moduleName: snapshot!.projectDetails.moduleName,
       extendsType: snapshot!.projectDetails.extendsType,
@@ -17,7 +20,10 @@ describe('environment multi-file transpile', () => {
       functions: snapshot!.functions,
       nodes: main.nodes,
       edges: main.edges,
-      tabId: 'main',
+      tabId: MAIN_GRAPH_CONTAINER_ID,
+      documents: snapshot!.documents,
+      classes: snapshot!.classes,
+      activeClassId: snapshot!.activeClassId,
       environmentId: snapshot!.environmentId,
     });
 
@@ -32,17 +38,21 @@ describe('environment multi-file transpile', () => {
     const snapshot = createProjectFromEnvironment('env.javascript.browser-app');
     expect(snapshot).not.toBeNull();
 
-    const main = snapshot!.documents.main;
+    const main = snapshot!.documents[MAIN_GRAPH_CONTAINER_ID];
+    if (!main) throw new Error(`missing ${MAIN_GRAPH_CONTAINER_ID}`);
     const result = generateMockTranspileResult({
       moduleName: 'App',
       extendsType: 'Object',
       targetLanguage: 'javascript',
-      variables: [],
-      projectEvents: [],
-      functions: [],
+      variables: snapshot!.variables,
+      projectEvents: snapshot!.events,
+      functions: snapshot!.functions,
       nodes: main.nodes,
       edges: main.edges,
-      tabId: 'main',
+      tabId: MAIN_GRAPH_CONTAINER_ID,
+      documents: snapshot!.documents,
+      classes: snapshot!.classes,
+      activeClassId: snapshot!.activeClassId,
       environmentId: 'env.javascript.browser-app',
     });
 
@@ -55,62 +65,37 @@ describe('environment multi-file transpile', () => {
 
 describe('env.call_native emission', () => {
   test('print native expands to manifest callExpr', () => {
-    const nodes = [
-      {
-        id: 'start',
-        type: 'vvs_standard_node' as const,
-        position: { x: 0, y: 0 },
-        data: {
-          label: 'On Start',
-          category: 'Events',
-          kindId: 'event_on_start',
-          inputs: [],
-          outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
-          inlineValues: {},
-        },
+    const printNative = {
+      id: 'print-native',
+      type: 'vvs_standard_node' as const,
+      position: { x: 200, y: 0 },
+      data: {
+        label: 'print()',
+        category: 'From environment',
+        kindId: 'env.call_native',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' as const },
+          { id: 'msg', label: 'Message', type: 'data_string' as const },
+        ],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
+        inlineValues: { msg: 'hello' },
+        properties: { manifestMethodId: 'native.print' },
+        graphBinding: { kind: 'env_native' as const, symbolId: 'native.print', manifestMethodId: 'native.print' },
       },
-      {
-        id: 'print-native',
-        type: 'vvs_standard_node' as const,
-        position: { x: 200, y: 0 },
-        data: {
-          label: 'print()',
-          category: 'From environment',
-          kindId: 'env.call_native',
-          inputs: [
-            { id: 'exec_in', label: '', type: 'execution' as const },
-            { id: 'msg', label: 'Message', type: 'data_string' as const },
-          ],
-          outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
-          inlineValues: { msg: 'hello' },
-          properties: { manifestMethodId: 'native.print' },
-          graphBinding: { kind: 'env_native' as const, symbolId: 'native.print', manifestMethodId: 'native.print' },
-        },
-      },
-    ];
-    const edges = [
-      {
-        id: 'e1',
-        source: 'start',
-        target: 'print-native',
-        sourceHandle: 'exec_out',
-        targetHandle: 'exec_in',
-        data: { pinType: 'execution' as const },
-      },
-    ];
+    };
 
-    const result = generateMockTranspileResult({
-      moduleName: 'App',
-      extendsType: 'object',
-      targetLanguage: 'python',
-      variables: [],
-      projectEvents: [],
-      functions: [],
-      nodes,
-      edges,
-      tabId: 'main',
-      environmentId: 'env.python.console-app',
-    });
+    const result = generateMockTranspileResult(
+      withTestEntryGraph({
+        moduleName: 'App',
+        extendsType: 'object',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [printNative],
+        edges: [],
+        environmentId: 'env.python.console-app',
+      })
+    );
 
     expect(result.files[0]?.content).toContain('print("hello")');
   });

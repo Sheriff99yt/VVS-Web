@@ -86,7 +86,12 @@ function appendFunctionDecl(
         : '        // empty';
 
   sink.appendRaw(
-    `\n${formatFunctionDefHeader(symbol, ir.targetLanguage, functionNeedsAsync(ir, symbol.id))}`
+    `\n${formatFunctionDefHeader(
+      symbol,
+      ir.targetLanguage,
+      functionNeedsAsync(ir, symbol.id),
+      Boolean(symbol.flags?.virtual)
+    )}`
   );
   appendFunctionBody(sink, ir, symbol.id, emptyLine, ir.environmentManifest);
 
@@ -208,80 +213,6 @@ export function appendIrMembers(sink: CodeSink, ir: IrModule): void {
       case 'EventDecl':
         appendEventDecl(sink, ir, member);
         break;
-    }
-  }
-}
-
-/** Legacy sidebar preamble — variables then functions. */
-export function appendLegacyPreamble(sink: CodeSink, ir: IrModule): void {
-  if (ir.targetLanguage === 'python') {
-    if (ir.variables.length > 0) {
-      sink.appendRaw('    # Variables');
-      for (const v of ir.variables) {
-        const val =
-          typeof v.defaultValue === 'string'
-            ? `"${v.defaultValue}"`
-            : typeof v.defaultValue === 'boolean'
-              ? v.defaultValue
-                ? 'True'
-                : 'False'
-              : v.defaultValue;
-        sink.appendRaw(`        self.${v.name} = ${val}`);
-      }
-    }
-    for (const f of ir.functions) {
-      sink.appendRaw(
-        `\n${formatFunctionDefHeader(f, 'python', functionNeedsAsync(ir, f.id))}`
-      );
-      appendFunctionBody(sink, ir, f.id, '        pass', ir.environmentManifest);
-    }
-    return;
-  }
-
-  if (ir.targetLanguage === 'javascript') {
-    for (const v of ir.variables) {
-      const val = typeof v.defaultValue === 'string' ? `"${v.defaultValue}"` : v.defaultValue;
-      sink.appendRaw(`    this.${v.name} = ${val};`);
-    }
-    for (const f of ir.functions) {
-      sink.appendRaw(
-        `\n${formatFunctionDefHeader(f, 'javascript', functionNeedsAsync(ir, f.id))}`
-      );
-      appendFunctionBody(sink, ir, f.id, '    // empty', ir.environmentManifest);
-      sink.appendRaw('  }');
-    }
-    return;
-  }
-
-  if (ir.targetLanguage === 'cpp') {
-    for (const v of ir.variables) {
-      const emitKind = variableDataTypeToLegacyEmitKind(v.type);
-      const type =
-        emitKind === 'number'
-          ? 'float'
-          : emitKind === 'string'
-            ? 'std::string'
-            : emitKind === 'boolean'
-              ? 'bool'
-              : 'auto';
-      sink.appendRaw(`    ${type} ${v.name};`);
-    }
-    for (const f of ir.functions) {
-      sink.appendRaw(`\n${formatFunctionDefHeader(f, 'cpp')}`);
-      appendFunctionBody(sink, ir, f.id, '        // empty', ir.environmentManifest);
-      sink.appendRaw('    }');
-    }
-    return;
-  }
-
-  if (ir.targetLanguage === 'verse') {
-    for (const v of ir.variables) {
-      const val = typeof v.defaultValue === 'string' ? `"${v.defaultValue}"` : v.defaultValue;
-      sink.appendRaw(`    var ${v.name} : ${verseType(v)} = ${val}`);
-    }
-    for (const f of ir.functions) {
-      sink.appendRaw(`\n${formatFunctionDefHeader(f, 'verse')}`);
-      appendFunctionBody(sink, ir, f.id, '        # empty', ir.environmentManifest);
     }
   }
 }

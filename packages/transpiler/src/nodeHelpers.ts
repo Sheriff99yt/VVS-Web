@@ -1,6 +1,7 @@
 import type { PinType, VVSNodeData } from '@vvs/graph-types';
 import type { ProjectEventDefinition, SymbolParameter } from '@vvs/graph-types';
-import { resolve as resolveKind, resolveNodeKindId as registryResolveKindId } from '@vvs/syntax-registry';
+import { normalizeGraphNodeData as normalizeGraphNodeDataCore, resolveGraphNodeKindId } from '@vvs/graph-types';
+import { resolve as resolveKind } from '@vvs/syntax-registry';
 
 export { resolveNodeKindId } from '@vvs/syntax-registry';
 
@@ -30,17 +31,18 @@ function defaultInlineValueForPinType(pinType: PinType): string | number | boole
 }
 
 export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
-  const kindId = registryResolveKindId(data);
+  const core = normalizeGraphNodeDataCore(data);
+  const kindId = resolveGraphNodeKindId(core);
   const def = resolveKind(kindId);
-  const properties = { ...(data.properties ?? {}) };
+  const properties = { ...(core.properties ?? {}) };
 
   if ((kindId === 'variable_get' || kindId === 'variable_set') && !properties.variableName) {
-    const inferred = getVariableName(data);
+    const inferred = getVariableName(core);
     if (inferred) properties.variableName = inferred;
   }
 
-  const inlineValues = { ...data.inlineValues };
-  const inputs = data.inputs.length > 0 ? data.inputs : def?.inputs ?? data.inputs;
+  const inlineValues = { ...core.inlineValues };
+  const inputs = core.inputs.length > 0 ? core.inputs : def?.inputs ?? core.inputs;
   for (const input of inputs) {
     if (input.type === 'execution') continue;
     if (inlineValues[input.id] === undefined) {
@@ -50,9 +52,9 @@ export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
   }
 
   return {
-    ...data,
+    ...core,
     kindId,
-    category: data.category || def?.category || data.category,
+    category: core.category || def?.category || core.category,
     properties,
     inputs,
     inlineValues,

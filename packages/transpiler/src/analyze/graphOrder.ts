@@ -1,4 +1,6 @@
 import type { GraphNode, GraphEdge } from '@vvs/graph-types';
+import type { ProjectEventDefinition } from '@vvs/graph-types';
+import { resolveNodeKindId } from '@vvs/graph-types';
 
 /** Stage A — graph traversal order for exec chains. */
 export function buildExecutionOrder(
@@ -33,7 +35,21 @@ export function buildExecutionOrder(
   return order;
 }
 
-export function findSimulationStartNode(nodes: GraphNode[]): GraphNode | undefined {
+export function findSimulationStartNode(
+  nodes: GraphNode[],
+  events?: ProjectEventDefinition[]
+): GraphNode | undefined {
+  const entry = events?.find((e) => e.role === 'entry');
+  if (entry) {
+    const handler = nodes.find((n) => {
+      if (n.type !== 'vvs_standard_node') return false;
+      const kindId = resolveNodeKindId(n.data);
+      if (kindId !== 'event_define' && kindId !== 'event_custom') return false;
+      return n.data.properties?.eventId === entry.id;
+    });
+    if (handler) return handler;
+  }
+
   return (
     nodes.find(
       (n) =>

@@ -12,6 +12,15 @@ description: Triggers when building user-facing features, Next.js components, or
 - **Canonical shell reference:** `docs/current_state.md` — update it when the layout changes.
 - **Naming:** `docs/naming_and_product_direction.md` — no Blueprint/BeginPlay/BP_ in user-facing copy.
 
+# Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- Project tree / panel rows are **indexes** — they do not imply a line exists in generated code unless a define node exists on canvas
+- Drag **Call** / **Declare** must create usage or define nodes; panel `+` uses `add*WithDefine` / `defineNodeSync`
+- UI copy: **Declare** on graph emits declarations; panel adds symbols that dual-write define nodes — not "add to code" from sidebar alone
+- Code panel highlight is the trust contract — if selection cannot map via `sourceMap`, fidelity is broken
+
 # App Shell (Locked Layout)
 
 ### Top-level views (TopNav)

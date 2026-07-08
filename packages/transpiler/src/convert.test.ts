@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { generateMockCode, generateMockTranspileResult } from './generate';
+import { withTestEntryGraph } from './testEntryGraph';
 
 describe('convert nodes codegen', () => {
   const getResult = {
@@ -49,30 +50,7 @@ describe('convert nodes codegen', () => {
     },
   };
 
-  const start = {
-    id: 'start',
-    type: 'vvs_standard_node' as const,
-    position: { x: 0, y: 0 },
-    data: {
-      label: 'On Start',
-      category: 'Events',
-      kindId: 'event_on_start',
-      inputs: [],
-      outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
-      inlineValues: {},
-    },
-  };
-
   const edges = [
-    {
-      id: 'e1',
-      source: 'start',
-      target: 'print-result',
-      sourceHandle: 'exec_out',
-      targetHandle: 'exec_in',
-      type: 'vvs_standard_edge' as const,
-      data: { pinType: 'execution' as const },
-    },
     {
       id: 'e2',
       source: 'get-result',
@@ -93,48 +71,33 @@ describe('convert nodes codegen', () => {
     },
   ];
 
+  const baseCtx = {
+    moduleName: 'Demo',
+    extendsType: '',
+    variables: [{ id: 'var-result', name: 'Result', type: 'data_number' as const }],
+    functions: [],
+    nodes: [getResult, toString, print],
+    edges,
+  };
+
   test('python emits explicit str() call — not folded into print', () => {
-    const code = generateMockCode({
-      moduleName: 'Demo',
-      extendsType: '',
-      targetLanguage: 'python',
-      variables: [{ id: 'var-result', name: 'Result', type: 'data_number' }],
-      projectEvents: [],
-      functions: [],
-      nodes: [start, getResult, toString, print],
-      edges,
-      tabId: 'main',
-    });
+    const code = generateMockCode(
+      withTestEntryGraph({ ...baseCtx, targetLanguage: 'python' }, 'print-result')
+    );
     expect(code).toContain('print(str(self.Result))');
   });
 
   test('javascript emits explicit String() call', () => {
-    const code = generateMockCode({
-      moduleName: 'Demo',
-      extendsType: '',
-      targetLanguage: 'javascript',
-      variables: [{ id: 'var-result', name: 'Result', type: 'data_number' }],
-      projectEvents: [],
-      functions: [],
-      nodes: [start, getResult, toString, print],
-      edges,
-      tabId: 'main',
-    });
+    const code = generateMockCode(
+      withTestEntryGraph({ ...baseCtx, targetLanguage: 'javascript' }, 'print-result')
+    );
     expect(code).toContain('console.log(String(this.Result))');
   });
 
   test('to-string node is highlighted in sourceMap on print line', () => {
-    const result = generateMockTranspileResult({
-      moduleName: 'Demo',
-      extendsType: '',
-      targetLanguage: 'python',
-      variables: [{ id: 'var-result', name: 'Result', type: 'data_number' }],
-      projectEvents: [],
-      functions: [],
-      nodes: [start, getResult, toString, print],
-      edges,
-      tabId: 'main',
-    });
+    const result = generateMockTranspileResult(
+      withTestEntryGraph({ ...baseCtx, targetLanguage: 'python' }, 'print-result')
+    );
     expect(result.sourceMap['to-str']?.length).toBeGreaterThan(0);
     expect(result.fragments?.['to-str']).toContain('str(');
     expect(result.fragments?.['get-result']).toContain('Result');

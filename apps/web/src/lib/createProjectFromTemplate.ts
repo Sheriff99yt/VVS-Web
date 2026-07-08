@@ -5,6 +5,7 @@ import { LIBRARY_GRAPH_FIXTURES } from '@/lib/libraryCatalog';
 import { defaultTabMetadata } from '@/lib/graphDefaults';
 import { createProjectFromEnvironment } from '@vvs/environment-templates';
 import { resolveApiSurface, loadEnvironmentManifest } from '@vvs/environment-templates';
+import { MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME } from '@vvs/graph-types';
 
 export function createProjectFromTemplate(asset: LibraryAsset): ProjectSnapshot {
   if (asset.importKind === 'environment' && asset.environmentId) {
@@ -33,10 +34,10 @@ export function createProjectFromTemplate(asset: LibraryAsset): ProjectSnapshot 
   }
 
   if (fixture) {
-    snapshot.documents.main = {
+    snapshot.documents[MAIN_GRAPH_CONTAINER_ID] = {
       nodes: structuredClone(fixture.nodes),
       edges: structuredClone(fixture.edges),
-      metadata: defaultTabMetadata('main', 'Main graph'),
+      metadata: defaultTabMetadata('container', PROJECT_MAP_CONTAINER_NAME),
     };
   }
 

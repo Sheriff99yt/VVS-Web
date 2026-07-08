@@ -1,5 +1,9 @@
 import { GraphTab, TargetLanguage } from '@/contexts/ProjectContext';
 import type { ClassSymbol } from '@vvs/graph-types';
+import {
+  classGraphHasDefineNodes,
+  MAIN_GRAPH_CONTAINER_ID,
+} from '@vvs/graph-types';
 import { activeClass as resolveActiveClass, classGraphTabId, classHomeGraphId, symbolClassId } from '@/lib/classScope';
 import { GraphDocument } from '@/lib/graphDefaults';
 import { graphDisplayName, generatedFileName } from './graphTabs';
@@ -15,6 +19,28 @@ export interface EventDispatcherEntry {
   label: string;
   graphId: string;
   subscriberCount: number;
+  dispatchCount: number;
+}
+
+function countEventDispatches(
+  eventId: string,
+  documents: Record<string, GraphDocument> | null
+): number {
+  if (!documents) return 0;
+  let count = 0;
+  for (const doc of Object.values(documents)) {
+    for (const node of doc.nodes) {
+      if (node.type !== 'vvs_standard_node') continue;
+      const kindId = resolveNodeKindId(node.data);
+      if (kindId !== 'event_dispatch' && kindId !== 'event_emit') continue;
+      const boundId =
+        node.data.graphBinding?.kind === 'dispatch_event'
+          ? node.data.graphBinding.symbolId
+          : node.data.properties?.eventId;
+      if (boundId === eventId) count += 1;
+    }
+  }
+  return count;
 }
 
 function countEventSubscribers(
@@ -46,6 +72,7 @@ export function listEventDispatchers(
         label: eventDisplayName(event.name),
         graphId: resolveEventHomeGraphId(event, documents, classes),
         subscriberCount: countEventSubscribers(event.id, documents),
+        dispatchCount: countEventDispatches(event.id, documents),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -91,7 +118,7 @@ function listLegacyEventDispatchers(
       const key = label.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      entries.push({ id: `dispatcher-${key}`, label, graphId, subscriberCount: 0 });
+      entries.push({ id: `dispatcher-${key}`, label, graphId, subscriberCount: 0, dispatchCount: 0 });
     }
   }
 
@@ -115,16 +142,24 @@ export function listGeneratedExports(
   functions: { id: string; name: string }[],
   documents: Record<string, GraphDocument> | null,
   moduleName: string,
-  targetLanguage: TargetLanguage
+  targetLanguage: TargetLanguage,
+  classes?: ClassSymbol[]
 ): GeneratedExportEntry[] {
-  return listAllGraphTabs(openTabs, functions, documents)
+  return listAllGraphTabs(openTabs, functions, documents, classes)
     .filter((tab) => tab.type !== 'container')
-    .map((tab) => ({
-      graphId: tab.id,
-      graphLabel: graphDisplayName(tab),
-      graphType: tab.type as GeneratedExportEntry['graphType'],
-      fileName: generatedFileName(tab, moduleName, targetLanguage),
-    }));
+    .map((tab) => {
+      const homeClass = classes?.find((cls) => classHomeGraphId(cls) === tab.id);
+      return {
+        graphId: tab.id,
+        graphLabel: graphDisplayName(tab),
+        graphType: tab.type as GeneratedExportEntry['graphType'],
+        fileName: generatedFileName(
+          tab,
+          homeClass?.name ?? moduleName,
+          targetLanguage
+        ),
+      };
+    });
 }
 
 /** @deprecated Macro authoring removed — always returns []. */
@@ -135,11 +170,27 @@ export function listMacroEntries(_openTabs: GraphTab[]): MacroEntry[] {
 export function listAllGraphTabs(
   openTabs: GraphTab[],
   functions: { id: string; name: string }[],
-  documents: Record<string, GraphDocument> | null
+  documents: Record<string, GraphDocument> | null,
+  classes?: ClassSymbol[]
 ): GraphTab[] {
   const byId = new Map<string, GraphTab>();
 
-  byId.set('main', { id: 'main', type: 'main', name: 'Main graph' });
+  const usesProjectMap = openTabs.some((t) => t.id === MAIN_GRAPH_CONTAINER_ID);
+  if (!usesProjectMap) {
+    byId.set('main', { id: 'main', type: 'main', name: 'Main graph' });
+  }
+
+  for (const cls of classes ?? []) {
+    const homeId = classHomeGraphId(cls);
+    const doc = documents?.[homeId];
+    if (!doc || !classGraphHasDefineNodes(doc)) continue;
+    byId.set(homeId, {
+      id: homeId,
+      type: 'main',
+      name: cls.name,
+      classId: cls.id,
+    });
+  }
 
   for (const func of functions) {
     const existing = openTabs.find((t) => t.id === func.id);

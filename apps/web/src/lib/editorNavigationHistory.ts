@@ -33,10 +33,14 @@ export function isVvsEditorNavigationFrame(value: unknown): value is VvsEditorNa
     return false;
   }
   if (!frame.selection || typeof frame.selection !== 'object') return false;
+  const selectionType = frame.selection.type;
   if (
-    frame.selection.type !== 'node' &&
-    frame.selection.type !== 'variable' &&
-    frame.selection.type !== 'graph'
+    selectionType !== 'node' &&
+    selectionType !== 'variable' &&
+    selectionType !== 'event' &&
+    selectionType !== 'function' &&
+    selectionType !== 'class' &&
+    selectionType !== 'graph'
   ) {
     return false;
   }

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { createComplexExampleSnapshot } from './examples/complexExample';
 import { resolveSymbolCodegenLink } from './symbolCodegenLink';
+import { resolveCodePreviewHighlightNodeIds } from './projectSelection';
 
 const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
 
@@ -86,5 +87,48 @@ describe('resolveSymbolCodegenLink', () => {
     });
 
     expect(link!.tabId).toBe(CALCULATOR_GRAPH_ID);
+  });
+
+  test('function selection prefers active overload graph tab', () => {
+    const func = snapshot.functions.find((f) => f.id === 'fn-add')!;
+    const overloadTab = func.overloads[0]?.graphTabId ?? func.id;
+
+    const link = resolveSymbolCodegenLink({
+      ...baseInput,
+      activeGraphTab: overloadTab,
+      selection: { type: 'function', id: 'fn-add' },
+    });
+
+    expect(link).not.toBeNull();
+    expect(link!.tabId).toBe(overloadTab);
+  });
+
+  test('dispatch node canvas selection highlights dispatch not member define', () => {
+    const eventLink = resolveSymbolCodegenLink({
+      ...baseInput,
+      selection: { type: 'event', id: 'evt-calc' },
+    });
+
+    const highlightNodeIds = resolveCodePreviewHighlightNodeIds(
+      { type: 'event', id: 'evt-calc' },
+      ['calc-dispatch'],
+      eventLink?.highlightNodeIds
+    );
+
+    expect(highlightNodeIds).toEqual(['calc-dispatch']);
+    expect(highlightNodeIds).not.toContain('calc-evt-calc-member');
+  });
+
+  test('node selection resolves to selected dispatch id for codegen link', () => {
+    const link = resolveSymbolCodegenLink({
+      ...baseInput,
+      activeGraphTab: CALCULATOR_GRAPH_ID,
+      selectedNodeIds: ['calc-dispatch'],
+      selection: { type: 'node', id: 'calc-dispatch' },
+    });
+
+    expect(link).not.toBeNull();
+    expect(link!.highlightNodeIds).toEqual(['calc-dispatch']);
+    expect(link!.primaryNodeId).toBe('calc-dispatch');
   });
 });

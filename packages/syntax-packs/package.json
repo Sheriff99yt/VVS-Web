@@ -10,12 +10,18 @@
   },
   "scripts": {
     "test": "bun test",
-    "generate:rosetta": "bun run scripts/generate-rosetta-goldens.ts"
+    "generate:rosetta": "bun run scripts/generate-rosetta-goldens.ts",
+    "run:rosetta": "bun run scripts/run-rosetta-suite.ts",
+    "validate:parse": "tsx scripts/validate-generated-parse.ts"
   },
   "dependencies": {
     "@vvs/graph-types": "workspace:*"
   },
   "devDependencies": {
-    "@vvs/transpiler": "workspace:*"
+    "@vvs/transpiler": "workspace:*",
+    "tree-sitter": "^0.25.0",
+    "tree-sitter-javascript": "^0.25.0",
+    "tree-sitter-python": "^0.25.0",
+    "tsx": "^4.23.0"
   }
 }

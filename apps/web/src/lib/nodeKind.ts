@@ -4,6 +4,7 @@ import { defaultInlineValueForPinType } from './pinInlineWidget';
 import { eventDisplayName } from './eventHelpers';
 import { mergePropertyDefaults } from '@vvs/syntax-registry';
 import { resolveNodeKindId as registryResolveNodeKindId } from '@vvs/syntax-registry';
+import { resolveGraphNodeKindId, normalizeGraphNodeData as normalizeGraphNodeDataCore } from '@vvs/graph-types';
 import { getInputKindLabel, syncGetInputNodePorts } from './getInputNode';
 
 export { inferKindIdFromLabel } from '@vvs/syntax-registry';
@@ -11,6 +12,8 @@ export { inferKindIdFromLabel } from '@vvs/syntax-registry';
 export function resolveNodeKindId(data: VVSNodeData): string {
   return registryResolveNodeKindId(data);
 }
+
+export { resolveGraphNodeKindId };
 
 export function getVariableName(data: VVSNodeData): string | undefined {
   const fromProps = data.properties?.variableName;
@@ -105,48 +108,37 @@ export function defaultInlineValueForPin(
 
 /** Backfill kindId, properties, and display label from legacy graph data. */
 export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
-  const seeded: VVSNodeData =
-    !data.kindId && data.graphBinding?.kind
-      ? {
-          ...data,
-          kindId:
-            data.graphBinding.kind === 'call_function'
-              ? 'vvs.project.call_function'
-              : data.graphBinding.kind === 'import_module'
-                ? 'vvs.project.import_module'
-                : data.graphBinding.kind === 'env_native'
-                  ? 'env.call_native'
-                  : data.graphBinding.kind === 'env_event'
-                    ? 'env.event_handler'
-                    : data.graphBinding.kind === 'use_macro'
-                      ? 'vvs.project.call_function'
-                      : data.kindId,
-        }
-      : data;
-
-  const kindId = resolveNodeKindId(seeded);
+  const core = normalizeGraphNodeDataCore(data);
+  const kindId = resolveNodeKindId(core);
   const def = getNodeKindDefinition(kindId);
-  const properties = mergePropertyDefaults(def?.propertySchema, seeded.properties);
+  const properties = mergePropertyDefaults(def?.propertySchema, core.properties);
 
   if ((kindId === 'variable_get' || kindId === 'variable_set') && !properties.variableName) {
-    const inferred = getVariableName(seeded);
+    const inferred =
+      typeof core.properties?.variableName === 'string'
+        ? core.properties.variableName
+        : core.label.startsWith('Get ')
+          ? core.label.slice(4).trim()
+          : core.label.startsWith('Set ')
+            ? core.label.slice(4).trim()
+            : undefined;
     if (inferred) properties.variableName = inferred;
   }
 
   if (kindId === 'event_define' || kindId === 'event_custom') {
-    const match = seeded.label.match(/^On\s+(.+)$/i);
+    const match = core.label.match(/^On\s+(.+)$/i);
     if (match?.[1] && !properties.eventName) properties.eventName = match[1];
   }
 
   if (kindId === 'event_dispatch') {
-    const match = seeded.label.match(/^Dispatch\s+(.+)$/i);
+    const match = core.label.match(/^Dispatch\s+(.+)$/i);
     if (match?.[1] && !properties.eventName) properties.eventName = match[1];
   }
 
-  const label = getNodeDisplayTitle({ ...seeded, kindId, properties });
+  const label = getNodeDisplayTitle({ ...core, kindId, properties });
 
-  const inlineValues = { ...seeded.inlineValues };
-  const inputs = seeded.inputs.length > 0 ? seeded.inputs : def?.inputs ?? seeded.inputs;
+  const inlineValues = { ...core.inlineValues };
+  const inputs = core.inputs.length > 0 ? core.inputs : def?.inputs ?? core.inputs;
   for (const input of inputs) {
     if (input.type === 'execution') continue;
     if (inlineValues[input.id] === undefined) {
@@ -156,7 +148,7 @@ export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
   }
 
   return syncGetInputNodePorts({
-    ...seeded,
+    ...core,
     kindId,
     category: data.category || def?.category || data.category,
     properties,

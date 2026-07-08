@@ -11,18 +11,18 @@ Broad phases for Vision Visual Scripting. Timelines are **directional**, not com
 ## Phase overview
 
 ```text
-Phase 1          Phase 2           Phase 3            Phase 4
-Web editor   →   Cloud + MCP   →   Community      →   Real-time
-+ transpiler     accounts          library            collaboration
+Phase 1          Phase 2                 Phase 3            Phase 4
+Web editor   →   Persistence, auth   →   Community      →   Real-time
+ + transpiler      + MCP core            library            collaboration
 
-Phase 5                              Phase 6
-UE6 editor plugin (in-engine)    →   Scale + polish
-(reuses v1 Verse emitter)            + more emitters
+Phase 5                                Phase 6
+UE6 editor plugin (in-engine)      →   Scale + polish
+(reuses v1 Verse emitter)              + more emitters
 ```
 
 ---
 
-## Phase 1 — Web editor & client transpiler *(largely shipped)*
+## Phase 1 — Web editor & client transpiler *(closed)*
 
 **Goal:** Prove the graph model and **text-shaped** generation pipeline in the browser without backend dependency.
 
@@ -35,17 +35,17 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 | **Languages v1** | Python, JavaScript/TypeScript, C++, **Verse** — client transpiler + web code preview |
 | **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; multi-file output (module + host entry) |
 | **Quality** | Snapshot tests on generated code; **Rosetta golden suite** + fidelity linter in `@vvs/syntax-packs`; graph validation (`PIN_TYPE_MISMATCH`, portability) |
-| **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, Subscribe/Emit multicast — **shipped** |
+| **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, Subscribe/Emit multicast, **explicit program entry** (`role: 'entry'`, no hidden `on_start`) — **shipped** |
 | **Project environments** | `@vvs/environment-templates` — VS Code–style templates, Environment API browse/spawn, built-in Python/JS packs — **shipped**; [environment_templates.md](environment_templates.md) |
 | **On-disk projects** | `.vvs/` overlay in existing repos — split JSON layout, `integration.json` emit paths, File System Access API (Chrome/Edge) — **shipped (browser)**; cloud sync still Phase 2 |
 
-**Status:** Phase 1 is **shipped** for the browser editor, v1 client transpiler, text-shaped graphs, project environments, folder-based `.vvs/` projects, OpenAPI/AsyncAPI import UI, overload picker, syntax pack lock settings, **local Go HTTP API**, and **local MCP**. Phase 2 adds **self-hosted Supabase (Auth + Postgres) + durable `pgx` persistence** — **near complete** in repo (GoTrue docker stack, cloud sync when authenticated, MCP JWT); full VPS/Caddy deploy remains ops follow-up — see [deployment.md](deployment.md).
+**Status:** Phase 1 is **closed and shipped** for the browser editor, v1 client transpiler, text-shaped graphs, project environments, folder-based `.vvs/` projects, OpenAPI/AsyncAPI import UI, overload picker, syntax pack lock settings, **local Go HTTP API**, and **local MCP**. Remaining cloud and production concerns are tracked in Phase 2 — see [deployment.md](deployment.md).
 
 ---
 
-## Phase 2 — Accounts, persistence & MCP
+## Phase 2 — Persistence, auth & MCP core
 
-**Goal:** Projects sync to the cloud; external AI tools edit graphs via MCP with production auth.
+**Goal:** Finish the core software architecture for durable project storage, user-scoped auth, and authenticated MCP access.
 
 **Deployment (locked):** [deployment.md](deployment.md) — self-hosted Supabase on VPS; Go + `pgx`; no PostgREST for app paths.
 
@@ -56,13 +56,27 @@ UE6 editor plugin (in-engine)    →   Scale + polish
 | **API** | Go REST — same `/api/projects`, compile, registry (replace in-memory store) |
 | **MCP** | Production `/mcp` with Bearer JWT; tools scoped per user |
 | **Editor sync** | Authenticated mode: Go/Postgres source of truth; localStorage as cache/draft |
-| **Ops** | Dev VPS + live VPS; Caddy TLS; Postgres backups; optional static web on shared hosting |
-| **PWA** | Offline graph editing + cached syntax registry (IndexedDB) |
 | **Connect AI** | TopNav modal — local MCP in dev; HTTPS MCP URL + token in prod |
 
-**Not in Phase 2:** PostgREST for CRUD, Supabase Realtime (collab is Phase 4 Go WebSockets), Redis, PWA offline sync.
+**Status:** Phase 2 core is **closed and shipped in repo**.
 
-**Phase 2 repo status (July 2026):** PostgresStore, JWT middleware, GoTrue docker-compose stack, authenticated cloud save/load, MCP session auth propagation, Connect AI prod guidance — **shipped in repo**. Remaining for production: VPS Compose + Caddy TLS, GitHub OAuth credentials, daily backups automation.
+- PostgresStore + migrations via **`pgx`**
+- JWT auth middleware + dev user path
+- GoTrue docker-compose local stack
+- Authenticated cloud save/load
+- Production MCP auth propagation
+- AuthButton + Bearer token client wiring
+
+### Separate track — Deployment & operations
+
+- Full Supabase Docker deploy on VPS
+- GitHub OAuth production configuration
+- Backups / health checks / pinned images
+- Optional offline sync / PWA follow-through
+
+**Not in Phase 2 core:** PostgREST for CRUD, Supabase Realtime (collab is Phase 4 Go WebSockets), Redis, VPS hosting, TLS, backups, and other service-operational work.
+
+**Roadmap focus:** product phases track **core systems of the software**. Hosting, deployment, backups, and similar service concerns are important, but they do **not** block core phase closure.
 
 ---
 

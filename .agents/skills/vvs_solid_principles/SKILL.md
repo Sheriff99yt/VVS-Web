@@ -23,6 +23,16 @@ Companion rules: `docs/naming_and_product_direction.md` · `docs/ui_api_delivery
 
 ---
 
+## Canvas source of truth (locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
+
+- **Single responsibility:** Symbol tables **index**; canvas define nodes **emit** — do not merge these concerns
+- Transpiler stages: `buildIrMembers` (from define chain) vs `appendIrMembers` (emit) — not symbol-array preamble
+- UI hooks that create symbols must dual-write define nodes — one reason to change per module
+
+---
+
 ## S — Single Responsibility
 
 **One module, one job.**

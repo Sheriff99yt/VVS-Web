@@ -1,13 +1,15 @@
 # Multi-Class Projects & Canvas-Defined Symbols
 
-**Status:** Design alignment (July 2026) — not implemented.  
+**Status:** Design alignment (July 2026) — **canvas define nodes shipped**; strict emit (no sidebar preamble) locked.  
 **Companion:** [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [naming_and_product_direction.md](../naming_and_product_direction.md) · [node_system.md](../node_system.md) · [current_state.md](../current_state.md)
 
 ---
 
 ## Summary
 
-Today each **project** maps to **one implicit module/class** (`projectDetails.moduleName`). Variables, functions, and events live in flat project-level symbol arrays; the transpiler **prepends** declarations from that symbol table before lowering graph bodies. The user vision extends text-shaped fidelity to **class formation**: multiple classes per project, a **class list** in the Project panel, **class-scoped** symbol browsing, and **define nodes on canvas** that emit declarations in graph order — not hidden preamble magic.
+**Canvas is the source of truth for generated code.** Each project has multiple **classes**; each class owns symbol arrays scoped by `classId`. Declarations emit from **define nodes on the class home graph** in author order — not from Project panel rows alone. Sidebar lists remain **indexes and CRUD shortcuts** that dual-write define nodes.
+
+Today: `ProjectSnapshot` v3, `class_define` / `var_define` / `function_define` / `event_member_define` on container graphs, ordered `ir.members` emit, strict analyzer errors (`DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`). **No** `appendLegacyPreamble` fallback.
 
 ---
 
@@ -22,14 +24,12 @@ Today each **project** maps to **one implicit module/class** (`projectDetails.mo
 | **Function declaration** | Created in panel; signature emitted from symbol table; body from function graph tab + `function_entry` node | **`function_define`** node on class graph emits signature; body still in linked sub-graph |
 | **Class declaration** | Implicit — emitter opens `class ${moduleName}` | **`class_define`** node (or ordered chain) opens class body; user sees formation order |
 | **Graph tabs** | `main` + one tab per function/overload | Class may own a **class graph** tab; functions remain sub-graph tabs scoped to class |
-| **Codegen fidelity** | Get/Set/Call nodes map to text; **declarations do not** | Declarations must map to visible text and `sourceMap` like other behavioral nodes |
-| **Calculator example** | Vars in sidebar; Get/Set on canvas; `def Add`/`def Clear` from symbol preamble | Class graph shows define nodes for `A`, `B`, `Result`, `Add`, `Clear` in author order |
+| **Codegen fidelity** | Define nodes + `sourceMap`; `appendIrMembers` only | Declarations must map to visible text and `sourceMap` like usage nodes — **required**, not optional |
+| **Calculator example** | Class graph define chain for `A`, `B`, `Result`, `Add`, `Clear`; usage nodes in flow | Same — fidelity reference template |
 
-### Architectural tension (intentional)
+### Architectural model (locked)
 
-The shipped model treats **sidebar symbols as source of truth** and **canvas nodes as usage sites**. The vision moves **declarations** onto the canvas while keeping **usage nodes** (Get/Set/Call) — aligning with [visual_to_text_fidelity.md](../visual_to_text_fidelity.md): *what you see on the graph is what you could have typed*.
-
-Sidebar lists remain useful as **indexes and CRUD shortcuts**, but codegen must not emit declarations that have no canvas correlate once define nodes ship.
+**Canvas define nodes are the codegen source of truth.** Sidebar symbol arrays index and edit symbols but **do not emit** declarations. Panel creates **dual-write** define nodes (`defineNodeSync`). This aligns with [visual_to_text_fidelity.md](../visual_to_text_fidelity.md): *what you see on the graph is what you could have typed*.
 
 ---
 
@@ -44,7 +44,7 @@ interface ClassSymbol {
   name: string;              // UI + emitted class/module name (replaces per-class moduleName)
   extendsType?: string;      // optional base type — OOP targets only
   description?: string;
-  /** Graph tab hosting class-level structure (define nodes, on_start, etc.). */
+  /** Graph tab hosting class-level structure (define nodes, program entry, etc.). */
   graphTabId?: string;       // defaults to id when class graph is created
   visibility?: 'public' | 'private';
 }
@@ -120,9 +120,9 @@ type IrMemberDecl =
   | { kind: 'EventDecl'; sourceGraphNodeId: string; symbol: ProjectEventDefinition };
 ```
 
-**Emitter rule change:** For class-scoped compile, **do not** iterate `ir.variables` / `ir.functions` independently of `members`. Walk `members` in order, then append handlers/start bodies that are wired from define/handler nodes.
+**Emitter rule (strict):** For class-scoped compile, **do not** iterate `ir.variables` / `ir.functions` independently of `members`. Walk `members` in order via `appendIrMembers`, then append handlers/start bodies wired from define/handler nodes.
 
-Legacy path (slice 0 / migration): if no define nodes present, fall back to current preamble behavior with a portability warning (`DECLARATION_NOT_ON_CANVAS`).
+**No legacy preamble:** `appendLegacyPreamble` and `useLegacyPreamble` are **removed**. If symbols exist without define nodes, `analyzeProject` emits `DEFINE_NODE_MISSING` or `DECLARATION_NOT_ON_CANVAS` and blocks Generate.
 
 Multi-class compile: one output file per class (existing multi-file pattern) or single file with multiple classes — profile-driven via `integration.json` / language profile.
 
@@ -167,7 +167,7 @@ Multi-class compile: one output file per class (existing multi-file pattern) or 
 
 | Tab type | Purpose |
 |----------|---------|
-| `class` (new) | Class structure graph — define nodes, on_start, top-level flow |
+| `class` (new) | Class structure graph — define nodes, program entry handler, top-level flow |
 | `function` | Function body (unchanged); parent = `classId` |
 | `main` | **Migrate to `class` tab** — alias for default class graph during v2→v3 |
 
@@ -191,8 +191,8 @@ Today:
 Target:
   class graph define nodes → analyze member order → IrClass.members[]
   function sub-graphs → functionBodies (unchanged)
-  main/class graph flow → onStartBody, eventHandlers (unchanged)
-  emit walks members[] then handlers (no duplicate preamble)
+  entry + custom event handlers → eventHandlers from event_define bodies (no hidden on_start)
+  emit walks members[] then handlers (no duplicate preamble; no transpiler-injected empty on_start)
 ```
 
 ### 3.2 Snapshot tests

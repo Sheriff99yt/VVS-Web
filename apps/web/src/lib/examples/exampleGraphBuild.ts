@@ -78,17 +78,6 @@ export function exampleDocument(nodes: VVSNode[], edges: VVSEdge[]): { nodes: VV
   return { nodes: normalizeExampleNodes(nodes), edges };
 }
 
-export function onStartNode(id: string, position: { x: number; y: number }): VVSNode {
-  return exampleNode(id, position, {
-    label: 'On Start',
-    category: 'Events',
-    kindId: 'event_on_start',
-    inputs: [],
-    outputs: [EXEC_OUT],
-    inlineValues: {},
-  });
-}
-
 export function printStringNode(
   id: string,
   position: { x: number; y: number },
@@ -235,6 +224,27 @@ export function boundCallFunction(
     inlineValues: {},
   };
   return exampleNode(id, position, applyFunctionCallBinding(empty, func));
+}
+
+export function boundImportClass(
+  id: string,
+  position: { x: number; y: number },
+  cls: ClassSymbol,
+  options?: { alias?: string }
+): VVSNode {
+  return exampleNode(id, position, {
+    label: `Import Class ${cls.name}`,
+    category: 'Imports',
+    kindId: 'import_class',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
+    graphBinding: { kind: 'import_class', symbolId: cls.id, targetClassId: cls.id },
+    properties: {
+      targetClassId: cls.id,
+      ...(options?.alias ? { alias: options.alias } : {}),
+    },
+  });
 }
 
 export function boundEventDefine(

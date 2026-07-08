@@ -18,6 +18,8 @@ We are working toward a **portable visual programming model** — graph schema, 
 - **Game engines** — UE6 plugin (roadmap) reuses the **v1 Verse emitter** for in-engine authoring
 - **Everything else** — education, tooling, scripting glue — via open node packs and syntax profiles
 
+**Canvas is the source of truth for generated code.** Every line in export must come from a canvas node with `sourceMap` coverage. The Project panel symbol lists (`variables[]`, `functions[]`, `events[]`) are **indexes and CRUD shortcuts** — they organize and edit symbols but do not emit declarations on their own. **Declare** on the graph (`class_define`, `var_define`, `function_define`, `event_member_define`); **use** where logic runs (Get/Set, Call, dispatch). See [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Canvas is the source of truth.
+
 VVS Web exists because that vision needs a **modern, accessible, openly developed foundation** — not a single-vendor desktop app tied to one install path.
 
 ---

@@ -8,6 +8,7 @@ import type {
   IrForLoop,
   IrIfBranch,
   IrModuleImport,
+  IrImportClass,
   IrPrint,
   IrSequence,
   IrStructuredStatement,
@@ -217,6 +218,27 @@ export function createStmtPrinters(
       if (stmt.kind !== 'CallFunction') return null;
       const s = stmt as IrCallFunction;
       const { indent, family } = ctx;
+      if (s.crossClass && s.targetClassName) {
+        const classRef = s.targetClassName;
+        if (family === 'python') {
+          const receiver = s.instanceCall ? `${classRef}()` : classRef;
+          const call = s.instanceCall ? `${receiver}.${s.calleeName}()` : `${classRef}.${s.calleeName}()`;
+          return { text: `${indent}${call}`, expressionSpans: [] };
+        }
+        if (family === 'javascript') {
+          const receiver = s.instanceCall ? `new ${classRef}()` : classRef;
+          const call = s.instanceCall ? `${receiver}.${s.calleeName}();` : `${classRef}.${s.calleeName}();`;
+          return { text: `${indent}${call}`, expressionSpans: [] };
+        }
+        if (family === 'cpp') {
+          const receiver = s.instanceCall ? `${classRef}()` : classRef;
+          const call = s.instanceCall ? `${receiver}.${s.calleeName}();` : `${classRef}::${s.calleeName}();`;
+          return { text: `${indent}${call}`, expressionSpans: [] };
+        }
+        if (family === 'verse') {
+          return { text: `${indent}${classRef}.${s.calleeName}()`, expressionSpans: [] };
+        }
+      }
       if (family === 'python') {
         const text = s.instanceCall ? `${indent}self.${s.calleeName}()` : `${indent}${s.calleeName}()`;
         return { text, expressionSpans: [] };
@@ -518,6 +540,32 @@ export function createStmtPrinters(
       if (stmt.kind !== 'ModuleImport') return null;
       const s = stmt as IrModuleImport;
       return { text: importTextForSlug(s.moduleSlug, ctx.family), expressionSpans: [] };
+    },
+
+    ImportClass: (stmt, ctx) => {
+      if (stmt.kind !== 'ImportClass') return null;
+      const s = stmt as IrImportClass;
+      const classRef = s.alias ?? s.className;
+      const { family } = ctx;
+      if (family === 'python') {
+        const text = s.alias
+          ? `from ${s.moduleName} import ${s.className} as ${s.alias}`
+          : `from ${s.moduleName} import ${s.className}`;
+        return { text, expressionSpans: [] };
+      }
+      if (family === 'javascript') {
+        const text = s.alias
+          ? `import { ${s.className} as ${s.alias} } from './${s.moduleName}.js';`
+          : `import { ${s.className} } from './${s.moduleName}.js';`;
+        return { text, expressionSpans: [] };
+      }
+      if (family === 'cpp') {
+        return { text: `#include "${s.moduleName}.h"`, expressionSpans: [] };
+      }
+      if (family === 'verse') {
+        return { text: `using { ${classRef} }`, expressionSpans: [] };
+      }
+      return { text: `// import class ${s.className} from ${s.moduleName}`, expressionSpans: [] };
     },
 
     CallNative: (stmt, ctx) => {
