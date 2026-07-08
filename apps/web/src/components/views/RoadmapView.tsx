@@ -20,7 +20,7 @@ const STATUS_META: Record<
   { label: string; className: string; icon: React.ReactNode }
 > = {
   done: {
-    label: 'Shipped',
+    label: 'Done',
     className: 'text-emerald-400/90 bg-emerald-500/10 border-emerald-500/25',
     icon: <CheckCircle2 size={11} className="text-emerald-400 shrink-0" />,
   },
@@ -43,7 +43,7 @@ const PHASE_STATUS_STYLE: Record<RoadmapPhase['status'], string> = {
 };
 
 const PHASE_STATUS_LABEL: Record<RoadmapPhase['status'], string> = {
-  shipped: 'Shipped',
+  shipped: 'Complete',
   active: 'Active',
   planned: 'Planned',
 };
@@ -125,7 +125,7 @@ function RoadmapSectionBlock({
         ) : null}
         {isShipped ? (
           <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border text-emerald-400/90 bg-emerald-500/10 border-emerald-500/25">
-            Shipped
+            Done
           </span>
         ) : null}
       </h3>
@@ -143,11 +143,44 @@ function RoadmapSectionBlock({
   );
 }
 
+function SymbolVocabularyCallout() {
+  return (
+    <div className="rounded-lg border border-sky-500/25 bg-sky-500/5 px-4 py-3 space-y-2">
+      <p className="text-[11px] font-medium text-sky-300/90">
+        Symbol vocabulary realignment — in progress (Phase 3)
+      </p>
+      <ul className="text-[11px] text-zinc-500 space-y-1">
+        <li className="flex items-start gap-2">
+          <CircleDashed size={11} className="text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            <span className="text-zinc-300">Declare</span> variables, functions, events &amp; classes on the member chain
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <CircleDashed size={11} className="text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            <span className="text-zinc-300">On</span> event handlers ·{' '}
+            <span className="text-zinc-300">Call</span> / <span className="text-zinc-300">Dispatch</span>{' '}
+            at invoke sites — <span className="font-mono text-zinc-400">kindId</span>s unchanged
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <Circle size={11} className="text-zinc-500 shrink-0 mt-0.5" />
+          <span>
+            Cross Over Architecture deferred — single-target portability warnings in place; node
+            effectiveness indicators planned next
+          </span>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 function EventFidelityCallout() {
   return (
     <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-4 py-3 space-y-2">
       <p className="text-[11px] font-medium text-emerald-300/90">
-        Event fidelity refactor — shipped (Phase 1)
+        Event fidelity refactor — done (Phase 1)
       </p>
       <ul className="text-[11px] text-zinc-500 space-y-1">
         <li className="flex items-start gap-2">
@@ -199,7 +232,7 @@ function PhaseProgressBar({ progress }: { progress: PhaseProgress }) {
   return (
     <div
       className="h-1.5 rounded-full bg-zinc-800 overflow-hidden flex"
-      title={`${counts.done} shipped · ${counts.partial} in progress · ${counts.planned} planned`}
+      title={`${counts.done} done · ${counts.partial} in progress · ${counts.planned} planned`}
     >
       {doneWidth > 0 ? (
         <div className="h-full bg-emerald-500/90" style={{ width: `${doneWidth}%` }} />
@@ -239,7 +272,7 @@ function PhaseProgressCard({ progress }: { progress: PhaseProgress }) {
       </div>
       {counts.total > 0 ? (
         <p className="text-[9px] text-zinc-600 mt-1.5 tabular-nums">
-          <span className="text-emerald-500/90">{counts.done} shipped</span>
+          <span className="text-emerald-500/90">{counts.done} done</span>
           {counts.partial > 0 ? (
             <>
               {' · '}
@@ -313,7 +346,7 @@ function PhaseOverviewStrip() {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] text-zinc-600">
         <span className="inline-flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-sm bg-emerald-500/90" aria-hidden />
-          Shipped
+          Done
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-sm bg-amber-500/80" aria-hidden />
@@ -325,7 +358,7 @@ function PhaseOverviewStrip() {
         </span>
         {crossCutting.total > 0 ? (
           <span className="text-zinc-500">
-            + {crossCutting.total} cross-phase items ({crossCutting.done} shipped, {crossCutting.partial}{' '}
+            + {crossCutting.total} cross-phase items ({crossCutting.done} done, {crossCutting.partial}{' '}
             in progress, {crossCutting.planned} planned) in Coming soon
           </span>
         ) : null}
@@ -345,13 +378,13 @@ export function RoadmapView() {
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
             <span className="text-emerald-400/90 font-medium">Phase 1 closed</span> — syntax packs,
             IR transpiler, <span className="text-zinc-300">text-shaped graphs</span> (fidelity
-            alignment shipped July 2026),{' '}
+            alignment complete July 2026),{' '}
             <span className="text-zinc-300">canvas-as-source-of-truth codegen</span> (every export line
             maps to a graph node), graph-as-canvas multi-class model,{' '}
             <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go HTTP API, and
             local MCP. Event model:{' '}
             <span className="text-emerald-400/80">Dispatch</span> (direct{' '}
-            <span className="font-mono text-zinc-400">self.on_*()</span> calls) is shipped;{' '}
+            <span className="font-mono text-zinc-400">self.on_*()</span> calls) is done;{' '}
             <span className="text-rose-400/80">Emit/Subscribe</span> hidden-runtime nodes are
             rejected.{' '}
             <span className="text-indigo-300/90 font-medium">Phases 1 and 2 are closed</span>{' '}
@@ -388,6 +421,8 @@ export function RoadmapView() {
 
         <EventFidelityCallout />
 
+        <SymbolVocabularyCallout />
+
         <PhaseOverviewStrip />
 
         <div className="flex gap-1 p-0.5 bg-zinc-900 border border-zinc-800 rounded-md w-fit">
@@ -400,7 +435,7 @@ export function RoadmapView() {
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            Shipped (Phases 1-2)
+            Done (Phases 1-2)
           </button>
           <button
             type="button"

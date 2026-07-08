@@ -265,6 +265,8 @@ export type IrMemberDecl =
   | {
       kind: 'EventDecl';
       sourceGraphNodeId: string;
+      /** Canvas `event_define` handler node — owns def + body highlight when present. */
+      handlerSourceGraphNodeId?: string;
       symbol: ProjectEventDefinition;
       handlerName: string;
       paramNames: string[];

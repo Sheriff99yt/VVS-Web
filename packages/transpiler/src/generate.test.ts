@@ -63,24 +63,28 @@ describe('generateMockCode', () => {
     const code = generateMockCode(mainCtx(snapshot));
     const lines = code.split('\n');
 
-    const memberLine = (pattern: RegExp) =>
-      lines.findIndex((l) => pattern.test(l) && /^        self\./.test(l));
-
-    const lineA = memberLine(/self\.A = 0/);
-    const lineB = memberLine(/self\.B = 0/);
-    const lineResult = memberLine(/self\.Result = 0/);
-    const lineShow = memberLine(/self\.ShowResult = True/);
+    const lineDeclareStart = lines.findIndex((l) => l.includes('# Declare start'));
+    const lineA = lines.findIndex((l) => /^        self\.A = 0/.test(l));
+    const lineB = lines.findIndex((l) => /^        self\.B = 0/.test(l));
+    const lineResult = lines.findIndex((l) => /^        self\.Result = 0/.test(l));
+    const lineShow = lines.findIndex((l) => /self\.ShowResult = True/.test(l));
+    const lineDeclareAdd = lines.findIndex((l) => l.includes('# Declare Add'));
+    const lineDeclareClear = lines.findIndex((l) => l.includes('# Declare Clear'));
+    const lineDeclareCalc = lines.findIndex((l) => l.includes('# Declare calculate'));
     const lineAdd = lines.findIndex((l) => l.includes('def Add(self):'));
     const lineClear = lines.findIndex((l) => l.includes('def Clear(self):'));
     const lineOnStart = lines.findIndex((l) => l.includes('def on_start(self):'));
 
-    expect(lineOnStart).toBeGreaterThan(-1);
-    expect(lineOnStart).toBeLessThan(lineA);
-    expect(lineA).toBeGreaterThan(-1);
-    expect(lineB).toBeGreaterThan(lineA);
-    expect(lineResult).toBeGreaterThan(lineB);
-    expect(lineShow).toBeGreaterThan(lineResult);
-    expect(lineAdd).toBeGreaterThan(lineShow);
+    expect(lineDeclareStart).toBeGreaterThan(-1);
+    expect(lineDeclareStart).toBeLessThan(lineA);
+    expect(lineA).toBeLessThan(lineB);
+    expect(lineB).toBeLessThan(lineResult);
+    expect(lineResult).toBeLessThan(lineShow);
+    expect(lineDeclareAdd).toBeGreaterThan(lineShow);
+    expect(lineDeclareClear).toBeGreaterThan(lineDeclareAdd);
+    expect(lineDeclareCalc).toBeGreaterThan(lineDeclareClear);
+    expect(lineOnStart).toBeGreaterThan(lineDeclareCalc);
+    expect(lineAdd).toBeGreaterThan(lineOnStart);
     expect(lineClear).toBeGreaterThan(lineAdd);
   });
 
@@ -158,20 +162,25 @@ describe('generateMockCode', () => {
     expect(result.fragments?.['calc-set-a']).toContain('A');
   });
 
-  test('event member define nodes map to full handler block in sourceMap', () => {
+  test('event member define nodes map to declare placeholder or cpp prototype', () => {
     const snapshot = createComplexExampleSnapshot();
     const result = generateMockTranspileResult(mainCtx(snapshot));
 
-    const handlerRanges = result.sourceMap['calc-evt-calc-member'];
-    expect(handlerRanges?.length).toBeGreaterThan(0);
+    const memberRanges = result.sourceMap['calc-evt-calc-member'];
+    expect(memberRanges?.length).toBeGreaterThan(0);
 
     const content = result.files[0]!.content;
+    expect(content).toContain('# Declare calculate');
+    expect(result.fragments?.['calc-evt-calc-member']).toContain('Declare calculate');
+
     const handlerLine =
       content.split('\n').findIndex((l) => l.includes('def on_calculate(self')) + 1;
     expect(handlerLine).toBeGreaterThan(0);
-    expect(handlerRanges![0]!.startLine).toBeLessThanOrEqual(handlerLine);
-    expect(handlerRanges![0]!.endLine).toBeGreaterThanOrEqual(handlerLine);
-    expect(result.fragments?.['calc-evt-calc-member']).toContain('on_calculate');
+    expect(memberRanges![0]!.startLine).not.toBe(handlerLine);
+
+    const handlerRanges = result.sourceMap['calc-on-calculate'];
+    expect(handlerRanges?.length).toBeGreaterThan(0);
+    expect(handlerRanges![0]!.startLine).toBe(handlerLine);
   });
 
   test('On Start maps to on_start handler not run', () => {
@@ -182,7 +191,8 @@ describe('generateMockCode', () => {
     expect(content).toContain('def on_start(self):');
     expect(content).not.toContain('def run(self):');
     expect(result.sourceMap['calc-evt-start-member']?.length).toBeGreaterThan(0);
-    expect(result.fragments?.['calc-evt-start-member']).toContain('on_start');
+    expect(result.fragments?.['calc-evt-start-member']).toContain('Declare start');
+    expect(result.sourceMap['calc-start-handler']?.length).toBeGreaterThan(0);
   });
 
   test('Add function graph maps get and math nodes to expression spans', () => {
@@ -533,7 +543,13 @@ describe('generateMockCode', () => {
     expect(publicRange).toBeDefined();
     expect(publicRange!.endCol).toBe('public:'.length + 1);
 
-    const handlerRange = result.sourceMap['calc-evt-calc-member']?.[0];
+    const memberRange = result.sourceMap['calc-evt-calc-member']?.[0];
+    expect(memberRange).toBeDefined();
+    const memberLine = lines[memberRange!.startLine - 1] ?? '';
+    expect(memberLine).toContain('void on_calculate();');
+    expect(memberRange!.startLine).toBe(memberRange!.endLine);
+
+    const handlerRange = result.sourceMap['calc-on-calculate']?.[0];
     expect(handlerRange).toBeDefined();
     const handlerCloseLine = lines[handlerRange!.endLine - 1] ?? '';
     expect(handlerCloseLine.trimEnd()).toMatch(/}$/);

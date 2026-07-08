@@ -299,7 +299,7 @@ export function classDefineNode(
   cls: ClassSymbol
 ): VVSNode {
   return exampleNode(id, position, {
-    label: `Class ${cls.name}`,
+    label: `Declare ${cls.name}`,
     category: 'Project',
     kindId: 'class_define',
     inputs: [EXEC_IN],
@@ -319,7 +319,7 @@ export function varDefineNode(
   variable: VariableSymbol
 ): VVSNode {
   return exampleNode(id, position, {
-    label: `Define ${variable.name}`,
+    label: `Declare ${variable.name}`,
     category: 'Variables',
     kindId: 'var_define',
     inputs: [EXEC_IN],
@@ -344,7 +344,7 @@ export function functionDefineNode(
 ): VVSNode {
   const overload = func.overloads[0];
   return exampleNode(id, position, {
-    label: `Define ${func.name}`,
+    label: `Declare ${func.name}`,
     category: 'Project',
     kindId: 'function_define',
     inputs: [EXEC_IN],
@@ -369,7 +369,7 @@ export function eventMemberDefineNode(
   event: ProjectEventDefinition
 ): VVSNode {
   return exampleNode(id, position, {
-    label: `Define ${event.name}`,
+    label: `Declare ${event.name}`,
     category: 'Events',
     kindId: 'event_member_define',
     inputs: [EXEC_IN],

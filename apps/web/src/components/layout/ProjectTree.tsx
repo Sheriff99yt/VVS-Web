@@ -45,11 +45,23 @@ import type { VariableBinding } from '@/types/graph';
 import { findGraphIdsUsingVariable } from '@/lib/graphRelations';
 import { useEditorFocus } from '@/hooks/useEditorFocus';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
+import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import {
   listGeneratedExports,
   listEventDispatchers,
 } from '@/lib/projectTree';
 import { createEventId, EVENT_DRAG_MIME, type EventDragPayload } from '@/lib/eventHelpers';
+import { dispatchNavigateToNode } from '@/lib/graphNavigation';
+import { SPAWN_EVENT_NODE_EVENT } from '@/components/layout/GraphFloatingDetails';
+import {
+  findHandlerNodeForEvent,
+  findMemberDeclareNodeForSymbol,
+  hasDefineNodeForEvent,
+  hasDefineNodeForFunction,
+  hasHandlerNodeForEvent,
+  insertDefineNodeForEvent,
+  insertDefineNodeForFunction,
+} from '@/lib/defineNodeSync';
 import {
   dispatchSpawnEnvironmentNode,
   type EnvironmentSpawnAction,
@@ -490,6 +502,31 @@ function matchesFilter(text: string, query: string): boolean {
   return text.toLowerCase().includes(query);
 }
 
+function CanvasStatusBadge({
+  label,
+  ok,
+  onClick,
+}: {
+  label: string;
+  ok: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 px-1 py-0.5 rounded text-[8px] border ${
+        ok
+          ? 'bg-emerald-500/10 text-emerald-400/90 border-emerald-500/25 hover:bg-emerald-500/20'
+          : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+      }`}
+      title={ok ? `Focus ${label} on canvas` : `Add missing ${label} on canvas`}
+    >
+      {ok ? '✓' : '⚠'} {label}
+    </button>
+  );
+}
+
 export type ProjectTreeMode = 'canvas' | 'references';
 
 export interface ProjectTreeProps {
@@ -525,10 +562,13 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     referenceVariableName,
     environmentId,
     environmentVersion,
+    markTabDirty,
+    setCompileState,
   } = useProject();
 
   const editorFocus = useEditorFocus();
   const documents = useGraphDocuments();
+  const { patchAllDocuments } = useGraphWorkspace();
   const { deleteSymbol, getUsageSummary, addVariableWithDefine, addFunctionWithDefine, addEventWithDefine } =
     useSymbolLifecycle();
   const { createClass, renameClass, deleteClass, canDeleteClass, moveClassToContainer } =
@@ -992,12 +1032,145 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const eventRowMeta = (entry: { dispatchCount: number; subscriberCount: number }) => {
     const parts: string[] = [];
     if (entry.dispatchCount > 0) {
-      parts.push(`${entry.dispatchCount} call${entry.dispatchCount === 1 ? '' : 's'}`);
+      parts.push(`${entry.dispatchCount} dispatch${entry.dispatchCount === 1 ? '' : 'es'}`);
     }
     if (entry.subscriberCount > 0) {
       parts.push(`${entry.subscriberCount} sub`);
     }
     return parts.length > 0 ? parts.join(' · ') : undefined;
+  };
+
+  const focusOrInsertFunctionDeclare = useCallback(
+    (func: FunctionSymbol, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!documents || isReferenceMode) return;
+      const cls = classes.find((c) => c.id === symbolClassId(func));
+      if (!cls) return;
+
+      editorFocus.focusTreeSymbolOnClass(cls, { type: 'function', id: func.id });
+
+      const declared = hasDefineNodeForFunction(documents, cls, func.id);
+      if (declared) {
+        const target = findMemberDeclareNodeForSymbol(documents, cls, 'function', func.id);
+        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+        return;
+      }
+
+      const next = insertDefineNodeForFunction(documents, cls, func);
+      patchAllDocuments(() => next);
+      markTabDirty(classGraphTabId(cls));
+      setCompileState('dirty');
+      const target = findMemberDeclareNodeForSymbol(next, cls, 'function', func.id);
+      if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+    },
+    [
+      documents,
+      isReferenceMode,
+      classes,
+      editorFocus,
+      patchAllDocuments,
+      markTabDirty,
+      setCompileState,
+    ]
+  );
+
+  const focusOrInsertEventDeclare = useCallback(
+    (eventId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!documents || isReferenceMode) return;
+      const event = events.find((item) => item.id === eventId);
+      const cls = event ? classes.find((c) => c.id === symbolClassId(event)) : undefined;
+      if (!event || !cls) return;
+
+      editorFocus.focusTreeSymbolOnClass(cls, { type: 'event', id: eventId });
+
+      const declared = hasDefineNodeForEvent(documents, cls, eventId);
+      if (declared) {
+        const target = findMemberDeclareNodeForSymbol(documents, cls, 'event', eventId);
+        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+        return;
+      }
+
+      const next = insertDefineNodeForEvent(documents, cls, event);
+      patchAllDocuments(() => next);
+      markTabDirty(classGraphTabId(cls));
+      setCompileState('dirty');
+      const target = findMemberDeclareNodeForSymbol(next, cls, 'event', eventId);
+      if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+    },
+    [
+      documents,
+      isReferenceMode,
+      events,
+      classes,
+      editorFocus,
+      patchAllDocuments,
+      markTabDirty,
+      setCompileState,
+    ]
+  );
+
+  const focusOrInsertEventHandler = useCallback(
+    (eventId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!documents || isReferenceMode) return;
+      const event = events.find((item) => item.id === eventId);
+      const cls = event ? classes.find((c) => c.id === symbolClassId(event)) : undefined;
+      if (!event || !cls) return;
+
+      editorFocus.focusTreeSymbolOnClass(cls, { type: 'event', id: eventId });
+
+      const hasHandler = hasHandlerNodeForEvent(documents, eventId);
+      if (hasHandler) {
+        const target = findHandlerNodeForEvent(documents, eventId);
+        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+        return;
+      }
+
+      window.dispatchEvent(
+        new CustomEvent(SPAWN_EVENT_NODE_EVENT, {
+          detail: { eventId, role: 'define' },
+        })
+      );
+    },
+    [documents, isReferenceMode, events, classes, editorFocus]
+  );
+
+  const renderFunctionCanvasStatus = (func: FunctionSymbol) => {
+    if (!documents || isReferenceMode) return null;
+    const cls = classes.find((c) => c.id === symbolClassId(func));
+    if (!cls) return null;
+    const declared = hasDefineNodeForFunction(documents, cls, func.id);
+    return (
+      <CanvasStatusBadge
+        label="Declare"
+        ok={declared}
+        onClick={(e) => focusOrInsertFunctionDeclare(func, e)}
+      />
+    );
+  };
+
+  const renderEventCanvasStatus = (eventId: string) => {
+    if (!documents || isReferenceMode) return null;
+    const event = events.find((item) => item.id === eventId);
+    const cls = event ? classes.find((c) => c.id === symbolClassId(event)) : undefined;
+    if (!event || !cls) return null;
+    const declared = hasDefineNodeForEvent(documents, cls, eventId);
+    const hasHandler = hasHandlerNodeForEvent(documents, eventId);
+    return (
+      <div className="flex items-center gap-0.5 shrink-0">
+        <CanvasStatusBadge
+          label="Declare"
+          ok={declared}
+          onClick={(e) => focusOrInsertEventDeclare(eventId, e)}
+        />
+        <CanvasStatusBadge
+          label="Handler"
+          ok={hasHandler}
+          onClick={(e) => focusOrInsertEventHandler(eventId, e)}
+        />
+      </div>
+    );
   };
 
   const selectVariable = isReferenceMode ? selectVariableForReferences : selectVariableInCanvas;
@@ -1700,6 +1873,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     }}
                     suffix={
                       <div className="flex items-center gap-0.5 shrink-0">
+                        {renderFunctionCanvasStatus(f)}
                         {isTabDirty(f.id) ? (
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Uncompiled changes" />
                         ) : null}
@@ -1812,7 +1986,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           {filteredEvents.length === 0 && !isAddingEvent
             ? emptyHint(
                 classEvents.length === 0
-                  ? 'No events yet — use + to add, then drag call to graph for Call or Declare.'
+                  ? 'No events yet — use + to add, then drag dispatch to graph.'
                   : 'No match.'
               )
             : filteredEvents.map((entry) => {
@@ -1834,17 +2008,20 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       onOpen={() => openEventHomeGraph(entry.id)}
                       suffix={
                         isReferenceMode ? undefined : (
-                          <button
-                            type="button"
-                            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                            title="Remove event"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteEvent(entry.id);
-                            }}
-                          >
-                            <Trash2 size={11} />
-                          </button>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {renderEventCanvasStatus(entry.id)}
+                            <button
+                              type="button"
+                              className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
+                              title="Remove event"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEvent(entry.id);
+                              }}
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
                         )
                       }
                     />
@@ -1852,9 +2029,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       <TreeRow
                         depth="l2"
                         icon={<div className="w-1 h-1 rounded-full bg-violet-400/60 shrink-0 ml-2" />}
-                        label="call"
+                        label="dispatch"
                         meta="drag to graph"
-                        hint="Drag to graph — choose Call or Declare"
+                        hint="Drag to graph — choose Dispatch or Declare"
                         canvasDrag={{
                           mimeType: EVENT_DRAG_MIME,
                           payload: JSON.stringify(dragPayload),

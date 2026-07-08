@@ -210,7 +210,7 @@ Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push 
 | Visual | Text | Notes |
 |--------|------|-------|
 | **Call Function** | `self.foo(args)` | One call node → one call site |
-| **Define** (event) | `def on_foo(self, …):` | Handler body |
+| **Define** (event handler) | `def on_foo(self, …):` | Handler body |
 | **Dispatch** | `self.on_foo(…)` | Direct handler call — one visible line per dispatch node |
 | **Conversion** | `str(x)`, etc. | Never folded into consumers |
 | **var_define** / **function_define** | `self.x = …` / `def foo(…):` | Declaration position from exec chain order |
@@ -635,7 +635,7 @@ flowchart LR
 
 ## 12. Event dispatchers (custom events)
 
-**Status:** Shipped (July 2026) — project-level `events[]`, **Define** and **Dispatch** node kinds, direct-call emit in `@vvs/transpiler`. **Emit** / **Subscribe** kinds exist in the registry for legacy graphs only — **blocked** from spawn and codegen (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe` helpers.
+**Status:** Shipped (July 2026) — project-level `events[]`, **Declare** (member chain) + **On** (handler) + **Dispatch** node kinds, direct-call emit in `@vvs/transpiler`. **Emit** / **Subscribe** kinds exist in the registry for legacy graphs only — **blocked** from spawn and codegen (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe` helpers.
 
 Unreal **Event Dispatchers** are one engine’s name for a universal pattern: **named signals with typed parameters, subscribers, and a broadcast**. VVS models that in the **graph + IR**; language-specific idioms live only in the **emitter**.
 
@@ -643,8 +643,8 @@ Unreal **Event Dispatchers** are one engine’s name for a universal pattern: **
 
 | Kind | `events[]` role | Canvas pattern | Codegen |
 |------|-----------------|----------------|---------|
-| **Program entry** | `role: 'entry'` | `event_member_define` + `event_define` (same as custom events) | `def on_start(self):` — only when user declared entry on the class graph |
-| **Custom event** | `role: 'custom'` (default) | `event_member_define` + `event_define` + `event_dispatch` | `def on_{name}(self, …)` |
+| **Program entry** | `role: 'entry'` | **Declare** (`event_member_define`) + **On** (`event_define`) | `def on_start(self):` — only when user declared entry on the class graph |
+| **Custom event** | `role: 'custom'` (default) | **Declare** + **On** + **Dispatch** | `def on_{name}(self, …)` + `self.on_{name}(…)` at dispatch |
 | **Lifecycle (deprecated)** | — | `event_on_start` node | **Removed** — analyzer error `LIFECYCLE_NODE_DEPRECATED` |
 
 Program entry is **first-class project data** (`events[]` with `role: 'entry'`), not a hidden lifecycle shortcut. The transpiler **never** injects an empty `on_start()`; host runners still call `App().on_start()` but that method exists only if the user wired an entry handler on canvas.
@@ -655,8 +655,9 @@ Custom events remain listed in the project Events tree. Entry events appear ther
 
 ```text
 EventDefinition(id, name, parameters)
-Define(eventId)     → handler entry + output pins = parameters
-Dispatch(eventId)   → exec + input pins = parameters
+Declare(eventId)    → event_member_define on define chain (member slot)
+On(eventId)         → event_define handler entry + output pins = parameters
+Dispatch(eventId)   → event_dispatch — exec + input pins = parameters
 ```
 
 Same idea across ecosystems:
@@ -680,12 +681,13 @@ interface ProjectEventDefinition {
 }
 ```
 
-Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. Legacy graphs without `events[]` are repaired on load by inferring definitions from existing **Define** nodes.
+Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. Legacy graphs without `events[]` are repaired on load by inferring definitions from existing declare/handler nodes.
 
 ### 12.4 Node kinds (registry)
 
 | kindId | UI title | Role |
 |--------|----------|------|
+| `event_member_define` | Declare … | Member slot on define chain; `properties.eventId` |
 | `event_on_start` | On Start | **Deprecated** — use `role: 'entry'` event + define chain |
 | `event_on_update` | On Update | Lifecycle tick (engine hook) |
 | `event_define` | On … | Handler entry; `properties.eventId` |
@@ -709,12 +711,16 @@ Semantics (not label strings):
 ```mermaid
 flowchart LR
   subgraph project ["Project data"]
-    ED["EventDefinition\nOn damage + params"]
+    ED["EventDefinition\ndamage + params"]
   end
 
-  subgraph graph ["Graph"]
-    DEF["Define node\nOn damage"]
-    DISP["Dispatch node\nDispatch damage"]
+  subgraph chain ["Member chain"]
+    DECL["Declare damage\nevent_member_define"]
+  end
+
+  subgraph flow ["Class graph flow"]
+    ON["On damage\nevent_define"]
+    DISP["Dispatch damage\nevent_dispatch"]
     BODY["Print, Branch, …"]
   end
 
@@ -728,9 +734,11 @@ flowchart LR
     JS["onDamage(amt)\nthis.onDamage(amt)"]
   end
 
-  ED --> DEF
+  ED --> DECL
+  ED --> ON
   ED --> DISP
-  DEF --> H
+  DECL --> H
+  ON --> H
   DISP --> D
   BODY --> H
   H --> PY
@@ -749,7 +757,8 @@ Uses the same `TranspileResult.sourceMap` contract (§6):
 
 | Node | Highlight target |
 |------|------------------|
-| **Define** | Full handler block (`def on_damage(self, …):` …) |
+| **Declare** (`event_member_define`) | Native declaration when the target has one (e.g. C++ `void on_x();`); otherwise a **comment placeholder** with the node label (e.g. `# Declare x`) |
+| **On** (`event_define`) | Full handler block (`def on_x(self):` …) |
 | **Dispatch** | Dispatch call line |
 | **Parameter pins** | Argument sub-expressions (`ExprSpan`) |
 
@@ -757,12 +766,14 @@ No re-transpile on selection.
 
 ### 12.7 Cross-language emit (phase 1)
 
-| Target | Define | Dispatch |
-|--------|--------|----------|
-| Python | `def on_damage(self, amount):` | `self.on_damage(amount)` |
-| JavaScript | `on_damage(amount) {` | `this.on_damage(amount);` |
-| C++ | `void on_damage(float amount) {` | `on_damage(amount);` |
-| Verse | `on_damage<override>(Amount : float) : void =` | `on_damage(Amount)` |
+| Target | Declare (member chain) | On (handler) | Dispatch |
+|--------|------------------------|--------------|----------|
+| Python | `# Declare damage` | `def on_damage(self, amount):` | `self.on_damage(amount)` |
+| JavaScript | `// Declare damage` | `on_damage(amount) {` | `this.on_damage(amount);` |
+| C++ | `void on_damage(float amount);` | `void on_damage(float amount) { … }` | `on_damage(amount);` |
+| Verse | `# Declare damage` | `on_damage<override>(Amount : float) : void =` | `on_damage(Amount)` |
+
+Languages without a separate member-declaration form emit **comment placeholders** for Declare nodes (and for function Declare slots) so the canvas node still maps to a visible, locatable line. Handler bodies always come from **On** nodes.
 
 Parameter names are derived from event parameter labels (snake_case in Python, camelCase optional later in profiles).
 
@@ -770,9 +781,9 @@ Parameter names are derived from event parameter labels (snake_case in Python, c
 
 | Layer | Term |
 |-------|------|
-| **UI** | Events / **On …** / **Dispatch …** |
+| **UI** | **Declare …** (member chain) / **On …** (handler) / **Dispatch …** (invoke) |
 | **Project JSON** | `events[]`, `eventId` |
-| **Registry** | `event_define`, `event_dispatch` |
+| **Registry** | `event_member_define`, `event_define`, `event_dispatch` — `kindId`s stable |
 | **IR** | `EventDefinition`, `EventHandler`, `DispatchEvent` |
 | **Tree section** | Event Dispatchers (UE-familiar label; canonical type is `events[]`) |
 
@@ -785,7 +796,7 @@ Parameter names are derived from event parameter labels (snake_case in Python, c
 | Symbol | Inspector | Pin sync |
 |--------|-----------|----------|
 | Variable | `VariablePropertiesPanel` | Get/Set nodes |
-| Event | `EventPropertiesPanel` | Define/Dispatch |
+| Event | `EventPropertiesPanel` | Declare / On / Dispatch |
 | Function | `FunctionPropertiesPanel` | Call nodes + function entry |
 
 **Portability:** `@vvs/language-profiles` + `runProjectAnalysis()` warn when graph features are unsupported for the selected target. See [language_profiles.md](language_profiles.md).

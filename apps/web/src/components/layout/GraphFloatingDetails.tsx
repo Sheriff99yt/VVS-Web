@@ -35,8 +35,47 @@ import { openFunctionGraphTab } from '@/lib/graphTabs';
 import type { FunctionSymbol } from '@/types/graph';
 import { readUiPreference, writeUiPreferences, clampDetailsPanelHeight } from '@/lib/uiPreferences';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
+import { activeClass } from '@/lib/classScope';
+import {
+  hasDefineNodeForEvent,
+  hasHandlerNodeForEvent,
+} from '@/lib/defineNodeSync';
 
 export const SPAWN_EVENT_NODE_EVENT = 'vvs:spawn-event-node';
+export const SPAWN_EVENT_DECLARE_MEMBER_EVENT = 'vvs:spawn-event-declare-member';
+
+const ROLE_CHIP_CLASS: Record<string, string> = {
+  Declare: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+  Handler: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
+  Call: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+  Dispatch: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+};
+
+function resolveNodeRoleChip(kindId: string | null): string | null {
+  if (!kindId) return null;
+  if (
+    kindId === 'var_define' ||
+    kindId === 'class_define' ||
+    kindId === 'function_define' ||
+    kindId === 'event_member_define'
+  ) {
+    return 'Declare';
+  }
+  if (kindId === 'event_define' || kindId === 'event_custom') return 'Handler';
+  if (kindId === 'event_dispatch') return 'Dispatch';
+  if (kindId === 'vvs.project.call_function' || kindId === 'call_function') return 'Call';
+  return null;
+}
+
+function NodeRoleChip({ role }: { role: string }) {
+  return (
+    <span
+      className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium border ${ROLE_CHIP_CLASS[role] ?? 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}
+    >
+      {role}
+    </span>
+  );
+}
 
 const BROKEN_PANEL_MIN_HEIGHT = 280;
 
@@ -55,8 +94,10 @@ function GraphFloatingDetailsPanel() {
     openTabs,
     setOpenTabs,
     setActiveGraphTab,
+    classes,
+    activeClassId,
   } = useProject();
-  const documents = useGraphDocuments();
+  const graphDocuments = useGraphDocuments();
   const {
     renameVariable,
     renameFunction,
@@ -204,7 +245,7 @@ function GraphFloatingDetailsPanel() {
 
   const handleOpenLinkedGraph = () => {
     if (!nodeData || !isLinkedGraphNode(nodeData.data) || !nodeData.data.linkedGraphId) return;
-    const entryId = findGraphEntryNodeId(documents ?? {}, nodeData.data.linkedGraphId);
+    const entryId = findGraphEntryNodeId(graphDocuments ?? {}, nodeData.data.linkedGraphId);
     if (!entryId) return;
     dispatchNavigateToNode(nodeData.data.linkedGraphId, entryId);
   };
@@ -240,6 +281,27 @@ function GraphFloatingDetailsPanel() {
   const boundVariable = nodeData ? resolveVariableForNode(nodeData.data, variables) : undefined;
   const isCommentNode = nodeData?.type === 'vvs_comment_node';
   const isRerouteNode = nodeData?.type === 'vvs_reroute_node';
+  const nodeRoleChip = selection.type === 'node' ? resolveNodeRoleChip(nodeKindId) : null;
+
+  const selectedEventDeclareStatus = useMemo(() => {
+    if (!selectedEvent || !graphDocuments) return null;
+    const cls = activeClass(classes, activeClassId);
+    if (!cls) return null;
+    return {
+      hasDeclare: hasDefineNodeForEvent(graphDocuments, cls, selectedEvent.id),
+      hasHandler: hasHandlerNodeForEvent(graphDocuments, selectedEvent.id),
+    };
+  }, [selectedEvent, graphDocuments, classes, activeClassId]);
+
+  const boundEventDeclareStatus = useMemo(() => {
+    if (!boundEvent || !graphDocuments) return null;
+    const cls = activeClass(classes, activeClassId);
+    if (!cls) return null;
+    return {
+      hasDeclare: hasDefineNodeForEvent(graphDocuments, cls, boundEvent.id),
+      hasHandler: hasHandlerNodeForEvent(graphDocuments, boundEvent.id),
+    };
+  }, [boundEvent, graphDocuments, classes, activeClassId]);
 
   const visible =
     (selection.type === 'node' && !isCommentNode && !isRerouteNode) ||
@@ -265,14 +327,37 @@ function GraphFloatingDetailsPanel() {
 
   const title = isBrokenRefSelection ? `Broken reference — ${baseTitle}` : baseTitle;
 
-  const spawnEventNode = (role: 'define' | 'dispatch') => {
-    if (!selectedEvent) return;
+  const inspectorEvent = selectedEvent ?? boundEvent ?? null;
+
+  const spawnEventNodeFor = (event: ProjectEventDefinition, role: 'define' | 'dispatch') => {
     window.dispatchEvent(
       new CustomEvent(SPAWN_EVENT_NODE_EVENT, {
-        detail: { eventId: selectedEvent.id, role },
+        detail: { eventId: event.id, role },
       })
     );
   };
+
+  const spawnEventDeclareMemberFor = (event: ProjectEventDefinition) => {
+    window.dispatchEvent(
+      new CustomEvent(SPAWN_EVENT_DECLARE_MEMBER_EVENT, {
+        detail: { eventId: event.id },
+      })
+    );
+  };
+
+  const eventCanvasActions = inspectorEvent
+    ? {
+        onSpawnDeclareMember:
+          isEventMemberDefineNode ||
+          (inspectorEvent.id === selectedEvent?.id
+            ? selectedEventDeclareStatus?.hasDeclare
+            : boundEventDeclareStatus?.hasDeclare)
+            ? undefined
+            : () => spawnEventDeclareMemberFor(inspectorEvent),
+        onSpawnHandler: () => spawnEventNodeFor(inspectorEvent, 'define'),
+        onSpawnDispatch: () => spawnEventNodeFor(inspectorEvent, 'dispatch'),
+      }
+    : {};
 
   const renderCompact = () => {
     if (isBrokenRefSelection && brokenRef && selectedNodeId) {
@@ -371,8 +456,7 @@ function GraphFloatingDetailsPanel() {
         <EventPropertiesPanel
           event={selectedEvent}
           onChange={handleEventChange}
-          onSpawnDefine={() => spawnEventNode('define')}
-          onSpawnDispatch={() => spawnEventNode('dispatch')}
+          {...eventCanvasActions}
         />
       )}
 
@@ -405,8 +489,7 @@ function GraphFloatingDetailsPanel() {
               <EventPropertiesPanel
                 event={boundEvent}
                 onChange={handleEventChange}
-                onSpawnDefine={() => spawnEventNode('define')}
-                onSpawnDispatch={() => spawnEventNode('dispatch')}
+                {...eventCanvasActions}
               />
             </div>
           ) : null}
@@ -460,6 +543,7 @@ function GraphFloatingDetailsPanel() {
     <FloatingPanelShell
       title={title}
       titleIcon={isBrokenRefSelection ? <AlertTriangle size={13} className="text-amber-400" /> : undefined}
+      headerExtra={nodeRoleChip ? <NodeRoleChip role={nodeRoleChip} /> : undefined}
       corner="top-right"
       expanded={effectiveExpanded}
       onToggleExpanded={toggleExpanded}

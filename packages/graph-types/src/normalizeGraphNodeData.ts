@@ -23,7 +23,14 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'Math Subtract') return 'math_subtract';
   if (label === 'Math Multiply') return 'math_multiply';
   if (label === 'Math Divide') return 'math_divide';
-  if (label.startsWith('Define Class') || label.startsWith('Class ')) return 'class_define';
+  if (label.startsWith('Declare Class') || label.startsWith('Class ')) return 'class_define';
+  if (label.startsWith('Declare Variable')) return 'var_define';
+  if (label.startsWith('Declare Function')) return 'function_define';
+  if (label.startsWith('Declare Event')) return 'event_member_define';
+  if (label.startsWith('Declare ') && category === 'Events') return 'event_member_define';
+  if (label.startsWith('Declare ') && category === 'Variables') return 'var_define';
+  if (label.startsWith('Declare ')) return 'function_define';
+  if (label.startsWith('Define Class')) return 'class_define';
   if (label.startsWith('Define Variable') || label.startsWith('Define ')) return 'var_define';
   if (label.startsWith('Define Function')) return 'function_define';
   if (label.startsWith('Get ')) return 'variable_get';

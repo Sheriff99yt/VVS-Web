@@ -23,7 +23,7 @@ export function isBindingCoaAllowed(
   if (!isCoaAuthoringActive(mode)) return true;
   if (binding === 'instance') return true;
   const feature = binding === 'static' ? 'variable.static' : 'variable.module';
-  return mode.allowedLanguages.every(
+  return mode!.allowedLanguages.every(
     (lang) => !isFeatureUnsupportedForLanguage(feature, lang)
   );
 }
@@ -36,7 +36,7 @@ export function isDataTypeCoaAllowed(
   const features = portabilityFeaturesForDataType(type);
   if (features.length === 0) return true;
   return features.every((feature) =>
-    mode.allowedLanguages.every((lang) => !isFeatureUnsupportedForLanguage(feature, lang))
+    mode!.allowedLanguages.every((lang) => !isFeatureUnsupportedForLanguage(feature, lang))
   );
 }
 

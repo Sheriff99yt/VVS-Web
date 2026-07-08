@@ -69,7 +69,7 @@ export function listEventDispatchers(
     return events
       .map((event) => ({
         id: event.id,
-        label: eventDisplayName(event.name),
+        label: event.name.trim() || 'Custom event',
         graphId: resolveEventHomeGraphId(event, documents, classes),
         subscriberCount: countEventSubscribers(event.id, documents),
         dispatchCount: countEventDispatches(event.id, documents),
@@ -93,12 +93,6 @@ function resolveEventHomeGraphId(
   if (cls) return classHomeGraphId(cls);
 
   return classHomeGraphId({ kind: 'class', id: classId, name: '' });
-}
-
-function eventDisplayName(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return 'Custom event';
-  return trimmed.toLowerCase().startsWith('on ') ? trimmed : `On ${trimmed}`;
 }
 
 function listLegacyEventDispatchers(

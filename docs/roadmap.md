@@ -1,6 +1,8 @@
 # VVS — Public Roadmap
 
-Broad phases for Vision Visual Scripting. Timelines are **directional**, not commitments — see [current_state.md](current_state.md) for what is shipped in this repository today.
+Broad phases for Vision Visual Scripting. Timelines are **directional**, not commitments — see [current_state.md](current_state.md) for what is implemented in this repository today.
+
+**Vocabulary alignment:** [design/terms_refactor_plan.md](design/terms_refactor_plan.md) · [design/language_neutral_vocabulary.md](design/language_neutral_vocabulary.md)
 
 **Lineage:** The roadmap builds on the original [Vision Visual Scripting](https://github.com/Sheriff99yt/Vision_Visual_Scripting) graduation project (graph → any language). **VVS Web** is the active codebase for an **open visual scripting language** aimed at all engines and workflows — see [history.md](history.md).
 

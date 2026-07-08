@@ -421,7 +421,7 @@ export function StartScreen() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-zinc-100">Roadmap</div>
                   <div className="text-xs text-zinc-500 mt-0.5">
-                    Shipped features and what&apos;s coming next
+                    Current features and what&apos;s coming next
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-zinc-300 transition-colors" />

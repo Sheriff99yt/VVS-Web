@@ -7,7 +7,7 @@ import {
   formatFunctionDefHeader,
   printContextForIr,
 } from './helpers';
-import { appendIrMembers, tagClassDeclLine, tagClassStructuralLine } from './members';
+import { appendIrMembers, appendMemberImplementations, tagClassDeclLine, tagClassStructuralLine } from './members';
 import { handlerBodyIndent } from '../lower/graphToIr';
 
 function appendCppEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHandler): void {
@@ -32,6 +32,7 @@ export function emitCppModule(sink: CodeSink, ir: IrModule): void {
   sink.appendRaw('public:');
   tagClassStructuralLine(sink, ir, publicLine);
   appendIrMembers(sink, ir);
+  appendMemberImplementations(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendCppEventHandler(sink, ir, handler);
   }

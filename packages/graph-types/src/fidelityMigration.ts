@@ -182,7 +182,7 @@ function migrateLegacyOnStartInDocument(
     type: 'vvs_standard_node' as const,
     position: { x: (classDefine?.position.x ?? 80) + 200, y: classDefine?.position.y ?? 40 },
     data: {
-      label: 'Define start',
+      label: 'Declare start',
       category: 'Events',
       kindId: 'event_member_define',
       inputs: [execIn],

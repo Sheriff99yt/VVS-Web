@@ -16,6 +16,8 @@ interface NodeContextMenuProps {
   currentGraphId: string;
   functions: FunctionSymbol[];
   events?: ProjectEventDefinition[];
+  functionsMissingDeclare?: FunctionSymbol[];
+  eventsMissingDeclare?: ProjectEventDefinition[];
   openTabs: GraphTab[];
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
@@ -33,6 +35,8 @@ export function NodeContextMenu({
   currentGraphId,
   functions,
   events,
+  functionsMissingDeclare,
+  eventsMissingDeclare,
   openTabs,
   environmentId,
   environmentManifest,
@@ -58,12 +62,24 @@ export function NodeContextMenu({
           : undefined,
         {
           events,
+          functionsMissingDeclare,
+          eventsMissingDeclare,
           environmentId,
           environmentManifest,
           targetLanguage,
         }
       ),
-    [functions, events, currentGraphId, filter?.pinType, environmentId, environmentManifest, targetLanguage]
+    [
+      functions,
+      events,
+      functionsMissingDeclare,
+      eventsMissingDeclare,
+      currentGraphId,
+      filter?.pinType,
+      environmentId,
+      environmentManifest,
+      targetLanguage,
+    ]
   );
 
   // Focus search input on mount

@@ -58,7 +58,7 @@ function eventHandlerSpawnTemplate(
     type: 'env.event_handler',
     kindId: 'env.event_handler',
     kindVersion: 1,
-    label: `On ${event.name}`,
+    label: event.name.trim() || 'Custom event',
     category: 'From environment',
     inputs: dataInputs,
     outputs: [EXEC_OUT],

@@ -69,7 +69,7 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 | One conversion node → one call | **To String** → `str(x)` |
 | One call node → one call site | **Call Function** → `self.Add()` |
 | One dispatch → one visible line | **Dispatch calculate** → `self.on_calculate()` |
-| One handler → one method body | **Define On calculate** → `def on_calculate(self):` |
+| One handler → one method body | **On calculate** → `def on_calculate(self):` |
 | Selection → code highlight | `sourceMap` / `expressionSpans` — no re-transpile on select |
 
 **Anti-patterns (forbidden in transpiler):**
@@ -78,7 +78,7 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 - Macro **inline expansion** that duplicates nodes without labeled regions in text
 - **Latent / delay** behavior with no matching `sleep`, `await`, or timer in output
 - Auto-cast at wire time in codegen (editor may warn; graph must show **Conversion** nodes)
-- Hidden event runtime helpers (`_emit`, `_subscribe`, `event_emit`, `event_subscribe`) — use **Define** + **Dispatch** (direct call) only
+- Hidden event runtime helpers (`_emit`, `_subscribe`, `event_emit`, `event_subscribe`) — use **Declare** + **On** + **Dispatch** (direct call) only
 
 ### 3. Reuse = functions and modules, not invisible paste
 
@@ -95,7 +95,7 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 | Concept | Visual | Generated text (conceptual) |
 |---------|--------|----------------------------|
 | **Function** | Sub-graph + Call | `def foo(...): ... return ...` + `foo(...)` |
-| **Event handler** | Define node | `def on_event(self, ...):` |
+| **Event handler** | On handler node | `def on_event(self, ...):` |
 | **Program entry** | `role: 'entry'` event + define chain | `def on_start(self):` — **only** when user declared entry on the class graph |
 | **Event signal** | Dispatch node | `self.on_event(...)` — direct handler call; no hidden `emit` / `_emit` runtime |
 | **Lifecycle tick** | On Update node | `on_update` / tick handler — still a visible method when wired |
@@ -123,7 +123,7 @@ Fidelity is what makes third-party integration possible. Hidden transforms make 
 ```text
 Need reusable logic?
   └─ Returns a value or void?     → Function + Call
-  └─ React to a named signal?     → Event Define + Dispatch (explicit line in code)
+  └─ React to a named signal?     → Event Declare + On + Dispatch (explicit line in code)
   └─ Program start (host calls)?  → Entry event (`role: 'entry'`) + event_member_define + event_define on class graph
   └─ Per-frame / tick hook?       → On Update lifecycle node (when target supports it)
   └─ Pause time?                  → Wait / Await Wait node (when shipped) — visible in text
@@ -225,7 +225,7 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 
 - Conversion nodes — explicit calls, `sourceMap` spans
 - Call Function — visible methods and calls (macro/`use_macro` removed; migration on load)
-- Event Define + Dispatch — visible handler methods and direct call lines (`self.on_<name>(…)`)
+- Event Declare + On + Dispatch — visible handler methods and direct call lines (`self.on_<name>(…)`)
 - No hidden event runtime — `event_emit` / `event_subscribe` blocked (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does not inject `_emit` / `_subscribe`
 - Import Module — hoisted to file top with `sourceMap` on import line
 - Wait / Await Wait — explicit sleep/await in export; async function flag

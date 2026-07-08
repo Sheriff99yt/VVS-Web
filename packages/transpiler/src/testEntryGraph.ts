@@ -41,7 +41,7 @@ export function entryDefineChainNodes(): GraphNode[] {
       type: 'vvs_standard_node',
       position: { x: 0, y: 0 },
       data: {
-        label: 'Define start',
+        label: 'Declare start',
         category: 'Events',
         kindId: 'event_member_define',
         inputs: [EXEC_IN],

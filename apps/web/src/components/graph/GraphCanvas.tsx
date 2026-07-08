@@ -22,14 +22,13 @@ import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, isLinkedGraphNode } from '@/lib/linkedGraphNodes';
 import { GraphNodeSearch } from './GraphNodeSearch';
 import { GraphSelectionToolbar } from './GraphSelectionToolbar';
-import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT } from '@/components/layout/GraphFloatingDetails';
+import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT } from '@/components/layout/GraphFloatingDetails';
 import { GraphFloatingCompilerLog } from '@/components/layout/GraphFloatingCompilerLog';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import {
   buildEventNodeData,
   applyEventDispatchBinding,
   createEventId,
-  eventDisplayName,
   EVENT_DRAG_MIME,
   type EventDragPayload,
 } from '@/lib/eventHelpers';
@@ -43,6 +42,7 @@ import {
   applyFunctionCallBinding,
   FUNCTION_RENAMED_EVENT,
   FUNCTION_OVERLOAD_DRAG_MIME,
+  resolveOverloadForCall,
   syncCallNodesForFunction,
   type FunctionOverloadDragPayload,
 } from '@/lib/functionHelpers';
@@ -88,6 +88,9 @@ import {
   insertDefineNodeForEvent,
   insertDefineNodeForFunction,
   insertDefineNodeForVariable,
+  findMemberDeclareNodeForSymbol,
+  findHandlerNodeForEvent,
+  hasHandlerNodeForEvent,
 } from '@/lib/defineNodeSync';
 import type { FunctionSymbol, GraphVariable, ClassSymbol, ProjectEventDefinition } from '@/types/graph';
 import { CLASS_DRAG_MIME, parseClassDragPayload } from '@/lib/classHelpers';
@@ -209,7 +212,7 @@ function GraphCanvasInner() {
   } = useProject();
 
   const { pendingCanvasFocus, clearPendingCanvasFocus } = useEditorNavigation();
-  const { focusGraphRef } = useEditorFocus();
+  const { focusGraphRef, focusFunction } = useEditorFocus();
   const { graphChromeOpen } = useEditorPanels();
 
   const {
@@ -304,6 +307,18 @@ function GraphCanvasInner() {
   const onActiveClassGraph = isOnClassHomeGraph(activeGraphTab, currentClass);
 
   const documentsSnapshot = getDocuments() ?? {};
+  const functionsMissingDeclare = useMemo(() => {
+    if (!onActiveClassGraph || !currentClass) return [];
+    return functions.filter(
+      (fn) => !hasDefineNodeForFunction(documentsSnapshot, currentClass, fn.id)
+    );
+  }, [onActiveClassGraph, currentClass, functions, documentsSnapshot]);
+  const eventsMissingDeclare = useMemo(() => {
+    if (!onActiveClassGraph || !currentClass) return [];
+    return classEvents.filter(
+      (event) => !hasDefineNodeForEvent(documentsSnapshot, currentClass, event.id)
+    );
+  }, [onActiveClassGraph, currentClass, classEvents, documentsSnapshot]);
   const variableDeclareExists =
     variableMenu && currentClass
       ? hasDefineNodeForVariable(documentsSnapshot, currentClass, variableMenu.variable.id)
@@ -315,6 +330,10 @@ function GraphCanvasInner() {
   const eventDeclareExists =
     eventMenu && currentClass
       ? hasDefineNodeForEvent(documentsSnapshot, currentClass, eventMenu.event.id)
+      : false;
+  const eventHandlerExists =
+    eventMenu != null
+      ? hasHandlerNodeForEvent(documentsSnapshot, eventMenu.event.id)
       : false;
   const classDeclareExists =
     classMenu != null
@@ -899,11 +918,15 @@ function GraphCanvasInner() {
   );
 
   const handleDeclareEvent = useCallback(
-    (event: ProjectEventDefinition) => {
+    (event: ProjectEventDefinition, focusAfter = false) => {
       const cls = activeClass(classes, activeClassId);
       if (!cls) return;
       const documents = getDocuments() ?? {};
       if (hasDefineNodeForEvent(documents, cls, event.id)) {
+        if (focusAfter) {
+          const target = findMemberDeclareNodeForSymbol(documents, cls, 'event', event.id);
+          if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+        }
         setEventMenu(null);
         return;
       }
@@ -911,6 +934,10 @@ function GraphCanvasInner() {
       patchAllDocuments(() => next);
       markTabDirty(classGraphTabId(cls));
       setCompileState('dirty');
+      if (focusAfter) {
+        const target = findMemberDeclareNodeForSymbol(next, cls, 'event', event.id);
+        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+      }
       setEventMenu(null);
     },
     [
@@ -1022,6 +1049,43 @@ function GraphCanvasInner() {
       markTabDirty,
       setCompileState,
     ]
+  );
+
+  const handleDefineFunction = useCallback(
+    (func: FunctionSymbol, overloadId: string) => {
+      const overload = resolveOverloadForCall(func, overloadId);
+      const tabId = overload.graphTabId ?? func.id;
+      focusFunction(func, tabId);
+      const entryId = findGraphEntryNodeId(getDocuments() ?? {}, tabId);
+      if (entryId) dispatchNavigateToNode(tabId, entryId);
+      setFunctionMenu(null);
+    },
+    [focusFunction, getDocuments]
+  );
+
+  const handleDefineEvent = useCallback(
+    (event: ProjectEventDefinition, flowPosition: { x: number; y: number }) => {
+      const documents = getDocuments() ?? {};
+      const existing = findHandlerNodeForEvent(documents, event.id);
+      if (existing) {
+        dispatchNavigateToNode(existing.tabId, existing.nodeId);
+        setEventMenu(null);
+        return;
+      }
+
+      const nodeId = `node-${Date.now()}`;
+      const newNode: VVSNodeType = {
+        id: nodeId,
+        type: 'vvs_standard_node',
+        position: flowPosition,
+        data: normalizeNodeData(buildEventNodeData(event, 'define')),
+      };
+      setNodesWithHistory((nds) => [...nds, newNode]);
+      setSelection({ type: 'node', id: nodeId });
+      setSelectedNodeIds([nodeId]);
+      setEventMenu(null);
+    },
+    [getDocuments, setNodesWithHistory, setSelection, setSelectedNodeIds]
   );
 
   const handleDeclareClass = useCallback(
@@ -1373,6 +1437,18 @@ function GraphCanvasInner() {
   }, [events, screenToFlowPosition, setNodesWithHistory, setSelection, setSelectedNodeIds]);
 
   React.useEffect(() => {
+    const onSpawnDeclareMember = (event: Event) => {
+      const detail = (event as CustomEvent<{ eventId: string }>).detail;
+      const projectEvent = events.find((e) => e.id === detail.eventId);
+      if (!projectEvent) return;
+      handleDeclareEvent(projectEvent, true);
+    };
+
+    window.addEventListener(SPAWN_EVENT_DECLARE_MEMBER_EVENT, onSpawnDeclareMember);
+    return () => window.removeEventListener(SPAWN_EVENT_DECLARE_MEMBER_EVENT, onSpawnDeclareMember);
+  }, [events, handleDeclareEvent]);
+
+  React.useEffect(() => {
     const onSpawnEnvNode = (event: Event) => {
       const detail = (event as CustomEvent<{ action: EnvironmentSpawnAction; symbolId: string }>)
         .detail;
@@ -1485,6 +1561,8 @@ function GraphCanvasInner() {
             currentGraphId={activeGraphTab}
             functions={functions}
             events={classEvents}
+            functionsMissingDeclare={functionsMissingDeclare}
+            eventsMissingDeclare={eventsMissingDeclare}
             openTabs={openTabs}
             environmentId={environmentId}
             environmentManifest={environmentManifest}
@@ -1499,7 +1577,7 @@ function GraphCanvasInner() {
           x={variableMenu.x}
           y={variableMenu.y}
           onClose={() => setVariableMenu(null)}
-          dividersBefore={onActiveClassGraph ? ['declare-variable'] : []}
+          dividersBefore={onActiveClassGraph ? ['define-variable'] : []}
           items={[
             {
               id: 'get-variable',
@@ -1520,7 +1598,7 @@ function GraphCanvasInner() {
                     label: `Declare ${variableMenu.variable.name}`,
                     disabled: variableDeclareExists,
                     title: variableDeclareExists
-                      ? 'Define node already exists on class graph'
+                      ? 'Already declared on member chain'
                       : undefined,
                     onClick: () => handleDeclareVariable(variableMenu.variable),
                   },
@@ -1534,7 +1612,11 @@ function GraphCanvasInner() {
           x={functionMenu.x}
           y={functionMenu.y}
           onClose={() => setFunctionMenu(null)}
-          dividersBefore={onActiveClassGraph ? ['declare-function'] : []}
+          dividersBefore={
+            onActiveClassGraph
+              ? ['declare-function', 'define-function']
+              : ['define-function']
+          }
           items={[
             {
               id: 'call-function',
@@ -1553,12 +1635,19 @@ function GraphCanvasInner() {
                     label: `Declare ${functionMenu.func.name}`,
                     disabled: functionDeclareExists,
                     title: functionDeclareExists
-                      ? 'Define node already exists on class graph'
+                      ? 'Already declared on member chain'
                       : undefined,
                     onClick: () => handleDeclareFunction(functionMenu.func),
                   },
                 ]
               : []),
+            {
+              id: 'define-function',
+              label: `Define ${functionMenu.func.name}`,
+              title: 'Open function body graph',
+              onClick: () =>
+                handleDefineFunction(functionMenu.func, functionMenu.overloadId),
+            },
           ]}
         />
       )}
@@ -1567,26 +1656,36 @@ function GraphCanvasInner() {
           x={eventMenu.x}
           y={eventMenu.y}
           onClose={() => setEventMenu(null)}
-          dividersBefore={onActiveClassGraph ? ['declare-event'] : []}
+          dividersBefore={
+            onActiveClassGraph ? ['declare-event', 'define-event'] : ['define-event']
+          }
           items={[
             {
-              id: 'call-event',
-              label: `Call ${eventDisplayName(eventMenu.event.name)}`,
+              id: 'dispatch-event',
+              label: `Dispatch ${eventMenu.event.name.trim()}`,
               onClick: () => handleSpawnEventCall(eventMenu.event, eventMenu.flowPosition),
             },
             ...(onActiveClassGraph
               ? [
                   {
                     id: 'declare-event',
-                    label: `Declare ${eventDisplayName(eventMenu.event.name)}`,
+                    label: `Declare ${eventMenu.event.name.trim()}`,
                     disabled: eventDeclareExists,
                     title: eventDeclareExists
-                      ? 'Handler define already exists on class graph'
+                      ? 'Already declared on member chain'
                       : undefined,
                     onClick: () => handleDeclareEvent(eventMenu.event),
                   },
                 ]
               : []),
+            {
+              id: 'define-event',
+              label: eventMenu.event.name.trim() || 'Custom event',
+              title: eventHandlerExists
+                ? 'Open existing handler on canvas'
+                : 'Add handler entry node to canvas',
+              onClick: () => handleDefineEvent(eventMenu.event, eventMenu.flowPosition),
+            },
           ]}
         />
       )}

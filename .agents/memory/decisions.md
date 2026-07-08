@@ -10,7 +10,7 @@ Choices agents must not undo without explicit user approval.
 - **Fidelity contract:** No compile-time paste, no hidden casts, no latent VM steps absent from export
 - **Integration goal:** Generated files embed in **any** third-party stack (IDE, git, CI, MCP) — **no VVS runtime required**
 - **Reuse:** **Function + Call Function** — not Blueprint macro inline expansion
-- **Events:** Define/Dispatch → visible handler methods and direct call lines (`self.on_<name>(…)`); **program entry** (`role: 'entry'`) uses the same define pattern and emits `on_start` only from canvas — no hidden lifecycle shortcut
+- **Events:** **Declare** (member) + **On** (handler) + **Dispatch** → visible handler methods and direct call lines (`self.on_<name>(…)`); **program entry** (`role: 'entry'`) uses the same pattern and emits `on_start` only from canvas — no hidden lifecycle shortcut
 - **Event runtime (July 2026 — enforced):** `event_emit` / `event_subscribe` **blocked** (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe`; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` error — no hidden callback lists
 - **Timing (future):** **Wait** / **Await Wait** nodes + async graph flag — explicit in text, not latent Delay
 - **Macro tabs / `use_macro`:** **Deprecated as codegen concept** — migrate to Function + Call (UI may linger until alignment plan ships)
@@ -23,7 +23,7 @@ Choices agents must not undo without explicit user approval.
 
 - **Product promise:** The canvas is the source of truth for generated code — every export line maps to a canvas node via `sourceGraphNodeId` / `sourceMap`
 - **Symbol tables:** `variables[]`, `functions[]`, `events[]` are **indexes and CRUD shortcuts** — they never emit declarations on their own
-- **Declare vs use:** Define nodes (`class_define`, `var_define`, `function_define`, `event_member_define`) emit declarations; Get/Set/Call/dispatch emit usage
+- **Declare vs use:** Member-chain nodes (`class_define`, `var_define`, `function_define`, `event_member_define`) emit declarations; Get/Set/Call/Dispatch emit usage. UI: **Declare** on member chain for all symbol kinds (see vocabulary doc)
 - **No sidebar preamble:** `appendLegacyPreamble` and `useLegacyPreamble` are **removed** — transpiler uses `appendIrMembers` / `ir.members` only
 - **Dual-write required:** Panel create paths must spawn define nodes (`defineNodeSync`, `useSymbolLifecycle`) — no symbol-only creates
 - **Strict analyzer errors (block Generate):** `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE`
@@ -38,6 +38,18 @@ Choices agents must not undo without explicit user approval.
 - **Canvas only** for codegen; panel rows are indexes with dual-write
 - **COA deferred** — `COA_SHIPPED = false`; single-target portability warnings shipped; full COA requires node effectiveness UI + multi-emit first
 - **Future subscribe/emit** — only if each node emits one visible line (no hidden runtime)
+
+## Language-neutral vocabulary (July 2026 — plan before rework)
+
+**Canonical spec:** `docs/design/language_neutral_vocabulary.md` · **implementation plan:** `docs/design/terms_refactor_plan.md` · product table in `docs/naming_and_product_direction.md`
+
+- **Plan first** — lock glossary and internal vs user-facing boundary **before** Phase D/E system rework (catalog, diagnostics, registry sync); execute phases V0–V4 per terms_refactor_plan.md
+- **No mass renames in vocabulary pass** — `kindId`s, diagnostic codes (`DEFINE_NODE_*`), and `defineNodeSync` module names stay stable until dedicated refactor phases
+- **User-facing member slots** — **Declare** `{name}` (not Define) for `var_define`, `function_define`, `event_member_define`, `class_define`
+- **Handler / On …** — event handler flow entry (`event_define`)
+- **Call** — function invoke (`vvs.project.call_function`)
+- **Dispatch** — event invoke (`event_dispatch`); not “Call” for events in UI copy
+- **Known drift** — Go `core-pack.json` titles and some diagnostic strings still say “define”; fix in V1 copy-alignment, not ad hoc
 
 ## Product UI (July 2026 revision)
 

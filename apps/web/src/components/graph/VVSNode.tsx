@@ -8,7 +8,6 @@ import { useProject } from '@/contexts/ProjectContext';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
 import { NodePinRow } from './NodePinRow';
-import { GraphWheelShield } from './GraphWheelShield';
 import styles from './VVSNode.module.css';
 
 interface VVSNodeBodyProps {
@@ -83,7 +82,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
         </div>
 
         <div className={`${styles.body} ${!hasPins ? styles.bodyPinless : ''}`}>
-          <GraphWheelShield className={`${styles.column} ${styles.leftColumn}`}>
+          <div className={`${styles.column} ${styles.leftColumn}`}>
             {data.inputs.map((input) => (
               <NodePinRow
                 key={input.id}
@@ -94,7 +93,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 onInlineChange={handleInlineChange}
               />
             ))}
-          </GraphWheelShield>
+          </div>
 
           <div className={`${styles.column} ${styles.rightColumn}`}>
             {data.outputs.map((output) => (

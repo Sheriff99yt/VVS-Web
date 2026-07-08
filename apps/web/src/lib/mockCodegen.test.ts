@@ -81,7 +81,7 @@ describe('generateMockCode', () => {
     expect(result.fragments?.['calc-set-a']).toContain('A');
   });
 
-  test('event member define nodes map to full handler block in sourceMap', () => {
+  test('event member define nodes map to declare placeholder in sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
     const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
 
@@ -98,16 +98,17 @@ describe('generateMockCode', () => {
       documents: snapshot.documents,
     });
 
-    const handlerRanges = result.sourceMap['calc-evt-calc-member'];
-    expect(handlerRanges?.length).toBeGreaterThan(0);
+    const memberRanges = result.sourceMap['calc-evt-calc-member'];
+    expect(memberRanges?.length).toBeGreaterThan(0);
 
     const content = result.files[0]!.content;
-    const handlerLine =
-      content.split('\n').findIndex((l) => l.includes('def on_calculate(self')) + 1;
-    expect(handlerLine).toBeGreaterThan(0);
-    expect(handlerRanges![0]!.startLine).toBeLessThanOrEqual(handlerLine);
-    expect(handlerRanges![0]!.endLine).toBeGreaterThanOrEqual(handlerLine);
-    expect(result.fragments?.['calc-evt-calc-member']).toContain('on_calculate');
+    expect(content).toContain('# Declare calculate');
+    expect(memberRanges![0]!.startLine).toBe(
+      content.split('\n').findIndex((l) => l.includes('# Declare calculate')) + 1
+    );
+    expect(result.fragments?.['calc-evt-calc-member']).toContain('Declare calculate');
+
+    expect(result.sourceMap['calc-on-calculate']?.length).toBeGreaterThan(0);
   });
 
   test('On Start maps to on_start handler not run', () => {
@@ -131,7 +132,7 @@ describe('generateMockCode', () => {
     expect(content).toContain('def on_start(self):');
     expect(content).not.toContain('def run(self):');
     expect(result.sourceMap['calc-evt-start-member']?.length).toBeGreaterThan(0);
-    expect(result.fragments?.['calc-evt-start-member']).toContain('on_start');
+    expect(result.fragments?.['calc-evt-start-member']).toContain('Declare start');
   });
 
   test('Add function graph maps get and math nodes to expression spans', () => {
@@ -221,7 +222,7 @@ describe('generateMockCode', () => {
     const expectations: [string, RegExp][] = [
       ['calc-var-a-define', /self\.A/],
       ['calc-fn-add-define', /Add/],
-      ['calc-evt-calc-member', /on_calculate/],
+      ['calc-evt-calc-member', /Declare calculate/],
       ['calc-dispatch', /on_calculate\(\)/],
       ['calc-call-add', /Add\(/],
       ['calc-set-a', /self\.A\s*=/],
@@ -236,7 +237,7 @@ describe('generateMockCode', () => {
   test('event_member_define declaration and event_define handler body stay linked', () => {
     const snapshot = createComplexExampleSnapshot();
     const calcGraph = snapshot.documents![CALCULATOR_GRAPH_ID];
-    const handlerEntry = calcGraph.nodes.find((n) => n.id === 'calc-define');
+    const handlerEntry = calcGraph.nodes.find((n) => n.id === 'calc-on-calculate');
     expect(handlerEntry?.data.kindId).toBe('event_define');
 
     const result = generateMockTranspileResult({
@@ -255,13 +256,16 @@ describe('generateMockCode', () => {
     });
 
     const memberRange = result.sourceMap['calc-evt-calc-member']![0]!;
+    const handlerRange = result.sourceMap['calc-on-calculate']![0]!;
     const callRange = result.sourceMap['calc-call-add']![0]!;
 
     expect(result.sourceMap['calc-evt-calc-member']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['calc-on-calculate']?.length).toBeGreaterThan(0);
     expect(result.sourceMap['calc-call-add']?.length).toBeGreaterThan(0);
-    expect(result.fragments?.['calc-evt-calc-member']).toContain('on_calculate');
+    expect(result.fragments?.['calc-evt-calc-member']).toContain('Declare calculate');
     expect(result.fragments?.['calc-call-add']).toContain('Add');
-    expect(callRange.startLine).toBeGreaterThanOrEqual(memberRange.startLine);
-    expect(callRange.endLine).toBeLessThanOrEqual(memberRange.endLine);
+    expect(memberRange.startLine).toBe(memberRange.endLine);
+    expect(handlerRange.startLine).toBeLessThanOrEqual(callRange.startLine);
+    expect(callRange.endLine).toBeLessThanOrEqual(handlerRange.endLine);
   });
 });

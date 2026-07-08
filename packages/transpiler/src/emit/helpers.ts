@@ -55,6 +55,20 @@ export function formatFunctionDefHeader(
   return `    // ${func.name}`;
 }
 
+/** C++-style declaration prototype (`void foo();`) — null when the target has no separate declare form. */
+export function formatFunctionDeclPrototype(
+  func: FunctionSymbol,
+  targetLanguage: TargetLanguage,
+  isVirtual = false
+): string | null {
+  if (targetLanguage !== 'cpp') return null;
+  const params = overloadParamNames(func);
+  const binding = func.binding ?? 'instance';
+  const prefix = binding === 'static' ? '    static ' : isVirtual ? '    virtual ' : '    ';
+  const args = params.map((p) => `float ${p}`).join(', ');
+  return `${prefix}void ${func.name}(${args});`;
+}
+
 export function printContextForIr(
   ir: IrModule,
   indent: string,

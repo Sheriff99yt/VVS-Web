@@ -208,7 +208,7 @@ function createEntryMemberDefineNode(entry: ProjectEventDefinition): GraphNode {
     type: 'vvs_standard_node',
     position: { x: 280, y: 40 },
     data: {
-      label: 'Define start',
+      label: 'Declare start',
       category: 'Events',
       kindId: 'event_member_define',
       inputs: [execIn],

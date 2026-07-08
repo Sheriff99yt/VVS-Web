@@ -30,8 +30,8 @@ export const EXAMPLE_PROJECTS: ExampleProjectDefinition[] = [
     title: 'Calculator',
     moduleName: 'Calculator',
     description:
-      'Interactive calculator — read A and B from user input, add, print Result, branch, and clear.',
-    highlights: ['3 graphs', 'Get User Input', 'Add + Clear functions', '2 events'],
+      'Member chain (Declare), On handlers, Call/Dispatch — read A and B via Get User Input, add, branch, and clear.',
+    highlights: ['Member chain', 'Declare + On + Dispatch', 'Multi-graph', 'Branch + To String'],
     create: createComplexExampleSnapshot,
   },
 ];

@@ -34,12 +34,15 @@ export type NodeSemantics =
   | 'env.call_native'
   | 'env.event_handler';
 
+export type SymbolRole = 'declare' | 'implement' | 'invoke' | 'define';
+
 export interface NodeKindDefinition {
   kindId: string;
   kindVersion: number;
   category: string;
   title: string;
   semantics: NodeSemantics;
+  symbolRole?: SymbolRole;
   mathOp?: 'add' | 'subtract' | 'multiply' | 'divide';
   inputs: PinDefinition[];
   outputs: PinDefinition[];
@@ -98,6 +101,9 @@ export interface ListRegistryOptions {
   currentGraphId: string;
   functions: FunctionSymbol[];
   events?: ProjectEventDefinition[];
+  /** Symbols without a matching declare node on the class define chain. */
+  functionsMissingDeclare?: FunctionSymbol[];
+  eventsMissingDeclare?: ProjectEventDefinition[];
   filterPin?: PinDefinition;
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
@@ -124,6 +130,73 @@ function kindToSpawnTemplate(kind: NodeKindDefinition): SpawnNodeTemplate {
   };
 }
 
+const DECLARATION_KIND_IDS = new Set([
+  'class_define',
+  'var_define',
+  'function_define',
+  'event_member_define',
+]);
+
+const HANDLER_KIND_IDS = new Set(['event_define', 'event_on_update']);
+
+function spawnCatalogCategory(kind: NodeKindDefinition): string {
+  if (kind.symbolRole === 'declare') return 'Declare';
+  if (kind.symbolRole === 'implement') return 'Handlers';
+  if (kind.symbolRole === 'invoke') return kind.category;
+  if (DECLARATION_KIND_IDS.has(kind.kindId)) return 'Declare';
+  if (HANDLER_KIND_IDS.has(kind.kindId)) return 'Handlers';
+  return kind.category;
+}
+
+function catalogCategoryOrder(name: string): number {
+  if (name === 'Declare') return 0;
+  if (name === 'Handlers') return 1;
+  if (name === 'Call') return 900;
+  if (name === 'Dispatch') return 901;
+  return 100;
+}
+
+function sortCatalogCategories(categories: LibraryCategory[]): LibraryCategory[] {
+  return [...categories].sort(
+    (a, b) =>
+      catalogCategoryOrder(a.name) - catalogCategoryOrder(b.name) ||
+      a.name.localeCompare(b.name)
+  );
+}
+
+function expandMissingDeclareRows(options: ListRegistryOptions): SpawnNodeTemplate[] {
+  const items: SpawnNodeTemplate[] = [];
+
+  for (const fn of options.functionsMissingDeclare ?? []) {
+    items.push({
+      type: 'function_define',
+      kindId: 'function_define',
+      kindVersion: 1,
+      label: `Declare ${fn.name}`,
+      category: 'Project',
+      inputs: [EXEC_IN],
+      outputs: [EXEC_OUT],
+      linkedGraphId: fn.id,
+      linkKind: 'call_function',
+      graphBinding: { kind: 'call_function', symbolId: fn.id },
+    });
+  }
+
+  for (const event of options.eventsMissingDeclare ?? []) {
+    items.push({
+      type: 'event_member_define',
+      kindId: 'event_member_define',
+      kindVersion: 1,
+      label: `Declare ${event.name}`,
+      category: 'Events',
+      inputs: [EXEC_IN],
+      outputs: [EXEC_OUT],
+    });
+  }
+
+  return items;
+}
+
 export function expandProjectSymbols(options: ListRegistryOptions): LibraryCategory[] {
   const categories: LibraryCategory[] = [];
 
@@ -143,7 +216,7 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
     }));
 
   if (callItems.length > 0) {
-    categories.push({ name: 'Project · Calls', items: callItems });
+    categories.push({ name: 'Call', items: callItems });
   }
 
   const dispatchItems: SpawnNodeTemplate[] = (options.events ?? []).map((event) => ({
@@ -158,7 +231,7 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
   }));
 
   if (dispatchItems.length > 0) {
-    categories.push({ name: 'Project · Events', items: dispatchItems });
+    categories.push({ name: 'Dispatch', items: dispatchItems });
   }
 
   return categories;
@@ -174,9 +247,16 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
         kind.outputs.some((p) => pinsMatchFilter(p, options.filterPin));
       if (!hasMatch) continue;
     }
-    const items = coreByCategory.get(kind.category) ?? [];
+    const categoryName = spawnCatalogCategory(kind);
+    const items = coreByCategory.get(categoryName) ?? [];
     items.push(kindToSpawnTemplate(kind));
-    coreByCategory.set(kind.category, items);
+    coreByCategory.set(categoryName, items);
+  }
+
+  const missingDeclares = expandMissingDeclareRows(options);
+  if (missingDeclares.length > 0) {
+    const existing = coreByCategory.get('Declare') ?? [];
+    coreByCategory.set('Declare', [...missingDeclares, ...existing]);
   }
 
   const coreCategories: LibraryCategory[] = [...coreByCategory.entries()].map(([name, items]) => ({
@@ -184,7 +264,11 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
     items,
   }));
 
-  return [...coreCategories, ...expandProjectSymbols(options), ...expandEnvironmentCategories(options)];
+  return sortCatalogCategories([
+    ...coreCategories,
+    ...expandProjectSymbols(options),
+    ...expandEnvironmentCategories(options),
+  ]);
 }
 
 function expandEnvironmentCategories(options: ListRegistryOptions): LibraryCategory[] {
@@ -223,10 +307,19 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'Math Subtract') return 'math_subtract';
   if (label === 'Math Multiply') return 'math_multiply';
   if (label === 'Math Divide') return 'math_divide';
+  if (label.startsWith('Declare Class')) return 'class_define';
+  if (label.startsWith('Declare Variable')) return 'var_define';
+  if (label.startsWith('Declare Function')) return 'function_define';
+  if (label.startsWith('Declare Event')) return 'event_member_define';
+  if (label.startsWith('Declare ') && category === 'Events') return 'event_member_define';
+  if (label.startsWith('Declare ') && category === 'Variables') return 'var_define';
+  if (label.startsWith('Declare ')) return 'function_define';
   if (label.startsWith('Define Class')) return 'class_define';
   if (label.startsWith('Define Variable')) return 'var_define';
   if (label.startsWith('Define Function')) return 'function_define';
-  if (label.startsWith('Define ')) return 'event_member_define';
+  if (label.startsWith('Define Event')) return 'event_member_define';
+  if (label.startsWith('Define ') && category === 'Events') return 'event_member_define';
+  if (label.startsWith('Define ') && category === 'Project') return 'function_define';
   if (label.startsWith('Get ')) return 'variable_get';
   if (label.startsWith('Set ')) return 'variable_set';
   if (label.startsWith('Call ')) return 'vvs.project.call_function';

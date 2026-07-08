@@ -9,6 +9,7 @@ import type {
   VVSNodeData,
 } from '@/types/graph';
 import {
+  findDefineNodesForSymbol,
   findMemberChainTail,
   findProgramEntryEvent,
   isMemberDefineKind,
@@ -20,7 +21,7 @@ import { classHomeGraphId } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { resolveOverloadForCall } from '@/lib/functionHelpers';
-import { eventDisplayName, applyEventDefineBinding } from '@/lib/eventHelpers';
+import { applyEventDefineBinding } from '@/lib/eventHelpers';
 
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
 const EXEC_OUT = { id: 'exec_out', label: '', type: 'execution' as const };
@@ -51,7 +52,7 @@ function buildVarDefineData(variable: VariableSymbol): VVSNodeData {
   const def = resolveKind('var_define');
   const base = applyVariableRefBinding(
     {
-      label: `Define ${variable.name}`,
+      label: `Declare ${variable.name}`,
       category: 'Variables',
       kindId: 'var_define',
       inputs: def?.inputs ?? [EXEC_IN],
@@ -75,7 +76,7 @@ function buildFunctionDefineData(func: FunctionSymbol): VVSNodeData {
   const def = resolveKind('function_define');
   const overload = resolveOverloadForCall(func);
   return normalizeNodeData({
-    label: `Define ${func.name}`,
+    label: `Declare ${func.name}`,
     category: 'Project',
     kindId: 'function_define',
     inputs: def?.inputs ?? [EXEC_IN],
@@ -97,7 +98,7 @@ function buildFunctionDefineData(func: FunctionSymbol): VVSNodeData {
 function buildEventDefineData(event: ProjectEventDefinition): VVSNodeData {
   const def = resolveKind('event_member_define');
   return normalizeNodeData({
-    label: `Define ${event.name}`,
+    label: `Declare ${event.name}`,
     category: 'Events',
     kindId: 'event_member_define',
     inputs: def?.inputs ?? [EXEC_IN],
@@ -107,7 +108,7 @@ function buildEventDefineData(event: ProjectEventDefinition): VVSNodeData {
       symbolId: event.id,
       name: event.name,
       eventId: event.id,
-      eventName: eventDisplayName(event.name),
+      eventName: event.name,
     },
   });
 }
@@ -115,7 +116,7 @@ function buildEventDefineData(event: ProjectEventDefinition): VVSNodeData {
 function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
   const def = resolveKind('class_define');
   return normalizeNodeData({
-    label: `Class ${cls.name}`,
+    label: `Declare ${cls.name}`,
     category: 'Project',
     kindId: 'class_define',
     inputs: def?.inputs ?? [EXEC_IN],
@@ -240,6 +241,43 @@ export function hasDefineNodeForClass(
   return doc?.nodes.some((n) => n.data.kindId === 'class_define') ?? false;
 }
 
+export function findHandlerNodeForEvent(
+  documents: Record<string, GraphDocument>,
+  eventId: string
+): { tabId: string; nodeId: string } | undefined {
+  for (const [tabId, doc] of Object.entries(documents)) {
+    const node = doc.nodes.find(
+      (n) =>
+        n.type === 'vvs_standard_node' &&
+        (n.data.kindId === 'event_define' || n.data.kindId === 'event_custom') &&
+        n.data.properties?.eventId === eventId
+    );
+    if (node) return { tabId, nodeId: node.id };
+  }
+  return undefined;
+}
+
+export function hasHandlerNodeForEvent(
+  documents: Record<string, GraphDocument>,
+  eventId: string
+): boolean {
+  return findHandlerNodeForEvent(documents, eventId) !== undefined;
+}
+
+export function findMemberDeclareNodeForSymbol(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol,
+  kind: 'function' | 'event',
+  symbolId: string
+): { tabId: string; nodeId: string } | undefined {
+  const tabId = classHomeGraphId(cls);
+  const doc = documents[tabId];
+  if (!doc) return undefined;
+  const nodes = findDefineNodesForSymbol(doc, kind, symbolId);
+  const node = nodes[0];
+  return node ? { tabId, nodeId: node.id } : undefined;
+}
+
 export function insertDefineNodeForVariable(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
@@ -323,7 +361,7 @@ export function insertProgramEntryHandlerNode(
 
   const handlerData = applyEventDefineBinding(
     {
-      label: eventDisplayName(event.name),
+      label: event.name,
       category: 'Events',
       kindId: 'event_define',
       inputs: [],

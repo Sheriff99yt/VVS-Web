@@ -220,20 +220,32 @@ Each `*_define` node registers spans for the declaration line(s) — same `sourc
 
 ### 4.2 Target (single class `Calculator`)
 
-**Class graph (new top section above flow):**
+**Reference implementation:** [`apps/web/src/lib/examples/complexExample.ts`](../../apps/web/src/lib/examples/complexExample.ts) · vocabulary: [language_neutral_vocabulary.md](language_neutral_vocabulary.md).
+
+**Class graph — member chain (Declare nodes, exec-wired above flow):**
 
 ```text
 [class_define Calculator]
+    → [event_member_define start]          # Declare start (program entry)
     → [var_define A: number = 0]
     → [var_define B: number = 0]
     → [var_define Result: number = 0]
     → [var_define ShowResult: boolean = true]
     → [function_define Add → fn-add tab]
     → [function_define Clear → fn-clear tab]
-    → [event_define calculate]
-    → [event_define clear]
-    → [On Start] → … (existing main flow)
+    → [event_member_define calculate]      # Declare calculate
+    → [event_member_define clear]          # Declare clear
 ```
+
+**Runtime flow (same class graph, below member chain):**
+
+```text
+[On start] → Get User Input → Set A, B, ShowResult → Dispatch calculate
+[On calculate] → Call Add → Branch → Print … → Dispatch clear
+[On clear] → Call Clear → Print …
+```
+
+Events use the **dual-node pattern**: `event_member_define` on the member chain (Declare) pairs with `event_define` handler nodes in flow (On). Dispatch nodes call declared events; they are not member-chain slots.
 
 **Function graphs:** unchanged bodies; signatures emitted from `function_define` nodes on class graph, not duplicated from sidebar.
 

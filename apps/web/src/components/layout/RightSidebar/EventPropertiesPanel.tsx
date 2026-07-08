@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Trash2, Radio, Send } from 'lucide-react';
+import { Plus, Trash2, Radio, Send, Link2 } from 'lucide-react';
 import type { EventParameter, PinType, ProjectEventDefinition } from '@/types/graph';
 import { DATA_PIN_TYPE_OPTIONS } from '@vvs/graph-types';
 import { createEventParameterId, eventDisplayName } from '@/lib/eventHelpers';
@@ -12,14 +12,18 @@ const PARAM_TYPES = DATA_PIN_TYPE_OPTIONS.filter((t) => t.value !== 'data_object
 interface EventPropertiesPanelProps {
   event: ProjectEventDefinition;
   onChange: (next: ProjectEventDefinition) => void;
-  onSpawnDefine?: () => void;
+  /** Insert event_member_define on the class member chain. */
+  onSpawnDeclareMember?: () => void;
+  /** Spawn event_define handler (On) on the flow graph. */
+  onSpawnHandler?: () => void;
   onSpawnDispatch?: () => void;
 }
 
 export function EventPropertiesPanel({
   event,
   onChange,
-  onSpawnDefine,
+  onSpawnDeclareMember,
+  onSpawnHandler,
   onSpawnDispatch,
 }: EventPropertiesPanelProps) {
   const updateParam = (index: number, patch: Partial<EventParameter>) => {
@@ -41,6 +45,8 @@ export function EventPropertiesPanel({
       ],
     });
   };
+
+  const hasCanvasActions = onSpawnDeclareMember || onSpawnHandler || onSpawnDispatch;
 
   return (
     <div className="space-y-3 text-xs text-zinc-300">
@@ -110,20 +116,31 @@ export function EventPropertiesPanel({
         )}
       </div>
 
-      {(onSpawnDefine || onSpawnDispatch) && (
+      {hasCanvasActions ? (
         <div className="flex flex-wrap gap-1.5 pt-1 border-t border-zinc-800/80">
-          {onSpawnDefine && (
+          {onSpawnDeclareMember ? (
             <button
               type="button"
-              onClick={onSpawnDefine}
+              onClick={onSpawnDeclareMember}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 text-[10px] hover:bg-sky-500/25"
+              title="Declare event on class member chain"
+            >
+              <Link2 size={10} />
+              Declare
+            </button>
+          ) : null}
+          {onSpawnHandler ? (
+            <button
+              type="button"
+              onClick={onSpawnHandler}
               className="flex items-center gap-1 px-2 py-1 rounded bg-violet-500/15 text-violet-300 border border-violet-500/30 text-[10px] hover:bg-violet-500/25"
-              title="Add On node to canvas"
+              title="Add On handler node to canvas"
             >
               <Radio size={10} />
               On
             </button>
-          )}
-          {onSpawnDispatch && (
+          ) : null}
+          {onSpawnDispatch ? (
             <button
               type="button"
               onClick={onSpawnDispatch}
@@ -133,9 +150,9 @@ export function EventPropertiesPanel({
               <Send size={10} />
               Dispatch
             </button>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

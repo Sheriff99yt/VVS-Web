@@ -36,16 +36,16 @@ export function getNodeDisplayTitle(data: VVSNodeData): string {
       typeof data.properties?.name === 'string'
         ? data.properties.name
         : getVariableName(data);
-    return name ? `Define ${name}` : def?.title ?? data.label;
+    return name ? `Declare ${name}` : def?.title ?? data.label;
   }
   if (kindId === 'function_define') {
     const fn = data.properties?.name;
-    if (typeof fn === 'string' && fn) return `Define ${fn}`;
+    if (typeof fn === 'string' && fn) return `Declare ${fn}`;
     return def?.title ?? data.label;
   }
   if (kindId === 'class_define') {
     const cls = data.properties?.name;
-    if (typeof cls === 'string' && cls) return `Class ${cls}`;
+    if (typeof cls === 'string' && cls) return `Declare ${cls}`;
     return def?.title ?? data.label;
   }
   if (kindId === 'graph_ref') {
@@ -55,7 +55,7 @@ export function getNodeDisplayTitle(data: VVSNodeData): string {
   }
   if (kindId === 'event_member_define') {
     const name = data.properties?.name;
-    if (typeof name === 'string' && name) return `Define ${name}`;
+    if (typeof name === 'string' && name) return `Declare ${name}`;
     return def?.title ?? data.label;
   }
   if (kindId === 'variable_set') {

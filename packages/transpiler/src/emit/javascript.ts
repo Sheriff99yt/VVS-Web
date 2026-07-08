@@ -8,7 +8,7 @@ import {
   functionNeedsAsync,
   printContextForIr,
 } from './helpers';
-import { appendIrMembers, tagClassDeclLine } from './members';
+import { appendIrMembers, appendMemberImplementations, tagClassDeclLine } from './members';
 import { handlerBodyIndent } from '../lower/graphToIr';
 
 function appendJsEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHandler): void {
@@ -29,6 +29,7 @@ export function emitJavascriptModule(sink: CodeSink, ir: IrModule): void {
   sink.appendRaw(`class ${ir.moduleName}${extendsClause} {`);
   tagClassDeclLine(sink, ir, classLineStart);
   appendIrMembers(sink, ir);
+  appendMemberImplementations(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendJsEventHandler(sink, ir, handler);
   }

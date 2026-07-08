@@ -8,8 +8,7 @@ export function createEventId(): string {
 
 export function eventDisplayName(name: string): string {
   const trimmed = name.trim();
-  if (!trimmed) return 'Custom event';
-  return trimmed.toLowerCase().startsWith('on ') ? trimmed : `On ${trimmed}`;
+  return trimmed || 'Custom event';
 }
 
 export function eventHandlerName(name: string): string {

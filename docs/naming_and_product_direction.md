@@ -2,7 +2,7 @@
 
 Canonical vocabulary and product principles. **Do not use Unreal Engine Blueprint terminology** in user-facing UI, docs, or generated code labels — even though the interaction model is inspired by node-based visual programming.
 
-Companion: [vision.md](vision.md) · [visual_to_text_fidelity.md](visual_to_text_fidelity.md) · [roadmap.md](roadmap.md) · [project_requirements.md](project_requirements.md) · [current_state.md](current_state.md)
+Companion: [vision.md](vision.md) · [visual_to_text_fidelity.md](visual_to_text_fidelity.md) · [roadmap.md](roadmap.md) · [project_requirements.md](project_requirements.md) · [current_state.md](current_state.md) · [design/language_neutral_vocabulary.md](design/language_neutral_vocabulary.md) (glossary) · [design/terms_refactor_plan.md](design/terms_refactor_plan.md) (phased rollout)
 
 ---
 
@@ -37,9 +37,12 @@ The UX borrows **canvas patterns** from node editors (wires, typed ports, flow) 
 
 | Vocabulary | Meaning |
 |------------|---------|
-| **Declare** | Place a define node on the class graph (`var_define`, `function_define`, `event_member_define`, `class_define`) — this is what emits the declaration in generated code |
-| **Call** / **Use** | Place usage nodes (Get, Set, Call Function, dispatch) where logic runs |
-| **Project panel row** | Index + CRUD shortcut — dual-writes a define node; **not** a second source of truth for codegen |
+| **Declare** | Place a member node on the member chain (`var_define`, `function_define`, `event_member_define`, `class_define`) — emits the declaration in generated code |
+| **Handler (On …)** | Place an event handler entry on the class graph (`event_define`) — wires the handler body |
+| **Call** | Invoke a function at a call site (`vvs.project.call_function`) |
+| **Dispatch** | Invoke an event handler at a call site (`event_dispatch`) |
+| **Get** / **Set** | Read or write a variable where logic runs |
+| **Project panel row** | Index + CRUD shortcut — dual-writes the canvas correlate; **not** a second source of truth for codegen |
 
 UI copy must not imply that adding a row in the Project tree alone puts a declaration in generated code. If it is not on the canvas, it is not in the export. Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Canvas is the source of truth.
 
@@ -63,7 +66,14 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Per-frame hook | **On Update** | Event Tick, Tick | Optional; name for loop/frame |
 | User-defined entry | **Custom event** | — | |
 | Local state | **Variable** | — | Standard CS term |
-| Reusable subgraph | **Function** | Macro, Blueprint Macro | Opens as graph tab; **Call Function** in generated text |
+| Reusable subgraph | **Function** | Macro, Blueprint Macro | Opens as graph tab; **Declare** on chain + **Call** in flow |
+| Function member on chain | **Declare** `{name}` | Define Function | `function_define` — `kindId` unchanged |
+| Event member on chain | **Declare** `{name}` | Define Event | `event_member_define` — `kindId` unchanged |
+| Event handler entry | **On** `{name}` / **Handler** | — | `event_define` — flow entry, not the member declare |
+| Function invoke | **Call** `{name}` | — | `vvs.project.call_function` |
+| Event invoke | **Dispatch** `{name}` | Call (events) | `event_dispatch` — not “Call” in UI copy |
+| Variable member on chain | **Declare** `{name}` | Define Variable | `var_define` — C++-style declaration (`int x;`) |
+| Class member on chain | **Declare** `{name}` / **Declare Class** | Define Class | `class_define` |
 | Macro (legacy UI tab) | **Function** *(migrate)* | Macro | Deprecated as codegen concept — see [visual_to_text_fidelity.md](visual_to_text_fidelity.md) |
 | Build graph → code | **Generate code** | Compile (OK in toolbar shorthand) | Button may say **Generate**; logs say "generation" |
 | Generated artifact name | **Module name** | Class name, BP_* | Maps to class/module in target language |

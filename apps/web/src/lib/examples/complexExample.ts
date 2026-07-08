@@ -1,3 +1,10 @@
+/**
+ * Calculator fidelity reference — Declare / On / Dispatch pattern:
+ * - Member chain (`event_member_define`, `var_define`, …): class-body **Declare** slots on canvas.
+ * - `boundEventDefine` handlers in runtime flow: **On** {event} entry nodes for wiring bodies.
+ * - `boundEventDispatch`: **Dispatch** {event} to invoke another handler.
+ * Entry `start` uses `eventMemberDefineNode` → Declare start; `boundEventDefine` → On start.
+ */
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import {
   createClassSymbol,
@@ -113,8 +120,8 @@ const RESULT_PANEL_EDGES: VVSEdge[] = [
   execEdge('calc-panel-e-start-print', 'calc-panel-start-handler', 'calc-panel-print'),
 ];
 
-/** Canvas define chain — declarations in graph order (above runtime flow). */
-const DEFINE_CHAIN_NODES: VVSNode[] = [
+/** Canvas member chain — declarations in graph order (above runtime flow). */
+const MEMBER_CHAIN_NODES: VVSNode[] = [
   classDefineNode('calc-class-define', { x: 40, y: -120 }, MAIN_CLASS),
   eventMemberDefineNode('calc-evt-start-member', { x: 140, y: -120 }, EVT_START),
   varDefineNode('calc-var-a-define', { x: 240, y: -120 }, VAR_A),
@@ -123,12 +130,12 @@ const DEFINE_CHAIN_NODES: VVSNode[] = [
   varDefineNode('calc-var-show-define', { x: 840, y: -120 }, VAR_SHOW),
   functionDefineNode('calc-fn-add-define', { x: 1040, y: -120 }, FN_ADD),
   functionDefineNode('calc-fn-clear-define', { x: 1240, y: -120 }, FN_CLEAR),
-  // Member declaration in class body — paired with event_define handler nodes below.
+  // Member declaration in class body — paired with On handler nodes below.
   eventMemberDefineNode('calc-evt-calc-member', { x: 1440, y: -120 }, EVT_CALCULATE),
   eventMemberDefineNode('calc-evt-clear-member', { x: 1640, y: -120 }, EVT_CLEAR),
 ];
 
-const DEFINE_CHAIN_EDGES: VVSEdge[] = [
+const MEMBER_CHAIN_EDGES: VVSEdge[] = [
   execEdge('calc-def-e-class-start', 'calc-class-define', 'calc-evt-start-member'),
   execEdge('calc-def-e-start-a', 'calc-evt-start-member', 'calc-var-a-define'),
   execEdge('calc-def-e-a-b', 'calc-var-a-define', 'calc-var-b-define'),
@@ -141,8 +148,8 @@ const DEFINE_CHAIN_EDGES: VVSEdge[] = [
 ];
 
 const MAIN_NODES: VVSNode[] = [
-  ...DEFINE_CHAIN_NODES,
-  // Program entry — same declare/handler pattern as calculate/clear (not lifecycle shortcut).
+  ...MEMBER_CHAIN_NODES,
+  // Program entry — same Declare member + On handler pattern as calculate/clear.
   boundEventDefine('calc-start-handler', { x: 40, y: 40 }, EVT_START),
   getUserInputNode('calc-input-a', { x: 240, y: 40 }, { prompt: 'Enter A:', inputKind: 'number' }),
   boundVariableSet('calc-set-a', { x: 480, y: 40 }, VAR_A),
@@ -150,11 +157,11 @@ const MAIN_NODES: VVSNode[] = [
   boundVariableSet('calc-set-b', { x: 960, y: 40 }, VAR_B),
   boundVariableSet('calc-set-show', { x: 1200, y: 40 }, VAR_SHOW, true),
   boundEventDispatch('calc-dispatch', { x: 1440, y: 40 }, EVT_CALCULATE),
-  // Dual-node event pattern (calculate): event_member_define on the define chain
-  // (`calc-evt-calc-member`) owns the class-body declaration; event_define in flow
-  // (`calc-define`) is the handler entry for wiring the body. Both must stay — do
-  // not collapse into a single node or codegen/highlight fidelity breaks.
-  boundEventDefine('calc-define', { x: 40, y: 280 }, EVT_CALCULATE),
+  // Dual-node event pattern (calculate): event_member_define on the member chain
+  // (`calc-evt-calc-member`) owns the class-body Declare slot; event_define in flow
+  // (`calc-on-calculate`) is the On handler entry for wiring the body. Both must stay —
+  // do not collapse into a single node or codegen/highlight fidelity breaks.
+  boundEventDefine('calc-on-calculate', { x: 40, y: 280 }, EVT_CALCULATE),
   boundCallFunction('calc-call-add', { x: 320, y: 280 }, FN_ADD),
   boundVariableGet('calc-get-show', { x: 320, y: 420 }, VAR_SHOW),
   branchNode('calc-branch', { x: 560, y: 280 }),
@@ -164,13 +171,13 @@ const MAIN_NODES: VVSNode[] = [
   printStringNode('calc-print-result', { x: 1080, y: 220 }),
   boundEventDispatch('calc-dispatch-clear', { x: 1340, y: 220 }, EVT_CLEAR),
   printStringNode('calc-print-skip', { x: 820, y: 400 }, 'Result hidden'),
-  boundEventDefine('calc-define-clear', { x: 40, y: 560 }, EVT_CLEAR),
+  boundEventDefine('calc-on-clear', { x: 40, y: 560 }, EVT_CLEAR),
   boundCallFunction('calc-call-clear', { x: 320, y: 560 }, FN_CLEAR),
   printStringNode('calc-print-cleared', { x: 580, y: 560 }, 'Values cleared'),
 ];
 
 const MAIN_EDGES: VVSEdge[] = [
-  ...DEFINE_CHAIN_EDGES,
+  ...MEMBER_CHAIN_EDGES,
   execEdge('calc-e-start-input-a', 'calc-start-handler', 'calc-input-a'),
   execEdge('calc-e-input-a-set-a', 'calc-input-a', 'calc-set-a'),
   dataEdge('calc-e-input-a-val', 'calc-input-a', 'calc-set-a', 'value', 'val'),
@@ -179,7 +186,7 @@ const MAIN_EDGES: VVSEdge[] = [
   dataEdge('calc-e-input-b-val', 'calc-input-b', 'calc-set-b', 'value', 'val'),
   execEdge('calc-e-set-b-show', 'calc-set-b', 'calc-set-show'),
   execEdge('calc-e-show-dispatch', 'calc-set-show', 'calc-dispatch'),
-  execEdge('calc-e-define-call', 'calc-define', 'calc-call-add'),
+  execEdge('calc-e-on-calculate-call', 'calc-on-calculate', 'calc-call-add'),
   execEdge('calc-e-call-branch', 'calc-call-add', 'calc-branch'),
   dataEdge('calc-e-show-branch', 'calc-get-show', 'calc-branch', 'val', 'condition', 'data_boolean'),
   execEdge('calc-e-branch-done', 'calc-branch', 'calc-print-done', 'true_exec', 'exec_in'),
@@ -188,7 +195,7 @@ const MAIN_EDGES: VVSEdge[] = [
   dataEdge('calc-e-tostr-print', 'calc-to-string', 'calc-print-result', 'result', 'in_str', 'data_string'),
   execEdge('calc-e-result-clear', 'calc-print-result', 'calc-dispatch-clear'),
   execEdge('calc-e-branch-skip', 'calc-branch', 'calc-print-skip', 'false_exec', 'exec_in'),
-  execEdge('calc-e-define-clear-call', 'calc-define-clear', 'calc-call-clear'),
+  execEdge('calc-e-on-clear-call', 'calc-on-clear', 'calc-call-clear'),
   execEdge('calc-e-clear-print', 'calc-call-clear', 'calc-print-cleared'),
 ];
 
@@ -220,7 +227,7 @@ const CLEAR_EDGES: VVSEdge[] = [
   execEdge('calc-clear-e-b-result', 'calc-clear-b', 'calc-clear-result'),
 ];
 
-/** Multi-graph calculator — define chain, user input, functions, events, branch, and dispatch. */
+/** Multi-graph calculator — member chain, user input, functions, events, branch, and dispatch. */
 export function createComplexExampleSnapshot(): ProjectSnapshot {
   const stamp = <T>(item: T): T & { classId: string } => ({ ...item, classId: MAIN_CLASS_ID });
 
@@ -231,7 +238,7 @@ export function createComplexExampleSnapshot(): ProjectSnapshot {
       moduleName: 'Calculator',
       extendsType: '',
       description:
-        'Complex example — canvas define chain, prompt for A and B, add via function, print Result, then clear',
+        'Member chain (Declare), On handlers, Call/Dispatch — prompt for A and B, add, branch on ShowResult, clear',
     },
     classes: [MAIN_CLASS, RESULT_PANEL_CLASS],
     activeClassId: MAIN_CLASS_ID,

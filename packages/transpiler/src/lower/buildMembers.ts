@@ -153,6 +153,7 @@ function memberDeclFromEntry(
       return {
         kind: 'EventDecl',
         sourceGraphNodeId: entry.nodeId,
+        handlerSourceGraphNodeId: handlerNode?.id,
         symbol,
         handlerName,
         paramNames: handlerParamNamesForEvent(symbol, handlerNode),

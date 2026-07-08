@@ -136,7 +136,7 @@ describe('analyzeProject define node sync', () => {
               type: 'vvs_standard_node',
               position: { x: 0, y: 0 },
               data: {
-                label: 'Define start',
+                label: 'Declare start',
                 category: 'Events',
                 kindId: 'event_member_define',
                 inputs: [{ id: 'exec_in', label: '', type: 'execution' }],

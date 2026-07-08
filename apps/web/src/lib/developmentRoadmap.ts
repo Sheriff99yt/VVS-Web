@@ -39,7 +39,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     id: 'phase-2',
     title: 'Persistence, auth & MCP core',
     summary:
-      'Core project persistence, JWT auth, and authenticated MCP flows are shipped in-repo',
+      'Core project persistence, JWT auth, and authenticated MCP flows are implemented in-repo',
     status: 'shipped',
   },
   {
@@ -256,7 +256,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'tree',
         title: 'Project explorer',
         description:
-          'Graph folders → classes; Functions → Events → Variables under active class; event rows with call child (drag for Call/Declare menu); Environment API and generated exports.',
+          'Graph folders → classes; Functions → Events → Variables under active class; event rows with call child (drag for Call/Declare/Define menu); Environment API and generated exports.',
         status: 'done',
       },
       {
@@ -338,7 +338,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-drag-spawn',
         title: 'Drag symbols to canvas',
         description:
-          'Variables: Get / Set / Declare. Functions: Call / Declare. Events: Call / Declare. Classes: Declare (class_define on the container graph define chain). Declare inserts define nodes on the class home graph only.',
+          'Variables: Get / Set / Declare. Functions: Call / Declare / Define. Events: Dispatch / Declare / On. Classes: Declare on the member chain. Declare inserts member-chain nodes on the class home graph; Define/On opens or spawns implementation.',
         status: 'done',
       },
       {
@@ -385,6 +385,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Project environments',
         description:
           'VS Code–style templates: live manifest catalog (9+ packs, categories), linked manifest, Environment API browse/spawn, env.call_native, module + host multi-file codegen.',
+      },
+      {
+        id: 'symbol-declare-vocabulary',
+        title: 'Declare / Handler vocabulary',
+        description:
+          'UI labels aligned to canvas roles: Declare member nodes (var, function, event, class) on member chain, On handlers, Call/Dispatch invoke. symbolRole on registry kinds; catalog grouped by Declare / Handlers / Calls.',
+        status: 'done',
       },
       {
         id: 'events',
@@ -727,6 +734,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     id: 'unified-symbols',
     title: 'Unified symbol model & portability UX',
     phase: 3,
+    emphasis: 'active',
     items: [
       {
         id: 'node-effectiveness',
@@ -739,15 +747,15 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'coa-deferred',
         title: 'Cross Over Architecture (COA)',
         description:
-          'Deferred — COA_SHIPPED false. Prerequisites: node effectiveness UI, multi-target export, documented compile policy. Single-target portability warnings shipped today.',
+          'Deferred — COA_SHIPPED false. Prerequisites: node effectiveness UI, multi-target export, documented compile policy. Single-target portability warnings available today.',
         status: 'planned',
       },
       {
         id: 'symbol-spawn-ux',
         title: 'Declare / implement / invoke spawn UX',
         description:
-          'Consistent authoring affordances for variables, functions, and events on define chain + flow. Spec: docs/design/unified_symbol_model.md.',
-        status: 'planned',
+          'Role chips, Project tree declare/handler status, Event panel Declare vs On vs Dispatch. Spec: docs/design/unified_symbol_model.md Phase D.',
+        status: 'partial',
       },
     ],
   },
@@ -810,7 +818,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'env-template-upgrade',
         title: 'Non-destructive template upgrade',
         description:
-          'One-click refresh from linked environment version; preserve user graph divergence with drift indicators (version drift UI shipped; full merge TBD).',
+          'One-click refresh from linked environment version; preserve user graph divergence with drift indicators (version drift UI done; full merge TBD).',
         status: 'partial',
       },
       {

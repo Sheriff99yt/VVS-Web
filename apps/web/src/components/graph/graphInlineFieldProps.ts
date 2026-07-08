@@ -1,12 +1,11 @@
-import type { FocusEvent, KeyboardEvent, SyntheticEvent } from 'react';
+import type { FocusEvent, KeyboardEvent, SyntheticEvent, WheelEvent } from 'react';
+import { GRAPH_WHEEL_SHIELD_CLASS } from './useBlockCanvasWheel';
 
-/** Keep inline node fields from fighting canvas zoom, pan, drag, and selection. */
 export function stopGraphBubble(event: SyntheticEvent) {
   event.stopPropagation();
 }
 
-export function handleInlineFieldWheel(event: React.WheelEvent<HTMLElement>) {
-  event.preventDefault();
+export function handleInlineFieldWheel(event: WheelEvent<HTMLElement>) {
   event.stopPropagation();
 }
 
@@ -29,13 +28,19 @@ export function handleInlineFieldFocus(event: FocusEvent<HTMLInputElement>) {
   requestAnimationFrame(() => input.select());
 }
 
-export const graphInlineFieldProps = {
+export const graphInlineFieldInteractionProps = {
   onPointerDown: stopGraphBubble,
   onPointerUp: stopGraphBubble,
   onClick: stopGraphBubble,
   onDoubleClick: stopGraphBubble,
   onMouseDown: stopGraphBubble,
-  onWheel: handleInlineFieldWheel,
   onKeyDown: handleInlineFieldKeyDown,
   onFocus: handleInlineFieldFocus,
 } as const;
+
+export const graphInlineFieldProps = {
+  ...graphInlineFieldInteractionProps,
+  onWheel: handleInlineFieldWheel,
+} as const;
+
+export { GRAPH_WHEEL_SHIELD_CLASS };

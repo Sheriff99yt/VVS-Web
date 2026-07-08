@@ -8,6 +8,7 @@ import {
 } from '@vvs/graph-types';
 import { generateMockCode, graphToIr } from '@vvs/transpiler';
 import { createComplexExampleSnapshot } from './complexExample';
+import { normalizeExampleNodes } from './exampleGraphBuild';
 import { evaluateWireConnection } from '@/lib/graphWiring';
 
 const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
@@ -173,6 +174,30 @@ describe('createComplexExampleSnapshot', () => {
     expect(code).not.toMatch(/use_macro/);
     expect(code).toMatch(/def Add\(/);
     expect(code).toMatch(/self\.Add\(\)/);
+  });
+
+  test('normalized labels use Declare / On / Dispatch vocabulary', () => {
+    const snapshot = createComplexExampleSnapshot();
+    const calc = calculatorDoc(snapshot);
+    const nodes = normalizeExampleNodes(calc.nodes);
+
+    const memberKindIds = new Set(['class_define', 'var_define', 'function_define', 'event_member_define']);
+    for (const node of nodes.filter((n) => memberKindIds.has(n.data.kindId))) {
+      expect(node.data.label).toMatch(/^Declare /);
+      expect(node.data.label).not.toMatch(/^Define /);
+    }
+
+    for (const node of nodes.filter((n) => n.data.kindId === 'event_define')) {
+      const eventName =
+        typeof node.data.properties?.eventName === 'string'
+          ? node.data.properties.eventName
+          : node.data.label;
+      expect(node.data.label).toBe(eventName);
+    }
+
+    for (const node of nodes.filter((n) => n.data.kindId === 'event_dispatch')) {
+      expect(node.data.label).toMatch(/^Dispatch /);
+    }
   });
 
   test('organizational graph folders and graph_ref nodes are present', () => {

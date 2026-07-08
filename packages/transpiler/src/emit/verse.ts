@@ -7,7 +7,7 @@ import {
   formatFunctionDefHeader,
   printContextForIr,
 } from './helpers';
-import { appendIrMembers, tagClassDeclLine } from './members';
+import { appendIrMembers, appendMemberImplementations, tagClassDeclLine } from './members';
 import { handlerBodyIndent } from '../lower/graphToIr';
 
 function appendVerseEventHandler(sink: CodeSink, ir: IrModule, handler: IrEventHandler): void {
@@ -30,6 +30,7 @@ export function emitVerseModule(sink: CodeSink, ir: IrModule): void {
   sink.appendRaw(`${ir.moduleName} := class${base}:`);
   tagClassDeclLine(sink, ir, classLineStart);
   appendIrMembers(sink, ir);
+  appendMemberImplementations(sink, ir);
   for (const handler of ir.eventHandlers) {
     appendVerseEventHandler(sink, ir, handler);
   }

@@ -8,6 +8,8 @@ Last aligned with codebase: **July 2026** (text-shaped graphs direction locked; 
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
+**Vocabulary alignment:** Phased implementation plan — [design/terms_refactor_plan.md](design/terms_refactor_plan.md) (glossary: [design/language_neutral_vocabulary.md](design/language_neutral_vocabulary.md)).
+
 ---
 
 ## Development Approach
@@ -325,7 +327,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 
 | Rule | Implementation |
 |------|----------------|
-| **Emit path** | `appendIrMembers` / `ir.members` from define chain only — **no** sidebar preamble (`appendLegacyPreamble` removed) |
+| **Emit path** | `appendIrMembers` / `ir.members` from member chain only — **no** sidebar preamble (`appendLegacyPreamble` removed) |
 | **Symbol tables** | `variables[]`, `functions[]`, `events[]` are indexes; panel creates **dual-write** define nodes via `defineNodeSync` / `useSymbolLifecycle` |
 | **Define nodes** | `class_define`, `var_define`, `function_define`, `event_member_define` on `classHomeGraphId` exec chain |
 | **Program entry** | `events[]` with `role: 'entry'` — same `event_member_define` + `event_define` pattern as custom events; codegen `on_start` **only** when user wired entry on canvas; legacy `event_on_start` → `LIFECYCLE_NODE_DEPRECATED`; **no** transpiler-injected empty `on_start()` |
