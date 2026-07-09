@@ -7,13 +7,13 @@ import {
   findDefineNodesForSymbol,
 } from '@vvs/graph-types';
 import { transpileGraphCode, graphToIr } from '@vvs/transpiler';
-import { createComplexExampleSnapshot } from './complexExample';
-import { normalizeExampleNodes } from './exampleGraphBuild';
+import { createCalculatorUsabilityTestSnapshot } from './calculatorUsabilityTest';
+import { normalizeUsabilityTestNodes } from './usabilityTestGraphBuild';
 import { evaluateWireConnection } from '@/lib/graphWiring';
 
 const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
 
-function analyzeCalculatorSnapshot(snapshot: ReturnType<typeof createComplexExampleSnapshot>) {
+function analyzeCalculatorSnapshot(snapshot: ReturnType<typeof createCalculatorUsabilityTestSnapshot>) {
   return analyzeProject({
     documents: snapshot.documents!,
     variables: snapshot.variables,
@@ -26,15 +26,15 @@ function analyzeCalculatorSnapshot(snapshot: ReturnType<typeof createComplexExam
   });
 }
 
-function calculatorDoc(snapshot: ReturnType<typeof createComplexExampleSnapshot>) {
+function calculatorDoc(snapshot: ReturnType<typeof createCalculatorUsabilityTestSnapshot>) {
   const doc = snapshot.documents![CALCULATOR_GRAPH_ID];
   if (!doc) throw new Error(`missing ${CALCULATOR_GRAPH_ID} document`);
   return doc;
 }
 
-describe('createComplexExampleSnapshot', () => {
+describe('calculator usability example test', () => {
   test('passes structural analysis with no errors', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = analyzeCalculatorSnapshot(snapshot);
 
     expect(result.ok).toBe(true);
@@ -43,7 +43,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('strict fidelity: no missing defines or off-canvas declarations', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = analyzeCalculatorSnapshot(snapshot);
     const mainClass = snapshot.classes.find((c) => c.id === MAIN_CLASS_ID)!;
     const homeDoc = snapshot.documents![classHomeGraphId(mainClass)]!;
@@ -64,7 +64,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('canvas-only emit uses ir.members without legacy preamble flag', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = calculatorDoc(snapshot);
     const ir = graphToIr(
       {
@@ -89,7 +89,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('every wire is compatible with editor wiring rules', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     for (const [tabId, doc] of Object.entries(snapshot.documents!)) {
       for (const edge of doc.edges) {
         const others = doc.edges.filter((e) => e.id !== edge.id);
@@ -112,10 +112,10 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('transpiles for all supported target languages', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = calculatorDoc(snapshot);
 
-    for (const lang of ['python', 'javascript', 'cpp', 'verse'] as const) {
+    for (const lang of ['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp'] as const) {
       const code = transpileGraphCode({
         moduleName: snapshot.projectDetails.moduleName,
         extendsType: snapshot.projectDetails.extendsType,
@@ -131,12 +131,20 @@ describe('createComplexExampleSnapshot', () => {
         activeClassId: snapshot.activeClassId,
       });
       expect(code.length).toBeGreaterThan(0);
-      expect(code).toMatch(/Enter A:/);
+      if (lang === 'gdscript') {
+        expect(code).toMatch(/OS\.read_string_from_stdin\(\)/);
+      } else if (lang === 'rust') {
+        expect(code).toMatch(/std::io::stdin\(\)\.read_line/);
+      } else if (lang === 'csharp') {
+        expect(code).toMatch(/Console\.ReadLine/);
+      } else {
+        expect(code).toMatch(/Enter A:/);
+      }
     }
   });
 
   test('user input value wires to typed set pins', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = calculatorDoc(snapshot);
     const inputA = calc.nodes.find((n) => n.id === 'calc-input-a')!;
     const setA = calc.nodes.find((n) => n.id === 'calc-set-a')!;
@@ -148,7 +156,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('text-shaped fidelity: no macro semantics in export', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = calculatorDoc(snapshot);
 
     expect(snapshot.openTabs.every((t) => t.type !== 'macro')).toBe(true);
@@ -177,9 +185,9 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('normalized labels use Declare / On / Dispatch vocabulary', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = calculatorDoc(snapshot);
-    const nodes = normalizeExampleNodes(calc.nodes);
+    const nodes = normalizeUsabilityTestNodes(calc.nodes);
 
     const memberKindIds = new Set(['class_define', 'var_define', 'function_define', 'event_member_define']);
     for (const node of nodes.filter((n) => memberKindIds.has(n.data.kindId))) {
@@ -201,7 +209,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('organizational graph folders and graph_ref nodes are present', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     expect(snapshot.graphContainers!.length).toBeGreaterThanOrEqual(3);
     expect(snapshot.graphContainers!.some((c) => c.name === 'Calculator')).toBe(true);
     expect(snapshot.graphContainers!.some((c) => c.name === 'UI flow')).toBe(true);
@@ -216,7 +224,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('result prints through explicit To String node', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = calculatorDoc(snapshot);
     expect(calc.nodes.some((n) => n.data.kindId === 'convert_to_string')).toBe(true);
 
@@ -239,7 +247,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('dispatch nodes use graphBinding for event symbols', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = calculatorDoc(snapshot);
     const dispatchNodes = calc.nodes.filter((n) => n.data.kindId === 'event_dispatch');
     expect(dispatchNodes.length).toBeGreaterThanOrEqual(2);
@@ -250,7 +258,7 @@ describe('createComplexExampleSnapshot', () => {
   });
 
   test('secondary class ResultPanel emits from UI flow container', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const uiFlowId = 'calc-ui-flow-container';
     const uiDoc = snapshot.documents![uiFlowId];
     if (!uiDoc) throw new Error(`missing ${uiFlowId}`);

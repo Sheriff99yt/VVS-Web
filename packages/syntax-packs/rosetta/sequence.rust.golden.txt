@@ -1,0 +1,7 @@
+        {
+        // sequence
+            println!("{}", "first");
+            println!("{}", "second");
+        }
+    }
+}

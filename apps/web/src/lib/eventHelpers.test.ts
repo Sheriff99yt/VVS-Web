@@ -6,7 +6,7 @@ import {
   inferEventsFromDocuments,
   parameterCodegenName,
 } from './eventHelpers';
-import { createComplexExampleSnapshot } from './examples/complexExample';
+import { createCalculatorUsabilityTestSnapshot } from './usabilityExampleTests/calculatorUsabilityTest';
 
 describe('eventHelpers', () => {
   test('eventHandlerName strips On prefix and snake_cases', () => {
@@ -27,7 +27,7 @@ describe('eventHelpers', () => {
   });
 
   test('inferEventsFromDocuments repairs legacy graphs', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const { events: _removed, ...withoutEvents } = snapshot;
     const inferred = inferEventsFromDocuments(withoutEvents.documents!);
     expect(inferred.some((e) => e.name.toLowerCase() === 'calculate')).toBe(true);

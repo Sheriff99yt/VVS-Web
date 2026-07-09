@@ -1,9 +1,15 @@
 import type { PrinterRegistry } from './types';
 import { printGetInputCpp } from './printers/getInput.cpp';
+import { printGetInputGdscript } from './printers/getInput.gdscript';
+import { printGetInputRust } from './printers/getInput.rust';
+import { printGetInputCsharp } from './printers/getInput.csharp';
 import { printGetInputJavascript } from './printers/getInput.javascript';
 import { printGetInputPython } from './printers/getInput.python';
 import { printGetInputVerse } from './printers/getInput.verse';
 import { createCppSwitchPrinter } from './printers/switch.cpp';
+import { createGdscriptSwitchPrinter } from './printers/switch.gdscript';
+import { createRustSwitchPrinter } from './printers/switch.rust';
+import { createCsharpSwitchPrinter } from './printers/switch.csharp';
 import { createJavascriptSwitchPrinter } from './printers/switch.javascript';
 import { createPythonSwitchPrinter } from './printers/switch.python';
 import { createVerseSwitchPrinter } from './printers/switch.verse';
@@ -33,8 +39,14 @@ export function registerPackPrinters(
   registry.registerStmt('AssignVariable:get_input', 'cpp', wrapAssignGetInput(printGetInputCpp));
   registry.registerStmt('AssignVariable:get_input', 'javascript', wrapAssignGetInput(printGetInputJavascript));
   registry.registerStmt('AssignVariable:get_input', 'verse', wrapAssignGetInput(printGetInputVerse));
+  registry.registerStmt('AssignVariable:get_input', 'gdscript', wrapAssignGetInput(printGetInputGdscript));
+  registry.registerStmt('AssignVariable:get_input', 'rust', wrapAssignGetInput(printGetInputRust));
+  registry.registerStmt('AssignVariable:get_input', 'csharp', wrapAssignGetInput(printGetInputCsharp));
   registry.registerStmt('Switch', 'python', createPythonSwitchPrinter(printStatements));
   registry.registerStmt('Switch', 'cpp', createCppSwitchPrinter(printStatements));
   registry.registerStmt('Switch', 'javascript', createJavascriptSwitchPrinter(printStatements));
   registry.registerStmt('Switch', 'verse', createVerseSwitchPrinter(printStatements));
+  registry.registerStmt('Switch', 'gdscript', createGdscriptSwitchPrinter(printStatements));
+  registry.registerStmt('Switch', 'rust', createRustSwitchPrinter(printStatements));
+  registry.registerStmt('Switch', 'csharp', createCsharpSwitchPrinter(printStatements));
 }

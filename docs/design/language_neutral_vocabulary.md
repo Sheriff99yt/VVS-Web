@@ -3,7 +3,7 @@
 **Status:** Proposal (July 2026) — **plan before system rework**. No mass renames in this pass.  
 **Goal:** Lock user-facing terms that map cleanly to C++, Java, C#, TypeScript, Python, Go, and Rust via syntax packs, while keeping stable internal identifiers (`kindId`, diagnostic codes, file names).
 
-**Companion:** [naming_and_product_direction.md](../naming_and_product_direction.md) · [unified_symbol_model.md](unified_symbol_model.md) · [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [node_system.md](../node_system.md)
+**Companion:** [naming_and_product_direction.md](../naming_and_product_direction.md) · [unified_symbol_model.md](unified_symbol_model.md) · [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [node_system.md](../node_system.md) · [language_capability_catalog.md](language_capability_catalog.md)
 
 ---
 

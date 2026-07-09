@@ -10,7 +10,7 @@ export function condSpanOffset(
   indent: string,
   keyword: 'if' | 'while'
 ): number {
-  if (family === 'python' || family === 'verse') {
+  if (family === 'python' || family === 'verse' || family === 'gdscript') {
     return indent.length + `${keyword} `.length;
   }
   return indent.length + `${keyword} (`.length;
@@ -39,7 +39,7 @@ export function appendBraceFamilyClose(
   lines: { text: string }[],
   key: BlockCloseKey
 ): void {
-  if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'rust' || ctx.family === 'csharp') {
     lines.push({ text: blockCloseLine(ctx, key) });
   }
 }

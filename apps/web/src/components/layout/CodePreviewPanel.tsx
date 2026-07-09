@@ -32,6 +32,9 @@ const LANGUAGE_OPTIONS: { value: TargetLanguage; label: string }[] = [
   { value: 'javascript', label: 'JavaScript' },
   { value: 'cpp', label: 'C++' },
   { value: 'verse', label: 'Verse' },
+  { value: 'gdscript', label: 'GDScript' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'csharp', label: 'C#' },
   { value: 'json', label: 'JSON' },
 ];
 
@@ -40,6 +43,9 @@ const LANGUAGE_ACCENT: Record<string, string> = {
   javascript: 'text-amber-400 bg-amber-500/10 border-amber-500/25',
   cpp: 'text-violet-400 bg-violet-500/10 border-violet-500/25',
   verse: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/25',
+  gdscript: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/25',
+  rust: 'text-orange-400 bg-orange-500/10 border-orange-500/25',
+  csharp: 'text-violet-400 bg-violet-500/10 border-violet-500/25',
   json: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/25',
 };
 

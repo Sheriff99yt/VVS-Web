@@ -50,7 +50,30 @@ const OPTIONAL_SHELL_BY_FAMILY: Record<
     'FunctionTabClose',
     'FunctionDeclPrototype',
   ],
+  gdscript: [],
   verse: [],
+  rust: [
+    'ClassModuleClose',
+    'EventHandlerClose',
+    'FunctionTabClose',
+    'IfBranchClose',
+    'ForLoopClose',
+    'WhileLoopClose',
+    'SequenceComment',
+    'SequenceClose',
+    'CallCrossClassStatic',
+  ],
+  csharp: [
+    'ClassModuleClose',
+    'EventHandlerClose',
+    'FunctionTabClose',
+    'IfBranchClose',
+    'ForLoopClose',
+    'WhileLoopClose',
+    'SequenceComment',
+    'SequenceClose',
+    'CallCrossClassStatic',
+  ],
 };
 
 const REQUIRED_LAYOUT_KEYS = [
@@ -66,10 +89,13 @@ const REQUIRED_LAYOUT_KEYS = [
   'emptyFunctionBody',
 ] as const;
 
-const PACK_FAMILIES = ['python', 'cpp', 'javascript', 'verse'] as const;
+const PACK_FAMILIES = ['python', 'cpp', 'javascript', 'verse', 'gdscript', 'rust', 'csharp'] as const;
 
 function skipTemplate(family: (typeof PACK_FAMILIES)[number], key: (typeof REQUIRED_TEMPLATES)[number]): boolean {
   if (family === 'python' && (key === 'AwaitWait' || key === 'Assign')) return true;
+  if (family === 'gdscript' && (key === 'AwaitWait' || key === 'Assign')) return true;
+  if (family === 'rust' && (key === 'AwaitWaitAsync' || key === 'AwaitWaitSync' || key === 'Assign')) return true;
+  if (family === 'csharp' && (key === 'AwaitWait' || key === 'Assign')) return true;
   if (family === 'cpp' && (key === 'AwaitWaitAsync' || key === 'AwaitWaitSync' || key === 'AssignInstance' || key === 'AssignLocal')) {
     return true;
   }

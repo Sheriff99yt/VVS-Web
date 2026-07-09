@@ -15,13 +15,13 @@ export function supportsNativeMemberDeclare(
 }
 
 export function memberChainIndent(targetLanguage: TargetLanguage): string {
-  if (targetLanguage === 'python' || targetLanguage === 'verse') return '    ';
+  if (targetLanguage === 'python' || targetLanguage === 'verse' || targetLanguage === 'gdscript') return '    ';
   if (targetLanguage === 'javascript') return '  ';
   return '    ';
 }
 
 export function commentLine(targetLanguage: TargetLanguage, indent: string, label: string): string {
-  const prefix = targetLanguage === 'python' || targetLanguage === 'verse' ? '# ' : '// ';
+  const prefix = targetLanguage === 'python' || targetLanguage === 'verse' || targetLanguage === 'gdscript' ? '# ' : '// ';
   return `${indent}${prefix}${label}`;
 }
 

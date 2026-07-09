@@ -7,7 +7,7 @@
 
 ## Summary
 
-VVS separates **what the graph means** from **how a target language prints it**. The three-stage pipeline is **shipped**: lowering produces language-neutral structured IR; **syntax packs** carry print rules for **all four v1 families** (python, javascript, cpp, verse). **Language profiles** carry portability policy.
+VVS separates **what the graph means** from **how a target language prints it**. The three-stage pipeline is **shipped**: lowering produces language-neutral structured IR; **syntax packs** carry print rules for **seven pack-driven codegen families** (python, javascript, cpp, verse, gdscript, rust, csharp). **Language profiles** carry portability policy.
 
 **Tree-sitter** is an optional **parse validator** in CI — not a syntax author. Syntax changes flow through packs, Rosetta golden tests, and agent-assisted maintenance gates.
 
@@ -15,11 +15,11 @@ VVS separates **what the graph means** from **how a target language prints it**.
 
 ## Problem (historical → current)
 
-| Was (pre–July 2026) | Milestone 1 (python/cpp) | Milestone 2 (javascript/verse) — **shipped** |
-|-------|-----|--------|
-| Emitters branch on `TargetLanguage` | **PrinterRegistry** + packs for python/cpp | **All four v1 families** pack-first; hybrid TS only for get_input/switch glue |
-| Hardcoded expr/leaf branches in `print/stmt.ts` | Removed for python/cpp | Removed for javascript/verse |
-| Thin javascript/verse base JSON | — | Full Rosetta template sets + layout |
+| Was (pre–July 2026) | Milestone 1 (python/cpp) | Milestone 2 (javascript/verse) | Milestone 3 (gdscript/rust/csharp) — **shipped** |
+|-------|-----|--------|--------|
+| Emitters branch on `TargetLanguage` | **PrinterRegistry** + packs for python/cpp | **All four v1 families** pack-first | **Seven codegen families** pack-first (+ json preview) |
+| Hardcoded expr/leaf branches in `print/stmt.ts` | Removed for python/cpp | Removed for javascript/verse | Same pattern for Phase 6 v2 langs |
+| Thin base JSON | — | Full Rosetta + layout for JS/verse | GDScript/Rust/C# base packs + 14× goldens each |
 
 ---
 
@@ -71,12 +71,12 @@ flowchart TB
 
 ## Target resolution and capabilities
 
-Flat `TargetLanguage` (`python`, `javascript`, `cpp`, `verse`) evolves to a **codegen target** with capabilities:
+Flat `TargetLanguage` (`python`, `javascript`, `cpp`, `verse`, `gdscript`, `json`) maps to a **codegen target** with capabilities:
 
 ```ts
 interface CodegenTarget {
-  family: 'python' | 'javascript' | 'cpp' | 'verse';
-  capabilities: string[];  // e.g. 'async', 'type_hints', 'es2022'
+  family: 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp';
+  capabilities: string[];  // e.g. 'async', 'type_hints', 'es2022', 'typed'
   packLock?: { base: string; overlays: string[] }; // pinned in .vvs/project.json
 }
 ```
@@ -271,10 +271,10 @@ Tree-sitter confirms generated output is syntactically valid — it does not def
 | **0** | This spec + cross-links | Done |
 | **1** | Structured IR v2 + PrinterRegistry | Done |
 | **2** | Rosetta suite + fidelity linter | Done |
-| **3** | `@vvs/syntax-packs` package + shell templates + lockfile UI | Done (v1 families) |
+| **3** | `@vvs/syntax-packs` package + shell templates + lockfile UI | Done (v1 + **gdscript** families) |
 | **4** | Capability-based targets + profile alignment | Partial — `CodegenTarget` shipped; JSON profiles optional |
 | **5** | MCP agent tools | Done (local) |
-| **6** | Environment pack overlays + new language families | Planned — GDScript, Rust, C# |
+| **6** | Environment pack overlays + new language families | **Done (M3)** — GDScript + Godot env, Rust, C#; optional Rust/C# console env packs remain |
 
 ---
 

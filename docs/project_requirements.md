@@ -84,9 +84,9 @@ This document captures functional and non-functional requirements for Vision Vis
 - [ ] Support for user-defined function nodes (encapsulating sub-graphs)
 
 ### 3.3 Code Generation (Transpiler)
-- [ ] Generate syntactically valid code from the visual graph for multiple target languages
-- [ ] **V1 languages**: Python, JavaScript/TypeScript, C++, **Verse**
-- [ ] **V2 languages** (stretch): GDScript (Godot), Rust, C#
+- [x] Generate syntactically valid code from the visual graph for multiple target languages
+- [x] **V1 languages**: Python, JavaScript/TypeScript, C++, **Verse**
+- [x] **V2 languages** (stretch): **GDScript, Rust, C#** — pack-first base packs, 14 Rosetta goldens each, UI codegen targets — **shipped** July 2026 (milestone 3)
 - [ ] Language switching is instant — the graph does not change, only the emitter output
 - [ ] Generated code is human-readable and properly formatted (indentation, spacing, line breaks)
 - [ ] Post-generation formatting pass (server-side Prettier/Clang-Format for v1; optional WASM formatters for later phases)

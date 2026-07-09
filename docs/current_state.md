@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs direction locked; syntax pack architecture shipped).
+Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed — seven pack-driven codegen families).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -203,7 +203,7 @@ Context-aware (`ProjectContext.selection`), shown on graph canvas when something
 
 Graph-level settings (module name, target language) → breadcrumb **settings** modal (`GraphSettingsModal`).
 
-Target languages in UI: **Python, JavaScript, C++, Verse, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/mockCodegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**.
+Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/mockCodegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**.
 
 ### Graph editor features
 
@@ -217,8 +217,8 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Get User Input node (`action_get_input`) | Done — registry kind, schema-driven Settings, Python/JS/C++/Verse emit |
 | Conversion nodes (`convert_to_string`, `convert_to_number`) | Done — explicit per-language calls, source-map highlights, no implicit casts |
 | Pin type validation on wires | Done — `PIN_TYPE_MISMATCH` in `@vvs/graph-types` analyze; shared with editor wiring |
-| Example templates (Hello World, Calculator) | Done — `simpleExample.ts`, `complexExample.ts`, integrity tests |
-| Example template integrity tests | Done — `complexExample.test.ts` (analyze + wiring + 4-language codegen) |
+| Usability example tests (Hello World, Calculator) | Done — `usabilityExampleTests/*`, `calculatorUsabilityTest.test.ts` |
+| Usability test integrity | Done — analyze + wiring + 7-language codegen; drives UI gap discovery per `language_capability_catalog.md` |
 | Call Function nodes (`vvs.project.call_function` + `graphBinding`) | Done |
 | Dispatch event nodes (`event_dispatch` + `graphBinding.kind: dispatch_event`) | Done — per-event spawn in context menu / tree drag; canvas-first **New event here…** on class graph; emits direct handler call (`self.on_<name>(…)`) |
 | Event emit/subscribe nodes (`event_emit`, `event_subscribe`) | **Blocked** — excluded from spawn catalog; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` blocks Generate; no `_emit` / `_subscribe` injection in transpiler |
@@ -269,9 +269,9 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Core node pack | `packages/syntax-registry/core-pack.json` |
 | Spawn catalog (web) | `apps/web/src/lib/nodeCatalog.ts` → `buildCoreCategories()` |
 | Project call palette | `apps/web/src/lib/projectNodeCatalog.ts` → `expandProjectSymbols()` |
-| Complex example (multi-graph) | `apps/web/src/lib/examples/complexExample.ts` |
+| Calculator usability test (multi-graph) | `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts` |
 | Codegen | `packages/transpiler` + `@vvs/syntax-packs` — web facade: `apps/web/src/lib/mockCodegen.ts` |
-| Rosetta fixtures | `packages/syntax-packs/rosetta/` — print, branch, assign, call, convert, dispatch, wait (+ `.golden.txt` per family) |
+| Rosetta fixtures | `packages/syntax-packs/rosetta/` — print, branch, assign, call, convert, dispatch, wait, for, while, switch, sequence, import_module, await_wait, call_native (+ `.golden.txt` per family) |
 | Syntax pack lock | `.vvs/project.json` → optional `syntaxPackLock` on `VvsProjectManifest` |
 | Project analysis | `packages/graph-types` (`analyzeProject`) + `packages/language-profiles` |
 | Web analysis wrapper | `apps/web/src/lib/projectAnalysis.ts` |
@@ -313,7 +313,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 |-----------|----------|--------|
 | Structured IR | `packages/transpiler/src/ir/types.ts` | Done — `IrExpr` tree, structured stmts; wave-1 `IrEmittedStmt` deprecated |
 | Language-neutral lowering | `packages/transpiler/src/lower/graphToIr.ts` | Done — no target-language strings in lower/ |
-| Print registry | `packages/transpiler/src/print/` | Done — **all four v1 families pack-first**; missing template → `PackTemplateMissingError`; registered TS printers for `get_input` + `switch` (all families) |
+| Print registry | `packages/transpiler/src/print/` | Done — **seven pack-driven families** (python, javascript, cpp, verse, gdscript, rust, csharp) pack-first |
 | Print adapter | `packages/transpiler/src/print/template.ts` | Done — `printFromTemplate`, pack `layout` helpers (`bodyIndent`, `blockPlaceholder`, `emptyHandlerBody`, …) |
 | Unified block emit | `packages/transpiler/src/print/blocks.ts` | Done — `buildIfBranch` / `buildForLoop` / … for string print path (`stmt.ts`) |
 | Block close helpers | `packages/transpiler/src/print/blockHelpers.ts` | Done — `condSpanOffset`, `blockCloseLine`, `ifElseLine` shared with `emit/sinkStatements.ts` (span-aware nested emit) |
@@ -323,9 +323,9 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Module shell renderer | `packages/transpiler/src/emit/shell.ts` | Done — `ClassModuleOpen`, `EventHandlerOpen`, `FunctionDefOpen`, etc. from pack JSON |
 | Empty body layout | `packages/transpiler/src/emit/layout.ts` | Done — `emptyHandlerBody` / `emptyFunctionBody` from pack `layout` (no hardcoded `pass` / `// empty` in emit) |
 | Pack migration CI gate | `packages/transpiler/src/print/packMigrationGate.test.ts` | Done — bans legacy emitters in `stmt.ts` / `expr.ts`; per-language `emit/*.ts` removed; `classModule` + `sinkStatements` use pack helpers |
-| Base syntax packs | `packages/syntax-packs/src/packs/*.base.json` | Done — full Rosetta + **shell** template sets + `layout` for python, cpp, javascript, verse |
+| Base syntax packs | `packages/syntax-packs/src/packs/*.base.json` | Done — full Rosetta + shell + layout for all seven families |
 | Capability overlay | `javascript.es2022.json` | Done — proof of inherit-only version deltas |
-| Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — 16 fixtures × 4 families; all families green in `rosetta.test.ts` |
+| Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — **14 fixtures × 7 families** (98 golden pairs); regen via `scripts/update-{family}-goldens.ts` |
 | Pack coverage gate | `packages/syntax-packs/src/packCoverage.test.ts` | Done — required Rosetta + **shell** template keys + layout profile per base pack |
 | Fidelity linter | `packages/syntax-packs/src/fidelity.ts` | Done — CI via `rosetta.test.ts` |
 | CodegenTarget | `packages/graph-types/src/codegenTarget.ts` | Done — family + capabilities; UI still uses flat `TargetLanguage` |
@@ -359,6 +359,8 @@ Calculator and Hello World examples pass strict analysis. Environment templates 
 | Ambiguous overload resolver UI | Call node details | **Done** — overload dropdown in floating details |
 | Syntax pack MCP tools | `server/` Go | **Done (local)** — `list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse` via thin MCP wrappers over services |
 | Tree-sitter parse validation | CI | **Done (Python/JS)** — validator-only check on Rosetta outputs; unsupported local runtimes skip gracefully |
+| GDScript language profile | `packages/language-profiles/src/profiles.ts` | Done — native static func, extends; overload unsupported |
+| Godot environment template | `env.gdscript.godot-game` | Done — Node extends, `_ready` / `_process`, `project.godot` stub |
 | `language-profiles/profiles/*.json` | packages | Profiles in TypeScript today; JSON packs optional |
 | Supabase auth / persistence | Go + **self-hosted Supabase** (`pgx`) | **Foundation shipped in repo (Phase 2a)** — PostgresStore, JWT middleware, GoTrue docker stack, cloud save/load when authenticated, MCP session auth; remaining Phase 2 tail = VPS/Caddy deploy, GitHub OAuth production config, backups, optional offline sync — [deployment.md](deployment.md) |
 | MCP server transport | `server/` Go | **Done (local)** — SSE at `/mcp`; production JWT + HTTPS deploy TBD |

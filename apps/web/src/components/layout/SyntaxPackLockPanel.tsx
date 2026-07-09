@@ -10,6 +10,9 @@ const FAMILY_OPTIONS: { id: LanguageFamily; label: string; defaultBase: string }
   { id: 'javascript', label: 'JavaScript', defaultBase: 'javascript.base' },
   { id: 'cpp', label: 'C++', defaultBase: 'cpp.base' },
   { id: 'verse', label: 'Verse', defaultBase: 'verse.base' },
+  { id: 'gdscript', label: 'GDScript', defaultBase: 'gdscript.base' },
+  { id: 'rust', label: 'Rust', defaultBase: 'rust.base' },
+  { id: 'csharp', label: 'C#', defaultBase: 'csharp.base' },
 ];
 
 function parseOverlays(value: string): string[] {

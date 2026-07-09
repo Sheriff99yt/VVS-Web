@@ -19,7 +19,7 @@ Web editor   →   Persistence, auth   →   Community      →   Real-time
 
 Phase 5                                Phase 6
 UE6 editor plugin (in-engine)      →   Scale + polish
-(reuses v1 Verse emitter)              + more emitters
+(reuses v1 Verse emitter)              + GDScript + more emitters
 ```
 
 ---
@@ -36,8 +36,10 @@ UE6 editor plugin (in-engine)      →   Scale + polish
 | **Transpiler** | Three-stage pipeline in `packages/transpiler`: graph analysis → structured IR v2 → print (syntax packs) → emitters; **no hidden transforms** |
 | **Syntax packs (milestone 1)** | **Python + C++ pack-driven print** — full Rosetta template sets, `renderTemplate` engine, unified `blocks.ts`, CI gate banning hardcoded python/cpp in legacy emitters — **shipped** July 2026 |
 | **Syntax packs (milestone 2)** | **JavaScript + Verse pack-driven print** — full base packs, switch/get_input registered printers, legacy `stmt.ts` / `blocks.ts` branches removed — **shipped** July 2026 |
+| **Syntax packs (milestone 3)** | **Phase 6 v2 language platform** — GDScript, Rust, C# pack-first families; 14 Rosetta goldens each; UI codegen targets; Godot env pack — **shipped** July 2026. **Closes language-expansion track** before usability/workflow standards rework — see [design/terms_refactor_plan.md](design/terms_refactor_plan.md) |
 | **Syntax packs (post-migration)** | **Module shell templates** (`ClassModuleOpen`, handlers, function headers), **pack layout** for empty bodies, **shared `blockHelpers`** (`blocks.ts` + `sinkStatements.ts`), unified `classModule.ts`, **Tree-sitter CI** (Python/JS, Linux), monorepo **packages** + **Go test** CI jobs — **shipped** July 2026 |
 | **Languages v1** | Python, JavaScript/TypeScript, C++, **Verse** — client transpiler + web code preview |
+| **Languages v2 (Phase 6)** | **GDScript, Rust, C#** — **shipped** July 2026 (milestone 3) |
 | **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; multi-file output (module + host entry) |
 | **Quality** | Snapshot tests on generated code; **Rosetta golden suite** + fidelity linter in `@vvs/syntax-packs`; graph validation (`PIN_TYPE_MISMATCH`, portability) |
 | **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, **event Dispatch** (direct call), **explicit program entry** (`role: 'entry'`, no hidden `on_start`) — **shipped**; Emit/Subscribe multicast **rejected** (hidden runtime) |
@@ -145,10 +147,12 @@ This is a **first-class product surface** for Unreal teams, but output remains *
 
 ## Phase 6 — Polish, scale & emitter expansion
 
+**Status:** **Active** — **language platform milestone (M3) closed** July 2026. Remaining Phase 6: performance, Rust/C# console env packs, mobile UX, enterprise. **Next major track:** usability & workflow standards — [design/terms_refactor_plan.md](design/terms_refactor_plan.md).
+
 | Track | Examples |
 |-------|----------|
 | **Performance** | 500+ node graphs at 60fps; worker-based transpile for large graphs |
-| **Languages** | GDScript, Rust, C#; **syntax packs** + agent-assisted maintenance + optional Tree-sitter parse validation — see [syntax_pack_architecture.md](syntax_pack_architecture.md). New families follow the python/cpp pack-first pattern (milestone 1, July 2026). |
+| **Languages** | **Closed (M3)** — seven pack-driven families; 14×7 Rosetta goldens; `env.gdscript.godot-game`. Optional: Rust/C# console env packs |
 | **Templates & standards** | OpenAPI/AsyncAPI → environment manifest import; TypeSpec emitter; Backstage catalog; devcontainer linkage |
 | **Mobile UX** | Touch gestures, radial menus, magnetic pin snap |
 | **Enterprise** | Self-hosted Supabase + Go on VPS ([deployment.md](deployment.md)), moderation, audit logs |

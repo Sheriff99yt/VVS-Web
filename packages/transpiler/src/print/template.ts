@@ -10,7 +10,7 @@ import { offsetSpans } from '../codeExpr';
 import type { PrintContext, PrintedStmt } from './types';
 
 /** Families that must use syntax packs — no silent fallback to hardcoded emitters. */
-export const PACK_DRIVEN_FAMILIES = new Set<LanguageFamily>(['python', 'cpp', 'javascript', 'verse']);
+export const PACK_DRIVEN_FAMILIES = new Set<LanguageFamily>(['python', 'cpp', 'javascript', 'verse', 'gdscript', 'rust', 'csharp']);
 
 export function isPackDrivenFamily(family: LanguageFamily): boolean {
   return PACK_DRIVEN_FAMILIES.has(family);

@@ -1,7 +1,7 @@
 import type { TargetLanguage } from './symbols';
 
 /** Language family for syntax pack resolution. */
-export type LanguageFamily = 'python' | 'javascript' | 'cpp' | 'verse';
+export type LanguageFamily = 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp';
 
 /** Pinned syntax pack versions in `.vvs/project.json`. */
 export interface SyntaxPackLockEntry {
@@ -29,6 +29,9 @@ export const DEFAULT_CAPABILITIES: Record<LanguageFamily, string[]> = {
   javascript: ['async', 'es2020'],
   cpp: ['cpp17'],
   verse: [],
+  gdscript: ['typed'],
+  rust: ['edition2021'],
+  csharp: ['dotnet8'],
 };
 
 export function defaultCodegenTarget(lang: TargetLanguage): CodegenTarget | null {
@@ -79,4 +82,7 @@ export const FAMILY_CAPABILITY_OPTIONS: Record<
   ],
   cpp: [{ id: 'cpp17', label: 'C++17' }],
   verse: [],
+  gdscript: [{ id: 'typed', label: 'Typed signatures (-> void)' }],
+  rust: [{ id: 'edition2021', label: 'Rust 2021 edition' }],
+  csharp: [{ id: 'dotnet8', label: '.NET 8 / C# 12' }],
 };

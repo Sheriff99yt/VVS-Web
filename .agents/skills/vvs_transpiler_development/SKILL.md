@@ -7,7 +7,7 @@ description: Triggers when modifying or building the TypeScript code generation 
 
 - The transpiler MUST be pure TypeScript with zero React dependencies, living in `packages/transpiler`. It must run fully offline in the browser.
 - Web facade: `apps/web/src/lib/mockCodegen.ts` re-exports `@vvs/transpiler` — UI imports the facade, not transpiler internals.
-- The transpiler is the most critical system. Any changes to code generation logic MUST be accompanied by tests verifying exact code output for fixed graph JSON (see `generate.test.ts`, `exampleSnapshots.test.ts`, `convert.test.ts`, `getInput.test.ts`).
+- The transpiler is the most critical system. Any changes to code generation logic MUST be accompanied by tests verifying exact code output for fixed graph JSON (see `generate.test.ts`, `usabilityExampleSnapshots.test.ts`, `convert.test.ts`, `getInput.test.ts`).
 
 # Text-shaped graphs (locked)
 
@@ -64,15 +64,16 @@ Enforce separation where possible: (1) Graph Analysis (DAG sorting), (2) IR / ex
 1. Add row to `packages/syntax-registry/core-pack.json` (+ sync `server/.../core-pack.json`)
 2. Extend `NodeSemantics` in `syntax-registry/src/registry.ts`
 3. Lower in `generate.ts` (`emitStatement` and/or `resolveNodeOutputExpr`)
-4. Add tests (unit + optional `exampleSnapshots.test.ts` matrix)
+4. Add tests (unit + optional `usabilityExampleSnapshots.test.ts` matrix)
 5. Optional `propertySchema` for inspector settings — transpiler reads `node.data.properties`, not React
 
-# Example templates
+# Usability example tests
 
-- `apps/web/src/lib/examples/simpleExample.ts` — Hello World
-- `apps/web/src/lib/examples/complexExample.ts` — Calculator (input, conversion, functions, events)
-- Integrity: `apps/web/src/lib/examples/complexExample.test.ts` — analyze + wiring + 4-language codegen
-- Builders: `apps/web/src/lib/examples/exampleGraphBuild.ts` — use `exampleDocument()` to normalize nodes
+- `apps/web/src/lib/usabilityExampleTests/helloWorldUsabilityTest.ts` — baseline Declare → On → Print
+- `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts` — full coverage fixture
+- Integrity: `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.test.ts`
+- Builders: `apps/web/src/lib/usabilityExampleTests/usabilityTestGraphBuild.ts` — `usabilityTestDocument()`
+- Catalog: `docs/design/language_capability_catalog.md` · skill: `vvs_usability_example_tests/SKILL.md`
 
 # Pin type validation (shared with UI)
 

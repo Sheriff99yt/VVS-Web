@@ -35,6 +35,7 @@ When fidelity rules change, update `decisions.md` § Canvas source of truth and 
 | Syntax packs / Rosetta | `vvs_syntax_packs/SKILL.md` |
 | Transpiler pipeline | `vvs_transpiler_development/SKILL.md` |
 | Symbol/codegen fidelity | `vvs_visual_code_fidelity/SKILL.md` |
+| Usability fixtures & language UI gaps | `vvs_usability_example_tests/SKILL.md` |
 
 ## When to write (end of task)
 

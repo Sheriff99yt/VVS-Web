@@ -4,6 +4,9 @@ import pythonBase from './packs/python.base.json';
 import javascriptBase from './packs/javascript.base.json';
 import cppBase from './packs/cpp.base.json';
 import verseBase from './packs/verse.base.json';
+import gdscriptBase from './packs/gdscript.base.json';
+import rustBase from './packs/rust.base.json';
+import csharpBase from './packs/csharp.base.json';
 import javascriptEs2022 from './packs/overlays/javascript.es2022.json';
 
 const PACKS: SyntaxPackManifest[] = [
@@ -11,6 +14,9 @@ const PACKS: SyntaxPackManifest[] = [
   javascriptBase as SyntaxPackManifest,
   cppBase as SyntaxPackManifest,
   verseBase as SyntaxPackManifest,
+  gdscriptBase as SyntaxPackManifest,
+  rustBase as SyntaxPackManifest,
+  csharpBase as SyntaxPackManifest,
   javascriptEs2022 as SyntaxPackManifest,
 ];
 

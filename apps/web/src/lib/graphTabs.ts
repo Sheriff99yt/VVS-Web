@@ -89,7 +89,13 @@ export function generatedFileName(
           ? 'cpp'
           : targetLanguage === 'verse'
             ? 'verse'
-            : 'json';
+            : targetLanguage === 'gdscript'
+              ? 'gd'
+              : targetLanguage === 'rust'
+                ? 'rs'
+                : targetLanguage === 'csharp'
+                  ? 'cs'
+                  : 'json';
   if (tab.type === 'container') {
     const base = tab.name.replace(/\s+/g, '_').toLowerCase() || 'project_map';
     return `${base}.${ext}`;

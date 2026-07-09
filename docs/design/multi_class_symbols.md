@@ -220,7 +220,7 @@ Each `*_define` node registers spans for the declaration line(s) — same `sourc
 
 ### 4.2 Target (single class `Calculator`)
 
-**Reference implementation:** [`apps/web/src/lib/examples/complexExample.ts`](../../apps/web/src/lib/examples/complexExample.ts) · vocabulary: [language_neutral_vocabulary.md](language_neutral_vocabulary.md).
+**Reference implementation:** [`apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts`](../../apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts) · vocabulary: [language_neutral_vocabulary.md](language_neutral_vocabulary.md) · capabilities: [language_capability_catalog.md](language_capability_catalog.md).
 
 **Class graph — member chain (Declare nodes, exec-wired above flow):**
 
@@ -301,7 +301,7 @@ During slice 2, creating a symbol from the panel also inserts a define node on t
 | Project panel | `apps/web/src/components/layout/ProjectTree.tsx` |
 | Symbol CRUD/rename | `apps/web/src/hooks/useSymbolLifecycle.ts` |
 | Function ↔ tab link | `apps/web/src/lib/functionTabs.ts` |
-| Calculator example | `apps/web/src/lib/examples/complexExample.ts` |
+| Calculator usability test | `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts` |
 | Preamble emission | `packages/transpiler/src/emit/python.ts` (and js/cpp/verse) |
 | IR module shape | `packages/transpiler/src/ir/types.ts` |
 | Lowering entry | `packages/transpiler/src/lower/graphToIr.ts` |

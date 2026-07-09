@@ -16,7 +16,7 @@ import { buildGraphRefNodeData } from '@/lib/graphRefHelpers';
 const EXEC_OUT = { id: 'exec_out', label: '', type: 'execution' as const };
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
 
-export function exampleNode(
+export function usabilityTestNode(
   id: string,
   position: { x: number; y: number },
   data: VVSNodeData
@@ -66,16 +66,16 @@ export function dataEdge(
   };
 }
 
-/** Normalize spawned example nodes (kindId, property defaults, typed pins). */
-export function normalizeExampleNodes(nodes: VVSNode[]): VVSNode[] {
+/** Normalize spawned usability-test nodes (kindId, property defaults, typed pins). */
+export function normalizeUsabilityTestNodes(nodes: VVSNode[]): VVSNode[] {
   return nodes.map((node) => ({
     ...node,
     data: normalizeNodeData(node.data),
   }));
 }
 
-export function exampleDocument(nodes: VVSNode[], edges: VVSEdge[]): { nodes: VVSNode[]; edges: VVSEdge[] } {
-  return { nodes: normalizeExampleNodes(nodes), edges };
+export function usabilityTestDocument(nodes: VVSNode[], edges: VVSEdge[]): { nodes: VVSNode[]; edges: VVSEdge[] } {
+  return { nodes: normalizeUsabilityTestNodes(nodes), edges };
 }
 
 export function printStringNode(
@@ -87,7 +87,7 @@ export function printStringNode(
   if (message !== undefined) {
     inlineValues.in_str = message;
   }
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: 'Print String',
     category: 'Action',
     kindId: 'action_print',
@@ -98,7 +98,7 @@ export function printStringNode(
 }
 
 export function branchNode(id: string, position: { x: number; y: number }): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: 'Branch',
     category: 'Flow Control',
     kindId: 'flow_branch',
@@ -115,7 +115,7 @@ export function branchNode(id: string, position: { x: number; y: number }): VVSN
 }
 
 export function mathAddNode(id: string, position: { x: number; y: number }): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: 'Math Add',
     category: 'Math',
     kindId: 'math_add',
@@ -140,7 +140,7 @@ export function boundVariableGet(
     outputs: [],
     inlineValues: {},
   };
-  return exampleNode(id, position, applyVariableRefBinding(empty, variable, 'get'));
+  return usabilityTestNode(id, position, applyVariableRefBinding(empty, variable, 'get'));
 }
 
 export function getUserInputNode(
@@ -155,7 +155,7 @@ export function getUserInputNode(
   const valueType = inputKind === 'number' ? 'data_number' : 'data_string';
   const kindLabel = inputKind === 'number' ? 'Number' : inputKind === 'password' ? 'Password' : 'Text';
 
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: `Get User Input · ${kindLabel}`,
     category: 'Action',
     kindId: 'action_get_input',
@@ -170,7 +170,7 @@ export function getUserInputNode(
 }
 
 export function convertToStringNode(id: string, position: { x: number; y: number }): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: 'To String',
     category: 'Conversion',
     kindId: 'convert_to_string',
@@ -181,7 +181,7 @@ export function convertToStringNode(id: string, position: { x: number; y: number
 }
 
 export function convertToNumberNode(id: string, position: { x: number; y: number }): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: 'To Number',
     category: 'Conversion',
     kindId: 'convert_to_number',
@@ -208,7 +208,7 @@ export function boundVariableSet(
   if (inlineValue !== undefined) {
     data.inlineValues = { ...data.inlineValues, val: inlineValue };
   }
-  return exampleNode(id, position, data);
+  return usabilityTestNode(id, position, data);
 }
 
 export function boundCallFunction(
@@ -223,7 +223,7 @@ export function boundCallFunction(
     outputs: [],
     inlineValues: {},
   };
-  return exampleNode(id, position, applyFunctionCallBinding(empty, func));
+  return usabilityTestNode(id, position, applyFunctionCallBinding(empty, func));
 }
 
 export function boundImportClass(
@@ -232,7 +232,7 @@ export function boundImportClass(
   cls: ClassSymbol,
   options?: { alias?: string }
 ): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: `Import Class ${cls.name}`,
     category: 'Imports',
     kindId: 'import_class',
@@ -259,7 +259,7 @@ export function boundEventDefine(
     outputs: [],
     inlineValues: {},
   };
-  return exampleNode(id, position, applyEventDefineBinding(empty, event));
+  return usabilityTestNode(id, position, applyEventDefineBinding(empty, event));
 }
 
 export function boundEventDispatch(
@@ -274,7 +274,7 @@ export function boundEventDispatch(
     outputs: [],
     inlineValues: {},
   };
-  return exampleNode(id, position, applyEventDispatchBinding(empty, event));
+  return usabilityTestNode(id, position, applyEventDispatchBinding(empty, event));
 }
 
 export function functionEntryNode(
@@ -282,7 +282,7 @@ export function functionEntryNode(
   position: { x: number; y: number },
   func: FunctionSymbol
 ): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: func.name,
     category: 'Events',
     kindId: 'function_entry',
@@ -298,7 +298,7 @@ export function classDefineNode(
   position: { x: number; y: number },
   cls: ClassSymbol
 ): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: `Declare ${cls.name}`,
     category: 'Project',
     kindId: 'class_define',
@@ -318,7 +318,7 @@ export function varDefineNode(
   position: { x: number; y: number },
   variable: VariableSymbol
 ): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: `Declare ${variable.name}`,
     category: 'Variables',
     kindId: 'var_define',
@@ -343,7 +343,7 @@ export function functionDefineNode(
   func: FunctionSymbol
 ): VVSNode {
   const overload = func.overloads[0];
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: `Declare ${func.name}`,
     category: 'Project',
     kindId: 'function_define',
@@ -368,7 +368,7 @@ export function eventMemberDefineNode(
   position: { x: number; y: number },
   event: ProjectEventDefinition
 ): VVSNode {
-  return exampleNode(id, position, {
+  return usabilityTestNode(id, position, {
     label: `Declare ${event.name}`,
     category: 'Events',
     kindId: 'event_member_define',
@@ -394,5 +394,5 @@ export function graphRefNode(
     graphTabId?: string;
   }
 ): VVSNode {
-  return exampleNode(id, position, buildGraphRefNodeData(options));
+  return usabilityTestNode(id, position, buildGraphRefNodeData(options));
 }

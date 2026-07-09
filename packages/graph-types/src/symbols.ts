@@ -6,7 +6,7 @@ import {
   type VariableDataType,
 } from './variableTypes';
 
-export type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse' | 'json';
+export type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'json';
 
 export type PortabilityFeature =
   | 'function.static'

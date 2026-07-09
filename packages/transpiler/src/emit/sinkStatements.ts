@@ -157,7 +157,7 @@ function appendSequence(sink: CodeSink, stmt: IrSequence, ctx: PrintContext): vo
   const steps = stmt.steps.filter((step) => step.length > 0);
 
   if (isPackDrivenFamily(ctx.family)) {
-    if (ctx.family === 'python' || ctx.family === 'verse') {
+    if (ctx.family === 'python' || ctx.family === 'verse' || ctx.family === 'gdscript') {
       sink.appendRaw(printFromTemplate(ctx, 'SequenceHeader', {}).text);
       for (const step of steps) {
         appendIrStatements(sink, step, inner);

@@ -7,7 +7,7 @@ import {
   sanitizeGraphFileStem,
   MAIN_GRAPH_CONTAINER_ID,
 } from '@vvs/graph-types';
-import { createComplexExampleSnapshot } from '../examples/complexExample';
+import { createCalculatorUsabilityTestSnapshot } from '../usabilityExampleTests/calculatorUsabilityTest';
 
 describe('projectFolder graph manifest helpers', () => {
   test('sanitizeGraphFileStem strips Function prefix and unsafe chars', () => {
@@ -32,7 +32,7 @@ describe('projectFolder graph manifest helpers', () => {
   });
 
   test('buildFolderGraphManifest maps every container id for v2 layout', () => {
-    const snapshot = normalizeProjectSnapshot(createComplexExampleSnapshot())!;
+    const snapshot = normalizeProjectSnapshot(createCalculatorUsabilityTestSnapshot())!;
     const graphs = buildFolderGraphManifest(snapshot);
 
     expect(graphs.main).toBeUndefined();
@@ -50,7 +50,7 @@ describe('projectFolder graph manifest helpers', () => {
   });
 
   test('normalized complex example has no documents.main key', () => {
-    const snapshot = normalizeProjectSnapshot(createComplexExampleSnapshot())!;
+    const snapshot = normalizeProjectSnapshot(createCalculatorUsabilityTestSnapshot())!;
     expect(snapshot.documents.main).toBeUndefined();
     expect(snapshot.documents[MAIN_GRAPH_CONTAINER_ID]).toBeDefined();
   });

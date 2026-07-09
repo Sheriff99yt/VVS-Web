@@ -65,7 +65,7 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 ### StartScreen (`components/start/StartScreen.tsx`)
 
 - **Start:** New blank, Open file, folder picker buttons (gated by `useFolderPickerSupported`)
-- **Examples:** `EXAMPLE_PROJECTS` from `lib/exampleProjects.ts` — Hello World (simple), Calculator (complex)
+- **Usability tests:** `USABILITY_EXAMPLE_TESTS` from `lib/usabilityExampleProjects.ts` — regression fixtures (Hello World, Calculator); see `docs/design/language_capability_catalog.md`
 - **Explore:** shortcuts to Library and Roadmap views in editor
 - **Recent:** via `useRecentProjects()` — deferred localStorage hydration (see below)
 - **AuthButton** when Supabase configured

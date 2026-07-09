@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { canvasFocusFrame, resolveClassHomeGraphTarget, resolveVariableFocusFrame } from './editorFocus';
-import { createComplexExampleSnapshot } from './examples/complexExample';
+import { createCalculatorUsabilityTestSnapshot } from './usabilityExampleTests/calculatorUsabilityTest';
 
 describe('editorFocus', () => {
   test('resolveClassHomeGraphTarget uses container tab for Calculator class', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const cls = snapshot.classes!.find((c) => c.name === 'Calculator')!;
     const target = resolveClassHomeGraphTarget(cls, snapshot.graphContainers!);
 
@@ -20,7 +20,7 @@ describe('editorFocus', () => {
   });
 
   test('resolveVariableFocusFrame targets class home graph for var-a', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const frame = resolveVariableFocusFrame(
       'var-a',
       snapshot.variables,

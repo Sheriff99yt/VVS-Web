@@ -7,14 +7,14 @@ import {
   type CodegenContext,
 } from './generate';
 import { withTestEntryGraph } from './testEntryGraph';
-import { createComplexExampleSnapshot } from '../../../apps/web/src/lib/examples/complexExample';
-import { createSimpleExampleSnapshot } from '../../../apps/web/src/lib/examples/simpleExample';
+import { createCalculatorUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest';
+import { createHelloWorldUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/helloWorldUsabilityTest';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
 const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
 
 function mainCtx(
-  snapshot: ReturnType<typeof createComplexExampleSnapshot>,
+  snapshot: ReturnType<typeof createCalculatorUsabilityTestSnapshot>,
   overrides: Partial<CodegenContext> = {}
 ): CodegenContext {
   const calc = snapshot.documents![CALCULATOR_GRAPH_ID];
@@ -38,7 +38,7 @@ function mainCtx(
 
 describe('transpileGraphCode', () => {
   test('complex example main graph emits call_function and branch', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const code = transpileGraphCode(mainCtx(snapshot));
 
     expect(code).toContain('self.Add()');
@@ -59,7 +59,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('canvas define chain emits members in graph order', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const code = transpileGraphCode(mainCtx(snapshot));
     const lines = code.split('\n');
 
@@ -89,7 +89,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('var_define nodes map to declaration lines in sourceMap', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = transpileGraph(mainCtx(snapshot));
 
     expect(result.sourceMap['calc-var-a-define']?.length).toBeGreaterThan(0);
@@ -98,7 +98,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('no define nodes emits no preamble declarations', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = snapshot.documents![CALCULATOR_GRAPH_ID]!;
     const nodesWithoutDefines = calc.nodes.filter(
       (n) =>
@@ -129,7 +129,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('function tab emits standalone function body', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const addTab = snapshot.documents!['fn-add'];
 
     const code = transpileGraphCode({
@@ -153,7 +153,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('transpile result includes sourceMap for statement nodes', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = transpileGraph(mainCtx(snapshot));
 
     expect(result.files[0]?.content.length).toBeGreaterThan(0);
@@ -163,7 +163,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('event member define nodes map to declare placeholder or cpp prototype', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = transpileGraph(mainCtx(snapshot));
 
     const memberRanges = result.sourceMap['calc-evt-calc-member'];
@@ -184,7 +184,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('On Start maps to on_start handler not run', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = transpileGraph(mainCtx(snapshot));
 
     const content = result.files[0]!.content;
@@ -196,7 +196,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('Add function graph maps get and math nodes to expression spans', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const addTab = snapshot.documents!['fn-add'];
 
     const result = transpileGraph({
@@ -224,7 +224,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('dispatch node emits parameterless call with sourceMap', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = snapshot.documents![CALCULATOR_GRAPH_ID]!;
     const start = calc.nodes.find((n) => n.id === 'calc-start-handler')!;
     const dispatchNode = calc.nodes.find((n) => n.id === 'calc-dispatch')!;
@@ -254,7 +254,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('nested branch body nodes map to sourceMap', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = transpileGraph(mainCtx(snapshot));
 
     expect(result.sourceMap['calc-print-done']?.length).toBeGreaterThan(0);
@@ -267,7 +267,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('simple example class_define maps to class line', () => {
-    const snapshot = createSimpleExampleSnapshot();
+    const snapshot = createHelloWorldUsabilityTestSnapshot();
     const main = snapshot.documents![MAIN_GRAPH_CONTAINER_ID];
     if (!main) throw new Error(`missing ${MAIN_GRAPH_CONTAINER_ID}`);
     const result = transpileGraph({
@@ -358,7 +358,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('secondary class home graph emits class module file', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const uiFlowId = 'calc-ui-flow-container';
     const uiDoc = snapshot.documents![uiFlowId];
     if (!uiDoc) throw new Error(`missing ${uiFlowId}`);
@@ -386,7 +386,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('transpileProject emits all class modules and function tabs', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = transpileProject({
       projectDetails: snapshot.projectDetails,
       targetLanguage: 'python',
@@ -408,7 +408,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('cross-class import and call emit explicit class reference', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const uiFlowId = 'calc-ui-flow-container';
     const resultPanel = snapshot.classes.find((c) => c.name === 'ResultPanel')!;
     const calculatorClass = snapshot.classes.find((c) => c.name === 'Calculator')!;
@@ -493,7 +493,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('async function flag emits async def in python', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const asyncFn = {
       ...snapshot.functions.find((f) => f.name === 'Add')!,
       flags: { async: true },
@@ -510,7 +510,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('virtual function flag emits virtual keyword in cpp', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const virtualFn = {
       ...snapshot.functions.find((f) => f.name === 'Add')!,
       flags: { virtual: true },
@@ -526,7 +526,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('cpp sourceMap endCol includes trailing punctuation on declaration lines', () => {
-    const snapshot = createComplexExampleSnapshot();
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = transpileGraph(mainCtx(snapshot, { targetLanguage: 'cpp' }));
     const content = result.files[0]!.content;
     const lines = content.split('\n');

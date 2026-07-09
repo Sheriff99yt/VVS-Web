@@ -34,6 +34,13 @@ describe('resolveApiSurface', () => {
     expect(surface.events.some((e) => e.id === 'event.on_ready')).toBe(true);
   });
 
+  test('resolves gdscript extends and natives for Godot game template', () => {
+    const manifest = loadEnvironmentManifest('env.gdscript.godot-game')!;
+    const surface = resolveApiSurface(manifest, 'gdscript');
+    expect(surface.extendsType).toBe('Node');
+    expect(surface.natives.some((n) => n.id === 'native.print')).toBe(true);
+  });
+
   test('filters unsupported natives for verse alert', () => {
     const manifest = loadEnvironmentManifest('env.javascript.browser-app')!;
     const jsSurface = resolveApiSurface(manifest, 'javascript');

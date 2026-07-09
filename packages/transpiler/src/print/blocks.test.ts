@@ -10,7 +10,7 @@ import {
 
 const BLOCK_FIXTURES = ['branch', 'for', 'while', 'switch'] as const;
 
-const BLOCK_FAMILIES = ['python', 'cpp', 'javascript', 'verse'] as const;
+const BLOCK_FAMILIES = ['python', 'cpp', 'javascript', 'verse', 'gdscript', 'rust', 'csharp'] as const;
 
 describe('blocks.ts vs Rosetta goldens', () => {
   for (const fixtureName of BLOCK_FIXTURES) {

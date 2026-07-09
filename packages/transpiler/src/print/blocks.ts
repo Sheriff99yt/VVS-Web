@@ -88,7 +88,7 @@ export function buildIfBranch(
     lines.push({ text: ifElseLine(ctx) });
     lines.push(...falseStmts.map((t) => ({ text: t })));
   }
-  if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'rust' || ctx.family === 'csharp') {
     lines.push({ text: blockCloseLine(ctx, 'IfBranchClose') });
   }
   return { lines };
@@ -172,7 +172,7 @@ export function buildSequence(
   }
 
   const lines: BlockLineMeta[] = [];
-  if (ctx.family === 'python' || ctx.family === 'verse') {
+  if (ctx.family === 'python' || ctx.family === 'verse' || ctx.family === 'gdscript') {
     lines.push({ text: printFromTemplate(ctx, 'SequenceHeader', {}).text });
     lines.push(...stepLines.map((t) => ({ text: t })));
     return { lines };

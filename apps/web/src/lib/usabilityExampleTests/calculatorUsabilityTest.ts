@@ -1,9 +1,9 @@
 /**
- * Calculator fidelity reference — Declare / On / Dispatch pattern:
+ * Calculator usability test — exercises Declare / On / Dispatch and surfaces UI/UX gaps:
  * - Member chain (`event_member_define`, `var_define`, …): class-body **Declare** slots on canvas.
  * - `boundEventDefine` handlers in runtime flow: **On** {event} entry nodes for wiring bodies.
  * - `boundEventDispatch`: **Dispatch** {event} to invoke another handler.
- * Entry `start` uses `eventMemberDefineNode` → Declare start; `boundEventDefine` → On start.
+ * Use this fixture to discover missing inspector fields, spawn catalog entries, and per-language options.
  */
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import {
@@ -29,7 +29,7 @@ import {
   branchNode,
   dataEdge,
   eventMemberDefineNode,
-  exampleDocument,
+  usabilityTestDocument,
   execEdge,
   functionDefineNode,
   functionEntryNode,
@@ -38,7 +38,7 @@ import {
   mathAddNode,
   printStringNode,
   varDefineNode,
-} from '@/lib/examples/exampleGraphBuild';
+} from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 const VAR_A = createVariableSymbol('A', { id: 'var-a', type: 'data_number' });
 const VAR_B = createVariableSymbol('B', { id: 'var-b', type: 'data_number' });
@@ -227,8 +227,8 @@ const CLEAR_EDGES: VVSEdge[] = [
   execEdge('calc-clear-e-b-result', 'calc-clear-b', 'calc-clear-result'),
 ];
 
-/** Multi-graph calculator — member chain, user input, functions, events, branch, and dispatch. */
-export function createComplexExampleSnapshot(): ProjectSnapshot {
+/** Multi-graph calculator usability test — member chain, input, functions, events, branch, dispatch. */
+export function createCalculatorUsabilityTestSnapshot(): ProjectSnapshot {
   const stamp = <T>(item: T): T & { classId: string } => ({ ...item, classId: MAIN_CLASS_ID });
 
   return {
@@ -259,23 +259,23 @@ export function createComplexExampleSnapshot(): ProjectSnapshot {
     autoSave: false,
     documents: {
       [MAIN_GRAPH_CONTAINER_ID]: {
-        ...exampleDocument(MAP_NODES, []),
+        ...usabilityTestDocument(MAP_NODES, []),
         metadata: defaultTabMetadata('container', PROJECT_MAP_CONTAINER_NAME),
       },
       [CALCULATOR_CONTAINER_ID]: {
-        ...exampleDocument(MAIN_NODES, MAIN_EDGES),
+        ...usabilityTestDocument(MAIN_NODES, MAIN_EDGES),
         metadata: defaultTabMetadata('container', 'Calculator'),
       },
       [UI_FLOW_CONTAINER_ID]: {
-        ...exampleDocument(RESULT_PANEL_NODES, RESULT_PANEL_EDGES),
+        ...usabilityTestDocument(RESULT_PANEL_NODES, RESULT_PANEL_EDGES),
         metadata: defaultTabMetadata('container', 'UI flow'),
       },
       'fn-add': {
-        ...exampleDocument(ADD_NODES, ADD_EDGES),
+        ...usabilityTestDocument(ADD_NODES, ADD_EDGES),
         metadata: defaultTabMetadata('function', 'Add'),
       },
       'fn-clear': {
-        ...exampleDocument(CLEAR_NODES, CLEAR_EDGES),
+        ...usabilityTestDocument(CLEAR_NODES, CLEAR_EDGES),
         metadata: defaultTabMetadata('function', 'Clear'),
       },
     },

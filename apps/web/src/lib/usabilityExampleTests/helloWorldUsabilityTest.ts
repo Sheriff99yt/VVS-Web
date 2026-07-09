@@ -11,10 +11,10 @@ import {
   boundEventDefine,
   classDefineNode,
   eventMemberDefineNode,
-  exampleDocument,
+  usabilityTestDocument,
   execEdge,
   printStringNode,
-} from '@/lib/examples/exampleGraphBuild';
+} from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 const MAIN_CLASS = createClassSymbol('HelloWorld', {
   id: MAIN_CLASS_ID,
@@ -29,8 +29,8 @@ const EVT_START = {
   classId: MAIN_CLASS_ID,
 };
 
-/** Minimal starter — class define, program entry declare/handler, Print String. */
-export function createSimpleExampleSnapshot(): ProjectSnapshot {
+/** Minimal usability fixture — class declare, program entry declare/handler, Print String. */
+export function createHelloWorldUsabilityTestSnapshot(): ProjectSnapshot {
   const classDefine = classDefineNode('ex-class-define', { x: 80, y: 0 }, MAIN_CLASS);
   const entryMember = eventMemberDefineNode('ex-start-member', { x: 280, y: 0 }, EVT_START);
   const entryHandler = boundEventDefine('ex-start-handler', { x: 80, y: 120 }, EVT_START);
@@ -42,7 +42,7 @@ export function createSimpleExampleSnapshot(): ProjectSnapshot {
     projectDetails: {
       moduleName: 'HelloWorld',
       extendsType: '',
-      description: 'Simple example — program entry declare/handler and one action',
+      description: 'Usability test — program entry declare/handler and one action',
     },
     classes: [MAIN_CLASS],
     activeClassId: MAIN_CLASS_ID,
@@ -59,7 +59,7 @@ export function createSimpleExampleSnapshot(): ProjectSnapshot {
     autoSave: false,
     documents: {
       [MAIN_GRAPH_CONTAINER_ID]: {
-        ...exampleDocument(
+        ...usabilityTestDocument(
           [classDefine, entryMember, entryHandler, print],
           [
             execEdge('ex-class-entry-member', classDefine.id, entryMember.id),

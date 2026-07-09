@@ -1,0 +1,8 @@
+        let _vvs_sel = 1;
+        if _vvs_sel == 0 {
+            // empty
+        } else if _vvs_sel == 1 {
+            println!("{}", "one");
+        }
+    }
+}

@@ -51,6 +51,16 @@ Choices agents must not undo without explicit user approval.
 - **Dispatch** — event invoke (`event_dispatch`); not “Call” for events in UI copy
 - **Known drift** — Go `core-pack.json` titles and some diagnostic strings still say “define”; fix in V1 copy-alignment, not ad hoc
 
+## Syntax pack milestones (codegen platform)
+
+| Milestone | Scope | Status |
+|-----------|--------|--------|
+| **M1** | Python + C++ pack-first | **Closed** July 2026 |
+| **M2** | JavaScript + Verse pack-first | **Closed** July 2026 |
+| **M3** | GDScript + Rust + C# (Phase 6 v2 platform) | **Closed** July 2026 |
+
+**Next major track:** Usability & workflow standards — [design/terms_refactor_plan.md](design/terms_refactor_plan.md) (vocabulary V0–V4, spawn catalog, diagnostics copy) and [design/language_capability_catalog.md](design/language_capability_catalog.md) (per-language UI capabilities, usability example tests).
+
 ## Product UI (July 2026 revision)
 
 - **No in-app Roadmap or Integrations tabs** — planning lives in `docs/`; MCP via Connect AI modal only
@@ -120,7 +130,7 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - **Conversion nodes** (`convert_to_string`, `convert_to_number`) — pure expression; **one node = one call** in generated code; **no transpiler folding**
 - **Print String** requires **`data_string`** — numeric display uses **Get → To String → Print**
 - **`pinCompatibility.ts`** in `@vvs/graph-types` — shared with editor + `analyzeProject` (`PIN_TYPE_MISMATCH`)
-- **Example templates:** Calculator demonstrates input, conversion, functions, events, branch — see `apps/web/src/lib/examples/`
+- **Usability example tests:** Calculator exercises input, conversion, functions, events, branch — see `apps/web/src/lib/usabilityExampleTests/` and `docs/design/language_capability_catalog.md`
 
 ## Syntax packs & codegen layers (July 2026)
 

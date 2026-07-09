@@ -16,6 +16,9 @@ const TARGET_OPTIONS: { id: TargetLanguage; label: string }[] = [
   { id: 'javascript', label: 'JavaScript' },
   { id: 'cpp', label: 'C++' },
   { id: 'verse', label: 'Verse' },
+  { id: 'gdscript', label: 'GDScript' },
+  { id: 'rust', label: 'Rust' },
+  { id: 'csharp', label: 'C#' },
   { id: 'json', label: 'Graph JSON' },
 ];
 

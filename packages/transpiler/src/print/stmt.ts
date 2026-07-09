@@ -71,6 +71,34 @@ export function createStmtPrinters(
             callee: s.calleeName,
           });
         }
+        if (family === 'gdscript') {
+          const receiver = s.instanceCall ? `${classRef}.new()` : classRef;
+          return printFromTemplate(ctx, 'CallCrossClass', {
+            receiver,
+            callee: s.calleeName,
+          });
+        }
+        if (family === 'rust') {
+          if (s.instanceCall) {
+            return printFromTemplate(ctx, 'CallCrossClass', {
+              receiver: `${classRef}::new()`,
+              callee: s.calleeName,
+            });
+          }
+          return printFromTemplate(ctx, 'CallCrossClassStatic', {
+            class: classRef,
+            callee: s.calleeName,
+          });
+        }
+        if (family === 'csharp') {
+          const receiver = s.instanceCall ? `new ${classRef}()` : classRef;
+          const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
+          const slots =
+            key === 'CallCrossClassStatic'
+              ? { class: classRef, callee: s.calleeName }
+              : { receiver, callee: s.calleeName };
+          return printFromTemplate(ctx, key, slots);
+        }
       }
 
       const key = s.instanceCall ? 'CallInstance' : 'CallFunction';
@@ -164,11 +192,11 @@ export function createStmtPrinters(
       if (stmt.kind !== 'AwaitWait') return null;
       const s = stmt as IrAwaitWait;
       const { family } = ctx;
-      if (family === 'python') {
+      if (family === 'python' || family === 'gdscript') {
         const key = s.async ? 'AwaitWaitAsync' : 'AwaitWaitSync';
         return printFromTemplate(ctx, key, { duration: String(s.seconds) });
       }
-      if (family === 'javascript') {
+      if (family === 'javascript' || family === 'csharp') {
         const key = s.async ? 'AwaitWaitAsync' : 'AwaitWaitSync';
         return printFromTemplate(ctx, key, { duration: String(s.seconds) });
       }
@@ -186,7 +214,7 @@ export function createStmtPrinters(
       const s = stmt as IrImportClass;
       const { family } = ctx;
 
-      if (family === 'python' || family === 'javascript') {
+      if (family === 'python' || family === 'javascript' || family === 'gdscript' || family === 'rust' || family === 'csharp') {
         const key = s.alias ? 'ImportClassAlias' : 'ImportClass';
         return printFromTemplate(
           ctx,

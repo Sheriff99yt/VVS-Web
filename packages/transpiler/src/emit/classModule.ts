@@ -26,7 +26,7 @@ export function emitClassModule(sink: CodeSink, ir: IrModule): void {
   appendHoistedImports(sink, ir);
   const classLineStart = sink.lineCount + 1;
 
-  if (!['python', 'javascript', 'cpp', 'verse'].includes(lang)) {
+  if (!['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp'].includes(lang)) {
     sink.appendRaw(`// class ${ir.moduleName}`);
     return;
   }

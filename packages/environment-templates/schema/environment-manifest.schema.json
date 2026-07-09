@@ -24,11 +24,11 @@
       "enum": ["console", "web", "data", "api", "game"]
     },
     "defaultTarget": {
-      "enum": ["python", "javascript", "cpp", "verse", "json"]
+      "enum": ["python", "javascript", "cpp", "verse", "gdscript", "rust", "csharp", "json"]
     },
     "supportedTargets": {
       "type": "array",
-      "items": { "enum": ["python", "javascript", "cpp", "verse", "json"] },
+      "items": { "enum": ["python", "javascript", "cpp", "verse", "gdscript", "rust", "csharp", "json"] },
       "minItems": 1
     },
     "module": {

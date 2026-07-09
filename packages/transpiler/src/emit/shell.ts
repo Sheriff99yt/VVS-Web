@@ -71,6 +71,12 @@ export function classExtendsSuffix(lang: TargetLanguage, extendsType?: string): 
       return ` : public ${extendsType}`;
     case 'verse':
       return `(${extendsType})`;
+    case 'gdscript':
+      return `\nextends ${extendsType}`;
+    case 'rust':
+      return '';
+    case 'csharp':
+      return extendsType ? ` : ${extendsType}` : '';
     default:
       return '';
   }
@@ -101,6 +107,16 @@ function eventHandlerParamList(lang: TargetLanguage, handler: IrEventHandler): s
       ? `self, ${handler.paramNames.join(', ')}`
       : 'self';
   }
+  if (lang === 'gdscript') {
+    return handler.paramNames.join(', ');
+  }
+  if (lang === 'rust') {
+    const extras = handler.paramNames.map((p) => `${p}: f64`).join(', ');
+    return extras ? `&mut self, ${extras}` : '&mut self';
+  }
+  if (lang === 'csharp') {
+    return handler.paramNames.map((p) => `double ${p}`).join(', ');
+  }
   if (lang === 'cpp') {
     return handler.paramNames.map((p) => `float ${p}`).join(', ');
   }
@@ -128,6 +144,9 @@ function eventHandlerSignature(lang: TargetLanguage, handler: IrEventHandler): s
 
 function eventHandlerTagAnchor(lang: TargetLanguage, handler: IrEventHandler): string {
   if (lang === 'python') return `def on_${handler.handlerName}(`;
+  if (lang === 'gdscript') return `func on_${handler.handlerName}(`;
+  if (lang === 'rust') return `fn on_${handler.handlerName}(`;
+  if (lang === 'csharp') return `void on_${handler.handlerName}(`;
   if (lang === 'javascript') return `on_${handler.handlerName}(`;
   if (lang === 'cpp') return eventHandlerSignature(lang, handler);
   return `on_${handler.handlerName}`;
@@ -177,6 +196,19 @@ function functionParamList(func: FunctionSymbol, lang: TargetLanguage): string {
   if (lang === 'python' && binding === 'instance') {
     return ['self', ...params].join(', ');
   }
+  if (lang === 'gdscript') {
+    return params.join(', ');
+  }
+  if (lang === 'rust') {
+    if (binding === 'static') {
+      return params.map((p) => `${p}: f64`).join(', ');
+    }
+    const typed = params.map((p) => `${p}: f64`).join(', ');
+    return typed ? `&mut self, ${typed}` : '&mut self';
+  }
+  if (lang === 'csharp') {
+    return params.map((p) => `double ${p}`).join(', ');
+  }
   if (lang === 'verse') {
     return params
       .map((p, i) => {
@@ -205,6 +237,15 @@ function functionDefPrefix(
   const binding = func.binding ?? 'instance';
   if (lang === 'python') {
     return binding === 'static' ? '    @staticmethod\n    ' : '    ';
+  }
+  if (lang === 'gdscript') {
+    return binding === 'static' ? '    static ' : '    ';
+  }
+  if (lang === 'rust') {
+    return binding === 'static' ? '    ' : '    pub ';
+  }
+  if (lang === 'csharp') {
+    return binding === 'static' ? '    public static ' : '    public ';
   }
   if (lang === 'javascript') {
     return binding === 'static' ? '  static ' : '  ';

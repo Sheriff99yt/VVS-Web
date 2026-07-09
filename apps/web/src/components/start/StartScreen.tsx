@@ -16,7 +16,7 @@ import {
   Map,
 } from 'lucide-react';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
-import { EXAMPLE_PROJECTS, type ExampleLevel } from '@/lib/exampleProjects';
+import { USABILITY_EXAMPLE_TESTS, type UsabilityTestLevel } from '@/lib/usabilityExampleProjects';
 import {
   createProjectId,
   loadProjectFromStore,
@@ -118,9 +118,9 @@ export function StartScreen() {
     openLocalInEditor(router, id, createEmptyProjectSnapshot(), 'new');
   };
 
-  const handleOpenExample = (level: ExampleLevel) => {
+  const handleOpenUsabilityTest = (level: UsabilityTestLevel) => {
     try {
-      const def = EXAMPLE_PROJECTS.find((e) => e.level === level);
+      const def = USABILITY_EXAMPLE_TESTS.find((e) => e.level === level);
       if (!def) return;
       const id = createProjectId();
       openLocalInEditor(router, id, def.create(), 'demo');
@@ -128,7 +128,7 @@ export function StartScreen() {
       window.alert(
         error instanceof Error
           ? error.message
-          : 'Could not open this example. Check browser storage settings and try again.'
+          : 'Could not open this usability test. Check browser storage settings and try again.'
       );
     }
   };
@@ -347,34 +347,34 @@ export function StartScreen() {
 
           <section>
             <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <BookOpen size={14} /> Examples
+              <BookOpen size={14} /> Usability tests
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {EXAMPLE_PROJECTS.map((example) => (
+              {USABILITY_EXAMPLE_TESTS.map((fixture) => (
                 <button
-                  key={example.id}
+                  key={fixture.id}
                   type="button"
-                  onClick={() => handleOpenExample(example.level)}
+                  onClick={() => handleOpenUsabilityTest(fixture.level)}
                   className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded ${
-                        example.level === 'simple'
+                        fixture.level === 'simple'
                           ? 'text-emerald-400 bg-emerald-500/10'
                           : 'text-indigo-400 bg-indigo-500/10'
                       }`}
                     >
-                      {example.level === 'simple' ? 'Simple' : 'Complex'}
+                      {fixture.level === 'simple' ? 'Baseline' : 'Full coverage'}
                     </span>
-                    <span className="text-[11px] text-zinc-600 font-mono">{example.moduleName}</span>
+                    <span className="text-[11px] text-zinc-600 font-mono">{fixture.moduleName}</span>
                   </div>
                   <h3 className="text-sm font-semibold text-zinc-100 mt-2 group-hover:text-white transition-colors">
-                    {example.title}
+                    {fixture.title}
                   </h3>
-                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{example.description}</p>
+                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{fixture.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {example.highlights.map((tag) => (
+                    {fixture.highlights.map((tag) => (
                       <span
                         key={tag}
                         className="text-[10px] text-zinc-500 bg-zinc-800/80 px-2 py-0.5 rounded"
@@ -438,10 +438,10 @@ export function StartScreen() {
                 <p className="text-zinc-500 text-sm mb-3">No recent projects yet.</p>
                 <button
                   type="button"
-                  onClick={() => handleOpenExample('simple')}
+                  onClick={() => handleOpenUsabilityTest('simple')}
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
-                  Try the Hello World example →
+                  Open Hello World usability test →
                 </button>
               </div>
             ) : (

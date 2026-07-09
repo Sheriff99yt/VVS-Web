@@ -4,7 +4,7 @@ Pure TypeScript syntax pack layer for VVS code generation. Zero React dependenci
 
 ## Architecture
 
-- **Base packs** (`src/packs/*.base.json`) — print templates per language family
+- **Base packs** (`src/packs/*.base.json`) — print templates per language family (python, javascript, cpp, verse, **gdscript**)
 - **Overlays** (`src/packs/overlays/`) — capability deltas (e.g. `javascript.es2022.json`)
 - **Resolver** (`resolve.ts`) — base ⊕ overlay merge, last-wins, `sourcePackId` tracing
 - **Rosetta suite** (`rosetta/`) — graph fixtures + `.golden.txt` per construct × family
@@ -49,7 +49,7 @@ Runs Tree-sitter validation for generated Python/JavaScript Rosetta outputs. Use
 
 1. **`packages/graph-types`** — add the family to `LanguageFamily` / `TargetLanguage`.
 2. **Base pack** — create `src/packs/{family}.base.json` with full `layout` (including `emptyHandlerBody`, `emptyFunctionBody`) and Rosetta template keys (see `packCoverage.test.ts`).
-3. **Rosetta goldens** — add `{fixture}.{family}.golden.txt` for every fixture in `rosetta/`.
+3. **Rosetta goldens** — add `{fixture}.{family}.golden.txt` for every fixture in `rosetta/` (regenerate via `scripts/update-{family}-goldens.ts` or the family-specific harness).
 4. **Transpiler** — register hybrid printers in `print/register.ts` if needed (`get_input`, `switch`); extend `PACK_DRIVEN_FAMILIES` in `print/template.ts`.
 5. **Module shell** — shell templates in base pack (`ClassModuleOpen`, `EventHandlerOpen`, `FunctionDefOpen`); wire via `emit/shell.ts` (param/signature slots still assembled in TS for fidelity).
 6. **CI** — family is covered by `bun test` in `packages/syntax-packs` and `packages/transpiler`; add Tree-sitter grammar if parse validation should apply.

@@ -44,5 +44,6 @@ Do not put personal preferences in team memory files.
 
 - `.agents/skills/vvs_agentic_memory/SKILL.md` — when to read/update this directory
 - `.agents/skills/vvs_visual_code_fidelity/SKILL.md` — canvas source of truth checklist before symbol/codegen work
+- `.agents/skills/vvs_usability_example_tests/SKILL.md` — usability fixtures and language capability UI gaps
 - `.agents/skills/vvs_ui_api_loop/SKILL.md` — contract-first UI→API slices
 - `docs/ui_api_delivery_loop.md` — full backlog and loop prompts

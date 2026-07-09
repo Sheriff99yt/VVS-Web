@@ -27,5 +27,6 @@ describe('environment categories', () => {
     expect(ids).toContain('env.python.api-service');
     expect(ids).toContain('env.python.data-script');
     expect(ids).toContain('env.cpp.game-loop');
+    expect(ids).toContain('env.gdscript.godot-game');
   });
 });

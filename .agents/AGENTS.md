@@ -34,6 +34,7 @@ When working on this project, strictly enforce the following architectural bound
    - **Do not add in-app Roadmap or Integrations tabs** — planning and ecosystem docs belong in `docs/`; MCP is exposed via the Connect AI modal only.
    - Follow the locked UI shell in `docs/current_state.md` and `.agents/skills/vvs_ui_development/SKILL.md`.
    - Apply **show data when needed** per `.agents/skills/vvs_progressive_disclosure/SKILL.md` when adding panels, trees, inspectors, or overlays.
+   - Plan language-specific UI via `docs/design/language_capability_catalog.md`; extend **usability example tests** when adding capabilities (`vvs_usability_example_tests/SKILL.md`).
    - Before new node kinds or transpiler lowering: pass the fidelity checklist in `docs/visual_to_text_fidelity.md`.
 
 6. **Modular & Maintainable Implementation (Best Practices):**

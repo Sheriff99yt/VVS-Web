@@ -31,17 +31,33 @@ The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation rema
 - The **transpiler** never folds conversions or hides macro bodies — one graph node = one visible construct ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)).
 - **`data_any`** on **To String** input accepts any wired value; output pins are strictly typed.
 
+## Shipped targets (July 2026)
+
+| Target | Profile | Syntax pack | Rosetta | Environment template |
+|--------|---------|-------------|---------|----------------------|
+| Python | Yes | `python.base` | 14 fixtures | `env.python.*` |
+| JavaScript | Yes | `javascript.base` | 14 fixtures | `env.javascript.*` |
+| C++ | Yes | `cpp.base` | 14 fixtures | `env.cpp.*` |
+| Verse | Yes | `verse.base` | 14 fixtures | (via multi-target envs) |
+| GDScript | Yes | `gdscript.base` | 14 fixtures | `env.gdscript.godot-game` |
+| Rust | Yes | `rust.base` | 14 fixtures | — (console env planned) |
+| C# | Yes | `csharp.base` | 14 fixtures | — (console env planned) |
+| Graph JSON | Yes | — | — | — |
+
+**Milestone 3 (July 2026):** Language platform closed — seven codegen families + 98 Rosetta goldens. **Next:** usability & workflow standards ([terms_refactor_plan.md](design/terms_refactor_plan.md)).
+
 ## Feature matrix (summary)
 
-| Feature | Python | JavaScript | C++ | Verse |
-|---------|--------|------------|-----|-------|
-| Instance methods | Native | Native | Native | Native (`<override>`) |
-| Static methods | Emulated (`@staticmethod`) | Native | Native | Emulated (module fn) |
-| Module functions | Native | Native | Native | Native |
-| Overloads | Unsupported (use defaults) | Emulated | Native | Emulated |
-| Virtual | N/A | N/A | Native | N/A |
-| Class inheritance | Native | Native | Native | Native |
-| Macro inline | **Deprecated** — use Function + Call | **Deprecated** | **Deprecated** | **Deprecated** |
+| Feature | Python | JavaScript | C++ | Verse | GDScript |
+|---------|--------|------------|-----|-------|----------|
+| Instance methods | Native | Native | Native | Native (`<override>`) | Native |
+| Static methods | Emulated (`@staticmethod`) | Native | Native | Emulated (module fn) | Native (`static func`) |
+| Module functions | Native | Native | Native | Native | Native (`func`) |
+| Overloads | Unsupported (use defaults) | Emulated | Native | Emulated | Unsupported |
+| Virtual | N/A | N/A | Native | N/A | N/A |
+| Class inheritance | Native | Native | Native | Native | Native (`extends`) |
+| Async / await | Emulated | Native | Emulated | Unsupported | Emulated (`await`) |
+| Macro inline | **Deprecated** — use Function + Call | **Deprecated** | **Deprecated** | **Deprecated** | **Deprecated** |
 
 ## Adding a language
 

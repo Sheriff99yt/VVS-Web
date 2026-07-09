@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { analyzeProject, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { transpileGraph } from './generate';
-import { createSimpleExampleSnapshot } from '../../../apps/web/src/lib/examples/simpleExample';
-import { createComplexExampleSnapshot } from '../../../apps/web/src/lib/examples/complexExample';
+import { createHelloWorldUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/helloWorldUsabilityTest';
+import { createCalculatorUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest';
 import type { CodegenContext } from './generate';
 
 type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse';
@@ -10,7 +10,7 @@ type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse';
 const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
 
 function transpileMain(
-  snapshot: ReturnType<typeof createSimpleExampleSnapshot>,
+  snapshot: ReturnType<typeof createHelloWorldUsabilityTestSnapshot>,
   targetLanguage: TargetLanguage
 ) {
   const main = snapshot.documents![MAIN_GRAPH_CONTAINER_ID];
@@ -33,7 +33,7 @@ function transpileMain(
 }
 
 function transpileComplexCalculator(
-  snapshot: ReturnType<typeof createComplexExampleSnapshot>,
+  snapshot: ReturnType<typeof createCalculatorUsabilityTestSnapshot>,
   targetLanguage: TargetLanguage
 ) {
   const calc = snapshot.documents![CALCULATOR_GRAPH_ID];
@@ -55,14 +55,14 @@ function transpileComplexCalculator(
   return transpileGraph(ctx);
 }
 
-const SIMPLE_EXPECTS: Record<TargetLanguage, string[]> = {
+const HELLO_WORLD_EXPECTS: Record<TargetLanguage, string[]> = {
   python: ['def on_start', 'print('],
   javascript: ['on_start()', 'console.log'],
   cpp: ['void on_start', 'std::cout'],
   verse: ['on_start', 'Print'],
 };
 
-const COMPLEX_EXPECTS: Record<TargetLanguage, string[]> = {
+const CALCULATOR_EXPECTS: Record<TargetLanguage, string[]> = {
   python: [
     'def on_calculate',
     'self.Add()',
@@ -86,27 +86,27 @@ const COMPLEX_EXPECTS: Record<TargetLanguage, string[]> = {
   verse: ['on_calculate', 'Add', 'if ', 'on_clear', 'Clear', 'Result', 'Enter A:'],
 };
 
-describe('example template snapshots', () => {
+describe('usability example test snapshots', () => {
   for (const lang of ['python', 'javascript', 'cpp', 'verse'] as const) {
-    test(`simple example transpiles for ${lang}`, () => {
-      const snapshot = createSimpleExampleSnapshot();
+    test(`hello world usability test transpiles for ${lang}`, () => {
+      const snapshot = createHelloWorldUsabilityTestSnapshot();
       const result = transpileMain(snapshot, lang);
       const content = result.files[0]!.content;
 
       expect(content.length).toBeGreaterThan(0);
-      for (const anchor of SIMPLE_EXPECTS[lang]) {
+      for (const anchor of HELLO_WORLD_EXPECTS[lang]) {
         expect(content).toContain(anchor);
       }
       expect(content).toContain('Hello from VVS!');
     });
 
-    test(`complex example transpiles for ${lang}`, () => {
-      const snapshot = createComplexExampleSnapshot();
+    test(`calculator usability test transpiles for ${lang}`, () => {
+      const snapshot = createCalculatorUsabilityTestSnapshot();
       const result = transpileComplexCalculator(snapshot, lang);
       const content = result.files[0]!.content;
 
       expect(content.length).toBeGreaterThan(0);
-      for (const anchor of COMPLEX_EXPECTS[lang]) {
+      for (const anchor of CALCULATOR_EXPECTS[lang]) {
         expect(content).toContain(anchor);
       }
       expect(content).not.toContain('import_module');
@@ -114,8 +114,8 @@ describe('example template snapshots', () => {
     });
   }
 
-  test('complex example has no error-level analysis diagnostics', () => {
-    const snapshot = createComplexExampleSnapshot();
+  test('calculator usability test has no error-level analysis diagnostics', () => {
+    const snapshot = createCalculatorUsabilityTestSnapshot();
     const result = analyzeProject({
       documents: snapshot.documents!,
       variables: snapshot.variables,

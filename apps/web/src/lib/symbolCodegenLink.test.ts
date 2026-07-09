@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { createComplexExampleSnapshot } from './examples/complexExample';
+import { createCalculatorUsabilityTestSnapshot } from './usabilityExampleTests/calculatorUsabilityTest';
 import { resolveSymbolCodegenLink } from './symbolCodegenLink';
 import { resolveCodePreviewHighlightNodeIds } from './projectSelection';
 
 const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
 
 describe('resolveSymbolCodegenLink', () => {
-  const snapshot = createComplexExampleSnapshot();
+  const snapshot = createCalculatorUsabilityTestSnapshot();
   const documents = snapshot.documents!;
   const baseInput = {
     documents,

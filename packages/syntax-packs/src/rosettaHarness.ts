@@ -6,14 +6,23 @@ import {
   resolveNodeKindId,
   type GraphEdge,
   type GraphNode,
+  type LanguageFamily,
   type ProjectEventDefinition,
   type FunctionSymbol,
   type VariableSymbol,
 } from '@vvs/graph-types';
 
-export type LanguageFamily = 'python' | 'javascript' | 'cpp' | 'verse';
+export type { LanguageFamily };
 
-export const ROSETTA_FAMILIES: LanguageFamily[] = ['python', 'javascript', 'cpp', 'verse'];
+export const ROSETTA_FAMILIES: LanguageFamily[] = [
+  'python',
+  'javascript',
+  'cpp',
+  'verse',
+  'gdscript',
+  'rust',
+  'csharp',
+];
 
 export interface RosettaFixture {
   name: string;
@@ -50,11 +59,26 @@ export function extractOnStartBody(content: string, family: LanguageFamily): str
     if (family === 'javascript' && lines[i]!.includes('on_start()')) start = i + 1;
     if (family === 'cpp' && lines[i]!.includes('void on_start()')) start = i + 1;
     if (family === 'verse' && lines[i]!.includes('on_start')) start = i + 1;
+    if (family === 'gdscript' && lines[i]!.includes('func on_start')) start = i + 1;
+    if (family === 'rust' && lines[i]!.includes('fn on_start')) start = i + 1;
+    if (family === 'csharp' && lines[i]!.includes('void on_start')) start = i + 1;
   }
   if (start < 0) return content;
   for (let i = start + 1; i < lines.length; i++) {
     const l = lines[i]!;
     if (family === 'python' && /^    def /.test(l)) {
+      end = i;
+      break;
+    }
+    if (family === 'gdscript' && /^    func /.test(l)) {
+      end = i;
+      break;
+    }
+    if (family === 'rust' && /^    pub fn /.test(l)) {
+      end = i;
+      break;
+    }
+    if (family === 'csharp' && /^    void /.test(l)) {
       end = i;
       break;
     }
@@ -92,6 +116,18 @@ export function extractImports(content: string, family: LanguageFamily): string 
       imports.push(line);
       continue;
     }
+    if (family === 'gdscript' && trimmed.startsWith('const ') && trimmed.includes('preload(')) {
+      imports.push(line);
+      continue;
+    }
+    if (family === 'rust' && (trimmed.startsWith('use ') || trimmed.startsWith('mod '))) {
+      imports.push(line);
+      continue;
+    }
+    if (family === 'csharp' && trimmed.startsWith('using ')) {
+      imports.push(line);
+      continue;
+    }
     if (family === 'cpp' && trimmed.startsWith('#include')) {
       imports.push(line);
       continue;
@@ -101,7 +137,14 @@ export function extractImports(content: string, family: LanguageFamily): string 
       continue;
     }
     if (imports.length > 0) break;
-    if (trimmed.startsWith('class ') || trimmed.startsWith('export ')) break;
+    if (
+      trimmed.startsWith('class ') ||
+      trimmed.startsWith('export ') ||
+      trimmed.startsWith('class_name ') ||
+      trimmed.startsWith('pub struct ')
+    ) {
+      break;
+    }
   }
   return imports.join('\n') + (imports.length > 0 ? '\n' : '');
 }

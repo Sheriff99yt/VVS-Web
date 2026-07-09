@@ -1,2 +1,2 @@
-/** @deprecated Use `createComplexExampleSnapshot` from `@/lib/examples/complexExample`. */
-export { createComplexExampleSnapshot as createDemoProjectSnapshot } from '@/lib/examples/complexExample';
+/** @deprecated Use `createCalculatorUsabilityTestSnapshot` from `@/lib/usabilityExampleTests/calculatorUsabilityTest`. */
+export { createCalculatorUsabilityTestSnapshot as createDemoProjectSnapshot } from '@/lib/usabilityExampleTests/calculatorUsabilityTest';

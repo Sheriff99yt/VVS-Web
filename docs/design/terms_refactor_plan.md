@@ -1,7 +1,7 @@
 # Vocabulary refactor — implementation plan
 
 **Status:** Action plan (July 2026) — **execute before unified symbol model Phase D/E system rework**.  
-**Glossary source:** [language_neutral_vocabulary.md](language_neutral_vocabulary.md) · **Architecture tie-in:** [unified_symbol_model.md](unified_symbol_model.md) phases D/E
+**Glossary source:** [language_neutral_vocabulary.md](language_neutral_vocabulary.md) · **Capability catalog:** [language_capability_catalog.md](language_capability_catalog.md) · **Architecture tie-in:** [unified_symbol_model.md](unified_symbol_model.md) phases D/E
 
 This document turns the glossary proposal into phased, verifiable work. **No code in this pass** — agents implement one phase at a time with acceptance criteria below.
 

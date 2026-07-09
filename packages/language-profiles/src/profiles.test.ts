@@ -27,4 +27,14 @@ describe('analyzePortability', () => {
     const diags = analyzePortability(features, 'cpp');
     expect(diags.filter((d) => d.level === 'warning')).toHaveLength(0);
   });
+
+  test('GDScript supports static functions natively', () => {
+    const diags = analyzePortability(['function.static'], 'gdscript');
+    expect(diags.filter((d) => d.level === 'warning')).toHaveLength(0);
+  });
+
+  test('GDScript warns on overload', () => {
+    const diags = analyzePortability(['function.overload'], 'gdscript');
+    expect(diags.some((d) => d.code?.includes('OVERLOAD'))).toBe(true);
+  });
 });

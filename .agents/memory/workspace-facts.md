@@ -31,12 +31,12 @@ Stable facts agents should assume without re-exploring the tree.
 | `functionHelpers.ts` | Call binding, overload sync, `applyFunctionCallBinding` |
 | `projectFolder/handleStore.ts` | `folderKeyFromHandleName()` stable folder keys |
 | `environmentCatalog.ts` | Bootstrap built-in + imported environment manifests |
-| `examples/simpleExample.ts` | Hello World template |
-| `examples/complexExample.ts` | Calculator template |
+| `usabilityExampleTests/helloWorldUsabilityTest.ts` | Hello World usability fixture |
+| `usabilityExampleTests/calculatorUsabilityTest.ts` | Calculator usability fixture |
 | `editorFocus.ts` | Tree/canvas focus frames; class home graph resolution |
 | `projectSelection.ts` | Tree symbol selection invariants |
 | `symbolCodegenLink.ts` | Selection → codegen tab + sourceMap node ids |
-| `exampleProjects.ts` | StartScreen `EXAMPLE_PROJECTS` cards |
+| `usabilityExampleProjects.ts` | StartScreen `USABILITY_EXAMPLE_TESTS` cards |
 | `recentProjectsSubscribe.ts` | Deferred localStorage recents (`useSyncExternalStore`) |
 
 ## Key packages

@@ -2,7 +2,7 @@ import type { TargetLanguage } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from './types';
 import { isEnvironmentCategory } from './categories';
 
-const TARGETS = new Set<TargetLanguage>(['python', 'javascript', 'cpp', 'verse', 'json']);
+const TARGETS = new Set<TargetLanguage>(['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp', 'json']);
 
 export interface ManifestValidationIssue {
   path: string;

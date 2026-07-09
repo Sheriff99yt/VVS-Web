@@ -90,6 +90,7 @@ function buildDefaultTypeTargets(
     if (t === 'javascript') out.javascript = { extendsName: 'Object' };
     if (t === 'cpp') out.cpp = { extendsName: 'std::enable_shared_from_this' };
     if (t === 'verse') out.verse = { extendsName: 'creative_object' };
+    if (t === 'gdscript') out.gdscript = { extendsName: 'Node' };
   }
   return out;
 }

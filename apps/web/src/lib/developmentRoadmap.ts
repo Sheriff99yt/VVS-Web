@@ -67,8 +67,8 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     number: 6,
     id: 'phase-6',
     title: 'Scale & polish',
-    summary: 'Performance, more emitters, mobile UX, enterprise ops',
-    status: 'planned',
+    summary: 'M3 language platform closed; perf/env/mobile/enterprise remain',
+    status: 'active',
   },
 ];
 
@@ -457,14 +457,42 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'transpile',
         title: 'Client transpiler',
         description:
-          'IR pipeline (analyze → graphToIr → print via syntax packs → emit/classModule); Python, JS, C++, Verse; control flow; example + Rosetta snapshot tests; 218+ package tests.',
+          'IR pipeline (analyze → graphToIr → print via syntax packs → emit/classModule); Python, JS, C++, Verse, GDScript; control flow; example + Rosetta snapshot tests; 233+ package tests.',
         status: 'done',
       },
       {
         id: 'syntax-packs',
         title: 'Syntax packs & Rosetta suite',
         description:
-          '@vvs/syntax-packs — base JSON (Rosetta + shell templates), capability overlays, 16 fixtures × 4 families, packCoverage + fidelity linter + parse validation script.',
+          '@vvs/syntax-packs — base JSON (Rosetta + shell templates), capability overlays, 14 fixtures × 5 families, packCoverage + fidelity linter + parse validation script.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-gdscript-shipped',
+        title: 'GDScript syntax pack family',
+        description:
+          'gdscript.base.json; pack-first print + module shells; get_input + switch printers; 14 Rosetta goldens; UI target; scripts/update-gdscript-goldens.ts.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-rust-shipped',
+        title: 'Rust syntax pack family',
+        description:
+          'rust.base.json; struct+impl module shells; get_input + switch printers; 14 Rosetta goldens; UI target (.rs); scripts/update-rust-goldens.ts.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-csharp-shipped',
+        title: 'C# syntax pack family (M3 complete)',
+        description:
+          'csharp.base.json; class module shells; get_input + switch printers; 14 Rosetta goldens; UI target (.cs); scripts/update-csharp-goldens.ts. Closes Phase 6 language platform milestone.',
+        status: 'done',
+      },
+      {
+        id: 'milestone-3-language-platform',
+        title: 'Milestone 3 — language platform closed',
+        description:
+          'Seven pack-driven codegen families (py/js/cpp/verse/gdscript/rust/csharp); 98 Rosetta goldens; Godot env pack. Next: usability/workflow standards (terms_refactor_plan).',
         status: 'done',
       },
       {
@@ -796,6 +824,42 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
           'GitHub Actions packages job: syntax-packs + transpiler + graph-types tests; web job lint/build; server job go build + go test.',
         status: 'done',
       },
+      {
+        id: 'syntax-pack-gdscript',
+        title: 'GDScript pack family (Phase 6)',
+        description:
+          'Fifth pack-driven family: gdscript.base.json, 14× Rosetta goldens, transpiler wiring, web UI target, golden regen script, Godot env pack + language profile.',
+        status: 'done',
+      },
+    ],
+  },
+  {
+    id: 'phase-6-gdscript',
+    title: 'Phase 6 — GDScript (Godot)',
+    phase: 6,
+    emphasis: 'shipped',
+    items: [
+      {
+        id: 'gdscript-pack-rosetta',
+        title: 'GDScript base pack + Rosetta',
+        description:
+          'gdscript.base.json with Godot idioms (class_name, func, preload, OS.delay_msec); 14 fixtures × gdscript goldens green in rosetta.test.ts.',
+        status: 'done',
+      },
+      {
+        id: 'gdscript-ui-codegen',
+        title: 'GDScript UI codegen target',
+        description:
+          'Selectable in code preview, codegen target panel, syntax pack lock; CodeMirror python-like highlight; .gd generated filenames.',
+        status: 'done',
+      },
+      {
+        id: 'gdscript-godot-env-shipped',
+        title: 'Godot environment pack + portability',
+        description:
+          'env.gdscript.godot-game manifest (Node, _ready, _process); GDScript language profile in @vvs/language-profiles.',
+        status: 'done',
+      },
     ],
   },
   {
@@ -1017,9 +1081,16 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'languages-more',
-        title: 'More language targets',
+        title: 'Phase 6 v2 language platform',
         description:
-          'GDScript, Rust, C# via new syntax pack families + Rosetta fixtures; agent-assisted pack authoring.',
+          'GDScript, Rust, C# — pack-first families + Rosetta + UI. Milestone 3 closed July 2026.',
+        status: 'done',
+      },
+      {
+        id: 'rust-console-env',
+        title: 'Rust console environment pack',
+        description:
+          'env.rust.console-app manifest (main.rs stub, std I/O natives); optional Tree-sitter validation when grammar available.',
         status: 'planned',
       },
       {

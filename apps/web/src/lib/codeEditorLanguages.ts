@@ -19,6 +19,12 @@ export function targetLanguageToCodeMirror(language: TargetLanguage): Extension[
     case 'verse':
       // No official Verse grammar — Python-like highlighting as interim.
       return [python()];
+    case 'gdscript':
+      return [python()];
+    case 'rust':
+      return [cpp()];
+    case 'csharp':
+      return [javascript()];
     default:
       return [];
   }
