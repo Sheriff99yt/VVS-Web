@@ -290,10 +290,12 @@ From repository root (Bun workspaces):
 
 ```bash
 bun install
-bun test packages
+bun test packages/syntax-packs packages/transpiler packages/graph-types
 cd apps/web && bun test src/lib
 cd server && go test ./...
 ```
+
+CI (`.github/workflows/ci.yml`): **packages** job runs the syntax-packs/transpiler/graph-types suites + `validate:parse --strict`; **web** job runs lint/build + `src/lib` tests; **server** job runs `go build` + `go test`.
 
 ---
 
@@ -311,15 +313,24 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 |-----------|----------|--------|
 | Structured IR | `packages/transpiler/src/ir/types.ts` | Done — `IrExpr` tree, structured stmts; wave-1 `IrEmittedStmt` deprecated |
 | Language-neutral lowering | `packages/transpiler/src/lower/graphToIr.ts` | Done — no target-language strings in lower/ |
-| Print registry | `packages/transpiler/src/print/` | Done — resolves syntax packs before TS printer fallback |
-| Base syntax packs | `packages/syntax-packs/src/packs/*.base.json` | Done — python, javascript, cpp, verse |
+| Print registry | `packages/transpiler/src/print/` | Done — **all four v1 families pack-first**; missing template → `PackTemplateMissingError`; registered TS printers for `get_input` + `switch` (all families) |
+| Print adapter | `packages/transpiler/src/print/template.ts` | Done — `printFromTemplate`, pack `layout` helpers (`bodyIndent`, `blockPlaceholder`, `emptyHandlerBody`, …) |
+| Unified block emit | `packages/transpiler/src/print/blocks.ts` | Done — `buildIfBranch` / `buildForLoop` / … for string print path (`stmt.ts`) |
+| Block close helpers | `packages/transpiler/src/print/blockHelpers.ts` | Done — `condSpanOffset`, `blockCloseLine`, `ifElseLine` shared with `emit/sinkStatements.ts` (span-aware nested emit) |
+| Nested emit sink | `packages/transpiler/src/emit/sinkStatements.ts` | Done — writes IR to `CodeSink` with `sourceMap`; headers/closes via `blockHelpers` + pack templates |
+| Pack render engine | `packages/syntax-packs/src/render.ts` | Done — `renderQuasi`, `renderLego`, `renderTemplate`; pack `layout` (indent, placeholders, comment prefix) |
+| Module emit | `packages/transpiler/src/emit/classModule.ts` | Done — unified class module + function tab emitter; **pack shell templates** for class open/close, handlers, function headers |
+| Module shell renderer | `packages/transpiler/src/emit/shell.ts` | Done — `ClassModuleOpen`, `EventHandlerOpen`, `FunctionDefOpen`, etc. from pack JSON |
+| Empty body layout | `packages/transpiler/src/emit/layout.ts` | Done — `emptyHandlerBody` / `emptyFunctionBody` from pack `layout` (no hardcoded `pass` / `// empty` in emit) |
+| Pack migration CI gate | `packages/transpiler/src/print/packMigrationGate.test.ts` | Done — bans legacy emitters in `stmt.ts` / `expr.ts`; per-language `emit/*.ts` removed; `classModule` + `sinkStatements` use pack helpers |
+| Base syntax packs | `packages/syntax-packs/src/packs/*.base.json` | Done — full Rosetta + **shell** template sets + `layout` for python, cpp, javascript, verse |
 | Capability overlay | `javascript.es2022.json` | Done — proof of inherit-only version deltas |
-| Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — 7 constructs × 4 families; `bun run generate:rosetta` |
+| Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — 16 fixtures × 4 families; all families green in `rosetta.test.ts` |
+| Pack coverage gate | `packages/syntax-packs/src/packCoverage.test.ts` | Done — required Rosetta + **shell** template keys + layout profile per base pack |
 | Fidelity linter | `packages/syntax-packs/src/fidelity.ts` | Done — CI via `rosetta.test.ts` |
 | CodegenTarget | `packages/graph-types/src/codegenTarget.ts` | Done — family + capabilities; UI still uses flat `TargetLanguage` |
-| Tree-sitter parse CI | — | **Deferred** — validator-only role documented |
-
-**Not started:** Go MCP tools for syntax pack maintenance (`list_syntax_packs`, `propose_syntax_delta`, etc.) — names documented in `packages/syntax-packs/README.md`.
+| Tree-sitter parse CI | `packages/syntax-packs/src/parseValidation.ts` | Done — python/javascript on Linux CI (`validate:parse --strict`); skips gracefully on dev machines without native prebuild |
+| Syntax pack MCP tools | `server/internal/transport/mcp/` | Done (local) — `list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse` |
 
 ### Codegen fidelity (strict)
 

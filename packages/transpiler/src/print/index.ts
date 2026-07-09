@@ -2,6 +2,7 @@ import type { LanguageFamily } from '@vvs/graph-types';
 import { resolvePrintProfile } from '@vvs/syntax-packs';
 import type { IrStatement, IrStructuredStatement } from '../ir/types';
 import { createDefaultExprPrinter } from './expr';
+import { registerPackPrinters } from './register';
 import { createStmtPrinters, printStructuredStatement, printStructuredStatements } from './stmt';
 import type { ExprPrinter, PrintContext, PrintedStmt, PrinterRegistry, StmtPrinter } from './types';
 
@@ -28,6 +29,13 @@ class Registry implements PrinterRegistry {
 
 export const printerRegistry = new Registry();
 
+function stmtPrinterKey(stmt: IrStatement): string {
+  if (stmt.kind === 'AssignVariable' && stmt.assignKind === 'get_input') {
+    return 'AssignVariable:get_input';
+  }
+  return stmt.kind;
+}
+
 export function createPrintContext(
   family: LanguageFamily,
   capabilities: string[],
@@ -41,7 +49,8 @@ export function createPrintContext(
 
 export function printStatement(stmt: IrStatement, ctx: PrintContext): PrintedStmt {
   const printExpr = createDefaultExprPrinter();
-  const custom = printerRegistry.getStmtPrinter(stmt.kind, ctx.family);
+  const key = stmtPrinterKey(stmt);
+  const custom = printerRegistry.getStmtPrinter(key, ctx.family);
   if (custom) {
     const result = custom(stmt as IrStructuredStatement, ctx);
     if (result) return result;
@@ -55,6 +64,8 @@ export function printStatement(stmt: IrStatement, ctx: PrintContext): PrintedStm
 export function printStatements(stmts: IrStatement[], ctx: PrintContext): PrintedStmt[] {
   return stmts.map((s) => printStatement(s, ctx));
 }
+
+registerPackPrinters(printerRegistry, printStatements);
 
 export type { PrintContext, PrintedExpr, PrintedStmt, PrinterRegistry } from './types';
 export { createDefaultExprPrinter } from './expr';

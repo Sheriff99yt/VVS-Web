@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createProjectFromEnvironment } from '@vvs/environment-templates';
-import { generateMockTranspileResult } from './generate';
+import { transpileGraph } from './generate';
 import { withTestEntryGraph } from './testEntryGraph';
 
 describe('environment multi-file transpile', () => {
@@ -11,7 +11,7 @@ describe('environment multi-file transpile', () => {
 
     const main = snapshot!.documents[MAIN_GRAPH_CONTAINER_ID];
     if (!main) throw new Error(`missing ${MAIN_GRAPH_CONTAINER_ID}`);
-    const result = generateMockTranspileResult({
+    const result = transpileGraph({
       moduleName: snapshot!.projectDetails.moduleName,
       extendsType: snapshot!.projectDetails.extendsType,
       targetLanguage: 'python',
@@ -40,7 +40,7 @@ describe('environment multi-file transpile', () => {
 
     const main = snapshot!.documents[MAIN_GRAPH_CONTAINER_ID];
     if (!main) throw new Error(`missing ${MAIN_GRAPH_CONTAINER_ID}`);
-    const result = generateMockTranspileResult({
+    const result = transpileGraph({
       moduleName: 'App',
       extendsType: 'Object',
       targetLanguage: 'javascript',
@@ -84,7 +84,7 @@ describe('env.call_native emission', () => {
       },
     };
 
-    const result = generateMockTranspileResult(
+    const result = transpileGraph(
       withTestEntryGraph({
         moduleName: 'App',
         extendsType: 'object',

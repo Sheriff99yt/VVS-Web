@@ -30,6 +30,8 @@ export interface ParseValidationCaseResult {
 
 export interface ParseValidationResult {
   ok: boolean;
+  /** True when at least one family loaded a native tree-sitter grammar. */
+  runtimeAvailable: boolean;
   total: number;
   passed: number;
   failed: number;
@@ -37,7 +39,7 @@ export interface ParseValidationResult {
   results: ParseValidationCaseResult[];
 }
 
-const SUPPORTED_FAMILIES: LanguageFamily[] = ['python', 'javascript'];
+export const SUPPORTED_FAMILIES: LanguageFamily[] = ['python', 'javascript'];
 
 type ParseNode = {
   isError: boolean;
@@ -51,6 +53,8 @@ type LoadedParser = {
   parse(input: string): { rootNode: ParseNode };
 };
 
+const parserCache = new Map<LanguageFamily, LoadedParser | null>();
+
 function allFixtureNames(): string[] {
   return readdirSync(rosettaDir())
     .filter((f) => f.endsWith('.fixture.json'))
@@ -59,22 +63,32 @@ function allFixtureNames(): string[] {
 }
 
 function parserForFamily(family: LanguageFamily): LoadedParser | null {
+  if (parserCache.has(family)) return parserCache.get(family) ?? null;
   try {
     const require = createRequire(import.meta.url);
     const Parser = require('tree-sitter');
     const parser = new Parser();
     if (family === 'python') {
       parser.setLanguage(require('tree-sitter-python'));
+      parserCache.set(family, parser as LoadedParser);
       return parser as LoadedParser;
     }
     if (family === 'javascript') {
       parser.setLanguage(require('tree-sitter-javascript'));
+      parserCache.set(family, parser as LoadedParser);
       return parser as LoadedParser;
     }
   } catch {
+    parserCache.set(family, null);
     return null;
   }
+  parserCache.set(family, null);
   return null;
+}
+
+/** Whether native tree-sitter grammars loaded (false when prebuild binary missing). */
+export function isParseValidationRuntimeAvailable(): boolean {
+  return SUPPORTED_FAMILIES.some((family) => parserForFamily(family) !== null);
 }
 
 function collectIssues(node: ParseNode, issues: ParseIssue[]): void {
@@ -135,8 +149,10 @@ export function validateGeneratedParse(filter: ParseValidationFilter = {}): Pars
   const supported = results.filter((r) => r.supported);
   const passed = supported.filter((r) => r.passed).length;
   const skipped = results.length - supported.length;
+  const runtimeAvailable = supported.length > 0;
   return {
     ok: supported.every((r) => r.passed),
+    runtimeAvailable,
     total: supported.length,
     passed,
     failed: supported.length - passed,
@@ -144,5 +160,3 @@ export function validateGeneratedParse(filter: ParseValidationFilter = {}): Pars
     results,
   };
 }
-
-export { SUPPORTED_FAMILIES };

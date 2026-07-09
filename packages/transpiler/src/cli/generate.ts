@@ -7,7 +7,7 @@
  *   bun run generate:cli < snapshot.json
  */
 import { normalizeProjectSnapshot, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
-import { generateMockTranspileResult } from '../generate';
+import { transpileGraph } from '../generate';
 
 async function readInput(): Promise<string> {
   const fileArg = process.argv[2];
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 
   const tab = snapshot.openTabs.find((t) => t.id === tabId);
 
-  const result = generateMockTranspileResult({
+  const result = transpileGraph({
     moduleName: snapshot.projectDetails.moduleName,
     extendsType: snapshot.projectDetails.extendsType,
     targetLanguage: snapshot.targetLanguage,

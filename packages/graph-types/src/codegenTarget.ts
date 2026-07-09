@@ -39,3 +39,44 @@ export function defaultCodegenTarget(lang: TargetLanguage): CodegenTarget | null
     capabilities: [...DEFAULT_CAPABILITIES[family]],
   };
 }
+
+/** Per-family capability overrides persisted in project snapshot. */
+export type CodegenCapabilities = Partial<Record<LanguageFamily, string[]>>;
+
+export interface ResolveCodegenTargetOptions {
+  capabilities?: CodegenCapabilities;
+  syntaxPackLock?: SyntaxPackLock;
+}
+
+/** Resolve the active codegen target from UI language + optional overrides. */
+export function resolveCodegenTarget(
+  lang: TargetLanguage,
+  options?: ResolveCodegenTargetOptions
+): CodegenTarget | null {
+  const family = targetLanguageToFamily(lang);
+  if (!family) return null;
+
+  const capabilities =
+    options?.capabilities?.[family] ?? [...DEFAULT_CAPABILITIES[family]];
+  const packLock = options?.syntaxPackLock?.[family];
+
+  return { family, capabilities, packLock };
+}
+
+/** Known capability tags per language family (for UI toggles). */
+export const FAMILY_CAPABILITY_OPTIONS: Record<
+  LanguageFamily,
+  { id: string; label: string }[]
+> = {
+  python: [
+    { id: 'async', label: 'Async / await' },
+    { id: 'type_hints', label: 'Type hints' },
+  ],
+  javascript: [
+    { id: 'async', label: 'Async / await' },
+    { id: 'es2020', label: 'ES2020' },
+    { id: 'es2022', label: 'ES2022' },
+  ],
+  cpp: [{ id: 'cpp17', label: 'C++17' }],
+  verse: [],
+};

@@ -39,6 +39,8 @@ export interface VvsProjectManifest {
   graphs: VvsProjectGraphManifest;
   /** Pinned syntax pack versions per language family. */
   syntaxPackLock?: SyntaxPackLock;
+  /** Per-family capability overrides for syntax pack resolution. */
+  codegenCapabilities?: import('./codegenTarget').CodegenCapabilities;
 }
 
 export interface LoadedFolderProject {

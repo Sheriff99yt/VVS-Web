@@ -8,19 +8,36 @@ import type {
   IrSwitch,
   IrWhileLoop,
 } from '../ir/types';
+import {
+  blockCloseLine,
+  condSpanOffset,
+  forSpanOffset,
+  ifElseLine,
+  innerIndentCtx,
+} from '../print/blocks';
 import { createDefaultExprPrinter } from '../print/expr';
 import { printStatement } from '../print';
+import {
+  blockPlaceholder,
+  innerIndentUnit,
+  isPackDrivenFamily,
+  printFromTemplate,
+} from '../print/template';
 import type { PrintContext } from '../print/types';
 
 const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'WhileLoop', 'Switch', 'Sequence']);
 
-function innerIndent(ctx: PrintContext): PrintContext {
-  return { ...ctx, indent: `${ctx.indent}    ` };
-}
-
-function caseLabelLiteral(label: string): string {
-  if (/^-?\d+(\.\d+)?$/.test(label)) return label;
-  return JSON.stringify(label);
+function appendRawWithExprSpans(
+  sink: CodeSink,
+  line: string,
+  spans: { nodeId: string; start: number; end: number }[],
+  spanOffset: number
+): void {
+  const startLine = sink.lineCount + 1;
+  sink.appendRaw(line);
+  if (spans.length > 0) {
+    sink.registerExpressionSpans(startLine, [line], offsetSpans(spans, spanOffset));
+  }
 }
 
 function appendBodyOrPlaceholder(
@@ -42,240 +59,120 @@ function appendLeafStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContex
   });
 }
 
-function appendRawWithExprSpans(
-  sink: CodeSink,
-  line: string,
-  spans: { nodeId: string; start: number; end: number }[],
-  spanOffset: number
-): void {
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw(line);
-  if (spans.length > 0) {
-    sink.registerExpressionSpans(startLine, [line], offsetSpans(spans, spanOffset));
-  }
-}
-
 function appendIfBranch(sink: CodeSink, stmt: IrIfBranch, ctx: PrintContext): void {
   const printExpr = createDefaultExprPrinter();
   const condPrinted = printExpr(stmt.condition, ctx);
-  const cond = condPrinted.text;
-  const { indent, family } = ctx;
-  const inner = innerIndent(ctx);
+  const inner = innerIndentCtx(ctx);
   const startLine = sink.lineCount + 1;
+  const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
 
-  if (family === 'python') {
-    const header = `${indent}if ${cond}:`;
-    appendRawWithExprSpans(sink, header, condPrinted.spans, indent.length + 'if '.length);
-    appendBodyOrPlaceholder(sink, stmt.trueBody, inner, `${inner.indent}pass`);
+  if (isPackDrivenFamily(ctx.family)) {
+    const header = printFromTemplate(ctx, 'IfBranchHeader', {
+      cond: { text: condPrinted.text, spans: condPrinted.spans },
+    });
+    appendRawWithExprSpans(
+      sink,
+      header.text,
+      condPrinted.spans,
+      condSpanOffset(ctx.family, ctx.indent, 'if')
+    );
+    appendBodyOrPlaceholder(sink, stmt.trueBody, inner, placeholder);
     if (stmt.falseBody.length > 0) {
-      sink.appendRaw(`${indent}else:`);
-      appendBodyOrPlaceholder(sink, stmt.falseBody, inner, `${inner.indent}pass`);
+      sink.appendRaw(ifElseLine(ctx));
+      appendBodyOrPlaceholder(sink, stmt.falseBody, inner, placeholder);
     }
-  } else if (family === 'javascript') {
-    const header = `${indent}if (${cond}) {`;
-    appendRawWithExprSpans(sink, header, condPrinted.spans, indent.length + 'if ('.length);
-    appendBodyOrPlaceholder(sink, stmt.trueBody, inner, `${inner.indent}// empty`);
-    if (stmt.falseBody.length > 0) {
-      sink.appendRaw(`${indent}} else {`);
-      appendBodyOrPlaceholder(sink, stmt.falseBody, inner, `${inner.indent}// empty`);
-      sink.appendRaw(`${indent}};`);
-    } else {
-      sink.appendRaw(`${indent}};`);
-    }
-  } else if (family === 'cpp') {
-    const header = `${indent}if (${cond}) {`;
-    appendRawWithExprSpans(sink, header, condPrinted.spans, indent.length + 'if ('.length);
-    appendBodyOrPlaceholder(sink, stmt.trueBody, inner, `${inner.indent}// empty`);
-    if (stmt.falseBody.length > 0) {
-      sink.appendRaw(`${indent}} else {`);
-      appendBodyOrPlaceholder(sink, stmt.falseBody, inner, `${inner.indent}// empty`);
-    }
-    sink.appendRaw(`${indent}}`);
-  } else if (family === 'verse') {
-    const header = `${indent}if (${cond}):`;
-    appendRawWithExprSpans(sink, header, condPrinted.spans, indent.length + 'if ('.length);
-    appendBodyOrPlaceholder(sink, stmt.trueBody, inner, `${inner.indent}# empty`);
-    if (stmt.falseBody.length > 0) {
-      sink.appendRaw(`${indent}else:`);
-      appendBodyOrPlaceholder(sink, stmt.falseBody, inner, `${inner.indent}# empty`);
+    if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+      sink.appendRaw(blockCloseLine(ctx, 'IfBranchClose'));
     }
   } else {
-    sink.appendRaw(`${indent}// if (${cond})`);
+    sink.appendRaw(`${ctx.indent}// if (${condPrinted.text})`);
   }
-
-  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `if ${cond}`);
+  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'if');
 }
 
 function appendForLoop(sink: CodeSink, stmt: IrForLoop, ctx: PrintContext): void {
   const printExpr = createDefaultExprPrinter();
   const firstPrinted = printExpr(stmt.first, ctx);
   const lastPrinted = printExpr(stmt.last, ctx);
-  const first = firstPrinted.text;
-  const last = lastPrinted.text;
-  const { indent, family } = ctx;
-  const inner = innerIndent(ctx);
+  const inner = innerIndentCtx(ctx);
   const startLine = sink.lineCount + 1;
+  const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
 
-  if (family === 'python') {
-    const header = `${indent}for ${stmt.indexVar} in range(${first}, ${last} + 1):`;
-    appendRawWithExprSpans(sink, header, [...firstPrinted.spans, ...offsetSpans(lastPrinted.spans, first.length + ', '.length)], indent.length + `for ${stmt.indexVar} in range(`.length);
-    appendBodyOrPlaceholder(sink, stmt.body, inner, `${inner.indent}pass`);
-  } else if (family === 'javascript') {
-    sink.appendRaw(
-      `${indent}for (let ${stmt.indexVar} = ${first}; ${stmt.indexVar} <= ${last}; ${stmt.indexVar}++) {`
-    );
-    appendBodyOrPlaceholder(sink, stmt.body, inner, `${inner.indent}// empty`);
-    sink.appendRaw(`${indent}};`);
-  } else if (family === 'cpp') {
-    sink.appendRaw(
-      `${indent}for (int ${stmt.indexVar} = ${first}; ${stmt.indexVar} <= ${last}; ${stmt.indexVar}++) {`
-    );
-    appendBodyOrPlaceholder(sink, stmt.body, inner, `${inner.indent}// empty`);
-    sink.appendRaw(`${indent}}`);
-  } else if (family === 'verse') {
-    sink.appendRaw(`${indent}loop:`);
-    appendBodyOrPlaceholder(
+  if (isPackDrivenFamily(ctx.family)) {
+    const header = printFromTemplate(ctx, 'ForLoopHeader', {
+      index: stmt.indexVar,
+      first: firstPrinted.text,
+      last: lastPrinted.text,
+    });
+    appendRawWithExprSpans(
       sink,
-      stmt.body,
-      inner,
-      `${inner.indent}# empty  # for ${stmt.indexVar} in ${first}..${last}`
+      header.text,
+      [...firstPrinted.spans, ...offsetSpans(lastPrinted.spans, firstPrinted.text.length + 2)],
+      forSpanOffset(ctx.family, ctx.indent, stmt.indexVar)
     );
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
+    if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+      sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
+    }
   } else {
-    sink.appendRaw(`${indent}// for ${stmt.indexVar} = ${first}..${last}`);
+    sink.appendRaw(`${ctx.indent}// for ${stmt.indexVar}`);
   }
-
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `for ${stmt.indexVar}`);
 }
 
 function appendWhileLoop(sink: CodeSink, stmt: IrWhileLoop, ctx: PrintContext): void {
   const printExpr = createDefaultExprPrinter();
   const condPrinted = printExpr(stmt.condition, ctx);
-  const cond = condPrinted.text;
-  const { indent, family } = ctx;
-  const inner = innerIndent(ctx);
+  const inner = innerIndentCtx(ctx);
   const startLine = sink.lineCount + 1;
+  const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
 
-  if (family === 'python') {
-    const header = `${indent}while ${cond}:`;
-    appendRawWithExprSpans(sink, header, condPrinted.spans, indent.length + 'while '.length);
-    appendBodyOrPlaceholder(sink, stmt.body, inner, `${inner.indent}pass`);
-  } else if (family === 'javascript') {
-    const header = `${indent}while (${cond}) {`;
-    appendRawWithExprSpans(sink, header, condPrinted.spans, indent.length + 'while ('.length);
-    appendBodyOrPlaceholder(sink, stmt.body, inner, `${inner.indent}// empty`);
-    sink.appendRaw(`${indent}};`);
-  } else if (family === 'cpp') {
-    const header = `${indent}while (${cond}) {`;
-    appendRawWithExprSpans(sink, header, condPrinted.spans, indent.length + 'while ('.length);
-    appendBodyOrPlaceholder(sink, stmt.body, inner, `${inner.indent}// empty`);
-    sink.appendRaw(`${indent}}`);
-  } else if (family === 'verse') {
-    sink.appendRaw(`${indent}loop:`);
-    appendBodyOrPlaceholder(sink, stmt.body, inner, `${inner.indent}# empty  # while ${cond}`);
+  if (isPackDrivenFamily(ctx.family)) {
+    const header = printFromTemplate(ctx, 'WhileLoopHeader', {
+      cond: { text: condPrinted.text, spans: condPrinted.spans },
+    });
+    appendRawWithExprSpans(
+      sink,
+      header.text,
+      condPrinted.spans,
+      condSpanOffset(ctx.family, ctx.indent, 'while')
+    );
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
+    if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+      sink.appendRaw(blockCloseLine(ctx, 'WhileLoopClose'));
+    }
   } else {
-    sink.appendRaw(`${indent}// while (${cond})`);
+    sink.appendRaw(`${ctx.indent}// while`);
   }
-
-  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `while ${cond}`);
+  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'while');
 }
 
 function appendSwitch(sink: CodeSink, stmt: IrSwitch, ctx: PrintContext): void {
-  const printExpr = createDefaultExprPrinter();
-  const selectorPrinted = printExpr(stmt.selector, ctx);
-  const selector = selectorPrinted.text;
-  const { indent, family } = ctx;
-  const inner = innerIndent(ctx);
-  const startLine = sink.lineCount + 1;
-  const selTemp = '_vvs_sel';
-
-  if (family === 'python') {
-    const header = `${indent}${selTemp} = ${selector}`;
-    appendRawWithExprSpans(sink, header, selectorPrinted.spans, indent.length + `${selTemp} = `.length);
-    stmt.cases.forEach((c, i) => {
-      const kw = i === 0 ? 'if' : 'elif';
-      sink.appendRaw(`${indent}${kw} ${selTemp} == ${caseLabelLiteral(c.label)}:`);
-      appendBodyOrPlaceholder(sink, c.body, inner, `${inner.indent}pass`);
-    });
-    if (stmt.defaultBody.length > 0) {
-      sink.appendRaw(`${indent}else:`);
-      appendBodyOrPlaceholder(sink, stmt.defaultBody, inner, `${inner.indent}pass`);
-    }
-  } else if (family === 'javascript') {
-    const header = `${indent}switch (${selector}) {`;
-    appendRawWithExprSpans(sink, header, selectorPrinted.spans, indent.length + 'switch ('.length);
-    for (const c of stmt.cases) {
-      sink.appendRaw(`${indent}  case ${caseLabelLiteral(c.label)}:`);
-      appendBodyOrPlaceholder(sink, c.body, inner, `${inner.indent}    // empty`);
-      sink.appendRaw(`${inner.indent}    break;`);
-    }
-    if (stmt.defaultBody.length > 0) {
-      sink.appendRaw(`${indent}  default:`);
-      appendBodyOrPlaceholder(sink, stmt.defaultBody, inner, `${inner.indent}    // empty`);
-      sink.appendRaw(`${inner.indent}    break;`);
-    }
-    sink.appendRaw(`${indent}};`);
-  } else if (family === 'cpp') {
-    const header = `${indent}switch (${selector}) {`;
-    appendRawWithExprSpans(sink, header, selectorPrinted.spans, indent.length + 'switch ('.length);
-    for (const c of stmt.cases) {
-      sink.appendRaw(`${indent}  case ${caseLabelLiteral(c.label)}:`);
-      appendBodyOrPlaceholder(sink, c.body, inner, `${inner.indent}    // empty`);
-      sink.appendRaw(`${inner.indent}    break;`);
-    }
-    if (stmt.defaultBody.length > 0) {
-      sink.appendRaw(`${indent}  default:`);
-      appendBodyOrPlaceholder(sink, stmt.defaultBody, inner, `${inner.indent}    // empty`);
-      sink.appendRaw(`${inner.indent}    break;`);
-    }
-    sink.appendRaw(`${indent}}`);
-  } else if (family === 'verse') {
-    sink.appendRaw(`${indent}# switch (${selector})`);
-    for (const c of stmt.cases) {
-      sink.appendRaw(`${indent}if (${selector} = ${JSON.stringify(c.label)}):`);
-      appendBodyOrPlaceholder(sink, c.body, inner, `${inner.indent}# empty`);
-    }
-    if (stmt.defaultBody.length > 0) {
-      sink.appendRaw(`${indent}else:`);
-      appendBodyOrPlaceholder(sink, stmt.defaultBody, inner, `${inner.indent}# empty`);
-    }
-  } else {
-    sink.appendRaw(`${indent}// switch (${selector})`);
-  }
-
-  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `switch ${selector}`);
+  appendLeafStatement(sink, stmt, ctx);
 }
 
 function appendSequence(sink: CodeSink, stmt: IrSequence, ctx: PrintContext): void {
-  const { indent, family } = ctx;
-  const inner = innerIndent(ctx);
+  const inner = innerIndentCtx(ctx);
   const startLine = sink.lineCount + 1;
+  const steps = stmt.steps.filter((step) => step.length > 0);
 
-  if (family === 'python' || family === 'verse') {
-    sink.appendRaw(`${indent}# sequence`);
-    for (const step of stmt.steps) {
-      appendIrStatements(sink, step, inner);
+  if (isPackDrivenFamily(ctx.family)) {
+    if (ctx.family === 'python' || ctx.family === 'verse') {
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceHeader', {}).text);
+      for (const step of steps) {
+        appendIrStatements(sink, step, inner);
+      }
+    } else {
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceHeader', {}).text);
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceComment', {}).text);
+      for (const step of steps) {
+        appendIrStatements(sink, step, inner);
+      }
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceClose', {}).text);
     }
-  } else if (family === 'javascript') {
-    sink.appendRaw(`${indent}{`);
-    sink.appendRaw(`${indent}  // sequence`);
-    for (const step of stmt.steps) {
-      appendIrStatements(sink, step, inner);
-    }
-    sink.appendRaw(`${indent}};`);
-  } else if (family === 'cpp') {
-    sink.appendRaw(`${indent}{`);
-    sink.appendRaw(`${indent}  // sequence`);
-    for (const step of stmt.steps) {
-      appendIrStatements(sink, step, inner);
-    }
-    sink.appendRaw(`${indent}}`);
   } else {
-    sink.appendRaw(`${indent}// sequence`);
-    for (const step of stmt.steps) {
-      appendIrStatements(sink, step, inner);
-    }
+    sink.appendRaw(`${ctx.indent}// sequence`);
   }
-
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'sequence');
 }
 
@@ -317,3 +214,5 @@ export function appendIrStatements(
     }
   }
 }
+
+export { innerIndentCtx, blockPlaceholder, innerIndentUnit };

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { graphToIr } from './lower/graphToIr';
 import {
-  generateMockCode,
-  generateMockTranspileResult,
-  generateProjectTranspileResult,
+  transpileGraphCode,
+  transpileGraph,
+  transpileProject,
   type CodegenContext,
 } from './generate';
 import { withTestEntryGraph } from './testEntryGraph';
@@ -36,10 +36,10 @@ function mainCtx(
   };
 }
 
-describe('generateMockCode', () => {
+describe('transpileGraphCode', () => {
   test('complex example main graph emits call_function and branch', () => {
     const snapshot = createComplexExampleSnapshot();
-    const code = generateMockCode(mainCtx(snapshot));
+    const code = transpileGraphCode(mainCtx(snapshot));
 
     expect(code).toContain('self.Add()');
     expect(code).toContain('def Add(self):');
@@ -60,7 +60,7 @@ describe('generateMockCode', () => {
 
   test('canvas define chain emits members in graph order', () => {
     const snapshot = createComplexExampleSnapshot();
-    const code = generateMockCode(mainCtx(snapshot));
+    const code = transpileGraphCode(mainCtx(snapshot));
     const lines = code.split('\n');
 
     const lineDeclareStart = lines.findIndex((l) => l.includes('# Declare start'));
@@ -90,7 +90,7 @@ describe('generateMockCode', () => {
 
   test('var_define nodes map to declaration lines in sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
-    const result = generateMockTranspileResult(mainCtx(snapshot));
+    const result = transpileGraph(mainCtx(snapshot));
 
     expect(result.sourceMap['calc-var-a-define']?.length).toBeGreaterThan(0);
     expect(result.fragments?.['calc-var-a-define']).toContain('self.A');
@@ -117,7 +117,7 @@ describe('generateMockCode', () => {
     const ir = graphToIr(ctx, 'Calculator.py');
     expect(ir.members).toEqual([]);
 
-    const code = generateMockCode(ctx);
+    const code = transpileGraphCode(ctx);
     const classMemberSection = code.split('def on_start(self):')[0]!;
     expect(classMemberSection).not.toContain('# Variables');
     expect(classMemberSection).not.toMatch(/self\.A\s*=\s*0/);
@@ -132,7 +132,7 @@ describe('generateMockCode', () => {
     const snapshot = createComplexExampleSnapshot();
     const addTab = snapshot.documents!['fn-add'];
 
-    const code = generateMockCode({
+    const code = transpileGraphCode({
       moduleName: 'Add',
       extendsType: '',
       targetLanguage: 'python',
@@ -154,7 +154,7 @@ describe('generateMockCode', () => {
 
   test('transpile result includes sourceMap for statement nodes', () => {
     const snapshot = createComplexExampleSnapshot();
-    const result = generateMockTranspileResult(mainCtx(snapshot));
+    const result = transpileGraph(mainCtx(snapshot));
 
     expect(result.files[0]?.content.length).toBeGreaterThan(0);
     expect(Object.keys(result.sourceMap).length).toBeGreaterThan(0);
@@ -164,7 +164,7 @@ describe('generateMockCode', () => {
 
   test('event member define nodes map to declare placeholder or cpp prototype', () => {
     const snapshot = createComplexExampleSnapshot();
-    const result = generateMockTranspileResult(mainCtx(snapshot));
+    const result = transpileGraph(mainCtx(snapshot));
 
     const memberRanges = result.sourceMap['calc-evt-calc-member'];
     expect(memberRanges?.length).toBeGreaterThan(0);
@@ -185,7 +185,7 @@ describe('generateMockCode', () => {
 
   test('On Start maps to on_start handler not run', () => {
     const snapshot = createComplexExampleSnapshot();
-    const result = generateMockTranspileResult(mainCtx(snapshot));
+    const result = transpileGraph(mainCtx(snapshot));
 
     const content = result.files[0]!.content;
     expect(content).toContain('def on_start(self):');
@@ -199,7 +199,7 @@ describe('generateMockCode', () => {
     const snapshot = createComplexExampleSnapshot();
     const addTab = snapshot.documents!['fn-add'];
 
-    const result = generateMockTranspileResult({
+    const result = transpileGraph({
       moduleName: 'Add',
       extendsType: '',
       targetLanguage: 'python',
@@ -242,7 +242,7 @@ describe('generateMockCode', () => {
       },
     ];
 
-    const result = generateMockTranspileResult({
+    const result = transpileGraph({
       ...mainCtx(snapshot),
       nodes,
       edges,
@@ -255,7 +255,7 @@ describe('generateMockCode', () => {
 
   test('nested branch body nodes map to sourceMap', () => {
     const snapshot = createComplexExampleSnapshot();
-    const result = generateMockTranspileResult(mainCtx(snapshot));
+    const result = transpileGraph(mainCtx(snapshot));
 
     expect(result.sourceMap['calc-print-done']?.length).toBeGreaterThan(0);
     expect(result.sourceMap['calc-print-result']?.length).toBeGreaterThan(0);
@@ -270,7 +270,7 @@ describe('generateMockCode', () => {
     const snapshot = createSimpleExampleSnapshot();
     const main = snapshot.documents![MAIN_GRAPH_CONTAINER_ID];
     if (!main) throw new Error(`missing ${MAIN_GRAPH_CONTAINER_ID}`);
-    const result = generateMockTranspileResult({
+    const result = transpileGraph({
       moduleName: snapshot.projectDetails.moduleName,
       extendsType: snapshot.projectDetails.extendsType,
       targetLanguage: 'python',
@@ -333,7 +333,7 @@ describe('generateMockCode', () => {
       },
     ];
 
-    const result = generateMockTranspileResult(
+    const result = transpileGraph(
       withTestEntryGraph(
         {
           moduleName: 'TestMod',
@@ -364,7 +364,7 @@ describe('generateMockCode', () => {
     if (!uiDoc) throw new Error(`missing ${uiFlowId}`);
     const resultPanel = snapshot.classes.find((c) => c.name === 'ResultPanel')!;
 
-    const result = generateMockTranspileResult({
+    const result = transpileGraph({
       moduleName: snapshot.projectDetails.moduleName,
       extendsType: '',
       targetLanguage: 'python',
@@ -385,9 +385,9 @@ describe('generateMockCode', () => {
     expect(content).toContain('print("Result panel ready")');
   });
 
-  test('generateProjectTranspileResult emits all class modules and function tabs', () => {
+  test('transpileProject emits all class modules and function tabs', () => {
     const snapshot = createComplexExampleSnapshot();
-    const result = generateProjectTranspileResult({
+    const result = transpileProject({
       projectDetails: snapshot.projectDetails,
       targetLanguage: 'python',
       variables: snapshot.variables,
@@ -473,7 +473,7 @@ describe('generateMockCode', () => {
       },
     ];
 
-    const code = generateMockCode({
+    const code = transpileGraphCode({
       moduleName: snapshot.projectDetails.moduleName,
       extendsType: '',
       targetLanguage: 'python',
@@ -501,7 +501,7 @@ describe('generateMockCode', () => {
     const functions = snapshot.functions.map((f) => (f.id === asyncFn.id ? asyncFn : f));
     const calc = snapshot.documents![CALCULATOR_GRAPH_ID]!;
 
-    const code = generateMockCode({
+    const code = transpileGraphCode({
       ...mainCtx(snapshot, { functions }),
       targetLanguage: 'python',
     });
@@ -517,7 +517,7 @@ describe('generateMockCode', () => {
     };
     const functions = snapshot.functions.map((f) => (f.id === virtualFn.id ? virtualFn : f));
 
-    const code = generateMockCode({
+    const code = transpileGraphCode({
       ...mainCtx(snapshot, { functions }),
       targetLanguage: 'cpp',
     });
@@ -527,7 +527,7 @@ describe('generateMockCode', () => {
 
   test('cpp sourceMap endCol includes trailing punctuation on declaration lines', () => {
     const snapshot = createComplexExampleSnapshot();
-    const result = generateMockTranspileResult(mainCtx(snapshot, { targetLanguage: 'cpp' }));
+    const result = transpileGraph(mainCtx(snapshot, { targetLanguage: 'cpp' }));
     const content = result.files[0]!.content;
     const lines = content.split('\n');
 

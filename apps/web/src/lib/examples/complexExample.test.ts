@@ -6,7 +6,7 @@ import {
   classHomeGraphId,
   findDefineNodesForSymbol,
 } from '@vvs/graph-types';
-import { generateMockCode, graphToIr } from '@vvs/transpiler';
+import { transpileGraphCode, graphToIr } from '@vvs/transpiler';
 import { createComplexExampleSnapshot } from './complexExample';
 import { normalizeExampleNodes } from './exampleGraphBuild';
 import { evaluateWireConnection } from '@/lib/graphWiring';
@@ -116,7 +116,7 @@ describe('createComplexExampleSnapshot', () => {
     const calc = calculatorDoc(snapshot);
 
     for (const lang of ['python', 'javascript', 'cpp', 'verse'] as const) {
-      const code = generateMockCode({
+      const code = transpileGraphCode({
         moduleName: snapshot.projectDetails.moduleName,
         extendsType: snapshot.projectDetails.extendsType,
         targetLanguage: lang,
@@ -155,7 +155,7 @@ describe('createComplexExampleSnapshot', () => {
     expect(snapshot.openTabs.every((t) => t.type !== 'class')).toBe(true);
     expect(calc.nodes.some((n) => n.data.kindId === 'vvs.project.use_macro')).toBe(false);
 
-    const code = generateMockCode({
+    const code = transpileGraphCode({
       moduleName: snapshot.projectDetails.moduleName,
       extendsType: snapshot.projectDetails.extendsType,
       targetLanguage: 'python',
@@ -220,7 +220,7 @@ describe('createComplexExampleSnapshot', () => {
     const calc = calculatorDoc(snapshot);
     expect(calc.nodes.some((n) => n.data.kindId === 'convert_to_string')).toBe(true);
 
-    const code = generateMockCode({
+    const code = transpileGraphCode({
       moduleName: snapshot.projectDetails.moduleName,
       extendsType: '',
       targetLanguage: 'python',
@@ -256,7 +256,7 @@ describe('createComplexExampleSnapshot', () => {
     if (!uiDoc) throw new Error(`missing ${uiFlowId}`);
 
     const resultPanel = snapshot.classes.find((c) => c.name === 'ResultPanel')!;
-    const code = generateMockCode({
+    const code = transpileGraphCode({
       moduleName: snapshot.projectDetails.moduleName,
       extendsType: '',
       targetLanguage: 'python',

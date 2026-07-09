@@ -145,29 +145,38 @@ function RoadmapSectionBlock({
 
 function SymbolVocabularyCallout() {
   return (
-    <div className="rounded-lg border border-sky-500/25 bg-sky-500/5 px-4 py-3 space-y-2">
-      <p className="text-[11px] font-medium text-sky-300/90">
-        Symbol vocabulary realignment — in progress (Phase 3)
+    <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-4 py-3 space-y-2">
+      <p className="text-[11px] font-medium text-emerald-300/90">
+        Symbol vocabulary &amp; declare → implement → invoke — largely done
       </p>
       <ul className="text-[11px] text-zinc-500 space-y-1">
         <li className="flex items-start gap-2">
-          <CircleDashed size={11} className="text-amber-400 shrink-0 mt-0.5" />
+          <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />
           <span>
-            <span className="text-zinc-300">Declare</span> variables, functions, events &amp; classes on the member chain
+            <span className="text-zinc-300">Declare</span> member-chain slots ·{' '}
+            <span className="text-zinc-300">Call</span> / <span className="text-zinc-300">Dispatch</span>{' '}
+            invoke sites · canvas drop menus and tree badges for declare + handler + define
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            Codegen splits <span className="text-zinc-300">declare</span> (native or{' '}
+            <span className="font-mono text-zinc-400"># Declare …</span> placeholder) from{' '}
+            <span className="text-zinc-300">implement</span> (handler / function body); event labels
+            use the name you set — no forced <span className="font-mono text-zinc-400">On</span> prefix
           </span>
         </li>
         <li className="flex items-start gap-2">
           <CircleDashed size={11} className="text-amber-400 shrink-0 mt-0.5" />
           <span>
-            <span className="text-zinc-300">On</span> event handlers ·{' '}
-            <span className="text-zinc-300">Call</span> / <span className="text-zinc-300">Dispatch</span>{' '}
-            at invoke sites — <span className="font-mono text-zinc-400">kindId</span>s unchanged
+            Spawn catalog role chips (Declare / Handlers / Calls) — remaining Phase D polish
           </span>
         </li>
         <li className="flex items-start gap-2">
           <Circle size={11} className="text-zinc-500 shrink-0 mt-0.5" />
           <span>
-            Cross Over Architecture deferred — single-target portability warnings in place; node
+            Cross Over Architecture deferred — single-target portability warnings today; node
             effectiveness indicators planned next
           </span>
         </li>
@@ -379,8 +388,10 @@ export function RoadmapView() {
             <span className="text-emerald-400/90 font-medium">Phase 1 closed</span> — syntax packs,
             IR transpiler, <span className="text-zinc-300">text-shaped graphs</span> (fidelity
             alignment complete July 2026),{' '}
-            <span className="text-zinc-300">canvas-as-source-of-truth codegen</span> (every export line
-            maps to a graph node), graph-as-canvas multi-class model,{' '}
+            <span className="text-zinc-300">declare → implement → invoke</span> codegen (member
+            declares, comment placeholders, separate handler bodies),{' '}
+            <span className="text-zinc-300">canvas-as-source-of-truth</span> (every export line maps
+            to a graph node), graph-as-canvas multi-class model,{' '}
             <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go HTTP API, and
             local MCP. Event model:{' '}
             <span className="text-emerald-400/80">Dispatch</span> (direct{' '}

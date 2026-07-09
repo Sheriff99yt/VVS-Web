@@ -43,4 +43,15 @@ Runs Rosetta golden compare, span invariants, fidelity linter, and pack resolver
 bun run validate:parse
 ```
 
-Runs Tree-sitter validation for generated Python/JavaScript Rosetta outputs.
+Runs Tree-sitter validation for generated Python/JavaScript Rosetta outputs. Use `--strict` in CI to fail when the native tree-sitter runtime is unavailable (Linux runners with installed prebuilds should pass).
+
+## Adding a language family (v1 checklist)
+
+1. **`packages/graph-types`** — add the family to `LanguageFamily` / `TargetLanguage`.
+2. **Base pack** — create `src/packs/{family}.base.json` with full `layout` (including `emptyHandlerBody`, `emptyFunctionBody`) and Rosetta template keys (see `packCoverage.test.ts`).
+3. **Rosetta goldens** — add `{fixture}.{family}.golden.txt` for every fixture in `rosetta/`.
+4. **Transpiler** — register hybrid printers in `print/register.ts` if needed (`get_input`, `switch`); extend `PACK_DRIVEN_FAMILIES` in `print/template.ts`.
+5. **Module shell** — shell templates in base pack (`ClassModuleOpen`, `EventHandlerOpen`, `FunctionDefOpen`); wire via `emit/shell.ts` (param/signature slots still assembled in TS for fidelity).
+6. **CI** — family is covered by `bun test` in `packages/syntax-packs` and `packages/transpiler`; add Tree-sitter grammar if parse validation should apply.
+
+See also [`docs/syntax_pack_architecture.md`](../../docs/syntax_pack_architecture.md).

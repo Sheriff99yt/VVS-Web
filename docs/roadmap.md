@@ -34,6 +34,9 @@ UE6 editor plugin (in-engine)      →   Scale + polish
 |-------|----------------|
 | **Editor** | Node canvas, typed wiring, **functions** (primary reuse), variables, events, references view, project save/load (browser + **`.vvs/` folder**), client transpiler codegen |
 | **Transpiler** | Three-stage pipeline in `packages/transpiler`: graph analysis → structured IR v2 → print (syntax packs) → emitters; **no hidden transforms** |
+| **Syntax packs (milestone 1)** | **Python + C++ pack-driven print** — full Rosetta template sets, `renderTemplate` engine, unified `blocks.ts`, CI gate banning hardcoded python/cpp in legacy emitters — **shipped** July 2026 |
+| **Syntax packs (milestone 2)** | **JavaScript + Verse pack-driven print** — full base packs, switch/get_input registered printers, legacy `stmt.ts` / `blocks.ts` branches removed — **shipped** July 2026 |
+| **Syntax packs (post-migration)** | **Module shell templates** (`ClassModuleOpen`, handlers, function headers), **pack layout** for empty bodies, **shared `blockHelpers`** (`blocks.ts` + `sinkStatements.ts`), unified `classModule.ts`, **Tree-sitter CI** (Python/JS, Linux), monorepo **packages** + **Go test** CI jobs — **shipped** July 2026 |
 | **Languages v1** | Python, JavaScript/TypeScript, C++, **Verse** — client transpiler + web code preview |
 | **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; multi-file output (module + host entry) |
 | **Quality** | Snapshot tests on generated code; **Rosetta golden suite** + fidelity linter in `@vvs/syntax-packs`; graph validation (`PIN_TYPE_MISMATCH`, portability) |
@@ -145,7 +148,7 @@ This is a **first-class product surface** for Unreal teams, but output remains *
 | Track | Examples |
 |-------|----------|
 | **Performance** | 500+ node graphs at 60fps; worker-based transpile for large graphs |
-| **Languages** | GDScript, Rust, C#; **syntax packs** + agent-assisted maintenance + optional Tree-sitter parse validation — see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
+| **Languages** | GDScript, Rust, C#; **syntax packs** + agent-assisted maintenance + optional Tree-sitter parse validation — see [syntax_pack_architecture.md](syntax_pack_architecture.md). New families follow the python/cpp pack-first pattern (milestone 1, July 2026). |
 | **Templates & standards** | OpenAPI/AsyncAPI → environment manifest import; TypeSpec emitter; Backstage catalog; devcontainer linkage |
 | **Mobile UX** | Touch gestures, radial menus, magnetic pin snap |
 | **Enterprise** | Self-hosted Supabase + Go on VPS ([deployment.md](deployment.md)), moderation, audit logs |

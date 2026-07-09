@@ -344,7 +344,9 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'pins-ui',
         title: 'Pin geometry & inline widgets',
-        description: 'Distinct shapes per pin type (incl. array); inline editors on node pins.',
+        description:
+          'Distinct shapes per pin type (incl. array); inline editors on unwired pins; scroll wheel steps number values (±1, Shift ±10, Ctrl ±0.1) without fighting canvas zoom or node drag.',
+        status: 'done',
       },
       {
         id: 'sim',
@@ -390,7 +392,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-declare-vocabulary',
         title: 'Declare / Handler vocabulary',
         description:
-          'UI labels aligned to canvas roles: Declare member nodes (var, function, event, class) on member chain, On handlers, Call/Dispatch invoke. symbolRole on registry kinds; catalog grouped by Declare / Handlers / Calls.',
+          'UI labels aligned to canvas roles: Declare member nodes on the chain, handler labels use the user’s event name (no forced On prefix), Call/Dispatch at invoke sites. symbolRole on registry kinds; spawn catalog grouping by Declare / Handlers / Calls.',
         status: 'done',
       },
       {
@@ -417,16 +419,53 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           '@vvs/syntax-registry core pack; expandProjectSymbols and expandEnvironmentSymbols spawn palettes.',
       },
       {
+        id: 'syntax-pack-migration-py-cpp',
+        title: 'Syntax pack migration — Python & C++',
+        description:
+          'Pack-first leaf + control-flow print for python/cpp: renderTemplate engine, expanded base JSON, unified blocks.ts, VarDefine via packs, get_input/switch TS printers, packMigrationGate CI.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-migration-js-verse-shipped',
+        title: 'Syntax pack migration — JavaScript & Verse',
+        description:
+          'Milestone 2: full javascript.base + verse.base packs; all v1 families pack-first; switch/get_input registered for all families; legacy stmt/blocks emitters removed.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-shell-templates-shipped',
+        title: 'Pack-driven module shells',
+        description:
+          'Shell templates in base packs (ClassModuleOpen, EventHandlerOpen, FunctionDefOpen); emit/shell.ts; pack layout emptyHandlerBody/emptyFunctionBody; unified classModule.ts (per-language emit files removed).',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-block-helpers-shipped',
+        title: 'Shared block close helpers',
+        description:
+          'blockHelpers.ts — condSpanOffset, blockCloseLine, ifElseLine shared by print/blocks.ts and emit/sinkStatements.ts; C++ ForLoopClose/WhileLoopClose pack keys.',
+        status: 'done',
+      },
+      {
+        id: 'tree-sitter-ci-shipped',
+        title: 'Tree-sitter parse validation CI',
+        description:
+          'Python/JS Rosetta outputs validated on Linux CI (validate:parse --strict); local dev skips when native prebuild unavailable.',
+        status: 'done',
+      },
+      {
         id: 'transpile',
         title: 'Client transpiler',
         description:
-          'IR v3 pipeline (analyze → graphToIr → print via syntax packs → per-target emit); Python, JS, C++, Verse, JSON; control flow (for/while/switch/sequence); example + Rosetta snapshot tests.',
+          'IR pipeline (analyze → graphToIr → print via syntax packs → emit/classModule); Python, JS, C++, Verse; control flow; example + Rosetta snapshot tests; 218+ package tests.',
+        status: 'done',
       },
       {
         id: 'syntax-packs',
         title: 'Syntax packs & Rosetta suite',
         description:
-          '@vvs/syntax-packs — base JSON print templates, capability overlays (e.g. ES2022), Rosetta constructs (print, branch, assign, call, convert, dispatch, wait, loops, await, import, call_native; subscribe/emit fixtures for blocked kinds), fidelity linter, generate:rosetta script.',
+          '@vvs/syntax-packs — base JSON (Rosetta + shell templates), capability overlays, 16 fixtures × 4 families, packCoverage + fidelity linter + parse validation script.',
+        status: 'done',
       },
       {
         id: 'codegen-target',
@@ -489,10 +528,17 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'declare-implement-emit',
+        title: 'Declare vs implement codegen',
+        description:
+          'Member-chain Declare emits native declarations (e.g. C++ prototypes) or comment placeholders (# Declare name) when a target has no declare form; On handlers and function tabs own bodies in a second pass. sourceMap highlights declare lines separately from handler blocks.',
+        status: 'done',
+      },
+      {
         id: 'ordered-emit',
         title: 'Ordered member emit',
         description:
-          'Transpiler walks define chain for declaration order via appendIrMembers / ir.members only; no sidebar preamble fallback.',
+          'Transpiler walks the member chain for declaration order (appendIrMembers) then implementations (appendMemberImplementations); no sidebar preamble fallback.',
         status: 'done',
       },
       {
@@ -702,6 +748,20 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Syntax packs & agent maintenance',
     items: [
       {
+        id: 'syntax-pack-migration-py-cpp',
+        title: 'Pack migration — Python & C++',
+        description:
+          'Milestone 1 shipped: python/cpp leaf + block emit via JSON templates; render.ts; packCoverage + packMigrationGate CI; get_input + switch registered printers.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-migration-js-verse',
+        title: 'Pack migration — JavaScript & Verse',
+        description:
+          'Milestone 2 shipped: full base packs, pack-first print for all v1 families, switch/get_input registered printers, legacy emitters removed.',
+        status: 'done',
+      },
+      {
         id: 'syntax-pack-mcp',
         title: 'MCP syntax pack tools',
         description:
@@ -709,10 +769,31 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'syntax-pack-shell-templates',
+        title: 'Pack-driven module shells',
+        description:
+          'ClassModuleOpen/Close, EventHandlerOpen, FunctionDefOpen templates in base packs; emit/shell.ts + pack emptyHandlerBody/emptyFunctionBody layout keys.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-block-helpers',
+        title: 'Shared block close helpers',
+        description:
+          'blockHelpers.ts — condSpanOffset, blockCloseLine, ifElseLine shared by print/blocks.ts and emit/sinkStatements.ts; C++ ForLoopClose/WhileLoopClose pack keys.',
+        status: 'done',
+      },
+      {
         id: 'tree-sitter-ci',
         title: 'Tree-sitter parse validation',
         description:
-          'CI parse check for Python/JS Rosetta output — validator-only; not syntax author. Unsupported local runtimes report skipped instead of crashing.',
+          'Python/JS Rosetta outputs validated via Tree-sitter on Linux CI (`validate:parse --strict` in `.github/workflows/ci.yml`); local dev skips when native prebuild unavailable.',
+        status: 'done',
+      },
+      {
+        id: 'packages-ci',
+        title: 'Monorepo packages CI job',
+        description:
+          'GitHub Actions packages job: syntax-packs + transpiler + graph-types tests; web job lint/build; server job go build + go test.',
         status: 'done',
       },
     ],
@@ -754,7 +835,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-spawn-ux',
         title: 'Declare / implement / invoke spawn UX',
         description:
-          'Role chips, Project tree declare/handler status, Event panel Declare vs On vs Dispatch. Spec: docs/design/unified_symbol_model.md Phase D.',
+          'Role chips in spawn catalog. Done: Project tree Declare/Handler badges, Event panel Declare · handler · Dispatch, canvas drop menus (Call/Declare/Define, Dispatch/Declare/handler). Spec: docs/design/unified_symbol_model.md Phase D.',
         status: 'partial',
       },
     ],

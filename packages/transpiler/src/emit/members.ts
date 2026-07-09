@@ -1,4 +1,5 @@
 import { variableDataTypeToLegacyEmitKind, type VariableSymbol } from '@vvs/graph-types';
+import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrMemberDecl, IrModule, IrStatement } from '../ir/types';
 import {
@@ -6,10 +7,9 @@ import {
   formatFunctionDeclPrototype,
   formatFunctionDefHeader,
   functionNeedsAsync,
-  printContextForIr,
 } from './helpers';
-import { appendIrStatements } from './sinkStatements';
-import { bodyIndent, handlerBodyIndent } from '../lower/graphToIr';
+import { emptyFunctionBodyLine } from './layout';
+import { appendEventHandlerDefinition } from './shell';
 import {
   appendGraphNodePlaceholder,
   declareLabel,
@@ -47,33 +47,44 @@ function appendVariableDecl(
   const startLine = sink.lineCount + 1;
   const val = formatVariableDefault(symbol, ir.targetLanguage);
 
-  if (ir.targetLanguage === 'python') {
-    sink.appendRaw(`        self.${symbol.name} = ${val}`);
-    sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, `self.${symbol.name}`);
-    return;
-  }
-  if (ir.targetLanguage === 'javascript') {
-    sink.appendRaw(`    this.${symbol.name} = ${val};`);
-    sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, `this.${symbol.name}`);
-    return;
-  }
-  if (ir.targetLanguage === 'cpp') {
+  if (
+    ir.targetLanguage === 'python' ||
+    ir.targetLanguage === 'cpp' ||
+    ir.targetLanguage === 'javascript' ||
+    ir.targetLanguage === 'verse'
+  ) {
+    const profile = resolvePrintProfile(ir.targetLanguage, ir.capabilities ?? []);
+    const row = requireTemplate(profile, 'VarDefine', ir.targetLanguage);
     const emitKind = variableDataTypeToLegacyEmitKind(symbol.type);
-    const type =
-      emitKind === 'number'
-        ? 'float'
-        : emitKind === 'string'
-          ? 'std::string'
-          : emitKind === 'boolean'
-            ? 'bool'
-            : 'auto';
-    sink.appendRaw(`    ${type} ${symbol.name};`);
-    sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, symbol.name);
+    const slots =
+      ir.targetLanguage === 'cpp'
+        ? {
+            type:
+              emitKind === 'number'
+                ? 'float'
+                : emitKind === 'string'
+                  ? 'std::string'
+                  : emitKind === 'boolean'
+                    ? 'bool'
+                    : 'auto',
+            name: symbol.name,
+            default: val,
+          }
+        : ir.targetLanguage === 'verse'
+          ? { type: verseType(symbol), name: symbol.name, default: val }
+          : { name: symbol.name, default: val };
+    const rendered = renderTemplate(row, slots, profile.layout);
+    const indent = profile.layout?.varDeclIndent ?? '    ';
+    const line = `${indent}${rendered.text}`;
+    sink.appendRaw(line);
+    const anchor =
+      ir.targetLanguage === 'python'
+        ? `self.${symbol.name}`
+        : ir.targetLanguage === 'javascript'
+          ? `this.${symbol.name}`
+          : symbol.name;
+    sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, anchor);
     return;
-  }
-  if (ir.targetLanguage === 'verse') {
-    sink.appendRaw(`    var ${symbol.name} : ${verseType(symbol)} = ${val}`);
-    sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, symbol.name);
   }
 }
 
@@ -126,78 +137,6 @@ function appendEventMemberDeclare(
   appendGraphNodePlaceholder(sink, ir.targetLanguage, member.sourceGraphNodeId, label);
 }
 
-function appendPythonEventDefinition(
-  sink: CodeSink,
-  ir: IrModule,
-  handler: IrEventHandler,
-  handlerSourceGraphNodeId: string
-): void {
-  const params = handler.paramNames.length > 0 ? `self, ${handler.paramNames.join(', ')}` : 'self';
-  if (sink.lineCount > 0) sink.appendRaw('');
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw(`    def on_${handler.handlerName}(${params}):`);
-  const ctx = printContextForIr(ir, handlerBodyIndent('python'), ir.environmentManifest);
-  if (handler.body.length === 0) sink.appendRaw('        pass');
-  else appendIrStatements(sink, handler.body, ctx);
-  sink.tagRange(handlerSourceGraphNodeId, startLine, sink.lineCount, `def on_${handler.handlerName}(`);
-}
-
-function appendJsEventDefinition(
-  sink: CodeSink,
-  ir: IrModule,
-  handler: IrEventHandler,
-  handlerSourceGraphNodeId: string
-): void {
-  const params = handler.paramNames.join(', ');
-  if (sink.lineCount > 0) sink.appendRaw('');
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw(`  on_${handler.handlerName}(${params}) {`);
-  const ctx = printContextForIr(ir, handlerBodyIndent('javascript'), ir.environmentManifest);
-  if (handler.body.length === 0) sink.appendRaw('    // empty');
-  else appendIrStatements(sink, handler.body, ctx);
-  sink.appendRaw('  }');
-  sink.tagRange(handlerSourceGraphNodeId, startLine, sink.lineCount, `on_${handler.handlerName}(`);
-}
-
-function appendCppEventDefinition(
-  sink: CodeSink,
-  ir: IrModule,
-  handler: IrEventHandler,
-  handlerSourceGraphNodeId: string
-): void {
-  const params = handler.paramNames.map((p) => `float ${p}`).join(', ');
-  const signature = params
-    ? `void on_${handler.handlerName}(${params})`
-    : `void on_${handler.handlerName}()`;
-  if (sink.lineCount > 0) sink.appendRaw('');
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw(`    ${signature} {`);
-  const ctx = printContextForIr(ir, handlerBodyIndent('cpp'), ir.environmentManifest);
-  if (handler.body.length === 0) sink.appendRaw('        // empty');
-  else appendIrStatements(sink, handler.body, ctx);
-  sink.appendRaw('    }');
-  sink.tagRange(handlerSourceGraphNodeId, startLine, sink.lineCount, signature);
-}
-
-function appendVerseEventDefinition(
-  sink: CodeSink,
-  ir: IrModule,
-  handler: IrEventHandler,
-  handlerSourceGraphNodeId: string
-): void {
-  const params = handler.paramNames.map((p) => `${p} : float`).join(', ');
-  const signature = params
-    ? `on_${handler.handlerName}<override>(${params}) : void =`
-    : `on_${handler.handlerName}<override>() : void =`;
-  if (sink.lineCount > 0) sink.appendRaw('');
-  const startLine = sink.lineCount + 1;
-  sink.appendRaw(`    ${signature}`);
-  const ctx = printContextForIr(ir, handlerBodyIndent('verse'), ir.environmentManifest);
-  if (handler.body.length === 0) sink.appendRaw('        # empty');
-  else appendIrStatements(sink, handler.body, ctx);
-  sink.tagRange(handlerSourceGraphNodeId, startLine, sink.lineCount, `on_${handler.handlerName}`);
-}
-
 function appendEventDefinition(
   sink: CodeSink,
   ir: IrModule,
@@ -214,21 +153,7 @@ function appendEventDefinition(
     body: member.body,
   };
 
-  if (ir.targetLanguage === 'python') {
-    appendPythonEventDefinition(sink, ir, handler, handlerNodeId);
-    return;
-  }
-  if (ir.targetLanguage === 'javascript') {
-    appendJsEventDefinition(sink, ir, handler, handlerNodeId);
-    return;
-  }
-  if (ir.targetLanguage === 'cpp') {
-    appendCppEventDefinition(sink, ir, handler, handlerNodeId);
-    return;
-  }
-  if (ir.targetLanguage === 'verse') {
-    appendVerseEventDefinition(sink, ir, handler, handlerNodeId);
-  }
+  appendEventHandlerDefinition(sink, ir, handler, handlerNodeId, { leadingBlankLine: true });
 }
 
 function appendFunctionDefinition(
@@ -237,12 +162,7 @@ function appendFunctionDefinition(
   member: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>
 ): void {
   const { symbol } = member;
-  const emptyLine =
-    ir.targetLanguage === 'python'
-      ? '        pass'
-      : ir.targetLanguage === 'verse'
-        ? '        # empty'
-        : '        // empty';
+  const emptyLine = emptyFunctionBodyLine(ir.targetLanguage);
 
   if (sink.lineCount > 0) sink.appendRaw('');
   sink.appendRaw(

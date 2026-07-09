@@ -1,5 +1,5 @@
 import type { LanguageFamily, SyntaxPackLockEntry } from '@vvs/graph-types';
-import type { ResolvedPrintProfile, SyntaxPackManifest, SyntaxTemplateRow } from './schema';
+import type { PackLayoutProfile, ResolvedPrintProfile, SyntaxPackManifest, SyntaxTemplateRow } from './schema';
 import pythonBase from './packs/python.base.json';
 import javascriptBase from './packs/javascript.base.json';
 import cppBase from './packs/cpp.base.json';
@@ -45,11 +45,13 @@ export function resolvePack(
 ): ResolvedPrintProfile {
   const sourcePackIds: string[] = [];
   let templates: Record<string, SyntaxTemplateRow> = {};
+  let layout: PackLayoutProfile | undefined;
 
   const baseRef = packLock?.base ?? `${family}.base@1`;
   const basePack = getSyntaxPack(baseRef);
   if (basePack) {
     templates = { ...basePack.templates };
+    layout = basePack.layout;
     sourcePackIds.push(`${basePack.id}@${basePack.version}`);
   }
 
@@ -73,7 +75,7 @@ export function resolvePack(
     }
   }
 
-  return { family, capabilities, templates, sourcePackIds };
+  return { family, capabilities, templates, layout, sourcePackIds };
 }
 
 /** Alias used by transpiler PrintContext. */

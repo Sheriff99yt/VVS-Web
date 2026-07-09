@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { generateMockCode } from './generate';
+import { transpileGraphCode } from './generate';
 import { withTestEntryGraph } from './testEntryGraph';
 
 describe('action_get_input codegen', () => {
@@ -25,7 +25,7 @@ describe('action_get_input codegen', () => {
   };
 
   test('python emits blocking input with temp variable', () => {
-    const code = generateMockCode(
+    const code = transpileGraphCode(
       withTestEntryGraph({
         moduleName: 'Demo',
         extendsType: '',
@@ -41,7 +41,7 @@ describe('action_get_input codegen', () => {
   });
 
   test('javascript emits prompt for text input', () => {
-    const code = generateMockCode(
+    const code = transpileGraphCode(
       withTestEntryGraph({
         moduleName: 'Demo',
         extendsType: '',
@@ -68,7 +68,7 @@ describe('action_get_input codegen', () => {
         ],
       },
     };
-    const code = generateMockCode(
+    const code = transpileGraphCode(
       withTestEntryGraph({
         moduleName: 'Demo',
         extendsType: '',

@@ -8,7 +8,7 @@ import type { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import type { ProjectSource } from '@/types/projectRegistry';
 
-import type { FunctionSymbol, GraphTab, TargetLanguage, CrossOverArchitectureMode, ProjectIntegrationConfig, SyntaxPackLock, ClassSymbol, GraphContainer } from '@vvs/graph-types';
+import type { FunctionSymbol, GraphTab, TargetLanguage, CrossOverArchitectureMode, ProjectIntegrationConfig, SyntaxPackLock, ClassSymbol, GraphContainer, CodegenCapabilities } from '@vvs/graph-types';
 import { createDefaultIntegration, normalizeProjectSnapshot, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { readCrossOverMode } from '@/lib/crossOverPreferences';
 
@@ -101,6 +101,9 @@ interface ProjectContextValue {
 
   syntaxPackLock?: SyntaxPackLock;
   setSyntaxPackLock: React.Dispatch<React.SetStateAction<SyntaxPackLock | undefined>>;
+
+  codegenCapabilities?: CodegenCapabilities;
+  setCodegenCapabilities: React.Dispatch<React.SetStateAction<CodegenCapabilities | undefined>>;
 
   /** Root for References view graph/tree — updated from project tree selection */
   referenceRootGraphId: string;
@@ -220,6 +223,9 @@ export function ProjectProvider({
   const [syntaxPackLock, setSyntaxPackLock] = useState<SyntaxPackLock | undefined>(
     snapshot.syntaxPackLock
   );
+  const [codegenCapabilities, setCodegenCapabilities] = useState<CodegenCapabilities | undefined>(
+    snapshot.codegenCapabilities
+  );
 
   const setEnvironmentLink = useCallback((id: string | undefined, version?: string) => {
     setEnvironmentId(id);
@@ -325,6 +331,8 @@ export function ProjectProvider({
         setIntegration,
         syntaxPackLock,
         setSyntaxPackLock,
+        codegenCapabilities,
+        setCodegenCapabilities,
         referenceRootGraphId,
         referenceVariableName,
         focusReference,

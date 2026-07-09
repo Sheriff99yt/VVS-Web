@@ -23,6 +23,7 @@
     "@vvs/environment-templates": "workspace:*",
     "@vvs/graph-types": "workspace:*",
     "@vvs/language-profiles": "workspace:*",
+    "@vvs/syntax-packs": "workspace:*",
     "@vvs/syntax-registry": "workspace:*",
     "@vvs/transpiler": "workspace:*",
     "@xyflow/react": "^12.11.1",

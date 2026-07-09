@@ -4,7 +4,7 @@ import { GraphVariable, ProjectEventDefinition, FunctionSymbol } from '@/types/g
 import { GraphDocument } from '@/lib/graphDefaults';
 import { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { Dispatch, SetStateAction } from 'react';
-import { createDefaultIntegration, normalizeProjectSnapshot, type ProjectIntegrationConfig, type SyntaxPackLock } from '@vvs/graph-types';
+import { createDefaultIntegration, normalizeProjectSnapshot, type ProjectIntegrationConfig, type SyntaxPackLock, type CodegenCapabilities } from '@vvs/graph-types';
 
 export interface SnapshotApplyTarget {
   setVariables: Dispatch<SetStateAction<GraphVariable[]>>;
@@ -27,6 +27,7 @@ export interface SnapshotApplyTarget {
   setEnvironmentLink: (id: string | undefined, version?: string) => void;
   setIntegration: Dispatch<SetStateAction<ProjectIntegrationConfig>>;
   setSyntaxPackLock?: Dispatch<SetStateAction<SyntaxPackLock | undefined>>;
+  setCodegenCapabilities?: Dispatch<SetStateAction<CodegenCapabilities | undefined>>;
 }
 
 export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: SnapshotApplyTarget): void {
@@ -60,4 +61,5 @@ export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: Snapshot
       })
   );
   target.setSyntaxPackLock?.(normalized.syntaxPackLock);
+  target.setCodegenCapabilities?.(normalized.codegenCapabilities);
 }

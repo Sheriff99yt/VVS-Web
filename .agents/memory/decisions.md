@@ -112,7 +112,7 @@ Shipped in monorepo packages + web UI:
 - **Extract to function** — Ctrl+Shift+E / View menu
 - **Go registry** — `GET /registry/nodes`, `GET /registry/core-pack` (MCP transport TBD)
 
-Still partial: syntax pack MCP tools (`propose_syntax_delta`, `run_rosetta` wire TBD); JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today).
+Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax pack MCP tools (`list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse`) shipped locally.
 
 ## Node design: property schema & conversion (July 2026)
 
@@ -133,6 +133,8 @@ Still partial: syntax pack MCP tools (`propose_syntax_delta`, `run_rosetta` wire
 - **Tree-sitter: validator-only** — optional CI parse check on Rosetta output (Python/JS first); **not** syntax author or auto-ingestion
 - **Agent scope:** may edit `packages/syntax-packs/**`; must not edit `lower/**`, IR schema, or fidelity rules without RFC
 - **Verification gates:** Rosetta golden tests + span invariants + fidelity linter (+ optional parse validation)
+- **Milestone 1 (shipped):** Python + C++ leaf statements, control-flow bodies, and `VarDefine` member emit are **pack-driven**
+- **Milestone 2 (shipped):** JavaScript + Verse migrated to the same pack-first model; all four v1 families use `@vvs/syntax-packs` templates with hybrid TS printers for get_input/switch only
 
 ## Architecture
 

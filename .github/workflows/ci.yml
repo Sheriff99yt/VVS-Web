@@ -6,20 +6,12 @@ on:
   pull_request:
     branches: [main, master]
 
-defaults:
-  run:
-    working-directory: apps/web
-
 jobs:
-  syntax-packs:
-    name: Syntax packs & parse validation
+  packages:
+    name: Monorepo package tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -28,17 +20,28 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Parse validation test
+      - name: Syntax packs tests
         working-directory: packages/syntax-packs
-        run: bun test src/parseValidation.test.ts
+        run: bun test
 
-      - name: Tree-sitter parse validation
+      - name: Transpiler tests
+        working-directory: packages/transpiler
+        run: bun test
+
+      - name: Graph types tests
+        working-directory: packages/graph-types
+        run: bun test
+
+      - name: Tree-sitter parse validation (strict)
         working-directory: packages/syntax-packs
-        run: bun run validate:parse
+        run: bun run validate:parse -- --strict
 
   web:
     name: Web build & lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
 
@@ -55,8 +58,11 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Unit tests
+        run: bun test src/lib
+
   server:
-    name: Go build
+    name: Go build & test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -70,3 +76,6 @@ jobs:
 
       - name: Build
         run: go build ./...
+
+      - name: Test
+        run: go test ./...

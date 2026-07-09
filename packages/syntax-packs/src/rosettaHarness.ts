@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
-import { generateMockTranspileResult, withTestEntryGraph } from '@vvs/transpiler';
+import { transpileGraph, withTestEntryGraph } from '@vvs/transpiler';
 import {
   resolveNodeKindId,
   type GraphEdge,
@@ -149,5 +149,5 @@ export function transpileRosettaFixture(fixture: RosettaFixture, family: Languag
   const hasLegacyEntry = fixture.nodes.some((n) => resolveNodeKindId(n.data) === 'event_on_start');
   const ctx = hasLegacyEntry ? withTestEntryGraph(base, flowTargetId) : base;
 
-  return generateMockTranspileResult(ctx);
+  return transpileGraph(ctx);
 }

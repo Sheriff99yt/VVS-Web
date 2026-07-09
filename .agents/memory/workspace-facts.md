@@ -45,8 +45,15 @@ Stable facts agents should assume without re-exploring the tree.
 |---------|-----------------|
 | `graph-types` | `analyze.ts`, `codegenTarget.ts`, `fidelityMigration.ts` (kindId backfill), `projectFolder.ts` |
 | `environment-templates` | `import/fromOpenApi.ts`, `fromAsyncApi.ts`, `buildEnvironmentManifest.ts` |
-| `syntax-packs` | `resolve.ts`, `rosetta/` |
-| `transpiler` | `lower/graphToIr.ts`, `print/`, `emit/` |
+| `syntax-packs` | `resolve.ts`, `render.ts`, `packCoverage.test.ts`, `rosetta/` |
+| `transpiler` | `lower/graphToIr.ts`, `print/` (all v1 families pack-first), `emit/classModule.ts`, `emit/sinkStatements.ts`, `emit/members.ts` |
+
+## Syntax pack print migration (July 2026)
+
+- **python + cpp:** pack-driven leaf + block print is authoritative — no silent fallback to hardcoded emitters.
+- **javascript + verse:** legacy hardcoded branches in `print/stmt.ts` / `print/expr.ts` remain until milestone 2 (same pipeline, expand base packs, delete branches).
+- **Member declare:** `VarDefine` template + pack `layout.varDeclIndent` for python/cpp variable declarations.
+- **Indent:** `bodyIndent` / `handlerBodyIndent` read from pack `layout` (with JS/Verse fallbacks in `graphToIr.ts`).
 
 ## MCP & HTTP (Phase 1 local / Phase 2 VPS)
 

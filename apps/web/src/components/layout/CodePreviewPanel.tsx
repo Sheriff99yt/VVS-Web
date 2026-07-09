@@ -12,7 +12,7 @@ import {
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { VVSNode, VVSEdge } from '@/types/graph';
-import { generateMockTranspileResult } from '@/lib/mockCodegen';
+import { transpileGraph, withProjectCodegenTarget } from '@/lib/codegen';
 import type { TranspileResult } from '@/types/transpile';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
@@ -112,6 +112,8 @@ export function CodePreviewPanel() {
     integration,
     classes,
     activeClassId,
+    syntaxPackLock,
+    codegenCapabilities,
   } = useProject();
   const documents = useGraphDocuments();
 
@@ -175,7 +177,7 @@ export function CodePreviewPanel() {
     const homeClass = classForHomeGraphId(classes, previewTabId);
     const isModuleGraph = homeClass != null || previewTabId === 'main';
 
-    return generateMockTranspileResult({
+    const codegenCtx = {
       moduleName: homeClass?.name ?? (isModuleGraph ? projectDetails.moduleName : previewMetadata?.moduleName ?? activeTab?.name ?? 'Graph'),
       extendsType: homeClass?.extendsType ?? (isModuleGraph ? projectDetails.extendsType : previewMetadata?.extendsType ?? ''),
       targetLanguage,
@@ -191,7 +193,15 @@ export function CodePreviewPanel() {
       activeClassId: homeClass?.id ?? activeClassId,
       environmentId,
       integration,
-    });
+    };
+
+    return transpileGraph(
+      withProjectCodegenTarget(codegenCtx, {
+        targetLanguage,
+        codegenCapabilities,
+        syntaxPackLock,
+      })
+    );
   }, [
     previewDocument,
     openTabs,
@@ -207,6 +217,9 @@ export function CodePreviewPanel() {
     environmentId,
     integration,
     classes,
+    activeClassId,
+    syntaxPackLock,
+    codegenCapabilities,
   ]);
 
   useEffect(() => {

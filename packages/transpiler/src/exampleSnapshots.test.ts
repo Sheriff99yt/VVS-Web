@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { analyzeProject, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
-import { generateMockTranspileResult } from './generate';
+import { transpileGraph } from './generate';
 import { createSimpleExampleSnapshot } from '../../../apps/web/src/lib/examples/simpleExample';
 import { createComplexExampleSnapshot } from '../../../apps/web/src/lib/examples/complexExample';
 import type { CodegenContext } from './generate';
@@ -29,7 +29,7 @@ function transpileMain(
     classes: snapshot.classes,
     activeClassId: snapshot.activeClassId,
   };
-  return generateMockTranspileResult(ctx);
+  return transpileGraph(ctx);
 }
 
 function transpileComplexCalculator(
@@ -52,7 +52,7 @@ function transpileComplexCalculator(
     classes: snapshot.classes,
     activeClassId: snapshot.activeClassId,
   };
-  return generateMockTranspileResult(ctx);
+  return transpileGraph(ctx);
 }
 
 const SIMPLE_EXPECTS: Record<TargetLanguage, string[]> = {

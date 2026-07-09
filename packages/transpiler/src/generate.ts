@@ -10,6 +10,7 @@ import type {
   ProjectIntegrationConfig,
   ClassSymbol,
   ProjectSnapshot,
+  CodegenTarget,
 } from '@vvs/graph-types';
 import {
   resolveModuleEmitPath,
@@ -20,6 +21,7 @@ import {
   classForHomeGraphId,
   classHomeGraphId,
   classGraphHasDefineNodes,
+  resolveCodegenTarget,
 } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { loadEnvironmentManifest, renderHostFileTemplate } from '@vvs/environment-templates';
@@ -47,6 +49,8 @@ export interface CodegenContext {
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
   integration?: ProjectIntegrationConfig;
+  /** Resolved syntax-pack target — family, capabilities, optional pack lock. */
+  codegenTarget?: CodegenTarget;
 }
 
 function mergeTranspileResults(results: TranspileResult[]): TranspileResult {
@@ -145,7 +149,7 @@ function resolveTabCodegen(ctx: CodegenContext): {
   };
 }
 
-export function generateMockTranspileResult(ctx: CodegenContext): TranspileResult {
+export function transpileGraph(ctx: CodegenContext): TranspileResult {
   const {
     nodes,
     edges,
@@ -177,6 +181,14 @@ export function generateMockTranspileResult(ctx: CodegenContext): TranspileResul
     ctx.environmentManifest ??
     (ctx.environmentId ? loadEnvironmentManifest(ctx.environmentId) : undefined);
 
+  const codegenTarget =
+    ctx.codegenTarget ??
+    resolveCodegenTarget(targetLanguage, {
+      capabilities: undefined,
+      syntaxPackLock: undefined,
+    }) ??
+    undefined;
+
   const codegenCtx: CodegenContext = {
     ...ctx,
     moduleName,
@@ -184,6 +196,7 @@ export function generateMockTranspileResult(ctx: CodegenContext): TranspileResul
     extendsType,
     activeClassId,
     environmentManifest: manifest,
+    codegenTarget,
   };
 
   if (targetLanguage === 'json') {
@@ -215,8 +228,8 @@ export function generateMockTranspileResult(ctx: CodegenContext): TranspileResul
   return result;
 }
 
-export function generateMockCode(ctx: CodegenContext): string {
-  return generateMockTranspileResult(ctx).files[0]?.content ?? '';
+export function transpileGraphCode(ctx: CodegenContext): string {
+  return transpileGraph(ctx).files[0]?.content ?? '';
 }
 
 export interface ProjectTranspileInput {
@@ -232,12 +245,18 @@ export interface ProjectTranspileInput {
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
   integration?: ProjectIntegrationConfig;
+  codegenTarget?: CodegenTarget;
 }
 
 /** Emit one module file per class home graph (with defines) and per function tab. */
-export function generateProjectTranspileResult(input: ProjectTranspileInput): TranspileResult {
+export function transpileProject(input: ProjectTranspileInput): TranspileResult {
   const results: TranspileResult[] = [];
   const emittedTabIds = new Set<string>();
+
+  const codegenTarget =
+    input.codegenTarget ??
+    resolveCodegenTarget(input.targetLanguage) ??
+    undefined;
 
   const baseCtx: Omit<CodegenContext, 'nodes' | 'edges' | 'tabId' | 'tabLabel'> = {
     moduleName: input.projectDetails.moduleName,
@@ -252,6 +271,7 @@ export function generateProjectTranspileResult(input: ProjectTranspileInput): Tr
     environmentId: input.environmentId,
     environmentManifest: input.environmentManifest,
     integration: input.integration,
+    codegenTarget,
   };
 
   for (const cls of input.classes ?? []) {
@@ -263,7 +283,7 @@ export function generateProjectTranspileResult(input: ProjectTranspileInput): Tr
 
     const tab = input.openTabs?.find((t) => t.id === homeId);
     results.push(
-      generateMockTranspileResult({
+      transpileGraph({
         ...baseCtx,
         nodes: doc.nodes,
         edges: doc.edges,
@@ -282,7 +302,7 @@ export function generateProjectTranspileResult(input: ProjectTranspileInput): Tr
 
     const tab = input.openTabs?.find((t) => t.id === func.id);
     results.push(
-      generateMockTranspileResult({
+      transpileGraph({
         ...baseCtx,
         nodes: doc.nodes,
         edges: doc.edges,

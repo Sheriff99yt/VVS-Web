@@ -82,6 +82,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setIntegration,
     syntaxPackLock,
     setSyntaxPackLock,
+    codegenCapabilities,
+    setCodegenCapabilities,
   } = useProject();
 
   const { isFolderProject, folderHandle, folderLabel } = useProjectFolder();
@@ -109,6 +111,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setEnvironmentLink,
       setIntegration,
       setSyntaxPackLock,
+      setCodegenCapabilities,
     }),
     [
       setVariables,
@@ -128,6 +131,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setEnvironmentLink,
       setIntegration,
       setSyntaxPackLock,
+      setCodegenCapabilities,
     ]
   );
 
@@ -215,6 +219,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       environmentVersion,
       integration,
       syntaxPackLock,
+      codegenCapabilities,
     };
   }, [
     getDocuments,
@@ -235,6 +240,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     environmentVersion,
     integration,
     syntaxPackLock,
+    codegenCapabilities,
   ]);
 
   const handleSave = useCallback(async () => {

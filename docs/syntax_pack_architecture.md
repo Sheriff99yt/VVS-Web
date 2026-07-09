@@ -7,22 +7,19 @@
 
 ## Summary
 
-VVS separates **what the graph means** from **how a target language prints it**. Today the three-stage pipeline is documented but partially merged — lowering embeds target-language strings, and emitters still branch on `TargetLanguage`. The **syntax pack** architecture completes the decoupling: structured IR carries semantics; **syntax packs** carry print rules; **language profiles** carry portability policy.
+VVS separates **what the graph means** from **how a target language prints it**. The three-stage pipeline is **shipped**: lowering produces language-neutral structured IR; **syntax packs** carry print rules for **all four v1 families** (python, javascript, cpp, verse). **Language profiles** carry portability policy.
 
 **Tree-sitter** is an optional **parse validator** in CI — not a syntax author. Syntax changes flow through packs, Rosetta golden tests, and agent-assisted maintenance gates.
 
 ---
 
-## Problem
+## Problem (historical → current)
 
-| Today | Target |
-|-------|--------|
-| `graphToIr.ts` embeds language strings during lowering | Lowering produces **language-neutral structured IR** |
-| `convertExprs.ts` duplicates per-language expression wrappers | Expression trees are **IrExpr** nodes resolved at print time |
-| `IrEmittedStmt { text }` bridges wave-1 emit | Structured nodes (`IrCall`, `IrIf`, …) with deprecated bridge removed after migration |
-| Emitters branch on `TargetLanguage` | **PrinterRegistry** + resolved syntax packs |
-
-Until lowering is language-neutral and syntax lives in one swappable layer, version reuse and agent automation cannot succeed.
+| Was (pre–July 2026) | Milestone 1 (python/cpp) | Milestone 2 (javascript/verse) — **shipped** |
+|-------|-----|--------|
+| Emitters branch on `TargetLanguage` | **PrinterRegistry** + packs for python/cpp | **All four v1 families** pack-first; hybrid TS only for get_input/switch glue |
+| Hardcoded expr/leaf branches in `print/stmt.ts` | Removed for python/cpp | Removed for javascript/verse |
+| Thin javascript/verse base JSON | — | Full Rosetta template sets + layout |
 
 ---
 
@@ -144,8 +141,25 @@ Not everything belongs in JSONB on day one. The split preserves [visual_to_text_
 |-----------|------|----------|
 | **Data (JSON templates)** | Simple, stable constructs | `Print`, binary ops, literals, basic `If` / `Assign`, instance `Call` |
 | **Code (TS printers in registry)** | Layout, fidelity-sensitive, multi-node | Events, hoisting, async, multi-file, `sourceMap` / `expressionSpans`, environment native substitution |
+| **Pack shell templates** | Module scaffolding text | `ClassModuleOpen`, `EventHandlerOpen`, `FunctionDefOpen`, `ClassModuleClose`, … — TS still owns `sourceMap` tagging and param/signature slot assembly |
+| **Block close helpers** | Shared brace/else/span-offset logic | `blockHelpers.ts` — used by `print/blocks.ts` (string path) and `emit/sinkStatements.ts` (CodeSink path) |
 
 **PrinterRegistry** resolves `(IrStmtKind | IrExprKind, languageFamily)` → JSON template or TS printer. `PrintContext` carries indent, capabilities, binding rules, and the span builder.
+
+### Shell template keys (all v1 base packs)
+
+Required by `packCoverage.test.ts` alongside Rosetta construct keys:
+
+| Key | Role |
+|-----|------|
+| `ClassModuleOpen` | Class / module declaration with optional `{extendsSuffix}` |
+| `ClassModuleClose` | Closing brace (javascript/cpp) |
+| `ClassPublicSection` | C++ `public:` |
+| `EventHandlerOpen` / `EventHandlerClose` | Handler signature + optional close brace |
+| `FunctionDefOpen` / `FunctionTabClose` | Member / tab function headers |
+| `FunctionDeclPrototype` | C++ declare-only line in member chain |
+
+Layout profile also carries `emptyHandlerBody` and `emptyFunctionBody` for empty handler/function bodies (`emit/layout.ts`).
 
 ---
 
@@ -196,16 +210,16 @@ Agents automate grunt work; **CI is the source of truth**. Scope is intentionall
 3. **Gates** — Rosetta golden + span invariants + fidelity linter (+ optional Tree-sitter parse if enabled)
 4. **Review** — human review only for portability/emulation policy changes (language profiles)
 
-### MCP tools (Phase 2 roadmap)
+### MCP tools (shipped locally)
 
-Go MCP server exposes thin wrappers over pure functions:
+Go MCP server exposes thin wrappers over pure functions in `server/internal/core/services/`:
 
 | Tool | Purpose |
 |------|---------|
 | `list_syntax_packs` | Discover families, versions, capabilities |
 | `propose_syntax_delta` | Returns diff against base pack |
 | `run_rosetta_suite` | Runs golden tests for a target |
-| `validate_generated_parse` | Optional Tree-sitter check |
+| `validate_generated_parse` | Optional Tree-sitter check (Python/JS; `--strict` in CI) |
 
 See `.agents/skills/vvs_syntax_packs/SKILL.md` for edit boundaries.
 
@@ -252,17 +266,15 @@ Tree-sitter confirms generated output is syntactically valid — it does not def
 
 ## Implementation phases (reference)
 
-| Phase | Deliverable | Doc only? |
-|-------|-------------|-----------|
-| **0** | This spec + cross-links | Yes — no behavior change |
-| **1** | Structured IR v2 + PrinterRegistry | Transpiler |
-| **2** | Rosetta suite + fidelity linter | Transpiler + syntax-packs |
-| **3** | `@vvs/syntax-packs` package + lockfile | New package |
-| **4** | Capability-based targets + profile alignment | graph-types + language-profiles |
-| **5** | MCP agent tools | Go server |
-| **6** | Environment pack overlays | environment-templates |
-
-Phases 1–3 are transpiler hardening (roadmap Phase 1). Phases 4–6 align with MCP and emitter expansion (roadmap Phases 2 and 6).
+| Phase | Deliverable | Status |
+|-------|-------------|--------|
+| **0** | This spec + cross-links | Done |
+| **1** | Structured IR v2 + PrinterRegistry | Done |
+| **2** | Rosetta suite + fidelity linter | Done |
+| **3** | `@vvs/syntax-packs` package + shell templates + lockfile UI | Done (v1 families) |
+| **4** | Capability-based targets + profile alignment | Partial — `CodegenTarget` shipped; JSON profiles optional |
+| **5** | MCP agent tools | Done (local) |
+| **6** | Environment pack overlays + new language families | Planned — GDScript, Rust, C# |
 
 ---
 

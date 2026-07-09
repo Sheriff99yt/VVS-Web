@@ -1,7 +1,7 @@
 import type { GraphDocument, GraphTab, VariableSymbol, ProjectEventDefinition, FunctionSymbol, TargetLanguage, ClassSymbol } from './symbols';
 import type { ProjectIntegrationConfig } from './integration';
 import { normalizeIntegrationConfig } from './integration';
-import type { SyntaxPackLock } from './codegenTarget';
+import type { SyntaxPackLock, CodegenCapabilities } from './codegenTarget';
 import { normalizeFunctionSymbols, normalizeVariableSymbols, createClassSymbol, normalizeClassSymbols, MAIN_CLASS_ID, normalizeGraphContainers, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME, containerTabFor, ensureContainerDocuments, classHomeGraphId, createProgramEntryEvent } from './symbols';
 import type { GraphContainer } from './symbols';
 import type { GraphNode } from './nodes';
@@ -55,6 +55,8 @@ export interface ProjectSnapshotV2 {
   integration?: ProjectIntegrationConfig;
   /** Pinned syntax pack versions per language family — persisted in .vvs/project.json */
   syntaxPackLock?: SyntaxPackLock;
+  /** Per-family capability overrides for syntax pack resolution */
+  codegenCapabilities?: CodegenCapabilities;
 }
 
 export interface ProjectSnapshotV3 {
@@ -84,6 +86,8 @@ export interface ProjectSnapshotV3 {
   integration?: ProjectIntegrationConfig;
   /** Pinned syntax pack versions per language family — persisted in .vvs/project.json */
   syntaxPackLock?: SyntaxPackLock;
+  /** Per-family capability overrides for syntax pack resolution */
+  codegenCapabilities?: CodegenCapabilities;
 }
 
 export type ProjectSnapshot = ProjectSnapshotV3;
@@ -538,6 +542,10 @@ export function normalizeProjectSnapshot(raw: unknown): ProjectSnapshot | null {
     syntaxPackLock:
       value.syntaxPackLock && typeof value.syntaxPackLock === 'object'
         ? (value.syntaxPackLock as SyntaxPackLock)
+        : undefined,
+    codegenCapabilities:
+      value.codegenCapabilities && typeof value.codegenCapabilities === 'object'
+        ? (value.codegenCapabilities as CodegenCapabilities)
         : undefined,
   };
 

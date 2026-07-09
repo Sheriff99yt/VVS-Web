@@ -47,6 +47,7 @@ function buildManifest(snapshot: ProjectSnapshot): VvsProjectManifest {
     graphContainers: snapshot.graphContainers,
     graphs: buildFolderGraphManifest(snapshot),
     ...(snapshot.syntaxPackLock ? { syntaxPackLock: snapshot.syntaxPackLock } : {}),
+    ...(snapshot.codegenCapabilities ? { codegenCapabilities: snapshot.codegenCapabilities } : {}),
   };
 }
 
@@ -175,6 +176,7 @@ export async function loadProjectFromFolder(
     environmentVersion: envVersion,
     integration,
     syntaxPackLock: manifest.syntaxPackLock,
+    codegenCapabilities: manifest.codegenCapabilities,
   });
 
   if (!snapshot) return null;

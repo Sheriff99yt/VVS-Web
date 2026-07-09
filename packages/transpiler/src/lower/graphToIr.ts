@@ -33,7 +33,7 @@ import type {
   IrSwitchCase,
 } from '../ir/types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
-import { defaultCodegenTarget } from '@vvs/graph-types';
+import { resolveCodegenTarget } from '@vvs/graph-types';
 
 interface LowerContext {
   nodes: GraphNode[];
@@ -711,17 +711,16 @@ function collectAllCodegenNodes(
   return all;
 }
 
+import { resolvePrintProfile } from '@vvs/syntax-packs';
+
 /** Body indent for event handler statements (applied at print time). */
 export function handlerBodyIndent(family: import('@vvs/graph-types').LanguageFamily): string {
-  if (family === 'javascript') return '      ';
-  if (family === 'python') return '            ';
-  return '        ';
+  return resolvePrintProfile(family).layout?.handlerBodyIndent ?? '        ';
 }
 
 /** Body indent for on_start / function bodies. */
 export function bodyIndent(family: import('@vvs/graph-types').LanguageFamily): string {
-  if (family === 'javascript') return '    ';
-  return '        ';
+  return resolvePrintProfile(family).layout?.bodyIndent ?? '        ';
 }
 
 export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
@@ -740,7 +739,7 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     environmentManifest,
   } = ctx;
 
-  const codegenTarget = defaultCodegenTarget(targetLanguage) ?? undefined;
+  const codegenTarget = ctx.codegenTarget ?? resolveCodegenTarget(targetLanguage) ?? undefined;
   const lowerCtx: LowerContext = {
     nodes: [],
     edges,

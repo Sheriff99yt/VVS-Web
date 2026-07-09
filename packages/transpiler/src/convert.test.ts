@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { generateMockCode, generateMockTranspileResult } from './generate';
+import { transpileGraphCode, transpileGraph } from './generate';
 import { withTestEntryGraph } from './testEntryGraph';
 
 describe('convert nodes codegen', () => {
@@ -81,21 +81,21 @@ describe('convert nodes codegen', () => {
   };
 
   test('python emits explicit str() call — not folded into print', () => {
-    const code = generateMockCode(
+    const code = transpileGraphCode(
       withTestEntryGraph({ ...baseCtx, targetLanguage: 'python' }, 'print-result')
     );
     expect(code).toContain('print(str(self.Result))');
   });
 
   test('javascript emits explicit String() call', () => {
-    const code = generateMockCode(
+    const code = transpileGraphCode(
       withTestEntryGraph({ ...baseCtx, targetLanguage: 'javascript' }, 'print-result')
     );
     expect(code).toContain('console.log(String(this.Result))');
   });
 
   test('to-string node is highlighted in sourceMap on print line', () => {
-    const result = generateMockTranspileResult(
+    const result = transpileGraph(
       withTestEntryGraph({ ...baseCtx, targetLanguage: 'python' }, 'print-result')
     );
     expect(result.sourceMap['to-str']?.length).toBeGreaterThan(0);
