@@ -33,7 +33,7 @@ export function entryDefineChainNodes(): GraphNode[] {
         inputs: [EXEC_IN],
         outputs: [EXEC_OUT],
         inlineValues: {},
-        properties: { name: 'Demo' },
+        properties: { symbolId: MAIN_CLASS_ID, classId: MAIN_CLASS_ID, name: 'Demo' },
       },
     },
     {

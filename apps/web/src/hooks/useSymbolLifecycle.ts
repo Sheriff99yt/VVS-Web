@@ -24,8 +24,17 @@ import {
   insertDefineNodeForEvent,
   insertDefineNodeForFunction,
   insertDefineNodeForVariable,
+  bootstrapClassHomeDocuments,
 } from '@/lib/defineNodeSync';
 import { activeClass } from '@/lib/classScope';
+import {
+  createClassSymbol,
+  createProgramEntryEvent,
+  classHomeGraphId,
+  MAIN_GRAPH_CONTAINER_ID,
+  type ClassSymbol,
+} from '@vvs/graph-types';
+import { openGraphContainerTab } from '@/lib/graphTabs';
 
 export function useSymbolLifecycle() {
   const {
@@ -41,8 +50,11 @@ export function useSymbolLifecycle() {
     activeClassId,
     activeGraphTab,
     setActiveGraphTab,
+    setActiveClassId,
     selection,
     setSelection,
+    graphContainers,
+    setClasses,
   } = useProject();
   const { getDocuments, patchAllDocuments } = useGraphWorkspace();
 
@@ -102,6 +114,40 @@ export function useSymbolLifecycle() {
       applyDocuments(dualWriteDefineNode(documents, 'event', event));
     },
     [setEvents, getDocuments, applyDocuments, dualWriteDefineNode]
+  );
+
+  const addClassWithDefine = useCallback(
+    (name: string, containerId: string = MAIN_GRAPH_CONTAINER_ID): ClassSymbol => {
+      const trimmed = name.trim() || 'NewClass';
+      const cls = createClassSymbol(trimmed, { containerId });
+      const entry = createProgramEntryEvent({ id: `evt-start-${cls.id}`, classId: cls.id });
+
+      setClasses((list) => [...list, cls]);
+      setEvents((list) => [...list, entry]);
+      const documents = getDocuments() ?? {};
+      applyDocuments(bootstrapClassHomeDocuments(documents, cls, entry));
+
+      const container = graphContainers.find((c) => c.id === containerId);
+      if (container) {
+        openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
+      } else {
+        setActiveGraphTab(classHomeGraphId(cls));
+      }
+      setActiveClassId(cls.id);
+      setSelection({ type: 'class', id: cls.id });
+      return cls;
+    },
+    [
+      setClasses,
+      setEvents,
+      getDocuments,
+      applyDocuments,
+      graphContainers,
+      setOpenTabs,
+      setActiveGraphTab,
+      setActiveClassId,
+      setSelection,
+    ]
   );
 
   const deleteSymbol = useCallback(
@@ -251,5 +297,6 @@ export function useSymbolLifecycle() {
     addVariableWithDefine,
     addFunctionWithDefine,
     addEventWithDefine,
+    addClassWithDefine,
   };
 }

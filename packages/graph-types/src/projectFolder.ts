@@ -1,4 +1,5 @@
 import type { ProjectIntegrationConfig } from './integration';
+import { resolveHostEmitPath } from './integration';
 import type { SyntaxPackLock } from './codegenTarget';
 import type { GraphContainer, GraphTab } from './symbols';
 import { classHomeGraphId } from './symbols';
@@ -93,4 +94,79 @@ export function buildFolderGraphManifest(snapshot: ProjectSnapshot): VvsProjectG
   }
 
   return { containers, functions };
+}
+
+export type ProjectFolderPathKind = 'vvs' | 'generated' | 'workspace' | 'host';
+
+export interface ProjectFolderPathEntry {
+  path: string;
+  kind: ProjectFolderPathKind;
+}
+
+const VVS_SYMBOL_FILES = [
+  'variables.json',
+  'events.json',
+  'functions.json',
+  'classes.json',
+] as const;
+
+export interface ProjectFolderListingInput {
+  graphContainers: GraphContainer[];
+  openTabs: GraphTab[];
+  documents: ProjectSnapshot['documents'];
+  classes: ProjectSnapshot['classes'];
+  workspaceFiles?: string[];
+}
+
+/** All repo-relative paths for the project folder browser (.vvs, emit, host, workspace). */
+export function listVirtualProjectFolderPaths(
+  snapshot: ProjectFolderListingInput,
+  options?: {
+    emittedFilePaths?: string[];
+    integration?: ProjectIntegrationConfig;
+  }
+): ProjectFolderPathEntry[] {
+  const entries: ProjectFolderPathEntry[] = [];
+  const seen = new Set<string>();
+
+  const add = (path: string, kind: ProjectFolderPathKind) => {
+    const normalized = path.replace(/\\/g, '/').replace(/^\/+/, '');
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    entries.push({ path: normalized, kind });
+  };
+
+  add(VVS_PROJECT_FILE, 'vvs');
+  add(VVS_INTEGRATION_FILE, 'vvs');
+
+  for (const file of VVS_SYMBOL_FILES) {
+    add(`${VVS_SYMBOLS_DIR}/${file}`, 'vvs');
+  }
+
+  const manifest = buildFolderGraphManifest(snapshot as ProjectSnapshot);
+  for (const rel of Object.values(manifest.containers ?? {})) {
+    add(`${VVS_DIR}/${rel}`, 'vvs');
+  }
+  if (manifest.main) {
+    add(`${VVS_DIR}/${manifest.main}`, 'vvs');
+  }
+  for (const rel of Object.values(manifest.functions)) {
+    add(`${VVS_DIR}/${rel}`, 'vvs');
+  }
+
+  for (const path of options?.emittedFilePaths ?? []) {
+    add(path, 'generated');
+  }
+
+  if (options?.integration?.hostFiles) {
+    for (const templatePath of Object.keys(options.integration.hostFiles)) {
+      add(resolveHostEmitPath(options.integration, templatePath), 'host');
+    }
+  }
+
+  for (const path of snapshot.workspaceFiles ?? []) {
+    add(path, 'workspace');
+  }
+
+  return entries.sort((a, b) => a.path.localeCompare(b.path));
 }

@@ -24,9 +24,9 @@ describe('analyzeProject define node sync', () => {
     });
 
     const missing = result.diagnostics.filter((d) => d.code === 'DEFINE_NODE_MISSING');
-    expect(missing).toHaveLength(1);
-    expect(missing[0]?.level).toBe('error');
-    expect(missing[0]?.symbolId).toBe(variable.id);
+    expect(missing).toHaveLength(2);
+    expect(missing.every((d) => d.level === 'error')).toBe(true);
+    expect(missing.map((d) => d.symbolId).sort()).toEqual([cls.id, variable.id].sort());
     expect(result.ok).toBe(false);
   });
 
@@ -37,6 +37,20 @@ describe('analyzeProject define node sync', () => {
       documents: {
         [HOME_GRAPH]: {
           nodes: [
+            {
+              id: 'class',
+              type: 'vvs_standard_node',
+              position: { x: 0, y: 0 },
+              data: {
+                label: 'Declare App',
+                category: 'Project',
+                kindId: 'class_define',
+                inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+                outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+                inlineValues: {},
+                properties: { symbolId: cls.id, classId: cls.id },
+              },
+            },
             {
               id: 'vd',
               type: 'vvs_standard_node',
@@ -88,6 +102,101 @@ describe('analyzeProject define node sync', () => {
     const notOnCanvas = result.diagnostics.filter((d) => d.code === 'DECLARATION_NOT_ON_CANVAS');
     expect(notOnCanvas).toHaveLength(1);
     expect(notOnCanvas[0]?.level).toBe('error');
+    expect(result.ok).toBe(false);
+  });
+
+  it('does not require class_define for blank class with no symbols or member defines', () => {
+    const cls = createClassSymbol('App', { id: 'main-class', containerId: HOME_GRAPH });
+
+    const result = analyzeProject({
+      documents: { [HOME_GRAPH]: { nodes: [], edges: [] } },
+      functions: [],
+      events: [],
+      variables: [],
+      classes: [cls],
+      projectDetails: { extendsType: '' },
+      targetLanguage: 'python',
+    });
+
+    expect(result.diagnostics.filter((d) => d.code === 'DEFINE_NODE_MISSING')).toHaveLength(0);
+    expect(result.ok).toBe(true);
+  });
+
+  it('emits DEFINE_NODE_MISSING when class_define is deleted but member defines remain', () => {
+    const cls = createClassSymbol('App', { id: 'main-class', containerId: HOME_GRAPH });
+    const variable = createVariableSymbol('Score', { id: 'var-score', classId: cls.id });
+
+    const result = analyzeProject({
+      documents: {
+        [HOME_GRAPH]: {
+          nodes: [
+            {
+              id: 'vd',
+              type: 'vvs_standard_node',
+              position: { x: 0, y: 0 },
+              data: {
+                label: 'Declare Score',
+                category: 'Variables',
+                kindId: 'var_define',
+                inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+                outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+                inlineValues: {},
+                properties: { symbolId: variable.id },
+              },
+            },
+          ],
+          edges: [],
+        },
+      },
+      functions: [],
+      events: [],
+      variables: [variable],
+      classes: [cls],
+      projectDetails: { extendsType: '' },
+      targetLanguage: 'python',
+    });
+
+    const missing = result.diagnostics.filter((d) => d.code === 'DEFINE_NODE_MISSING');
+    expect(missing.some((d) => d.symbolId === cls.id)).toBe(true);
+    expect(result.ok).toBe(false);
+  });
+
+  it('emits ORPHAN_DEFINE_NODE for class_define referencing unknown class', () => {
+    const cls = createClassSymbol('App', { id: 'main-class', containerId: HOME_GRAPH });
+
+    const result = analyzeProject({
+      documents: {
+        [HOME_GRAPH]: {
+          nodes: [
+            {
+              id: 'cd',
+              type: 'vvs_standard_node',
+              position: { x: 0, y: 0 },
+              data: {
+                label: 'Declare Other',
+                category: 'Project',
+                kindId: 'class_define',
+                inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+                outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+                inlineValues: {},
+                properties: { symbolId: 'unknown-class', classId: 'unknown-class' },
+              },
+            },
+          ],
+          edges: [],
+        },
+      },
+      functions: [],
+      events: [],
+      variables: [],
+      classes: [cls],
+      projectDetails: { extendsType: '' },
+      targetLanguage: 'python',
+    });
+
+    const orphan = result.diagnostics.filter((d) => d.code === 'ORPHAN_DEFINE_NODE');
+    expect(orphan).toHaveLength(1);
+    expect(orphan[0]?.nodeId).toBe('cd');
     expect(result.ok).toBe(false);
   });
 

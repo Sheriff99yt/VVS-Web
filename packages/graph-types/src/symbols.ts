@@ -65,7 +65,7 @@ export const MAIN_GRAPH_CONTAINER_ID = 'main-graph';
 
 export const PROJECT_MAP_CONTAINER_NAME = 'Project map';
 
-/** Virtual folder for grouping classes in the project tree — does not affect codegen. */
+/** Virtual folder for grouping classes — output path prefix derived from folder name. */
 export interface GraphContainer {
   id: string;
   name: string;

@@ -61,25 +61,35 @@ function countEventSubscribers(
   return count;
 }
 
-/** List project events for the tree. Falls back to scanning graphs for legacy projects. */
+/** List project events for the tree. Merges symbol table with graph-discovered legacy entries. */
 export function listEventDispatchers(
   events: ProjectEventDefinition[],
   documents: Record<string, GraphDocument> | null,
   classes: ClassSymbol[] = []
 ): EventDispatcherEntry[] {
-  if (events.length > 0) {
-    return events
-      .map((event) => ({
-        id: event.id,
-        label: event.name.trim() || 'Custom event',
-        graphId: resolveEventHomeGraphId(event, documents, classes),
-        subscriberCount: countEventSubscribers(event.id, documents),
-        dispatchCount: countEventDispatches(event.id, documents),
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+  const byId = new Map<string, EventDispatcherEntry>();
+  const labels = new Set<string>();
+
+  for (const event of events) {
+    const label = event.name.trim() || 'Custom event';
+    labels.add(label.toLowerCase());
+    byId.set(event.id, {
+      id: event.id,
+      label,
+      graphId: resolveEventHomeGraphId(event, documents, classes),
+      subscriberCount: countEventSubscribers(event.id, documents),
+      dispatchCount: countEventDispatches(event.id, documents),
+    });
   }
 
-  return listLegacyEventDispatchers(documents);
+  for (const legacy of listLegacyEventDispatchers(documents)) {
+    const key = legacy.label.toLowerCase();
+    if (labels.has(key) || byId.has(legacy.id)) continue;
+    labels.add(key);
+    byId.set(legacy.id, legacy);
+  }
+
+  return Array.from(byId.values()).sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function resolveEventHomeGraphId(

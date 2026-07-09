@@ -1,5 +1,5 @@
 import type { GraphEdge, GraphNode, VVSNodeData } from './nodes';
-import type { GraphDocument } from './symbols';
+import type { ClassSymbol, GraphDocument } from './symbols';
 
 /** Canvas member-declaration node kinds (class graph exec chain). */
 export const MEMBER_DEFINE_KINDS = [
@@ -38,6 +38,53 @@ export function defineNodeSymbolId(node: GraphNode): string | undefined {
   const fromProps = data.properties?.symbolId;
   if (typeof fromProps === 'string' && fromProps) return fromProps;
   return undefined;
+}
+
+export function classDefineNodeClassId(node: GraphNode): string | undefined {
+  if (resolveNodeKindId(node.data) !== 'class_define') return undefined;
+  const props = node.data.properties ?? {};
+  const fromProps = props.symbolId ?? props.classId;
+  if (typeof fromProps === 'string' && fromProps) return fromProps;
+  if (node.id.startsWith('class-define-')) {
+    return node.id.slice('class-define-'.length);
+  }
+  return undefined;
+}
+
+function legacySingleUnboundClassDefine(doc: GraphDocument, node: GraphNode): boolean {
+  if (resolveNodeKindId(node.data) !== 'class_define') return false;
+  const defines = doc.nodes.filter((n) => resolveNodeKindId(n.data) === 'class_define');
+  if (defines.length !== 1 || defines[0]!.id !== node.id) return false;
+  const props = node.data.properties ?? {};
+  return !props.symbolId && !props.classId;
+}
+
+export function classDefineMatchesClass(
+  node: GraphNode,
+  cls: ClassSymbol,
+  doc?: GraphDocument
+): boolean {
+  if (resolveNodeKindId(node.data) !== 'class_define') return false;
+  const classId = classDefineNodeClassId(node);
+  if (classId) return classId === cls.id;
+  if (doc && legacySingleUnboundClassDefine(doc, node)) return true;
+  return node.id === `class-define-${cls.id}`;
+}
+
+export function findClassDefineNode(
+  doc: GraphDocument | undefined,
+  cls: ClassSymbol
+): GraphNode | undefined {
+  if (!doc) return undefined;
+  return doc.nodes.find((n) => classDefineMatchesClass(n, cls, doc));
+}
+
+/** True when the class has a canvas class_define (required for exportable class shell). */
+export function classGraphHasClassDefine(
+  doc: GraphDocument | undefined,
+  cls: ClassSymbol
+): boolean {
+  return findClassDefineNode(doc, cls) != null;
 }
 
 export function findDefineNodesForSymbol(

@@ -1,5 +1,5 @@
 import { CodeSink } from '../codeSink';
-import type { IrModule } from '../ir/types';
+import type { IrMemberDecl, IrModule } from '../ir/types';
 import {
   appendFunctionBody,
   appendHoistedImports,
@@ -22,23 +22,39 @@ import {
 } from './shell';
 
 export function emitClassModule(sink: CodeSink, ir: IrModule): void {
+  const classDecl = ir.members.find(
+    (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
+  );
+
   const lang = ir.targetLanguage;
   appendHoistedImports(sink, ir);
-  const classLineStart = sink.lineCount + 1;
 
-  if (!['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp'].includes(lang)) {
+  const supportedClassLang = [
+    'python',
+    'javascript',
+    'cpp',
+    'verse',
+    'gdscript',
+    'rust',
+    'csharp',
+  ].includes(lang);
+
+  // Class shell only when a canvas class_define produced ClassDecl in IR.
+  // Without it, members and handlers still emit (preview) — export is blocked by DEFINE_NODE_MISSING.
+  if (classDecl && supportedClassLang) {
+    const classLineStart = sink.lineCount + 1;
+    sink.appendRaw(renderClassModuleOpen(lang, ir.moduleName, ir.extendsType));
+    tagClassDeclLine(sink, ir, classLineStart);
+
+    const publicSection = renderClassPublicSection(lang);
+    if (publicSection) {
+      const publicLine = sink.lineCount + 1;
+      sink.appendRaw(publicSection);
+      tagClassStructuralLine(sink, ir, publicLine);
+    }
+  } else if (classDecl && !supportedClassLang) {
     sink.appendRaw(`// class ${ir.moduleName}`);
     return;
-  }
-
-  sink.appendRaw(renderClassModuleOpen(lang, ir.moduleName, ir.extendsType));
-  tagClassDeclLine(sink, ir, classLineStart);
-
-  const publicSection = renderClassPublicSection(lang);
-  if (publicSection) {
-    const publicLine = sink.lineCount + 1;
-    sink.appendRaw(publicSection);
-    tagClassStructuralLine(sink, ir, publicLine);
   }
 
   appendIrMembers(sink, ir);
@@ -49,11 +65,13 @@ export function emitClassModule(sink: CodeSink, ir: IrModule): void {
     });
   }
 
-  const classClose = renderClassModuleClose(lang);
-  if (classClose) {
-    const closeLine = sink.lineCount + 1;
-    sink.appendRaw(classClose);
-    if (lang === 'cpp') tagClassStructuralLine(sink, ir, closeLine);
+  if (classDecl && supportedClassLang) {
+    const classClose = renderClassModuleClose(lang);
+    if (classClose) {
+      const closeLine = sink.lineCount + 1;
+      sink.appendRaw(classClose);
+      if (lang === 'cpp') tagClassStructuralLine(sink, ir, closeLine);
+    }
   }
 }
 

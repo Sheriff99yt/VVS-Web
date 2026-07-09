@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed — seven pack-driven codegen families).
+Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -66,9 +66,10 @@ When **Canvas** is active, the full editor chrome is visible:
 │ TopNav: File · Edit · View · [Auto save|Save] [Auto generate|Generate] … │
 ├──────────┬───────────────────────────────┬───────────────────┤
 │ Project  │ GraphTabBar                   │ Code output       │
-│ tree     │ GraphCanvas (React Flow)      │ Code | Files tabs │
-│ (canvas  │ + floating details (top-right)│ (@vvs/transpiler) │
-│  mode)   │ + floating compiler log (br)  │                   │
+│ explorer │ GraphCanvas (React Flow)      │ Code preview      │
+│ Structure│ + floating details (top-right)│ (@vvs/transpiler) │
+│ Symbols  │ + floating compiler log (br)  │                   │
+│ API tabs │                               │                   │
 ├──────────┴───────────────────────────────┴───────────────────┤
 │ StatusBar: offline · Log toggle · target language · compile  │
 └──────────────────────────────────────────────────────────────┘
@@ -142,7 +143,7 @@ References view (mounted only when active):
 - Do **not** wrap edit + reference canvases in one top-level `ReactFlowProvider`.
 - `CodePreviewPanel` reads documents via `useGraphDocuments`, not React Flow `useStore`.
 - `referenceRootGraphId` updates via `focusReference()` only — not from `activeGraphTab`.
-- `GraphExplorer` / `ProjectTree` uses `mode: 'canvas' | 'references'` for single-click behavior.
+- `GraphExplorer` / `ProjectTree` uses `mode: 'canvas' | 'references'`; **Structure | Symbols | API** tabs; single-click selects, double-click opens; scope header shows project + breadcrumb tail + Edit/Refs badge.
 - `useGraphTabSync` debounces metadata notify on edits; prunes closed tabs from `documentsRef`.
 
 Orphan: `components/layout/ReferenceViewer.tsx` — superseded by `ReferencesView`; do not re-add to left panel.
@@ -157,12 +158,13 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Pure helpers | `lib/editorFocus.ts` | `resolveClassHomeGraphTarget`, `canvasFocusFrame`, `resolveVariableFocusFrame` |
 | Selection invariants | `lib/projectSelection.ts` | `isTreeSymbolSelection`, `clearCanvasSelectionKeepTreeSymbol` |
 | Code preview link | `lib/symbolCodegenLink.ts` | Maps `selection` → `tabId` + `highlightNodeIds` via `collectSymbolUsages` |
+| Live validation sync | `hooks/useLiveProjectValidation.ts` | Memoized `runProjectAnalysis`; syncs `validationErrors` / `validationWarnings` to ProjectContext when signature changes |
 | Canvas sync | `hooks/useSyncProjectSelection.ts` | Mirrors React Flow selection; preserves tree symbols on deselect/tab change |
 | History | `contexts/EditorNavigationContext.tsx` | Versioned frames in `history.state`; `ensureGraphTabOpen` opens container + function tabs |
 
-**Flow:** ProjectTree / compiler log / graph_ref double-click → `useEditorFocus` → `EditorNavigationContext.navigate` → `ProjectContext.selection` + `activeGraphTab` → `CodePreviewPanel` resolves `symbolCodegenLink` (preview tab may differ from active canvas tab on project map) → `sourceMap` highlight ranges.
+**Flow:** ProjectTree / compiler log / graph_ref double-click → `useEditorFocus` → `EditorNavigationContext.navigate` → `ProjectContext.selection` + `activeGraphTab` → `CodePreviewPanel` resolves `symbolCodegenLink` (preview tab may differ from active canvas tab on project map) → `displayResultForView.sourceMap` highlight ranges (aligned with pinned **Files** tab paths).
 
-**Invariants:** Tree symbol selection is never cleared by tab switches or React Flow deselect (`GraphCanvas` + `useSyncProjectSelection`). Tab bar / breadcrumb navigation sets `selection: { type: 'graph', ... }` intentionally. Browser back/forward restores all selection types including `event` / `function` / `class`.
+**Invariants:** Tree symbol selection is never cleared by tab switches or React Flow deselect (`GraphCanvas` + `useSyncProjectSelection`). Tab bar / breadcrumb navigation sets `selection: { type: 'graph', ... }` intentionally. Browser back/forward restores all selection types including `event` / `function` / `class`. Highlight navigation uses the same `sourceMap` as the file list being shown — avoids path oscillation between graph-only and project-wide emit paths.
 
 ---
 
@@ -226,13 +228,13 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Event emit/subscribe nodes (`event_emit`, `event_subscribe`) | **Blocked** — excluded from spawn catalog; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` blocks Generate; no `_emit` / `_subscribe` injection in transpiler |
 | Program entry (`events[]` `role: 'entry'`) | Done — `event_member_define` + `event_define` on class graph; `on_start` only from canvas; legacy `event_on_start` deprecated; new class/project bootstraps entry via `createClassHomeBootstrap` |
 | Function symbols + overloads (`FunctionSymbol`, snapshot v3) | Done — tree, inspector, pin sync; symbols carry optional `classId` |
-| Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Graphs** section in ProjectTree (double-click graph opens graph canvas; double-click class opens codegen canvas), class-scoped symbol lists, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. Canvas define nodes + ordered transpiler emit. Go/MCP: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
+| Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Folders** section in ProjectTree **Structure** tab (click folder/class to select; double-click to open graph), class-scoped symbol lists on **Symbols** tab, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. **Class declare fidelity:** `class_define` required when class has symbols or any member define on home graph; `DEFINE_NODE_MISSING` / `ORPHAN_DEFINE_NODE` for class; panel `addClassWithDefine` + tree Declare badge + restore; deleting `class_define` blocks Generate but preview still shows member body in chain order (no phantom `class Name:` shell). Go/MCP: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
 | Pin type validation on connect | Done |
 | Wire / cross-graph cycle prevention | Done — `graphCycles.ts`, `graphRelations.ts` |
 | Linear flow chains (break on middle rewire) | Done — `graphWiring.ts` + editor warning |
 | Extract selection to function | Done — `extractToFunction.ts`, Ctrl+Shift+E |
-| Variable/function/event lists in explorer | Done — **ProjectTree**: Functions → **Events** → Variables; event rows show dispatch counts (and legacy subscriber counts for old graphs); drag event spawns **Dispatch** only |
-| Generated files browser | Done — right panel **Files** tab: project-wide emit tree (`buildGeneratedFileTree`, `useProjectTranspileResult`); per-graph language/extension; click to select, double-click to open in **Code** tab |
+| Variable/function/event lists in explorer | Done — **Symbols** tab: **Functions** (base row + override rows only) → **Event dispatchers** (drag row to dispatch) → **Variables** |
+| Generated files browser | Done — **Structure** tab **Output** toggle merges graph folders and project files in one tree: `.vvs/` metadata, emit paths with graph+file icons on the same row, workspace/host stubs; drag classes between folders to set emit path; click generated file opens code preview |
 | Searchable dropdowns | Done — `SearchableSelect` replaces native `<select>` in codegen, property panels, import pickers, environment import |
 | Import graph / class / module pickers | Done — `ImportGraphTargetPanel` + `projectGraphCatalog.ts`; searchable list of all project graphs |
 | Reference viewer (top-level view) | Done — `ReferencesView`, UE5 focus graph + tree |
@@ -249,7 +251,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
-| Code preview | Done — CodeMirror 6; **Code** tab shows active/preview graph emit; language + `.{ext}` in header edit **that graph**; **Files** tab shows full project folder tree; canvas/tree selection highlight via `sourceMap` (`symbolCodegenLink`); portability warning badge |
+| Code preview | Done — CodeMirror 6; **Code** tab shows active/preview graph emit; language + `.{ext}` in header edit **that graph**; **Files** tab shows full project folder tree; canvas/tree selection highlight via `sourceMap` (`symbolCodegenLink`); live analysis errors in sync indicator + badge (`useLiveProjectValidation`); **preview-only** banner when class Declare missing (`DEFINE_NODE_MISSING` for previewed class); portability warning badge |
 | Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
@@ -279,6 +281,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Syntax pack lock | `.vvs/project.json` → optional `syntaxPackLock` on `VvsProjectManifest` |
 | Project analysis | `packages/graph-types` (`analyzeProject`) + `packages/language-profiles` |
 | Web analysis wrapper | `apps/web/src/lib/projectAnalysis.ts` |
+| Live validation hook | `apps/web/src/hooks/useLiveProjectValidation.ts` — memoized analysis → ProjectContext |
 | Reference layout | `apps/web/src/lib/referenceGraphLayout.ts`, `referenceTree.ts` |
 | Cross-graph index | `apps/web/src/lib/graphRelations.ts` |
 | Cycle detection | `apps/web/src/lib/graphCycles.ts` |
@@ -346,8 +349,9 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Emit path** | `appendIrMembers` / `ir.members` from member chain only — **no** sidebar preamble (`appendLegacyPreamble` removed) |
 | **Symbol tables** | `variables[]`, `functions[]`, `events[]` are indexes; panel creates **dual-write** define nodes via `defineNodeSync` / `useSymbolLifecycle` |
 | **Define nodes** | `class_define`, `var_define`, `function_define`, `event_member_define` on `classHomeGraphId` exec chain |
+| **Class declare** | `class_define` required when class has symbols **or** any member define on home graph; blank class with no symbols and no defines passes analysis; `classGraphHasClassDefine` / `findClassDefineNode` in `@vvs/graph-types`; deleting class Declare omits `class Name:` shell in preview but **blocks Generate** |
 | **Program entry** | `events[]` with `role: 'entry'` — same `event_member_define` + `event_define` pattern as custom events; codegen `on_start` **only** when user wired entry on canvas; legacy `event_on_start` → `LIFECYCLE_NODE_DEPRECATED`; **no** transpiler-injected empty `on_start()` |
-| **Compile gate** | `analyzeProject` errors block Generate in TopNav when `!analysis.ok` |
+| **Compile gate** | `analyzeProject` errors block Generate in TopNav when `!analysis.ok`; code preview syncs live analysis via `useLiveProjectValidation` (signature-guarded, no render loops) |
 | **Event model** | **Dispatch** supported (direct call); **Emit** / **Subscribe** blocked — no hidden `_emit` / `_subscribe` runtime; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` |
 | **Strict diagnostics** | `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE` |
 | **sourceMap** | Every emitted declaration and statement maps to a canvas `nodeId` for code-panel highlight |

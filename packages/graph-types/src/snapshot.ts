@@ -91,6 +91,8 @@ export interface ProjectSnapshotV3 {
   codegenCapabilities?: CodegenCapabilities;
   /** User-selected file extension per codegen target (e.g. cpp → hpp). */
   targetFileExtensions?: import('./targetFileExtensions').TargetFileExtensions;
+  /** Repo-relative paths alongside `.vvs/` (docs, assets, tests) — folder-browser stubs. */
+  workspaceFiles?: string[];
 }
 
 export type ProjectSnapshot = ProjectSnapshotV3;
@@ -192,13 +194,15 @@ function createStarterClassDefineNode(cls: ClassSymbol): GraphNode {
     type: 'vvs_standard_node',
     position: { x: 80, y: 40 },
     data: {
-      label: `Class ${cls.name}`,
+      label: `Declare ${cls.name}`,
       category: 'Project',
       kindId: 'class_define',
       inputs: [execIn],
       outputs: [execOut],
       inlineValues: {},
       properties: {
+        symbolId: cls.id,
+        classId: cls.id,
         name: cls.name,
         extendsType: cls.extendsType ?? '',
         visibility: cls.visibility ?? 'public',
@@ -551,6 +555,9 @@ export function normalizeProjectSnapshot(raw: unknown): ProjectSnapshot | null {
         ? (value.codegenCapabilities as CodegenCapabilities)
         : undefined,
     targetFileExtensions: normalizeTargetFileExtensions(value.targetFileExtensions),
+    workspaceFiles: Array.isArray(value.workspaceFiles)
+      ? (value.workspaceFiles as string[]).filter((p) => typeof p === 'string' && p.trim())
+      : undefined,
   };
 
   const migrated = finalizeGraphContainerSnapshot(

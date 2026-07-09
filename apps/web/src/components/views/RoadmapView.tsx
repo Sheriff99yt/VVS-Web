@@ -211,6 +211,47 @@ function EventFidelityCallout() {
   );
 }
 
+function ClassDeclareFidelityCallout() {
+  return (
+    <div className="rounded-lg border border-indigo-500/25 bg-indigo-500/5 px-4 py-3 space-y-2">
+      <p className="text-[11px] font-medium text-indigo-300/90">
+        Class declare fidelity — shipped (July 2026)
+      </p>
+      <ul className="text-[11px] text-zinc-500 space-y-1">
+        <li className="flex items-start gap-2">
+          <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            <span className="text-zinc-300">Declare Class</span> on canvas required when a class has
+            symbols or member defines — blank class with neither passes analysis
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            No phantom <span className="font-mono text-zinc-400">class Name:</span> from symbol table
+            — shell emits only from <span className="font-mono text-zinc-400">class_define</span>
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            Delete class Declare → preview keeps member body order;{' '}
+            <span className="font-mono text-zinc-400">DEFINE_NODE_MISSING</span> blocks Generate;
+            preview-only banner in code panel
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <CheckCircle2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            Project tree Declare badge + restore; dual-write on class create (
+            <span className="font-mono text-zinc-400">addClassWithDefine</span>)
+          </span>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 function GdScriptCallout() {
   return (
     <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/5 px-4 py-3 space-y-2">
@@ -287,7 +328,8 @@ export function RoadmapView() {
             <span className="text-zinc-300">declare → implement → invoke</span> codegen (member
             declares, comment placeholders, separate handler bodies),{' '}
             <span className="text-zinc-300">canvas-as-source-of-truth</span> (every export line maps
-            to a graph node), graph-as-canvas multi-class model,{' '}
+            to a graph node; class Declare fidelity shipped July 2026), graph-as-canvas multi-class
+            model,{' '}
             <span className="font-mono text-zinc-400">.vvs/</span> folders, local Go HTTP API, and
             local MCP. Event model:{' '}
             <span className="text-emerald-400/80">Dispatch</span> (direct{' '}
@@ -333,6 +375,8 @@ export function RoadmapView() {
         <EventFidelityCallout />
 
         <SymbolVocabularyCallout />
+
+        <ClassDeclareFidelityCallout />
 
         <GdScriptCallout />
 

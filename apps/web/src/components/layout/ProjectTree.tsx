@@ -5,9 +5,6 @@ import {
   ChevronRight,
   ChevronDown,
   Plus,
-  FileCode2,
-  Search,
-  X,
   Trash2,
   Variable,
   PlaySquare,
@@ -55,9 +52,12 @@ import { SPAWN_EVENT_NODE_EVENT } from '@/components/layout/GraphFloatingDetails
 import {
   findHandlerNodeForEvent,
   findMemberDeclareNodeForSymbol,
+  findClassDefineNode,
+  hasDefineNodeForClass,
   hasDefineNodeForEvent,
   hasDefineNodeForFunction,
   hasHandlerNodeForEvent,
+  insertClassDefineNode,
   insertDefineNodeForEvent,
   insertDefineNodeForFunction,
 } from '@/lib/defineNodeSync';
@@ -71,10 +71,10 @@ import { SymbolDeleteDialog } from '@/components/layout/SymbolDeleteDialog';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
 import { useClassLifecycle } from '@/hooks/useClassLifecycle';
 import { useGraphContainerLifecycle } from '@/hooks/useGraphContainerLifecycle';
-import { CLASS_DRAG_MIME, classDragPayload, parseClassDragPayload } from '@/lib/classHelpers';
+import { CLASS_DRAG_MIME, classDragPayload, isClassFolderDragEvent, readClassIdFromFolderDragEvent } from '@/lib/classHelpers';
 import {
   configureCanvasDrag,
-  configureClassTreeDrag,
+  configureClassFolderDrag,
   configureTreeReorderDrag,
   graphContainerDragPayload,
   parseGraphContainerDragPayload,
@@ -89,293 +89,25 @@ import {
   symbolClassId,
 } from '@/lib/classScope';
 import type { GraphTab } from '@vvs/graph-types';
+import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { getSymbolDisplayName } from '@/lib/symbolLifecycle';
 import type { SymbolRefKind } from '@vvs/graph-types';
-
-type CategoryKey =
-  | 'graphs'
-  | 'environment'
-  | 'functions'
-  | 'events'
-  | 'variables';
-
-const INDENT = { root: 'pl-2', l1: 'pl-5', l2: 'pl-8' };
-
-interface TreeRowProps {
-  depth?: keyof typeof INDENT;
-  active?: boolean;
-  icon?: React.ReactNode;
-  leading?: React.ReactNode;
-  label: string;
-  meta?: string;
-  suffix?: React.ReactNode;
-  onSelect?: () => void;
-  onOpen?: () => void;
-  /** When true, single click invokes onOpen (chevron/leading handles expand separately). */
-  openOnSelect?: boolean;
-  hint?: string;
-  className?: string;
-  isDropTarget?: boolean;
-  isDragging?: boolean;
-  onDragOver?: (e: React.DragEvent) => void;
-  onDrop?: (e: React.DragEvent) => void;
-  onDragLeave?: () => void;
-  /** Drag from tree onto the graph canvas (e.g. function overload call). */
-  canvasDrag?: { mimeType: string; payload: string };
-  /** Drag within the tree (e.g. move class between graph folders). */
-  onDragStart?: (e: React.DragEvent) => void;
-  onDragEnd?: () => void;
-}
-
-const SINGLE_CLICK_DELAY_MS = 220;
-
-function TreeRow({
-  depth = 'l1',
-  active,
-  icon,
-  leading,
-  label,
-  meta,
-  onSelect,
-  onOpen,
-  openOnSelect = false,
-  hint,
-  suffix,
-  className = '',
-  isDropTarget = false,
-  isDragging = false,
-  onDragOver,
-  onDrop,
-  onDragLeave,
-  canvasDrag,
-  onDragStart,
-  onDragEnd,
-}: TreeRowProps) {
-  const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleClick = () => {
-    if (!onSelect && !onOpen) return;
-    if (openOnSelect && onOpen) {
-      onOpen();
-      return;
-    }
-    if (!onOpen) {
-      onSelect?.();
-      return;
-    }
-    clickTimerRef.current = setTimeout(() => {
-      onSelect?.();
-      clickTimerRef.current = null;
-    }, SINGLE_CLICK_DELAY_MS);
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    if (!onOpen || openOnSelect) return;
-    e.preventDefault();
-    if (clickTimerRef.current) {
-      clearTimeout(clickTimerRef.current);
-      clickTimerRef.current = null;
-    }
-    onOpen();
-  };
-
-  const interactive = Boolean(onSelect || onOpen);
-
-  const handleCanvasDragStart = (e: React.DragEvent) => {
-    if (onDragStart) {
-      onDragStart(e);
-      return;
-    }
-    if (!canvasDrag) return;
-    configureCanvasDrag(e, canvasDrag);
-  };
-
-  const draggable = Boolean(canvasDrag || onDragStart);
-
-  return (
-    <div
-      draggable={draggable}
-      onDragStart={draggable ? handleCanvasDragStart : undefined}
-      onDragEnd={onDragEnd}
-      className={`flex items-center gap-1.5 py-1 pr-2 select-none group ${INDENT[depth]} ${
-        interactive ? 'cursor-pointer' : ''
-      } ${draggable ? 'cursor-grab active:cursor-grabbing' : ''} ${
-        active ? 'bg-zinc-800/80 border-l-2 border-indigo-500' : 'hover:bg-zinc-900 border-l-2 border-transparent'
-      } ${isDropTarget ? 'bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/30' : ''} ${
-        isDragging ? 'opacity-40' : ''
-      } ${className}`}
-      onClick={interactive ? handleClick : undefined}
-      onDoubleClick={onOpen ? handleDoubleClick : undefined}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onDragLeave={onDragLeave}
-      title={
-        hint ??
-        (openOnSelect && onOpen
-          ? 'Click to open'
-          : onOpen
-            ? 'Click to select · Double-click to open'
-            : onSelect
-              ? 'Click to select'
-              : undefined)
-      }
-    >
-      <span className="w-4 shrink-0 flex items-center justify-center">{leading}</span>
-      {icon}
-      <span className="flex-1 min-w-0 flex flex-col">
-        <span
-          className={`text-[11px] truncate ${
-            active ? 'text-zinc-100 font-medium' : 'text-zinc-400 group-hover:text-zinc-200'
-          }`}
-        >
-          {label}
-        </span>
-        {meta ? <span className="text-[9px] text-zinc-600 truncate">{meta}</span> : null}
-      </span>
-      {suffix}
-    </div>
-  );
-}
-
-function CategorySection({
-  title,
-  count,
-  icon,
-  expanded,
-  onToggle,
-  onAdd,
-  addLabel,
-  children,
-}: {
-  title: string;
-  count: number;
-  icon: React.ReactNode;
-  expanded: boolean;
-  onToggle: () => void;
-  onAdd?: () => void;
-  addLabel?: string;
-  children: React.ReactNode;
-}) {
-  const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleClick = () => {
-    clickTimerRef.current = setTimeout(() => {
-      onToggle();
-      clickTimerRef.current = null;
-    }, SINGLE_CLICK_DELAY_MS);
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (clickTimerRef.current) {
-      clearTimeout(clickTimerRef.current);
-      clickTimerRef.current = null;
-    }
-    onToggle();
-  };
-
-  return (
-    <div className="border-b border-zinc-800/40 last:border-b-0">
-      <div
-        className={`flex items-center gap-1 py-1.5 pr-2 cursor-pointer select-none group ${INDENT.root} hover:bg-zinc-900/50`}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-      >
-        <span className="p-0.5 text-zinc-500 shrink-0">
-          {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        </span>
-        {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 group-hover:text-zinc-400 flex-1">
-          {title}
-        </span>
-        <span className="text-[9px] text-zinc-600 tabular-nums">{count}</span>
-        {onAdd ? (
-          <button
-            type="button"
-            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
-            title={addLabel}
-            onClick={(e) => {
-              e.stopPropagation();
-              onAdd();
-            }}
-          >
-            <Plus size={12} />
-          </button>
-        ) : (
-          <span className="w-5 shrink-0" />
-        )}
-      </div>
-      {expanded ? <div className="pb-1">{children}</div> : null}
-    </div>
-  );
-}
-
-function PanelFilter({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  const collapse = useCallback(() => {
-    if (!value.trim()) {
-      setOpen(false);
-      onChange('');
-    }
-    inputRef.current?.blur();
-  }, [onChange, value]);
-
-  useEffect(() => {
-    if (open) requestAnimationFrame(() => inputRef.current?.focus());
-  }, [open]);
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="p-1.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
-        title="Filter"
-        aria-label="Filter"
-      >
-        <Search size={13} />
-      </button>
-    );
-  }
-
-  return (
-    <div className="flex-1 flex items-center gap-1 min-w-0 bg-zinc-900 border border-zinc-800 rounded px-2 py-1">
-      <Search size={12} className="text-zinc-600 shrink-0" />
-      <input
-        ref={inputRef}
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') collapse();
-        }}
-        onBlur={collapse}
-        placeholder={placeholder}
-        className="flex-1 min-w-0 bg-transparent text-[11px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none"
-      />
-      {value ? (
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => onChange('')}
-          className="text-zinc-500 hover:text-zinc-300"
-        >
-          <X size={11} />
-        </button>
-      ) : null}
-    </div>
-  );
-}
+import { TreeRow } from './project-tree/TreeRow';
+import { CategorySection } from './project-tree/CategorySection';
+import { PanelFilter } from './project-tree/PanelFilter';
+import { ExplorerTabs } from './project-tree/ExplorerTabs';
+import type { ExplorerTab } from './project-tree/constants';
+import { ProjectScopeHeader } from './project-tree/ProjectScopeHeader';
+import { CanvasStatusBadge } from './project-tree/CanvasStatusBadge';
+import { CodegenSuffix } from './project-tree/CodegenSuffix';
+import { SymbolCreatePopover } from './project-tree/SymbolCreatePopover';
+import { ClassFolderDropStrip } from './project-tree/ClassFolderDropStrip';
+import { OutputFolderToggle } from './project-tree/OutputFolderToggle';
+import { MergedStructureExplorer } from './project-tree/MergedStructureExplorer';
+import { INDENT, type SymbolCategoryKey } from './project-tree/constants';
+import { useProjectFolderPaths } from '@/hooks/useProjectFolderPaths';
+import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
+import { containerEmitHint } from '@/lib/structureOutputFiles';
 
 function VariableRow({
   variable,
@@ -384,7 +116,6 @@ function VariableRow({
   hint,
   onSelect,
   onOpen,
-  openOnSelect = false,
   onDelete,
 }: {
   variable: {
@@ -399,54 +130,20 @@ function VariableRow({
   hint?: string;
   onSelect?: () => void;
   onOpen?: () => void;
-  openOnSelect?: boolean;
   onDelete?: () => void;
 }) {
-  const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleClick = () => {
-    if (!onSelect && !onOpen) return;
-    if (openOnSelect && onOpen) {
-      onOpen();
-      return;
-    }
-    if (!onOpen) {
-      onSelect?.();
-      return;
-    }
-    clickTimerRef.current = setTimeout(() => {
-      onSelect?.();
-      clickTimerRef.current = null;
-    }, SINGLE_CLICK_DELAY_MS);
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    if (!onOpen || openOnSelect) return;
-    e.preventDefault();
-    if (clickTimerRef.current) {
-      clearTimeout(clickTimerRef.current);
-      clickTimerRef.current = null;
-    }
-    onOpen();
-  };
-
   return (
     <div
-      className={`flex items-center gap-2 ${INDENT.l1} py-1 pr-2 cursor-pointer group border-l-2 ${
-        isSelected ? 'bg-zinc-800/80 border-indigo-500' : 'hover:bg-zinc-900 border-transparent'
+      className={`flex items-center gap-2 ${INDENT.l1} py-1 pr-2 cursor-pointer group ${
+        isSelected ? 'bg-indigo-500/10 text-indigo-100' : 'hover:bg-zinc-900/60 text-zinc-300'
       }`}
-      onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
-      title={
-        hint ??
-        (openOnSelect && onOpen
-          ? 'Click to open'
-          : onOpen
-            ? 'Click to select · Double-click to edit in inspector'
-            : onSelect
-              ? 'Click to select'
-              : undefined)
-      }
+      onClick={onSelect}
+      onDoubleClick={(e) => {
+        if (!onOpen) return;
+        e.preventDefault();
+        onOpen();
+      }}
+      title={hint ?? (onOpen ? 'Click to select · Double-click to open' : 'Click to select')}
       draggable
       onDragStart={(e) => {
         configureCanvasDrag(e, {
@@ -461,13 +158,7 @@ function VariableRow({
         className="w-2 h-2 rounded-full border border-zinc-950 shrink-0"
         style={{ backgroundColor: color }}
       />
-      <span
-        className={`text-[11px] truncate flex-1 ${
-          isSelected ? 'text-zinc-100 font-medium' : 'text-zinc-400 group-hover:text-zinc-200'
-        }`}
-      >
-        {variable.name}
-      </span>
+      <span className="text-[11px] truncate flex-1">{variable.name}</span>
       <span className="text-[9px] text-zinc-600 uppercase shrink-0">
         {LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === variable.type)?.shortLabel ??
           variable.type.replace(/^data_/, '')}
@@ -500,31 +191,6 @@ function matchesFilter(text: string, query: string): boolean {
   return text.toLowerCase().includes(query);
 }
 
-function CanvasStatusBadge({
-  label,
-  ok,
-  onClick,
-}: {
-  label: string;
-  ok: boolean;
-  onClick: (e: React.MouseEvent) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`shrink-0 px-1 py-0.5 rounded text-[8px] border ${
-        ok
-          ? 'bg-emerald-500/10 text-emerald-400/90 border-emerald-500/25 hover:bg-emerald-500/20'
-          : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-      }`}
-      title={ok ? `Focus ${label} on canvas` : `Add missing ${label} on canvas`}
-    >
-      {ok ? '✓' : '⚠'} {label}
-    </button>
-  );
-}
-
 export type ProjectTreeMode = 'canvas' | 'references';
 
 export interface ProjectTreeProps {
@@ -552,6 +218,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     activeGraphTab,
     projectDetails,
     targetLanguage,
+    targetFileExtensions,
     crossOverMode,
     openTabs,
     isTabDirty,
@@ -566,10 +233,20 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const editorFocus = useEditorFocus();
   const documents = useGraphDocuments();
+  const projectFolderPaths = useProjectFolderPaths();
+  const { fileOwners } = useProjectTranspileResult();
+  const projectFolderPathKinds = useMemo(
+    () => new Map(projectFolderPaths.map((entry) => [entry.path, entry.kind])),
+    [projectFolderPaths]
+  );
+  const projectFilePaths = useMemo(
+    () => projectFolderPaths.map((entry) => entry.path),
+    [projectFolderPaths]
+  );
   const { patchAllDocuments } = useGraphWorkspace();
-  const { deleteSymbol, getUsageSummary, addVariableWithDefine, addFunctionWithDefine, addEventWithDefine } =
+  const { deleteSymbol, getUsageSummary, addVariableWithDefine, addFunctionWithDefine, addEventWithDefine, addClassWithDefine } =
     useSymbolLifecycle();
-  const { createClass, renameClass, deleteClass, canDeleteClass, moveClassToContainer } =
+  const { renameClass, deleteClass, canDeleteClass, moveClassToContainer } =
     useClassLifecycle();
   const {
     createContainer,
@@ -595,12 +272,14 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   } | null>(null);
 
   const [filterQuery, setFilterQuery] = useState('');
-  const [expanded, setExpanded] = useState<Record<CategoryKey, boolean>>({
-    graphs: true,
-    environment: true,
-    functions: true,
+  const [explorerTab, setExplorerTab] = useState<ExplorerTab>('structure');
+  const [foldersExpanded, setFoldersExpanded] = useState(true);
+  const [showOutputFolders, setShowOutputFolders] = useState(false);
+  const [expanded, setExpanded] = useState<Record<SymbolCategoryKey, boolean>>({
+    classes: false,
+    functions: false,
     events: false,
-    variables: true,
+    variables: false,
   });
   const [expandedContainerIds, setExpandedContainerIds] = useState<Record<string, boolean>>({});
   const [isAddingContainer, setIsAddingContainer] = useState(false);
@@ -611,8 +290,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const [dropContainerId, setDropContainerId] = useState<string | null>(null);
   const [draggingGraphContainerId, setDraggingGraphContainerId] = useState<string | null>(null);
   const [dropGraphContainerId, setDropGraphContainerId] = useState<string | null>(null);
-  const [addingClassToContainerId, setAddingClassToContainerId] = useState<string | null>(null);
+  const [isAddingClass, setIsAddingClass] = useState(false);
   const [newClassName, setNewClassName] = useState('');
+  const [newClassContainerId, setNewClassContainerId] = useState(MAIN_GRAPH_CONTAINER_ID);
   const [renamingClassId, setRenamingClassId] = useState<string | null>(null);
   const [renameClassName, setRenameClassName] = useState('');
   const [isAddingVariable, setIsAddingVariable] = useState(false);
@@ -645,6 +325,16 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const q = filterQuery.trim().toLowerCase();
 
+  const filteredClasses = useMemo(
+    () =>
+      classes.filter((cls) => {
+        if (matchesFilter(cls.name, q)) return true;
+        const container = graphContainers.find((c) => c.id === classContainerId(cls));
+        return container ? matchesFilter(container.name, q) : false;
+      }),
+    [classes, graphContainers, q]
+  );
+
   const filteredFunctions = useMemo(
     () => classFunctions.filter((f) => matchesFilter(f.name, q)),
     [classFunctions, q]
@@ -662,11 +352,21 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     if (!q) return;
     setExpanded((state) => ({
       ...state,
+      ...(filteredClasses.length > 0 && !state.classes ? { classes: true } : {}),
       ...(filteredFunctions.length > 0 && !state.functions ? { functions: true } : {}),
       ...(filteredEvents.length > 0 && !state.events ? { events: true } : {}),
       ...(filteredVariables.length > 0 && !state.variables ? { variables: true } : {}),
     }));
-  }, [q, filteredFunctions.length, filteredEvents.length, filteredVariables.length]);
+  }, [q, filteredClasses.length, filteredFunctions.length, filteredEvents.length, filteredVariables.length]);
+
+  useEffect(() => {
+    if (explorerTab !== 'symbols') return;
+    setExpanded((state) => ({
+      ...state,
+      ...(classes.length > 0 && !state.classes ? { classes: true } : {}),
+      ...(classEvents.length > 0 && !state.events ? { events: true } : {}),
+    }));
+  }, [explorerTab, classes.length, classEvents.length]);
   const graphSectionCount = graphContainers.length;
 
   const containerMatches = useCallback(
@@ -679,7 +379,30 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     return graphContainers.filter((container) => containerMatches(container));
   }, [graphContainers, containerMatches]);
 
-  const toggleCategory = (key: CategoryKey) => {
+  const projectCodegenDefaults = useMemo(
+    () => ({ targetLanguage, targetFileExtensions }),
+    [targetLanguage, targetFileExtensions]
+  );
+
+  useEffect(() => {
+    if (selection.type === 'function') {
+      setExplorerTab('symbols');
+      setExpanded((state) => ({ ...state, functions: true }));
+    } else if (selection.type === 'event') {
+      setExplorerTab('symbols');
+      setExpanded((state) => ({ ...state, events: true }));
+    } else if (selection.type === 'variable') {
+      setExplorerTab('symbols');
+      setExpanded((state) => ({ ...state, variables: true }));
+    } else if (selection.type === 'class') {
+      setExplorerTab('symbols');
+      setExpanded((state) => ({ ...state, classes: true }));
+    } else if (selection.type === 'graph') {
+      setExplorerTab('structure');
+    }
+  }, [selection.type]);
+
+  const toggleCategory = (key: SymbolCategoryKey) => {
     setExpanded((s) => ({ ...s, [key]: !s[key] }));
   };
 
@@ -710,7 +433,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const revealClassGraphInTree = useCallback(
     (container: GraphContainer | undefined) => {
-      setExpanded((s) => ({ ...s, graphs: true }));
+      setFoldersExpanded(true);
+      setExplorerTab('structure');
       if (container) {
         setExpandedContainerIds((prev) => ({ ...prev, [container.id]: true }));
       }
@@ -751,14 +475,22 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     setExpandedContainerIds((prev) => ({ ...prev, [containerId]: !prev[containerId] }));
   }, []);
 
-  const handleSaveClass = (containerId: string) => {
-    if (!newClassName.trim()) return;
-    createClass(newClassName.trim(), containerId);
+  const handleSaveClass = () => {
+    if (!newClassName.trim() || !newClassContainerId) return;
+    addClassWithDefine(newClassName.trim(), newClassContainerId);
     setNewClassName('');
-    setAddingClassToContainerId(null);
-    setExpandedContainerIds((prev) => ({ ...prev, [containerId]: true }));
-    setExpanded((s) => ({ ...s, graphs: true }));
+    setIsAddingClass(false);
+    setExpandedContainerIds((prev) => ({ ...prev, [newClassContainerId]: true }));
+    setExplorerTab('symbols');
+    setExpanded((s) => ({ ...s, classes: true }));
   };
+
+  const defaultClassContainerId = useCallback(() => {
+    const active = classes.find((cls) => cls.id === activeClassId);
+    if (active) return classContainerId(active);
+    const emitContainer = graphContainers.find((c) => c.id !== MAIN_GRAPH_CONTAINER_ID);
+    return emitContainer?.id ?? MAIN_GRAPH_CONTAINER_ID;
+  }, [classes, activeClassId, graphContainers]);
 
   const handleSaveContainer = () => {
     if (!newContainerName.trim()) return;
@@ -766,7 +498,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     setNewContainerName('');
     setIsAddingContainer(false);
     setExpandedContainerIds((prev) => ({ ...prev, [container.id]: true }));
-    setExpanded((s) => ({ ...s, graphs: true }));
+    setFoldersExpanded(true);
+    setExplorerTab('structure');
   };
 
   const handleSaveContainerRename = (container: GraphContainer) => {
@@ -778,7 +511,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   };
 
   const handleClassDragStart = useCallback((e: React.DragEvent, cls: ClassSymbol) => {
-    configureClassTreeDrag(e, classDragPayload(cls));
+    configureClassFolderDrag(e, classDragPayload(cls));
     setDraggingClassId(cls.id);
   }, []);
 
@@ -796,7 +529,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         setDropGraphContainerId(containerId);
         return;
       }
-      if (!draggingClassId) return;
+      if (!draggingClassId && !isClassFolderDragEvent(e)) return;
       e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = 'move';
@@ -820,11 +553,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         return;
       }
 
-      if (!draggingClassId) return;
-      const raw = e.dataTransfer.getData(CLASS_DRAG_MIME);
-      const payload = raw ? parseClassDragPayload(raw) : null;
-      const classId = payload?.classId ?? draggingClassId;
-      if (classId) moveClassToContainer(classId, containerId);
+      const classId = readClassIdFromFolderDragEvent(e, draggingClassId);
+      if (!classId) return;
+      moveClassToContainer(classId, containerId);
+      setExpandedContainerIds((prev) => ({ ...prev, [containerId]: true }));
       setDraggingClassId(null);
       setDropContainerId(null);
     },
@@ -874,12 +606,25 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     [variables, functions, events]
   );
 
+  const selectClass = useCallback(
+    (cls: ClassSymbol) => {
+      setActiveClassId(cls.id);
+      setSelection({ type: 'class', id: cls.id });
+      setExplorerTab('symbols');
+      setExpanded((s) => ({ ...s, classes: true }));
+    },
+    [setActiveClassId, setSelection]
+  );
+
   const selectFunction = useCallback(
     (func: FunctionSymbol) => {
-      editorFocus.focusFunction(func);
+      setSelection({ type: 'function', id: func.id });
+      const classId = symbolClassId(func);
+      if (classId) setActiveClassId(classId);
+      setExplorerTab('symbols');
       setExpanded((s) => ({ ...s, functions: true }));
     },
-    [editorFocus]
+    [setActiveClassId, setSelection]
   );
 
   const openFunctionOverloadGraph = useCallback(
@@ -1023,6 +768,49 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       parts.push(`${entry.subscriberCount} sub`);
     }
     return parts.length > 0 ? parts.join(' · ') : undefined;
+  };
+
+  const focusOrInsertClassDeclare = useCallback(
+    (cls: ClassSymbol, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!documents || isReferenceMode) return;
+
+      editorFocus.focusTreeSymbolOnClass(cls, { type: 'class', id: cls.id });
+
+      const declared = hasDefineNodeForClass(documents, cls);
+      if (declared) {
+        const target = findClassDefineNode(documents, cls);
+        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+        return;
+      }
+
+      const next = insertClassDefineNode(documents, cls);
+      patchAllDocuments(() => next);
+      markTabDirty(classGraphTabId(cls));
+      setCompileState('dirty');
+      const target = findClassDefineNode(next, cls);
+      if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+    },
+    [
+      documents,
+      isReferenceMode,
+      editorFocus,
+      patchAllDocuments,
+      markTabDirty,
+      setCompileState,
+    ]
+  );
+
+  const renderClassCanvasStatus = (cls: ClassSymbol) => {
+    if (!documents || isReferenceMode) return null;
+    const declared = hasDefineNodeForClass(documents, cls);
+    return (
+      <CanvasStatusBadge
+        label="Declare"
+        ok={declared}
+        onClick={(e) => focusOrInsertClassDeclare(cls, e)}
+      />
+    );
   };
 
   const focusOrInsertFunctionDeclare = useCallback(
@@ -1252,7 +1040,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       classId: activeClassId,
     });
     addFunctionWithDefine(func);
-    selectFunction(func);
+    setSelection({ type: 'function', id: func.id });
+    editorFocus.focusFunction(func);
+    setExplorerTab('symbols');
+    setExpanded((s) => ({ ...s, functions: true }));
     setNewFuncName('');
     setNewFuncBinding('instance');
     setIsAddingFunction(false);
@@ -1284,7 +1075,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   };
 
   const renderFunctionCreateForm = () => (
-    <div className={`${INDENT.l1} py-1.5 pr-2 space-y-1.5`}>
+    <div className="space-y-1.5">
       <input
         type="text"
         placeholder="Function name"
@@ -1369,46 +1160,69 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   return (
     <div className="w-full h-full bg-zinc-950 flex flex-col border-r border-zinc-800 min-h-0 min-w-[200px]">
-      <div className="flex-none px-3 pt-2 pb-1.5 border-b border-zinc-800">
-        <div className="text-[12px] font-medium text-zinc-100 truncate" title={projectDetails.moduleName}>
-          {projectDetails.moduleName || 'Untitled'}
-        </div>
-        {environmentManifest ? (
-          <div
-            className="text-[9px] text-indigo-400/90 truncate mt-0.5"
-            title={`${environmentManifest.description}${environmentVersion ? ` · linked v${environmentVersion}` : ''}`}
-          >
-            env: {environmentManifest.displayName}
-            {environmentVersion ? (
-              <span className="text-zinc-600 font-mono"> · v{environmentVersion}</span>
-            ) : null}
-          </div>
+      <ProjectScopeHeader
+        projectName={projectDetails.moduleName}
+        activeGraphTab={activeGraphTab}
+        openTabs={openTabs}
+        classes={classes}
+        activeClassId={activeClassId}
+        mode={mode}
+      />
+
+      <div className="flex-none flex items-center gap-1 px-2 py-1 border-b border-zinc-800/60">
+        <PanelFilter value={filterQuery} onChange={setFilterQuery} placeholder="Filter…" />
+        {explorerTab === 'structure' ? (
+          <OutputFolderToggle enabled={showOutputFolders} onChange={setShowOutputFolders} />
         ) : null}
       </div>
 
-      <div className="flex-none flex items-center gap-1 px-2 py-1.5 border-b border-zinc-800/60">
-        <PanelFilter value={filterQuery} onChange={setFilterQuery} placeholder="Filter…" />
-      </div>
+      <ExplorerTabs
+        value={explorerTab}
+        onChange={setExplorerTab}
+        showApiTab={Boolean(environmentSurface && environmentManifest)}
+      />
+
+      {!isReferenceMode ? (
+        <ClassFolderDropStrip
+          containers={visibleGraphContainers}
+          draggingClassId={draggingClassId}
+          dropContainerId={dropContainerId}
+          onContainerDragOver={handleContainerDragOver}
+          onContainerDrop={handleContainerDrop}
+          onContainerDragLeave={(containerId) => {
+            setDropContainerId((id) => (id === containerId ? null : id));
+          }}
+        />
+      ) : null}
 
       <div className="flex-1 overflow-y-auto min-h-0 py-0.5 overscroll-contain" {...{ [PANEL_SCROLL_ATTR]: '' }}>
-        {/* Graphs — organizational folders containing classes */}
+        {explorerTab === 'structure' ? (
+        <>
         <CategorySection
-          title="Graphs"
-          count={graphSectionCount}
+          title={showOutputFolders ? 'Project folder' : 'Folders'}
+          count={showOutputFolders ? projectFolderPaths.length : graphSectionCount}
           icon={<GitBranch size={12} className="text-emerald-500/80 shrink-0" />}
-          expanded={expanded.graphs}
-          onToggle={() => toggleCategory('graphs')}
+          expanded={foldersExpanded}
+          onToggle={() => setFoldersExpanded((open) => !open)}
           onAdd={() => {
             setIsAddingContainer(true);
-            setExpanded((s) => ({ ...s, graphs: true }));
+            setFoldersExpanded(true);
           }}
-          addLabel="New graph"
+          addLabel="New folder"
         >
           {isAddingContainer ? (
-            <div className={`${INDENT.l1} py-1.5 pr-2 space-y-1.5`}>
+            <SymbolCreatePopover
+              open
+              title="New folder"
+              onClose={() => {
+                setIsAddingContainer(false);
+                setNewContainerName('');
+              }}
+              anchorClassName={INDENT.l1}
+            >
               <input
                 type="text"
-                placeholder="Graph folder name"
+                placeholder="Folder name"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
                 value={newContainerName}
                 onChange={(e) => setNewContainerName(e.target.value)}
@@ -1440,56 +1254,105 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   Cancel
                 </button>
               </div>
-            </div>
+            </SymbolCreatePopover>
           ) : null}
+          {showOutputFolders ? (
+            <MergedStructureExplorer
+              entries={projectFolderPaths}
+              fileOwners={fileOwners}
+              filePaths={projectFilePaths}
+              pathKinds={projectFolderPathKinds}
+              graphContainers={visibleGraphContainers}
+              classes={classes}
+              functions={functions}
+              documents={documents}
+              projectCodegenDefaults={projectCodegenDefaults}
+              activeGraphTab={activeGraphTab}
+              activeClassId={activeClassId}
+              selection={selection}
+              isReferenceMode={isReferenceMode}
+              isTabDirty={isTabDirty}
+              expandedContainerIds={expandedContainerIds}
+              toggleContainerExpanded={toggleContainerExpanded}
+              draggingClassId={draggingClassId}
+              draggingGraphContainerId={draggingGraphContainerId}
+              dropContainerId={dropContainerId}
+              dropGraphContainerId={dropGraphContainerId}
+              onClassDragStart={handleClassDragStart}
+              onClassDragEnd={handleClassDragEnd}
+              onGraphContainerDragStart={handleGraphContainerDragStart}
+              onGraphContainerDragEnd={handleGraphContainerDragEnd}
+              onContainerDragOver={handleContainerDragOver}
+              onContainerDrop={handleContainerDrop}
+              onContainerDragLeave={(containerId) => {
+                setDropContainerId((id) => (id === containerId ? null : id));
+                setDropGraphContainerId((id) => (id === containerId ? null : id));
+              }}
+              selectGraph={selectGraph}
+              openGraphContainer={openGraphContainer}
+              selectClass={selectClass}
+              openClassGraph={openClassGraph}
+              openGraph={(graphId) => openGraph(graphId, 'function')}
+              classSymbolCounts={classSymbolCounts}
+              canRenameContainer={canRenameContainer}
+              canDeleteContainer={canDeleteContainer}
+              deleteContainer={deleteContainer}
+              onStartRenameContainer={(container) => {
+                setRenamingContainerId(container.id);
+                setRenameContainerName(container.name);
+              }}
+              renamingContainerId={renamingContainerId}
+              renameContainerName={renameContainerName}
+              setRenameContainerName={setRenameContainerName}
+              onSaveContainerRename={handleSaveContainerRename}
+              onCancelContainerRename={() => setRenamingContainerId(null)}
+            />
+          ) : null}
+          {!showOutputFolders ? (
+          <>
           {visibleGraphContainers
             .map((container) => {
               const containerClasses = classesForContainer(classes, container.id);
-              const isExpanded = expandedContainerIds[container.id] ?? true;
               return (
                 <React.Fragment key={container.id}>
                   <TreeRow
                     leading={
-                      <div className="flex items-center gap-0.5">
-                        <button
-                          type="button"
-                          className="p-0.5 text-zinc-500 hover:text-zinc-300"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleContainerExpanded(container.id);
-                          }}
-                        >
-                          {isExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-                        </button>
+                      !isReferenceMode ? (
                         <span
                           draggable
                           className="p-0.5 text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing"
-                          title="Drag to reorder graph"
+                          title="Drag to reorder folder"
                           onClick={(e) => e.stopPropagation()}
                           onDragStart={(e) => handleGraphContainerDragStart(e, container)}
                           onDragEnd={handleGraphContainerDragEnd}
                         >
                           <GripVertical size={10} />
                         </span>
-                      </div>
+                      ) : (
+                        <span className="w-2.5" />
+                      )
                     }
                     icon={<GitBranch size={10} className="text-emerald-500/80 shrink-0" />}
                     label={
                       renamingContainerId === container.id ? renameContainerName : container.name
                     }
-                    meta={`${containerClasses.length} class${containerClasses.length === 1 ? '' : 'es'}`}
-                    hint="Click to open graph · Chevron to expand or collapse"
-                    active={
-                      activeGraphTab === container.id ||
-                      (containerClasses.length === 1 &&
-                        activeGraphTab === classGraphTabId(containerClasses[0]!))
+                    meta={
+                      [
+                        `${containerClasses.length} class${containerClasses.length === 1 ? '' : 'es'}`,
+                        showOutputFolders ? containerEmitHint(container) : undefined,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ') || undefined
                     }
+                    hint="Click to select · Double-click to open · Drop class from Symbols to set output folder"
+                    active={activeGraphTab === container.id}
                     isDragging={draggingGraphContainerId === container.id}
                     isDropTarget={
                       dropContainerId === container.id || dropGraphContainerId === container.id
                     }
-                    openOnSelect
+                    onSelect={() => selectGraph(container.id)}
                     onOpen={() => openGraphContainer(container)}
+                    showOpenAffordance
                     onDragOver={(e) => handleContainerDragOver(e, container.id)}
                     onDrop={(e) => handleContainerDrop(e, container.id)}
                     onDragLeave={() => {
@@ -1499,24 +1362,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     suffix={
                       !isReferenceMode ? (
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                          <button
-                            type="button"
-                            className="p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
-                            title="New class"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAddingClassToContainerId(container.id);
-                              setNewClassName('');
-                              setExpandedContainerIds((prev) => ({ ...prev, [container.id]: true }));
-                            }}
-                          >
-                            <Plus size={10} />
-                          </button>
                           {canRenameContainer(container) ? (
                             <button
                               type="button"
                               className="p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
-                              title="Rename graph folder"
+                              title="Rename folder"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setRenamingContainerId(container.id);
@@ -1530,7 +1380,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                             <button
                               type="button"
                               className="p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                              title="Delete graph folder"
+                              title="Delete folder"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteContainer(container.id);
@@ -1565,138 +1415,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       </button>
                     </div>
                   ) : null}
-                  {isExpanded ? (
-                    <>
-                      {containerClasses.map((cls) => {
-                        const counts = classSymbolCounts(cls.id);
-                        const isActive = activeClassId === cls.id;
-                        const mainTabId = classGraphTabId(cls);
-                        return (
-                          <React.Fragment key={cls.id}>
-                            <TreeRow
-                              depth="l2"
-                              active={isActive && activeGraphTab === mainTabId}
-                              icon={<Boxes size={10} className="text-violet-400/80 shrink-0" />}
-                              label={renamingClassId === cls.id ? renameClassName : cls.name}
-                              meta={
-                                isActive
-                                  ? `active · fn ${counts.functions} · evt ${counts.events} · var ${counts.variables}`
-                                  : `fn ${counts.functions} · evt ${counts.events} · var ${counts.variables}`
-                              }
-                              hint="Click to select class and open its graph · Drag to declare or move"
-                              openOnSelect
-                              onOpen={() => openClassGraph(cls)}
-                              isDragging={draggingClassId === cls.id}
-                              onDragStart={(e) => handleClassDragStart(e, cls)}
-                              onDragEnd={handleClassDragEnd}
-                              suffix={
-                                !isReferenceMode ? (
-                                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                                    {isTabDirty(mainTabId) ? (
-                                      <span
-                                        className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
-                                        title="Uncompiled changes"
-                                      />
-                                    ) : null}
-                                    <button
-                                      type="button"
-                                      className="p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
-                                      title="Rename class"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setRenamingClassId(cls.id);
-                                        setRenameClassName(cls.name);
-                                      }}
-                                    >
-                                      <PenLine size={10} />
-                                    </button>
-                                    {canDeleteClass ? (
-                                      <button
-                                        type="button"
-                                        className="p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                                        title="Delete class"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          deleteClass(cls.id);
-                                        }}
-                                      >
-                                        <Trash2 size={10} />
-                                      </button>
-                                    ) : null}
-                                  </div>
-                                ) : isTabDirty(mainTabId) ? (
-                                  <span
-                                    className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
-                                    title="Uncompiled changes"
-                                  />
-                                ) : null
-                              }
-                            />
-                            {renamingClassId === cls.id ? (
-                              <div className={`${INDENT.l2} py-1 pr-2 flex gap-1 pl-11`}>
-                                <input
-                                  type="text"
-                                  value={renameClassName}
-                                  onChange={(e) => setRenameClassName(e.target.value)}
-                                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2 py-0.5 text-[10px] text-white"
-                                  autoFocus
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleSaveClassRename(cls);
-                                    if (e.key === 'Escape') setRenamingClassId(null);
-                                  }}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleSaveClassRename(cls)}
-                                  className="px-2 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30"
-                                >
-                                  Save
-                                </button>
-                              </div>
-                            ) : null}
-                          </React.Fragment>
-                        );
-                      })}
-                      {!isReferenceMode && addingClassToContainerId === container.id ? (
-                        <div className={`${INDENT.l2} py-1.5 pr-2 space-y-1.5`}>
-                          <input
-                            type="text"
-                            placeholder="Class name"
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[10px] text-white focus:outline-none focus:border-zinc-600"
-                            value={newClassName}
-                            onChange={(e) => setNewClassName(e.target.value)}
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveClass(container.id);
-                              if (e.key === 'Escape') {
-                                setAddingClassToContainerId(null);
-                                setNewClassName('');
-                              }
-                            }}
-                          />
-                          <div className="flex gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleSaveClass(container.id)}
-                              className="flex-1 px-2 py-1 rounded bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/30 hover:bg-indigo-500/30"
-                            >
-                              Create & open
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAddingClassToContainerId(null);
-                                setNewClassName('');
-                              }}
-                              className="px-2 py-1 rounded text-[10px] text-zinc-500 border border-zinc-800 hover:text-zinc-300"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : null}
                 </React.Fragment>
               );
             })}
@@ -1704,9 +1422,13 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           !isAddingContainer
             ? emptyHint('No match.')
             : null}
+          </>
+          ) : null}
         </CategorySection>
+        </>
+        ) : null}
 
-        {environmentSurface && environmentManifest ? (
+        {explorerTab === 'api' && environmentSurface && environmentManifest ? (
           <CategorySection
             title="Environment API"
             count={
@@ -1715,9 +1437,17 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               environmentSurface.overrideable.length
             }
             icon={<Layers size={12} className="text-indigo-400/80 shrink-0" />}
-            expanded={expanded.environment}
-            onToggle={() => toggleCategory('environment')}
+            expanded
+            onToggle={() => {}}
           >
+            {environmentManifest ? (
+              <div className={`${INDENT.l1} text-[9px] text-indigo-400/80 truncate pr-2 pb-1`}>
+                {environmentManifest.displayName}
+                {environmentVersion ? (
+                  <span className="text-zinc-600 font-mono"> · v{environmentVersion}</span>
+                ) : null}
+              </div>
+            ) : null}
             {environmentSurface.events
               .filter((e) => matchesFilter(e.name, q))
               .map((event) => (
@@ -1801,7 +1531,199 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           </CategorySection>
         ) : null}
 
-        {/* Functions */}
+        {explorerTab === 'symbols' ? (
+        <>
+        <CategorySection
+          title="Classes"
+          count={classes.length}
+          icon={<Boxes size={12} className="text-violet-400/80 shrink-0" />}
+          expanded={expanded.classes}
+          onToggle={() => toggleCategory('classes')}
+          onAdd={() => {
+            setIsAddingClass(true);
+            setNewClassContainerId(defaultClassContainerId());
+            setExplorerTab('symbols');
+            setExpanded((s) => ({ ...s, classes: true }));
+          }}
+          addLabel="New class"
+        >
+          <SymbolCreatePopover
+            open={isAddingClass}
+            title="New class"
+            onClose={() => {
+              setIsAddingClass(false);
+              setNewClassName('');
+            }}
+            anchorClassName={INDENT.l1}
+          >
+            <input
+              type="text"
+              placeholder="Class name"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
+              value={newClassName}
+              onChange={(e) => setNewClassName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveClass();
+                if (e.key === 'Escape') {
+                  setIsAddingClass(false);
+                  setNewClassName('');
+                }
+              }}
+            />
+            <label className="block text-[9px] text-zinc-500 uppercase tracking-wide">Output folder</label>
+            <select
+              value={newClassContainerId}
+              onChange={(e) => setNewClassContainerId(e.target.value)}
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[10px] text-white focus:outline-none focus:border-zinc-600"
+            >
+              {graphContainers.map((container) => (
+                <option key={container.id} value={container.id}>
+                  {container.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 text-[11px] px-2 py-1 rounded border border-indigo-500/30"
+              onClick={handleSaveClass}
+            >
+              Create & open
+            </button>
+          </SymbolCreatePopover>
+          {filteredClasses.length === 0 && !isAddingClass
+            ? emptyHint(classes.length === 0 ? 'No classes — use + to add' : 'No match.')
+            : filteredClasses.map((cls) => {
+                const counts = classSymbolCounts(cls.id);
+                const isActive = activeClassId === cls.id;
+                const mainTabId = classGraphTabId(cls);
+                const folderName =
+                  graphContainers.find((c) => c.id === classContainerId(cls))?.name ?? 'Project map';
+                return (
+                  <React.Fragment key={cls.id}>
+                    <TreeRow
+                      active={isActive && activeGraphTab === mainTabId}
+                      leading={
+                        !isReferenceMode ? (
+                          <span
+                            draggable
+                            className="cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 p-0"
+                            title="Drag grip to move output folder"
+                            onClick={(e) => e.stopPropagation()}
+                            onDragStart={(e) => {
+                              e.stopPropagation();
+                              handleClassDragStart(e, cls);
+                            }}
+                            onDragEnd={handleClassDragEnd}
+                          >
+                            <GripVertical size={10} />
+                          </span>
+                        ) : (
+                          <span className="w-2.5" />
+                        )
+                      }
+                      icon={<Boxes size={10} className="text-violet-400/80 shrink-0" />}
+                      label={renamingClassId === cls.id ? renameClassName : cls.name}
+                      meta={
+                        [
+                          folderName,
+                          isActive ? 'active' : undefined,
+                          `fn ${counts.functions} · evt ${counts.events} · var ${counts.variables}`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')
+                      }
+                      hint="Drag row to canvas · drag grip to move folder · double-click to open class graph"
+                      onSelect={() => selectClass(cls)}
+                      onOpen={() => openClassGraph(cls)}
+                      showOpenAffordance
+                      isDragging={draggingClassId === cls.id}
+                      canvasDrag={
+                        !isReferenceMode
+                          ? {
+                              mimeType: CLASS_DRAG_MIME,
+                              payload: classDragPayload(cls),
+                            }
+                          : undefined
+                      }
+                      suffix={
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {renderClassCanvasStatus(cls)}
+                          <CodegenSuffix
+                            tabId={mainTabId}
+                            documents={documents}
+                            projectDefaults={projectCodegenDefaults}
+                          />
+                          {!isReferenceMode ? (
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                              {isTabDirty(mainTabId) ? (
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+                                  title="Uncompiled changes"
+                                />
+                              ) : null}
+                              <button
+                                type="button"
+                                className="p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
+                                title="Rename class"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRenamingClassId(cls.id);
+                                  setRenameClassName(cls.name);
+                                }}
+                              >
+                                <PenLine size={10} />
+                              </button>
+                              {canDeleteClass ? (
+                                <button
+                                  type="button"
+                                  className="p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
+                                  title="Delete class"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteClass(cls.id);
+                                  }}
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : isTabDirty(mainTabId) ? (
+                            <span
+                              className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+                              title="Uncompiled changes"
+                            />
+                          ) : null}
+                        </div>
+                      }
+                    />
+                    {renamingClassId === cls.id ? (
+                      <div className={`${INDENT.l2} py-1 pr-2 flex gap-1`}>
+                        <input
+                          type="text"
+                          value={renameClassName}
+                          onChange={(e) => setRenameClassName(e.target.value)}
+                          className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2 py-0.5 text-[10px] text-white"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveClassRename(cls);
+                            if (e.key === 'Escape') setRenamingClassId(null);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveClassRename(cls)}
+                          className="px-2 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : null}
+                  </React.Fragment>
+                );
+              })}
+        </CategorySection>
+
         <CategorySection
           title="Functions"
           count={classFunctions.length}
@@ -1810,14 +1732,32 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           onToggle={() => toggleCategory('functions')}
           onAdd={() => {
             setIsAddingFunction(true);
+            setExplorerTab('symbols');
             setExpanded((s) => ({ ...s, functions: true }));
           }}
           addLabel="New function"
         >
-          {isAddingFunction ? renderFunctionCreateForm() : null}
+          <SymbolCreatePopover
+            open={isAddingFunction}
+            title="New function"
+            onClose={() => {
+              setIsAddingFunction(false);
+              setNewFuncName('');
+              setNewFuncBinding('instance');
+            }}
+            anchorClassName={INDENT.l1}
+          >
+            {renderFunctionCreateForm()}
+          </SymbolCreatePopover>
           {filteredFunctions.length === 0 && !isAddingFunction
             ? emptyHint(classFunctions.length === 0 ? 'Empty — use + to add' : '—')
-            : filteredFunctions.map((f) => (
+            : filteredFunctions.map((f) => {
+                const primaryOverload = f.overloads[0];
+                const extraOverloads = f.overloads.slice(1);
+                const primaryDragPayload: FunctionOverloadDragPayload | null = primaryOverload
+                  ? { functionId: f.id, overloadId: primaryOverload.id }
+                  : null;
+                return (
                 <React.Fragment key={f.id}>
                   <TreeRow
                     active={selection.type === 'function' && selection.id === f.id}
@@ -1843,14 +1783,28 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     label={f.name}
                     meta={
                       f.binding !== 'instance'
-                        ? f.binding
-                        : f.overloads.length > 1
-                          ? `${f.overloads.length} overloads`
+                        ? `${f.binding} · ${primaryOverload ? overloadTreeLabel(primaryOverload) : ''}`
+                        : primaryOverload
+                          ? extraOverloads.length > 0
+                            ? `${overloadTreeLabel(primaryOverload)} +${extraOverloads.length}`
+                            : overloadTreeLabel(primaryOverload)
                           : undefined
                     }
-                    hint={canReorderFunctions ? 'Drag to reorder · click to edit' : rowHint}
+                    hint={
+                      canReorderFunctions
+                        ? 'Drag grip to reorder · drag row to call · double-click to open'
+                        : 'Drag row to call · click to select · double-click to open'
+                    }
                     onSelect={() => selectFunction(f)}
                     onOpen={() => openGraph(f.id, 'function')}
+                    canvasDrag={
+                      !isReferenceMode && primaryDragPayload
+                        ? {
+                            mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
+                            payload: JSON.stringify(primaryDragPayload),
+                          }
+                        : undefined
+                    }
                     onDragOver={(e) => handleFunctionDragOver(e, f.id)}
                     onDrop={(e) => handleFunctionDrop(e, f.id)}
                     onDragLeave={() => {
@@ -1858,6 +1812,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     }}
                     suffix={
                       <div className="flex items-center gap-0.5 shrink-0">
+                        <CodegenSuffix
+                          tabId={f.id}
+                          documents={documents}
+                          projectDefaults={projectCodegenDefaults}
+                        />
                         {renderFunctionCanvasStatus(f)}
                         {isTabDirty(f.id) ? (
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Uncompiled changes" />
@@ -1899,7 +1858,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       </div>
                     }
                   />
-                  {f.overloads.map((overload, index) => {
+                  {extraOverloads.map((overload, index) => {
                     const dragPayload: FunctionOverloadDragPayload = {
                       functionId: f.id,
                       overloadId: overload.id,
@@ -1915,8 +1874,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         }
                         icon={<div className="w-1 h-1 rounded-full bg-indigo-400/60 shrink-0 ml-2" />}
                         label={overloadTreeLabel(overload)}
-                        meta={f.overloads.length > 1 ? `overload ${index + 1}` : 'drag to call'}
-                        hint="Drag to graph to call · click to select"
+                        meta={`override ${index + 2}`}
+                        hint="Drag to graph to call this override · click to open"
                         canvasDrag={{
                           mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
                           payload: JSON.stringify(dragPayload),
@@ -1927,55 +1886,65 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   })}
                   {addingOverloadForId === f.id ? renderOverloadCreateForm(f.id) : null}
                 </React.Fragment>
-              ))}
+                );
+              })}
         </CategorySection>
 
         {/* Events — class-scoped custom events */}
         <CategorySection
           title="Events"
-          count={classEvents.length}
+          count={projectEvents.length}
           icon={<Radio size={12} className="text-violet-400/80 shrink-0" />}
           expanded={expanded.events}
           onToggle={() => toggleCategory('events')}
           onAdd={() => {
             setIsAddingEvent(true);
+            setExplorerTab('symbols');
             setExpanded((s) => ({ ...s, events: true }));
           }}
           addLabel="New event"
         >
-          {isAddingEvent && (
-            <div className={`${INDENT.l1} py-1 pr-2 space-y-1`}>
-              <input
-                type="text"
-                placeholder="Event name (e.g. calculate)"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
-                value={newEventName}
-                onChange={(e) => setNewEventName(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveEvent();
-                  if (e.key === 'Escape') setIsAddingEvent(false);
-                }}
-              />
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  className="bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 rounded"
-                  onClick={handleSaveEvent}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
+          <SymbolCreatePopover
+            open={isAddingEvent}
+            title="New event"
+            onClose={() => {
+              setIsAddingEvent(false);
+              setNewEventName('');
+            }}
+            anchorClassName={INDENT.l1}
+          >
+            <input
+              type="text"
+              placeholder="Event name (e.g. calculate)"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
+              value={newEventName}
+              onChange={(e) => setNewEventName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveEvent();
+                if (e.key === 'Escape') setIsAddingEvent(false);
+              }}
+            />
+            <button
+              type="button"
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 py-1 rounded"
+              onClick={handleSaveEvent}
+            >
+              Add
+            </button>
+          </SymbolCreatePopover>
           {filteredEvents.length === 0 && !isAddingEvent
             ? emptyHint(
-                classEvents.length === 0
-                  ? 'No events yet — use + to add, then drag dispatch to graph.'
+                projectEvents.length === 0
+                  ? 'No events yet — use + to add, then drag the dispatch row to graph.'
                   : 'No match.'
               )
             : filteredEvents.map((entry) => {
-                const dragPayload: EventDragPayload = { eventId: entry.id };
+                const dragPayload: EventDragPayload = {
+                  eventId: entry.id,
+                  eventName: entry.label,
+                };
+                const isSymbolEvent = classEvents.some((event) => event.id === entry.id);
                 return (
                   <React.Fragment key={entry.id}>
                     <TreeRow
@@ -1986,13 +1955,23 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       hint={
                         isReferenceMode
                           ? rowHint
-                          : 'Click to open handler (declare) on class graph'
+                          : isSymbolEvent
+                            ? 'Drag row to graph · double-click to open handler'
+                            : 'Click to select · double-click to open handler on class graph'
                       }
-                      openOnSelect={!isReferenceMode}
                       onSelect={() => selectEvent(entry.id)}
                       onOpen={() => openEventHomeGraph(entry.id)}
+                      showOpenAffordance={isSymbolEvent}
+                      canvasDrag={
+                        !isReferenceMode
+                          ? {
+                              mimeType: EVENT_DRAG_MIME,
+                              payload: JSON.stringify(dragPayload),
+                            }
+                          : undefined
+                      }
                       suffix={
-                        isReferenceMode ? undefined : (
+                        isReferenceMode || !isSymbolEvent ? undefined : (
                           <div className="flex items-center gap-0.5 shrink-0">
                             {renderEventCanvasStatus(entry.id)}
                             <button
@@ -2015,8 +1994,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         depth="l2"
                         icon={<div className="w-1 h-1 rounded-full bg-violet-400/60 shrink-0 ml-2" />}
                         label="dispatch"
-                        meta="drag to graph"
-                        hint="Drag to graph — choose Dispatch or Declare"
+                        meta={entry.dispatchCount > 0 ? `${entry.dispatchCount} on canvas` : 'drag to graph'}
+                        hint="Drag to graph to spawn a dispatch node"
                         canvasDrag={{
                           mimeType: EVENT_DRAG_MIME,
                           payload: JSON.stringify(dragPayload),
@@ -2029,14 +2008,17 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               })}
         </CategorySection>
 
-        {/* Variables */}
         <CategorySection
           title="Variables"
           count={classVariables.length}
           icon={<Variable size={12} className="text-sky-400/80 shrink-0" />}
           expanded={expanded.variables}
           onToggle={() => toggleCategory('variables')}
-          onAdd={() => setIsAddingVariable(true)}
+          onAdd={() => {
+            setIsAddingVariable(true);
+            setExplorerTab('symbols');
+            setExpanded((s) => ({ ...s, variables: true }));
+          }}
           addLabel="New variable"
         >
           {!isReferenceMode && variables.length < 3 ? (
@@ -2050,61 +2032,66 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               </button>
             </div>
           ) : null}
-          {isAddingVariable && (
-            <div className={`${INDENT.l1} py-1 pr-2 space-y-1`}>
-              <input
-                type="text"
-                placeholder="Variable name"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
-                value={newVarName}
-                onChange={(e) => setNewVarName(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveVariable();
-                  if (e.key === 'Escape') setIsAddingVariable(false);
-                }}
-              />
-              <div className="flex gap-1">
-                <SearchableSelect
-                  className="flex-1"
-                  value={newVarType}
-                  onChange={(value) => {
-                    if (!isDataTypeCoaAllowed(value as VariableType, crossOverMode)) return;
-                    setNewVarType(value as VariableType);
-                  }}
-                  options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
-                    value: descriptor.id,
-                    label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
-                  }))}
-                  placeholder="Type…"
-                />
+          <SymbolCreatePopover
+            open={isAddingVariable}
+            title="New variable"
+            onClose={() => {
+              setIsAddingVariable(false);
+              setNewVarName('');
+              setNewVarBinding('instance');
+            }}
+            anchorClassName={INDENT.l1}
+          >
+            <input
+              type="text"
+              placeholder="Variable name"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
+              value={newVarName}
+              onChange={(e) => setNewVarName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveVariable();
+                if (e.key === 'Escape') setIsAddingVariable(false);
+              }}
+            />
+            <SearchableSelect
+              className="w-full"
+              value={newVarType}
+              onChange={(value) => {
+                if (!isDataTypeCoaAllowed(value as VariableType, crossOverMode)) return;
+                setNewVarType(value as VariableType);
+              }}
+              options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
+                value: descriptor.id,
+                label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
+              }))}
+              placeholder="Type…"
+            />
+            <div className="flex flex-wrap gap-1">
+              {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => (
                 <button
+                  key={binding}
                   type="button"
-                  className="bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 rounded"
-                  onClick={handleSaveVariable}
+                  disabled={!isBindingCoaAllowed(binding, crossOverMode)}
+                  onClick={() => setNewVarBinding(binding)}
+                  className={`px-1.5 py-0.5 text-[9px] rounded border ${
+                    newVarBinding === binding
+                      ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-500'
+                  } disabled:opacity-40`}
                 >
-                  Add
+                  {binding}
                 </button>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => (
-                  <button
-                    key={binding}
-                    type="button"
-                    disabled={!isBindingCoaAllowed(binding, crossOverMode)}
-                    onClick={() => setNewVarBinding(binding)}
-                    className={`px-1.5 py-0.5 text-[9px] rounded border ${
-                      newVarBinding === binding
-                        ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
-                        : 'bg-zinc-950 border-zinc-800 text-zinc-500'
-                    } disabled:opacity-40`}
-                  >
-                    {binding}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
-          )}
+            <button
+              type="button"
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 py-1 rounded"
+              onClick={handleSaveVariable}
+            >
+              Add
+            </button>
+          </SymbolCreatePopover>
           {filteredVariables.length === 0 && !isAddingVariable
             ? emptyHint(classVariables.length === 0 ? 'No variables yet.' : 'No match.')
             : filteredVariables.map((v) => (
@@ -2116,21 +2103,22 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   hint={
                     isReferenceMode
                       ? 'Click to focus references · Double-click to edit in inspector'
-                      : 'Click to select and open class graph · Double-click to edit in inspector'
+                      : 'Click to select · Double-click to open class graph'
                   }
-                  openOnSelect={!isReferenceMode}
                   onSelect={() => selectVariable(v.id, v.name)}
                   onOpen={() => openVariableHomeGraph(v.id)}
                   onDelete={isReferenceMode ? undefined : () => handleDeleteVariable(v.id)}
                 />
               ))}
         </CategorySection>
+        </>
+        ) : null}
       </div>
 
       <div className="flex-none px-3 py-1 border-t border-zinc-800 text-[9px] text-zinc-600 text-center">
         {isReferenceMode
-          ? 'Click · dbl-click open'
-          : 'Drag overload or event to graph · drag function grip to reorder'}
+          ? 'Click select · double-click open'
+          : 'Structure (folders) · Symbols (classes, functions, events, variables) · drag class to folder for output paths'}
       </div>
 
       <SymbolDeleteDialog

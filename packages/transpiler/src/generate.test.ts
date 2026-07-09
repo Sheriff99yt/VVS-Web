@@ -97,6 +97,29 @@ describe('transpileGraphCode', () => {
     expect(result.sourceMap['calc-class-define']?.length).toBeGreaterThan(0);
   });
 
+  test('missing class_define omits class shell but keeps member chain order', () => {
+    const snapshot = createCalculatorUsabilityTestSnapshot();
+    const calc = snapshot.documents![CALCULATOR_GRAPH_ID]!;
+    const nodesWithoutClassDefine = calc.nodes.filter((n) => n.data.kindId !== 'class_define');
+    const edgesWithoutClassDefine = calc.edges.filter(
+      (e) => e.source !== 'calc-class-define' && e.target !== 'calc-class-define'
+    );
+
+    const code = transpileGraphCode({
+      ...mainCtx(snapshot),
+      nodes: nodesWithoutClassDefine,
+      edges: edgesWithoutClassDefine,
+    });
+
+    expect(code).not.toMatch(/class\s+Calculator\b/);
+    expect(code).toContain('# Declare start');
+    expect(code).toContain('self.A =');
+    expect(code).toContain('def on_start(self):');
+    expect(code).toContain('def Add(self):');
+    expect(code.indexOf('# Declare start')).toBeLessThan(code.indexOf('self.A ='));
+    expect(code.indexOf('self.A =')).toBeLessThan(code.indexOf('def on_start(self):'));
+  });
+
   test('no define nodes emits no preamble declarations', () => {
     const snapshot = createCalculatorUsabilityTestSnapshot();
     const calc = snapshot.documents![CALCULATOR_GRAPH_ID]!;
@@ -242,11 +265,16 @@ describe('transpileGraphCode', () => {
       },
     ];
 
-    const result = transpileGraph({
-      ...mainCtx(snapshot),
-      nodes,
-      edges,
-    });
+    const result = transpileGraph(
+      withTestEntryGraph(
+        {
+          ...mainCtx(snapshot),
+          nodes,
+          edges,
+        },
+        'calc-dispatch'
+      )
+    );
 
     const content = result.files[0]!.content;
     expect(content).toContain('self.on_calculate()');
@@ -380,7 +408,7 @@ describe('transpileGraphCode', () => {
     });
 
     const content = result.files[0]!.content;
-    expect(result.files[0]?.path).toBe('ResultPanel.py');
+    expect(result.files[0]?.path).toBe('resultpanel.py');
     expect(content).toContain('class ResultPanel');
     expect(content).toContain('print("Result panel ready")');
   });
@@ -400,8 +428,8 @@ describe('transpileGraphCode', () => {
     });
 
     const paths = result.files.map((f) => f.path).sort();
-    expect(paths).toContain('Calculator.py');
-    expect(paths).toContain('ResultPanel.py');
+    expect(paths).toContain('calculator.py');
+    expect(paths).toContain('resultpanel.py');
     expect(paths).toContain('Add.py');
     expect(paths).toContain('Clear.py');
     expect(Object.keys(result.sourceMap).length).toBeGreaterThan(0);
@@ -435,7 +463,7 @@ describe('transpileGraphCode', () => {
     expect(result.files.some((file) => file.path === 'Add.mjs')).toBe(true);
     expect(result.files.find((file) => file.path === 'Add.mjs')?.content).toContain('Add(');
     expect(result.files.some((file) => file.path === 'Add.py')).toBe(false);
-    expect(result.files.some((file) => file.path === 'Calculator.py')).toBe(true);
+    expect(result.files.some((file) => file.path === 'calculator.py')).toBe(true);
   });
 
   test('class home graph uses per-graph extension in output path', () => {

@@ -28,7 +28,7 @@ describe('environment multi-file transpile', () => {
     });
 
     expect(result.files.length).toBeGreaterThanOrEqual(2);
-    const moduleFile = result.files.find((f) => f.path.endsWith('.py') && f.path.includes('App'));
+    const moduleFile = result.files.find((f) => f.path.endsWith('.py') && f.path.toLowerCase().includes('app'));
     const hostFile = result.files.find((f) => f.path === 'main.py');
     expect(moduleFile?.content).toContain('class App');
     expect(hostFile?.content).toContain('App().on_start()');

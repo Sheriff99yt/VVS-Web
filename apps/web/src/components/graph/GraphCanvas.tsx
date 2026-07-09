@@ -30,6 +30,7 @@ import {
   applyEventDispatchBinding,
   createEventId,
   EVENT_DRAG_MIME,
+  resolveEventForDrop,
   type EventDragPayload,
 } from '@/lib/eventHelpers';
 import {
@@ -212,7 +213,7 @@ function GraphCanvasInner() {
   } = useProject();
 
   const { pendingCanvasFocus, clearPendingCanvasFocus } = useEditorNavigation();
-  const { focusGraphRef, focusFunction } = useEditorFocus();
+  const { focusGraphRef, focusFunction, focusClass } = useEditorFocus();
   const { graphChromeOpen } = useEditorPanels();
 
   const {
@@ -373,6 +374,7 @@ function GraphCanvasInner() {
   );
 
   const processedFocusKeyRef = React.useRef<string | null>(null);
+  const suppressPaneClickRef = React.useRef(false);
 
   React.useEffect(() => {
     if (!pendingCanvasFocus || pendingCanvasFocus.graphTab !== activeGraphTab) {
@@ -470,6 +472,10 @@ function GraphCanvasInner() {
   );
 
   const onPaneClick = useCallback(() => {
+    if (suppressPaneClickRef.current) {
+      suppressPaneClickRef.current = false;
+      return;
+    }
     if (menu) setMenu(null);
     if (variableMenu) setVariableMenu(null);
     if (functionMenu) setFunctionMenu(null);
@@ -711,6 +717,8 @@ function GraphCanvasInner() {
       };
 
       setNodesWithHistory((nds) => [...nds, newNode]);
+      setSelection({ type: 'node', id: newNode.id });
+      setSelectedNodeIds([newNode.id]);
 
       if (pendingConnection) {
         const { nodeId, handleId, handleType } = pendingConnection;
@@ -757,7 +765,7 @@ function GraphCanvasInner() {
         }
       }
     },
-    [nodes, edges, setNodesWithHistory, setEdgesWithHistory]
+    [nodes, edges, setNodesWithHistory, setEdgesWithHistory, setSelection, setSelectedNodeIds]
   );
 
   const handleNewEventHere = useCallback(() => {
@@ -783,6 +791,9 @@ function GraphCanvasInner() {
   }, [menu, onActiveClassGraph, activeClassId, addEventWithDefine, spawnDispatchNode]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
+    if (event.dataTransfer.types.includes(TREE_DRAG_MIME.classFolder)) {
+      return;
+    }
     event.preventDefault();
     if (
       event.dataTransfer.types.includes(FUNCTION_OVERLOAD_DRAG_MIME) ||
@@ -801,6 +812,13 @@ function GraphCanvasInner() {
     (event: React.DragEvent) => {
       event.preventDefault();
 
+      if (
+        event.dataTransfer.types.includes(TREE_DRAG_MIME.classFolder) &&
+        !event.dataTransfer.types.includes(CLASS_DRAG_MIME)
+      ) {
+        return;
+      }
+
       const overloadDataStr = event.dataTransfer.getData(FUNCTION_OVERLOAD_DRAG_MIME);
       if (overloadDataStr) {
         try {
@@ -811,6 +829,7 @@ function GraphCanvasInner() {
           if (!func) return;
 
           const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+          suppressPaneClickRef.current = true;
           setFunctionMenu({
             x: event.clientX,
             y: event.clientY,
@@ -827,17 +846,13 @@ function GraphCanvasInner() {
       const eventDataStr = event.dataTransfer.getData(EVENT_DRAG_MIME);
       if (eventDataStr) {
         try {
-          const { eventId } = JSON.parse(eventDataStr) as EventDragPayload;
-          const projectEvent = classEvents.find((e) => e.id === eventId);
+          const payload = JSON.parse(eventDataStr) as EventDragPayload;
+          const projectEvent = resolveEventForDrop(payload, events);
           if (!projectEvent) return;
 
           const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-          setEventMenu({
-            x: event.clientX,
-            y: event.clientY,
-            flowPosition: position,
-            event: projectEvent,
-          });
+          suppressPaneClickRef.current = true;
+          spawnDispatchNode(projectEvent, position);
         } catch (e) {
           console.error('Failed to parse dropped event', e);
         }
@@ -849,6 +864,7 @@ function GraphCanvasInner() {
         try {
           const variable = JSON.parse(variableDataStr);
           const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+          suppressPaneClickRef.current = true;
           setVariableMenu({ x: event.clientX, y: event.clientY, flowPosition: position, variable });
         } catch (e) {
           console.error('Failed to parse dropped variable', e);
@@ -880,10 +896,11 @@ function GraphCanvasInner() {
         const cls = classes.find((c) => c.id === payload.classId);
         if (!cls) return;
         const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+        suppressPaneClickRef.current = true;
         setClassMenu({ x: event.clientX, y: event.clientY, flowPosition: position, cls });
       }
     },
-    [classes, classEvents, functions, graphContainers, screenToFlowPosition]
+    [classes, events, functions, graphContainers, screenToFlowPosition, spawnDispatchNode]
   );
 
   const handleSpawnGraphRef = useCallback(
@@ -1113,6 +1130,14 @@ function GraphCanvasInner() {
       setActiveGraphTab,
       setSelection,
     ]
+  );
+
+  const handleOpenClassGraph = useCallback(
+    (cls: ClassSymbol) => {
+      focusClass(cls);
+      setClassMenu(null);
+    },
+    [focusClass]
   );
 
   const handleSpawnVariableNode = useCallback(
@@ -1494,6 +1519,8 @@ function GraphCanvasInner() {
       style={{ background: '#0a0a0c' }}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      onDragOverCapture={onDragOver}
+      onDropCapture={onDrop}
     >
       <GraphNodeSearch />
       <GraphShortcutsHelp open={shortcutsHelpOpen} onClose={() => setShortcutsHelpOpen(false)} />
@@ -1694,17 +1721,12 @@ function GraphCanvasInner() {
           x={classMenu.x}
           y={classMenu.y}
           onClose={() => setClassMenu(null)}
-          dividersBefore={['open-class-ref']}
+          dividersBefore={
+            onActiveClassGraph && currentClass?.id === classMenu.cls.id
+              ? ['open-class-ref', 'declare-class']
+              : ['open-class-ref']
+          }
           items={[
-            {
-              id: 'declare-class',
-              label: `Declare ${classMenu.cls.name}`,
-              disabled: classDeclareExists,
-              title: classDeclareExists
-                ? 'Class define node already exists on this class graph'
-                : undefined,
-              onClick: () => handleDeclareClass(classMenu.cls),
-            },
             {
               id: 'open-class-ref',
               label: `Open reference to ${classMenu.cls.name}`,
@@ -1713,6 +1735,25 @@ function GraphCanvasInner() {
                   { label: classMenu.cls.name, classId: classMenu.cls.id },
                   classMenu.flowPosition
                 ),
+            },
+            ...(onActiveClassGraph && currentClass?.id === classMenu.cls.id
+              ? [
+                  {
+                    id: 'declare-class',
+                    label: `Declare ${classMenu.cls.name}`,
+                    disabled: classDeclareExists,
+                    title: classDeclareExists
+                      ? 'Class define node already exists on this class graph'
+                      : undefined,
+                    onClick: () => handleDeclareClass(classMenu.cls),
+                  },
+                ]
+              : []),
+            {
+              id: 'open-class-graph',
+              label: `Open ${classMenu.cls.name}`,
+              title: 'Open class home graph',
+              onClick: () => handleOpenClassGraph(classMenu.cls),
             },
           ]}
         />

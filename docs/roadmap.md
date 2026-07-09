@@ -43,6 +43,7 @@ UE6 editor plugin (in-engine)      →   Scale + polish
 | **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; **Code \| Files** output panel; per-graph language/extension with project defaults for new graphs; multi-file tree (module + host entry) |
 | **Quality** | Snapshot tests on generated code; **Rosetta golden suite** + fidelity linter in `@vvs/syntax-packs`; graph validation (`PIN_TYPE_MISMATCH`, portability) |
 | **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, **event Dispatch** (direct call), **explicit program entry** (`role: 'entry'`, no hidden `on_start`) — **shipped**; Emit/Subscribe multicast **rejected** (hidden runtime) |
+| **Class declare fidelity** | `class_define` enforced when class has symbols or member defines; no phantom class shell from symbol table; preview shows member chain without shell when Declare deleted; export blocked via `DEFINE_NODE_MISSING` — **shipped** July 2026 |
 | **Project environments** | `@vvs/environment-templates` — VS Code–style templates, Environment API browse/spawn, built-in Python/JS packs — **shipped**; [environment_templates.md](environment_templates.md) |
 | **On-disk projects** | `.vvs/` overlay in existing repos — split JSON layout, `integration.json` emit paths, File System Access API (Chrome/Edge) — **shipped (browser)**; cloud sync still Phase 2 |
 
@@ -147,11 +148,11 @@ This is a **first-class product surface** for Unreal teams, but output remains *
 
 ## Phase 6 — Polish, scale & emitter expansion
 
-**Status:** **Active** — **language platform milestone (M3) closed** July 2026. **Usability & workflow** track underway (per-graph codegen, output file tree, searchable controls, usability example tests). Remaining Phase 6: performance, Rust/C# console env packs, mobile UX, enterprise. See [design/terms_refactor_plan.md](design/terms_refactor_plan.md) and [design/language_capability_catalog.md](design/language_capability_catalog.md).
+**Status:** **Active** — **language platform milestone (M3) closed** July 2026. **Usability & workflow** track underway (per-graph codegen, output file tree, searchable controls, usability example tests, **class declare fidelity**, live validation in code preview). Remaining Phase 6: performance, Rust/C# console env packs, mobile UX, enterprise. See [design/terms_refactor_plan.md](design/terms_refactor_plan.md) and [design/language_capability_catalog.md](design/language_capability_catalog.md).
 
 | Track | Examples |
 |-------|----------|
-| **Usability & workflow** | **Shipped (July 2026):** usability example tests (Hello World, Calculator); **Code \| Files** output tabs; per-graph `targetLanguage` + `targetFileExtension` with project defaults; searchable `SearchableSelect` project-wide; import graph/class/module pickers. **Next:** terms/vocabulary alignment, capability catalog gaps (visibility, overload UI, lambda) |
+| **Usability & workflow** | **Shipped (July 2026):** usability example tests (Hello World, Calculator); **Code \| Files** output tabs; per-graph `targetLanguage` + `targetFileExtension` with project defaults; searchable `SearchableSelect` project-wide; import graph/class/module pickers; **Project explorer** tabs (Structure \| Symbols \| API), scope header, progressive disclosure; **class ↔ canvas dual-write** (`defineNodeSync`, Declare badges, `addClassWithDefine`); **class declare fidelity** (analyzer + transpiler: no phantom class shell, preview-only body when Declare missing, Generate blocked). **Next:** terms/vocabulary alignment, capability catalog gaps (visibility, overload UI, lambda) |
 | **Performance** | 500+ node graphs at 60fps; worker-based transpile for large graphs |
 | **Languages** | **Closed (M3)** — seven pack-driven families; 14×7 Rosetta goldens; `env.gdscript.godot-game`. Optional: Rust/C# console env packs |
 | **Templates & standards** | OpenAPI/AsyncAPI → environment manifest import; TypeSpec emitter; Backstage catalog; devcontainer linkage |

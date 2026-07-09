@@ -256,7 +256,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'tree',
         title: 'Project explorer',
         description:
-          'Graph folders → classes; Functions → Events → Variables under active class; event rows with call child (drag for Call/Declare/Define menu); Environment API and generated exports.',
+          'Structure | Symbols | API tabs; scope header with breadcrumb; folders → classes; class-scoped Functions → Events → Variables; icon-expand filter; click select / double-click open; codegen suffix on class/function rows; Environment API on API tab; generated files on right panel Files tab.',
         status: 'done',
       },
       {
@@ -518,7 +518,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'analysis',
         title: 'Project analysis',
         description:
-          'analyzeProject diagnostics (DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, ORPHAN_DEFINE_NODE, PROGRAM_ENTRY_MISSING, PROGRAM_ENTRY_NOT_ON_CANVAS, LIFECYCLE_NODE_DEPRECATED, HIDDEN_EVENT_RUNTIME_UNSUPPORTED, MULTICAST_REQUIRES_SUBSCRIBE, UNRESOLVED_SYMBOL_REF); portability scan; compile gate blocks Generate on fidelity errors.',
+          'analyzeProject diagnostics (DEFINE_NODE_MISSING with class-scoped rules, DECLARATION_NOT_ON_CANVAS, ORPHAN_DEFINE_NODE, PROGRAM_ENTRY_MISSING, PROGRAM_ENTRY_NOT_ON_CANVAS, LIFECYCLE_NODE_DEPRECATED, HIDDEN_EVENT_RUNTIME_UNSUPPORTED, MULTICAST_REQUIRES_SUBSCRIBE, UNRESOLVED_SYMBOL_REF); portability scan; compile gate blocks Generate on fidelity errors; useLiveProjectValidation keeps UI in sync.',
         status: 'done',
       },
     ],
@@ -553,7 +553,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'define-nodes',
         title: 'Canvas define nodes',
         description:
-          'class_define, var_define, function_define, event_member_define on the container graph exec chain; panel↔canvas dual-write via defineNodeSync; legacy class tabs and documents.main migrate to home graphs on load.',
+          'class_define, var_define, function_define, event_member_define on the container graph exec chain; panel↔canvas dual-write via defineNodeSync + useSymbolLifecycle; addClassWithDefine on class create; legacy class tabs and documents.main migrate to home graphs on load.',
+        status: 'done',
+      },
+      {
+        id: 'class-define-fidelity',
+        title: 'Class declare fidelity',
+        description:
+          'class_define required when class has symbols or member defines; ORPHAN_DEFINE_NODE for stray class_define; no phantom class shell from symbol table; deleting Declare blocks Generate (DEFINE_NODE_MISSING) but preview shows member chain without class Name: wrapper; Calculator usability test covers deleted Declare.',
         status: 'done',
       },
       {
@@ -574,7 +581,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'canvas-source-of-truth',
         title: 'Canvas source of truth',
         description:
-          'Strict canvas-only codegen: symbol tables index only; DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, and ORPHAN_DEFINE_NODE block Generate; panel dual-write define nodes.',
+          'Strict canvas-only codegen: symbol tables index only; DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, and ORPHAN_DEFINE_NODE block Generate; panel dual-write define nodes; live analysis sync via useLiveProjectValidation.',
         status: 'done',
       },
       {
@@ -655,7 +662,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'codemirror',
         title: 'Code output panel',
         description:
-          'CodeMirror 6 — **Code** tab (per-graph transpile + sourceMap highlights; language and .{ext} in header); **Files** tab (project-wide folder tree from useProjectTranspileResult). Project map tab skips codegen.',
+          'CodeMirror 6 — **Code** tab (per-graph transpile + sourceMap highlights aligned with displayed files; language and .{ext} in header); **Files** tab (project-wide folder tree from useProjectTranspileResult). Live validation badge + preview-only banner when class Declare missing; sync indicator reflects analysis errors. Project map tab skips codegen.',
         status: 'done',
       },
       {
@@ -677,6 +684,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Per-graph language & extension',
         description:
           'GraphTabMetadata stores targetLanguage and targetFileExtension per graph; project targetLanguage/targetFileExtensions seed new graphs only; Files tab emits each graph with its own settings.',
+        status: 'done',
+      },
+      {
+        id: 'explorer-ux',
+        title: 'Project explorer tabs & scope',
+        description:
+          'Structure | Symbols | API tabs; Output toggle shows emit files under folders; drag class to folder for emit path; function base + override rows; Event dispatchers with drag-to-canvas.',
         status: 'done',
       },
       {

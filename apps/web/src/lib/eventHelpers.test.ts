@@ -5,6 +5,7 @@ import {
   eventHandlerName,
   inferEventsFromDocuments,
   parameterCodegenName,
+  resolveEventForDrop,
 } from './eventHelpers';
 import { createCalculatorUsabilityTestSnapshot } from './usabilityExampleTests/calculatorUsabilityTest';
 
@@ -32,5 +33,16 @@ describe('eventHelpers', () => {
     const inferred = inferEventsFromDocuments(withoutEvents.documents!);
     expect(inferred.some((e) => e.name.toLowerCase() === 'calculate')).toBe(true);
     expect(inferred.some((e) => e.name.toLowerCase() === 'clear')).toBe(true);
+  });
+
+  test('resolveEventForDrop matches symbol id or legacy dispatcher label', () => {
+    const events = [
+      { id: 'evt-calc', name: 'calculate', parameters: [] },
+      { id: 'evt-clear', name: 'clear', parameters: [] },
+    ];
+    expect(resolveEventForDrop({ eventId: 'evt-calc' }, events)?.id).toBe('evt-calc');
+    expect(
+      resolveEventForDrop({ eventId: 'dispatcher-calculate', eventName: 'calculate' }, events)?.id
+    ).toBe('evt-calc');
   });
 });

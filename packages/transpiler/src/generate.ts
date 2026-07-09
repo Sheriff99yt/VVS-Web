@@ -55,6 +55,8 @@ export interface CodegenContext {
   codegenTarget?: CodegenTarget;
   /** Per-graph / per-project extension overrides for emit paths. */
   targetFileExtensions?: TargetFileExtensions;
+  /** Container folder prefix for emitted files (from graph folder placement). */
+  emitSubdir?: string;
 }
 
 function mergeTranspileResults(results: TranspileResult[]): TranspileResult {
@@ -181,6 +183,7 @@ export function transpileGraph(ctx: CodegenContext): TranspileResult {
       resolved.isClassHomeModule ? moduleName : undefined
     ),
     targetFileExtensions: ctx.targetFileExtensions,
+    subdirPrefix: ctx.emitSubdir,
   });
 
   const manifest =

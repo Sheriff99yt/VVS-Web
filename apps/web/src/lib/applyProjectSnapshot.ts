@@ -27,6 +27,7 @@ export interface SnapshotApplyTarget {
   setInstalledLibrary: Dispatch<SetStateAction<InstalledLibraryEntry[]>>;
   setEnvironmentLink: (id: string | undefined, version?: string) => void;
   setIntegration: Dispatch<SetStateAction<ProjectIntegrationConfig>>;
+  setWorkspaceFiles?: Dispatch<SetStateAction<string[] | undefined>>;
   setSyntaxPackLock?: Dispatch<SetStateAction<SyntaxPackLock | undefined>>;
   setCodegenCapabilities?: Dispatch<SetStateAction<CodegenCapabilities | undefined>>;
 }
@@ -64,4 +65,5 @@ export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: Snapshot
   );
   target.setSyntaxPackLock?.(normalized.syntaxPackLock);
   target.setCodegenCapabilities?.(normalized.codegenCapabilities);
+  target.setWorkspaceFiles?.(normalized.workspaceFiles);
 }

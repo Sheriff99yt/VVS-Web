@@ -32,6 +32,17 @@ describe('ProjectIntegrationConfig', () => {
     ).toBe('src/myapp/vvs/logic.py');
   });
 
+  test('resolveModuleEmitPath applies container subdir prefix', () => {
+    expect(
+      resolveModuleEmitPath(undefined, 'python', {
+        tabKind: 'main',
+        moduleName: 'Widget',
+        fallbackFileName: 'Widget.py',
+        subdirPrefix: 'ui',
+      })
+    ).toBe('ui/Widget.py');
+  });
+
   test('shouldEmitHostFile respects skip strategy', () => {
     const cfg = normalizeIntegrationConfig({
       hostFiles: { 'main.py': { strategy: 'skip' } },

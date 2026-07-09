@@ -42,6 +42,24 @@ export const EVENT_DRAG_MIME = 'application/vvs-event-dispatch';
 
 export interface EventDragPayload {
   eventId: string;
+  eventName?: string;
+}
+
+export function resolveEventForDrop(
+  payload: EventDragPayload,
+  events: ProjectEventDefinition[]
+): ProjectEventDefinition | undefined {
+  const direct = events.find((e) => e.id === payload.eventId);
+  if (direct) return direct;
+
+  const nameKey =
+    payload.eventName?.trim().toLowerCase() ??
+    (payload.eventId.startsWith('dispatcher-')
+      ? payload.eventId.slice('dispatcher-'.length)
+      : undefined);
+  if (!nameKey) return undefined;
+
+  return events.find((e) => e.name.trim().toLowerCase() === nameKey);
 }
 
 export function resolveEventForNode(

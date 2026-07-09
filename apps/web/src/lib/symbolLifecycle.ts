@@ -1,6 +1,7 @@
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { GraphDocument as CoreGraphDocument } from '@vvs/graph-types';
 import type {
+  ClassSymbol,
   FunctionSymbol,
   ProjectEventDefinition,
   VariableSymbol,
@@ -30,6 +31,7 @@ import { resolveNodeKindId } from '@/lib/nodeKind';
 import {
   removeDefineNodesForSymbol,
   syncDefineNodesForSymbol,
+  syncDefineNodesForClass,
 } from '@/lib/defineNodeSync';
 
 function asCoreDocuments(docs: Record<string, GraphDocument>): Record<string, CoreGraphDocument> {
@@ -187,6 +189,13 @@ export function applyEventUpdateToDocuments(
     })
   );
   return syncDefineNodesForSymbol(updated, 'event', event);
+}
+
+export function applyClassUpdateToDocuments(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol
+): Record<string, GraphDocument> {
+  return syncDefineNodesForClass(documents, cls);
 }
 
 export function deleteBrokenNodeFromDocuments(

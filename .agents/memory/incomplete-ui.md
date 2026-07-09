@@ -35,6 +35,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 | U2 | Function ↔ tab ID sync | **Done** | `functionTabs.ts`, `GraphTabBar.tsx`, `ProjectTree.tsx` |
 | U3 | Outliner selection sync | **Done** | `ProjectTree.tsx` — nested under active graph |
 | U4 | Event hooks in catalog | **Done** | `nodeCatalog.ts` — On Start, On Update, Custom event |
+| U38 | Explorer tabs & scope UX | **Done** | `project-tree/*`, `ProjectTree.tsx` — Structure \| Symbols \| API, scope header, popover creates |
 
 ---
 

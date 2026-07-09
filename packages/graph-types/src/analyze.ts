@@ -16,6 +16,8 @@ import {
 } from './symbolRefs';
 import { edgePinTypes, pinsAreCompatible } from './pinCompatibility';
 import {
+  classDefineMatchesClass,
+  classGraphHasClassDefine,
   classGraphHasDefineNodes,
   defineNodeSymbolId,
   findDefineNodesForSymbol,
@@ -593,10 +595,23 @@ function classHasSymbols(
   );
 }
 
+/** Class shell on canvas is required only when the class has symbols or any member define chain. */
+function classRequiresClassDefine(
+  cls: ClassSymbol,
+  doc: GraphDocument | undefined,
+  variables: VariableSymbol[],
+  functions: FunctionSymbol[],
+  events: ProjectEventDefinition[]
+): boolean {
+  if (classGraphHasDefineNodes(doc)) return true;
+  return classHasSymbols(cls, variables, functions, events);
+}
+
 function validateOrphanDefineNodes(
   tabId: string,
   doc: GraphDocument,
   cls: ClassSymbol,
+  allClasses: ClassSymbol[],
   variables: VariableSymbol[],
   functions: FunctionSymbol[],
   events: ProjectEventDefinition[]
@@ -615,7 +630,20 @@ function validateOrphanDefineNodes(
   for (const node of doc.nodes) {
     if (!isMemberDefineNode(node)) continue;
     const kindId = resolveNodeKindId(node.data);
-    if (kindId === 'class_define') continue;
+    if (kindId === 'class_define') {
+      const matchesKnownClass = allClasses.some((c) => classDefineMatchesClass(node, c, doc));
+      if (!matchesKnownClass) {
+        messages.push({
+          level: 'error',
+          message: `Define node references unknown class on class graph "${cls.name}".`,
+          tabId,
+          nodeId: node.id,
+          source: 'semantic',
+          code: 'ORPHAN_DEFINE_NODE',
+        });
+      }
+      continue;
+    }
 
     const symbolId = defineNodeSymbolId(node);
     if (!symbolId) continue;
@@ -665,6 +693,20 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     const classFunctions = input.functions.filter((f) => symbolClassId(f) === cls.id);
     const classEvents = input.events.filter((e) => symbolClassId(e) === cls.id);
 
+    if (
+      classRequiresClassDefine(cls, doc, variables, input.functions, input.events) &&
+      !classGraphHasClassDefine(doc, cls)
+    ) {
+      messages.push({
+        level: 'error',
+        message: `Class "${cls.name}" has no class_define node on its class graph.`,
+        tabId,
+        symbolId: cls.id,
+        source: 'semantic',
+        code: 'DEFINE_NODE_MISSING',
+      });
+    }
+
     for (const variable of classVariables) {
       if (findDefineNodesForSymbol(doc, 'variable', variable.id).length > 0) continue;
       messages.push({
@@ -706,6 +748,7 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
         tabId,
         doc,
         cls,
+        classes,
         variables,
         input.functions,
         input.events

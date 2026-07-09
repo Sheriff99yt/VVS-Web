@@ -81,6 +81,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setEnvironmentLink,
     integration,
     setIntegration,
+    workspaceFiles,
+    setWorkspaceFiles,
     syntaxPackLock,
     setSyntaxPackLock,
     codegenCapabilities,
@@ -112,6 +114,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setInstalledLibrary,
       setEnvironmentLink,
       setIntegration,
+      setWorkspaceFiles,
       setSyntaxPackLock,
       setCodegenCapabilities,
     }),
@@ -133,6 +136,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setInstalledLibrary,
       setEnvironmentLink,
       setIntegration,
+      setWorkspaceFiles,
       setSyntaxPackLock,
       setCodegenCapabilities,
     ]
@@ -224,6 +228,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       integration,
       syntaxPackLock,
       codegenCapabilities,
+      workspaceFiles,
     };
   }, [
     getDocuments,
@@ -231,6 +236,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     projectDetails,
     classes,
     activeClassId,
+    graphContainers,
     variables,
     events,
     functions,
@@ -246,6 +252,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     integration,
     syntaxPackLock,
     codegenCapabilities,
+    workspaceFiles,
   ]);
 
   const handleSave = useCallback(async () => {

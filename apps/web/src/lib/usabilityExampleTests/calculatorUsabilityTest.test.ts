@@ -5,6 +5,7 @@ import {
   MAIN_CLASS_ID,
   classHomeGraphId,
   findDefineNodesForSymbol,
+  listVirtualProjectFolderPaths,
 } from '@vvs/graph-types';
 import { transpileGraphCode, graphToIr } from '@vvs/transpiler';
 import { createCalculatorUsabilityTestSnapshot } from './calculatorUsabilityTest';
@@ -282,5 +283,75 @@ describe('calculator usability example test', () => {
     expect(code).toContain('class ResultPanel');
     expect(code).toContain('def on_start(self):');
     expect(code).toContain('Result panel ready');
+  });
+
+  test('deleted class_define blocks export but preview keeps member body without class shell', () => {
+    const snapshot = createCalculatorUsabilityTestSnapshot();
+    const calc = calculatorDoc(snapshot);
+    const nodesWithoutClassDefine = calc.nodes.filter((n) => n.data.kindId !== 'class_define');
+    const edgesWithoutClassDefine = calc.edges.filter(
+      (e) => e.source !== 'calc-class-define' && e.target !== 'calc-class-define'
+    );
+    const documents = {
+      ...snapshot.documents!,
+      [CALCULATOR_GRAPH_ID]: {
+        nodes: nodesWithoutClassDefine,
+        edges: edgesWithoutClassDefine,
+      },
+    };
+
+    const result = analyzeProject({
+      documents,
+      variables: snapshot.variables,
+      functions: snapshot.functions,
+      events: snapshot.events,
+      classes: snapshot.classes,
+      openTabs: snapshot.openTabs,
+      projectDetails: { extendsType: snapshot.projectDetails.extendsType },
+      targetLanguage: 'python',
+    });
+
+    const mainClass = snapshot.classes.find((c) => c.id === MAIN_CLASS_ID)!;
+    const missingClass = result.diagnostics.filter(
+      (d) => d.code === 'DEFINE_NODE_MISSING' && d.symbolId === mainClass.id
+    );
+    expect(missingClass).toHaveLength(1);
+    expect(missingClass[0]?.level).toBe('error');
+    expect(result.ok).toBe(false);
+
+    const code = transpileGraphCode({
+      moduleName: snapshot.projectDetails.moduleName,
+      extendsType: '',
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      nodes: nodesWithoutClassDefine,
+      edges: edgesWithoutClassDefine,
+      tabId: CALCULATOR_GRAPH_ID,
+      documents,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+    });
+
+    expect(code).not.toMatch(/class\s+Calculator\b/);
+    expect(code).toContain('self.A =');
+    expect(code).toContain('def on_start(self):');
+  });
+
+  test('project folder listing includes vvs overlay, workspace stubs, and host files', () => {
+    const snapshot = createCalculatorUsabilityTestSnapshot();
+    const paths = listVirtualProjectFolderPaths(snapshot, {
+      emittedFilePaths: ['Calculator/Calculator.py'],
+      integration: snapshot.integration,
+    });
+    const pathSet = new Set(paths.map((e) => e.path));
+    expect(pathSet.has('.vvs/project.json')).toBe(true);
+    expect(pathSet.has('.vvs/symbols/variables.json')).toBe(true);
+    expect(pathSet.has('.vvs/graphs/containers/calc-calculator-graph.graph.json')).toBe(true);
+    expect(pathSet.has('src/ui/components/nested/deep/placeholder.txt')).toBe(true);
+    expect(pathSet.has('tests/calculator/fixtures/empty.json')).toBe(true);
+    expect(pathSet.has('main.py')).toBe(true);
+    expect(pathSet.has('Calculator/Calculator.py')).toBe(true);
   });
 });

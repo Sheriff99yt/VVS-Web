@@ -101,6 +101,10 @@ interface ProjectContextValue {
   integration: ProjectIntegrationConfig;
   setIntegration: React.Dispatch<React.SetStateAction<ProjectIntegrationConfig>>;
 
+  /** Repo-relative workspace paths shown in project folder browser. */
+  workspaceFiles?: string[];
+  setWorkspaceFiles: React.Dispatch<React.SetStateAction<string[] | undefined>>;
+
   syntaxPackLock?: SyntaxPackLock;
   setSyntaxPackLock: React.Dispatch<React.SetStateAction<SyntaxPackLock | undefined>>;
 
@@ -224,6 +228,9 @@ export function ProjectProvider({
         adoptExisting: true,
       })
   );
+  const [workspaceFiles, setWorkspaceFiles] = useState<string[] | undefined>(
+    snapshot.workspaceFiles
+  );
 
   const [syntaxPackLock, setSyntaxPackLock] = useState<SyntaxPackLock | undefined>(
     snapshot.syntaxPackLock
@@ -336,6 +343,8 @@ export function ProjectProvider({
         setEnvironmentLink,
         integration,
         setIntegration,
+        workspaceFiles,
+        setWorkspaceFiles,
         syntaxPackLock,
         setSyntaxPackLock,
         codegenCapabilities,

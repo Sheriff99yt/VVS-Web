@@ -1,4 +1,4 @@
-import { CLASS_DRAG_MIME } from '@/lib/classHelpers';
+import { CLASS_DRAG_MIME, CLASS_FOLDER_DRAG_MIME } from '@/lib/classHelpers';
 import { EVENT_DRAG_MIME } from '@/lib/eventHelpers';
 import { FUNCTION_OVERLOAD_DRAG_MIME } from '@/lib/functionHelpers';
 
@@ -9,6 +9,7 @@ export const TREE_DRAG_MIME = {
   functionOverload: FUNCTION_OVERLOAD_DRAG_MIME,
   eventDispatch: EVENT_DRAG_MIME,
   class: CLASS_DRAG_MIME,
+  classFolder: CLASS_FOLDER_DRAG_MIME,
   graphContainer: 'application/vvs-graph-container',
 } as const;
 
@@ -59,14 +60,10 @@ export function configureTreeReorderDrag(
   e.dataTransfer.effectAllowed = 'move';
 }
 
-/** Configure class drag — canvas declare + folder move. */
-export function configureClassTreeDrag(
+/** Configure class grip drag — move between output folders only. */
+export function configureClassFolderDrag(
   e: React.DragEvent,
   payload: string
 ): void {
-  configureCanvasDrag(e, {
-    mimeType: TREE_DRAG_MIME.class,
-    payload,
-    effectAllowed: 'copyMove',
-  });
+  configureTreeReorderDrag(e, TREE_DRAG_MIME.classFolder, payload);
 }

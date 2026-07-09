@@ -14,10 +14,12 @@ import {
   findProgramEntryEvent,
   isMemberDefineKind,
   MEMBER_DEFINE_KINDS,
+  classDefineMatchesClass as graphClassDefineMatchesClass,
+  findClassDefineNode as findClassDefineOnDocument,
 } from '@vvs/graph-types';
 import { normalizeNodeData } from '@/lib/nodeKind';
 import { resolve as resolveKind } from '@/lib/nodeRegistry';
-import { classHomeGraphId } from '@vvs/graph-types';
+import { classHomeGraphId, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { resolveOverloadForCall } from '@/lib/functionHelpers';
@@ -123,11 +125,21 @@ function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
     outputs: def?.outputs ?? [EXEC_OUT],
     inlineValues: {},
     properties: {
+      symbolId: cls.id,
+      classId: cls.id,
       name: cls.name,
       extendsType: cls.extendsType ?? '',
       visibility: cls.visibility ?? 'public',
     },
   });
+}
+
+export function classDefineMatchesClass(
+  node: VVSNode,
+  cls: ClassSymbol,
+  doc?: GraphDocument
+): boolean {
+  return graphClassDefineMatchesClass(node, cls, doc);
 }
 
 function insertNodeOnMemberChain(
@@ -232,13 +244,32 @@ export function hasDefineNodeForEvent(
   );
 }
 
+/**
+ * Tab + node id for a class_define (searches the class home graph, then all tabs).
+ * For the node on a single document, use `@vvs/graph-types` `findClassDefineNode(doc, cls)`.
+ */
+export function findClassDefineNode(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol
+): { tabId: string; nodeId: string } | undefined {
+  const homeTab = classHomeGraphId(cls);
+  const homeDoc = documents[homeTab];
+  const homeNode = homeDoc ? findClassDefineOnDocument(homeDoc, cls) : undefined;
+  if (homeNode) return { tabId: homeTab, nodeId: homeNode.id };
+
+  for (const [tabId, doc] of Object.entries(documents)) {
+    if (tabId === homeTab) continue;
+    const node = findClassDefineOnDocument(doc, cls);
+    if (node) return { tabId, nodeId: node.id };
+  }
+  return undefined;
+}
+
 export function hasDefineNodeForClass(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol
 ): boolean {
-  const tabId = classHomeGraphId(cls);
-  const doc = documents[tabId];
-  return doc?.nodes.some((n) => n.data.kindId === 'class_define') ?? false;
+  return findClassDefineNode(documents, cls) != null;
 }
 
 export function findHandlerNodeForEvent(
@@ -394,11 +425,110 @@ export function insertClassDefineNode(
 ): Record<string, GraphDocument> {
   const tabId = classHomeGraphId(cls);
   const doc = documents[tabId] ?? { nodes: [], edges: [] };
-  if (doc.nodes.some((n) => n.data.kindId === 'class_define')) return documents;
+  if (doc.nodes.some((n) => classDefineMatchesClass(n, cls, doc))) return documents;
+
+  const nodeData = buildClassDefineData(cls);
+  const node: VVSNode = {
+    id: `class-define-${cls.id}`,
+    type: 'vvs_standard_node',
+    position: { x: 80, y: 40 },
+    data: {
+      ...nodeData,
+      resolvedPorts: { inputs: nodeData.inputs, outputs: nodeData.outputs },
+    },
+  };
+  return {
+    ...documents,
+    [tabId]: insertNodeOnMemberChain(doc, node),
+  };
+}
+
+export function syncDefineNodesForClass(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol
+): Record<string, GraphDocument> {
+  let changed = false;
+  const next: Record<string, GraphDocument> = { ...documents };
+
+  for (const [tabId, doc] of Object.entries(documents)) {
+    let docChanged = false;
+    const nodes = doc.nodes.map((node) => {
+      if (!classDefineMatchesClass(node, cls, doc)) return node;
+      docChanged = true;
+      const data = buildClassDefineData(cls);
+      return {
+        ...node,
+        data: {
+          ...data,
+          resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
+        },
+      };
+    });
+    if (docChanged) {
+      changed = true;
+      next[tabId] = { ...doc, nodes };
+    }
+  }
+
+  return changed ? next : documents;
+}
+
+export function relocateClassHomeGraph(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol,
+  fromContainerId: string,
+  toContainerId: string,
+  allClasses: ClassSymbol[]
+): Record<string, GraphDocument> {
+  if (fromContainerId === toContainerId) return documents;
+
+  const classesOnSource = allClasses.filter(
+    (c) => (c.containerId ?? MAIN_GRAPH_CONTAINER_ID) === fromContainerId
+  );
+  const soleClassOnSource =
+    classesOnSource.length === 1 && classesOnSource[0]?.id === cls.id;
+
+  const sourceDoc = documents[fromContainerId] ?? { nodes: [], edges: [] };
+  const targetDoc = documents[toContainerId] ?? { nodes: [], edges: [] };
+
+  if (soleClassOnSource && sourceDoc.nodes.length > 0) {
+    return {
+      ...documents,
+      [fromContainerId]: { nodes: [], edges: [] },
+      [toContainerId]: {
+        nodes: [...targetDoc.nodes, ...sourceDoc.nodes],
+        edges: [...targetDoc.edges, ...sourceDoc.edges],
+      },
+    };
+  }
+
+  const defineLoc = findClassDefineNode(documents, cls);
+  if (!defineLoc) {
+    return insertClassDefineNode(documents, cls);
+  }
+  if (defineLoc.tabId === toContainerId) return documents;
+
+  const source = documents[defineLoc.tabId];
+  if (!source) return documents;
+
+  const defineNode = source.nodes.find((n) => n.id === defineLoc.nodeId);
+  if (!defineNode) return documents;
+
+  const connectedEdges = source.edges.filter(
+    (e) => e.source === defineNode.id || e.target === defineNode.id
+  );
+  const nextSourceNodes = source.nodes.filter((n) => n.id !== defineNode.id);
+  const nextSourceEdges = source.edges.filter(
+    (e) => e.source !== defineNode.id && e.target !== defineNode.id
+  );
 
   return {
     ...documents,
-    [tabId]: spawnDefineNode(doc, buildClassDefineData(cls), 0),
+    [defineLoc.tabId]: { nodes: nextSourceNodes, edges: nextSourceEdges },
+    [toContainerId]: {
+      nodes: [...targetDoc.nodes, defineNode],
+      edges: [...targetDoc.edges, ...connectedEdges],
+    },
   };
 }
 
@@ -491,6 +621,25 @@ export function removeDefineNodesForSymbol(
   }
 
   return changed ? next : documents;
+}
+
+export function bootstrapClassHomeDocuments(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol,
+  entry: ProjectEventDefinition
+): Record<string, GraphDocument> {
+  const homeGraphId = classHomeGraphId(cls);
+  const existing = documents[homeGraphId];
+  const empty = !existing || (existing.nodes.length === 0 && existing.edges.length === 0);
+  if (empty) {
+    const { document } = createClassHomeBootstrap(cls, entry);
+    return { ...documents, [homeGraphId]: document as unknown as GraphDocument };
+  }
+  let next = { ...documents };
+  next = insertClassDefineNode(next, cls);
+  next = insertDefineNodeForEvent(next, cls, entry);
+  next = insertProgramEntryHandlerNode(next, cls, entry);
+  return next;
 }
 
 export { MEMBER_DEFINE_KINDS };

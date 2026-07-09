@@ -14,10 +14,8 @@ import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { VVSNode, VVSEdge } from '@/types/graph';
 import { transpileGraph, withProjectCodegenTarget } from '@/lib/codegen';
 import type { TranspileResult } from '@/types/transpile';
-import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
 import { MAIN_GRAPH_CONTAINER_ID, classForHomeGraphId } from '@/lib/classScope';
-import type { ValidationMessage } from '@/lib/graphValidator';
 import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
 import type { CodeHighlightRange } from '@/components/code/types';
 import { CopyPathButton } from '@/components/ui/CopyPathButton';
@@ -25,6 +23,7 @@ import { nodeHighlightColor, DEFAULT_NODE_HIGHLIGHT } from '@/lib/nodeHighlightC
 import { resolveSymbolCodegenLink } from '@/lib/symbolCodegenLink';
 import { resolveCodePreviewHighlightNodeIds } from '@/lib/projectSelection';
 import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
+import { useLiveProjectValidation } from '@/hooks/useLiveProjectValidation';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { TARGET_FILE_EXTENSIONS, formatTargetFileExtension } from '@vvs/graph-types';
@@ -48,21 +47,6 @@ function countMappedNodes(result: TranspileResult): number {
 function lineCount(content: string): number {
   if (!content) return 0;
   return content.split('\n').length;
-}
-
-function warningsEqual(a: ValidationMessage[], b: ValidationMessage[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((msg, i) => {
-    const other = b[i]!;
-    return (
-      msg.level === other.level &&
-      msg.message === other.message &&
-      msg.tabId === other.tabId &&
-      msg.nodeId === other.nodeId &&
-      msg.code === other.code &&
-      msg.symbolId === other.symbolId
-    );
-  });
 }
 
 function buildColoredHighlightRanges(
@@ -113,8 +97,7 @@ export function CodePreviewPanel({
     selection,
     selectedNodeIds,
     validationWarnings,
-    setValidationWarnings,
-    crossOverMode,
+    validationErrors,
     environmentId,
     integration,
     classes,
@@ -124,12 +107,14 @@ export function CodePreviewPanel({
   } = useProject();
   const documents = useGraphDocuments();
   const { result: projectResult, fileOwners } = useProjectTranspileResult();
+  useLiveProjectValidation();
 
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const lastCleanResultRef = useRef<TranspileResult | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const highlightNavKeyRef = useRef<string | null>(null);
 
   const activeDocument =
     documents?.[activeGraphTab] ??
@@ -254,26 +239,6 @@ export function CodePreviewPanel({
   ]);
 
   useEffect(() => {
-    if (!documents) return;
-    const analysis = runProjectAnalysis({
-      documents,
-      functions,
-      events,
-      variables,
-      classes,
-      activeClassId,
-      openTabs,
-      projectDetails,
-      targetLanguage: projectTargetLanguage,
-      crossOver: crossOverMode,
-      environmentId,
-    });
-    setValidationWarnings((prev) =>
-      warningsEqual(prev, analysis.warnings) ? prev : analysis.warnings
-    );
-  }, [documents, functions, events, variables, classes, activeClassId, openTabs, projectDetails, projectTargetLanguage, crossOverMode, environmentId, setValidationWarnings]);
-
-  useEffect(() => {
     if (compileState === 'success' || compileState === 'clean') {
       lastCleanResultRef.current = liveResult;
     }
@@ -315,9 +280,20 @@ export function CodePreviewPanel({
         : lastCleanResultRef.current ?? liveResult;
 
   useEffect(() => {
-    onClearPinnedFile?.();
-    setActiveFileIndex(0);
-  }, [previewTabId, targetLanguage, targetFileExtension, onClearPinnedFile]);
+    highlightNavKeyRef.current = null;
+    if (
+      selectedFilePath &&
+      fileOwners[selectedFilePath] &&
+      fileOwners[selectedFilePath] !== previewTabId
+    ) {
+      onClearPinnedFile?.();
+    }
+    setActiveFileIndex((prev) => (prev === 0 ? prev : 0));
+  }, [previewTabId, selectedFilePath, fileOwners, onClearPinnedFile]);
+
+  useEffect(() => {
+    setActiveFileIndex((prev) => (prev === 0 ? prev : 0));
+  }, [targetLanguage, targetFileExtension]);
 
   const graphDisplayResult = displayResult;
   const displayResultForView =
@@ -325,14 +301,21 @@ export function CodePreviewPanel({
       ? projectResult
       : graphDisplayResult;
 
+  const displayFilePathsKey = useMemo(
+    () => displayResultForView.files.map((file) => file.path).join('\0'),
+    [displayResultForView.files]
+  );
+
   useEffect(() => {
     if (!selectedFilePath) {
-      setActiveFileIndex(0);
+      setActiveFileIndex((prev) => (prev === 0 ? prev : 0));
       return;
     }
     const fileIndex = displayResultForView.files.findIndex((file) => file.path === selectedFilePath);
-    if (fileIndex >= 0) setActiveFileIndex(fileIndex);
-  }, [selectedFilePath, displayResultForView.files]);
+    if (fileIndex >= 0) {
+      setActiveFileIndex((prev) => (prev === fileIndex ? prev : fileIndex));
+    }
+  }, [selectedFilePath, displayFilePathsKey, displayResultForView.files]);
 
   const safeFileIndex = Math.min(
     activeFileIndex,
@@ -342,11 +325,14 @@ export function CodePreviewPanel({
   const generatedCode = activeFile?.content ?? '';
   const filePath = activeFile?.path ?? 'output';
   const copyablePath = filePath;
-  const sourceMap = graphDisplayResult.sourceMap;
-  const mappedNodeCount = countMappedNodes(graphDisplayResult);
+  const sourceMap = displayResultForView.sourceMap;
+  const mappedNodeCount = countMappedNodes(displayResultForView);
   const lines = lineCount(generatedCode);
 
-  const previewNodes = (previewDocument?.nodes ?? []) as VVSNode[];
+  const previewNodes = useMemo(
+    () => (previewDocument?.nodes ?? []) as VVSNode[],
+    [previewDocument]
+  );
   const nodesById = useMemo(() => {
     const map = new Map<string, VVSNode>();
     for (const node of previewNodes) {
@@ -355,10 +341,14 @@ export function CodePreviewPanel({
     return map;
   }, [previewNodes]);
 
-  const highlightNodeIds = resolveCodePreviewHighlightNodeIds(
-    selection,
-    selectedNodeIds,
-    symbolLink?.highlightNodeIds
+  const highlightNodeIds = useMemo(
+    () =>
+      resolveCodePreviewHighlightNodeIds(
+        selection,
+        selectedNodeIds,
+        symbolLink?.highlightNodeIds
+      ),
+    [selection, selectedNodeIds, symbolLink?.highlightNodeIds]
   );
 
   const highlightRanges = useMemo(
@@ -371,40 +361,62 @@ export function CodePreviewPanel({
   const hasSelectionLink = Boolean(highlightRanges?.length);
 
   useEffect(() => {
-    if (highlightNodeIds.length === 0) return;
+    if (highlightNodeIds.length === 0) {
+      highlightNavKeyRef.current = null;
+      return;
+    }
+
+    const navKey = `${highlightNodeIds.join(',')}|${displayFilePathsKey}`;
+    if (highlightNavKeyRef.current === navKey && selectedFilePath) return;
 
     for (const nodeId of highlightNodeIds) {
       const ranges = sourceMap[nodeId];
       if (!ranges?.length) continue;
       const targetPath = ranges[0]!.filePath;
       const fileIndex = displayResultForView.files.findIndex((file) => file.path === targetPath);
-      if (fileIndex >= 0 && fileIndex !== safeFileIndex) {
-        setActiveFileIndex(fileIndex);
+      if (fileIndex >= 0) {
+        setActiveFileIndex((prev) => (prev === fileIndex ? prev : fileIndex));
+      }
+      if (targetPath !== selectedFilePath) {
         onSelectedFilePathChange?.(targetPath);
       }
+      highlightNavKeyRef.current = navKey;
       break;
     }
   }, [
     highlightNodeIds,
     sourceMap,
+    displayFilePathsKey,
     displayResultForView.files,
-    safeFileIndex,
+    selectedFilePath,
     onSelectedFilePathChange,
   ]);
+
+  const previewClass = classForHomeGraphId(classes, previewTabId);
+  const missingClassDeclareOnPreview = validationErrors.some(
+    (e) =>
+      e.code === 'DEFINE_NODE_MISSING' &&
+      previewClass != null &&
+      e.symbolId === previewClass.id
+  );
+  const hasBlockingAnalysisErrors = validationErrors.length > 0;
+  const hasBlockingIssues = compileState === 'error' || hasBlockingAnalysisErrors;
 
   const syncTitle = isCompiling
     ? 'Generating…'
     : isStale
       ? 'Preview paused — generate or enable auto generate'
-      : compileState === 'error'
-        ? 'Compile errors'
+      : hasBlockingIssues
+        ? hasBlockingAnalysisErrors
+          ? 'Analysis errors block export'
+          : 'Compile errors'
         : 'In sync';
 
   const syncTone = isCompiling
     ? 'text-amber-400/90'
     : isStale
       ? 'text-amber-500'
-      : compileState === 'error'
+      : hasBlockingIssues
         ? 'text-red-400'
         : 'text-emerald-500';
 
@@ -441,6 +453,15 @@ export function CodePreviewPanel({
 
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1">
+            {validationErrors.length > 0 ? (
+              <span
+                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] text-red-400 bg-red-500/10 border border-red-500/20"
+                title={validationErrors.map((e) => e.message).join('\n')}
+              >
+                <AlertTriangle size={9} />
+                {validationErrors.length}
+              </span>
+            ) : null}
             {validationWarnings.length > 0 ? (
               <span
                 className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] text-amber-400 bg-amber-500/10 border border-amber-500/20"
@@ -523,10 +544,20 @@ export function CodePreviewPanel({
             <p className="text-[11px] text-zinc-500">
               {isOrgGraph
                 ? 'Visual organization graph — no generated code. Open a class graph to preview output.'
-                : 'Wire nodes to preview code.'}
+                : validationErrors.length > 0
+                  ? 'Fix compile errors to export — restore missing Declare nodes on the class graph.'
+                  : 'Wire nodes to preview code.'}
             </p>
           </div>
-        ) : (
+        ) : missingClassDeclareOnPreview ? (
+          <div className="absolute top-2 left-2 right-2 z-10 pointer-events-none">
+            <p className="text-[10px] text-amber-300/90 bg-amber-500/10 border border-amber-500/25 rounded px-2 py-1">
+              Preview only — restore class Declare on graph to export.
+            </p>
+          </div>
+        ) : null}
+
+        {!isEmpty ? (
           <div className={`h-full transition-opacity duration-150 ${isStale ? 'opacity-55' : 'opacity-100'}`}>
             <GeneratedCodeView
               value={generatedCode}
@@ -536,7 +567,7 @@ export function CodePreviewPanel({
               className="h-full"
             />
           </div>
-        )}
+        ) : null}
 
         {isStale && !isEmpty ? (
           <div className="absolute top-2 right-2 z-10 pointer-events-none" title="Preview paused">

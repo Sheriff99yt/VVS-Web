@@ -124,6 +124,8 @@ type IrMemberDecl =
 
 **No legacy preamble:** `appendLegacyPreamble` and `useLegacyPreamble` are **removed**. If symbols exist without define nodes, `analyzeProject` emits `DEFINE_NODE_MISSING` or `DECLARATION_NOT_ON_CANVAS` and blocks Generate.
 
+**Class declare rules (July 2026):** `class_define` is required when the class has symbols **or** any member define on its home graph. A blank class with neither passes analysis. Deleting `class_define` while other defines remain blocks Generate (`DEFINE_NODE_MISSING` for the class) but the code **preview** may still show the member chain in order without a `class Name:` shell — export remains invalid until Declare is restored.
+
 Multi-class compile: one output file per class (existing multi-file pattern) or single file with multiple classes — profile-driven via `integration.json` / language profile.
 
 ---

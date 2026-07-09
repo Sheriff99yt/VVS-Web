@@ -4,7 +4,10 @@ import {
   findDefineNodesForSymbol,
   findMemberChainHead,
   findMemberChainTail,
+  findClassDefineNode,
+  classDefineMatchesClass,
 } from './defineNodes';
+import { createClassSymbol, MAIN_GRAPH_CONTAINER_ID } from './symbols';
 import type { GraphDocument } from './symbols';
 
 function edge(source: string, target: string) {
@@ -63,5 +66,55 @@ describe('defineNodes', () => {
     expect(findMemberChainHead(doc)?.id).toBe('class');
     expect(findMemberChainTail(doc)?.id).toBe('v2');
     expect(findDefineNodesForSymbol(doc, 'variable', 'var-a')).toHaveLength(1);
+  });
+
+  it('findClassDefineNode matches symbolId and legacy unbound define', () => {
+    const cls = createClassSymbol('Calc', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+
+    const boundDoc: GraphDocument = {
+      nodes: [
+        {
+          id: 'class-define-main-class',
+          type: 'vvs_standard_node',
+          position: { x: 0, y: 0 },
+          data: {
+            label: 'Declare Calc',
+            category: 'Project',
+            kindId: 'class_define',
+            inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+            outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+            inlineValues: {},
+            properties: { symbolId: cls.id, classId: cls.id },
+          },
+        },
+      ],
+      edges: [],
+    };
+    expect(findClassDefineNode(boundDoc, cls)?.id).toBe('class-define-main-class');
+
+    const legacyDoc: GraphDocument = {
+      nodes: [
+        {
+          id: 'legacy-class',
+          type: 'vvs_standard_node',
+          position: { x: 0, y: 0 },
+          data: {
+            label: 'Class Calc',
+            category: 'Project',
+            kindId: 'class_define',
+            inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+            outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+            inlineValues: {},
+            properties: { name: 'Calc' },
+          },
+        },
+      ],
+      edges: [],
+    };
+    expect(classDefineMatchesClass(legacyDoc.nodes[0]!, cls, legacyDoc)).toBe(true);
+    expect(findClassDefineNode(legacyDoc, cls)?.id).toBe('legacy-class');
   });
 });

@@ -306,6 +306,8 @@ export function classDefineNode(
     outputs: [EXEC_OUT],
     inlineValues: {},
     properties: {
+      symbolId: cls.id,
+      classId: cls.id,
       name: cls.name,
       extendsType: cls.extendsType ?? '',
       visibility: cls.visibility ?? 'public',

@@ -7,7 +7,12 @@ import { transpileProject, withProjectCodegenTarget } from '@/lib/codegen';
 import { getLinkedEnvironmentManifest } from '@/lib/environmentContext';
 import { resolveTabCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import type { TranspileResult } from '@/types/transpile';
-import { classHomeGraphId, classGraphHasDefineNodes } from '@vvs/graph-types';
+import {
+  classGraphHasDefineNodes,
+  classHomeGraphId,
+  containerEmitSubdir,
+} from '@vvs/graph-types';
+import { classContainerId } from '@/lib/classScope';
 import { transpileGraph } from '@vvs/transpiler';
 import type { CodegenContext } from '@vvs/transpiler';
 
@@ -44,6 +49,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     events,
     functions,
     classes,
+    graphContainers,
     activeClassId,
     openTabs,
     projectDetails,
@@ -75,6 +81,22 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     const results: TranspileResult[] = [];
     const fileOwners: Record<string, string> = {};
 
+    const emitSubdirForTab = (tabId: string, classId?: string) => {
+      const cls =
+        classId != null
+          ? classes.find((c) => c.id === classId)
+          : classes.find((c) => classHomeGraphId(c) === tabId);
+      if (!cls) {
+        const fn = functions.find((f) => f.id === tabId);
+        const fnClass = fn ? classes.find((c) => c.id === (fn.classId ?? '')) : undefined;
+        if (!fnClass) return '';
+        const container = graphContainers.find((c) => c.id === classContainerId(fnClass));
+        return container ? containerEmitSubdir(container) : '';
+      }
+      const container = graphContainers.find((c) => c.id === classContainerId(cls));
+      return container ? containerEmitSubdir(container) : '';
+    };
+
     const emitTab = (tabId: string, tabLabel: string, nodes: CodegenContext['nodes'], edges: CodegenContext['edges'], activeClass?: string) => {
       if (emittedTabIds.has(tabId)) return;
       emittedTabIds.add(tabId);
@@ -99,6 +121,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
         environmentId,
         environmentManifest,
         integration,
+        emitSubdir: emitSubdirForTab(tabId, activeClass ?? homeClass?.id),
       };
       const tabResult = transpileGraph(
         withProjectCodegenTarget(ctx, {
@@ -163,6 +186,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     events,
     functions,
     classes,
+    graphContainers,
     activeClassId,
     openTabs,
     targetLanguage,

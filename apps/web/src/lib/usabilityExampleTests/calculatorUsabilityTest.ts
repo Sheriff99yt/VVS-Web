@@ -8,6 +8,7 @@
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import {
   createClassSymbol,
+  createDefaultIntegration,
   createGraphContainer,
   MAIN_CLASS_ID,
   MAIN_GRAPH_CONTAINER_ID,
@@ -280,5 +281,19 @@ export function createCalculatorUsabilityTestSnapshot(): ProjectSnapshot {
       },
     },
     installedLibrary: [],
+    integration: createDefaultIntegration({
+      moduleName: 'Calculator',
+      defaultTarget: 'python',
+      adoptExisting: true,
+      hostFilePaths: ['main.py', 'requirements.txt'],
+    }),
+    workspaceFiles: [
+      'README.md',
+      'src/ui/panel.css',
+      'src/ui/components/widget.stub.ts',
+      'src/ui/components/nested/deep/placeholder.txt',
+      'tests/calculator/fixtures/empty.json',
+      'docs/calculator/overview.md',
+    ],
   };
 }

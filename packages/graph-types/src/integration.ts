@@ -1,5 +1,16 @@
-import type { TargetLanguage } from './symbols';
+import type { GraphContainer, TargetLanguage } from './symbols';
+import { MAIN_GRAPH_CONTAINER_ID } from './symbols';
 import { resolveTargetFileExtension, type TargetFileExtensions } from './targetFileExtensions';
+
+/** Repo-relative output folder for graphs living in a container (empty for project map). */
+export function containerEmitSubdir(container: GraphContainer): string {
+  if (container.id === MAIN_GRAPH_CONTAINER_ID) return '';
+  const slug = container.name
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return slug || 'output';
+}
 
 export type HostFileStrategy = 'skip' | 'emit' | 'patch';
 
@@ -123,28 +134,38 @@ export function resolveModuleEmitPath(
     functionBaseName?: string;
     fallbackFileName: string;
     targetFileExtensions?: TargetFileExtensions;
+    /** Extra folder prefix from graph container placement (e.g. `utils/Player.py`). */
+    subdirPrefix?: string;
   }
 ): string {
   const emitCfg = integration?.emit?.[target];
+  let path: string;
   if (options.tabKind === 'main') {
     if (emitCfg?.moduleFile) {
-      return joinPath(emitCfg.moduleDir, emitCfg.moduleFile);
+      path = joinPath(emitCfg.moduleDir, emitCfg.moduleFile);
+    } else if (emitCfg?.moduleDir) {
+      path = joinPath(emitCfg.moduleDir, options.fallbackFileName);
+    } else {
+      path = options.fallbackFileName;
     }
-    if (emitCfg?.moduleDir) {
-      return joinPath(emitCfg.moduleDir, options.fallbackFileName);
+  } else {
+    const base =
+      options.functionBaseName?.replace(/[^a-zA-Z0-9_-]+/g, '_') || 'Function';
+    const ext = extensionForTarget(target, options.targetFileExtensions);
+    const fileName = `${base}.${ext}`;
+    const dir = emitCfg?.functionDir ?? emitCfg?.moduleDir;
+    if (dir || emitCfg?.moduleFile) {
+      path = joinPath(dir, fileName);
+    } else {
+      path = fileName;
     }
-    return options.fallbackFileName;
   }
 
-  const base =
-    options.functionBaseName?.replace(/[^a-zA-Z0-9_-]+/g, '_') || 'Function';
-  const ext = extensionForTarget(target, options.targetFileExtensions);
-  const fileName = `${base}.${ext}`;
-  const dir = emitCfg?.functionDir ?? emitCfg?.moduleDir;
-  if (dir || emitCfg?.moduleFile) {
-    return joinPath(dir, fileName);
+  const prefix = options.subdirPrefix?.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (prefix) {
+    path = joinPath(prefix, path);
   }
-  return fileName;
+  return path;
 }
 
 export function shouldEmitHostFile(
