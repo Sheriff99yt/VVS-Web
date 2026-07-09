@@ -118,7 +118,9 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Constructor** | Declare Constructor | `constructor_define` (planned) | cpp, cs, rs | planned | Separate from `on_start` entry |
 | **Destructor** | Declare Destructor | `destructor_define` (planned) | cpp | planned | |
 | **Interface / trait impl** | Declare Implements | `implements_define` (planned) | cs, rs | planned | |
-| **Namespace / module** | Declare Namespace | `namespace_define` (planned) | cpp, rs | planned | vs single `moduleName` today |
+| **File extension per target** | Graph settings → **This graph** + **Project defaults** | `metadata.targetFileExtension` per graph; `targetFileExtensions` on snapshot for new graphs | all | **shipped** | User picks `.cpp`, `.hpp`, `.h`, etc.; code panel shows `.{ext}` beside language dropdown |
+| **Per-graph codegen language** | Graph settings → **This graph**; code panel header | `metadata.targetLanguage` per graph; snapshot `targetLanguage` = default for new graphs | all | **shipped** | Multi-language projects: Calculator in Python, helper fn in Rust, etc. |
+| **Generated files tree** | Output panel → **Files** tab | `useProjectTranspileResult` + `buildGeneratedFileTree` | all | **shipped** | Folder tree of all emitted paths; removed flat **Generated** list from project tree |
 
 ### B — Handlers & flow (On / Implement)
 
@@ -242,4 +244,5 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 
 | Date | Change |
 |------|--------|
+| 2026-07 | Per-graph codegen language + extension; project defaults for new graphs; Code \| Files output panel with folder tree; searchable selects + import graph pickers |
 | 2026-07 | Initial catalog; renamed example templates → usability example tests; linked golden rule and AI workflow |

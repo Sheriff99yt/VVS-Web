@@ -3,6 +3,7 @@
 import React from 'react';
 import type { PropertyFieldDefinition } from '@vvs/syntax-registry';
 import { isPropertyFieldVisible } from '@vvs/syntax-registry';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface PropertySchemaPanelProps {
   fields: PropertyFieldDefinition[];
@@ -28,20 +29,17 @@ export function PropertySchemaPanel({ fields, values, onChange }: PropertySchema
               <label className="text-[11px] font-medium text-zinc-400" htmlFor={field.key}>
                 {field.label}
               </label>
-              <select
+              <SearchableSelect
                 id={field.key}
                 value={typeof raw === 'string' ? raw : String(field.enumValues[0])}
-                onChange={(e) => onChange(field.key, e.target.value)}
-                className="w-full nowheel nopan nodrag bg-zinc-900/80 border border-zinc-800 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-zinc-600"
-                onWheel={(e) => e.stopPropagation()}
-                aria-describedby={descriptionId}
-              >
-                {field.enumValues.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => onChange(field.key, value)}
+                options={field.enumValues.map((option) => ({
+                  value: option,
+                  label: option,
+                }))}
+                placeholder={`Select ${field.label}…`}
+                searchable={field.enumValues.length > 1}
+              />
               {field.description ? (
                 <p id={descriptionId} className="text-[10px] text-zinc-600 leading-relaxed">
                   {field.description}

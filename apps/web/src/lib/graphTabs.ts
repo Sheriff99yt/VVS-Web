@@ -1,5 +1,10 @@
-import type { GraphContainer, GraphTab } from '@vvs/graph-types';
-import { containerTabFor, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+import type { ClassSymbol, GraphContainer, GraphTab, TargetLanguage, TargetFileExtensions } from '@vvs/graph-types';
+import {
+  classHomeGraphId,
+  containerTabFor,
+  MAIN_GRAPH_CONTAINER_ID,
+  resolveTargetFileExtension,
+} from '@vvs/graph-types';
 import type { Dispatch, SetStateAction } from 'react';
 import { formatFunctionTabName } from './functionTabs';
 
@@ -51,8 +56,24 @@ export function isPinnedGraphTab(tab: GraphTab): boolean {
   return tab.id === MAIN_GRAPH_CONTAINER_ID;
 }
 
-export function isOrgOnlyGraphTab(activeGraphTab: string): boolean {
-  return activeGraphTab === MAIN_GRAPH_CONTAINER_ID;
+export function isOrgOnlyGraphTab(
+  activeGraphTab: string,
+  classes?: Pick<ClassSymbol, 'containerId'>[]
+): boolean {
+  if (activeGraphTab !== MAIN_GRAPH_CONTAINER_ID) return false;
+  return !classes?.some((cls) => classHomeGraphId(cls) === activeGraphTab);
+}
+
+/** True when a tab can emit code (class home, function, legacy main, etc.). */
+export function isCodegenGraphTab(
+  tabId: string,
+  classes?: Pick<ClassSymbol, 'containerId'>[]
+): boolean {
+  if (tabId === 'main') return true;
+  if (tabId === MAIN_GRAPH_CONTAINER_ID) {
+    return classes?.some((cls) => classHomeGraphId(cls) === tabId) ?? false;
+  }
+  return true;
 }
 
 export function isContainerGraphTab(activeGraphTab: string, openTabs: GraphTab[]): boolean {
@@ -78,24 +99,13 @@ export function reorderOpenTabs(tabs: GraphTab[], fromId: string, toId: string):
 export function generatedFileName(
   tab: GraphTab,
   moduleName: string,
-  targetLanguage: string
+  targetLanguage: TargetLanguage | string,
+  targetFileExtensions?: TargetFileExtensions
 ): string {
-  const ext =
-    targetLanguage === 'python'
-      ? 'py'
-      : targetLanguage === 'javascript'
-        ? 'js'
-        : targetLanguage === 'cpp'
-          ? 'cpp'
-          : targetLanguage === 'verse'
-            ? 'verse'
-            : targetLanguage === 'gdscript'
-              ? 'gd'
-              : targetLanguage === 'rust'
-                ? 'rs'
-                : targetLanguage === 'csharp'
-                  ? 'cs'
-                  : 'json';
+  const ext = resolveTargetFileExtension(
+    targetLanguage as TargetLanguage,
+    targetFileExtensions
+  );
   if (tab.type === 'container') {
     const base = tab.name.replace(/\s+/g, '_').toLowerCase() || 'project_map';
     return `${base}.${ext}`;

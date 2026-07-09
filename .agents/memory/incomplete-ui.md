@@ -123,7 +123,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 |---|------|--------|-----------|
 | U35 | Project tree (root → graphs → variables) | **Done** | `ProjectTree.tsx`, `projectTree.ts`, `graphTabs.ts` |
 | U36 | Breadcrumb (`Module › Functions › Name`) | **Done** | `GraphBreadcrumb.tsx` |
-| U37 | Generated export folder in tree | **Done** | `listGeneratedExports()`, `ProjectTree.tsx` — Generated section |
+| U37 | Generated files browser (output **Files** tab) | **Done** | `GeneratedFilesPanel`, `buildGeneratedFileTree`, `useProjectTranspileResult` — removed flat Generated section from project tree |
 | U38 | Reference viewer (UE5 top-level view) | **Done** | `ReferencesView.tsx`, `ReferenceGraphCanvas.tsx`, `referenceGraphLayout.ts` |
 | U46 | Graph domain isolation | **Done** | `GraphWorkspaceHost.tsx`, split `ReactFlowProvider`, `GraphEditContext` |
 | U47 | Left-panel navigation modes | **Done** | `ProjectTree` `mode: 'canvas' \| 'references'` — no view-switch collision |

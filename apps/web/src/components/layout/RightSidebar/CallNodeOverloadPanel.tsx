@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { FunctionSymbol, VVSNodeData } from '@/types/graph';
 import { applyFunctionCallBinding } from '@/lib/functionHelpers';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface CallNodeOverloadPanelProps {
   func: FunctionSymbol;
@@ -11,6 +12,24 @@ interface CallNodeOverloadPanelProps {
 }
 
 export function CallNodeOverloadPanel({ func, nodeData, onApply }: CallNodeOverloadPanelProps) {
+  const options = useMemo(
+    () =>
+      func.overloads.map((overload, index) => {
+        const paramSummary =
+          overload.parameters.length > 0
+            ? overload.parameters.map((p) => `${p.label}: ${p.type}`).join(', ')
+            : 'no params';
+        const ret =
+          overload.returnType && overload.returnType !== 'void' ? ` → ${overload.returnType}` : '';
+        return {
+          value: overload.id,
+          label: `Overload ${index + 1}`,
+          description: `(${paramSummary})${ret}`,
+        };
+      }),
+    [func.overloads]
+  );
+
   if (func.overloads.length <= 1) return null;
 
   const selectedId =
@@ -37,27 +56,12 @@ export function CallNodeOverloadPanel({ func, nodeData, onApply }: CallNodeOverl
       <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">
         Function overload
       </p>
-      <select
+      <SearchableSelect
         value={selectedId}
-        onChange={(e) => handleChange(e.target.value)}
-        className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500"
-      >
-        {func.overloads.map((overload, index) => {
-          const paramSummary =
-            overload.parameters.length > 0
-              ? overload.parameters.map((p) => `${p.label}: ${p.type}`).join(', ')
-              : 'no params';
-          const ret =
-            overload.returnType && overload.returnType !== 'void'
-              ? ` → ${overload.returnType}`
-              : '';
-          return (
-            <option key={overload.id} value={overload.id}>
-              Overload {index + 1}: ({paramSummary}){ret}
-            </option>
-          );
-        })}
-      </select>
+        onChange={handleChange}
+        options={options}
+        placeholder="Select overload…"
+      />
     </div>
   );
 }

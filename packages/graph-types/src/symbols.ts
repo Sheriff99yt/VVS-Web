@@ -354,6 +354,10 @@ export interface GraphTabMetadata {
   moduleName: string;
   extendsType: string;
   description: string;
+  /** Per-graph codegen language; unset inherits project default at emit time. */
+  targetLanguage?: TargetLanguage;
+  /** Per-graph extension for this graph's target language. */
+  targetFileExtension?: string;
 }
 
 export interface GraphDocument {

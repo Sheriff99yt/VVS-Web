@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { PinType, SymbolParameter } from '@vvs/graph-types';
 import { DATA_PIN_TYPE_OPTIONS } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 const PARAM_TYPES: { value: PinType; label: string }[] = DATA_PIN_TYPE_OPTIONS;
 
@@ -66,18 +67,14 @@ export function SymbolParameterEditor({
                 placeholder="Label"
                 {...graphInlineFieldProps}
               />
-              <select
-                value={param.type}
-                onChange={(e) => updateParam(index, { type: e.target.value as PinType })}
-                className="w-[72px] shrink-0 nowheel nopan nodrag bg-zinc-900/80 border border-zinc-800 rounded px-1 py-1 text-[10px] text-zinc-300 focus:outline-none focus:border-zinc-600"
-                onWheel={(e) => e.stopPropagation()}
-              >
-                {PARAM_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+              <div className="w-[88px] shrink-0">
+                <SearchableSelect
+                  value={param.type}
+                  onChange={(value) => updateParam(index, { type: value as PinType })}
+                  options={PARAM_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                  searchable={PARAM_TYPES.length > 4}
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => removeParam(index)}

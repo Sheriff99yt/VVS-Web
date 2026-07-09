@@ -8,8 +8,8 @@ import type { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import type { ProjectSource } from '@/types/projectRegistry';
 
-import type { FunctionSymbol, GraphTab, TargetLanguage, CrossOverArchitectureMode, ProjectIntegrationConfig, SyntaxPackLock, ClassSymbol, GraphContainer, CodegenCapabilities } from '@vvs/graph-types';
-import { createDefaultIntegration, normalizeProjectSnapshot, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+import type { FunctionSymbol, GraphTab, TargetLanguage, CrossOverArchitectureMode, ProjectIntegrationConfig, SyntaxPackLock, ClassSymbol, GraphContainer, CodegenCapabilities, TargetFileExtensions } from '@vvs/graph-types';
+import { createDefaultIntegration, normalizeProjectSnapshot, MAIN_GRAPH_CONTAINER_ID, normalizeTargetFileExtensions } from '@vvs/graph-types';
 import { readCrossOverMode } from '@/lib/crossOverPreferences';
 
 export type { TargetLanguage, GraphTab, FunctionSymbol, ClassSymbol, GraphContainer };
@@ -71,6 +71,8 @@ interface ProjectContextValue {
   setAutoSave: React.Dispatch<React.SetStateAction<boolean>>;
   targetLanguage: TargetLanguage;
   setTargetLanguage: React.Dispatch<React.SetStateAction<TargetLanguage>>;
+  targetFileExtensions: TargetFileExtensions;
+  setTargetFileExtensions: React.Dispatch<React.SetStateAction<TargetFileExtensions>>;
 
   crossOverMode: CrossOverArchitectureMode;
   setCrossOverMode: React.Dispatch<React.SetStateAction<CrossOverArchitectureMode>>;
@@ -188,6 +190,9 @@ export function ProjectProvider({
     [autoCompile]
   );
   const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>(snapshot.targetLanguage);
+  const [targetFileExtensions, setTargetFileExtensions] = useState<TargetFileExtensions>(
+    () => normalizeTargetFileExtensions(snapshot.targetFileExtensions)
+  );
   const [crossOverMode, setCrossOverMode] = useState<CrossOverArchitectureMode>(() => readCrossOverMode());
 
   const [undoTrigger, setUndoTrigger] = useState(0);
@@ -308,6 +313,8 @@ export function ProjectProvider({
         setAutoSave,
         targetLanguage,
         setTargetLanguage,
+        targetFileExtensions,
+        setTargetFileExtensions,
         crossOverMode,
         setCrossOverMode,
         undoTrigger,

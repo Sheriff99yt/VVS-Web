@@ -67,7 +67,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     number: 6,
     id: 'phase-6',
     title: 'Scale & polish',
-    summary: 'M3 language platform closed; perf/env/mobile/enterprise remain',
+    summary: 'M3 closed; usability/workflow + perf/env/mobile remain',
     status: 'active',
   },
 ];
@@ -151,7 +151,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen — new/open folder (.vvs/ overlay), recent projects, import JSON, Hello World & Calculator example cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
+          'Start screen — new/open folder (.vvs/ overlay), recent projects, import JSON, Hello World & Calculator **usability test** cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
       },
       {
         id: 'nav-history',
@@ -162,7 +162,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'breadcrumb',
         title: 'Graph breadcrumb',
         description:
-          'Module › graph path above tabs; settings modal for module name, target language, and linked project environment.',
+          'Module › graph path above tabs; settings modal for module name, **per-graph** codegen language/extension, **project defaults** for new graphs, and linked project environment.',
       },
       {
         id: 'status-bar',
@@ -173,7 +173,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'panel-layout',
         title: 'Resizable panels',
-        description: 'Collapsible graph navigator and code preview; persisted UI preferences including details height.',
+        description: 'Collapsible graph navigator and code output panel (Code | Files tabs); persisted UI preferences including details height.',
       },
       {
         id: 'floating-panels',
@@ -499,7 +499,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'codegen-target',
         title: 'Capability-based codegen targets',
         description:
-          'CodegenTarget (family + capabilities + optional syntaxPackLock in .vvs/project.json); language-profiles capabilities arrays.',
+          'CodegenTarget (family + capabilities + optional syntaxPackLock in .vvs/project.json); per-graph metadata.targetLanguage + targetFileExtension; project defaults on snapshot for new graphs; resolveGraphCodegenSettings in @vvs/graph-types.',
+        status: 'done',
       },
       {
         id: 'source-map',
@@ -652,9 +653,30 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'codemirror',
-        title: 'Code preview panel',
+        title: 'Code output panel',
         description:
-          'CodeMirror 6 with syntax highlighting, transpiler-driven output, and multi-file tabs; Project map tab skips codegen; module graphs codegen from container document.',
+          'CodeMirror 6 — **Code** tab (per-graph transpile + sourceMap highlights; language and .{ext} in header); **Files** tab (project-wide folder tree from useProjectTranspileResult). Project map tab skips codegen.',
+        status: 'done',
+      },
+      {
+        id: 'searchable-selects',
+        title: 'Searchable dropdowns',
+        description:
+          'SearchableSelect component — codegen language/extension, property enums, import graph/class/module pickers, environment import defaults.',
+        status: 'done',
+      },
+      {
+        id: 'import-graph-picker',
+        title: 'Import graph pickers',
+        description:
+          'ImportGraphTargetPanel + projectGraphCatalog — searchable picker for graph_ref, import_class, and import_module targets across all project graphs.',
+        status: 'done',
+      },
+      {
+        id: 'per-graph-codegen',
+        title: 'Per-graph language & extension',
+        description:
+          'GraphTabMetadata stores targetLanguage and targetFileExtension per graph; project targetLanguage/targetFileExtensions seed new graphs only; Files tab emits each graph with its own settings.',
         status: 'done',
       },
       {
@@ -850,7 +872,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'gdscript-ui-codegen',
         title: 'GDScript UI codegen target',
         description:
-          'Selectable in code preview, codegen target panel, syntax pack lock; CodeMirror python-like highlight; .gd generated filenames.',
+          'Selectable per graph and in project defaults; code panel header shows language + .{ext}; Graph settings → This graph / Project defaults.',
         status: 'done',
       },
       {
@@ -1084,6 +1106,13 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Phase 6 v2 language platform',
         description:
           'GDScript, Rust, C# — pack-first families + Rosetta + UI. Milestone 3 closed July 2026.',
+        status: 'done',
+      },
+      {
+        id: 'usability-example-tests',
+        title: 'Usability example tests',
+        description:
+          'Hello World + Calculator fixtures in usabilityExampleTests/ — regression graphs for UI gap discovery (language_capability_catalog.md); Start screen section renamed from Examples.',
         status: 'done',
       },
       {

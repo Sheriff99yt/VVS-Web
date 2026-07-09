@@ -81,7 +81,7 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 
 - Status bar: honest **offline/disconnected** — no fake CPU/sync metrics
 - `useApiHealth` + `VvsApi.getHealth` — show `store`/`auth` when HTTP mode
-- **Code preview:** open by default in Canvas (see `docs/node_system.md`)
+- **Code output:** open by default in Canvas — **Code | Files** tabs (`CodeOutputPanel`); per-graph language/extension; project defaults for new graphs
 - Compiler log: collapsed by default; expands on compile/error (StatusBar **Log** toggle)
 - No `animate-pulse` on connection dots; no heavy `backdrop-filter` on modals
 
@@ -118,13 +118,13 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 Whenever building or evaluating the UI panels, ensure the following professional Visual Scripting features and use-cases are accounted for:
 
 ### 1. Left Panel (Project)
-- **UE-style category tree** (single scrollable panel): Graphs · Functions · Variables · Event Dispatchers · Generated.
+- **UE-style category tree** (single scrollable panel): Graphs · Functions · Variables · Event Dispatchers. **Generated files** live in the right panel **Files** tab (not the project tree).
 - **References** is a **top-level TopNav view**, not a left-panel category — `ProjectTree` uses `mode="references"` (single-click focuses reference graph).
 - **Variable Lifecycle Management**: add, edit (Name, Type, Default Value), delete local variables.
 - **Function/Event Sub-graphs**: custom functions open in separate graph tabs.
 - **Drag-and-Drop Spawning**: drag variable → spawn Get/Set node on canvas.
 - **Navigation modes:** `mode: 'canvas' | 'references'` — canvas single-click selects; references single-click `focusReference()`; double-click opens in Canvas.
-- **Progressive disclosure:** Generated collapsed by default; per-category + row headers.
+- **Progressive disclosure:** per-category + row headers in project tree; **Files** tab shows full emit tree on demand.
 
 ### 2. Floating inspector (canvas overlay)
 

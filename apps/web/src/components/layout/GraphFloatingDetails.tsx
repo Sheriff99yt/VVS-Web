@@ -28,6 +28,7 @@ import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
 import { EventNodeBindingPanel } from './RightSidebar/EventNodeBindingPanel';
 import { NodePinsPanel } from './RightSidebar/NodePinsPanel';
 import { PropertySchemaPanel } from './RightSidebar/PropertySchemaPanel';
+import { ImportGraphTargetPanel } from './RightSidebar/ImportGraphTargetPanel';
 import { FunctionPropertiesPanel } from './RightSidebar/FunctionPropertiesPanel';
 import { BrokenRefRepairPanel } from './RightSidebar/BrokenRefRepairPanel';
 import { FloatingPanelShell } from './FloatingPanelShell';
@@ -96,6 +97,7 @@ function GraphFloatingDetailsPanel() {
     setActiveGraphTab,
     classes,
     activeClassId,
+    graphContainers,
   } = useProject();
   const graphDocuments = useGraphDocuments();
   const {
@@ -277,7 +279,26 @@ function GraphFloatingDetailsPanel() {
   const isVarDefineNode = nodeKindId === 'var_define';
   const isFunctionDefineNode = nodeKindId === 'function_define';
   const isEventMemberDefineNode = nodeKindId === 'event_member_define';
-  const isClassDefineNode = nodeKindId === 'class_define';
+  const isImportTargetNode =
+    nodeKindId === 'graph_ref' ||
+    nodeKindId === 'import_class' ||
+    nodeKindId === 'vvs.project.import_module' ||
+    nodeData?.data.linkKind === 'import_module';
+
+  const filteredPropertySchema = useMemo(() => {
+    if (!nodeKindDef?.propertySchema?.length) return [];
+    const hidden = new Set<string>();
+    if (nodeKindId === 'graph_ref') {
+      hidden.add('classId');
+      hidden.add('containerId');
+      hidden.add('graphTabId');
+      hidden.add('refLabel');
+    }
+    if (nodeKindId === 'import_class') {
+      hidden.add('targetClassId');
+    }
+    return nodeKindDef.propertySchema.filter((field) => !hidden.has(field.key));
+  }, [nodeKindDef?.propertySchema, nodeKindId]);
   const boundVariable = nodeData ? resolveVariableForNode(nodeData.data, variables) : undefined;
   const isCommentNode = nodeData?.type === 'vvs_comment_node';
   const isRerouteNode = nodeData?.type === 'vvs_reroute_node';
@@ -517,9 +538,22 @@ function GraphFloatingDetailsPanel() {
             />
           ) : null}
 
-          {nodeKindDef?.propertySchema && nodeKindDef.propertySchema.length > 0 ? (
+          {isImportTargetNode && nodeData && selectedNodeId ? (
+            <ImportGraphTargetPanel
+              kindId={nodeKindId}
+              nodeData={nodeData.data}
+              activeGraphTab={activeGraphTab}
+              graphContainers={graphContainers}
+              openTabs={openTabs}
+              functions={functions}
+              classes={classes}
+              onApply={(patch) => updateNodeData(selectedNodeId, patch)}
+            />
+          ) : null}
+
+          {filteredPropertySchema.length > 0 ? (
             <PropertySchemaPanel
-              fields={nodeKindDef.propertySchema}
+              fields={filteredPropertySchema}
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}
             />

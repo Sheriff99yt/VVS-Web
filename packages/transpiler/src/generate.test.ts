@@ -407,6 +407,69 @@ describe('transpileGraphCode', () => {
     expect(Object.keys(result.sourceMap).length).toBeGreaterThan(0);
   });
 
+  test('transpileProject respects per-graph language overrides', () => {
+    const snapshot = createCalculatorUsabilityTestSnapshot();
+    const documents = structuredClone(snapshot.documents!);
+    const addFn = snapshot.functions.find((f) => f.name === 'Add')!;
+    documents[addFn.id] = {
+      ...documents[addFn.id]!,
+      metadata: {
+        ...documents[addFn.id]!.metadata!,
+        targetLanguage: 'javascript',
+        targetFileExtension: 'mjs',
+      },
+    };
+
+    const result = transpileProject({
+      projectDetails: snapshot.projectDetails,
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      documents,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+      openTabs: snapshot.openTabs,
+    });
+
+    expect(result.files.some((file) => file.path === 'Add.mjs')).toBe(true);
+    expect(result.files.find((file) => file.path === 'Add.mjs')?.content).toContain('Add(');
+    expect(result.files.some((file) => file.path === 'Add.py')).toBe(false);
+    expect(result.files.some((file) => file.path === 'Calculator.py')).toBe(true);
+  });
+
+  test('class home graph uses per-graph extension in output path', () => {
+    const snapshot = createHelloWorldUsabilityTestSnapshot();
+    const homeId = MAIN_GRAPH_CONTAINER_ID;
+    const documents = structuredClone(snapshot.documents!);
+    documents[homeId] = {
+      ...documents[homeId]!,
+      metadata: {
+        ...documents[homeId]!.metadata!,
+        targetLanguage: 'cpp',
+        targetFileExtension: 'c',
+      },
+    };
+
+    const result = transpileGraph({
+      moduleName: snapshot.projectDetails.moduleName,
+      extendsType: snapshot.projectDetails.extendsType,
+      targetLanguage: 'cpp',
+      targetFileExtensions: { cpp: 'c' },
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      nodes: documents[homeId]!.nodes,
+      edges: documents[homeId]!.edges,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+      tabId: homeId,
+      tabLabel: 'HelloWorld',
+    });
+
+    expect(result.files[0]?.path).toBe('helloworld.c');
+  });
+
   test('cross-class import and call emit explicit class reference', () => {
     const snapshot = createCalculatorUsabilityTestSnapshot();
     const uiFlowId = 'calc-ui-flow-container';

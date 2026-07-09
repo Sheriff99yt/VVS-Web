@@ -4,7 +4,7 @@ import { GraphVariable, ProjectEventDefinition, FunctionSymbol } from '@/types/g
 import { GraphDocument } from '@/lib/graphDefaults';
 import { InstalledLibraryEntry } from '@/types/libraryAsset';
 import type { Dispatch, SetStateAction } from 'react';
-import { createDefaultIntegration, normalizeProjectSnapshot, type ProjectIntegrationConfig, type SyntaxPackLock, type CodegenCapabilities } from '@vvs/graph-types';
+import { createDefaultIntegration, normalizeProjectSnapshot, type ProjectIntegrationConfig, type SyntaxPackLock, type CodegenCapabilities, type TargetFileExtensions, normalizeTargetFileExtensions } from '@vvs/graph-types';
 
 export interface SnapshotApplyTarget {
   setVariables: Dispatch<SetStateAction<GraphVariable[]>>;
@@ -16,6 +16,7 @@ export interface SnapshotApplyTarget {
   setActiveGraphTab: (tabId: string) => void;
   setProjectDetails: (details: { moduleName: string; extendsType: string; description: string }) => void;
   setTargetLanguage: (lang: TargetLanguage) => void;
+  setTargetFileExtensions?: Dispatch<SetStateAction<TargetFileExtensions>>;
   setAutoCompile: (value: boolean) => void;
   setAutoSave: (value: boolean) => void;
   setSelection: (selection: {
@@ -44,6 +45,7 @@ export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: Snapshot
   target.setActiveGraphTab(activeTab);
   target.setProjectDetails(normalized.projectDetails);
   target.setTargetLanguage(normalized.targetLanguage);
+  target.setTargetFileExtensions?.(normalizeTargetFileExtensions(normalized.targetFileExtensions));
   target.setAutoCompile(normalized.autoCompile);
   target.setAutoSave(normalized.autoSave ?? false);
   target.setSelection({ type: 'graph', id: null });

@@ -106,7 +106,7 @@ Still open: Library backend, **production VPS deploy** (PostgresStore + JWT midd
 - **Port strategy:** Hybrid (`kindId` + `kindVersion`, registry resolve, optional snapshot on save)
 - **Pin types:** Logical types at wire layer; per-language mapping in emitter only
 - **Selection → code:** `sourceMap` from one generate pass — **no** re-transpile on select; **shipped** in CodePreviewPanel
-- **Code panel:** Open by default; **CodeMirror 6** via `GeneratedCodeView` facade (§11 `docs/node_system.md`); Monaco swappable later
+- **Code panel:** Open by default; **Code | Files** tabs (`CodeOutputPanel`); **CodeMirror 6** via `GeneratedCodeView` facade; per-graph `targetLanguage` + `targetFileExtension` with project defaults for new graphs (`graphCodegen.ts`)
 - **Dynamic calls:** One kind `vvs.project.call_function` + `graphBinding`
 
 ## Cross-language redesign (July 2026)

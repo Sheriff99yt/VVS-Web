@@ -3,7 +3,7 @@
 import React from 'react';
 import { TopNav } from './TopNav';
 import { GraphExplorer } from './GraphExplorer';
-import { CodePreviewPanel } from './CodePreviewPanel';
+import { CodeOutputPanel } from './CodeOutputPanel';
 import { GraphTabBar } from './GraphTabBar';
 import { GraphBreadcrumb } from './GraphBreadcrumb';
 import { StatusBar } from './StatusBar';
@@ -82,7 +82,7 @@ function CanvasWorkspace() {
         collapsedSize={0}
         panelRef={codePanelRef}
       >
-        <CodePreviewPanel />
+        <CodeOutputPanel />
       </Panel>
     </PanelGroup>
   );

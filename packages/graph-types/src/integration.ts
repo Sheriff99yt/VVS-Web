@@ -1,4 +1,5 @@
 import type { TargetLanguage } from './symbols';
+import { resolveTargetFileExtension, type TargetFileExtensions } from './targetFileExtensions';
 
 export type HostFileStrategy = 'skip' | 'emit' | 'patch';
 
@@ -41,16 +42,7 @@ export function createDefaultIntegration(options?: {
 
   const target = options?.defaultTarget ?? 'python';
   const moduleName = options?.moduleName ?? 'App';
-  const ext =
-    target === 'python'
-      ? 'py'
-      : target === 'javascript'
-        ? 'js'
-        : target === 'cpp'
-          ? 'cpp'
-          : target === 'verse'
-            ? 'verse'
-            : 'json';
+  const ext = resolveTargetFileExtension(target);
 
   return {
     environmentId: options?.environmentId,
@@ -114,19 +106,11 @@ function joinPath(dir: string | undefined, file: string): string {
   return `${normalizedDir}/${file}`;
 }
 
-function extensionForTarget(target: TargetLanguage): string {
-  switch (target) {
-    case 'python':
-      return 'py';
-    case 'javascript':
-      return 'js';
-    case 'cpp':
-      return 'cpp';
-    case 'verse':
-      return 'verse';
-    default:
-      return 'json';
-  }
+function extensionForTarget(
+  target: TargetLanguage,
+  overrides?: TargetFileExtensions
+): string {
+  return resolveTargetFileExtension(target, overrides);
 }
 
 /** Resolve repo-relative path for a generated module file. */
@@ -138,6 +122,7 @@ export function resolveModuleEmitPath(
     moduleName: string;
     functionBaseName?: string;
     fallbackFileName: string;
+    targetFileExtensions?: TargetFileExtensions;
   }
 ): string {
   const emitCfg = integration?.emit?.[target];
@@ -153,7 +138,7 @@ export function resolveModuleEmitPath(
 
   const base =
     options.functionBaseName?.replace(/[^a-zA-Z0-9_-]+/g, '_') || 'Function';
-  const ext = extensionForTarget(target);
+  const ext = extensionForTarget(target, options.targetFileExtensions);
   const fileName = `${base}.${ext}`;
   const dir = emitCfg?.functionDir ?? emitCfg?.moduleDir;
   if (dir || emitCfg?.moduleFile) {

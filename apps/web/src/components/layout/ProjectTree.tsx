@@ -6,7 +6,6 @@ import {
   ChevronDown,
   Plus,
   FileCode2,
-  FolderOutput,
   Search,
   X,
   Trash2,
@@ -41,13 +40,13 @@ import {
   isBindingCoaAllowed,
   isDataTypeCoaAllowed,
 } from '@/lib/variableCoaUi';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import type { VariableBinding } from '@/types/graph';
 import { findGraphIdsUsingVariable } from '@/lib/graphRelations';
 import { useEditorFocus } from '@/hooks/useEditorFocus';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import {
-  listGeneratedExports,
   listEventDispatchers,
 } from '@/lib/projectTree';
 import { createEventId, EVENT_DRAG_MIME, type EventDragPayload } from '@/lib/eventHelpers';
@@ -98,8 +97,7 @@ type CategoryKey =
   | 'environment'
   | 'functions'
   | 'events'
-  | 'variables'
-  | 'generated';
+  | 'variables';
 
 const INDENT = { root: 'pl-2', l1: 'pl-5', l2: 'pl-8' };
 
@@ -603,7 +601,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     functions: true,
     events: false,
     variables: true,
-    generated: false,
   });
   const [expandedContainerIds, setExpandedContainerIds] = useState<Record<string, boolean>>({});
   const [isAddingContainer, setIsAddingContainer] = useState(false);
@@ -644,18 +641,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const projectEvents = useMemo(
     () => listEventDispatchers(classEvents, documents, classes),
     [classEvents, documents, classes]
-  );
-  const generatedExports = useMemo(
-    () =>
-      listGeneratedExports(
-        openTabs,
-        classFunctions,
-        documents,
-        projectDetails.moduleName,
-        targetLanguage,
-        classes
-      ),
-    [openTabs, classFunctions, documents, projectDetails.moduleName, targetLanguage, classes]
   );
 
   const q = filterQuery.trim().toLowerCase();
@@ -2080,20 +2065,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 }}
               />
               <div className="flex gap-1">
-                <select
-                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-[11px] text-zinc-300"
+                <SearchableSelect
+                  className="flex-1"
                   value={newVarType}
-                  onChange={(e) => setNewVarType(e.target.value as VariableType)}
-                >
-                  {LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => {
-                    const coaBlocked = !isDataTypeCoaAllowed(descriptor.id, crossOverMode);
-                    return (
-                      <option key={descriptor.id} value={descriptor.id} disabled={coaBlocked}>
-                        {descriptor.label}
-                      </option>
-                    );
-                  })}
-                </select>
+                  onChange={(value) => {
+                    if (!isDataTypeCoaAllowed(value as VariableType, crossOverMode)) return;
+                    setNewVarType(value as VariableType);
+                  }}
+                  options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
+                    value: descriptor.id,
+                    label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
+                  }))}
+                  placeholder="Type…"
+                />
                 <button
                   type="button"
                   className="bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] px-2 rounded"
@@ -2140,36 +2124,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   onDelete={isReferenceMode ? undefined : () => handleDeleteVariable(v.id)}
                 />
               ))}
-        </CategorySection>
-
-        {/* Generated exports */}
-        <CategorySection
-          title="Generated"
-          count={generatedExports.length}
-          icon={<FolderOutput size={12} className="text-zinc-500 shrink-0" />}
-          expanded={expanded.generated}
-          onToggle={() => toggleCategory('generated')}
-        >
-          {generatedExports.length === 0
-            ? emptyHint('Filenames follow the active target language and module name.')
-            : generatedExports
-                .filter((e) => matchesFilter(`${e.fileName} ${e.graphLabel}`, q))
-                .map((entry) => (
-                  <TreeRow
-                    key={entry.graphId}
-                    active={isGraphReferenceActive(entry.graphId)}
-                    icon={<FileCode2 size={11} className="text-emerald-500/70 shrink-0" />}
-                    label={entry.fileName}
-                    hint={rowHint}
-                    onSelect={() => selectGraph(entry.graphId)}
-                    onOpen={() => openGraphById(entry.graphId)}
-                    suffix={
-                      <span className="text-[9px] text-zinc-600 truncate max-w-[72px]">
-                        {entry.graphLabel}
-                      </span>
-                    }
-                  />
-                ))}
         </CategorySection>
       </div>
 

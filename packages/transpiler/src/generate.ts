@@ -11,6 +11,7 @@ import type {
   ClassSymbol,
   ProjectSnapshot,
   CodegenTarget,
+  TargetFileExtensions,
 } from '@vvs/graph-types';
 import {
   resolveModuleEmitPath,
@@ -22,6 +23,7 @@ import {
   classHomeGraphId,
   classGraphHasDefineNodes,
   resolveCodegenTarget,
+  resolveGraphCodegenSettings,
 } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { loadEnvironmentManifest, renderHostFileTemplate } from '@vvs/environment-templates';
@@ -51,6 +53,8 @@ export interface CodegenContext {
   integration?: ProjectIntegrationConfig;
   /** Resolved syntax-pack target — family, capabilities, optional pack lock. */
   codegenTarget?: CodegenTarget;
+  /** Per-graph / per-project extension overrides for emit paths. */
+  targetFileExtensions?: TargetFileExtensions;
 }
 
 function mergeTranspileResults(results: TranspileResult[]): TranspileResult {
@@ -173,8 +177,10 @@ export function transpileGraph(ctx: CodegenContext): TranspileResult {
       { id: activeTabId, type: tabType, name: tabLabel ?? moduleName },
       moduleName,
       targetLanguage,
+      ctx.targetFileExtensions,
       resolved.isClassHomeModule ? moduleName : undefined
     ),
+    targetFileExtensions: ctx.targetFileExtensions,
   });
 
   const manifest =
@@ -235,6 +241,7 @@ export function transpileGraphCode(ctx: CodegenContext): string {
 export interface ProjectTranspileInput {
   projectDetails: ProjectSnapshot['projectDetails'];
   targetLanguage: TargetLanguage;
+  targetFileExtensions?: TargetFileExtensions;
   variables: VariableSymbol[];
   projectEvents: ProjectEventDefinition[];
   functions: FunctionSymbol[];
@@ -253,15 +260,14 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
   const results: TranspileResult[] = [];
   const emittedTabIds = new Set<string>();
 
-  const codegenTarget =
-    input.codegenTarget ??
-    resolveCodegenTarget(input.targetLanguage) ??
-    undefined;
+  const projectDefaults = {
+    targetLanguage: input.targetLanguage,
+    targetFileExtensions: input.targetFileExtensions,
+  };
 
-  const baseCtx: Omit<CodegenContext, 'nodes' | 'edges' | 'tabId' | 'tabLabel'> = {
+  const baseCtx: Omit<CodegenContext, 'nodes' | 'edges' | 'tabId' | 'tabLabel' | 'targetLanguage' | 'targetFileExtensions' | 'codegenTarget'> = {
     moduleName: input.projectDetails.moduleName,
     extendsType: input.projectDetails.extendsType,
-    targetLanguage: input.targetLanguage,
     variables: input.variables,
     projectEvents: input.projectEvents,
     functions: input.functions,
@@ -271,45 +277,52 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
     environmentId: input.environmentId,
     environmentManifest: input.environmentManifest,
     integration: input.integration,
-    codegenTarget,
+  };
+
+  const emitTab = (
+    tabId: string,
+    tabLabel: string,
+    doc: GraphDocument,
+    activeClass?: string
+  ) => {
+    if (emittedTabIds.has(tabId)) return;
+    emittedTabIds.add(tabId);
+
+    const codegen = resolveGraphCodegenSettings(doc.metadata, projectDefaults);
+    const codegenTarget =
+      resolveCodegenTarget(codegen.targetLanguage, {
+        capabilities: input.codegenTarget?.capabilities,
+        syntaxPackLock: input.codegenTarget?.syntaxPackLock,
+      }) ?? input.codegenTarget ?? undefined;
+
+    results.push(
+      transpileGraph({
+        ...baseCtx,
+        targetLanguage: codegen.targetLanguage,
+        targetFileExtensions: codegen.targetFileExtensions,
+        codegenTarget,
+        nodes: doc.nodes,
+        edges: doc.edges,
+        tabId,
+        tabLabel,
+        activeClassId: activeClass ?? input.activeClassId,
+      })
+    );
   };
 
   for (const cls of input.classes ?? []) {
     const homeId = classHomeGraphId(cls);
     const doc = input.documents[homeId];
     if (!doc || !classGraphHasDefineNodes(doc)) continue;
-    if (emittedTabIds.has(homeId)) continue;
-    emittedTabIds.add(homeId);
-
     const tab = input.openTabs?.find((t) => t.id === homeId);
-    results.push(
-      transpileGraph({
-        ...baseCtx,
-        nodes: doc.nodes,
-        edges: doc.edges,
-        tabId: homeId,
-        tabLabel: tab?.name ?? cls.name,
-        activeClassId: cls.id,
-      })
-    );
+    emitTab(homeId, tab?.name ?? cls.name, doc, cls.id);
   }
 
   for (const func of input.functions) {
     const doc = input.documents[func.id];
     if (!doc) continue;
-    if (emittedTabIds.has(func.id)) continue;
-    emittedTabIds.add(func.id);
-
     const tab = input.openTabs?.find((t) => t.id === func.id);
-    results.push(
-      transpileGraph({
-        ...baseCtx,
-        nodes: doc.nodes,
-        edges: doc.edges,
-        tabId: func.id,
-        tabLabel: tab?.name ?? `Function: ${func.name}`,
-      })
-    );
+    emitTab(func.id, tab?.name ?? `Function: ${func.name}`, doc);
   }
 
   return mergeTranspileResults(results);

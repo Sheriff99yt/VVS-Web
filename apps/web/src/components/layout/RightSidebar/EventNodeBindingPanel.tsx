@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { ProjectEventDefinition } from '@/types/graph';
 import { eventDisplayName } from '@/lib/eventHelpers';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface EventNodeBindingPanelProps {
   events: ProjectEventDefinition[];
@@ -17,6 +18,22 @@ export function EventNodeBindingPanel({
   role,
   onSelectEvent,
 }: EventNodeBindingPanelProps) {
+  const options = useMemo(
+    () =>
+      events.map((ev) => ({
+        value: ev.id,
+        label:
+          role === 'define'
+            ? eventDisplayName(ev.name)
+            : role === 'subscribe'
+              ? `Subscribe ${ev.name}`
+              : role === 'emit'
+                ? `Emit ${ev.name}`
+                : `Dispatch ${ev.name}`,
+      })),
+    [events, role]
+  );
+
   return (
     <div className="space-y-2">
       <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
@@ -28,33 +45,16 @@ export function EventNodeBindingPanel({
               ? 'Emit event'
               : 'Dispatch event'}
       </label>
-      <select
+      <SearchableSelect
         value={eventId ?? ''}
-        onChange={(e) => {
-          const next = events.find((ev) => ev.id === e.target.value);
+        onChange={(id) => {
+          const next = events.find((ev) => ev.id === id);
           if (next) onSelectEvent(next);
         }}
-        className="w-full nowheel nopan nodrag bg-zinc-900/80 border border-zinc-800 rounded px-2 py-1 text-[11px] text-white focus:outline-none focus:border-zinc-600"
-        onWheel={(e) => e.stopPropagation()}
-      >
-        <option value="" disabled>
-          Select event…
-        </option>
-        {events.map((ev) => (
-          <option key={ev.id} value={ev.id}>
-            {role === 'define'
-              ? eventDisplayName(ev.name)
-              : role === 'subscribe'
-                ? `Subscribe ${ev.name}`
-                : role === 'emit'
-                  ? `Emit ${ev.name}`
-                  : `Dispatch ${ev.name}`}
-          </option>
-        ))}
-      </select>
-      {events.length === 0 && (
-        <p className="text-[10px] text-zinc-600">Add an event in the project tree first.</p>
-      )}
+        options={options}
+        placeholder="Select event…"
+        emptyLabel="No events — add one in the project tree"
+      />
     </div>
   );
 }

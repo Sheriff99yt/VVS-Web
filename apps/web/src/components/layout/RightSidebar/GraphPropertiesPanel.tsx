@@ -14,6 +14,7 @@ import {
 import { dispatchEnvironmentImportModal } from '@/components/environments/EnvironmentImportModal';
 import { useEnvironmentCatalog } from '@/hooks/useEnvironmentCatalog';
 import { formatEmitPreview } from '@vvs/graph-types';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface GraphPropertiesPanelProps {
   onClose?: () => void;
@@ -138,18 +139,18 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
             Project environment
           </p>
           <div className="space-y-2">
-            <select
+            <SearchableSelect
               value={environmentId ?? ''}
-              onChange={(e) => handleEnvironmentChange(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500"
-            >
-              <option value="">None (blank project)</option>
-              {environments.map((env) => (
-                <option key={env.id} value={env.id}>
-                  {env.displayName} · v{env.version}
-                </option>
-              ))}
-            </select>
+              onChange={(id) => handleEnvironmentChange(id)}
+              options={[
+                { value: '', label: 'None (blank project)' },
+                ...environments.map((env) => ({
+                  value: env.id,
+                  label: `${env.displayName} · v${env.version}`,
+                })),
+              ]}
+              placeholder="Select environment…"
+            />
             {linkedManifest ? (
               <>
                 <p className="text-[10px] text-zinc-500">{linkedManifest.description}</p>

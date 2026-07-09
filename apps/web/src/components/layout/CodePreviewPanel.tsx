@@ -24,12 +24,15 @@ import { CopyPathButton } from '@/components/ui/CopyPathButton';
 import { nodeHighlightColor, DEFAULT_NODE_HIGHLIGHT } from '@/lib/nodeHighlightColor';
 import { resolveSymbolCodegenLink } from '@/lib/symbolCodegenLink';
 import { resolveCodePreviewHighlightNodeIds } from '@/lib/projectSelection';
-
+import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
+import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { TARGET_FILE_EXTENSIONS, formatTargetFileExtension } from '@vvs/graph-types';
 import type { TargetLanguage } from '@/contexts/ProjectContext';
 
 const LANGUAGE_OPTIONS: { value: TargetLanguage; label: string }[] = [
   { value: 'python', label: 'Python' },
-  { value: 'javascript', label: 'JavaScript' },
+  { value: 'javascript', label: 'JS' },
   { value: 'cpp', label: 'C++' },
   { value: 'verse', label: 'Verse' },
   { value: 'gdscript', label: 'GDScript' },
@@ -37,17 +40,6 @@ const LANGUAGE_OPTIONS: { value: TargetLanguage; label: string }[] = [
   { value: 'csharp', label: 'C#' },
   { value: 'json', label: 'JSON' },
 ];
-
-const LANGUAGE_ACCENT: Record<string, string> = {
-  python: 'text-sky-400 bg-sky-500/10 border-sky-500/25',
-  javascript: 'text-amber-400 bg-amber-500/10 border-amber-500/25',
-  cpp: 'text-violet-400 bg-violet-500/10 border-violet-500/25',
-  verse: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/25',
-  gdscript: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/25',
-  rust: 'text-orange-400 bg-orange-500/10 border-orange-500/25',
-  csharp: 'text-violet-400 bg-violet-500/10 border-violet-500/25',
-  json: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/25',
-};
 
 function countMappedNodes(result: TranspileResult): number {
   return Object.keys(result.sourceMap).length;
@@ -97,12 +89,21 @@ function buildColoredHighlightRanges(
   return entries.length > 0 ? entries : undefined;
 }
 
-export function CodePreviewPanel() {
+interface CodePreviewPanelProps {
+  selectedFilePath?: string | null;
+  onSelectedFilePathChange?: (path: string) => void;
+  onClearPinnedFile?: () => void;
+}
+
+export function CodePreviewPanel({
+  selectedFilePath = null,
+  onSelectedFilePathChange,
+  onClearPinnedFile,
+}: CodePreviewPanelProps = {}) {
   const {
     compileState,
     autoCompile,
-    targetLanguage,
-    setTargetLanguage,
+    targetLanguage: projectTargetLanguage,
     variables,
     events,
     functions,
@@ -122,6 +123,7 @@ export function CodePreviewPanel() {
     codegenCapabilities,
   } = useProject();
   const documents = useGraphDocuments();
+  const { result: projectResult, fileOwners } = useProjectTranspileResult();
 
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
   const [copied, setCopied] = useState(false);
@@ -159,6 +161,26 @@ export function CodePreviewPanel() {
   );
 
   const previewTabId = symbolLink?.tabId ?? activeGraphTab;
+  const codegenTabId =
+    (selectedFilePath ? fileOwners[selectedFilePath] : undefined) ?? previewTabId;
+
+  const {
+    targetLanguage,
+    targetFileExtension,
+    targetFileExtensions,
+    setGraphTargetLanguage,
+    setGraphTargetFileExtension,
+    isOrgGraph: previewOrgGraph,
+  } = useActiveGraphCodegenSettings(codegenTabId);
+
+  const extensionOptions = useMemo(
+    () =>
+      TARGET_FILE_EXTENSIONS[targetLanguage].map((ext) => ({
+        value: ext,
+        label: formatTargetFileExtension(ext),
+      })),
+    [targetLanguage]
+  );
 
   const previewDocument =
     documents?.[previewTabId] ??
@@ -166,12 +188,12 @@ export function CodePreviewPanel() {
     null;
 
   const activeTab = openTabs.find((t) => t.id === previewTabId);
-  const isOrgGraph = isOrgOnlyGraphTab(previewTabId);
+  const isOrgGraph = previewOrgGraph || isOrgOnlyGraphTab(previewTabId, classes);
 
   const liveResult = useMemo(() => {
     if (isOrgGraph) {
       return {
-        language: targetLanguage,
+        language: projectTargetLanguage,
         files: [],
         sourceMap: {},
       } satisfies TranspileResult;
@@ -187,6 +209,7 @@ export function CodePreviewPanel() {
       moduleName: homeClass?.name ?? (isModuleGraph ? projectDetails.moduleName : previewMetadata?.moduleName ?? activeTab?.name ?? 'Graph'),
       extendsType: homeClass?.extendsType ?? (isModuleGraph ? projectDetails.extendsType : previewMetadata?.extendsType ?? ''),
       targetLanguage,
+      targetFileExtensions,
       variables,
       projectEvents: events,
       functions,
@@ -215,6 +238,8 @@ export function CodePreviewPanel() {
     activeTab,
     isOrgGraph,
     targetLanguage,
+    targetFileExtensions,
+    projectTargetLanguage,
     projectDetails,
     variables,
     events,
@@ -239,14 +264,14 @@ export function CodePreviewPanel() {
       activeClassId,
       openTabs,
       projectDetails,
-      targetLanguage,
+      targetLanguage: projectTargetLanguage,
       crossOver: crossOverMode,
       environmentId,
     });
     setValidationWarnings((prev) =>
       warningsEqual(prev, analysis.warnings) ? prev : analysis.warnings
     );
-  }, [documents, functions, events, variables, classes, activeClassId, openTabs, projectDetails, targetLanguage, crossOverMode, environmentId, setValidationWarnings]);
+  }, [documents, functions, events, variables, classes, activeClassId, openTabs, projectDetails, projectTargetLanguage, crossOverMode, environmentId, setValidationWarnings]);
 
   useEffect(() => {
     if (compileState === 'success' || compileState === 'clean') {
@@ -290,16 +315,35 @@ export function CodePreviewPanel() {
         : lastCleanResultRef.current ?? liveResult;
 
   useEffect(() => {
+    onClearPinnedFile?.();
     setActiveFileIndex(0);
-  }, [displayResult.files.length, previewTabId, targetLanguage]);
+  }, [previewTabId, targetLanguage, targetFileExtension, onClearPinnedFile]);
 
-  const safeFileIndex = Math.min(activeFileIndex, Math.max(0, (displayResult?.files.length ?? 1) - 1));
-  const activeFile = displayResult.files[safeFileIndex] ?? displayResult.files[0];
+  const graphDisplayResult = displayResult;
+  const displayResultForView =
+    selectedFilePath && projectResult.files.some((file) => file.path === selectedFilePath)
+      ? projectResult
+      : graphDisplayResult;
+
+  useEffect(() => {
+    if (!selectedFilePath) {
+      setActiveFileIndex(0);
+      return;
+    }
+    const fileIndex = displayResultForView.files.findIndex((file) => file.path === selectedFilePath);
+    if (fileIndex >= 0) setActiveFileIndex(fileIndex);
+  }, [selectedFilePath, displayResultForView.files]);
+
+  const safeFileIndex = Math.min(
+    activeFileIndex,
+    Math.max(0, (displayResultForView?.files.length ?? 1) - 1)
+  );
+  const activeFile = displayResultForView.files[safeFileIndex] ?? displayResultForView.files[0];
   const generatedCode = activeFile?.content ?? '';
   const filePath = activeFile?.path ?? 'output';
   const copyablePath = filePath;
-  const sourceMap = displayResult.sourceMap;
-  const mappedNodeCount = countMappedNodes(displayResult);
+  const sourceMap = graphDisplayResult.sourceMap;
+  const mappedNodeCount = countMappedNodes(graphDisplayResult);
   const lines = lineCount(generatedCode);
 
   const previewNodes = (previewDocument?.nodes ?? []) as VVSNode[];
@@ -333,15 +377,20 @@ export function CodePreviewPanel() {
       const ranges = sourceMap[nodeId];
       if (!ranges?.length) continue;
       const targetPath = ranges[0]!.filePath;
-      const fileIndex = displayResult.files.findIndex((file) => file.path === targetPath);
+      const fileIndex = displayResultForView.files.findIndex((file) => file.path === targetPath);
       if (fileIndex >= 0 && fileIndex !== safeFileIndex) {
         setActiveFileIndex(fileIndex);
+        onSelectedFilePathChange?.(targetPath);
       }
       break;
     }
-  }, [highlightNodeIds, sourceMap, displayResult.files, safeFileIndex]);
-
-  const languageAccent = LANGUAGE_ACCENT[targetLanguage] ?? LANGUAGE_ACCENT.json;
+  }, [
+    highlightNodeIds,
+    sourceMap,
+    displayResultForView.files,
+    safeFileIndex,
+    onSelectedFilePathChange,
+  ]);
 
   const syncTitle = isCompiling
     ? 'Generating…'
@@ -374,77 +423,79 @@ export function CodePreviewPanel() {
   const isEmpty = !generatedCode.trim();
 
   return (
-    <div className="w-full h-full bg-zinc-950 flex flex-col min-h-0 min-w-0 relative overflow-hidden border-t border-zinc-800">
-      {/* Header — matches Compiler Log chrome */}
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-800 bg-zinc-900/80 px-2 h-8 shrink-0">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <FileCode2 size={12} className="text-indigo-400 shrink-0" />
-          {displayResult.files.length > 1 ? (
-            <select
-              value={safeFileIndex}
-              onChange={(e) => setActiveFileIndex(Number(e.target.value))}
-              className="text-[10px] text-zinc-300 font-mono bg-zinc-900 border border-zinc-800 rounded px-1 py-0.5 max-w-[min(200px,50%)] truncate"
-              title="Generated file"
-            >
-              {displayResult.files.map((file, index) => (
-                <option key={file.path} value={index}>
-                  {file.path}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span
-              className="text-[10px] text-zinc-400 font-mono truncate max-w-[min(160px,40%)]"
-              title={copyablePath}
-            >
-              {filePath}
-            </span>
-          )}
+    <div className="w-full h-full bg-zinc-950 flex flex-col min-h-0 min-w-0 relative overflow-hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 bg-zinc-950 px-2 h-7 shrink-0">
+        <div className="flex items-center gap-1 min-w-0 flex-1">
+          <FileCode2 size={11} className="text-zinc-600 shrink-0" />
+          <span
+            className="text-[10px] text-zinc-400 font-mono truncate"
+            title={copyablePath}
+          >
+            {filePath}
+          </span>
           <CopyPathButton
             path={copyablePath}
             title={`Copy path: ${copyablePath}`}
           />
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          {validationWarnings.length > 0 ? (
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1">
+            {validationWarnings.length > 0 ? (
+              <span
+                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] text-amber-400 bg-amber-500/10 border border-amber-500/20"
+                title={`${validationWarnings.length} portability warning(s)`}
+              >
+                <AlertTriangle size={9} />
+                {validationWarnings.length}
+              </span>
+            ) : null}
             <span
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-amber-400 bg-amber-500/15 border border-amber-500/25"
-              title={`${validationWarnings.length} portability warning(s)`}
+              className={`inline-flex items-center p-0.5 rounded ${syncTone}`}
+              title={syncTitle}
             >
-              <AlertTriangle size={10} />
-              {validationWarnings.length}
+              {isCompiling ? (
+                <Loader2 size={10} className="animate-spin" />
+              ) : isStale ? (
+                <AlertTriangle size={10} />
+              ) : compileState === 'error' ? (
+                <AlertTriangle size={10} />
+              ) : (
+                <Circle size={6} fill="currentColor" stroke="none" />
+              )}
             </span>
+          </div>
+
+          {!isOrgGraph ? (
+            <div className="flex items-center gap-1 border-l border-zinc-800 pl-1.5">
+              <SearchableSelect
+                variant="compact"
+                value={targetLanguage}
+                onChange={(value) => setGraphTargetLanguage(value as TargetLanguage)}
+                options={LANGUAGE_OPTIONS}
+                placeholder="Lang"
+                className="w-[4.75rem]"
+                menuClassName="min-w-[9rem]"
+                searchable={LANGUAGE_OPTIONS.length > 6}
+              />
+              <SearchableSelect
+                variant="compact"
+                value={targetFileExtension}
+                onChange={setGraphTargetFileExtension}
+                options={extensionOptions}
+                placeholder="ext"
+                className="w-[3.25rem]"
+                menuClassName="min-w-[6rem] right-0"
+                searchable={extensionOptions.length > 1}
+                searchMinOptions={1}
+              />
+            </div>
           ) : null}
+
           <span
-            className={`inline-flex items-center p-0.5 rounded ${syncTone}`}
-            title={syncTitle}
+            className="text-[9px] text-zinc-600 tabular-nums hidden sm:inline border-l border-zinc-800 pl-1.5"
+            title={`${lines} lines · ${mappedNodeCount} mapped nodes`}
           >
-            {isCompiling ? (
-              <Loader2 size={11} className="animate-spin" />
-            ) : isStale ? (
-              <AlertTriangle size={11} />
-            ) : compileState === 'error' ? (
-              <AlertTriangle size={11} />
-            ) : (
-              <Circle size={7} fill="currentColor" stroke="none" />
-            )}
-          </span>
-
-          <select
-            value={targetLanguage}
-            onChange={(e) => setTargetLanguage(e.target.value as TargetLanguage)}
-            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border cursor-pointer focus:outline-none focus:ring-1 focus:ring-zinc-600 ${languageAccent}`}
-            title="Target language"
-          >
-            {LANGUAGE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-zinc-900 text-zinc-200">
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          <span className="text-[9px] text-zinc-600 tabular-nums hidden lg:inline" title={`${lines} lines · ${mappedNodeCount} mapped nodes`}>
             {lines}L
           </span>
 
@@ -452,10 +503,10 @@ export function CodePreviewPanel() {
             type="button"
             onClick={() => void handleCopy()}
             disabled={isEmpty}
-            className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-40 disabled:pointer-events-none rounded hover:bg-zinc-800 transition-colors"
-            title={copied ? 'Copied' : 'Copy'}
+            className="p-0.5 text-zinc-500 hover:text-zinc-200 disabled:opacity-40 disabled:pointer-events-none rounded hover:bg-zinc-800 transition-colors"
+            title={copied ? 'Copied' : 'Copy code'}
           >
-            {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+            {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
           </button>
         </div>
       </div>

@@ -46,7 +46,7 @@ The terminal prints a **Network** URL for LAN access (e.g. `http://192.168.x.x:3
 2. **Examples → Calculator** — interactive demo (user input, To String, functions, events, branch)  
 3. **Right-click canvas** — spawn nodes (Action, **Conversion**, Math, Variables, …)  
 4. **Connect pins** — same-type wires only; use **To String** before Print for numbers  
-5. **Generate** (TopNav) — validation + `@vvs/transpiler` code preview (Python, JS, C++, Verse)  
+5. **Generate** (TopNav) — validation + `@vvs/transpiler` code preview (per-graph language; **Code** and **Files** tabs on the right)  
 6. **Functions** — add in Project tree; spawn **Call {name}** from context menu  
 7. **File → Save** — persists **ProjectSnapshot v2** to browser **localStorage**
 
@@ -83,7 +83,7 @@ bun run lint
 | localStorage save/load | Production MCP auth / remote deploy |
 | `@vvs/transpiler` — Python, JS, C++, Verse | JSON graph export as runnable code |
 | Conversion nodes, Get User Input, pin validation | String concat, compare, loops |
-| Start-screen examples (Hello World, Calculator) | Community library backend |
+| Start-screen usability tests (Hello World, Calculator) | Community library backend |
 | Offline honest UI | WebSocket collaboration |
 | Local Go API + MCP (`start_app.ps1`) | Self-hosted Supabase + `pgx` on VPS ([deployment.md](deployment.md)) |
 

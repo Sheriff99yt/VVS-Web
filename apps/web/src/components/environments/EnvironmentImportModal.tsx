@@ -12,6 +12,7 @@ import {
   type ProjectEnvironmentManifest,
 } from '@vvs/environment-templates';
 import type { TargetLanguage } from '@vvs/graph-types';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { VvsApi } from '@/lib/api';
 import { linkEnvironmentManifest } from '@/lib/environmentCatalog';
 import { useProject } from '@/contexts/ProjectContext';
@@ -268,15 +269,16 @@ export function EnvironmentImportModal({ open, onClose, onImported }: Environmen
 
           <div className="space-y-1">
             <label className="text-[11px] font-medium text-zinc-400">Default codegen target</label>
-            <select
+            <SearchableSelect
               value={defaultTarget}
-              onChange={(e) => setDefaultTarget(e.target.value as TargetLanguage)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500"
-            >
-              <option value="python">Python</option>
-              <option value="javascript">JavaScript</option>
-              <option value="cpp">C++</option>
-            </select>
+              onChange={(value) => setDefaultTarget(value as TargetLanguage)}
+              options={[
+                { value: 'python', label: 'Python' },
+                { value: 'javascript', label: 'JavaScript' },
+                { value: 'cpp', label: 'C++' },
+              ]}
+              placeholder="Codegen target…"
+            />
           </div>
 
           {preview ? (

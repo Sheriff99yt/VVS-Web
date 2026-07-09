@@ -48,6 +48,8 @@ export function GraphWorkspaceHost({
     markTabDirty,
     classes,
     activeClassId,
+    targetLanguage,
+    targetFileExtensions,
   } = useProject();
 
   const { registerWorkspace } = useGraphWorkspace();
@@ -74,6 +76,11 @@ export function GraphWorkspaceHost({
     canRedo,
     clearHistory,
   } = useGraphState(initialNodes, initialEdges);
+
+  const getProjectCodegenDefaults = useCallback(
+    () => ({ targetLanguage, targetFileExtensions }),
+    [targetLanguage, targetFileExtensions]
+  );
 
   const getMainMetadata = useCallback(
     () => ({
@@ -104,6 +111,7 @@ export function GraphWorkspaceHost({
     clearHistory,
     initialMain: { nodes: initialNodes, edges: initialEdges },
     getMainMetadata,
+    getProjectCodegenDefaults,
     isDraggingRef,
   });
 

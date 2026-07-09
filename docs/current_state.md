@@ -65,9 +65,9 @@ When **Canvas** is active, the full editor chrome is visible:
 ┌──────────────────────────────────────────────────────────────┐
 │ TopNav: File · Edit · View · [Auto save|Save] [Auto generate|Generate] … │
 ├──────────┬───────────────────────────────┬───────────────────┤
-│ Project  │ GraphTabBar                   │ Code preview      │
-│ tree     │ GraphCanvas (React Flow)      │ (@vvs/transpiler) │
-│ (canvas  │ + floating details (top-right)│                   │
+│ Project  │ GraphTabBar                   │ Code output       │
+│ tree     │ GraphCanvas (React Flow)      │ Code | Files tabs │
+│ (canvas  │ + floating details (top-right)│ (@vvs/transpiler) │
 │  mode)   │ + floating compiler log (br)  │                   │
 ├──────────┴───────────────────────────────┴───────────────────┤
 │ StatusBar: offline · Log toggle · target language · compile  │
@@ -201,9 +201,11 @@ Context-aware (`ProjectContext.selection`), shown on graph canvas when something
 | Function | `FunctionPropertiesPanel` — name, binding, visibility, overloads, return type, flags |
 | Node | `PropertySchemaPanel` (when kind defines `propertySchema`) + `NodePinsPanel` — pins, inline values, linked graph; event define/dispatch binding plugin |
 
-Graph-level settings (module name, target language) → breadcrumb **settings** modal (`GraphSettingsModal`).
+Graph-level settings (module name, **per-graph codegen language & file extension**, integration paths) → breadcrumb **settings** modal (`GraphSettingsModal`). **Project defaults** (default language + extension for **new graphs**) live in the same modal under **Project defaults**.
 
-Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/mockCodegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**.
+**Codegen model:** `documents[tabId].metadata.targetLanguage` and `targetFileExtension` override project-level `targetLanguage` / `targetFileExtensions` for that graph. Unset fields inherit project defaults at emit time (`resolveGraphCodegenSettings` in `@vvs/graph-types`). New graphs seed metadata from project defaults when first opened (`useGraphTabSync`).
+
+Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/codegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**.
 
 ### Graph editor features
 
@@ -230,10 +232,12 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Linear flow chains (break on middle rewire) | Done — `graphWiring.ts` + editor warning |
 | Extract selection to function | Done — `extractToFunction.ts`, Ctrl+Shift+E |
 | Variable/function/event lists in explorer | Done — **ProjectTree**: Functions → **Events** → Variables; event rows show dispatch counts (and legacy subscriber counts for old graphs); drag event spawns **Dispatch** only |
-| Generated export folder (left panel) | Done — `Generated` section lists per-graph output files |
+| Generated files browser | Done — right panel **Files** tab: project-wide emit tree (`buildGeneratedFileTree`, `useProjectTranspileResult`); per-graph language/extension; click to select, double-click to open in **Code** tab |
+| Searchable dropdowns | Done — `SearchableSelect` replaces native `<select>` in codegen, property panels, import pickers, environment import |
+| Import graph / class / module pickers | Done — `ImportGraphTargetPanel` + `projectGraphCatalog.ts`; searchable list of all project graphs |
 | Reference viewer (top-level view) | Done — `ReferencesView`, UE5 focus graph + tree |
 | Project breadcrumb | Done — `GraphBreadcrumb` above tab bar |
-| Graph tabs (main / function / container) | Done — per-tab documents + `GraphTabMetadata`; Project map (`main-graph`) pinned; legacy macro tabs migrate on load |
+| Graph tabs (main / function / container) | Done — per-tab documents + `GraphTabMetadata` (module fields + optional `targetLanguage` / `targetFileExtension`); Project map (`main-graph`) pinned; legacy macro tabs migrate on load |
 | Undo/redo | Done |
 | Comment nodes + grouping | Done — color, ungroup, inspector label |
 | Drag variable → spawn Get/Set | Done |
@@ -245,7 +249,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
-| Code preview | Done — CodeMirror 6; canvas node and project-tree symbol selection highlight generated code via `sourceMap` (`symbolCodegenLink`); portability warning badge |
+| Code preview | Done — CodeMirror 6; **Code** tab shows active/preview graph emit; language + `.{ext}` in header edit **that graph**; **Files** tab shows full project folder tree; canvas/tree selection highlight via `sourceMap` (`symbolCodegenLink`); portability warning badge |
 | Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
@@ -270,7 +274,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Spawn catalog (web) | `apps/web/src/lib/nodeCatalog.ts` → `buildCoreCategories()` |
 | Project call palette | `apps/web/src/lib/projectNodeCatalog.ts` → `expandProjectSymbols()` |
 | Calculator usability test (multi-graph) | `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts` |
-| Codegen | `packages/transpiler` + `@vvs/syntax-packs` — web facade: `apps/web/src/lib/mockCodegen.ts` |
+| Codegen | `packages/transpiler` + `@vvs/syntax-packs` — web facade: `apps/web/src/lib/codegen.ts` |
 | Rosetta fixtures | `packages/syntax-packs/rosetta/` — print, branch, assign, call, convert, dispatch, wait, for, while, switch, sequence, import_module, await_wait, call_native (+ `.golden.txt` per family) |
 | Syntax pack lock | `.vvs/project.json` → optional `syntaxPackLock` on `VvsProjectManifest` |
 | Project analysis | `packages/graph-types` (`analyzeProject`) + `packages/language-profiles` |
@@ -328,7 +332,8 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — **14 fixtures × 7 families** (98 golden pairs); regen via `scripts/update-{family}-goldens.ts` |
 | Pack coverage gate | `packages/syntax-packs/src/packCoverage.test.ts` | Done — required Rosetta + **shell** template keys + layout profile per base pack |
 | Fidelity linter | `packages/syntax-packs/src/fidelity.ts` | Done — CI via `rosetta.test.ts` |
-| CodegenTarget | `packages/graph-types/src/codegenTarget.ts` | Done — family + capabilities; UI still uses flat `TargetLanguage` |
+| CodegenTarget | `packages/graph-types/src/codegenTarget.ts` | Done — family + capabilities + syntaxPackLock |
+| Graph codegen settings | `packages/graph-types/src/graphCodegen.ts` | Done — `resolveGraphCodegenSettings`, `codegenMetadataSeed` for new graphs |
 | Tree-sitter parse CI | `packages/syntax-packs/src/parseValidation.ts` | Done — python/javascript on Linux CI (`validate:parse --strict`); skips gracefully on dev machines without native prebuild |
 | Syntax pack MCP tools | `server/internal/transport/mcp/` | Done (local) — `list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse` |
 

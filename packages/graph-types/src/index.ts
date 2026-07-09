@@ -16,3 +16,5 @@ export * from './codegenTarget';
 export * from './defineNodes';
 export * from './classMembers';
 export * from './normalizeGraphNodeData';
+export * from './targetFileExtensions';
+export * from './graphCodegen';

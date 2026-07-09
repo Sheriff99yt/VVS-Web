@@ -6,6 +6,7 @@ import { normalizeFunctionSymbols, normalizeVariableSymbols, createClassSymbol, 
 import type { GraphContainer } from './symbols';
 import type { GraphNode } from './nodes';
 import { migrateTextShapedAlignment } from './fidelityMigration';
+import { normalizeTargetFileExtensions } from './targetFileExtensions';
 
 export interface InstalledLibraryEntry {
   assetId: string;
@@ -88,6 +89,8 @@ export interface ProjectSnapshotV3 {
   syntaxPackLock?: SyntaxPackLock;
   /** Per-family capability overrides for syntax pack resolution */
   codegenCapabilities?: CodegenCapabilities;
+  /** User-selected file extension per codegen target (e.g. cpp → hpp). */
+  targetFileExtensions?: import('./targetFileExtensions').TargetFileExtensions;
 }
 
 export type ProjectSnapshot = ProjectSnapshotV3;
@@ -547,6 +550,7 @@ export function normalizeProjectSnapshot(raw: unknown): ProjectSnapshot | null {
       value.codegenCapabilities && typeof value.codegenCapabilities === 'object'
         ? (value.codegenCapabilities as CodegenCapabilities)
         : undefined,
+    targetFileExtensions: normalizeTargetFileExtensions(value.targetFileExtensions),
   };
 
   const migrated = finalizeGraphContainerSnapshot(

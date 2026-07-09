@@ -1,8 +1,10 @@
-import { GraphTab, TargetLanguage } from '@/contexts/ProjectContext';
+import { GraphTab } from '@/contexts/ProjectContext';
 import type { ClassSymbol } from '@vvs/graph-types';
 import {
   classGraphHasDefineNodes,
   MAIN_GRAPH_CONTAINER_ID,
+  resolveGraphCodegenSettings,
+  type ProjectCodegenDefaults,
 } from '@vvs/graph-types';
 import { activeClass as resolveActiveClass, classGraphTabId, classHomeGraphId, symbolClassId } from '@/lib/classScope';
 import { GraphDocument } from '@/lib/graphDefaults';
@@ -136,13 +138,14 @@ export function listGeneratedExports(
   functions: { id: string; name: string }[],
   documents: Record<string, GraphDocument> | null,
   moduleName: string,
-  targetLanguage: TargetLanguage,
+  projectDefaults: ProjectCodegenDefaults,
   classes?: ClassSymbol[]
 ): GeneratedExportEntry[] {
   return listAllGraphTabs(openTabs, functions, documents, classes)
     .filter((tab) => tab.type !== 'container')
     .map((tab) => {
       const homeClass = classes?.find((cls) => classHomeGraphId(cls) === tab.id);
+      const codegen = resolveGraphCodegenSettings(documents?.[tab.id]?.metadata, projectDefaults);
       return {
         graphId: tab.id,
         graphLabel: graphDisplayName(tab),
@@ -150,7 +153,8 @@ export function listGeneratedExports(
         fileName: generatedFileName(
           tab,
           homeClass?.name ?? moduleName,
-          targetLanguage
+          codegen.targetLanguage,
+          codegen.targetFileExtensions
         ),
       };
     });

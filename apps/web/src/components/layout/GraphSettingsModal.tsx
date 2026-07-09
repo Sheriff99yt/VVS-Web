@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { GraphPropertiesPanel } from './RightSidebar/GraphPropertiesPanel';
-import { CodegenTargetPanel } from './CodegenTargetPanel';
+import { GraphCodegenPanel, ProjectCodegenDefaultsPanel } from './CodegenTargetPanel';
 import { CrossOverArchitecturePanel } from './CrossOverArchitecturePanel';
 import { PortabilitySummaryPanel } from './PortabilitySummaryPanel';
 import { SyntaxPackLockPanel } from './SyntaxPackLockPanel';
@@ -41,7 +41,10 @@ export function GraphSettingsModal() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0 space-y-5">
-          <CodegenTargetPanel />
+          <GraphCodegenPanel />
+          <div className="border-t border-zinc-800/80 pt-4">
+            <ProjectCodegenDefaultsPanel />
+          </div>
           <div className="border-t border-zinc-800/80 pt-4">
             <CrossOverArchitecturePanel />
           </div>

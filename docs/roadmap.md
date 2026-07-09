@@ -40,7 +40,7 @@ UE6 editor plugin (in-engine)      →   Scale + polish
 | **Syntax packs (post-migration)** | **Module shell templates** (`ClassModuleOpen`, handlers, function headers), **pack layout** for empty bodies, **shared `blockHelpers`** (`blocks.ts` + `sinkStatements.ts`), unified `classModule.ts`, **Tree-sitter CI** (Python/JS, Linux), monorepo **packages** + **Go test** CI jobs — **shipped** July 2026 |
 | **Languages v1** | Python, JavaScript/TypeScript, C++, **Verse** — client transpiler + web code preview |
 | **Languages v2 (Phase 6)** | **GDScript, Rust, C#** — **shipped** July 2026 (milestone 3) |
-| **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; multi-file output (module + host entry) |
+| **Preview** | Live code panel driven by `@vvs/transpiler` + `sourceMap` selection highlight; **Code \| Files** output panel; per-graph language/extension with project defaults for new graphs; multi-file tree (module + host entry) |
 | **Quality** | Snapshot tests on generated code; **Rosetta golden suite** + fidelity linter in `@vvs/syntax-packs`; graph validation (`PIN_TYPE_MISMATCH`, portability) |
 | **Text-shaped alignment** | Macro removal, hoisted imports, Wait/Await Wait, **event Dispatch** (direct call), **explicit program entry** (`role: 'entry'`, no hidden `on_start`) — **shipped**; Emit/Subscribe multicast **rejected** (hidden runtime) |
 | **Project environments** | `@vvs/environment-templates` — VS Code–style templates, Environment API browse/spawn, built-in Python/JS packs — **shipped**; [environment_templates.md](environment_templates.md) |
@@ -147,10 +147,11 @@ This is a **first-class product surface** for Unreal teams, but output remains *
 
 ## Phase 6 — Polish, scale & emitter expansion
 
-**Status:** **Active** — **language platform milestone (M3) closed** July 2026. Remaining Phase 6: performance, Rust/C# console env packs, mobile UX, enterprise. **Next major track:** usability & workflow standards — [design/terms_refactor_plan.md](design/terms_refactor_plan.md).
+**Status:** **Active** — **language platform milestone (M3) closed** July 2026. **Usability & workflow** track underway (per-graph codegen, output file tree, searchable controls, usability example tests). Remaining Phase 6: performance, Rust/C# console env packs, mobile UX, enterprise. See [design/terms_refactor_plan.md](design/terms_refactor_plan.md) and [design/language_capability_catalog.md](design/language_capability_catalog.md).
 
 | Track | Examples |
 |-------|----------|
+| **Usability & workflow** | **Shipped (July 2026):** usability example tests (Hello World, Calculator); **Code \| Files** output tabs; per-graph `targetLanguage` + `targetFileExtension` with project defaults; searchable `SearchableSelect` project-wide; import graph/class/module pickers. **Next:** terms/vocabulary alignment, capability catalog gaps (visibility, overload UI, lambda) |
 | **Performance** | 500+ node graphs at 60fps; worker-based transpile for large graphs |
 | **Languages** | **Closed (M3)** — seven pack-driven families; 14×7 Rosetta goldens; `env.gdscript.godot-game`. Optional: Rust/C# console env packs |
 | **Templates & standards** | OpenAPI/AsyncAPI → environment manifest import; TypeSpec emitter; Backstage catalog; devcontainer linkage |

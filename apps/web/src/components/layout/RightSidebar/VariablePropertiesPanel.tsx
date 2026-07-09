@@ -16,6 +16,7 @@ import {
   isReadonlyCoaAllowed,
 } from '@/lib/variableCoaUi';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface VariablePropertiesPanelProps {
   variable: VariableSymbol;
@@ -56,27 +57,22 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
 
       <div className="space-y-1.5">
         <label className="text-[11px] font-medium text-zinc-400">Type</label>
-        <select
+        <SearchableSelect
           value={variable.type}
-          onChange={(e) => {
-            const nextType = e.target.value as VariableDataType;
+          onChange={(nextType) => {
+            if (!isDataTypeCoaAllowed(nextType as VariableDataType, crossOverMode)) return;
             patch({
-              type: nextType,
-              defaultValue: defaultValueForVariableType(nextType),
+              type: nextType as VariableDataType,
+              defaultValue: defaultValueForVariableType(nextType as VariableDataType),
             });
           }}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
-        >
-          {LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => {
-            const coaBlocked = !isDataTypeCoaAllowed(descriptor.id, crossOverMode);
-            return (
-              <option key={descriptor.id} value={descriptor.id} disabled={coaBlocked}>
-                {descriptor.label}
-                {coaBlocked ? ' (COA)' : ''}
-              </option>
-            );
-          })}
-        </select>
+          options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
+            value: descriptor.id,
+            label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
+            description: descriptor.description,
+          }))}
+          placeholder="Select type…"
+        />
         <p className="text-[10px] text-zinc-500 leading-relaxed">
           {LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === variable.type)?.description}
         </p>
@@ -109,14 +105,15 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
 
       <div className="space-y-1">
         <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Visibility</span>
-        <select
+        <SearchableSelect
           value={variable.visibility}
-          onChange={(e) => patch({ visibility: e.target.value as SymbolVisibility })}
-          className="w-full bg-zinc-900/80 border border-zinc-800 rounded px-2 py-1 text-[10px] text-zinc-300"
-        >
-          <option value="public">Public</option>
-          <option value="private">Private</option>
-        </select>
+          onChange={(value) => patch({ visibility: value as SymbolVisibility })}
+          options={[
+            { value: 'public', label: 'Public' },
+            { value: 'private', label: 'Private' },
+          ]}
+          searchable={false}
+        />
       </div>
 
       <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">

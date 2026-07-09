@@ -7,6 +7,7 @@ import { createDefaultOverload, FUNCTION_RETURN_TYPE_OPTIONS } from '@vvs/graph-
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { SymbolParameterEditor } from './SymbolParameterEditor';
 import { overloadDisplayLabel } from '@/lib/functionTabs';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 const RETURN_TYPES = FUNCTION_RETURN_TYPE_OPTIONS;
 
@@ -86,14 +87,15 @@ export function FunctionPropertiesPanel({
 
       <div className="space-y-1">
         <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Visibility</span>
-        <select
+        <SearchableSelect
           value={func.visibility}
-          onChange={(e) => onChange({ ...func, visibility: e.target.value as SymbolVisibility })}
-          className="w-full bg-zinc-900/80 border border-zinc-800 rounded px-2 py-1 text-[10px] text-zinc-300"
-        >
-          <option value="public">Public</option>
-          <option value="private">Private</option>
-        </select>
+          onChange={(value) => onChange({ ...func, visibility: value as SymbolVisibility })}
+          options={[
+            { value: 'public', label: 'Public' },
+            { value: 'private', label: 'Private' },
+          ]}
+          searchable={false}
+        />
       </div>
 
       <div className="space-y-1.5 border-t border-zinc-800/80 pt-2">
@@ -144,21 +146,16 @@ export function FunctionPropertiesPanel({
           />
           <div className="space-y-1">
             <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Return</label>
-            <select
+            <SearchableSelect
               value={selectedOverload.returnType}
-              onChange={(e) =>
+              onChange={(value) =>
                 updateOverload(selectedOverload.id, {
-                  returnType: e.target.value as PinType | 'void',
+                  returnType: value as PinType | 'void',
                 })
               }
-              className="w-full bg-zinc-900/80 border border-zinc-800 rounded px-2 py-1 text-[10px] text-zinc-300"
-            >
-              {RETURN_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+              options={RETURN_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+              placeholder="Return type…"
+            />
           </div>
         </>
       )}

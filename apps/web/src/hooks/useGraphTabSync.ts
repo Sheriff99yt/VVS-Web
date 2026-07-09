@@ -6,6 +6,8 @@ import {
   createDefaultGraphForTab,
   defaultTabMetadata,
   withDefaultMetadata,
+  isCodegenMetadataPatch,
+  type ProjectCodegenDefaults,
 } from '@/lib/graphDefaults';
 import { GraphTab } from '@/contexts/ProjectContext';
 import { graphDisplayName } from '@/lib/graphTabs';
@@ -44,6 +46,7 @@ interface UseGraphTabSyncOptions {
   clearHistory: () => void;
   initialMain: GraphDocument;
   getMainMetadata: () => GraphTabMetadata;
+  getProjectCodegenDefaults: () => ProjectCodegenDefaults;
   /** When true, skip debounced document revision notifications (during node drag). */
   isDraggingRef?: React.RefObject<boolean>;
 }
@@ -59,6 +62,7 @@ export function useGraphTabSync({
   clearHistory,
   initialMain,
   getMainMetadata,
+  getProjectCodegenDefaults,
   isDraggingRef,
 }: UseGraphTabSyncOptions) {
   const documentsRef = useRef<Map<string, GraphDocument>>(
@@ -83,29 +87,59 @@ export function useGraphTabSync({
 
   const getTabMeta = useCallback(
     (tabId: string): GraphTabMetadata => {
-      if (tabId === 'main') return getMainMetadata();
-      const doc = documentsRef.current.get(tabId);
       const tabMeta = openTabs.find((t) => t.id === tabId);
-      return doc?.metadata ?? defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph');
+      const codegenDefaults = getProjectCodegenDefaults();
+      const doc = documentsRef.current.get(tabId);
+      if (tabId === 'main') {
+        return {
+          ...defaultTabMetadata('main', tabMeta?.name ?? 'Main graph', codegenDefaults),
+          ...getMainMetadata(),
+          ...(doc?.metadata?.targetLanguage !== undefined
+            ? { targetLanguage: doc.metadata.targetLanguage }
+            : {}),
+          ...(doc?.metadata?.targetFileExtension !== undefined
+            ? { targetFileExtension: doc.metadata.targetFileExtension }
+            : {}),
+        };
+      }
+      return (
+        doc?.metadata ??
+        defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph', codegenDefaults)
+      );
     },
-    [getMainMetadata, openTabs]
+    [getMainMetadata, getProjectCodegenDefaults, openTabs]
   );
 
   const flushCurrentTab = useCallback(() => {
     const tabId = prevTabRef.current;
     const tabMeta = openTabs.find((t) => t.id === tabId);
-    const metadata =
-      tabId === 'main'
-        ? getMainMetadata()
-        : documentsRef.current.get(tabId)?.metadata ??
-          defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph');
+    const codegenDefaults = getProjectCodegenDefaults();
+    const existingMetadata = documentsRef.current.get(tabId)?.metadata;
+
+    let metadata: GraphTabMetadata;
+    if (tabId === 'main') {
+      metadata = {
+        ...defaultTabMetadata('main', tabMeta?.name ?? 'Main graph', codegenDefaults),
+        ...getMainMetadata(),
+        ...(existingMetadata?.targetLanguage !== undefined
+          ? { targetLanguage: existingMetadata.targetLanguage }
+          : {}),
+        ...(existingMetadata?.targetFileExtension !== undefined
+          ? { targetFileExtension: existingMetadata.targetFileExtension }
+          : {}),
+      };
+    } else {
+      metadata =
+        existingMetadata ??
+        defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph', codegenDefaults);
+    }
 
     documentsRef.current.set(tabId, {
       nodes: clearNodeSelectionFlags(structuredClone(nodesRef.current)),
       edges: clearEdgeSelectionFlags(structuredClone(edgesRef.current)),
       metadata,
     });
-  }, [getMainMetadata, openTabs]);
+  }, [getMainMetadata, getProjectCodegenDefaults, openTabs]);
 
   const getAllDocuments = useCallback((): Record<string, GraphDocument> => {
     flushCurrentTab();
@@ -139,20 +173,27 @@ export function useGraphTabSync({
   const updateActiveTabMetadata = useCallback(
     (patch: Partial<GraphTabMetadata>) => {
       const tabMeta = openTabs.find((t) => t.id === activeGraphTab);
-      if (activeGraphTab === 'main' || activeGraphTab === MAIN_GRAPH_CONTAINER_ID) return;
-      if (containerIdSet().has(activeGraphTab) && tabMeta?.type === 'container') return;
+      const codegenPatch = isCodegenMetadataPatch(patch);
+
+      if (!codegenPatch) {
+        if (activeGraphTab === MAIN_GRAPH_CONTAINER_ID) return;
+        if (containerIdSet().has(activeGraphTab) && tabMeta?.type === 'container') return;
+      }
+
       const doc = documentsRef.current.get(activeGraphTab) ?? {
         nodes: structuredClone(nodesRef.current),
         edges: structuredClone(edgesRef.current),
       };
-      const base = doc.metadata ?? defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph');
+      const base =
+        doc.metadata ??
+        defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph', getProjectCodegenDefaults());
       documentsRef.current.set(activeGraphTab, {
         ...doc,
         metadata: { ...base, ...patch },
       });
       notifyMetadata();
     },
-    [activeGraphTab, openTabs, notifyMetadata]
+    [activeGraphTab, openTabs, notifyMetadata, getProjectCodegenDefaults, containerIdSet]
   );
 
   const subscribeMetadata = useCallback((listener: () => void) => {
@@ -213,7 +254,13 @@ export function useGraphTabSync({
 
     let nextDoc = documentsRef.current.get(activeGraphTab);
     if (!nextDoc) {
-      nextDoc = withDefaultMetadata(createDefaultGraphForTab(tabType, tabName), tabType, tabName);
+      const codegenDefaults = getProjectCodegenDefaults();
+      nextDoc = withDefaultMetadata(
+        createDefaultGraphForTab(tabType, tabName, undefined, codegenDefaults),
+        tabType,
+        tabName,
+        codegenDefaults
+      );
       documentsRef.current.set(activeGraphTab, nextDoc);
     }
 
@@ -231,6 +278,7 @@ export function useGraphTabSync({
     clearHistory,
     flushCurrentTab,
     notifyMetadata,
+    getProjectCodegenDefaults,
   ]);
 
   const importGraphTab = useCallback(
@@ -238,7 +286,12 @@ export function useGraphTabSync({
       flushCurrentTab();
       const tabType = documentTabType(tab.type);
       const name = graphDisplayName(tab);
-      const doc = withDefaultMetadata(cloneDocument(document), tabType, name);
+      const doc = withDefaultMetadata(
+        cloneDocument(document),
+        tabType,
+        name,
+        getProjectCodegenDefaults()
+      );
       documentsRef.current.set(tab.id, doc);
       setNodes(clearNodeSelectionFlags(doc.nodes));
       setEdges(clearEdgeSelectionFlags(doc.edges));
@@ -246,7 +299,7 @@ export function useGraphTabSync({
       clearHistory();
       notifyMetadata();
     },
-    [flushCurrentTab, setNodes, setEdges, clearHistory, notifyMetadata]
+    [flushCurrentTab, setNodes, setEdges, clearHistory, notifyMetadata, getProjectCodegenDefaults]
   );
 
   const patchAllDocuments = useCallback(
