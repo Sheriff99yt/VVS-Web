@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Folder, FileText, Loader2, RefreshCw } from 'lucide-react';
 import { listDirectoryTree, type DirectoryEntry } from '@/lib/projectFolder/listDirectory';
 import { CopyPathButton, formatRepoRelativePath } from '@/components/ui/CopyPathButton';
