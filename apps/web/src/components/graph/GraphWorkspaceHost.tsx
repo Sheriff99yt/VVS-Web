@@ -179,15 +179,17 @@ export function GraphWorkspaceHost({
     updateActiveTabMetadata,
     subscribeMetadata,
   });
-  tabSyncRef.current = {
-    getAllDocuments,
-    loadAllDocuments,
-    patchAllDocuments,
-    importGraphTab,
-    getActiveTabMetadata,
-    updateActiveTabMetadata,
-    subscribeMetadata,
-  };
+  React.useLayoutEffect(() => {
+    tabSyncRef.current = {
+      getAllDocuments,
+      loadAllDocuments,
+      patchAllDocuments,
+      importGraphTab,
+      getActiveTabMetadata,
+      updateActiveTabMetadata,
+      subscribeMetadata,
+    };
+  });
 
   const patchAllDocumentsWithDirty = useCallback(
     (

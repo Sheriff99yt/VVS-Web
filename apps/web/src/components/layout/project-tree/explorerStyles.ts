@@ -33,7 +33,7 @@ export function gridTileClass(
 ): string {
   const interactive = opts?.interactive !== false;
   return [
-    'flex flex-col items-center justify-center gap-0.5 min-h-[36px] p-1.5 rounded-md border select-none group',
+    'flex items-center gap-1 min-h-[22px] px-1.5 py-0.5 rounded border select-none group relative',
     interactive ? 'cursor-pointer' : '',
     active
       ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-100'
@@ -69,5 +69,5 @@ export function bindingChipClass(selected: boolean): string {
 }
 
 export function sectionBodyClass(viewMode: SectionViewMode): string {
-  return viewMode === 'grid' ? 'grid grid-cols-2 gap-1.5 px-2 pb-2' : 'pb-1';
+  return viewMode === 'grid' ? 'grid grid-cols-3 gap-1 px-1.5 pb-1.5' : 'pb-1';
 }

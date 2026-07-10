@@ -30,7 +30,7 @@ class Registry implements PrinterRegistry {
 export const printerRegistry = new Registry();
 
 function stmtPrinterKey(stmt: IrStatement): string {
-  if (stmt.kind === 'AssignVariable' && stmt.assignKind === 'get_input') {
+  if (stmt.kind === 'AssignVariable' && (stmt as any).assignKind === 'get_input') {
     return 'AssignVariable:get_input';
   }
   return stmt.kind;

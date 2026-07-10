@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GitBranch, GripVertical, PenLine, Trash2 } from 'lucide-react';
+import { GitBranch, GripVertical } from 'lucide-react';
 import type { ClassSymbol, GraphContainer } from '@vvs/graph-types';
 import { classesForContainer } from '@/lib/classScope';
 import { CategorySection } from './CategorySection';
@@ -10,6 +10,7 @@ import { TreeRow } from './TreeRow';
 import { TreeRenameRow } from './TreeRenameRow';
 import { graphContainerClassMeta, graphContainerLabel } from './graphContainerLabels';
 import { INDENT, type SectionViewMode } from './constants';
+import { RowActionsMenu } from './RowActionsMenu';
 
 export function GraphFoldersSection({
   containers,
@@ -152,8 +153,27 @@ export function GraphFoldersSection({
                 )
               }
               icon={<GitBranch size={10} className="text-emerald-500/80 shrink-0" />}
-              label={renamingId === container.id ? renameName : graphContainerLabel(container)}
-              meta={graphContainerClassMeta(containerClasses.length)}
+              label={
+                renamingId === container.id ? (
+                  <input
+                    type="text"
+                    value={renameName}
+                    onChange={(e) => onRenameNameChange(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[10px] text-white focus:outline-none focus:border-zinc-600"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onSaveRename(container);
+                      if (e.key === 'Escape') onCancelRename();
+                    }}
+                  />
+                ) : (
+                  graphContainerLabel(container)
+                )
+              }
+              isRenaming={renamingId === container.id}
+              meta={renamingId === container.id ? undefined : graphContainerClassMeta(containerClasses.length)}
               hint="Open graph · drag a class here to set its output graph"
               active={activeGraphTab === container.id}
               isDragging={draggingId === container.id}
@@ -164,47 +184,40 @@ export function GraphFoldersSection({
               onDrop={(e) => onContainerDrop(e, container.id)}
               onDragLeave={() => onContainerDragLeave(container.id)}
               suffix={
-                !isReferenceMode ? (
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                    {canRename(container) ? (
-                      <button
-                        type="button"
-                        className="p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
-                        title="Rename graph"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onStartRename(container);
-                        }}
-                      >
-                        <PenLine size={10} />
-                      </button>
-                    ) : null}
-                    {canDelete(container) ? (
-                      <button
-                        type="button"
-                        className="p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                        title="Delete graph"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(container.id);
-                        }}
-                      >
-                        <Trash2 size={10} />
-                      </button>
-                    ) : null}
-                  </div>
+                renamingId === container.id ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSaveRename(container);
+                    }}
+                    className="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 hover:bg-indigo-500/30 shrink-0"
+                  >
+                    Save
+                  </button>
+                ) : null
+              }
+              hoverActions={
+                !isReferenceMode && renamingId !== container.id ? (
+                  <RowActionsMenu
+                    actions={[
+                      ...(canRename(container)
+                        ? [{ label: 'Rename', onClick: () => onStartRename(container) }]
+                        : []),
+                      ...(canDelete(container)
+                        ? [
+                            {
+                              label: 'Delete',
+                              onClick: () => onDelete(container.id),
+                              danger: true,
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
                 ) : null
               }
             />
-            {renamingId === container.id ? (
-              <TreeRenameRow
-                value={renameName}
-                onChange={onRenameNameChange}
-                onSave={() => onSaveRename(container)}
-                onCancel={onCancelRename}
-                viewMode={viewMode}
-              />
-            ) : null}
           </React.Fragment>
         );
       })}

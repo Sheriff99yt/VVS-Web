@@ -59,7 +59,7 @@ function PlainFileRow({
       >
         {plainFileIcon(kind)}
         <span
-          className={`truncate text-[9px] font-mono w-full text-center ${
+          className={`truncate text-[9px] font-mono text-left flex-1 min-w-0 ${
             isGenerated ? 'text-zinc-400 group-hover:text-emerald-200' : 'text-zinc-500'
           }`}
         >

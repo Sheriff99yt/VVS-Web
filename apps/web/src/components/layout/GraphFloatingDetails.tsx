@@ -149,12 +149,13 @@ function GraphFloatingDetailsPanel() {
   const effectiveExpanded = expanded || isBrokenRefSelection;
   const panelHeight = effectiveExpanded ? expandedHeight : compactHeight;
 
+  if (isBrokenRefSelection && expandedHeight < BROKEN_PANEL_MIN_HEIGHT) {
+    setExpandedHeight(clampDetailsPanelHeight(BROKEN_PANEL_MIN_HEIGHT));
+  }
+
   useEffect(() => {
-    if (!isBrokenRefSelection) return;
-    if (expandedHeight < BROKEN_PANEL_MIN_HEIGHT) {
-      const next = clampDetailsPanelHeight(BROKEN_PANEL_MIN_HEIGHT);
-      setExpandedHeight(next);
-      writeUiPreferences({ detailsPanelExpandedHeight: next });
+    if (isBrokenRefSelection && expandedHeight < BROKEN_PANEL_MIN_HEIGHT) {
+      writeUiPreferences({ detailsPanelExpandedHeight: clampDetailsPanelHeight(BROKEN_PANEL_MIN_HEIGHT) });
     }
   }, [isBrokenRefSelection, expandedHeight]);
 
@@ -384,7 +385,7 @@ function GraphFloatingDetailsPanel() {
     if (isBrokenRefSelection && brokenRef && selectedNodeId) {
       return (
         <BrokenRefRepairPanel
-          ref={brokenRef}
+          symbolRef={brokenRef}
           onDeleteNode={() => deleteBrokenNode(activeGraphTab, selectedNodeId)}
           onDeleteAllForSymbol={() => deleteAllBrokenForRef(brokenRef)}
           onRecreateSymbol={() => fixBrokenNode(activeGraphTab, selectedNodeId)}
@@ -447,7 +448,7 @@ function GraphFloatingDetailsPanel() {
     <>
       {isBrokenRefSelection && brokenRef && selectedNodeId ? (
         <BrokenRefRepairPanel
-          ref={brokenRef}
+          symbolRef={brokenRef}
           onDeleteNode={() => deleteBrokenNode(activeGraphTab, selectedNodeId)}
           onDeleteAllForSymbol={() => deleteAllBrokenForRef(brokenRef)}
           onRecreateSymbol={() => fixBrokenNode(activeGraphTab, selectedNodeId)}

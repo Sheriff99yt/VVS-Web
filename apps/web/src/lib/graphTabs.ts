@@ -61,7 +61,7 @@ export function isOrgOnlyGraphTab(
   classes?: Pick<ClassSymbol, 'containerId'>[]
 ): boolean {
   if (activeGraphTab !== MAIN_GRAPH_CONTAINER_ID) return false;
-  return !classes?.some((cls) => classHomeGraphId(cls) === activeGraphTab);
+  return !classes?.some((cls) => classHomeGraphId(cls as ClassSymbol) === activeGraphTab);
 }
 
 /** True when a tab can emit code (class home, function, legacy main, etc.). */
@@ -71,7 +71,7 @@ export function isCodegenGraphTab(
 ): boolean {
   if (tabId === 'main') return true;
   if (tabId === MAIN_GRAPH_CONTAINER_ID) {
-    return classes?.some((cls) => classHomeGraphId(cls) === tabId) ?? false;
+    return classes?.some((cls) => classHomeGraphId(cls as ClassSymbol) === tabId) ?? false;
   }
   return true;
 }

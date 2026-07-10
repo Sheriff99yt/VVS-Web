@@ -1,5 +1,5 @@
 import type { FunctionSymbol, TargetLanguage } from '@vvs/graph-types';
-import { defaultCodegenTarget } from '@vvs/graph-types';
+import { defaultCodegenTarget, targetLanguageToFamily } from '@vvs/graph-types';
 import {
   getTemplate,
   renderTemplate,
@@ -36,7 +36,8 @@ function printContextForIr(
 }
 
 function profileFor(lang: TargetLanguage) {
-  return resolvePrintProfile(lang);
+  const family = targetLanguageToFamily(lang) ?? 'python';
+  return resolvePrintProfile(family);
 }
 
 function renderShell(
@@ -175,7 +176,8 @@ export function appendEventHandlerDefinition(
   const startLine = sink.lineCount + 1;
   sink.appendRaw(renderShell(lang, 'EventHandlerOpen', slots));
 
-  const ctx = printContextForIr(ir, handlerBodyIndent(lang), ir.environmentManifest);
+  const family = targetLanguageToFamily(lang) ?? 'python';
+  const ctx = printContextForIr(ir, handlerBodyIndent(family), ir.environmentManifest);
   if (handler.body.length === 0) sink.appendRaw(emptyHandlerBodyLine(lang));
   else appendIrStatements(sink, handler.body, ctx);
 

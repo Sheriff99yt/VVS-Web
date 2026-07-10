@@ -136,7 +136,9 @@ export function CodeMirrorGeneratedCodeView({
 }: GeneratedCodeViewProps) {
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const highlightRangesRef = useRef(highlightRanges);
-  highlightRangesRef.current = highlightRanges;
+  React.useLayoutEffect(() => {
+    highlightRangesRef.current = highlightRanges;
+  });
 
   const extensions = useMemo(
     () => [

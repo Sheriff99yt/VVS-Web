@@ -50,19 +50,21 @@ export function createStmtPrinters(
         if (family === 'cpp') {
           const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
           const receiver = s.instanceCall ? `${classRef}()` : classRef;
-          const slots =
+          const slots = (
             key === 'CallCrossClassStatic'
               ? { class: classRef, callee: s.calleeName }
-              : { receiver, callee: s.calleeName };
+              : { receiver, callee: s.calleeName }
+          ) as Record<string, string>;
           return printFromTemplate(ctx, key, slots);
         }
         if (family === 'javascript') {
           const receiver = s.instanceCall ? `new ${classRef}()` : classRef;
           const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
-          const slots =
+          const slots = (
             key === 'CallCrossClassStatic'
               ? { class: classRef, callee: s.calleeName }
-              : { receiver, callee: s.calleeName };
+              : { receiver, callee: s.calleeName }
+          ) as Record<string, string>;
           return printFromTemplate(ctx, key, slots);
         }
         if (family === 'verse') {
@@ -93,10 +95,11 @@ export function createStmtPrinters(
         if (family === 'csharp') {
           const receiver = s.instanceCall ? `new ${classRef}()` : classRef;
           const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
-          const slots =
+          const slots = (
             key === 'CallCrossClassStatic'
               ? { class: classRef, callee: s.calleeName }
-              : { receiver, callee: s.calleeName };
+              : { receiver, callee: s.calleeName }
+          ) as Record<string, string>;
           return printFromTemplate(ctx, key, slots);
         }
       }

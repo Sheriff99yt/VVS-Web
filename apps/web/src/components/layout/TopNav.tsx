@@ -348,13 +348,14 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   }, []);
 
   const handleCommitPreviewRef = useRef(handleCommitPreview);
-  handleCommitPreviewRef.current = handleCommitPreview;
-
   const handleSaveRef = useRef(handleSave);
-  handleSaveRef.current = handleSave;
-
   const handleCompileRef = useRef(handleCompile);
-  handleCompileRef.current = handleCompile;
+
+  React.useLayoutEffect(() => {
+    handleCommitPreviewRef.current = handleCommitPreview;
+    handleSaveRef.current = handleSave;
+    handleCompileRef.current = handleCompile;
+  });
 
   useEffect(() => {
     if (!autoCompile) return;

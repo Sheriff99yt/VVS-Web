@@ -17,6 +17,7 @@ export function useApiHealth(pollMs = 30_000) {
   const [userId, setUserId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    await Promise.resolve(); // Yield to prevent synchronous state update in effect
     if (apiMode === 'mock') {
       setHealthState('mock');
       setServiceName('local');

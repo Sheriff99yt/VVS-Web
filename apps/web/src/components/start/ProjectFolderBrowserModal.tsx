@@ -79,7 +79,8 @@ export function ProjectFolderBrowserModal({
   const [error, setError] = useState<string | null>(null);
   const projectRootName = handle.name;
 
-  const loadTree = async () => {
+  const loadTree = useCallback(async () => {
+    await Promise.resolve(); // Yield to prevent synchronous state update in effect
     setLoading(true);
     setError(null);
     try {
@@ -90,11 +91,11 @@ export function ProjectFolderBrowserModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [handle]);
 
   useEffect(() => {
     void loadTree();
-  }, [handle]);
+  }, [loadTree]);
 
   return (
     <div

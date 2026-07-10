@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
 
 export function stepNumberInlineValue(
   current: number,
@@ -10,7 +10,7 @@ export function stepNumberInlineValue(
   const step = modifiers.shiftKey ? 10 : modifiers.ctrlKey || modifiers.metaKey ? 0.1 : 1;
   const delta = deltaY < 0 ? step : -step;
   const base = Number.isFinite(current) ? current : 0;
-  let next = base + delta;
+  const next = base + delta;
   if (step >= 1 && Number.isInteger(base)) return Math.round(next);
   return Math.round(next * 1000) / 1000;
 }
@@ -21,7 +21,9 @@ export function useNumberInputWheel(
 ): RefObject<HTMLInputElement | null> {
   const ref = useRef<HTMLInputElement>(null);
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+  });
 
   useEffect(() => {
     const el = ref.current;

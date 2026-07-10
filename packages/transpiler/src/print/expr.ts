@@ -127,7 +127,7 @@ export function createDefaultExprPrinter(): ExprPrinter {
         return printGetInputTempExpr(expr);
       default:
         if (isPackDrivenFamily(ctx.family)) {
-          throw new PackTemplateMissingError(expr.kind, ctx.family);
+          throw new PackTemplateMissingError((expr as any).kind, ctx.family);
         }
         return { text: '/* unknown expr */', spans: [] };
     }

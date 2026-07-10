@@ -185,9 +185,11 @@ export function useCanvasDeclareBadges(input: {
     [documents, isReferenceMode, events, classes, editorFocus]
   );
 
-  const renderClassCanvasStatus = (cls: ClassSymbol, rowSelected = false) => {
+  const renderClassCanvasStatus = (cls: ClassSymbol, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
     if (!documents || isReferenceMode) return null;
     const declared = hasDefineNodeForClass(documents, cls);
+    if (onlyErrors && declared) return null;
+    if (onlySuccess && !declared) return null;
     return (
       <CanvasStatusBadge
         label="Declare"
@@ -198,9 +200,11 @@ export function useCanvasDeclareBadges(input: {
     );
   };
 
-  const renderVariableCanvasStatus = (variableId: string, rowSelected = false) => {
+  const renderVariableCanvasStatus = (variableId: string, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
     if (!documents || isReferenceMode || !activeClass) return null;
     const declared = hasDefineNodeForVariable(documents, activeClass, variableId);
+    if (onlyErrors && declared) return null;
+    if (onlySuccess && !declared) return null;
     return (
       <CanvasStatusBadge
         label="Declare"
@@ -211,11 +215,13 @@ export function useCanvasDeclareBadges(input: {
     );
   };
 
-  const renderFunctionCanvasStatus = (func: FunctionSymbol, rowSelected = false) => {
+  const renderFunctionCanvasStatus = (func: FunctionSymbol, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
     if (!documents || isReferenceMode) return null;
     const cls = classes.find((c) => c.id === symbolClassId(func));
     if (!cls) return null;
     const declared = hasDefineNodeForFunction(documents, cls, func.id);
+    if (onlyErrors && declared) return null;
+    if (onlySuccess && !declared) return null;
     return (
       <CanvasStatusBadge
         label="Declare"
@@ -226,27 +232,35 @@ export function useCanvasDeclareBadges(input: {
     );
   };
 
-  const renderEventCanvasStatus = (eventId: string, rowSelected = false) => {
+  const renderEventCanvasStatus = (eventId: string, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
     if (!documents || isReferenceMode) return null;
     const event = events.find((item) => item.id === eventId);
     const cls = event ? classes.find((c) => c.id === symbolClassId(event)) : undefined;
     if (!event || !cls) return null;
     const declared = hasDefineNodeForEvent(documents, cls, eventId);
     const hasHandler = hasHandlerNodeForEvent(documents, eventId);
+    
+    if (onlyErrors && declared && hasHandler) return null;
+    if (onlySuccess && !declared && !hasHandler) return null;
+
     return (
       <div className="flex items-center gap-0.5 shrink-0">
-        <CanvasStatusBadge
-          label="Declare"
-          ok={declared}
-          emphasize={rowSelected && !declared}
-          onClick={(e) => focusOrInsertEventDeclare(eventId, e)}
-        />
-        <CanvasStatusBadge
-          label="Handler"
-          ok={hasHandler}
-          emphasize={rowSelected && !hasHandler}
-          onClick={(e) => focusOrInsertEventHandler(eventId, e)}
-        />
+        {(!onlyErrors || !declared) && (!onlySuccess || declared) ? (
+          <CanvasStatusBadge
+            label="Declare"
+            ok={declared}
+            emphasize={rowSelected && !declared}
+            onClick={(e) => focusOrInsertEventDeclare(eventId, e)}
+          />
+        ) : null}
+        {(!onlyErrors || !hasHandler) && (!onlySuccess || hasHandler) ? (
+          <CanvasStatusBadge
+            label="Handler"
+            ok={hasHandler}
+            emphasize={rowSelected && !hasHandler}
+            onClick={(e) => focusOrInsertEventHandler(eventId, e)}
+          />
+        ) : null}
       </div>
     );
   };

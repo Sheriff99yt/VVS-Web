@@ -1,4 +1,4 @@
-import { variableDataTypeToLegacyEmitKind, type VariableSymbol } from '@vvs/graph-types';
+import { variableDataTypeToLegacyEmitKind, type VariableSymbol, targetLanguageToFamily } from '@vvs/graph-types';
 import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrMemberDecl, IrModule, IrStatement } from '../ir/types';
@@ -53,10 +53,11 @@ function appendVariableDecl(
     ir.targetLanguage === 'javascript' ||
     ir.targetLanguage === 'verse'
   ) {
-    const profile = resolvePrintProfile(ir.targetLanguage, ir.capabilities ?? []);
+    const family = targetLanguageToFamily(ir.targetLanguage) ?? 'python';
+    const profile = resolvePrintProfile(family, ir.codegenTarget?.capabilities ?? []);
     const row = requireTemplate(profile, 'VarDefine', ir.targetLanguage);
     const emitKind = variableDataTypeToLegacyEmitKind(symbol.type);
-    const slots =
+    const slots = (
       ir.targetLanguage === 'cpp'
         ? {
             type:
@@ -72,7 +73,8 @@ function appendVariableDecl(
           }
         : ir.targetLanguage === 'verse'
           ? { type: verseType(symbol), name: symbol.name, default: val }
-          : { name: symbol.name, default: val };
+          : { name: symbol.name, default: val }
+    ) as Record<string, string>;
     const rendered = renderTemplate(row, slots, profile.layout);
     const indent = profile.layout?.varDeclIndent ?? '    ';
     const line = `${indent}${rendered.text}`;

@@ -15,9 +15,11 @@ export function PanelFilter({
   const [open, setOpen] = useState(() => value.trim().length > 0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
     if (value.trim()) setOpen(true);
-  }, [value]);
+  }
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

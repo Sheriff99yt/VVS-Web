@@ -58,18 +58,66 @@ export function useExplorerPanelState(input: {
   } = input;
 
   const [filterQuery, setFilterQuery] = useState('');
-  const [explorerTab, setExplorerTab] = useState<ExplorerTab>('symbols');
-  const [foldersExpanded, setFoldersExpanded] = useState(false);
-  const [sectionViewModes, setSectionViewModes] =
-    useState<Record<SectionViewKey, SectionViewMode>>(DEFAULT_SECTION_VIEWS);
-  const [expanded, setExpanded] = useState<Record<SymbolCategoryKey, boolean>>({
-    classes: false,
-    functions: false,
-    events: false,
-    variables: false,
+  const [explorerTab, setExplorerTab] = useState<ExplorerTab>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('vvs_explorer_tab');
+      if (savedTab) return savedTab as ExplorerTab;
+    }
+    return 'symbols';
+  });
+  const [foldersExpanded, setFoldersExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedFolders = localStorage.getItem('vvs_folders_expanded');
+      if (savedFolders) return savedFolders === 'true';
+    }
+    return false;
+  });
+  const [sectionViewModes, setSectionViewModes] = useState<Record<SectionViewKey, SectionViewMode>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedViews = localStorage.getItem('vvs_section_views');
+        if (savedViews) return JSON.parse(savedViews);
+      } catch (e) {
+        console.error('Failed to parse section views', e);
+      }
+    }
+    return DEFAULT_SECTION_VIEWS;
+  });
+  const [expanded, setExpanded] = useState<Record<SymbolCategoryKey, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedExpanded = localStorage.getItem('vvs_categories_expanded');
+        if (savedExpanded) return JSON.parse(savedExpanded);
+      } catch (e) {
+        console.error('Failed to parse expanded categories', e);
+      }
+    }
+    return {
+      classes: false,
+      functions: false,
+      events: false,
+      variables: false,
+    };
   });
 
   const [isAddingContainer, setIsAddingContainer] = useState(false);
+
+  // Save changes to localStorage
+  useEffect(() => {
+    localStorage.setItem('vvs_explorer_tab', explorerTab);
+  }, [explorerTab]);
+
+  useEffect(() => {
+    localStorage.setItem('vvs_folders_expanded', String(foldersExpanded));
+  }, [foldersExpanded]);
+
+  useEffect(() => {
+    localStorage.setItem('vvs_section_views', JSON.stringify(sectionViewModes));
+  }, [sectionViewModes]);
+
+  useEffect(() => {
+    localStorage.setItem('vvs_categories_expanded', JSON.stringify(expanded));
+  }, [expanded]);
 
   const q = filterQuery.trim().toLowerCase();
   const panelTab: ExplorerTab = explorerTab === 'api' && !showApiTab ? 'symbols' : explorerTab;
@@ -142,6 +190,7 @@ export function useExplorerPanelState(input: {
 
   useEffect(() => {
     if (!q) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExpanded((state) => ({
       ...state,
       ...(filteredClasses.length > 0 && !state.classes ? { classes: true } : {}),
@@ -161,15 +210,21 @@ export function useExplorerPanelState(input: {
     visibleGraphContainers.length,
   ]);
 
-  useEffect(() => {
-    setExpanded((state) => ({
-      ...state,
-      ...(classes.length > 0 && !state.classes ? { classes: true } : {}),
-      ...(classEvents.length > 0 && !state.events ? { events: true } : {}),
-    }));
-  }, [classes.length, classEvents.length]);
+  const [prevLengths, setPrevLengths] = useState(`${classes.length}:${classEvents.length}`);
+  if (prevLengths !== `${classes.length}:${classEvents.length}`) {
+    setPrevLengths(`${classes.length}:${classEvents.length}`);
+    if ((classes.length > 0 && !expanded.classes) || (classEvents.length > 0 && !expanded.events)) {
+      setExpanded((state) => ({
+        ...state,
+        ...(classes.length > 0 && !state.classes ? { classes: true } : {}),
+        ...(classEvents.length > 0 && !state.events ? { events: true } : {}),
+      }));
+    }
+  }
 
-  useEffect(() => {
+  const [prevSelection, setPrevSelection] = useState(`${selection.type}:${selection.id}`);
+  if (prevSelection !== `${selection.type}:${selection.id}`) {
+    setPrevSelection(`${selection.type}:${selection.id}`);
     switch (selection.type) {
       case 'graph':
         setFoldersExpanded(true);
@@ -189,7 +244,7 @@ export function useExplorerPanelState(input: {
       default:
         break;
     }
-  }, [selection.type, selection.id]);
+  }
 
   return {
     filterQuery,

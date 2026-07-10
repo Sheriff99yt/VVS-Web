@@ -25,10 +25,10 @@ export function resolveProjectCodegenTarget(options: ProjectCodegenOptions): Cod
   });
 }
 
-export function withProjectCodegenTarget(
-  ctx: CodegenContext,
+export function withProjectCodegenTarget<T>(
+  ctx: T,
   options: ProjectCodegenOptions
-): CodegenContext {
+): T & { codegenTarget?: CodegenTarget } {
   const codegenTarget = resolveProjectCodegenTarget(options);
-  return codegenTarget ? { ...ctx, codegenTarget } : ctx;
+  return (codegenTarget ? { ...ctx, codegenTarget } : ctx) as T & { codegenTarget?: CodegenTarget };
 }

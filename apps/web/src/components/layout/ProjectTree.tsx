@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -13,7 +13,7 @@ import {
   FolderOutput,
   PenLine,
 } from 'lucide-react';
-import type { FunctionBinding, FunctionSymbol, ClassSymbol, GraphContainer } from '@vvs/graph-types';
+import type { FunctionBinding, FunctionSymbol, ClassSymbol, GraphContainer, VariableSymbol } from '@vvs/graph-types';
 import { createVariableSymbol, LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
 import { useProject } from '@/contexts/ProjectContext';
 import {
@@ -82,6 +82,7 @@ import { VariableRow } from './project-tree/VariableRow';
 import { ExplorerEmptyHint } from './project-tree/ExplorerEmptyHint';
 import { SectionPopoverAnchor } from './project-tree/SectionPopoverAnchor';
 import { TreeRenameRow } from './project-tree/TreeRenameRow';
+import { RowActionsMenu } from './project-tree/RowActionsMenu';
 import {
   ExplorerPanelShell,
   ExplorerScrollRegion,
@@ -240,6 +241,91 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const [newFuncName, setNewFuncName] = useState('');
   const [newFuncBinding, setNewFuncBinding] = useState<FunctionBinding>('instance');
   const [addingOverloadForId, setAddingOverloadForId] = useState<string | null>(null);
+
+  const [renamingFunctionId, setRenamingFunctionId] = useState<string | null>(null);
+  const [renameFunctionName, setRenameFunctionName] = useState('');
+  const [renamingEventId, setRenamingEventId] = useState<string | null>(null);
+  const [renameEventName, setRenameEventName] = useState('');
+  const [renamingVariableId, setRenamingVariableId] = useState<string | null>(null);
+  const [renameVariableName, setRenameVariableName] = useState('');
+
+  const { renameFunction, renameEvent, renameVariable } = useSymbolLifecycle();
+
+  const handleSaveFunctionRename = (func: FunctionSymbol) => {
+    const name = renameFunctionName.trim();
+    if (name && name !== func.name) {
+      renameFunction({ ...func, name });
+    }
+    setRenamingFunctionId(null);
+  };
+
+  const handleSaveEventRename = (eventId: string) => {
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return;
+    const name = renameEventName.trim();
+    if (name && name !== event.name) {
+      renameEvent({ ...event, name });
+    }
+    setRenamingEventId(null);
+  };
+
+  const handleSaveVariableRename = (variable: VariableSymbol) => {
+    const name = renameVariableName.trim();
+    if (name && name !== variable.name) {
+      renameVariable({ ...variable, name });
+    }
+    setRenamingVariableId(null);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        const activeEl = document.activeElement;
+        if (
+          activeEl &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.getAttribute('contenteditable') === 'true')
+        ) {
+          return;
+        }
+        e.preventDefault();
+        if (selection.type === 'class' && selection.id) {
+          const cls = classes.find((c) => c.id === selection.id);
+          if (cls) {
+            setRenamingClassId(cls.id);
+            setRenameClassName(cls.name);
+          }
+        } else if (selection.type === 'function' && selection.id) {
+          const func = functions.find((f) => f.id === selection.id);
+          if (func) {
+            setRenamingFunctionId(func.id);
+            setRenameFunctionName(func.name);
+          }
+        } else if (selection.type === 'event' && selection.id) {
+          const event = events.find((e) => e.id === selection.id);
+          if (event) {
+            setRenamingEventId(event.id);
+            setRenameEventName(event.name);
+          }
+        } else if (selection.type === 'variable' && selection.id) {
+          const variable = variables.find((v) => v.id === selection.id);
+          if (variable) {
+            setRenamingVariableId(variable.id);
+            setRenameVariableName(variable.name);
+          }
+        } else if (selection.type === 'graph' && selection.id) {
+          const container = graphContainers.find((c) => c.id === selection.id);
+          if (container) {
+            setRenamingContainerId(container.id);
+            setRenameContainerName(container.name);
+          }
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selection, classes, functions, events, variables, graphContainers]);
 
   const environmentManifest = useMemo(
     () => getLinkedEnvironmentManifest(environmentId),
@@ -852,53 +938,55 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           }}
           addLabel="New class"
         >
-          <SectionPopoverAnchor viewMode={sectionViewModes.classes}>
-          <SymbolCreatePopover
-            open={isAddingClass}
-            title="New class"
-            onClose={() => {
-              setIsAddingClass(false);
-              setNewClassName('');
-            }}
-            anchorClassName={INDENT.l1}
-          >
-            <input
-              type="text"
-              placeholder="Class name"
-              className={explorerInputClass}
-              value={newClassName}
-              onChange={(e) => setNewClassName(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSaveClass();
-                if (e.key === 'Escape') {
-                  setIsAddingClass(false);
-                  setNewClassName('');
-                }
+          {isAddingClass && (
+            <SectionPopoverAnchor viewMode={sectionViewModes.classes}>
+            <SymbolCreatePopover
+              open={isAddingClass}
+              title="New class"
+              onClose={() => {
+                setIsAddingClass(false);
+                setNewClassName('');
               }}
-            />
-            <label className={explorerLabelClass}>Output graph</label>
-            <select
-              value={newClassContainerId}
-              onChange={(e) => setNewClassContainerId(e.target.value)}
-              className={explorerSelectClass}
-              title="Which graph this class generates code from"
+              anchorClassName={INDENT.l1}
             >
-              {graphContainers.map((container) => (
-                <option key={container.id} value={container.id}>
-                  {graphContainerLabel(container)}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className={explorerBtnPrimaryClass}
-              onClick={handleSaveClass}
-            >
-              Create & open
-            </button>
-          </SymbolCreatePopover>
-          </SectionPopoverAnchor>
+              <input
+                type="text"
+                placeholder="Class name"
+                className={explorerInputClass}
+                value={newClassName}
+                onChange={(e) => setNewClassName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveClass();
+                  if (e.key === 'Escape') {
+                    setIsAddingClass(false);
+                    setNewClassName('');
+                  }
+                }}
+              />
+              <label className={explorerLabelClass}>Output graph</label>
+              <select
+                value={newClassContainerId}
+                onChange={(e) => setNewClassContainerId(e.target.value)}
+                className={explorerSelectClass}
+                title="Which graph this class generates code from"
+              >
+                {graphContainers.map((container) => (
+                  <option key={container.id} value={container.id}>
+                    {graphContainerLabel(container)}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={explorerBtnPrimaryClass}
+                onClick={handleSaveClass}
+              >
+                Create & open
+              </button>
+            </SymbolCreatePopover>
+            </SectionPopoverAnchor>
+          )}
           {filteredClasses.length === 0 && !isAddingClass ? (
             <ExplorerEmptyHint viewMode={sectionViewModes.classes}>
               {classes.length === 0 ? 'No classes — use + to add' : 'No match.'}
@@ -940,8 +1028,27 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         )
                       }
                       icon={<Boxes size={10} className="text-violet-400/80 shrink-0" />}
-                      label={renamingClassId === cls.id ? renameClassName : cls.name}
-                      meta={`→ ${folderName} · fn ${counts.functions} · evt ${counts.events} · var ${counts.variables}`}
+                      label={
+                        renamingClassId === cls.id ? (
+                          <input
+                            type="text"
+                            value={renameClassName}
+                            onChange={(e) => setRenameClassName(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onDoubleClick={(e) => e.stopPropagation()}
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[10px] text-white focus:outline-none focus:border-zinc-600"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveClassRename(cls);
+                              if (e.key === 'Escape') setRenamingClassId(null);
+                            }}
+                          />
+                        ) : (
+                          cls.name
+                        )
+                      }
+                      isRenaming={renamingClassId === cls.id}
+                      meta={renamingClassId === cls.id ? undefined : `→ ${folderName} · fn ${counts.functions} · evt ${counts.events} · var ${counts.variables}`}
                       hint={[
                         `Class · outputs to ${folderName}`,
                         isActive ? 'active class' : undefined,
@@ -969,46 +1076,26 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                               title="Active class"
                             />
                           ) : null}
-                          {renderClassCanvasStatus(cls, isActive && activeGraphTab === mainTabId)}
-                          <CodegenSuffix
-                            tabId={mainTabId}
-                            documents={documents}
-                            projectDefaults={projectCodegenDefaults}
-                          />
-                          {!isReferenceMode ? (
-                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                          {renamingClassId === cls.id ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveClassRename(cls);
+                              }}
+                              className="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 hover:bg-indigo-500/30 shrink-0"
+                            >
+                              Save
+                            </button>
+                          ) : !isReferenceMode ? (
+                            <>
                               {isTabDirty(mainTabId) ? (
                                 <span
-                                  className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+                                  className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mr-1"
                                   title="Uncompiled changes"
                                 />
                               ) : null}
-                              <button
-                                type="button"
-                                className="p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
-                                title="Rename class"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setRenamingClassId(cls.id);
-                                  setRenameClassName(cls.name);
-                                }}
-                              >
-                                <PenLine size={10} />
-                              </button>
-                              {canDeleteClass ? (
-                                <button
-                                  type="button"
-                                  className="p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                                  title="Delete class"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteClass(cls.id);
-                                  }}
-                                >
-                                  <Trash2 size={10} />
-                                </button>
-                              ) : null}
-                            </div>
+                            </>
                           ) : isTabDirty(mainTabId) ? (
                             <span
                               className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
@@ -1017,16 +1104,39 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                           ) : null}
                         </div>
                       }
+                      hoverActions={
+                        !isReferenceMode && renamingClassId !== cls.id ? (
+                          <>
+                            {renderClassCanvasStatus(cls, isActive && activeGraphTab === mainTabId, false, false)}
+                            <CodegenSuffix
+                              tabId={mainTabId}
+                              documents={documents}
+                              projectDefaults={projectCodegenDefaults}
+                            />
+                            <RowActionsMenu
+                              actions={[
+                                {
+                                  label: 'Rename',
+                                  onClick: () => {
+                                    setRenamingClassId(cls.id);
+                                    setRenameClassName(cls.name);
+                                  },
+                                },
+                                ...(canDeleteClass
+                                  ? [
+                                      {
+                                        label: 'Delete',
+                                        onClick: () => deleteClass(cls.id),
+                                        danger: true,
+                                      },
+                                    ]
+                                  : []),
+                              ]}
+                            />
+                          </>
+                        ) : undefined
+                      }
                     />
-                    {renamingClassId === cls.id ? (
-                      <TreeRenameRow
-                        value={renameClassName}
-                        onChange={setRenameClassName}
-                        onSave={() => handleSaveClassRename(cls)}
-                        onCancel={() => setRenamingClassId(null)}
-                        viewMode={sectionViewModes.classes}
-                      />
-                    ) : null}
                   </React.Fragment>
                 );
               })
@@ -1050,20 +1160,22 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           }}
           addLabel="New function"
         >
-          <SectionPopoverAnchor viewMode={sectionViewModes.functions}>
-          <SymbolCreatePopover
-            open={isAddingFunction}
-            title="New function"
-            onClose={() => {
-              setIsAddingFunction(false);
-              setNewFuncName('');
-              setNewFuncBinding('instance');
-            }}
-            anchorClassName={INDENT.l1}
-          >
-            {renderFunctionCreateForm()}
-          </SymbolCreatePopover>
-          </SectionPopoverAnchor>
+          {isAddingFunction && (
+            <SectionPopoverAnchor viewMode={sectionViewModes.functions}>
+            <SymbolCreatePopover
+              open={isAddingFunction}
+              title="New function"
+              onClose={() => {
+                setIsAddingFunction(false);
+                setNewFuncName('');
+                setNewFuncBinding('instance');
+              }}
+              anchorClassName={INDENT.l1}
+            >
+              {renderFunctionCreateForm()}
+            </SymbolCreatePopover>
+            </SectionPopoverAnchor>
+          )}
           {filteredFunctions.length === 0 && !isAddingFunction ? (
             <ExplorerEmptyHint viewMode={sectionViewModes.functions}>
               {classFunctions.length === 0 ? 'Empty — use + to add' : '—'}
@@ -1099,76 +1211,117 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       )
                     }
                     icon={<div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
-                    label={f.name}
-                    meta={
-                      f.binding !== 'instance'
-                        ? `${f.binding} · ${primaryOverload ? overloadTreeLabel(primaryOverload) : ''}`
-                        : primaryOverload
-                          ? extraOverloads.length > 0
-                            ? `${overloadTreeLabel(primaryOverload)} +${extraOverloads.length}`
-                            : overloadTreeLabel(primaryOverload)
-                          : undefined
-                    }
-                    hint={
-                      canReorderFunctions
-                        ? 'Drag grip to reorder · drag row to call · double-click to open'
-                        : 'Drag row to call · click to select · double-click to open'
-                    }
-                    onSelect={() => selectFunction(f)}
-                    onOpen={() => openGraph(f.id, 'function')}
-                    showOpenAffordance
-                    canvasDrag={
-                      !isReferenceMode && primaryDragPayload
-                        ? {
-                            mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
-                            payload: JSON.stringify(primaryDragPayload),
-                          }
-                        : undefined
-                    }
-                    onDragOver={(e) => handleFunctionDragOver(e, f.id)}
-                    onDrop={(e) => handleFunctionDrop(e, f.id)}
-                    onDragLeave={() => {
-                      if (dropFunctionId === f.id) setDropFunctionId(null);
-                    }}
-                    suffix={
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        <CodegenSuffix
-                          tabId={f.id}
-                          documents={documents}
-                          projectDefaults={projectCodegenDefaults}
-                        />
-                        {renderFunctionCanvasStatus(
-                          f,
-                          selection.type === 'function' && selection.id === f.id
-                        )}
-                        {isTabDirty(f.id) ? (
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Uncompiled changes" />
-                        ) : null}
-                        <button
-                          type="button"
-                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
-                          title="Add overload"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAddingOverloadForId(f.id);
-                            selectFunction(f);
-                          }}
-                        >
-                          <Plus size={11} />
-                        </button>
-                        <button
-                          type="button"
-                          className={`opacity-0 group-hover:opacity-100 ${explorerRowDeleteClass}`}
-                          title="Remove function"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteFunction(f.id);
-                          }}
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      </div>
-                    }
+                    label={
+                       renamingFunctionId === f.id ? (
+                         <input
+                           type="text"
+                           value={renameFunctionName}
+                           onChange={(e) => setRenameFunctionName(e.target.value)}
+                           onClick={(e) => e.stopPropagation()}
+                           onDoubleClick={(e) => e.stopPropagation()}
+                           className="w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[10px] text-white focus:outline-none focus:border-zinc-600"
+                           autoFocus
+                           onKeyDown={(e) => {
+                             if (e.key === 'Enter') handleSaveFunctionRename(f);
+                             if (e.key === 'Escape') setRenamingFunctionId(null);
+                           }}
+                         />
+                       ) : (
+                         f.name
+                       )
+                     }
+                     isRenaming={renamingFunctionId === f.id}
+                     meta={
+                       renamingFunctionId === f.id
+                         ? undefined
+                         : f.binding !== 'instance'
+                           ? `${f.binding} · ${primaryOverload ? overloadTreeLabel(primaryOverload) : ''}`
+                           : primaryOverload
+                             ? extraOverloads.length > 0
+                               ? `${overloadTreeLabel(primaryOverload)} +${extraOverloads.length}`
+                               : overloadTreeLabel(primaryOverload)
+                             : undefined
+                     }
+                     hint={
+                       canReorderFunctions
+                         ? 'Drag grip to reorder · drag row to call · double-click to open'
+                         : 'Drag row to call · click to select · double-click to open'
+                     }
+                     onSelect={() => selectFunction(f)}
+                     onOpen={() => openGraph(f.id, 'function')}
+                     showOpenAffordance
+                     canvasDrag={
+                       !isReferenceMode && primaryDragPayload
+                         ? {
+                             mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
+                             payload: JSON.stringify(primaryDragPayload),
+                           }
+                         : undefined
+                     }
+                     onDragOver={(e) => handleFunctionDragOver(e, f.id)}
+                     onDrop={(e) => handleFunctionDrop(e, f.id)}
+                     onDragLeave={() => {
+                       if (dropFunctionId === f.id) setDropFunctionId(null);
+                     }}
+                     suffix={
+                       <div className="flex items-center gap-0.5 shrink-0">
+                         {isTabDirty(f.id) ? (
+                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1" title="Uncompiled changes" />
+                         ) : null}
+                         {renamingFunctionId === f.id ? (
+                           <button
+                             type="button"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleSaveFunctionRename(f);
+                             }}
+                             className="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 hover:bg-indigo-500/30 shrink-0"
+                           >
+                             Save
+                           </button>
+                         ) : null}
+                       </div>
+                     }
+                      hoverActions={
+                        !isReferenceMode && renamingFunctionId !== f.id ? (
+                          <>
+                            <CodegenSuffix
+                              tabId={f.id}
+                              documents={documents}
+                              projectDefaults={projectCodegenDefaults}
+                            />
+                            {renderFunctionCanvasStatus(
+                              f,
+                              selection.type === 'function' && selection.id === f.id,
+                              false,
+                              true
+                            )}
+                            <RowActionsMenu
+                            actions={[
+                              {
+                                label: 'Add overload',
+                                onClick: () => {
+                                  setAddingOverloadForId(f.id);
+                                  selectFunction(f);
+                                },
+                              },
+                              {
+                                label: 'Rename',
+                                onClick: () => {
+                                  setRenamingFunctionId(f.id);
+                                  setRenameFunctionName(f.name);
+                                },
+                              },
+                              {
+                                label: 'Delete',
+                                onClick: () => handleDeleteFunction(f.id),
+                                danger: true,
+                              },
+                            ]}
+                          />
+                          </>
+                        ) : undefined
+                      }
                   />
                   {sectionViewModes.functions === 'list'
                     ? extraOverloads.map((overload, index) => {
@@ -1224,37 +1377,39 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           }}
           addLabel="New event"
         >
-          <SectionPopoverAnchor viewMode={sectionViewModes.events}>
-          <SymbolCreatePopover
-            open={isAddingEvent}
-            title="New event"
-            onClose={() => {
-              setIsAddingEvent(false);
-              setNewEventName('');
-            }}
-            anchorClassName={INDENT.l1}
-          >
-            <input
-              type="text"
-              placeholder="Event name (e.g. calculate)"
-              className={explorerInputClass}
-              value={newEventName}
-              onChange={(e) => setNewEventName(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSaveEvent();
-                if (e.key === 'Escape') setIsAddingEvent(false);
+          {isAddingEvent && (
+            <SectionPopoverAnchor viewMode={sectionViewModes.events}>
+            <SymbolCreatePopover
+              open={isAddingEvent}
+              title="New event"
+              onClose={() => {
+                setIsAddingEvent(false);
+                setNewEventName('');
               }}
-            />
-            <button
-              type="button"
-              className={explorerBtnSecondaryClass}
-              onClick={handleSaveEvent}
+              anchorClassName={INDENT.l1}
             >
-              Add
-            </button>
-          </SymbolCreatePopover>
-          </SectionPopoverAnchor>
+              <input
+                type="text"
+                placeholder="Event name (e.g. calculate)"
+                className={explorerInputClass}
+                value={newEventName}
+                onChange={(e) => setNewEventName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveEvent();
+                  if (e.key === 'Escape') setIsAddingEvent(false);
+                }}
+              />
+              <button
+                type="button"
+                className={explorerBtnSecondaryClass}
+                onClick={handleSaveEvent}
+              >
+                Add
+              </button>
+            </SymbolCreatePopover>
+            </SectionPopoverAnchor>
+          )}
           {filteredEvents.length === 0 && !isAddingEvent ? (
             <ExplorerEmptyHint viewMode={sectionViewModes.events}>
               {classEvents.length === 0
@@ -1269,49 +1424,92 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 };
                 const rowSelected = selection.type === 'event' && selection.id === entry.id;
                 return (
-                  <TreeRow
-                    key={entry.id}
-                    layout={sectionViewModes.events}
-                    icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
-                    label={entry.label}
-                    meta={eventRowMeta(entry)}
-                    active={rowSelected}
-                    hint={
-                      isReferenceMode
-                        ? rowHint
-                        : 'Drag row to graph · double-click to open handler'
-                    }
-                    onSelect={() => selectEvent(entry.id)}
-                    onOpen={() => openEventHomeGraph(entry.id)}
-                    showOpenAffordance
-                    canvasDrag={
-                      !isReferenceMode
-                        ? {
-                            mimeType: EVENT_DRAG_MIME,
-                            payload: JSON.stringify(dragPayload),
-                          }
-                        : undefined
-                    }
-                    suffix={
-                      isReferenceMode ? undefined : (
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <EventDispatchChip dispatchCount={entry.dispatchCount} />
-                          {renderEventCanvasStatus(entry.id, rowSelected)}
-                          <button
-                            type="button"
-                            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-500 hover:text-red-400"
-                            title="Remove event"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteEvent(entry.id);
+                  <React.Fragment key={entry.id}>
+                    <TreeRow
+                      layout={sectionViewModes.events}
+                      icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
+                      label={
+                        renamingEventId === entry.id ? (
+                          <input
+                            type="text"
+                            value={renameEventName}
+                            onChange={(e) => setRenameEventName(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onDoubleClick={(e) => e.stopPropagation()}
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[10px] text-white focus:outline-none focus:border-zinc-600"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveEventRename(entry.id);
+                              if (e.key === 'Escape') setRenamingEventId(null);
                             }}
-                          >
-                            <Trash2 size={11} />
-                          </button>
-                        </div>
-                      )
-                    }
-                  />
+                          />
+                        ) : (
+                          entry.label
+                        )
+                      }
+                      isRenaming={renamingEventId === entry.id}
+                      meta={renamingEventId === entry.id ? undefined : eventRowMeta(entry)}
+                      active={rowSelected}
+                      hint={
+                        isReferenceMode
+                          ? rowHint
+                          : 'Drag row to graph · double-click to open handler'
+                      }
+                      onSelect={() => selectEvent(entry.id)}
+                      onOpen={() => openEventHomeGraph(entry.id)}
+                      showOpenAffordance
+                      canvasDrag={
+                        !isReferenceMode
+                          ? {
+                              mimeType: EVENT_DRAG_MIME,
+                              payload: JSON.stringify(dragPayload),
+                            }
+                          : undefined
+                      }
+                      suffix={
+                        isReferenceMode ? undefined : (
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {renamingEventId === entry.id ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSaveEventRename(entry.id);
+                                }}
+                                className="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 hover:bg-indigo-500/30 shrink-0"
+                              >
+                                Save
+                              </button>
+                            ) : null}
+                          </div>
+                        )
+                      }
+                      hoverActions={
+                        !isReferenceMode && renamingEventId !== entry.id ? (
+                          <>
+                            <EventDispatchChip dispatchCount={entry.dispatchCount} />
+                            {renderEventCanvasStatus(entry.id, rowSelected, false, false)}
+                            <RowActionsMenu
+                              actions={[
+                                {
+                                  label: 'Rename',
+                                  onClick: () => {
+                                    setRenamingEventId(entry.id);
+                                    setRenameEventName(entry.label);
+                                  },
+                                },
+                                {
+                                  label: 'Delete',
+                                  onClick: () => handleDeleteEvent(entry.id),
+                                  danger: true,
+                                },
+                              ]}
+                            />
+                          </>
+                        ) : undefined
+                      }
+                    />
+                  </React.Fragment>
                 );
               })
           )}
@@ -1345,87 +1543,104 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               </button>
             </div>
           ) : null}
-          <SectionPopoverAnchor viewMode={sectionViewModes.variables}>
-          <SymbolCreatePopover
-            open={isAddingVariable}
-            title="New variable"
-            onClose={() => {
-              setIsAddingVariable(false);
-              setNewVarName('');
-              setNewVarBinding('instance');
-            }}
-            anchorClassName={INDENT.l1}
-          >
-            <input
-              type="text"
-              placeholder="Variable name"
-              className={explorerInputClass}
-              value={newVarName}
-              onChange={(e) => setNewVarName(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSaveVariable();
-                if (e.key === 'Escape') setIsAddingVariable(false);
+          {isAddingVariable && (
+            <SectionPopoverAnchor viewMode={sectionViewModes.variables}>
+            <SymbolCreatePopover
+              open={isAddingVariable}
+              title="New variable"
+              onClose={() => {
+                setIsAddingVariable(false);
+                setNewVarName('');
+                setNewVarBinding('instance');
               }}
-            />
-            <SearchableSelect
-              className="w-full"
-              value={newVarType}
-              onChange={(value) => {
-                if (!isDataTypeCoaAllowed(value as VariableType, crossOverMode)) return;
-                setNewVarType(value as VariableType);
-              }}
-              options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
-                value: descriptor.id,
-                label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
-              }))}
-              placeholder="Type…"
-            />
-            <div className="flex flex-wrap gap-1">
-              {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => (
-                <button
-                  key={binding}
-                  type="button"
-                  disabled={!isBindingCoaAllowed(binding, crossOverMode)}
-                  onClick={() => setNewVarBinding(binding)}
-                  className={bindingChipClass(newVarBinding === binding)}
-                  disabled={!isBindingCoaAllowed(binding, crossOverMode)}
-                  onClick={() => setNewVarBinding(binding)}
-                >
-                  {binding}
-                </button>
-              ))}
-            </div>
-            <button type="button" className={explorerBtnSecondaryClass} onClick={handleSaveVariable}>
-              Add
-            </button>
-          </SymbolCreatePopover>
-          </SectionPopoverAnchor>
+              anchorClassName={INDENT.l1}
+            >
+              <input
+                type="text"
+                placeholder="Variable name"
+                className={explorerInputClass}
+                value={newVarName}
+                onChange={(e) => setNewVarName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveVariable();
+                  if (e.key === 'Escape') setIsAddingVariable(false);
+                }}
+              />
+              <SearchableSelect
+                className="w-full"
+                value={newVarType}
+                onChange={(value) => {
+                  if (!isDataTypeCoaAllowed(value as VariableType, crossOverMode)) return;
+                  setNewVarType(value as VariableType);
+                }}
+                options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
+                  value: descriptor.id,
+                  label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
+                }))}
+                placeholder="Type…"
+              />
+              <div className="flex flex-wrap gap-1">
+                {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => (
+                  <button
+                    key={binding}
+                    type="button"
+                    className={bindingChipClass(newVarBinding === binding)}
+                    disabled={!isBindingCoaAllowed(binding, crossOverMode)}
+                    onClick={() => setNewVarBinding(binding)}
+                  >
+                    {binding}
+                  </button>
+                ))}
+              </div>
+              <button type="button" className={explorerBtnSecondaryClass} onClick={handleSaveVariable}>
+                Add
+              </button>
+            </SymbolCreatePopover>
+            </SectionPopoverAnchor>
+          )}
           {filteredVariables.length === 0 && !isAddingVariable ? (
             <ExplorerEmptyHint viewMode={sectionViewModes.variables}>
               {classVariables.length === 0 ? 'No variables yet.' : 'No match.'}
             </ExplorerEmptyHint>
           ) : (
             filteredVariables.map((v) => (
-                <VariableRow
-                  key={v.id}
-                  layout={sectionViewModes.variables}
-                  variable={v}
-                  isSelected={isVariableActive(v.id, v.name)}
-                  color={getVariableColor(v.type)}
-                  declareBadge={renderVariableCanvasStatus(
-                    v.id,
-                    selection.type === 'variable' && selection.id === v.id
-                  )}
-                  hint={
-                    isReferenceMode
-                      ? 'Click to focus references · Double-click to edit in inspector'
-                      : 'Click to select · Double-click to open class graph'
-                  }
-                  onSelect={() => selectVariable(v.id, v.name)}
-                  onOpen={() => openVariableHomeGraph(v.id)}
-                  onDelete={isReferenceMode ? undefined : () => handleDeleteVariable(v.id)}
-                />
+                <React.Fragment key={v.id}>
+                  <VariableRow
+                    layout={sectionViewModes.variables}
+                    variable={v}
+                    isSelected={isVariableActive(v.id, v.name)}
+                    color={getVariableColor(v.type)}
+                    declareBadge={undefined}
+                    hoverBadge={
+                      isReferenceMode
+                        ? undefined
+                        : renderVariableCanvasStatus(
+                            v.id,
+                            selection.type === 'variable' && selection.id === v.id,
+                            false,
+                            false
+                          )
+                    }
+                    hint={
+                      isReferenceMode
+                        ? 'Click to focus references · Double-click to edit in inspector'
+                        : 'Click to select · Double-click to open class graph'
+                    }
+                    onSelect={() => selectVariable(v.id, v.name)}
+                    onOpen={() => openVariableHomeGraph(v.id)}
+                    onRename={() => {
+                      setRenamingVariableId(v.id);
+                      setRenameVariableName(v.name);
+                    }}
+                    onDelete={isReferenceMode ? undefined : () => handleDeleteVariable(v.id)}
+                    isRenaming={renamingVariableId === v.id}
+                    renameValue={renameVariableName}
+                    onRenameValueChange={setRenameVariableName}
+                    onSaveRename={() => handleSaveVariableRename(v)}
+                    onCancelRename={() => setRenamingVariableId(null)}
+                  />
+                </React.Fragment>
               ))
           )}
         </CategorySection>

@@ -107,10 +107,10 @@ export function CodePreviewPanel({
   const documents = useGraphDocuments();
   const { result: projectResult, fileOwners } = useProjectTranspileResult();
 
+  const [lastCleanResult, setLastCleanResult] = useState<TranspileResult | null>(null);
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
-  const lastCleanResultRef = useRef<TranspileResult | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightNavKeyRef = useRef<string | null>(null);
 
@@ -236,15 +236,17 @@ export function CodePreviewPanel({
     codegenCapabilities,
   ]);
 
-  useEffect(() => {
+  const [prevCompileState, setPrevCompileState] = useState(compileState);
+  if (prevCompileState !== compileState) {
+    setPrevCompileState(compileState);
     if (compileState === 'success' || compileState === 'clean') {
-      lastCleanResultRef.current = liveResult;
+      setLastCleanResult(liveResult);
     }
-  }, [compileState, liveResult]);
+  }
 
   useEffect(() => {
     const onCommitPreview = () => {
-      lastCleanResultRef.current = liveResult;
+      setLastCleanResult(liveResult);
     };
     window.addEventListener('vvs:commit-preview', onCommitPreview);
     return () => window.removeEventListener('vvs:commit-preview', onCommitPreview);
@@ -254,7 +256,7 @@ export function CodePreviewPanel({
     const onCompileState = (event: Event) => {
       const { state } = (event as CustomEvent<{ state: string }>).detail;
       if (state === 'compiling') {
-        setHeldResult(lastCleanResultRef.current);
+        setHeldResult(lastCleanResult);
       }
     };
     window.addEventListener('vvs:compile-state', onCompileState);
@@ -275,10 +277,27 @@ export function CodePreviewPanel({
       ? heldResult
       : showLivePreview
         ? liveResult
-        : lastCleanResultRef.current ?? liveResult;
+        : lastCleanResult ?? liveResult;
+
+  const [prevPreviewTabId, setPrevPreviewTabId] = useState(previewTabId);
+  if (prevPreviewTabId !== previewTabId) {
+    setPrevPreviewTabId(previewTabId);
+    setActiveFileIndex(0);
+  }
 
   useEffect(() => {
-    highlightNavKeyRef.current = null;
+    if (prevPreviewTabId !== previewTabId) {
+      highlightNavKeyRef.current = null;
+    }
+  }, [previewTabId, prevPreviewTabId]);
+
+  const [prevLangExt, setPrevLangExt] = useState(`${targetLanguage}:${targetFileExtension}`);
+  if (prevLangExt !== `${targetLanguage}:${targetFileExtension}`) {
+    setPrevLangExt(`${targetLanguage}:${targetFileExtension}`);
+    setActiveFileIndex(0);
+  }
+
+  useEffect(() => {
     if (
       selectedFilePath &&
       fileOwners[selectedFilePath] &&
@@ -286,12 +305,7 @@ export function CodePreviewPanel({
     ) {
       onClearPinnedFile?.();
     }
-    setActiveFileIndex((prev) => (prev === 0 ? prev : 0));
   }, [previewTabId, selectedFilePath, fileOwners, onClearPinnedFile]);
-
-  useEffect(() => {
-    setActiveFileIndex((prev) => (prev === 0 ? prev : 0));
-  }, [targetLanguage, targetFileExtension]);
 
   const graphDisplayResult = displayResult;
   const displayResultForView =
@@ -304,16 +318,18 @@ export function CodePreviewPanel({
     [displayResultForView.files]
   );
 
-  useEffect(() => {
+  const [prevFilePathParams, setPrevFilePathParams] = useState(`${selectedFilePath}:${displayFilePathsKey}`);
+  if (prevFilePathParams !== `${selectedFilePath}:${displayFilePathsKey}`) {
+    setPrevFilePathParams(`${selectedFilePath}:${displayFilePathsKey}`);
     if (!selectedFilePath) {
-      setActiveFileIndex((prev) => (prev === 0 ? prev : 0));
-      return;
+      setActiveFileIndex(0);
+    } else {
+      const fileIndex = displayResultForView.files.findIndex((file) => file.path === selectedFilePath);
+      if (fileIndex >= 0) {
+        setActiveFileIndex(fileIndex);
+      }
     }
-    const fileIndex = displayResultForView.files.findIndex((file) => file.path === selectedFilePath);
-    if (fileIndex >= 0) {
-      setActiveFileIndex((prev) => (prev === fileIndex ? prev : fileIndex));
-    }
-  }, [selectedFilePath, displayFilePathsKey, displayResultForView.files]);
+  }
 
   const safeFileIndex = Math.min(
     activeFileIndex,
@@ -358,37 +374,33 @@ export function CodePreviewPanel({
   );
   const hasSelectionLink = Boolean(highlightRanges?.length);
 
-  useEffect(() => {
-    if (highlightNodeIds.length === 0) {
-      highlightNavKeyRef.current = null;
-      return;
-    }
-
+  const [prevHighlightNavKey, setPrevHighlightNavKey] = useState<string | null>(null);
+  
+  if (highlightNodeIds.length === 0 && prevHighlightNavKey !== null) {
+    setPrevHighlightNavKey(null);
+  } else if (highlightNodeIds.length > 0) {
     const navKey = `${highlightNodeIds.join(',')}|${displayFilePathsKey}`;
-    if (highlightNavKeyRef.current === navKey && selectedFilePath) return;
-
-    for (const nodeId of highlightNodeIds) {
-      const ranges = sourceMap[nodeId];
-      if (!ranges?.length) continue;
-      const targetPath = ranges[0]!.filePath;
-      const fileIndex = displayResultForView.files.findIndex((file) => file.path === targetPath);
-      if (fileIndex >= 0) {
-        setActiveFileIndex((prev) => (prev === fileIndex ? prev : fileIndex));
+    if (prevHighlightNavKey !== navKey) {
+      for (const nodeId of highlightNodeIds) {
+        const ranges = sourceMap[nodeId];
+        if (!ranges?.length) continue;
+        const targetPath = ranges[0]!.filePath;
+        const fileIndex = displayResultForView.files.findIndex((file) => file.path === targetPath);
+        if (fileIndex >= 0) {
+          setActiveFileIndex(fileIndex);
+        }
+        if (targetPath !== selectedFilePath) {
+          // Fire on next tick to avoid updating parent during render
+          setTimeout(() => onSelectedFilePathChange?.(targetPath), 0);
+        }
+        setPrevHighlightNavKey(navKey);
+        break;
       }
-      if (targetPath !== selectedFilePath) {
-        onSelectedFilePathChange?.(targetPath);
+      if (prevHighlightNavKey !== navKey) {
+        setPrevHighlightNavKey(navKey);
       }
-      highlightNavKeyRef.current = navKey;
-      break;
     }
-  }, [
-    highlightNodeIds,
-    sourceMap,
-    displayFilePathsKey,
-    displayResultForView.files,
-    selectedFilePath,
-    onSelectedFilePathChange,
-  ]);
+  }
 
   const previewClass = classForHomeGraphId(classes, previewTabId);
   const missingClassDeclareOnPreview = validationErrors.some(

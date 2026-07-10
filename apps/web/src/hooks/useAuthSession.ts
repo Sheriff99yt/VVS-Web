@@ -16,13 +16,12 @@ export function useAuthSession() {
 
   useEffect(() => {
     if (!configured) {
-      setLoading(false);
       return;
     }
 
     const supabase = getSupabaseClient();
     if (!supabase) {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
       return;
     }
 

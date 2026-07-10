@@ -20,8 +20,8 @@ function wrapAssignGetInput(
   fn: (stmt: import('../ir/types').IrAssignVariable, ctx: PrintContext) => PrintedStmt
 ) {
   return (stmt: IrStructuredStatement, ctx: PrintContext): PrintedStmt | null => {
-    if (stmt.kind !== 'AssignVariable' || stmt.assignKind !== 'get_input') return null;
-    return fn(stmt, ctx);
+    if (stmt.kind !== 'AssignVariable' || (stmt as any).assignKind !== 'get_input') return null;
+    return fn(stmt as any, ctx);
   };
 }
 

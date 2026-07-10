@@ -294,8 +294,12 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
     const codegen = resolveGraphCodegenSettings(doc.metadata, projectDefaults);
     const codegenTarget =
       resolveCodegenTarget(codegen.targetLanguage, {
-        capabilities: input.codegenTarget?.capabilities,
-        syntaxPackLock: input.codegenTarget?.syntaxPackLock,
+        capabilities: input.codegenTarget
+          ? { [input.codegenTarget.family]: input.codegenTarget.capabilities }
+          : undefined,
+        syntaxPackLock: input.codegenTarget?.packLock
+          ? { [input.codegenTarget.family]: input.codegenTarget.packLock }
+          : undefined,
       }) ?? input.codegenTarget ?? undefined;
 
     results.push(

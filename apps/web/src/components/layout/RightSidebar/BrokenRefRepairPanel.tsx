@@ -5,7 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 import type { ResolvedSymbolRef } from '@vvs/graph-types';
 
 export interface BrokenRefRepairPanelProps {
-  ref: ResolvedSymbolRef;
+  symbolRef: ResolvedSymbolRef;
   onDeleteNode: () => void;
   onDeleteAllForSymbol: () => void;
   onRecreateSymbol: () => void;
@@ -13,7 +13,7 @@ export interface BrokenRefRepairPanelProps {
 }
 
 export function BrokenRefRepairPanel({
-  ref: symbolRef,
+  symbolRef,
   onDeleteNode,
   onDeleteAllForSymbol,
   onRecreateSymbol,

@@ -271,12 +271,14 @@ export function ProjectProvider({
     window.dispatchEvent(new CustomEvent('vvs:compile-state', { detail: { state: compileState } }));
   }, [compileState]);
 
-  useEffect(() => {
+  const [prevDeps, setPrevDeps] = React.useState(`${activeGraphTab}:${JSON.stringify(dirtyTabIds)}`);
+  if (prevDeps !== `${activeGraphTab}:${JSON.stringify(dirtyTabIds)}`) {
+    setPrevDeps(`${activeGraphTab}:${JSON.stringify(dirtyTabIds)}`);
     setCompileStateInner((prev) => {
       if (prev === 'compiling') return prev;
       return dirtyTabIds[activeGraphTab] ? 'dirty' : prev === 'error' ? 'error' : 'success';
     });
-  }, [activeGraphTab, dirtyTabIds]);
+  }
 
   return (
     <ProjectContext.Provider

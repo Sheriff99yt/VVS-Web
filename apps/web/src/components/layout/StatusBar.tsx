@@ -56,11 +56,13 @@ export function StatusBar() {
   const isCompiling = compileState === 'compiling';
   const isDirty = compileState === 'dirty';
 
-  const [savedLabel, setSavedLabel] = useState<string | null>(null);
+  const [prevLastSavedAt, setPrevLastSavedAt] = useState(lastSavedAt);
+  const [savedLabel, setSavedLabel] = useState<string | null>(() => formatSavedAt(lastSavedAt));
 
-  useEffect(() => {
+  if (prevLastSavedAt !== lastSavedAt) {
+    setPrevLastSavedAt(lastSavedAt);
     setSavedLabel(formatSavedAt(lastSavedAt));
-  }, [lastSavedAt]);
+  }
   const api = apiModeShort(apiMode, healthState, serviceName, storeMode, authMode, userId);
 
   const statusTitle =

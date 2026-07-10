@@ -11,9 +11,10 @@ export interface TreeRowProps {
   active?: boolean;
   icon?: React.ReactNode;
   leading?: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   meta?: string;
   suffix?: React.ReactNode;
+  hoverActions?: React.ReactNode;
   onSelect?: () => void;
   onOpen?: () => void;
   hint?: string;
@@ -29,6 +30,7 @@ export interface TreeRowProps {
   onDragEnd?: () => void;
   showOpenAffordance?: boolean;
   layout?: 'list' | 'grid';
+  isRenaming?: boolean;
 }
 
 export function TreeRow({
@@ -42,6 +44,7 @@ export function TreeRow({
   onOpen,
   hint,
   suffix,
+  hoverActions,
   className = '',
   isDropTarget = false,
   isDragging = false,
@@ -54,6 +57,7 @@ export function TreeRow({
   onDragEnd,
   showOpenAffordance = false,
   layout = 'list',
+  isRenaming = false,
 }: TreeRowProps) {
   const interactive = Boolean(onSelect || onOpen);
 
@@ -67,7 +71,7 @@ export function TreeRow({
     configureCanvasDrag(e, canvasDrag);
   };
 
-  const draggable = Boolean(canvasDrag || onDragStart);
+  const draggable = !isRenaming && Boolean(canvasDrag || onDragStart);
 
   const rowTitle = [hint, meta].filter(Boolean).join(' · ');
 
@@ -94,15 +98,17 @@ export function TreeRow({
         onDragLeave={onDragLeave}
       >
         <span className="shrink-0">{icon}</span>
-        <span className="text-[10px] font-medium truncate w-full text-center leading-tight">
+        <span className="text-[10px] font-medium truncate flex-1 min-w-0 text-left leading-none">
           {label}
         </span>
-        {meta ? (
-          <span className="text-[8px] text-zinc-600 truncate w-full text-center">{meta}</span>
-        ) : null}
         {suffix ? (
-          <div className="pointer-events-none [&_button]:pointer-events-auto scale-90 origin-center">
+          <div className="pointer-events-none [&_button]:pointer-events-auto scale-90 origin-center shrink-0">
             {suffix}
+          </div>
+        ) : null}
+        {hoverActions ? (
+          <div className="absolute right-0.5 top-1/2 -translate-y-1/2 pointer-events-none [&_button]:pointer-events-auto scale-90 origin-right shrink-0 flex items-center bg-zinc-900/90 backdrop-blur-sm pl-1.5 py-1 rounded-l opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            {hoverActions}
           </div>
         ) : null}
       </div>
@@ -145,6 +151,11 @@ export function TreeRow({
       {suffix ? (
         <div className="pointer-events-none shrink-0 flex items-center gap-0.5 [&_button]:pointer-events-auto [&_span[role=button]]:pointer-events-auto">
           {suffix}
+        </div>
+      ) : null}
+      {hoverActions ? (
+        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 pointer-events-none [&_button]:pointer-events-auto shrink-0 flex items-center bg-zinc-950/90 backdrop-blur-sm pl-1.5 py-1 rounded-l opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          {hoverActions}
         </div>
       ) : null}
       {showOpenAffordance && onOpen ? (

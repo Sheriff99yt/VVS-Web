@@ -90,7 +90,7 @@ export async function loadProjectFromFolder(
   if (!manifest || manifest.format !== 'vvs.project') return null;
 
   const integrationRaw = await readJsonFile<unknown>(root, VVS_INTEGRATION_FILE);
-  let integration = integrationRaw
+  const integration = integrationRaw
     ? normalizeIntegrationConfig(integrationRaw)
     : createDefaultIntegration({
         moduleName: manifest.module.name,
