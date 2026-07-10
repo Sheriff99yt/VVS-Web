@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { GitBranch } from 'lucide-react';
+import { graphContainerLabel } from '@/components/layout/project-tree/graphContainerLabels';
 import type { GraphContainer } from '@vvs/graph-types';
 import { isClassFolderDragEvent } from '@/lib/classHelpers';
 
@@ -27,7 +28,7 @@ export function ClassFolderDropStrip({
   return (
     <div className="flex-none px-2 py-1.5 border-b border-indigo-500/20 bg-indigo-500/5">
       <div className="text-[9px] uppercase tracking-wide text-indigo-300/80 mb-1">
-        Drop on folder to move · drop on canvas for reference
+        Drop on graph to assign class output · drop on canvas for reference
       </div>
       <div className="flex flex-wrap gap-1">
         {containers.map((container) => {
@@ -48,7 +49,7 @@ export function ClassFolderDropStrip({
               onDragLeave={() => onContainerDragLeave(container.id)}
             >
               <GitBranch size={9} className="text-emerald-500/80 shrink-0" />
-              <span className="truncate max-w-[8rem]">{container.name}</span>
+              <span className="truncate max-w-[8rem]">{graphContainerLabel(container)}</span>
             </div>
           );
         })}

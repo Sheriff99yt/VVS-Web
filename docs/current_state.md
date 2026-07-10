@@ -158,7 +158,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Pure helpers | `lib/editorFocus.ts` | `resolveClassHomeGraphTarget`, `canvasFocusFrame`, `resolveVariableFocusFrame` |
 | Selection invariants | `lib/projectSelection.ts` | `isTreeSymbolSelection`, `clearCanvasSelectionKeepTreeSymbol` |
 | Code preview link | `lib/symbolCodegenLink.ts` | Maps `selection` → `tabId` + `highlightNodeIds` via `collectSymbolUsages` |
-| Live validation sync | `hooks/useLiveProjectValidation.ts` | Memoized `runProjectAnalysis`; syncs `validationErrors` / `validationWarnings` to ProjectContext when signature changes |
+| Live validation sync | `hooks/useLiveProjectValidation.ts` in `GraphWorkspaceHost` | Memoized `runProjectAnalysis`; syncs validation to ProjectContext when signature changes (StatusBar + code panel even when output collapsed) |
 | Canvas sync | `hooks/useSyncProjectSelection.ts` | Mirrors React Flow selection; preserves tree symbols on deselect/tab change |
 | History | `contexts/EditorNavigationContext.tsx` | Versioned frames in `history.state`; `ensureGraphTabOpen` opens container + function tabs |
 
@@ -349,7 +349,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Emit path** | `appendIrMembers` / `ir.members` from member chain only — **no** sidebar preamble (`appendLegacyPreamble` removed) |
 | **Symbol tables** | `variables[]`, `functions[]`, `events[]` are indexes; panel creates **dual-write** define nodes via `defineNodeSync` / `useSymbolLifecycle` |
 | **Define nodes** | `class_define`, `var_define`, `function_define`, `event_member_define` on `classHomeGraphId` exec chain |
-| **Class declare** | `class_define` required when class has symbols **or** any member define on home graph; blank class with no symbols and no defines passes analysis; `classGraphHasClassDefine` / `findClassDefineNode` in `@vvs/graph-types`; deleting class Declare omits `class Name:` shell in preview but **blocks Generate** |
+| **Class declare** | `class_define` required when home graph has any member define chain (`classRequiresClassDefine`); blank class with no defines passes analysis; symbols-only off-canvas → `DECLARATION_NOT_ON_CANVAS` (not duplicate class `DEFINE_NODE_MISSING`); deleting class Declare omits `class Name:` shell in preview but **blocks Generate** |
 | **Program entry** | `events[]` with `role: 'entry'` — same `event_member_define` + `event_define` pattern as custom events; codegen `on_start` **only** when user wired entry on canvas; legacy `event_on_start` → `LIFECYCLE_NODE_DEPRECATED`; **no** transpiler-injected empty `on_start()` |
 | **Compile gate** | `analyzeProject` errors block Generate in TopNav when `!analysis.ok`; code preview syncs live analysis via `useLiveProjectValidation` (signature-guarded, no render loops) |
 | **Event model** | **Dispatch** supported (direct call); **Emit** / **Subscribe** blocked — no hidden `_emit` / `_subscribe` runtime; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` |

@@ -19,6 +19,7 @@ import {
   classDefineMatchesClass,
   classGraphHasClassDefine,
   classGraphHasDefineNodes,
+  classRequiresClassDefine,
   defineNodeSymbolId,
   findDefineNodesForSymbol,
   isMemberDefineKind,
@@ -595,18 +596,6 @@ function classHasSymbols(
   );
 }
 
-/** Class shell on canvas is required only when the class has symbols or any member define chain. */
-function classRequiresClassDefine(
-  cls: ClassSymbol,
-  doc: GraphDocument | undefined,
-  variables: VariableSymbol[],
-  functions: FunctionSymbol[],
-  events: ProjectEventDefinition[]
-): boolean {
-  if (classGraphHasDefineNodes(doc)) return true;
-  return classHasSymbols(cls, variables, functions, events);
-}
-
 function validateOrphanDefineNodes(
   tabId: string,
   doc: GraphDocument,
@@ -693,13 +682,10 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     const classFunctions = input.functions.filter((f) => symbolClassId(f) === cls.id);
     const classEvents = input.events.filter((e) => symbolClassId(e) === cls.id);
 
-    if (
-      classRequiresClassDefine(cls, doc, variables, input.functions, input.events) &&
-      !classGraphHasClassDefine(doc, cls)
-    ) {
+    if (classRequiresClassDefine(doc) && !classGraphHasClassDefine(doc, cls)) {
       messages.push({
         level: 'error',
-        message: `Class "${cls.name}" has no class_define node on its class graph.`,
+        message: `Class "${cls.name}" has no Declare Class node on its class graph.`,
         tabId,
         symbolId: cls.id,
         source: 'semantic',
@@ -711,7 +697,7 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
       if (findDefineNodesForSymbol(doc, 'variable', variable.id).length > 0) continue;
       messages.push({
         level: 'error',
-        message: `Variable "${variable.name}" has no var_define node on class graph "${cls.name}".`,
+        message: `Variable "${variable.name}" has no Declare node on class graph "${cls.name}".`,
         tabId,
         symbolId: variable.id,
         source: 'semantic',
@@ -723,7 +709,7 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
       if (findDefineNodesForSymbol(doc, 'function', func.id).length > 0) continue;
       messages.push({
         level: 'error',
-        message: `Function "${func.name}" has no function_define node on class graph "${cls.name}".`,
+        message: `Function "${func.name}" has no Declare node on class graph "${cls.name}".`,
         tabId,
         symbolId: func.id,
         source: 'semantic',
@@ -735,7 +721,7 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
       if (findDefineNodesForSymbol(doc, 'event', event.id).length > 0) continue;
       messages.push({
         level: 'error',
-        message: `Event "${event.name}" has no define event node on class graph "${cls.name}".`,
+        message: `Event "${event.name}" has no Declare node on class graph "${cls.name}".`,
         tabId,
         symbolId: event.id,
         source: 'semantic',
@@ -862,7 +848,7 @@ function validateCanvasDeclarations(input: AnalyzeProjectInput): Diagnostic[] {
     if (!classGraphHasDefineNodes(doc)) {
       messages.push({
         level: 'error',
-        message: `Class "${cls.name}" has symbols but no define nodes on its class graph.`,
+        message: `Class "${cls.name}" has symbols but no Declare nodes on its class graph.`,
         tabId,
         source: 'semantic',
         code: 'DECLARATION_NOT_ON_CANVAS',

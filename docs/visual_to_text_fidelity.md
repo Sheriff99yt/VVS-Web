@@ -35,7 +35,7 @@ This is a **major strategic choice**. It diverges from Unreal Engine Blueprint s
 | + New event | `event_member_define` on class home graph |
 | Declare from drop menu | Matching define node at drop position |
 | Get / Set / Call in flow | Usage nodes only — symbol must already have a define node |
-| Class formation | `class_define` on container graph — required when class has symbols or any member define on home graph |
+| Class formation | `class_define` on container graph — required when the home graph has any member define chain |
 
 **Preview vs export:** The code preview may show member-chain body text without a `class Name:` shell when `class_define` was deleted (so authors still see handler order). **Generate** remains blocked with `DEFINE_NODE_MISSING` until Declare is restored on canvas.
 

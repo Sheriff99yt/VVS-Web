@@ -92,6 +92,30 @@ export function listEventDispatchers(
   return Array.from(byId.values()).sort((a, b) => a.label.localeCompare(b.label));
 }
 
+/** Symbol-table events with dispatch/subscriber counts — excludes legacy-only duplicates. */
+export function listSymbolEventEntries(
+  classEvents: ProjectEventDefinition[],
+  documents: Record<string, GraphDocument> | null,
+  classes: ClassSymbol[]
+): EventDispatcherEntry[] {
+  const countsById = new Map(
+    listEventDispatchers(classEvents, documents, classes).map((entry) => [entry.id, entry])
+  );
+
+  return classEvents.map((event) => {
+    const existing = countsById.get(event.id);
+    if (existing) return existing;
+    const cls = classes.find((c) => c.id === symbolClassId(event));
+    return {
+      id: event.id,
+      label: event.name.trim() || 'Custom event',
+      graphId: cls ? classHomeGraphId(cls) : 'main',
+      subscriberCount: 0,
+      dispatchCount: 0,
+    };
+  });
+}
+
 function resolveEventHomeGraphId(
   event: ProjectEventDefinition,
   documents: Record<string, GraphDocument> | null,

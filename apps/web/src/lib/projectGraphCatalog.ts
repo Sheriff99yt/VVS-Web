@@ -5,6 +5,7 @@ import {
   classHomeGraphId,
 } from '@vvs/graph-types';
 import type { SearchableSelectOption } from '@/components/ui/SearchableSelect';
+import { graphContainerLabel } from '@/components/layout/project-tree/graphContainerLabels';
 import { graphDisplayName } from '@/lib/graphTabs';
 
 export type ProjectGraphTargetKind = 'container' | 'function' | 'organizational';
@@ -78,7 +79,7 @@ export function buildProjectGraphTargets(input: {
       kind: 'container',
       graphTabId: container.id,
       containerId: container.id,
-      label: container.name,
+      label: graphContainerLabel(container),
     });
   }
 
@@ -101,7 +102,7 @@ export function buildProjectGraphTargets(input: {
       graphTabId: homeId,
       containerId: cls.containerId,
       classId: cls.id,
-      label: container ? `${container.name} · ${cls.name}` : cls.name,
+      label: container ? `${graphContainerLabel(container)} · ${cls.name}` : cls.name,
     });
   }
 
@@ -116,10 +117,10 @@ export function projectGraphTargetOptions(
     label: target.label,
     group:
       target.kind === 'organizational'
-        ? 'Project map'
+        ? 'Overview'
         : target.kind === 'function'
           ? 'Functions'
-          : 'Graph folders',
+          : 'Graphs',
     description: target.graphTabId,
   }));
 }

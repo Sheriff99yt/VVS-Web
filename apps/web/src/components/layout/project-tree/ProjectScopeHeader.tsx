@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { buildGraphBreadcrumb } from '@/lib/projectTree';
-import type { ProjectTreeMode } from '../ProjectTree';
+import type { ProjectTreeMode } from './constants';
 
 export function ProjectScopeHeader({
   projectName,
@@ -12,6 +12,7 @@ export function ProjectScopeHeader({
   classes,
   activeClassId,
   mode,
+  activeClassName,
 }: {
   projectName: string;
   activeGraphTab: string;
@@ -19,6 +20,7 @@ export function ProjectScopeHeader({
   classes: import('@vvs/graph-types').ClassSymbol[];
   activeClassId: string;
   mode: ProjectTreeMode;
+  activeClassName?: string;
 }) {
   const segments = buildGraphBreadcrumb(
     projectName,
@@ -51,7 +53,16 @@ export function ProjectScopeHeader({
               ))}
             </div>
           ) : (
-            <div className="text-[10px] text-zinc-600 mt-0.5">Project scope</div>
+            <div className="text-[10px] text-zinc-600 mt-0.5">
+              {activeClassName ? (
+                <>
+                  Active class{' '}
+                  <span className="text-zinc-400">{activeClassName}</span>
+                </>
+              ) : (
+                'Project scope'
+              )}
+            </div>
           )}
         </div>
         <span

@@ -29,10 +29,10 @@ export function CodegenSuffix({
 
   return (
     <span
-      className="shrink-0 text-[8px] font-mono text-zinc-600 tabular-nums"
+      className="shrink-0 text-[8px] font-mono text-zinc-600 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity"
       title={`Output: ${settings.targetLanguage} · .${settings.targetFileExtension}`}
     >
-      {lang}·.{settings.targetFileExtension}
+      {lang}
     </span>
   );
 }

@@ -87,6 +87,11 @@ export function classGraphHasClassDefine(
   return findClassDefineNode(doc, cls) != null;
 }
 
+/** Class shell on canvas is required whenever the home graph has any member define chain. */
+export function classRequiresClassDefine(doc: GraphDocument | undefined): boolean {
+  return classGraphHasDefineNodes(doc);
+}
+
 export function findDefineNodesForSymbol(
   doc: GraphDocument,
   kind: 'variable' | 'function' | 'event',

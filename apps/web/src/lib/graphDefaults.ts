@@ -1,6 +1,6 @@
 import { VVSNode, VVSEdge } from '@/types/graph';
 import type { TargetLanguage, TargetFileExtensions } from '@vvs/graph-types';
-import { codegenMetadataSeed, type ProjectCodegenDefaults } from '@vvs/graph-types';
+import { codegenMetadataSeed, PROJECT_MAP_CONTAINER_NAME, type ProjectCodegenDefaults } from '@vvs/graph-types';
 
 export interface GraphTabMetadata {
   moduleName: string;
@@ -39,7 +39,7 @@ export function defaultTabMetadata(
       tabType === 'main'
         ? 'PlayerController'
         : tabType === 'container'
-          ? cleanName || 'Project map'
+          ? cleanName || PROJECT_MAP_CONTAINER_NAME
           : cleanName || 'Graph',
     extendsType: '',
     description: '',

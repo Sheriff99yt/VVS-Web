@@ -5,6 +5,7 @@ import { NodeChange, EdgeChange } from '@xyflow/react';
 import { useGraphState } from '@/hooks/useGraphState';
 import { useGraphTabSync } from '@/hooks/useGraphTabSync';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
+import { useLiveProjectValidation } from '@/hooks/useLiveProjectValidation';
 import { GraphEditProvider } from '@/contexts/GraphEditContext';
 import { useProject } from '@/contexts/ProjectContext';
 import type { GraphDocument } from '@/lib/graphDefaults';
@@ -53,6 +54,8 @@ export function GraphWorkspaceHost({
   } = useProject();
 
   const { registerWorkspace } = useGraphWorkspace();
+
+  useLiveProjectValidation();
 
   const markCurrentTabDirty = useCallback(() => {
     markTabDirty(activeGraphTab);

@@ -27,7 +27,7 @@ Choices agents must not undo without explicit user approval.
 - **No sidebar preamble:** `appendLegacyPreamble` and `useLegacyPreamble` are **removed** — transpiler uses `appendIrMembers` / `ir.members` only
 - **Dual-write required:** Panel create paths must spawn define nodes (`defineNodeSync`, `useSymbolLifecycle`) — no symbol-only creates
 - **Strict analyzer errors (block Generate):** `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE`
-- **Class declare:** `class_define` required when class has symbols or member defines on home graph; blank class with neither passes analysis; deleting class Declare blocks export but preview may show member body without class shell (preview-only, not exportable)
+- **Class declare:** `class_define` required when home graph has any member define chain; blank class with no defines passes analysis; symbols-only off-canvas → `DECLARATION_NOT_ON_CANVAS`; deleting class Declare blocks export but preview may show member body without class shell (preview-only)
 - **Program entry:** `events[]` with `role: 'entry'` — user declares start via `event_member_define` + `event_define` on the class graph (same pattern as custom events); transpiler emits `on_start` only from canvas; legacy `event_on_start` nodes error on load/analysis; **no** empty `on_start()` injection
 - **Do not undo:** No backward-compat fallback that emits from symbol arrays without define nodes
 

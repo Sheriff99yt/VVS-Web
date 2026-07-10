@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
-import { useGraphDocuments } from '@/hooks/useGraphDocuments';
-import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { getLanguageProfile } from '@vvs/language-profiles';
 import { LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
 import { isCoaAuthoringActive } from '@/lib/coaPolicy';
@@ -13,37 +11,14 @@ export function PortabilitySummaryPanel() {
   const {
     targetLanguage,
     crossOverMode,
-    variables,
-    functions,
-    events,
-    openTabs,
-    projectDetails,
-    classes,
-    activeClassId,
     validationErrors,
     validationWarnings,
   } = useProject();
-  const documents = useGraphDocuments();
-
-  const analysis = useMemo(() => {
-    if (!documents) return null;
-    return runProjectAnalysis({
-      documents,
-      functions,
-      events,
-      variables,
-      classes,
-      activeClassId,
-      openTabs,
-      projectDetails,
-      targetLanguage,
-      crossOver: crossOverMode,
-    });
-  }, [documents, functions, events, variables, classes, activeClassId, openTabs, projectDetails, targetLanguage, crossOverMode]);
 
   const profile = getLanguageProfile(targetLanguage);
-  const errorCount = analysis?.errors.length ?? validationErrors.length;
-  const warningCount = analysis?.warnings.length ?? validationWarnings.length;
+  const errorCount = validationErrors.length;
+  const warningCount = validationWarnings.length;
+  const messages = [...validationErrors, ...validationWarnings];
 
   return (
     <div className="space-y-3">
@@ -77,9 +52,9 @@ export function PortabilitySummaryPanel() {
         </div>
       </div>
 
-      {(analysis?.errors.length ?? 0) > 0 || (analysis?.warnings.length ?? 0) > 0 ? (
+      {messages.length > 0 ? (
         <ul className="space-y-1 max-h-32 overflow-y-auto text-[10px]">
-          {[...(analysis?.errors ?? []), ...(analysis?.warnings ?? [])].slice(0, 8).map((msg, i) => (
+          {messages.slice(0, 8).map((msg, i) => (
             <li
               key={`${msg.code ?? 'msg'}-${i}`}
               className={`flex items-start gap-1 leading-relaxed ${
@@ -93,7 +68,7 @@ export function PortabilitySummaryPanel() {
         </ul>
       ) : (
         <p className="text-[10px] text-zinc-600 leading-relaxed">
-          No portability issues for the current graph and target language.
+          No analysis issues for the current graph and target language.
         </p>
       )}
 

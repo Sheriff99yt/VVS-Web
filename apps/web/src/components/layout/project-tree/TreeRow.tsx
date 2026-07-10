@@ -4,6 +4,7 @@ import React from 'react';
 import { ExternalLink } from 'lucide-react';
 import { configureCanvasDrag } from '@/lib/treeDrag';
 import { INDENT } from './constants';
+import { gridTileClass, listRowClass } from './explorerStyles';
 
 export interface TreeRowProps {
   depth?: keyof typeof INDENT;
@@ -27,6 +28,7 @@ export interface TreeRowProps {
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
   showOpenAffordance?: boolean;
+  layout?: 'list' | 'grid';
 }
 
 export function TreeRow({
@@ -51,6 +53,7 @@ export function TreeRow({
   onDragStart,
   onDragEnd,
   showOpenAffordance = false,
+  layout = 'list',
 }: TreeRowProps) {
   const interactive = Boolean(onSelect || onOpen);
 
@@ -66,17 +69,57 @@ export function TreeRow({
 
   const draggable = Boolean(canvasDrag || onDragStart);
 
+  const rowTitle = [hint, meta].filter(Boolean).join(' · ');
+
+  if (layout === 'grid') {
+    return (
+      <div
+        draggable={draggable}
+        onDragStart={draggable ? handleCanvasDragStart : undefined}
+        onDragEnd={onDragEnd}
+        className={`${gridTileClass(Boolean(active), {
+          dropTarget: isDropTarget,
+          dragging: isDragging,
+          interactive,
+        })} ${draggable && canvasDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${className}`}
+        title={rowTitle || undefined}
+        onClick={onSelect}
+        onDoubleClick={(e) => {
+          if (!onOpen) return;
+          e.preventDefault();
+          onOpen();
+        }}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        onDragLeave={onDragLeave}
+      >
+        <span className="shrink-0">{icon}</span>
+        <span className="text-[10px] font-medium truncate w-full text-center leading-tight">
+          {label}
+        </span>
+        {meta ? (
+          <span className="text-[8px] text-zinc-600 truncate w-full text-center">{meta}</span>
+        ) : null}
+        {suffix ? (
+          <div className="pointer-events-none [&_button]:pointer-events-auto scale-90 origin-center">
+            {suffix}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div
       draggable={draggable}
       onDragStart={draggable ? handleCanvasDragStart : undefined}
       onDragEnd={onDragEnd}
-      className={`flex items-center gap-1.5 py-1 pr-2 select-none group ${INDENT[depth]} ${
-        interactive ? 'cursor-pointer' : ''
-      } ${draggable && canvasDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${active ? 'bg-indigo-500/10 text-indigo-100' : 'hover:bg-zinc-900/60 text-zinc-300'} ${
-        isDropTarget ? 'ring-1 ring-inset ring-indigo-500/40 bg-indigo-500/5' : ''
-      } ${isDragging ? 'opacity-40' : ''} ${className}`}
-      title={hint}
+      className={`${listRowClass(Boolean(active), {
+        dropTarget: isDropTarget,
+        dragging: isDragging,
+        depthClass: INDENT[depth],
+      })} ${draggable && canvasDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${className}`}
+      title={rowTitle || undefined}
       onClick={onSelect}
       onDoubleClick={(e) => {
         if (!onOpen) return;
@@ -87,12 +130,22 @@ export function TreeRow({
       onDrop={onDrop}
       onDragLeave={onDragLeave}
     >
-      {leading ? <span className="shrink-0">{leading}</span> : null}
+      {leading ? <span className="inline-flex items-center shrink-0">{leading}</span> : null}
       {icon ? <span className="shrink-0">{icon}</span> : null}
       <span className="truncate text-[11px] flex-1 min-w-0">{label}</span>
-      {meta ? <span className="text-[9px] text-zinc-600 truncate max-w-[42%]">{meta}</span> : null}
+      {meta ? (
+        <span
+          className={`text-[9px] text-zinc-600 truncate max-w-[32%] shrink-[3] transition-opacity ${
+            active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          {meta}
+        </span>
+      ) : null}
       {suffix ? (
-        <div className="pointer-events-none shrink-0 [&_button]:pointer-events-auto">{suffix}</div>
+        <div className="pointer-events-none shrink-0 flex items-center gap-0.5 [&_button]:pointer-events-auto [&_span[role=button]]:pointer-events-auto">
+          {suffix}
+        </div>
       ) : null}
       {showOpenAffordance && onOpen ? (
         <button

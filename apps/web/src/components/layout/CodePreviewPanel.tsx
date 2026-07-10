@@ -23,7 +23,6 @@ import { nodeHighlightColor, DEFAULT_NODE_HIGHLIGHT } from '@/lib/nodeHighlightC
 import { resolveSymbolCodegenLink } from '@/lib/symbolCodegenLink';
 import { resolveCodePreviewHighlightNodeIds } from '@/lib/projectSelection';
 import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
-import { useLiveProjectValidation } from '@/hooks/useLiveProjectValidation';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { TARGET_FILE_EXTENSIONS, formatTargetFileExtension } from '@vvs/graph-types';
@@ -107,7 +106,6 @@ export function CodePreviewPanel({
   } = useProject();
   const documents = useGraphDocuments();
   const { result: projectResult, fileOwners } = useProjectTranspileResult();
-  useLiveProjectValidation();
 
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
   const [copied, setCopied] = useState(false);

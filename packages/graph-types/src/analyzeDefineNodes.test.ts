@@ -24,9 +24,10 @@ describe('analyzeProject define node sync', () => {
     });
 
     const missing = result.diagnostics.filter((d) => d.code === 'DEFINE_NODE_MISSING');
-    expect(missing).toHaveLength(2);
+    expect(missing).toHaveLength(1);
+    expect(missing[0]?.symbolId).toBe(variable.id);
     expect(missing.every((d) => d.level === 'error')).toBe(true);
-    expect(missing.map((d) => d.symbolId).sort()).toEqual([cls.id, variable.id].sort());
+    expect(result.diagnostics.some((d) => d.code === 'DECLARATION_NOT_ON_CANVAS')).toBe(true);
     expect(result.ok).toBe(false);
   });
 
@@ -102,6 +103,11 @@ describe('analyzeProject define node sync', () => {
     const notOnCanvas = result.diagnostics.filter((d) => d.code === 'DECLARATION_NOT_ON_CANVAS');
     expect(notOnCanvas).toHaveLength(1);
     expect(notOnCanvas[0]?.level).toBe('error');
+    expect(
+      result.diagnostics.some(
+        (d) => d.code === 'DEFINE_NODE_MISSING' && d.symbolId === cls.id
+      )
+    ).toBe(false);
     expect(result.ok).toBe(false);
   });
 

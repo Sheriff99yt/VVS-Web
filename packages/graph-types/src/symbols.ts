@@ -63,7 +63,9 @@ export const MAIN_CLASS_ID = 'main-class';
 /** Default project-map graph container — first-class canvas at documents[MAIN_GRAPH_CONTAINER_ID]. */
 export const MAIN_GRAPH_CONTAINER_ID = 'main-graph';
 
-export const PROJECT_MAP_CONTAINER_NAME = 'Project map';
+export const PROJECT_MAP_CONTAINER_NAME = 'Overview';
+
+const LEGACY_PROJECT_MAP_NAMES = new Set(['Project map', 'Main graph', '']);
 
 /** Virtual folder for grouping classes — output path prefix derived from folder name. */
 export interface GraphContainer {
@@ -88,7 +90,8 @@ export function createGraphContainer(
 function normalizeContainerDisplayName(container: GraphContainer): GraphContainer {
   if (
     container.id === MAIN_GRAPH_CONTAINER_ID &&
-    (container.name === 'Main graph' || container.name.trim() === '')
+    (LEGACY_PROJECT_MAP_NAMES.has(container.name.trim()) ||
+      container.name === 'Project map')
   ) {
     return { ...container, name: PROJECT_MAP_CONTAINER_NAME };
   }

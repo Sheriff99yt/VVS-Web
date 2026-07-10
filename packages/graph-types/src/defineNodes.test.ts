@@ -6,6 +6,7 @@ import {
   findMemberChainTail,
   findClassDefineNode,
   classDefineMatchesClass,
+  classRequiresClassDefine,
 } from './defineNodes';
 import { createClassSymbol, MAIN_GRAPH_CONTAINER_ID } from './symbols';
 import type { GraphDocument } from './symbols';
@@ -116,5 +117,23 @@ describe('defineNodes', () => {
     };
     expect(classDefineMatchesClass(legacyDoc.nodes[0]!, cls, legacyDoc)).toBe(true);
     expect(findClassDefineNode(legacyDoc, cls)?.id).toBe('legacy-class');
+  });
+
+  it('classRequiresClassDefine is true only when member define chain exists', () => {
+    expect(classRequiresClassDefine(undefined)).toBe(false);
+    expect(classRequiresClassDefine({ nodes: [], edges: [] })).toBe(false);
+    expect(
+      classRequiresClassDefine({
+        nodes: [
+          {
+            id: 'vd',
+            type: 'vvs_standard_node',
+            position: { x: 0, y: 0 },
+            data: { kindId: 'var_define', label: 'Declare x', category: 'Variables' },
+          },
+        ],
+        edges: [],
+      })
+    ).toBe(true);
   });
 });

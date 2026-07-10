@@ -2,25 +2,33 @@
 
 import React from 'react';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { INDENT } from './constants';
+import { INDENT, type SectionViewMode } from './constants';
+import { SectionViewToggle } from './SectionViewToggle';
+import { sectionBodyClass } from './explorerStyles';
 
 export function CategorySection({
   title,
   count,
+  issueCount = 0,
   icon,
   expanded,
   onToggle,
   onAdd,
   addLabel,
+  viewMode = 'list',
+  onViewModeChange,
   children,
 }: {
   title: string;
   count: number;
+  issueCount?: number;
   icon: React.ReactNode;
   expanded: boolean;
   onToggle: () => void;
   onAdd?: () => void;
   addLabel?: string;
+  viewMode?: SectionViewMode;
+  onViewModeChange?: (mode: SectionViewMode) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -33,14 +41,27 @@ export function CategorySection({
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </span>
         {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 group-hover:text-zinc-400 flex-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 group-hover:text-zinc-400 flex-1 min-w-0 truncate">
           {title}
         </span>
-        <span className="text-[9px] text-zinc-600 tabular-nums">{count}</span>
+        {!expanded && issueCount > 0 ? (
+          <span
+            className="text-[8px] tabular-nums px-1 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/25"
+            title={`${issueCount} missing on canvas`}
+          >
+            {issueCount}
+          </span>
+        ) : null}
+        <span className="text-[9px] text-zinc-600 tabular-nums shrink-0">{count}</span>
+        {expanded && onViewModeChange ? (
+          <SectionViewToggle value={viewMode} onChange={onViewModeChange} />
+        ) : onViewModeChange ? (
+          <span className="w-[42px] shrink-0" aria-hidden />
+        ) : null}
         {onAdd ? (
           <button
             type="button"
-            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200"
+            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200 shrink-0"
             title={addLabel}
             onClick={(e) => {
               e.stopPropagation();
@@ -53,7 +74,9 @@ export function CategorySection({
           <span className="w-5 shrink-0" />
         )}
       </div>
-      {expanded ? <div className="pb-1">{children}</div> : null}
+      {expanded ? (
+        <div className={sectionBodyClass(viewMode)}>{children}</div>
+      ) : null}
     </div>
   );
 }
