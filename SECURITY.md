@@ -4,7 +4,11 @@ We appreciate responsible disclosure.
 
 ## Supported versions
 
-This project is in **early public development** (Phase 1 skeleton). Security fixes apply to the latest commit on the `main` branch.
+This project is in **early public development**. Security fixes apply to:
+
+- The latest commit on `main`
+- The live Pages build at [https://sheriff99yt.github.io/VVS-Web/](https://sheriff99yt.github.io/VVS-Web/) (and the matching `pre-release` GitHub Release)
+- The newest SemVer release zip, when published
 
 ## How to report
 

@@ -6,6 +6,8 @@ Thank you for your interest in VVS. This repository is open for community collab
 
 ## Before you start
 
+**Fastest way to see the product:** open the live editor at **[https://sheriff99yt.github.io/VVS-Web/](https://sheriff99yt.github.io/VVS-Web/)** (latest Pages deploy). Pre-release + versioned zips: [Releases](https://github.com/Sheriff99yt/VVS-Web/releases). Local setup below when you need to change code.
+
 1. Read **[docs/vision.md](docs/vision.md)** — why VVS exists and how it relates to text code and engine tooling.
 2. Read **[docs/current_state.md](docs/current_state.md)** — what is implemented today vs planned (avoid re-building removed UI or duplicate systems).
 3. Read **[docs/naming_and_product_direction.md](docs/naming_and_product_direction.md)** — vocabulary for the web editor (engine-specific terms belong in the UE plugin docs, not generic web UI copy).

@@ -1,10 +1,26 @@
 # Vision Visual Scripting (VVS)
 
-> **Early public development (v0.1 skeleton)** — the graph editor is usable locally; transpiler, MCP, and cloud sync are planned. See [Where we are now](#where-we-are-now) · **Origin:** [Vision Visual Scripting (2021)](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
+> **Early public development** — try the live editor below, or run locally. See [Where we are now](#where-we-are-now) · **Origin:** [Vision Visual Scripting (2021)](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
 
 **Visual programming that generates real code** — compose logic on a graph, export ordinary source, and integrate with the tools you already use: your IDE, git, CI, and AI assistants (via MCP). **Canvas is the source of truth for generated code** — every export line maps to a graph node; symbol tables index only.
 
 VVS builds **on top of traditional development**, not instead of it. The graph is the authoring view; **text code stays the integration layer** — with **text-shaped fidelity** (what you draw is what you could type). See [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md).
+
+---
+
+## Try it (live)
+
+**Open the editor now:** [https://sheriff99yt.github.io/VVS-Web/](https://sheriff99yt.github.io/VVS-Web/)
+
+That is the latest successful **GitHub Pages** deployment — same fast showcase link as Deployments → `github-pages`. Browser storage only (no cloud account required).
+
+| Channel | Where | What |
+|---------|--------|------|
+| **Live preview** | [sheriff99yt.github.io/VVS-Web](https://sheriff99yt.github.io/VVS-Web/) | Always tracks `main` after a green Pages deploy |
+| **Current pre-release** | [Releases](https://github.com/Sheriff99yt/VVS-Web/releases) → *Try it — …* (tag `pre-release`) | Same site link + `vvs-web-pre-release.zip` |
+| **Versioned downloads** | [Releases](https://github.com/Sheriff99yt/VVS-Web/releases) → SemVer tags (`v0.1.0`, …) | Frozen static zips for a specific version |
+
+Details: [docs/setup.md](docs/setup.md) § GitHub Pages / Releases.
 
 ---
 
@@ -121,7 +137,7 @@ bun run dev
 
 Open [http://localhost:3000](http://localhost:3000) — create or open a project from the start screen.
 
-**Live preview:** [sheriff99yt.github.io/VVS-Web](https://sheriff99yt.github.io/VVS-Web/) (GitHub Pages — static, browser storage only).
+Prefer not to install? Use the **[live preview](https://sheriff99yt.github.io/VVS-Web/)** or grab a zip from **[Releases](https://github.com/Sheriff99yt/VVS-Web/releases)** (see [Try it (live)](#try-it-live)).
 
 Before pushing: confirm `apps/web/.env.local` does **not** appear in `git status`.
 
@@ -149,6 +165,7 @@ Contributor rules: **[CONTRIBUTING.md](CONTRIBUTING.md)** · **[.agents/AGENTS.m
 
 | Document | Use when |
 |----------|----------|
+| **[setup.md](docs/setup.md)** | Install, Pages preview, pre-release + SemVer releases |
 | **[history.md](docs/history.md)** | Origin story — graduation project → VVS Web, open systems & AI era |
 | **[vision.md](docs/vision.md)** | Product philosophy, UE6/Verse direction, logic/syntax model |
 | **[roadmap.md](docs/roadmap.md)** | Public phased roadmap |
