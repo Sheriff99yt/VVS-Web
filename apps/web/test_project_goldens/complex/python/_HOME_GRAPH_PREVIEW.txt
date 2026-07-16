@@ -1,0 +1,65 @@
+// ===== src/CoverageLab.py =====
+# (x) Import iostream
+# (x) Import System
+# (x) Import string
+from enum import Enum
+# (x) Import vector
+# (x) Import unordered_map
+# (x) Import Collections.Generic
+class Machine:
+    Power = 0
+    Serial = 0
+    MaxPower = 100
+    Ready = False
+    def Boot(self):
+        # Boot
+        self.Ready = True
+        print("Booted")
+        Sensor().on_tick()
+    # abstract Diagnose
+    async def Shutdown(self):
+        # Shutdown
+        self.Ready = False
+        print("Shutdown")
+    def on_pulse(self):
+        print(("Power=" + str(self.Power)))
+    def on_start(self):
+        _vvs_input_lab_get_input = input("Operator name?")
+        print(_vvs_input_lab_get_input)
+        self.Boot()
+        if self.Ready:
+            self.on_pulse()
+        else:
+            import json
+            print("Not ready")
+class SensorStatus(Enum):
+    OK = 1
+    WARN = 2
+    FAIL = 3
+class Sensor(Machine):
+    Readings = []
+    Status = SensorStatus.OK
+    Host = None
+    Tags = 0
+    async def Sample(self):
+        # Sample
+        self.Readings.append(self.Power)
+        print("Sampled")
+    def Report(self):
+        # Report
+        print("--- Readings ---")
+        for val in self.Readings:
+            print(str(val))
+    def on_tick(self):
+        print("Tick")
+    def on_start(self):
+        _vvs_sel = self.Status
+        if _vvs_sel == SensorStatus.OK:
+            self.Sample()
+            self.Report()
+        elif _vvs_sel == SensorStatus.WARN:
+            print("Warn")
+            self.Report()
+        elif _vvs_sel == SensorStatus.FAIL:
+            print("Fail")
+            self.Report()

@@ -31,12 +31,15 @@ Stable facts agents should assume without re-exploring the tree.
 | `functionHelpers.ts` | Call binding, overload sync, `applyFunctionCallBinding` |
 | `projectFolder/handleStore.ts` | `folderKeyFromHandleName()` stable folder keys |
 | `environmentCatalog.ts` | Bootstrap built-in + imported environment manifests |
-| `usabilityExampleTests/helloWorldUsabilityTest.ts` | Hello World usability fixture |
-| `usabilityExampleTests/calculatorUsabilityTest.ts` | Calculator usability fixture |
+| `typePickerOptions.ts` | Type picker options from built-ins + canvas enum/class TypeRefs |
+| `usabilityExampleTests/coverageLabUsabilityTest.ts` | Coverage Lab — primary fidelity golden |
+| `usabilityExampleTests/firstGraphUsabilityTest.ts` | First Graph — simple StartScreen test |
+| `usabilityExampleProjects.ts` | StartScreen `USABILITY_EXAMPLE_TESTS` cards |
+| `apps/web/scripts/extract_test_project_outputs.ts` | Dump Code-panel-identical Test Project outputs |
+| `apps/web/src/hooks/useProjectTranspileResult.ts` | Project-wide emit (what Code panel uses) |
 | `editorFocus.ts` | Tree/canvas focus frames; class home graph resolution |
 | `projectSelection.ts` | Tree symbol selection invariants |
 | `symbolCodegenLink.ts` | Selection → codegen tab + sourceMap node ids |
-| `usabilityExampleProjects.ts` | StartScreen `USABILITY_EXAMPLE_TESTS` cards |
 | `recentProjectsSubscribe.ts` | Deferred localStorage recents (`useSyncExternalStore`) |
 
 ## Key packages
@@ -82,10 +85,14 @@ Stable facts agents should assume without re-exploring the tree.
 - Panel dual-write: `defineNodeSync`, `useSymbolLifecycle`, `add*WithDefine` in `ProjectTree.tsx` / `GraphCanvas.tsx`
 - Compile gate: TopNav blocks Generate when `!analyzeProject(...).ok`
 
+**Active pilot (July 2026):** Coverage Lab (Machine+Sensor). **Verify as Code panel shows.** **Locked:** one graph → one file (all classes; no split-class profile — want two files → two graphs). Modifier chips disable when ineffective. Single-pass `appendIrMembersInOrder`. Imports: once at file top + conditional flow Import (`targetLanguages`; optional `ownerClassId`). Event defines: Y-ordered peers. Next: U68–U77. Do not invent keywords / includes / Default / file layout.
+
+**U66/U67 (shipped):** `packages/language-profiles/src/nodeEffectiveness.ts` — gated Import Module → `(x)` comments (Code panel toggle left of language) + canvas dim (TopNav Dim left of Autosave). Prefs `showUnsupportedComments` / `dimUnsupportedNodes` default on.
+
 ## Agent assets
 
 - Rules: `.agents/AGENTS.md`
-- Skills: `.agents/skills/*/SKILL.md`
+- Skills: `.agents/skills/*/SKILL.md` — fidelity, usability (**panel-first**), transpiler, cross-language
 - Memory: `.agents/memory/` — `decisions.md`, `workspace-facts.md`, `incomplete-ui.md`
 - Canonical UI/codegen state: `docs/current_state.md`
 

@@ -1,0 +1,15 @@
+// ===== firstgraph.cs =====
+public class FirstGraph {
+        public string VisitorName = "";
+    public void SayHello() {
+        // SayHello
+        Console.WriteLine("Hello from SayHello!");
+    }
+    public void on_start() {
+        Console.Write("What is your name?");
+        var _vvs_input_fg_get_input = Console.ReadLine() ?? "";
+        Console.WriteLine(_vvs_input_fg_get_input);
+        this.SayHello();
+        Console.WriteLine("Done.");
+    }
+}

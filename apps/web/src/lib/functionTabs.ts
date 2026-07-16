@@ -1,6 +1,7 @@
 import type { GraphTab, FunctionSymbol, FunctionBinding } from '@vvs/graph-types';
 import { createDefaultOverload } from '@vvs/graph-types';
 import type { Dispatch, SetStateAction } from 'react';
+import { reorderById } from '@/lib/symbolOrder';
 
 export type { FunctionSymbol };
 export type ProjectFunction = FunctionSymbol;
@@ -103,11 +104,5 @@ export function reorderFunctionSymbols(
   fromId: string,
   toId: string
 ): FunctionSymbol[] {
-  const fromIndex = functions.findIndex((f) => f.id === fromId);
-  const toIndex = functions.findIndex((f) => f.id === toId);
-  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return functions;
-  const next = functions.slice();
-  const [item] = next.splice(fromIndex, 1);
-  next.splice(toIndex, 0, item);
-  return next;
+  return reorderById(functions, fromId, toId);
 }

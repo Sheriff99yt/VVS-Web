@@ -28,7 +28,9 @@ export function isClassDragEvent(e: DragEvent): boolean {
 }
 
 export function isClassFolderDragEvent(e: DragEvent): boolean {
-  return e.dataTransfer.types.includes(CLASS_FOLDER_DRAG_MIME);
+  const types = Array.from(e.dataTransfer.types);
+  const mime = CLASS_FOLDER_DRAG_MIME.toLowerCase();
+  return types.some((t) => t === CLASS_FOLDER_DRAG_MIME || t.toLowerCase() === mime);
 }
 
 export function readClassIdFromDragEvent(

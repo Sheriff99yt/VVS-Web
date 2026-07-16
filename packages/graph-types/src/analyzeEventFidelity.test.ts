@@ -172,6 +172,41 @@ describe('analyzeProject event fidelity', () => {
     expect(hidden).toHaveLength(0);
   });
 
+  it('warns CROSS_CLASS_DISPATCH_WITHOUT_IMPORT when target class is off-graph', () => {
+    const machine = createClassSymbol('Machine', { id: 'main-class', containerId: HOME_GRAPH });
+    const sensor = createClassSymbol('Sensor', { id: 'cls-sensor', containerId: 'other-graph' });
+    const dispatch = {
+      id: 'dispatch-tick',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Dispatch tick',
+        category: 'Events',
+        kindId: 'event_dispatch',
+        inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+        inlineValues: {},
+        properties: { eventId: 'evt-tick', eventName: 'tick' },
+        graphBinding: { kind: 'dispatch_event' as const, symbolId: 'evt-tick' },
+      },
+    };
+
+    const result = analyzeProject(
+      baseInput({
+        classes: [machine, sensor],
+        events: [{ id: 'evt-tick', name: 'tick', parameters: [], classId: sensor.id }],
+        documents: {
+          [HOME_GRAPH]: { nodes: [dispatch], edges: [] },
+        },
+      })
+    );
+
+    const warn = result.diagnostics.filter((d) => d.code === 'CROSS_CLASS_DISPATCH_WITHOUT_IMPORT');
+    expect(warn).toHaveLength(1);
+    expect(warn[0]?.nodeId).toBe('dispatch-tick');
+    expect(warn[0]?.level).toBe('warning');
+  });
+
   it('promotes MULTICAST_REQUIRES_SUBSCRIBE to error for duplicate handlers', () => {
     const handler = (id: string) => ({
       id,

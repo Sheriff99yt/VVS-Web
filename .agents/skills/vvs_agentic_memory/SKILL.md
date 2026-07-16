@@ -35,6 +35,7 @@ When fidelity rules change, update `decisions.md` § Canvas source of truth and 
 | Syntax packs / Rosetta | `vvs_syntax_packs/SKILL.md` |
 | Transpiler pipeline | `vvs_transpiler_development/SKILL.md` |
 | Symbol/codegen fidelity | `vvs_visual_code_fidelity/SKILL.md` |
+| Cross-language modifiers / C++ pilot | `vvs_cross_language_mapping/SKILL.md` |
 | Usability fixtures & language UI gaps | `vvs_usability_example_tests/SKILL.md` |
 
 ## When to write (end of task)
@@ -64,4 +65,4 @@ After each UI/API loop iteration:
 2. Set next slice from `docs/ui_api_delivery_loop.md` backlog
 3. Update `docs/current_state.md` if implementation changed
 4. Update `decisions.md` if product direction or fidelity rules changed
-5. Update relevant skill if a new canonical path or anti-pattern emerged
+5. Update relevant skill if a new canonical path or anti-pattern emerged (esp. **Code panel verification** in usability/fidelity skills)

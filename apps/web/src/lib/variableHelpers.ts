@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { PinDefinition, PinType, VariableSymbol, VVSNodeData } from '@/types/graph';
-import { defaultValueForDataType } from '@vvs/graph-types';
+import { defaultValueForDataType, resolveTypeRef, typeRefToPinType } from '@vvs/graph-types';
 import { resolveNodeKindId } from '@/lib/nodeKind';
 
 const EXEC_IN: PinDefinition = { id: 'exec_in', label: '', type: 'execution' };
@@ -32,7 +32,8 @@ export function variableGetSetPins(variable: VariableSymbol, role: 'get' | 'set'
   const dataPin: PinDefinition = {
     id: 'val',
     label: role === 'get' ? variable.name : 'New Value',
-    type: variable.type as PinType,
+    type: typeRefToPinType(resolveTypeRef(variable)) as PinType,
+    typeRef: resolveTypeRef(variable),
   };
   if (role === 'get') {
     return { inputs: [], outputs: [dataPin] };

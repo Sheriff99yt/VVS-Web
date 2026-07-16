@@ -3,31 +3,45 @@ import type { IrMemberDecl, IrModule } from '../ir/types';
 import {
   appendFunctionBody,
   appendHoistedImports,
+  appendImportStatement,
   formatFunctionDefHeader,
   functionNeedsAsync,
 } from './helpers';
 import { emptyFunctionBodyLine } from './layout';
 import {
-  appendIrMembers,
-  appendMemberImplementations,
+  appendIrMembersInOrder,
   tagClassDeclLine,
   tagClassStructuralLine,
+  type MemberState,
 } from './members';
 import {
   appendEventHandlerDefinition,
   renderClassModuleClose,
   renderClassModuleOpen,
-  renderClassPublicSection,
+  renderClassImplOpen,
   renderFunctionTabClose,
 } from './shell';
 
-export function emitClassModule(sink: CodeSink, ir: IrModule): void {
+/**
+ * Emit a class module with **canvas member-chain order = source order** (1:1).
+ * No declare-then-implement two-phase: each define node emits its full construct
+ * when encountered on the chain.
+ */
+export function emitClassModule(
+  sink: CodeSink,
+  ir: IrModule,
+  options?: { skipImports?: boolean }
+): void {
   const classDecl = ir.members.find(
     (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
   );
 
   const lang = ir.targetLanguage;
-  appendHoistedImports(sink, ir);
+  // Imports emit in member-chain order (appendIrMembersInOrder). Only leftover
+  // `ir.imports` not represented on the chain are written here.
+  if (!options?.skipImports && ir.imports.length > 0) {
+    appendHoistedImports(sink, ir);
+  }
 
   const supportedClassLang = [
     'python',
@@ -39,33 +53,66 @@ export function emitClassModule(sink: CodeSink, ir: IrModule): void {
     'csharp',
   ].includes(lang);
 
-  // Class shell only when a canvas class_define produced ClassDecl in IR.
-  // Without it, members and handlers still emit (preview) — export is blocked by DEFINE_NODE_MISSING.
-  if (classDecl && supportedClassLang) {
-    const classLineStart = sink.lineCount + 1;
-    sink.appendRaw(renderClassModuleOpen(lang, ir.moduleName, ir.extendsType));
-    tagClassDeclLine(sink, ir, classLineStart);
-
-    const publicSection = renderClassPublicSection(lang);
-    if (publicSection) {
-      const publicLine = sink.lineCount + 1;
-      sink.appendRaw(publicSection);
-      tagClassStructuralLine(sink, ir, publicLine);
-    }
-  } else if (classDecl && !supportedClassLang) {
+  if (classDecl && !supportedClassLang) {
     sink.appendRaw(`// class ${ir.moduleName}`);
     return;
   }
 
-  appendIrMembers(sink, ir);
-  appendMemberImplementations(sink, ir);
-  for (const handler of ir.eventHandlers) {
-    appendEventHandlerDefinition(sink, ir, handler, handler.sourceGraphNodeId, {
-      leadingNewline: true,
-    });
+  const state: MemberState = {
+    cppVisibility: '',
+    classOpened: false,
+    rustImplOpened: false,
+  };
+
+  const openClassShell = () => {
+    if (!classDecl || state.classOpened) return;
+    const classLineStart = sink.lineCount + 1;
+    const properties = classDecl.properties ?? {};
+    const extendsType = classDecl.extendsType || ir.extendsType || '';
+    sink.appendRaw(renderClassModuleOpen(lang, ir.moduleName, extendsType, properties));
+    tagClassDeclLine(sink, ir, classLineStart);
+    state.classOpened = true;
+  };
+
+  /** Rust: close struct fields and open `impl` before the first method. */
+  const ensureRustImpl = () => {
+    if (lang !== 'rust' || !state.classOpened || state.rustImplOpened) return;
+    if (sink.lineCount > 0) sink.appendRaw('}');
+    const implOpen = renderClassImplOpen(lang, ir.moduleName);
+    if (implOpen) sink.appendRaw(implOpen);
+    state.rustImplOpened = true;
+  };
+
+  appendIrMembersInOrder(sink, ir, state, {
+    onClassDecl: openClassShell,
+    // Rust layout only — never invent a class shell from fields/methods without ClassDecl.
+    onBeforeMethod: () => {
+      ensureRustImpl();
+    },
+  });
+
+  // Orphan event handlers (not paired to an event_member_define on the chain).
+  // Do not auto-open a class shell here — shell opens only on ClassDecl.
+  if (ir.eventHandlers.length > 0) {
+    if (state.classOpened) ensureRustImpl();
+    for (const handler of ir.eventHandlers) {
+      appendEventHandlerDefinition(sink, ir, handler, handler.sourceGraphNodeId, {
+        leadingBlankLine: true,
+        memberProperties: handler.properties,
+      });
+    }
   }
 
-  if (classDecl && supportedClassLang) {
+  // Script body when there is no class shell (no class_define).
+  if (!classDecl && ir.onStartBody.length > 0) {
+    const { printContextForIr } = require('./shell');
+    const { appendIrStatements } = require('./sinkStatements');
+    const ctx = printContextForIr(ir, '');
+    appendIrStatements(sink, ir.onStartBody, ctx);
+  }
+
+  if (state.classOpened && supportedClassLang) {
+    // Rust already closed the struct when opening impl; ClassModuleClose closes impl (or struct if no methods).
     const classClose = renderClassModuleClose(lang);
     if (classClose) {
       const closeLine = sink.lineCount + 1;
@@ -81,13 +128,19 @@ export function emitFunctionTab(sink: CodeSink, ir: IrModule): void {
   const emptyLine = emptyFunctionBodyLine(lang);
 
   sink.appendRaw(
-    formatFunctionDefHeader(
-      func,
-      lang,
-      functionNeedsAsync(ir, func.id),
-      Boolean(func.flags?.virtual)
-    )
+    formatFunctionDefHeader(func, lang, functionNeedsAsync(ir, func.id, {
+      isAsync: Boolean(func.flags?.async),
+      isVirtual: Boolean(func.flags?.virtual),
+      visibility: func.visibility,
+      binding: func.binding,
+    }), {
+      isVirtual: Boolean(func.flags?.virtual),
+      isAsync: Boolean(func.flags?.async),
+      visibility: func.visibility,
+      binding: func.binding,
+    })
   );
+
   appendFunctionBody(sink, ir, func.id, emptyLine, ir.environmentManifest);
 
   const tabClose = renderFunctionTabClose(lang);

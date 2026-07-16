@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useNodesData, useReactFlow } from '@xyflow/react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
-import { findGraphEntryNodeId, isLinkedGraphNode, linkedGraphInspectorLabel } from '@/lib/linkedGraphNodes';
+import { findGraphEntryNodeId, nestedGraphIdForNode, linkedGraphInspectorLabel } from '@/lib/linkedGraphNodes';
 import { resolveImportableGraphName } from '@/lib/projectNodeCatalog';
 import { CallNodeOverloadPanel } from './RightSidebar/CallNodeOverloadPanel';
+import { SwitchNodePanel } from './RightSidebar/SwitchNodePanel';
 import { resolveVariableForNode } from '@/lib/variableHelpers';
 import { resolveFunctionForNode } from '@/lib/functionHelpers';
 import { normalizeNodeData, resolveNodeKindId } from '@/lib/nodeKind';
@@ -34,17 +35,21 @@ import { BrokenRefRepairPanel } from './RightSidebar/BrokenRefRepairPanel';
 import { FloatingPanelShell } from './FloatingPanelShell';
 import { openFunctionGraphTab } from '@/lib/graphTabs';
 import type { FunctionSymbol } from '@/types/graph';
-import { readUiPreference, writeUiPreferences, clampDetailsPanelHeight } from '@/lib/uiPreferences';
+import { readUiPreference, writeUiPreferences, clampDetailsPanelHeight, clampFloatingPanelWidth, defaultDetailsPanelLayout, dispatchResetDetailsPanelLayout, RESET_DETAILS_PANEL_LAYOUT_EVENT } from '@/lib/uiPreferences';
+import { useUiPreference } from '@/hooks/useUiPreference';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
 import { activeClass } from '@/lib/classScope';
 import {
   hasDefineNodeForEvent,
   hasHandlerNodeForEvent,
 } from '@/lib/defineNodeSync';
+import { paneMenuPosition } from '@/lib/paneMenuPosition';
 
 export const SPAWN_EVENT_NODE_EVENT = 'vvs:spawn-event-node';
 export const SPAWN_EVENT_DECLARE_MEMBER_EVENT = 'vvs:spawn-event-declare-member';
 
+/** Delay before hover expands details — avoids flash while dragging. */
+const HOVER_EXPAND_MS = 180;
 const ROLE_CHIP_CLASS: Record<string, string> = {
   Declare: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
   Handler: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
@@ -81,7 +86,7 @@ function NodeRoleChip({ role }: { role: string }) {
 const BROKEN_PANEL_MIN_HEIGHT = 280;
 
 function CompactSummary({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] text-zinc-500 leading-relaxed">{children}</p>;
+  return <>{children}</>;
 }
 
 function GraphFloatingDetailsPanel() {
@@ -110,17 +115,34 @@ function GraphFloatingDetailsPanel() {
     fixAllBrokenRefs,
   } = useSymbolLifecycle();
 
-  const [expanded, setExpanded] = useState(() => readUiPreference('detailsPanelExpanded'));
+  const [pinned, setPinned] = useUiPreference('detailsPanelPinned');
+  const [hoverExpanded, setHoverExpanded] = useState(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gestureActiveRef = useRef(false);
+  const hoverInsideRef = useRef(false);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [expandedHeight, setExpandedHeight] = useState(() =>
     clampDetailsPanelHeight(readUiPreference('detailsPanelExpandedHeight'))
   );
-  const [compactHeight, setCompactHeight] = useState(() =>
-    clampDetailsPanelHeight(readUiPreference('detailsPanelCompactHeight'))
+  const [expandedWidth, setExpandedWidth] = useState(() =>
+    clampFloatingPanelWidth(readUiPreference('detailsPanelExpandedWidth'))
   );
+  const [offsetRight, setOffsetRight] = useState(() => readUiPreference('detailsPanelOffsetRight'));
+  const [offsetTop, setOffsetTop] = useState(() => readUiPreference('detailsPanelOffsetTop'));
 
   const selectedNodeId = selection.type === 'node' ? selection.id : null;
   const nodeData = useNodesData<VVSNode>(selectedNodeId || '');
   const { updateNodeData } = useReactFlow();
+
+  // New selection → drop transient hover expand (pin still wins).
+  useEffect(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoverExpanded(false);
+  }, [selection.type, selection.id]);
 
   const selectedVariable =
     selection.type === 'variable' ? variables.find((v) => v.id === selection.id) : null;
@@ -146,8 +168,7 @@ function GraphFloatingDetailsPanel() {
   }, [selection.type, selectedNodeId, nodeData, variables, functions, events]);
 
   const isBrokenRefSelection = brokenRef !== null;
-  const effectiveExpanded = expanded || isBrokenRefSelection;
-  const panelHeight = effectiveExpanded ? expandedHeight : compactHeight;
+  const effectiveExpanded = pinned || hoverExpanded || isBrokenRefSelection;
 
   if (isBrokenRefSelection && expandedHeight < BROKEN_PANEL_MIN_HEIGHT) {
     setExpandedHeight(clampDetailsPanelHeight(BROKEN_PANEL_MIN_HEIGHT));
@@ -159,31 +180,128 @@ function GraphFloatingDetailsPanel() {
     }
   }, [isBrokenRefSelection, expandedHeight]);
 
-  const handlePanelHeightChange = useCallback(
-    (height: number) => {
-      const next = clampDetailsPanelHeight(height);
-      if (effectiveExpanded) {
-        setExpandedHeight(next);
-        writeUiPreferences({ detailsPanelExpandedHeight: next });
-      } else {
-        setCompactHeight(next);
-        writeUiPreferences({ detailsPanelCompactHeight: next });
-      }
-    },
-    [effectiveExpanded]
-  );
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
+
+  const applyDefaultLayout = useCallback(() => {
+    const d = defaultDetailsPanelLayout();
+    setExpandedWidth(d.width);
+    setExpandedHeight(d.height);
+    setOffsetRight(d.offsetRight);
+    setOffsetTop(d.offsetTop);
+  }, []);
+
+  useEffect(() => {
+    const onReset = () => applyDefaultLayout();
+    window.addEventListener(RESET_DETAILS_PANEL_LAYOUT_EVENT, onReset);
+    return () => window.removeEventListener(RESET_DETAILS_PANEL_LAYOUT_EVENT, onReset);
+  }, [applyDefaultLayout]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    const onDown = (e: MouseEvent) => {
+      if (contextMenuRef.current?.contains(e.target as Node)) return;
+      setContextMenu(null);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onDown);
+    };
+  }, [contextMenu]);
+
+  const handlePanelHeightChange = useCallback((height: number) => {
+    const next = clampDetailsPanelHeight(height);
+    setExpandedHeight(next);
+    writeUiPreferences({ detailsPanelExpandedHeight: next });
+  }, []);
+
+  const handlePanelWidthChange = useCallback((width: number) => {
+    const next = clampFloatingPanelWidth(width);
+    setExpandedWidth(next);
+    writeUiPreferences({ detailsPanelExpandedWidth: next });
+  }, []);
+
+  const handleOffsetChange = useCallback((right: number, top: number) => {
+    setOffsetRight(right);
+    setOffsetTop(top);
+    writeUiPreferences({ detailsPanelOffsetRight: right, detailsPanelOffsetTop: top });
+  }, []);
+
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu(paneMenuPosition(event.clientX, event.clientY, 180, 40));
+  }, []);
+
+  const handleResetLayout = useCallback(() => {
+    dispatchResetDetailsPanelLayout();
+    setContextMenu(null);
+  }, []);
 
   const handleFunctionChange = (next: FunctionSymbol) => {
     renameFunction(next);
   };
 
-  const toggleExpanded = useCallback(() => {
-    setExpanded((prev) => {
-      const next = !prev;
-      writeUiPreferences({ detailsPanelExpanded: next });
-      return next;
-    });
-  }, []);
+  const togglePinned = useCallback(() => {
+    setPinned(!pinned);
+  }, [pinned, setPinned]);
+
+  const handleHoverChange = useCallback(
+    (hovered: boolean) => {
+      hoverInsideRef.current = hovered;
+      if (gestureActiveRef.current) {
+        if (hovered) {
+          if (hoverTimerRef.current) {
+            clearTimeout(hoverTimerRef.current);
+            hoverTimerRef.current = null;
+          }
+          setHoverExpanded(true);
+        }
+        return;
+      }
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = null;
+      }
+      if (hovered) {
+        hoverTimerRef.current = setTimeout(() => {
+          setHoverExpanded(true);
+          hoverTimerRef.current = null;
+        }, HOVER_EXPAND_MS);
+        return;
+      }
+      if (!pinned) {
+        setHoverExpanded(false);
+      }
+    },
+    [pinned]
+  );
+
+  const handleGestureChange = useCallback(
+    (active: boolean) => {
+      gestureActiveRef.current = active;
+      if (active) {
+        if (hoverTimerRef.current) {
+          clearTimeout(hoverTimerRef.current);
+          hoverTimerRef.current = null;
+        }
+        setHoverExpanded(true);
+        return;
+      }
+      if (!hoverInsideRef.current && !pinned) {
+        setHoverExpanded(false);
+      }
+    },
+    [pinned]
+  );
 
   const handleDismiss = () => {
     setSelection({ type: 'graph', id: null });
@@ -213,6 +331,33 @@ function GraphFloatingDetailsPanel() {
       outputs: patch.outputs,
       label: patch.label,
     });
+    
+    // Dual write to symbol table
+    const symbolId = nodeData.data.properties?.symbolId;
+    if (symbolId && typeof symbolId === 'string') {
+      const isFlag = ['isConst', 'isAbstract', 'isVirtual', 'isOverride', 'isAsync'].includes(key);
+      const flagKey = key === 'isConst' ? 'readonly' : (isFlag ? key.slice(2).toLowerCase() : null);
+      
+      if (nodeData.data.kindId === 'var_define') {
+        const v = variables.find(x => x.id === symbolId);
+        if (v) {
+          if (isFlag) renameVariable({ ...v, flags: { ...v.flags, [flagKey!]: value } });
+          else renameVariable({ ...v, [key]: value });
+        }
+      } else if (nodeData.data.kindId === 'function_define') {
+        const f = functions.find(x => x.id === symbolId);
+        if (f) {
+          if (isFlag) renameFunction({ ...f, flags: { ...f.flags, [flagKey!]: value } });
+          else renameFunction({ ...f, [key]: value });
+        }
+      } else if (nodeData.data.kindId === 'event_member_define') {
+        const e = events.find(x => x.id === symbolId);
+        if (e) {
+          // Event doesn't have flags currently, but if it does later, handle it here
+          renameEvent({ ...e, [key]: value });
+        }
+      }
+    }
   };
 
   const handleVariableChange = (next: VariableSymbol) => {
@@ -247,16 +392,20 @@ function GraphFloatingDetailsPanel() {
   };
 
   const handleOpenLinkedGraph = () => {
-    if (!nodeData || !isLinkedGraphNode(nodeData.data) || !nodeData.data.linkedGraphId) return;
-    const entryId = findGraphEntryNodeId(graphDocuments ?? {}, nodeData.data.linkedGraphId);
+    if (!nodeData) return;
+    const nestedId = nestedGraphIdForNode(nodeData.data);
+    if (!nestedId) return;
+    const entryId = findGraphEntryNodeId(graphDocuments ?? {}, nestedId);
     if (!entryId) return;
-    dispatchNavigateToNode(nodeData.data.linkedGraphId, entryId);
+    dispatchNavigateToNode(nestedId, entryId);
   };
 
-  const linkedGraphName =
-    nodeData?.data.linkedGraphId && nodeData.data.linkKind
-      ? resolveImportableGraphName(nodeData.data.linkedGraphId, functions, openTabs)
-      : undefined;
+  const linkedGraphName = (() => {
+    if (!nodeData) return undefined;
+    const nestedId = nestedGraphIdForNode(nodeData.data);
+    if (!nestedId) return undefined;
+    return resolveImportableGraphName(nestedId, functions, openTabs);
+  })();
 
   const nodeKindId = nodeData ? resolveNodeKindId(nodeData.data) : null;
   const nodeKindDef = nodeKindId ? getNodeKindDefinition(nodeKindId) : undefined;
@@ -297,6 +446,12 @@ function GraphFloatingDetailsPanel() {
     }
     if (nodeKindId === 'import_class') {
       hidden.add('targetClassId');
+    }
+    // Linking IDs — not user codegen options
+    hidden.add('symbolId');
+    hidden.add('eventId');
+    if (nodeKindId === 'function_define') {
+      hidden.add('graphTabId');
     }
     return nodeKindDef.propertySchema.filter((field) => !hidden.has(field.key));
   }, [nodeKindDef?.propertySchema, nodeKindId]);
@@ -381,17 +536,9 @@ function GraphFloatingDetailsPanel() {
       }
     : {};
 
-  const renderCompact = () => {
-    if (isBrokenRefSelection && brokenRef && selectedNodeId) {
-      return (
-        <BrokenRefRepairPanel
-          symbolRef={brokenRef}
-          onDeleteNode={() => deleteBrokenNode(activeGraphTab, selectedNodeId)}
-          onDeleteAllForSymbol={() => deleteAllBrokenForRef(brokenRef)}
-          onRecreateSymbol={() => fixBrokenNode(activeGraphTab, selectedNodeId)}
-          onRecreateAllSymbols={() => fixAllBrokenRefs(brokenRef)}
-        />
-      );
+  const renderCompactSubtitle = (): React.ReactNode => {
+    if (isBrokenRefSelection) {
+      return <span className="text-amber-400/90">Unresolved — hover or pin to repair</span>;
     }
 
     if (selection.type === 'variable' && selectedVariable) {
@@ -409,14 +556,17 @@ function GraphFloatingDetailsPanel() {
       return (
         <CompactSummary>
           <span className="text-zinc-400">{selectedFunction.binding}</span>
-          {selectedFunction.overloads.length > 1 ? ` · ${selectedFunction.overloads.length} overloads` : ''}
+          {selectedFunction.overloads.length > 1
+            ? ` · ${selectedFunction.overloads.length} overloads`
+            : ''}
         </CompactSummary>
       );
     }
     if (selection.type === 'event' && selectedEvent) {
       return (
         <CompactSummary>
-          {selectedEvent.parameters.length} param{selectedEvent.parameters.length === 1 ? '' : 's'}
+          {selectedEvent.parameters.length} param
+          {selectedEvent.parameters.length === 1 ? '' : 's'}
         </CompactSummary>
       );
     }
@@ -428,16 +578,12 @@ function GraphFloatingDetailsPanel() {
           </CompactSummary>
         );
       }
-      if (isLinkedGraphNode(nodeData.data)) {
-        return (
-          <CompactSummary>
-            → {linkedGraphName ?? 'graph'}
-          </CompactSummary>
-        );
+      if (nestedGraphIdForNode(nodeData.data)) {
+        return <CompactSummary>→ {linkedGraphName ?? 'graph'}</CompactSummary>;
       }
       return (
         <CompactSummary>
-          {inputCount}↓ {outputCount}↑
+          {inputCount}↓ {outputCount}↑ · hover for details
         </CompactSummary>
       );
     }
@@ -552,6 +698,13 @@ function GraphFloatingDetailsPanel() {
             />
           ) : null}
 
+          {nodeKindId === 'flow_switch' && (
+            <SwitchNodePanel
+              nodeData={nodeData}
+              onApply={(patch) => updateNodeData(selectedNodeId, patch)}
+            />
+          )}
+
           {filteredPropertySchema.length > 0 ? (
             <PropertySchemaPanel
               fields={filteredPropertySchema}
@@ -567,7 +720,9 @@ function GraphFloatingDetailsPanel() {
             linkedGraphInspectorLabel={
               nodeData.data.linkKind ? linkedGraphInspectorLabel(nodeData.data.linkKind) : undefined
             }
-            onOpenLinkedGraph={isLinkedGraphNode(nodeData.data) ? handleOpenLinkedGraph : undefined}
+            onOpenLinkedGraph={
+              nestedGraphIdForNode(nodeData.data) ? handleOpenLinkedGraph : undefined
+            }
           />
         </>
       )}
@@ -575,19 +730,48 @@ function GraphFloatingDetailsPanel() {
   );
 
   return (
-    <FloatingPanelShell
-      title={title}
-      titleIcon={isBrokenRefSelection ? <AlertTriangle size={13} className="text-amber-400" /> : undefined}
-      headerExtra={nodeRoleChip ? <NodeRoleChip role={nodeRoleChip} /> : undefined}
-      corner="top-right"
-      expanded={effectiveExpanded}
-      onToggleExpanded={toggleExpanded}
-      onClose={handleDismiss}
-      heightPx={panelHeight}
-      onHeightChange={handlePanelHeightChange}
-    >
-      {effectiveExpanded ? renderExpanded() : renderCompact()}
-    </FloatingPanelShell>
+    <>
+      <FloatingPanelShell
+        title={title}
+        subtitle={effectiveExpanded ? undefined : renderCompactSubtitle()}
+        titleIcon={isBrokenRefSelection ? <AlertTriangle size={13} className="text-amber-400" /> : undefined}
+        headerExtra={nodeRoleChip ? <NodeRoleChip role={nodeRoleChip} /> : undefined}
+        corner="top-right"
+        expanded={effectiveExpanded}
+        pinned={pinned}
+        onTogglePinned={togglePinned}
+        onHoverChange={handleHoverChange}
+        onGestureChange={handleGestureChange}
+        onContextMenu={handleContextMenu}
+        onClose={handleDismiss}
+        heightPx={effectiveExpanded ? expandedHeight : undefined}
+        onHeightChange={effectiveExpanded ? handlePanelHeightChange : undefined}
+        widthPx={expandedWidth}
+        onWidthChange={effectiveExpanded ? handlePanelWidthChange : undefined}
+        offsetRight={offsetRight}
+        offsetTop={offsetTop}
+        onOffsetChange={handleOffsetChange}
+      >
+        {effectiveExpanded ? renderExpanded() : null}
+      </FloatingPanelShell>
+      {contextMenu ? (
+        <div
+          ref={contextMenuRef}
+          className="fixed z-[80] min-w-[168px] py-0.5 rounded-md border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/40"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+            onClick={handleResetLayout}
+          >
+            Reset size & position
+          </button>
+        </div>
+      ) : null}
+    </>
   );
 }
 

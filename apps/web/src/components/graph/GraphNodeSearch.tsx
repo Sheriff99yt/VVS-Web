@@ -10,7 +10,8 @@ import {
   nodeCategoryColor,
   nodeDisplayLabel,
 } from '@/lib/nodeOutliner';
-import { shortcutTitle } from '@/lib/graphShortcuts';
+import { shortcutKeys, shortcutTitle } from '@/lib/graphShortcuts';
+import { FOCUS_GRAPH_NODE_SEARCH_EVENT } from '@/lib/uiPreferences';
 
 const MAX_RESULTS = 12;
 
@@ -39,16 +40,22 @@ export function GraphNodeSearch() {
       setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === node.id })));
       setSelection({ type: 'node', id: node.id });
       setCenter(node.position.x, node.position.y, { duration: 400, zoom: 1 });
-      setQuery('');
-      setExpanded(false);
-      inputRef.current?.blur();
+      // Keep query + expanded so the user can jump through matches.
+      inputRef.current?.focus();
     },
     [setCenter, setNodes, setSelection]
   );
 
-  const collapse = React.useCallback(() => {
+  const collapseIfEmpty = React.useCallback(() => {
+    if (query.trim()) return;
     setExpanded(false);
+    inputRef.current?.blur();
+  }, [query]);
+
+  const clearAndCollapse = React.useCallback(() => {
     setQuery('');
+    setExpanded(false);
+    setActiveIndex(0);
     inputRef.current?.blur();
   }, []);
 
@@ -58,30 +65,30 @@ export function GraphNodeSearch() {
   }, []);
 
   React.useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        openSearch();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    const onFocusSearch = () => openSearch();
+    window.addEventListener(FOCUS_GRAPH_NODE_SEARCH_EVENT, onFocusSearch);
+    return () => window.removeEventListener(FOCUS_GRAPH_NODE_SEARCH_EVENT, onFocusSearch);
   }, [openSearch]);
 
   React.useEffect(() => {
     if (!expanded) return;
     const onPointerDown = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as HTMLElement)) {
-        collapse();
+        collapseIfEmpty();
       }
     };
     document.addEventListener('mousedown', onPointerDown);
     return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [expanded, collapse]);
+  }, [expanded, collapseIfEmpty]);
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
-      collapse();
+      if (query.trim()) {
+        setQuery('');
+        setActiveIndex(0);
+      } else {
+        clearAndCollapse();
+      }
       return;
     }
     if (!showDropdown || results.length === 0) return;
@@ -99,30 +106,36 @@ export function GraphNodeSearch() {
     }
   };
 
-  if (!expanded) {
-    return (
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <button
-          type="button"
-          onClick={openSearch}
-          className="pointer-events-auto flex items-center justify-center w-8 h-8 rounded-full bg-zinc-900/90 border border-zinc-700/80 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600 transition-colors shadow-md"
-          title={shortcutTitle('node-search')}
-          aria-label="Search nodes"
-        >
-          <Search size={14} />
-        </button>
-      </div>
-    );
-  }
+  const keepExpanded = expanded || query.trim().length > 0;
 
   return (
     <div
       ref={containerRef}
-      className="absolute top-3 left-1/2 -translate-x-1/2 z-20 w-full max-w-sm px-3 pointer-events-none"
+      className="absolute top-3 left-3 z-20 pointer-events-none"
     >
-      <div className="pointer-events-auto">
-        <div className="relative flex items-center bg-zinc-900/95 border border-zinc-700/80 rounded-lg shadow-lg">
-          <Search size={14} className="absolute left-3 text-zinc-500 shrink-0" />
+      <div
+        className={`pointer-events-auto flex flex-col transition-[width] duration-200 ease-out ${
+          keepExpanded ? 'w-64' : 'w-8'
+        }`}
+      >
+        <div
+          className={`relative flex items-center h-8 overflow-hidden border transition-colors duration-200 ${
+            keepExpanded
+              ? 'bg-zinc-950 border-zinc-800 rounded-md shadow-lg shadow-black/30'
+              : 'bg-zinc-950/90 border-zinc-800 rounded-md hover:border-zinc-700'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={openSearch}
+            className="shrink-0 w-8 h-8 inline-flex items-center justify-center text-zinc-500 hover:text-zinc-200 transition-colors"
+            title={shortcutTitle('node-search')}
+            aria-label="Search nodes"
+            aria-expanded={keepExpanded}
+          >
+            <Search size={13} />
+          </button>
+
           <input
             ref={inputRef}
             type="search"
@@ -130,26 +143,39 @@ export function GraphNodeSearch() {
             onChange={(e) => {
               setQuery(e.target.value);
               setActiveIndex(0);
+              if (!expanded) setExpanded(true);
+            }}
+            onFocus={() => setExpanded(true)}
+            onBlur={() => {
+              // Defer so result clicks still register; collapse only when empty.
+              requestAnimationFrame(() => collapseIfEmpty());
             }}
             onKeyDown={handleInputKeyDown}
-            placeholder="Search nodes…"
-            className="w-full bg-transparent pl-9 pr-8 py-2 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
-            autoFocus
+            placeholder={`Search nodes… (${shortcutKeys('node-search')})`}
+            className={`bg-transparent text-[11px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-[opacity,width,padding] duration-200 ease-out ${
+              keepExpanded
+                ? 'flex-1 min-w-0 opacity-100 pl-0 pr-7 py-1.5'
+                : 'w-0 opacity-0 p-0 pointer-events-none'
+            }`}
+            tabIndex={keepExpanded ? 0 : -1}
           />
-          <button
-            type="button"
-            onClick={collapse}
-            className="absolute right-2 p-1 text-zinc-500 hover:text-zinc-300 rounded"
-            title="Close"
-          >
-            <X size={12} />
-          </button>
+
+          {keepExpanded && query ? (
+            <button
+              type="button"
+              onClick={clearAndCollapse}
+              className="absolute right-1.5 p-1 text-zinc-600 hover:text-zinc-300 rounded"
+              title="Clear"
+            >
+              <X size={11} />
+            </button>
+          ) : null}
         </div>
 
-        {showDropdown && (
-          <div className="mt-1 rounded-lg border border-zinc-700/80 bg-zinc-900/95 shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+        {showDropdown ? (
+          <div className="mt-1 rounded-md border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/40 overflow-hidden max-h-56 overflow-y-auto">
             {results.length === 0 ? (
-              <div className="px-3 py-3 text-[11px] text-zinc-500 text-center">No matching nodes</div>
+              <div className="px-2.5 py-2.5 text-[11px] text-zinc-500 text-center">No matching nodes</div>
             ) : (
               results.map((node, index) => {
                 const selected = selection.type === 'node' && selection.id === node.id;
@@ -158,10 +184,11 @@ export function GraphNodeSearch() {
                   <button
                     key={node.id}
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => focusNode(node)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
-                      highlighted ? 'bg-zinc-800' : 'hover:bg-zinc-800/70'
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors ${
+                      highlighted ? 'bg-zinc-900' : 'hover:bg-zinc-900/80'
                     } ${selected ? 'border-l-2 border-indigo-500' : 'border-l-2 border-transparent'}`}
                   >
                     <div
@@ -177,7 +204,7 @@ export function GraphNodeSearch() {
               })
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   hasDefineNodeForClass,
   insertDefineNodeForVariable,
   insertClassDefineNode,
+  insertProgramEntryHandlerNode,
   syncDefineNodesForClass,
   relocateClassHomeGraph,
 } from './defineNodeSync';
@@ -50,7 +51,48 @@ describe('defineNodeSync', () => {
     const defineNode = doc.nodes.find((n) => n.data.kindId === 'var_define');
     expect(defineNode).toBeDefined();
     expect(defineNode?.data.properties?.symbolId).toBe(variable.id);
-    expect(doc.edges.some((e) => e.source === defineNode!.id && e.target === 'entry')).toBe(true);
+    // Define nodes are placed without auto-wiring into the execution chain
+    expect(doc.edges.length).toBe(0);
+  });
+
+  it('skips var_define for function-scoped locals', () => {
+    const cls = createClassSymbol('Calc', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+    const local = createVariableSymbol('temp', {
+      id: 'var-local',
+      classId: cls.id,
+      type: 'data_number',
+      graphTabId: 'fn-sample',
+    });
+    const documents = {
+      [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] },
+    };
+    const next = insertDefineNodeForVariable(documents, cls, local);
+    expect(next[MAIN_GRAPH_CONTAINER_ID]!.nodes).toHaveLength(0);
+  });
+
+  it('places program entry handler on target tab', () => {
+    const cls = createClassSymbol('Widget', {
+      id: 'cls-widget',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+    const entry = {
+      kind: 'event' as const,
+      id: 'evt-start',
+      name: 'start',
+      classId: cls.id,
+      parameters: [],
+    };
+    const documents = insertProgramEntryHandlerNode(
+      { 'other-tab': { nodes: [], edges: [] } },
+      cls,
+      entry,
+      'other-tab'
+    );
+    expect(documents['other-tab']!.nodes.some((n) => n.data.kindId === 'event_define')).toBe(true);
+    expect(documents[MAIN_GRAPH_CONTAINER_ID]).toBeUndefined();
   });
 
   it('inserts class_define with symbolId and detects by class id', () => {

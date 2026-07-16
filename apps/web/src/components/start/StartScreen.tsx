@@ -16,7 +16,12 @@ import {
   Map,
 } from 'lucide-react';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
-import { USABILITY_EXAMPLE_TESTS, type UsabilityTestLevel } from '@/lib/usabilityExampleProjects';
+import {
+  USABILITY_EXAMPLE_TESTS,
+  openUsabilityTestProject,
+  seedUsabilityTestProjectsToLocalStorage,
+  type UsabilityTestLevel,
+} from '@/lib/usabilityExampleProjects';
 import {
   createProjectId,
   loadProjectFromStore,
@@ -95,6 +100,7 @@ const SOURCE_LABEL: Record<RecentProjectEntry['source'], string> = {
   import: 'Imported',
   template: 'Template',
   demo: 'Demo',
+  test: 'Test Project',
 };
 
 export function StartScreen() {
@@ -109,6 +115,7 @@ export function StartScreen() {
 
   useEffect(() => {
     initRecentProjects();
+    seedUsabilityTestProjectsToLocalStorage();
   }, []);
 
   const refreshRecent = () => notifyRecentProjectsChanged();
@@ -120,10 +127,8 @@ export function StartScreen() {
 
   const handleOpenUsabilityTest = (level: UsabilityTestLevel) => {
     try {
-      const def = USABILITY_EXAMPLE_TESTS.find((e) => e.level === level);
-      if (!def) return;
-      const id = createProjectId();
-      openLocalInEditor(router, id, def.create(), 'demo');
+      const { projectId, snapshot } = openUsabilityTestProject(level);
+      openLocalInEditor(router, projectId, snapshot, 'test');
     } catch (error) {
       window.alert(
         error instanceof Error

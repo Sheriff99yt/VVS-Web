@@ -1,5 +1,5 @@
 import type { GraphEdge, GraphNode, VVSNodeData } from './nodes';
-import type { ClassSymbol, GraphDocument } from './symbols';
+import { type ClassSymbol, type GraphDocument, type VariableSymbol, type FunctionSymbol, type ProjectEventDefinition, MAIN_CLASS_ID } from './symbols';
 
 /** Canvas member-declaration node kinds (class graph exec chain). */
 export const MEMBER_DEFINE_KINDS = [
@@ -7,6 +7,7 @@ export const MEMBER_DEFINE_KINDS = [
   'var_define',
   'function_define',
   'event_member_define',
+  'enum_define',
 ] as const;
 
 export type MemberDefineKind = (typeof MEMBER_DEFINE_KINDS)[number];
@@ -160,25 +161,230 @@ export function findMemberChainTail(doc: GraphDocument): GraphNode | undefined {
   return defineNodes[defineNodes.length - 1];
 }
 
-export function collectMemberDefineNodeIds(doc: GraphDocument): string[] {
-  const head = findMemberChainHead(doc);
-  if (!head) return [];
+export function collectMemberDefineNodeIds(
+  doc: GraphDocument,
+  cls: ClassSymbol | undefined,
+  variables: VariableSymbol[],
+  functions: FunctionSymbol[],
+  events: ProjectEventDefinition[]
+): string[] {
+  // 1. Gather member define nodes belonging to the class (enums attached in step 1b).
+  const classNodes = doc.nodes.filter((node) => {
+    if (!isMemberDefineNode(node)) return false;
 
-  const ordered: string[] = [];
-  const visited = new Set<string>();
-  let current: GraphNode | undefined = head;
+    const symbolId = defineNodeSymbolId(node);
+    const kindId = resolveNodeKindId(node.data);
 
-  while (current && !visited.has(current.id)) {
-    visited.add(current.id);
-    if (isMemberDefineNode(current)) {
-      ordered.push(current.id);
+    if (kindId === 'enum_define') {
+      // Attached below — only when exec-connected to this class's chain.
+      return false;
     }
-    const targets = execTargetsFrom(doc.edges, current.id, 'exec_out');
-    const nextId = targets.find((id) => {
-      const node = doc.nodes.find((n) => n.id === id);
-      return node && isMemberDefineNode(node);
-    });
-    current = nextId ? doc.nodes.find((n) => n.id === nextId) : undefined;
+
+    if (kindId === 'class_define') {
+      return !cls || !symbolId || symbolId === cls.id;
+    }
+
+    if (!symbolId) return false;
+
+    const matchesClass = (targetClsId?: string) => {
+      if (!cls) return true;
+      return (targetClsId ?? MAIN_CLASS_ID) === cls.id;
+    };
+
+    return (
+      variables.some((v) => v.id === symbolId && matchesClass(v.classId)) ||
+      functions.some((f) => f.id === symbolId && matchesClass(f.classId)) ||
+      events.some((e) => e.id === symbolId && matchesClass(e.classId))
+    );
+  });
+
+  // 1b. Include enum_define nodes reachable from this class's define nodes via exec edges
+  //     (or that reach them) — so two classes on one graph do not share each other's enums.
+  const classNodeIds = new Set(classNodes.map((n) => n.id));
+  const enumNodes = doc.nodes.filter((n) => resolveNodeKindId(n.data) === 'enum_define');
+  for (const enumNode of enumNodes) {
+    const touching = [
+      ...execTargetsFrom(doc.edges, enumNode.id, 'exec_out'),
+      ...doc.edges
+        .filter(
+          (e) =>
+            e.target === enumNode.id &&
+            e.data?.pinType === 'execution' &&
+            (e.targetHandle === 'exec_in' || e.targetHandle == null)
+        )
+        .map((e) => e.source),
+    ];
+    if (touching.some((id) => classNodeIds.has(id))) {
+      classNodes.push(enumNode);
+      classNodeIds.add(enumNode.id);
+    }
+  }
+
+  // 1c. Include Import Module / Import Class nodes that reach this class's define chain
+  //     (canvas order = emit order). Prefer placing shared imports once at file top on the
+  //     first class chain; flow Import Module nodes (e.g. inside branches) are not members.
+  const importNodes = doc.nodes.filter((n) => {
+    const kindId = resolveNodeKindId(n.data);
+    return (
+      kindId === 'vvs.project.import_module' ||
+      kindId.startsWith('import_module_') ||
+      kindId === 'import_class' ||
+      n.data.linkKind === 'import_module'
+    );
+  });
+  const isImportChainNode = (n: GraphNode): boolean => {
+    const kindId = resolveNodeKindId(n.data);
+    return (
+      kindId === 'vvs.project.import_module' ||
+      kindId.startsWith('import_module_') ||
+      kindId === 'import_class' ||
+      n.data.linkKind === 'import_module' ||
+      kindId === 'enum_define'
+    );
+  };
+  for (const importNode of importNodes) {
+    if (classNodeIds.has(importNode.id)) continue;
+    const ownerRaw = importNode.data.properties?.ownerClassId;
+    if (typeof ownerRaw === 'string' && ownerRaw.trim() && cls && ownerRaw.trim() !== cls.id) {
+      continue;
+    }
+    const seen = new Set<string>();
+    const queue = [importNode.id];
+    let reachesClass = false;
+    while (queue.length > 0) {
+      const id = queue.shift()!;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      if (classNodeIds.has(id) && id !== importNode.id) {
+        reachesClass = true;
+        break;
+      }
+      for (const t of execTargetsFrom(doc.edges, id, 'exec_out')) {
+        if (classNodeIds.has(t)) {
+          reachesClass = true;
+          break;
+        }
+        const n = doc.nodes.find((x) => x.id === t);
+        if (n && isImportChainNode(n)) queue.push(t);
+      }
+      if (reachesClass) break;
+    }
+    if (reachesClass) {
+      classNodes.push(importNode);
+      classNodeIds.add(importNode.id);
+    }
+  }
+
+  if (classNodes.length === 0) return [];
+
+  const kindOf = (nodeId: string): string => {
+    const n = classNodes.find((x) => x.id === nodeId);
+    return n ? resolveNodeKindId(n.data) : '';
+  };
+  const isEventDefine = (nodeId: string) => kindOf(nodeId) === 'event_member_define';
+
+  /** Nearest non-event member-chain ancestor (walks back through event→event wires). */
+  const findNonEventAncestor = (eventId: string): string | undefined => {
+    const visited = new Set<string>();
+    const queue = doc.edges
+      .filter(
+        (e) =>
+          e.target === eventId &&
+          e.data?.pinType === 'execution' &&
+          classNodeIds.has(e.source)
+      )
+      .map((e) => e.source);
+    while (queue.length > 0) {
+      const id = queue.shift()!;
+      if (visited.has(id)) continue;
+      visited.add(id);
+      if (!isEventDefine(id)) return id;
+      for (const e of doc.edges) {
+        if (
+          e.target === id &&
+          e.data?.pinType === 'execution' &&
+          classNodeIds.has(e.source) &&
+          !visited.has(e.source)
+        ) {
+          queue.push(e.source);
+        }
+      }
+    }
+    return undefined;
+  };
+
+  // 2. Build Adjacency List and In-Degree Map.
+  // Event defines are ordering peers: event→event exec wires keep the chain connected
+  // for validation/UI, but emit order among events uses Y (visually higher first).
+  const adj = new Map<string, string[]>();
+  const inDegree = new Map<string, number>();
+
+  for (const node of classNodes) {
+    adj.set(node.id, []);
+    inDegree.set(node.id, 0);
+  }
+
+  const addOrderEdge = (fromId: string, toId: string) => {
+    const list = adj.get(fromId)!;
+    if (list.includes(toId)) return;
+    list.push(toId);
+    inDegree.set(toId, inDegree.get(toId)! + 1);
+  };
+
+  for (const node of classNodes) {
+    const targets = execTargetsFrom(doc.edges, node.id, 'exec_out');
+    for (const targetId of targets) {
+      if (!classNodeIds.has(targetId)) continue;
+      if (isEventDefine(node.id) && isEventDefine(targetId)) continue;
+      addOrderEdge(node.id, targetId);
+    }
+  }
+
+  for (const node of classNodes) {
+    if (!isEventDefine(node.id)) continue;
+    if ((inDegree.get(node.id) ?? 0) > 0) continue;
+    const ancestor = findNonEventAncestor(node.id);
+    if (ancestor) addOrderEdge(ancestor, node.id);
+  }
+
+  // 3. Topological Sort with Y-coordinate priority
+  const ordered: string[] = [];
+  const available: GraphNode[] = [];
+
+  for (const node of classNodes) {
+    if (inDegree.get(node.id) === 0) {
+      available.push(node);
+    }
+  }
+
+  // Sort available descending by Y so we can easily pop the lowest Y (visually highest)
+  available.sort((a, b) => b.position.y - a.position.y);
+
+  while (available.length > 0) {
+    const current = available.pop()!;
+    ordered.push(current.id);
+
+    const targets = adj.get(current.id)!;
+    for (const targetId of targets) {
+      const newInDegree = inDegree.get(targetId)! - 1;
+      inDegree.set(targetId, newInDegree);
+      if (newInDegree === 0) {
+        const targetNode = classNodes.find((n) => n.id === targetId)!;
+        // Insert targetNode into available maintaining sorted order (descending Y)
+        let insertIdx = 0;
+        while (insertIdx < available.length && available[insertIdx].position.y > targetNode.position.y) {
+          insertIdx++;
+        }
+        available.splice(insertIdx, 0, targetNode);
+      }
+    }
+  }
+
+  // Handle cycles (append remaining nodes sorted by Y)
+  const remaining = classNodes.filter((n) => !ordered.includes(n.id));
+  remaining.sort((a, b) => a.position.y - b.position.y);
+  for (const node of remaining) {
+    ordered.push(node.id);
   }
 
   return ordered;

@@ -3,18 +3,25 @@ import type { VariableSymbol, VariableBinding, SymbolVisibility, VariableDataTyp
 import {
   LOGICAL_DATA_TYPE_DESCRIPTORS,
   portabilityFeaturesForVariable,
+  resolveTypeRef,
+  isEnumTypeRef,
 } from '@vvs/graph-types';
 import { analyzePortability } from '@vvs/language-profiles';
 import { useProject } from '@/contexts/ProjectContext';
+import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import {
   coerceVariableDefaultValue,
-  defaultValueForVariableType,
 } from '@/lib/variableDefaults';
 import {
   isBindingCoaAllowed,
   isDataTypeCoaAllowed,
   isReadonlyCoaAllowed,
 } from '@/lib/variableCoaUi';
+import {
+  applyPickerValueToVariableFields,
+  buildTypePickerOptions,
+  variableTypePickerValue,
+} from '@/lib/typePickerOptions';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
@@ -24,11 +31,28 @@ interface VariablePropertiesPanelProps {
 }
 
 export function VariablePropertiesPanel({ variable, onChange }: VariablePropertiesPanelProps) {
-  const { targetLanguage, crossOverMode } = useProject();
+  const { targetLanguage, crossOverMode, classes } = useProject();
+  const documents = useGraphDocuments();
+
+  const typeRef = useMemo(() => resolveTypeRef(variable), [variable]);
+  const isEnum = isEnumTypeRef(typeRef);
 
   const portabilityHints = useMemo(() => {
     return analyzePortability(portabilityFeaturesForVariable(variable), targetLanguage);
   }, [variable, targetLanguage]);
+
+  const typeOptions = useMemo(
+    () =>
+      buildTypePickerOptions({
+        documents: documents ?? {},
+        classes,
+        includeClasses: true,
+        includeContainers: true,
+        formatBuiltinLabel: (id, label) =>
+          `${label}${!isDataTypeCoaAllowed(id as VariableDataType, crossOverMode) ? ' (COA)' : ''}`,
+      }),
+    [documents, classes, crossOverMode]
+  );
 
   const objectDefault =
     variable.type === 'data_object' && variable.defaultValue && typeof variable.defaultValue === 'object'
@@ -41,6 +65,22 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
       : '[]';
 
   const patch = (partial: Partial<VariableSymbol>) => onChange({ ...variable, ...partial });
+
+  const enumMembers = useMemo(() => {
+    if (!isEnum || !documents) return [] as string[];
+    const name = typeRef.name;
+    for (const doc of Object.values(documents)) {
+      for (const node of doc.nodes) {
+        if (node.data?.kindId !== 'enum_define') continue;
+        const props = node.data.properties ?? {};
+        if (props.name !== name) continue;
+        return Array.isArray(props.members)
+          ? props.members.filter((m): m is string => typeof m === 'string')
+          : [];
+      }
+    }
+    return [];
+  }, [documents, isEnum, typeRef]);
 
   return (
     <div className="text-sm text-zinc-300 space-y-3">
@@ -58,30 +98,44 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
       <div className="space-y-1.5">
         <label className="text-[11px] font-medium text-zinc-400">Type</label>
         <SearchableSelect
-          value={variable.type}
-          onChange={(nextType) => {
-            if (!isDataTypeCoaAllowed(nextType as VariableDataType, crossOverMode)) return;
+          value={variableTypePickerValue(variable)}
+          onChange={(nextValue) => {
+            if (nextValue.startsWith('data_') && !isDataTypeCoaAllowed(nextValue as VariableDataType, crossOverMode)) {
+              return;
+            }
+            const applied = applyPickerValueToVariableFields(nextValue);
+            if (!applied) return;
+            let nextDefault = applied.defaultValue;
+            if (applied.enumType) {
+              if (typeof variable.defaultValue === 'string' && variable.defaultValue.includes('::')) {
+                nextDefault = variable.defaultValue.split('::').pop();
+              } else if (typeof variable.defaultValue === 'string' && variable.defaultValue.trim()) {
+                nextDefault = variable.defaultValue;
+              } else if (enumMembers[0]) {
+                nextDefault = enumMembers[0];
+              }
+            }
             patch({
-              type: nextType as VariableDataType,
-              defaultValue: defaultValueForVariableType(nextType as VariableDataType),
+              type: applied.type,
+              typeRef: applied.typeRef,
+              enumType: applied.enumType,
+              defaultValue: nextDefault,
             });
           }}
-          options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
-            value: descriptor.id,
-            label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
-            description: descriptor.description,
-          }))}
+          options={typeOptions}
           placeholder="Select type…"
         />
         <p className="text-[10px] text-zinc-500 leading-relaxed">
-          {LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === variable.type)?.description}
+          {isEnum
+            ? 'Enum type from a Declare Enum node on the canvas.'
+            : LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === variable.type)?.description}
         </p>
       </div>
 
       <div className="space-y-1">
         <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Binding</span>
         <div className="flex flex-wrap gap-1">
-          {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => {
+          {(['instance', 'static'] as VariableBinding[]).map((binding) => {
             const coaBlocked = !isBindingCoaAllowed(binding, crossOverMode);
             return (
               <button
@@ -155,9 +209,31 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
       ) : null}
 
       <div className="space-y-1.5">
-        <label className="text-[11px] font-medium text-zinc-400">Default</label>
+        <label className="text-[11px] font-medium text-zinc-400">
+          Default{isEnum ? ' (member name)' : ''}
+        </label>
 
-        {variable.type === 'data_string' && (
+        {isEnum ? (
+          enumMembers.length > 0 ? (
+            <SearchableSelect
+              value={String(variable.defaultValue ?? '')}
+              onChange={(value) => patch({ defaultValue: value })}
+              options={enumMembers.map((m) => ({ value: m, label: m }))}
+              placeholder="Select member…"
+            />
+          ) : (
+            <input
+              type="text"
+              value={(variable.defaultValue as string) ?? ''}
+              onChange={(e) => patch({ defaultValue: e.target.value })}
+              placeholder="OK"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
+              {...graphInlineFieldProps}
+            />
+          )
+        ) : null}
+
+        {!isEnum && variable.type === 'data_string' && (
           <input
             type="text"
             value={(variable.defaultValue as string) ?? ''}
@@ -166,7 +242,7 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
           />
         )}
 
-        {variable.type === 'data_number' && (
+        {!isEnum && variable.type === 'data_number' && (
           <input
             type="number"
             value={(variable.defaultValue as number) ?? 0}
@@ -175,7 +251,7 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
           />
         )}
 
-        {variable.type === 'data_boolean' && (
+        {!isEnum && variable.type === 'data_boolean' && (
           <label className="flex items-center gap-2 text-xs text-white cursor-pointer py-1">
             <input
               type="checkbox"
@@ -187,7 +263,7 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
           </label>
         )}
 
-        {variable.type === 'data_object' && (
+        {!isEnum && variable.type === 'data_object' && (
           <textarea
             rows={4}
             value={objectDefault}
@@ -206,7 +282,7 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
           />
         )}
 
-        {variable.type === 'data_array' && (
+        {!isEnum && variable.type === 'data_array' && (
           <textarea
             rows={4}
             value={arrayDefault}
@@ -225,7 +301,7 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
           />
         )}
 
-        {variable.type === 'data_any' && (
+        {!isEnum && variable.type === 'data_any' && (
           <input
             type="text"
             value={variable.defaultValue == null ? '' : String(variable.defaultValue)}

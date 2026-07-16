@@ -1,0 +1,66 @@
+// ===== src/CoverageLab.verse =====
+# (x) Import iostream
+# (x) Import System
+# (x) Import string
+# (x) Import Enum
+# (x) Import vector
+# (x) Import unordered_map
+# (x) Import Collections.Generic
+<public>Machine := class:
+        var Power : float = 0
+        var Serial<public> : float = 0
+        var MaxPower<public> : float = 100
+        var Ready<public> : logic = false
+    Boot<public>() : void =
+        # Boot
+        set Ready = true
+        Print("Booted")
+        Sensor.on_tick()
+    # abstract Diagnose
+    Shutdown<public>() : void =
+        # Shutdown
+        set Ready = false
+        Print("Shutdown")
+    on_pulse() : void =
+        Print(("Power=" + ToString(Power)))
+    on_start() : void =
+        Print("Operator name?")
+        var _vvs_input_lab_get_input : float = 0.0
+        Print(_vvs_input_lab_get_input)
+        Boot()
+        if (Ready?):
+            on_pulse()
+        else:
+            # (x) Import json
+            Print("Not ready")
+SensorStatus := enum:
+    OK
+    WARN
+    FAIL
+<public>Sensor(Machine) := class:
+        var Readings<public> : []float = array{}
+        var Status<public> : SensorStatus = SensorStatus.OK
+        var Host<public> : Machine = false
+        var Tags<public> : [string]string = 0
+    Sample<public>() : void =
+        # Sample
+        set Readings += array{Power}
+        Print("Sampled")
+    Report<public><override>() : void =
+        # Report
+        Print("--- Readings ---")
+        for (float val : Readings) {
+            Print(ToString(val))
+    on_tick() : void =
+        Print("Tick")
+    on_start<override>() : void =
+        # switch (Status)
+        if (Status = SensorStatus.OK):
+            Sample()
+            Report()
+        if (Status = SensorStatus.WARN):
+            Print("Warn")
+            Report()
+        if (Status = SensorStatus.FAIL):
+            Print("Fail")
+            Report()

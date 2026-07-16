@@ -1,6 +1,7 @@
 import type { IrStatement, IrSwitch } from '../../ir/types';
+import { offsetSpans } from '../../codeExpr';
 import { createDefaultExprPrinter } from '../expr';
-import { caseLabelLiteral } from '../blocks';
+import { formatSwitchCaseLabel } from '../blocks';
 import { nestedIndent } from '../template';
 import type { PrintContext, PrintedStmt, StmtPrinter } from '../types';
 
@@ -11,7 +12,8 @@ export function createJavascriptSwitchPrinter(
     if (stmt.kind !== 'Switch') return null;
     const s = stmt as IrSwitch;
     const printExpr = createDefaultExprPrinter();
-    const selector = printExpr(s.selector, ctx).text;
+    const selector = printExpr(s.selector, ctx);
+    const open = `${ctx.indent}switch (`;
     const inner = { ...ctx, indent: nestedIndent(ctx) };
     const caseLines = s.cases.map((c) => {
       const body = printStatements(c.body, inner);
@@ -19,7 +21,7 @@ export function createJavascriptSwitchPrinter(
         body.length > 0
           ? body.map((p) => p.text).join('\n')
           : `${inner.indent}    // empty`;
-      return `${ctx.indent}  case ${caseLabelLiteral(c.label)}:\n${bodyText}\n${inner.indent}    break;`;
+      return `${ctx.indent}  case ${formatSwitchCaseLabel(c, ctx.family)}:\n${bodyText}\n${inner.indent}    break;`;
     });
     const defaultBody = printStatements(s.defaultBody, inner);
     const defaultClause =
@@ -27,8 +29,8 @@ export function createJavascriptSwitchPrinter(
         ? `\n${ctx.indent}  default:\n${defaultBody.map((p) => p.text).join('\n')}\n${inner.indent}    break;`
         : '';
     return {
-      text: `${ctx.indent}switch (${selector}) {\n${caseLines.join('\n')}${defaultClause}\n${ctx.indent}};`,
-      expressionSpans: [],
+      text: `${open}${selector.text}) {\n${caseLines.join('\n')}${defaultClause}\n${ctx.indent}};`,
+      expressionSpans: offsetSpans(selector.spans, open.length),
     };
   };
 }

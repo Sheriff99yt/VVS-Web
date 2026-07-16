@@ -79,14 +79,29 @@ export function useSymbolLifecycle() {
       const cls = activeClass(classes, activeClassId);
       if (!cls) return documents;
       if (kind === 'variable') {
-        return insertDefineNodeForVariable(documents, cls, symbol as VariableSymbol);
+        return insertDefineNodeForVariable(
+          documents,
+          cls,
+          symbol as VariableSymbol,
+          activeGraphTab
+        );
       }
       if (kind === 'function') {
-        return insertDefineNodeForFunction(documents, cls, symbol as FunctionSymbol);
+        return insertDefineNodeForFunction(
+          documents,
+          cls,
+          symbol as FunctionSymbol,
+          activeGraphTab
+        );
       }
-      return insertDefineNodeForEvent(documents, cls, symbol as ProjectEventDefinition);
+      return insertDefineNodeForEvent(
+        documents,
+        cls,
+        symbol as ProjectEventDefinition,
+        activeGraphTab
+      );
     },
-    [classes, activeClassId]
+    [classes, activeClassId, activeGraphTab]
   );
 
   const addVariableWithDefine = useCallback(
@@ -125,7 +140,7 @@ export function useSymbolLifecycle() {
       setClasses((list) => [...list, cls]);
       setEvents((list) => [...list, entry]);
       const documents = getDocuments() ?? {};
-      applyDocuments(bootstrapClassHomeDocuments(documents, cls, entry));
+      applyDocuments(bootstrapClassHomeDocuments(documents, cls, entry, activeGraphTab));
 
       const container = graphContainers.find((c) => c.id === containerId);
       if (container) {
@@ -147,7 +162,93 @@ export function useSymbolLifecycle() {
       setActiveGraphTab,
       setActiveClassId,
       setSelection,
+      activeGraphTab,
     ]
+  );
+
+  const uniqueCopyName = useCallback((base: string, existingNames: string[]) => {
+    const taken = new Set(existingNames.map((n) => n.toLowerCase()));
+    let name = `${base}_copy`;
+    let n = 2;
+    while (taken.has(name.toLowerCase())) {
+      name = `${base}_copy${n++}`;
+    }
+    return name;
+  }, []);
+
+  const duplicateVariable = useCallback(
+    (variableId: string): VariableSymbol | null => {
+      const source = variables.find((v) => v.id === variableId);
+      if (!source) return null;
+      const name = uniqueCopyName(
+        source.name,
+        variables.filter((v) => v.classId === source.classId).map((v) => v.name)
+      );
+      const copy: VariableSymbol = {
+        ...source,
+        id: `var-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name,
+      };
+      addVariableWithDefine(copy);
+      setSelection({ type: 'variable', id: copy.id });
+      return copy;
+    },
+    [variables, uniqueCopyName, addVariableWithDefine, setSelection]
+  );
+
+  const duplicateFunction = useCallback(
+    (functionId: string): FunctionSymbol | null => {
+      const source = functions.find((f) => f.id === functionId);
+      if (!source) return null;
+      const name = uniqueCopyName(
+        source.name,
+        functions.filter((f) => f.classId === source.classId).map((f) => f.name)
+      );
+      const newId = `func-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const overloads = source.overloads.map((overload, index) => {
+        const overloadId = `ovl-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`;
+        const graphTabId =
+          source.overloads.length === 1 ? newId : `${newId}::${overloadId}`;
+        return {
+          ...overload,
+          id: overloadId,
+          parameters: overload.parameters.map((p) => ({ ...p })),
+          graphTabId,
+        };
+      });
+      const copy: FunctionSymbol = {
+        ...source,
+        id: newId,
+        name,
+        overloads,
+      };
+      addFunctionWithDefine(copy);
+      setSelection({ type: 'function', id: copy.id });
+      return copy;
+    },
+    [functions, uniqueCopyName, addFunctionWithDefine, setSelection]
+  );
+
+  const duplicateEvent = useCallback(
+    (eventId: string): ProjectEventDefinition | null => {
+      const source = events.find((e) => e.id === eventId);
+      if (!source) return null;
+      const name = uniqueCopyName(
+        source.name,
+        events.filter((e) => e.classId === source.classId).map((e) => e.name)
+      );
+      const copy: ProjectEventDefinition = {
+        ...source,
+        id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name,
+        role: source.role === 'entry' ? undefined : source.role,
+        parameters: source.parameters.map((p) => ({ ...p })),
+      };
+      addEventWithDefine(copy);
+      setSelection({ type: 'event', id: copy.id });
+      return copy;
+    },
+    [events, uniqueCopyName, addEventWithDefine, setSelection]
   );
 
   const deleteSymbol = useCallback(
@@ -259,7 +360,11 @@ export function useSymbolLifecycle() {
     (tabId: string, nodeId: string) => {
       const documents = getDocuments();
       if (!documents) return;
-      const result = recreateSymbolForNode(getSymbolsState(), documents, tabId, nodeId);
+      const result = recreateSymbolForNode(getSymbolsState(), documents, tabId, nodeId, {
+        classes,
+        preferredClassId: activeClassId,
+        activeGraphTab,
+      });
       if (!result) return;
       setVariables(result.nextSymbols.variables);
       setFunctions(result.nextSymbols.functions);
@@ -267,21 +372,47 @@ export function useSymbolLifecycle() {
       setOpenTabs(result.nextSymbols.openTabs);
       applyDocuments(result.nextDocuments);
     },
-    [getDocuments, getSymbolsState, setVariables, setFunctions, setEvents, setOpenTabs, applyDocuments]
+    [
+      getDocuments,
+      getSymbolsState,
+      classes,
+      activeClassId,
+      activeGraphTab,
+      setVariables,
+      setFunctions,
+      setEvents,
+      setOpenTabs,
+      applyDocuments,
+    ]
   );
 
   const fixAllBrokenRefs = useCallback(
     (filterRef?: ResolvedSymbolRef) => {
       const documents = getDocuments();
       if (!documents) return;
-      const result = recreateAllUnresolvedSymbols(getSymbolsState(), documents, filterRef);
+      const result = recreateAllUnresolvedSymbols(getSymbolsState(), documents, filterRef, {
+        classes,
+        preferredClassId: activeClassId,
+        activeGraphTab,
+      });
       setVariables(result.nextSymbols.variables);
       setFunctions(result.nextSymbols.functions);
       setEvents(result.nextSymbols.events);
       setOpenTabs(result.nextSymbols.openTabs);
       applyDocuments(result.nextDocuments);
     },
-    [getDocuments, getSymbolsState, setVariables, setFunctions, setEvents, setOpenTabs, applyDocuments]
+    [
+      getDocuments,
+      getSymbolsState,
+      classes,
+      activeClassId,
+      activeGraphTab,
+      setVariables,
+      setFunctions,
+      setEvents,
+      setOpenTabs,
+      applyDocuments,
+    ]
   );
 
   return {
@@ -298,5 +429,8 @@ export function useSymbolLifecycle() {
     addFunctionWithDefine,
     addEventWithDefine,
     addClassWithDefine,
+    duplicateVariable,
+    duplicateFunction,
+    duplicateEvent,
   };
 }

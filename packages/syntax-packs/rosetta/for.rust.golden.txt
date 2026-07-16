@@ -1,4 +1,6 @@
         for _vvs_i_for_loop in 0..=2 {
             println!("{}", _vvs_i_for_loop.to_string());
+        }
     }
 }
+

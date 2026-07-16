@@ -131,9 +131,7 @@ Example — **`action_get_input`** (Get User Input):
 | `exec_in` → `exec_out` | Blocking read; flow continues after input |
 | `prompt` (string, optional wire) | Message shown to the user |
 | `value` (out) | Result read by downstream nodes |
-| `properties.inputKind` | `text` \| `number` \| `password` — syncs `value` pin type |
-| `properties.placeholder` | Hint (inspector only; shown when `inputKind` is text/password) |
-| `properties.required` | Documented intent for blocking read |
+| `properties.inputKind` | `text` \| `number` — syncs `value` pin type |
 
 Codegen assigns a handler-local temp (`_vvs_input_<nodeId>`) and wires the **Value** output to that symbol. Semantics: `action.input.blocking`.
 
@@ -757,23 +755,23 @@ Uses the same `TranspileResult.sourceMap` contract (§6):
 
 | Node | Highlight target |
 |------|------------------|
-| **Declare** (`event_member_define`) | Native declaration when the target has one (e.g. C++ `void on_x();`); otherwise a **comment placeholder** with the node label (e.g. `# Declare x`) |
+| **Declare** (`event_member_define`) | Method **signature** line of the paired handler (`def on_x` / `void on_x() {`) — same construct as On; dual-node fidelity |
 | **On** (`event_define`) | Full handler block (`def on_x(self):` …) |
 | **Dispatch** | Dispatch call line |
 | **Parameter pins** | Argument sub-expressions (`ExprSpan`) |
 
-No re-transpile on selection.
+No re-transpile on selection. Emit is **single-pass**: member-chain order = source order (`appendIrMembersInOrder`); no `# Declare` comment stubs.
 
 ### 12.7 Cross-language emit (phase 1)
 
-| Target | Declare (member chain) | On (handler) | Dispatch |
-|--------|------------------------|--------------|----------|
-| Python | `# Declare damage` | `def on_damage(self, amount):` | `self.on_damage(amount)` |
-| JavaScript | `// Declare damage` | `on_damage(amount) {` | `this.on_damage(amount);` |
-| C++ | `void on_damage(float amount);` | `void on_damage(float amount) { … }` | `on_damage(amount);` |
-| Verse | `# Declare damage` | `on_damage<override>(Amount : float) : void =` | `on_damage(Amount)` |
+| Target | Declare + On (same method) | Dispatch |
+|--------|----------------------------|----------|
+| Python | `def on_damage(self, amount):` … | `self.on_damage(amount)` |
+| JavaScript | `on_damage(amount) {` … | `this.on_damage(amount);` |
+| C++ | `void on_damage(float amount) { … }` | `on_damage(amount);` |
+| Verse | `on_damage(…) : void =` … | `on_damage(Amount)` |
 
-Languages without a separate member-declaration form emit **comment placeholders** for Declare nodes (and for function Declare slots) so the canvas node still maps to a visible, locatable line. Handler bodies always come from **On** nodes.
+`event_member_define` and `event_define` both map to the **same** method (signature vs full span). Canvas chain position of the Declare node controls where that method appears in the class body.
 
 Parameter names are derived from event parameter labels (snake_case in Python, camelCase optional later in profiles).
 

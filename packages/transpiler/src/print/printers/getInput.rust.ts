@@ -2,6 +2,12 @@ import type { IrAssignVariable } from '../../ir/types';
 import { offsetSpans } from '../../codeExpr';
 import { createDefaultExprPrinter } from '../expr';
 import type { PrintContext, PrintedStmt } from '../types';
+import {
+  getInputLineTempName,
+  printGetInputLineNew,
+  printGetInputLineRead,
+  printGetInputParseLineF32,
+} from './getInputLineTemp';
 
 export function printGetInputRust(stmt: IrAssignVariable, ctx: PrintContext): PrintedStmt {
   const printExpr = createDefaultExprPrinter();
@@ -12,11 +18,16 @@ export function printGetInputRust(stmt: IrAssignVariable, ctx: PrintContext): Pr
   const promptOffset = `${indent}print!("{}", `.length;
 
   if (inputKind === 'number') {
+    const line = getInputLineTempName(stmt, 'rust');
+    const decl = printGetInputLineNew(ctx, line);
+    const read = printGetInputLineRead(ctx, line);
+    const parse = printGetInputParseLineF32(ctx, line, varName);
     const lines = [
       `${indent}print!("{}", ${prompt.text});`,
-      `${indent}let mut _vvs_line = String::new();`,
-      `${indent}std::io::stdin().read_line(&mut _vvs_line).unwrap();`,
-      `${indent}let ${varName} = _vvs_line.trim().parse::<f64>().unwrap();`,
+      `${indent}std::io::Write::flush(&mut std::io::stdout()).unwrap();`,
+      decl.text,
+      read.text,
+      parse.text,
     ];
     return {
       text: lines.join('\n'),
@@ -26,6 +37,7 @@ export function printGetInputRust(stmt: IrAssignVariable, ctx: PrintContext): Pr
 
   const lines = [
     `${indent}print!("{}", ${prompt.text});`,
+    `${indent}std::io::Write::flush(&mut std::io::stdout()).unwrap();`,
     `${indent}let mut ${varName} = String::new();`,
     `${indent}std::io::stdin().read_line(&mut ${varName}).unwrap();`,
     `${indent}${varName} = ${varName}.trim_end().to_string();`,

@@ -69,5 +69,8 @@ export function bindingChipClass(selected: boolean): string {
 }
 
 export function sectionBodyClass(viewMode: SectionViewMode): string {
-  return viewMode === 'grid' ? 'grid grid-cols-3 gap-1 px-1.5 pb-1.5' : 'pb-1';
+  // Auto-fit columns as the explorer panel resizes (~7rem min tile keeps names readable).
+  return viewMode === 'grid'
+    ? 'grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1 px-1.5 pb-1.5'
+    : 'pb-1';
 }

@@ -16,6 +16,7 @@ When working on this project, strictly enforce the following architectural bound
 
 3. **Transpiler Snapshot Testing:**
    - The transpiler is the most critical system. Any changes to code generation logic MUST be accompanied by snapshot tests verifying the exact code output for a fixed JSON graph input.
+   - **Usability / Test Projects:** Also validate as the user sees — Code | Files path via `useProjectTranspileResult` / `apps/web/scripts/extract_test_project_outputs.ts` (Coverage Lab). Do not ship multi-class emit fixes proven only with raw `transpileGraph` dumps.
 
 4. **Interface-First System Boundaries:**
    - The interface between the Graph and Code Generation must remain fully decoupled. Language definitions are data-driven (JSONB syntax registry), not hardcoded logic.

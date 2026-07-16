@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import { GitBranch, GripVertical } from 'lucide-react';
+import { GitBranch } from 'lucide-react';
 import type { ClassSymbol, GraphContainer } from '@vvs/graph-types';
 import { classesForContainer } from '@/lib/classScope';
 import { CategorySection } from './CategorySection';
 import { SymbolCreatePopover } from './SymbolCreatePopover';
 import { TreeRow } from './TreeRow';
+import { ReorderGrip } from './ReorderGrip';
 import { TreeRenameRow } from './TreeRenameRow';
 import { graphContainerClassMeta, graphContainerLabel } from './graphContainerLabels';
 import { INDENT, type SectionViewMode } from './constants';
@@ -96,7 +97,7 @@ export function GraphFoldersSection({
       onViewModeChange={onViewModeChange}
     >
       {isAdding ? (
-        <div className={viewMode === 'grid' ? 'col-span-2' : undefined}>
+        <div className={viewMode === 'grid' ? 'col-span-full' : undefined}>
         <SymbolCreatePopover open title="New graph" onClose={onCancelAdd} anchorClassName={INDENT.l1}>
           <input
             type="text"
@@ -138,18 +139,12 @@ export function GraphFoldersSection({
               layout={viewMode}
               leading={
                 !isReferenceMode ? (
-                  <span
-                    draggable
-                    className="inline-flex items-center p-0 text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing"
-                    title="Drag to reorder"
-                    onClick={(e) => e.stopPropagation()}
+                  <ReorderGrip
                     onDragStart={(e) => onGraphContainerDragStart(e, container)}
                     onDragEnd={onGraphContainerDragEnd}
-                  >
-                    <GripVertical size={10} />
-                  </span>
+                  />
                 ) : (
-                  <span className="w-2.5" />
+                  <span className="w-5" />
                 )
               }
               icon={<GitBranch size={10} className="text-emerald-500/80 shrink-0" />}
@@ -223,7 +218,7 @@ export function GraphFoldersSection({
       })}
 
       {containers.length === 0 && !isAdding ? (
-        <div className={viewMode === 'grid' ? 'col-span-2' : undefined}>{emptyHint}</div>
+        <div className={viewMode === 'grid' ? 'col-span-full' : undefined}>{emptyHint}</div>
       ) : null}
     </CategorySection>
   );

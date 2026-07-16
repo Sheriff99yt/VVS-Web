@@ -1,0 +1,63 @@
+// ===== src/CoverageLab.gd =====
+# (x) Import iostream
+# (x) Import System
+# (x) Import string
+# (x) Import Enum
+# (x) Import vector
+# (x) Import unordered_map
+# (x) Import Collections.Generic
+class_name Machine
+    var Power = 0
+    static var Serial = 0
+    var MaxPower = 100
+    var Ready = false
+    func Boot() -> void:
+        # Boot
+        self.Ready = true
+        print("Booted")
+        Sensor.new().on_tick()
+    # abstract Diagnose
+    func Shutdown() -> void:
+        # Shutdown
+        self.Ready = false
+        print("Shutdown")
+    func on_pulse() -> void:
+        print(("Power=" + str(self.Power)))
+    func on_start() -> void:
+        var _vvs_input_lab_get_input = OS.read_string_from_stdin()
+        print(_vvs_input_lab_get_input)
+        self.Boot()
+        if self.Ready:
+            self.on_pulse()
+        else:
+            # (x) Import json
+            print("Not ready")
+enum SensorStatus { OK, WARN, FAIL }
+class_name Sensor
+extends Machine
+    var Readings = []
+    var Status = SensorStatus.OK
+    var Host = null
+    var Tags = 0
+    func Sample() -> void:
+        # Sample
+        self.Readings.append(self.Power)
+        print("Sampled")
+    func Report() -> void:
+        # Report
+        print("--- Readings ---")
+        for val in self.Readings:
+            print(str(val))
+    func on_tick() -> void:
+        print("Tick")
+    func on_start() -> void:
+        _vvs_sel = self.Status
+        if _vvs_sel == SensorStatus.OK:
+            self.Sample()
+            self.Report()
+        elif _vvs_sel == SensorStatus.WARN:
+            print("Warn")
+            self.Report()
+        elif _vvs_sel == SensorStatus.FAIL:
+            print("Fail")
+            self.Report()

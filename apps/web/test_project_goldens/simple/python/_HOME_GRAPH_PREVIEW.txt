@@ -1,0 +1,11 @@
+// ===== firstgraph.py =====
+class FirstGraph:
+    VisitorName = ""
+    def SayHello(self):
+        # SayHello
+        print("Hello from SayHello!")
+    def on_start(self):
+        _vvs_input_fg_get_input = input("What is your name?")
+        print(_vvs_input_fg_get_input)
+        self.SayHello()
+        print("Done.")

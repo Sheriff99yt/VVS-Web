@@ -1,0 +1,11 @@
+// ===== firstgraph.gd =====
+class_name FirstGraph
+    var VisitorName = ""
+    func SayHello() -> void:
+        # SayHello
+        print("Hello from SayHello!")
+    func on_start() -> void:
+        var _vvs_input_fg_get_input = OS.read_string_from_stdin()
+        print(_vvs_input_fg_get_input)
+        self.SayHello()
+        print("Done.")

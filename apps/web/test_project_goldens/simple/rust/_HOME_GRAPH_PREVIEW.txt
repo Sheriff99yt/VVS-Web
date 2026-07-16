@@ -1,0 +1,22 @@
+// ===== firstgraph.rs =====
+pub struct FirstGraph {
+
+        pub VisitorName: String,
+}
+impl FirstGraph {
+
+    pub fn SayHello(&mut self) {
+        // SayHello
+        println!("{}", "Hello from SayHello!");
+    }
+    pub fn on_start(&mut self) {
+        print!("{}", "What is your name?");
+        std::io::Write::flush(&mut std::io::stdout()).unwrap();
+        let mut _vvs_input_fg_get_input = String::new();
+        std::io::stdin().read_line(&mut _vvs_input_fg_get_input).unwrap();
+        _vvs_input_fg_get_input = _vvs_input_fg_get_input.trim_end().to_string();
+        println!("{}", _vvs_input_fg_get_input);
+        self.SayHello();
+        println!("{}", "Done.");
+    }
+}

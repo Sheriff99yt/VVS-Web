@@ -255,7 +255,7 @@ export function ProjectFilesExplorer({
           <VvsSubtree paths={vvsEntries.map((e) => e.path)} pathKinds={pathKinds} />
         )
       ) : q ? (
-        <div className={`${INDENT.l1} text-[10px] text-zinc-600 italic py-1 pr-2 ${viewMode === 'grid' ? 'col-span-2' : ''}`}>
+        <div className={`${INDENT.l1} text-[10px] text-zinc-600 italic py-1 pr-2 ${viewMode === 'grid' ? 'col-span-full' : ''}`}>
           No matching files.
         </div>
       ) : null}

@@ -53,18 +53,17 @@ export function useClassLifecycle() {
 
       setClasses((list) => [...list, cls]);
       setEvents((list) => [...list, entry]);
-      patchAllDocuments((docs) => bootstrapClassHomeDocuments(docs, cls, entry));
+      patchAllDocuments((docs) => bootstrapClassHomeDocuments(docs, cls, entry, activeGraphTab));
       const container = graphContainers.find((c) => c.id === containerId);
       if (container) {
         openGraphContainerTab(container, setOpenTabs, setActiveGraphTab);
-      } else {
-        setActiveGraphTab(classHomeGraphId(cls));
       }
       setActiveClassId(cls.id);
       setSelection({ type: 'class', id: cls.id });
       return cls;
     },
     [
+      activeGraphTab,
       graphContainers,
       patchAllDocuments,
       setActiveClassId,

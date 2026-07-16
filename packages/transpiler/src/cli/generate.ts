@@ -5,16 +5,17 @@
  * Usage:
  *   echo '{...}' | bun run generate:cli
  *   bun run generate:cli < snapshot.json
+ *
+ * Uses transpileProject — same graph→file emit as the Code panel (U56).
  */
-import { normalizeProjectSnapshot, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
-import { transpileGraph } from '../generate';
+import { normalizeProjectSnapshot } from '@vvs/graph-types';
+import { transpileProject } from '../generate';
 
 async function readInput(): Promise<string> {
   const fileArg = process.argv[2];
   if (fileArg && fileArg !== '-') {
     return await Bun.file(fileArg).text();
   }
-  // Bun.stdin.text() can be empty on some Windows shells; fall back to stream read.
   const chunks: Uint8Array[] = [];
   for await (const chunk of Bun.stdin.stream()) {
     chunks.push(chunk);
@@ -53,27 +54,17 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const tabId = snapshot.activeGraphTab || MAIN_GRAPH_CONTAINER_ID;
-  const doc = snapshot.documents[tabId];
-  if (!doc) {
-    console.error(JSON.stringify({ error: `Graph document not found for tab: ${tabId}` }));
-    process.exit(1);
-  }
-
-  const tab = snapshot.openTabs.find((t) => t.id === tabId);
-
-  const result = transpileGraph({
-    moduleName: snapshot.projectDetails.moduleName,
-    extendsType: snapshot.projectDetails.extendsType,
+  const result = transpileProject({
+    projectDetails: snapshot.projectDetails,
     targetLanguage: snapshot.targetLanguage,
+    targetFileExtensions: snapshot.targetFileExtensions,
     variables: snapshot.variables,
     projectEvents: snapshot.events,
     functions: snapshot.functions,
-    nodes: doc.nodes,
-    edges: doc.edges,
-    tabLabel: tab?.name,
-    tabId,
     documents: snapshot.documents,
+    classes: snapshot.classes,
+    activeClassId: snapshot.activeClassId,
+    openTabs: snapshot.openTabs,
     environmentId: snapshot.environmentId,
     integration: snapshot.integration,
   });

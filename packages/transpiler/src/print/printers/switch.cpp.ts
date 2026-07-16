@@ -1,7 +1,8 @@
-import type { IrSwitch, IrStatement } from '../../ir/types';
+import type { IrStatement, IrSwitch } from '../../ir/types';
+import { offsetSpans } from '../../codeExpr';
 import { createDefaultExprPrinter } from '../expr';
 import { blockPlaceholder, nestedIndent } from '../template';
-import { caseLabelLiteral } from '../blocks';
+import { formatSwitchCaseLabel } from '../blocks';
 import type { PrintContext, PrintedStmt, StmtPrinter } from '../types';
 
 export function createCppSwitchPrinter(
@@ -12,10 +13,11 @@ export function createCppSwitchPrinter(
     const s = stmt as IrSwitch;
     const printExpr = createDefaultExprPrinter();
     const selector = printExpr(s.selector, ctx);
+    const open = `${ctx.indent}switch (`;
     const inner = { ...ctx, indent: nestedIndent(ctx) };
-    const lines = [`${ctx.indent}switch (${selector.text}) {`];
+    const lines = [`${open}${selector.text}) {`];
     for (const c of s.cases) {
-      lines.push(`${ctx.indent}  case ${caseLabelLiteral(c.label)}:`);
+      lines.push(`${ctx.indent}  case ${formatSwitchCaseLabel(c, ctx.family)}:`);
       const body = printStatements(c.body, inner);
       if (body.length > 0) {
         lines.push(body.map((p) => p.text).join('\n'));
@@ -31,6 +33,9 @@ export function createCppSwitchPrinter(
       lines.push(`${inner.indent}    break;`);
     }
     lines.push(`${ctx.indent}}`);
-    return { text: lines.join('\n'), expressionSpans: [] };
+    return {
+      text: lines.join('\n'),
+      expressionSpans: offsetSpans(selector.spans, open.length),
+    };
   };
 }

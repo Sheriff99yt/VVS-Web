@@ -1,2 +1,2 @@
-        if (Flag):
+        if (Flag?):
             Print("yes")

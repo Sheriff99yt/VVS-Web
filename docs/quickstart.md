@@ -83,7 +83,7 @@ bun run lint
 | localStorage save/load | Production MCP auth / remote deploy |
 | `@vvs/transpiler` — Python, JS, C++, Verse | JSON graph export as runnable code |
 | Conversion nodes, Get User Input, pin validation | String concat, compare, loops |
-| Start-screen usability tests (Hello World, Calculator) | Community library backend |
+| Start-screen usability tests (First Graph, Coverage Lab) | Community library backend |
 | Offline honest UI | WebSocket collaboration |
 | Local Go API + MCP (`start_app.ps1`) | Self-hosted Supabase + `pgx` on VPS ([deployment.md](deployment.md)) |
 

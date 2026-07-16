@@ -16,44 +16,155 @@
     "emptyFunctionBody": "        // empty"
   },
   "templates": {
-    "Print": { "quasi": "println!(\"{}\", {value});" },
-    "AssignInstance": { "quasi": "self.{target} = {value};" },
-    "AssignLocal": { "quasi": "let mut {target} = {value};" },
-    "CallInstance": { "quasi": "self.{callee}();" },
-    "CallFunction": { "quasi": "{callee}();" },
-    "CallCrossClass": { "quasi": "{receiver}.{callee}();" },
-    "CallCrossClassStatic": { "quasi": "{receiver}::{callee}();" },
-    "DispatchEvent": { "quasi": "self.on_{handler}({args});" },
-    "IfBranchHeader": { "quasi": "if {cond} {" },
-    "IfBranchElse": { "quasi": "} else {" },
-    "IfBranchClose": { "quasi": "}" },
-    "ForLoopHeader": { "quasi": "for {index} in {first}..={last} {" },
-    "ForLoopClose": { "quasi": "}" },
-    "WhileLoopHeader": { "quasi": "while {cond} {" },
-    "WhileLoopClose": { "quasi": "}" },
-    "SequenceHeader": { "quasi": "{" },
-    "SequenceComment": { "quasi": "// sequence" },
-    "SequenceClose": { "quasi": "}" },
-    "ModuleImport": { "quasi": "mod {mod};" },
-    "ImportClass": { "quasi": "use {mod}::{class};" },
-    "ImportClassAlias": { "quasi": "use {mod}::{class} as {alias};" },
-    "AwaitWait": { "quasi": "std::thread::sleep(std::time::Duration::from_secs_f64({duration}));" },
-    "CallNative": { "quasi": "{call}" },
-    "ConvertToString": { "quasi": "{value}.to_string()" },
-    "ConvertToNumber": { "quasi": "{value}.parse::<f64>().unwrap()" },
-    "InstanceRef": { "quasi": "self.{name}" },
-    "NullLiteral": { "quasi": "None" },
-    "BoolLiteralTrue": { "quasi": "true" },
-    "BoolLiteralFalse": { "quasi": "false" },
-    "VarDefine": { "quasi": "let mut {name} = {default};" },
-    "ClassDefine": { "quasi": "// struct {name}" },
-    "FunctionDefine": { "quasi": "// fn {name}" },
-    "EventDefine": { "quasi": "// event {name}" },
-    "ClassModuleOpen": { "quasi": "pub struct {name} {\n}\n\nimpl {name} {" },
-    "ClassModuleClose": { "quasi": "}" },
-    "EventHandlerOpen": { "quasi": "{linePrefix}    pub fn on_{handler}({paramList}) {" },
-    "EventHandlerClose": { "quasi": "    }" },
-    "FunctionDefOpen": { "quasi": "{prefix}fn {name}({paramList}) {" },
-    "FunctionTabClose": { "quasi": "    }" }
+    "Print": {
+      "quasi": "println!(\"{}\", {value});"
+    },
+    "AssignInstance": {
+      "quasi": "self.{target} = {value};"
+    },
+    "AssignLocal": {
+      "quasi": "let mut {target} = {value};"
+    },
+    "CallInstance": {
+      "quasi": "self.{callee}();"
+    },
+    "CallFunction": {
+      "quasi": "{callee}();"
+    },
+    "CallCrossClass": {
+      "quasi": "{receiver}.{callee}();"
+    },
+    "CallCrossClassStatic": {
+      "quasi": "{receiver}::{callee}();"
+    },
+    "DispatchEvent": {
+      "quasi": "self.on_{handler}({args});"
+    },
+    "DispatchEventCrossClass": {
+      "quasi": "{receiver}.on_{handler}({args});"
+    },
+    "IfBranchHeader": {
+      "quasi": "if {cond} {"
+    },
+    "IfBranchElse": {
+      "quasi": "} else {"
+    },
+    "IfBranchClose": {
+      "quasi": "}"
+    },
+    "ForLoopHeader": {
+      "quasi": "for {index} in {first}..={last} {"
+    },
+    "ForLoopClose": {
+      "quasi": "}"
+    },
+    "WhileLoopHeader": {
+      "quasi": "while {cond} {"
+    },
+    "WhileLoopClose": {
+      "quasi": "}"
+    },
+    "SequenceHeader": {
+      "quasi": "{"
+    },
+    "SequenceComment": {
+      "quasi": "// sequence"
+    },
+    "SequenceClose": {
+      "quasi": "}"
+    },
+    "ModuleImport": {
+      "quasi": "mod {mod};"
+    },
+    "ImportClass": {
+      "quasi": "use {mod}::{class};"
+    },
+    "ImportClassAlias": {
+      "quasi": "use {mod}::{class} as {alias};"
+    },
+    "AwaitWait": {
+      "quasi": "std::thread::sleep(std::time::Duration::from_secs_f64({duration}));"
+    },
+    "CallNative": {
+      "quasi": "{call}"
+    },
+    "ConvertToString": {
+      "quasi": "{value}.to_string()"
+    },
+    "ConvertToNumber": {
+      "quasi": "{value}.parse::<f64>().unwrap()"
+    },
+    "InstanceRef": {
+      "quasi": "self.{name}"
+    },
+    "NullLiteral": {
+      "quasi": "None"
+    },
+    "BoolLiteralTrue": {
+      "quasi": "true"
+    },
+    "BoolLiteralFalse": {
+      "quasi": "false"
+    },
+    "VarDefine": {
+      "quasi": "    {visibility}{name}: {type},"
+    },
+    "DeclareLocal": {
+      "quasi": "let mut {name}: {type};"
+    },
+    "ClassDefine": {
+      "quasi": "// struct {name}"
+    },
+    "FunctionDefine": {
+      "quasi": "// fn {name}"
+    },
+    "EventDefine": {
+      "quasi": "// event {name}"
+    },
+    "ClassModuleOpen": {
+      "quasi": "pub struct {name} {\n{extendsField}"
+    },
+    "ClassImplOpen": {
+      "quasi": "impl {name} {\n"
+    },
+    "ClassModuleClose": {
+      "quasi": "}\n"
+    },
+    "EventHandlerOpen": {
+      "quasi": "{linePrefix}    pub fn on_{handler}({paramList}) {"
+    },
+    "EventHandlerClose": {
+      "quasi": "    }"
+    },
+    "FunctionDefOpen": {
+      "quasi": "    {visibility}{asyncKw}fn {name}({paramList}) {"
+    },
+    "FunctionTabClose": {
+      "quasi": "    }"
+    },
+    "ConstructorOpen": {
+      "quasi": "{linePrefix}pub fn new({paramList}) -> Self {"
+    },
+    "EnumMemberAccess": {
+      "quasi": "{enum}::{member}"
+    },
+    "SwitchSelectBind": {
+      "quasi": "let {name} = {value};"
+    },
+    "GetInputLineNew": {
+      "quasi": "let mut {name} = String::new();"
+    },
+    "GetInputLineRead": {
+      "quasi": "std::io::stdin().read_line(&mut {name}).unwrap();"
+    },
+    "GetInputParseLineF32": {
+      "quasi": "let {target} = {name}.trim().parse::<f32>().unwrap_or(0.0);"
+    },
+    "ModuleImportFrom": {
+      "quasi": "use {mod}::{names};"
+    },
+    "ModuleImportIncludeSystem": {
+      "quasi": "use {mod};"
+    }
   }
 }

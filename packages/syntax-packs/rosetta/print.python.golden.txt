@@ -1,1 +1,1 @@
-            print("Hello Rosetta")
+        print("Hello Rosetta")

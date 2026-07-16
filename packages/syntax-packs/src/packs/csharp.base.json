@@ -14,48 +14,157 @@
     "varDeclIndent": "    ",
     "emptyHandlerBody": "        // empty",
     "emptyFunctionBody": "        // empty",
-    "importTemplate": { "quasi": "using {mod};" }
+    "importTemplate": {
+      "quasi": "using {mod};"
+    }
   },
   "templates": {
-    "Print": { "quasi": "Console.WriteLine({value});" },
-    "AssignInstance": { "quasi": "this.{target} = {value};" },
-    "AssignLocal": { "quasi": "var {target} = {value};" },
-    "CallInstance": { "quasi": "this.{callee}();" },
-    "CallFunction": { "quasi": "{callee}();" },
-    "CallCrossClass": { "quasi": "{receiver}.{callee}();" },
-    "CallCrossClassStatic": { "quasi": "{class}.{callee}();" },
-    "DispatchEvent": { "quasi": "this.on_{handler}({args});" },
-    "IfBranchHeader": { "quasi": "if ({cond}) {" },
-    "IfBranchElse": { "quasi": "} else {" },
-    "IfBranchClose": { "quasi": "}" },
-    "ForLoopHeader": { "quasi": "for (int {index} = {first}; {index} <= {last}; {index}++) {" },
-    "ForLoopClose": { "quasi": "}" },
-    "WhileLoopHeader": { "quasi": "while ({cond}) {" },
-    "WhileLoopClose": { "quasi": "}" },
-    "SequenceHeader": { "quasi": "{" },
-    "SequenceComment": { "quasi": "// sequence" },
-    "SequenceClose": { "quasi": "}" },
-    "ModuleImport": { "quasi": "using {mod};" },
-    "ImportClass": { "quasi": "using {mod}.{class};" },
-    "ImportClassAlias": { "quasi": "using {alias} = {mod}.{class};" },
-    "AwaitWaitAsync": { "quasi": "await Task.Delay((int)({duration} * 1000));" },
-    "AwaitWaitSync": { "quasi": "Thread.Sleep((int)({duration} * 1000));" },
-    "CallNative": { "quasi": "{call}" },
-    "ConvertToString": { "quasi": "{value}.ToString()" },
-    "ConvertToNumber": { "quasi": "double.Parse({value})" },
-    "InstanceRef": { "quasi": "this.{name}" },
-    "NullLiteral": { "quasi": "null" },
-    "BoolLiteralTrue": { "quasi": "true" },
-    "BoolLiteralFalse": { "quasi": "false" },
-    "VarDefine": { "quasi": "public object {name} = {default};" },
-    "ClassDefine": { "quasi": "// class {name}" },
-    "FunctionDefine": { "quasi": "// method {name}" },
-    "EventDefine": { "quasi": "// event {name}" },
-    "ClassModuleOpen": { "quasi": "class {name}{extendsSuffix} {" },
-    "ClassModuleClose": { "quasi": "}" },
-    "EventHandlerOpen": { "quasi": "{linePrefix}    void on_{handler}({paramList}) {" },
-    "EventHandlerClose": { "quasi": "    }" },
-    "FunctionDefOpen": { "quasi": "{prefix}void {name}({paramList}) {" },
-    "FunctionTabClose": { "quasi": "    }" }
+    "Print": {
+      "quasi": "Console.WriteLine({value});"
+    },
+    "AssignInstance": {
+      "quasi": "this.{target} = {value};"
+    },
+    "AssignLocal": {
+      "quasi": "var {target} = {value};"
+    },
+    "CallInstance": {
+      "quasi": "this.{callee}();"
+    },
+    "CallFunction": {
+      "quasi": "{callee}();"
+    },
+    "CallCrossClass": {
+      "quasi": "{receiver}.{callee}();"
+    },
+    "CallCrossClassStatic": {
+      "quasi": "{class}.{callee}();"
+    },
+    "DispatchEvent": {
+      "quasi": "this.on_{handler}({args});"
+    },
+    "DispatchEventCrossClass": {
+      "quasi": "{receiver}.on_{handler}({args});"
+    },
+    "IfBranchHeader": {
+      "quasi": "if ({cond}) {"
+    },
+    "IfBranchElse": {
+      "quasi": "} else {"
+    },
+    "IfBranchClose": {
+      "quasi": "}"
+    },
+    "ForLoopHeader": {
+      "quasi": "for (int {index} = {first}; {index} <= {last}; {index}++) {"
+    },
+    "ForLoopClose": {
+      "quasi": "}"
+    },
+    "WhileLoopHeader": {
+      "quasi": "while ({cond}) {"
+    },
+    "WhileLoopClose": {
+      "quasi": "}"
+    },
+    "SequenceHeader": {
+      "quasi": "{"
+    },
+    "SequenceComment": {
+      "quasi": "// sequence"
+    },
+    "SequenceClose": {
+      "quasi": "}"
+    },
+    "ModuleImport": {
+      "quasi": "using {mod};"
+    },
+    "ImportClass": {
+      "quasi": "using {mod}.{class};"
+    },
+    "ImportClassAlias": {
+      "quasi": "using {alias} = {mod}.{class};"
+    },
+    "AwaitWaitAsync": {
+      "quasi": "await Task.Delay((int)({duration} * 1000));"
+    },
+    "AwaitWaitSync": {
+      "quasi": "Thread.Sleep((int)({duration} * 1000));"
+    },
+    "CallNative": {
+      "quasi": "{call}"
+    },
+    "ConvertToString": {
+      "quasi": "{value}.ToString()"
+    },
+    "ConvertToNumber": {
+      "quasi": "double.Parse({value})"
+    },
+    "InstanceRef": {
+      "quasi": "this.{name}"
+    },
+    "NullLiteral": {
+      "quasi": "null"
+    },
+    "BoolLiteralTrue": {
+      "quasi": "true"
+    },
+    "BoolLiteralFalse": {
+      "quasi": "false"
+    },
+    "VarDefine": {
+      "quasi": "    {visibility}{staticKw}{constKw}{type} {name} = {default};"
+    },
+    "DeclareLocal": {
+      "quasi": "{type} {name};"
+    },
+    "ClassDefine": {
+      "quasi": "// class {name}"
+    },
+    "FunctionDefine": {
+      "quasi": "// method {name}"
+    },
+    "EventDefine": {
+      "quasi": "// event {name}"
+    },
+    "ClassModuleOpen": {
+      "quasi": "{visibility}{abstractKw}class {name}{extendsSuffix} {"
+    },
+    "ClassModuleClose": {
+      "quasi": "}"
+    },
+    "EventHandlerOpen": {
+      "quasi": "{linePrefix}    {visibility}void on_{handler}({paramList}) {"
+    },
+    "EventHandlerClose": {
+      "quasi": "    }"
+    },
+    "FunctionDefOpen": {
+      "quasi": "    {visibility}{staticKw}{abstractKw}{virtualKw}{overrideKw}{asyncKw}void {name}({paramList}) {"
+    },
+    "FunctionDeclPrototype": {
+      "quasi": "    {visibility}{staticKw}{abstractKw}{virtualKw}{overrideKw}{asyncKw}void {name}({paramList});"
+    },
+    "FunctionTabClose": {
+      "quasi": "    }"
+    },
+    "ConstructorOpen": {
+      "quasi": "{linePrefix}{visibility} {class}({paramList}) {"
+    },
+    "EnumMemberAccess": {
+      "quasi": "{enum}.{member}"
+    },
+    "GetInputLineRead": {
+      "quasi": "var {name} = Console.ReadLine();"
+    },
+    "GetInputParseLineF32": {
+      "quasi": "float.TryParse({name} ?? \"0\", out var {target});"
+    },
+    "ModuleImportFrom": {
+      "quasi": "using {names} = {mod};"
+    },
+    "ModuleImportIncludeSystem": {
+      "quasi": "using {mod};"
+    }
   }
 }

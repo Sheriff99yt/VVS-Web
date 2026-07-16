@@ -50,7 +50,7 @@ function findEntryHandlerNode(doc: GraphDocument): VVSNode | undefined {
   );
 }
 
-function buildVarDefineData(variable: VariableSymbol): VVSNodeData {
+function buildVarDefineData(variable: VariableSymbol, existingProperties?: Record<string, unknown>): VVSNodeData {
   const def = resolveKind('var_define');
   const base = applyVariableRefBinding(
     {
@@ -61,11 +61,19 @@ function buildVarDefineData(variable: VariableSymbol): VVSNodeData {
       outputs: def?.outputs ?? [EXEC_OUT],
       inlineValues: {},
       properties: {
+        ...(existingProperties ?? {}),
         symbolId: variable.id,
         name: variable.name,
         type: variable.type,
         default: variable.defaultValue,
         binding: variable.binding,
+        visibility: variable.visibility,
+        isConst: variable.flags?.readonly,
+        isAbstract: variable.flags?.abstract,
+        isVirtual: variable.flags?.virtual,
+        isOverride: variable.flags?.override,
+        ...(variable.enumType ? { enumType: variable.enumType } : {}),
+        ...(variable.typeRef ? { typeRef: variable.typeRef } : {}),
       },
     },
     variable,
@@ -74,7 +82,7 @@ function buildVarDefineData(variable: VariableSymbol): VVSNodeData {
   return normalizeNodeData({ ...base, kindId: 'var_define' });
 }
 
-function buildFunctionDefineData(func: FunctionSymbol): VVSNodeData {
+function buildFunctionDefineData(func: FunctionSymbol, existingProperties?: Record<string, unknown>): VVSNodeData {
   const def = resolveKind('function_define');
   const overload = resolveOverloadForCall(func);
   return normalizeNodeData({
@@ -85,19 +93,24 @@ function buildFunctionDefineData(func: FunctionSymbol): VVSNodeData {
     outputs: def?.outputs ?? [EXEC_OUT],
     inlineValues: {},
     linkedGraphId: func.id,
-    linkKind: 'call_function',
     graphBinding: { kind: 'call_function', symbolId: func.id, overloadId: overload.id },
     properties: {
+      ...(existingProperties ?? {}),
       symbolId: func.id,
       name: func.name,
       binding: func.binding,
+      visibility: func.visibility,
+      isAbstract: func.flags?.abstract,
+      isVirtual: func.flags?.virtual,
+      isOverride: func.flags?.override,
+      isAsync: func.flags?.async,
       returnType: overload.returnType,
       graphTabId: overload.graphTabId ?? func.id,
     },
   });
 }
 
-function buildEventDefineData(event: ProjectEventDefinition): VVSNodeData {
+function buildEventDefineData(event: ProjectEventDefinition, existingProperties?: Record<string, unknown>): VVSNodeData {
   const def = resolveKind('event_member_define');
   return normalizeNodeData({
     label: `Declare ${event.name}`,
@@ -107,6 +120,7 @@ function buildEventDefineData(event: ProjectEventDefinition): VVSNodeData {
     outputs: def?.outputs ?? [EXEC_OUT],
     inlineValues: {},
     properties: {
+      ...(existingProperties ?? {}),
       symbolId: event.id,
       name: event.name,
       eventId: event.id,
@@ -198,7 +212,7 @@ function spawnDefineNode(
       resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
     },
   };
-  return insertNodeOnMemberChain(doc, node);
+  return { ...doc, nodes: [...doc.nodes, node] };
 }
 
 export function hasDefineNodeForVariable(
@@ -206,12 +220,10 @@ export function hasDefineNodeForVariable(
   cls: ClassSymbol,
   variableId: string
 ): boolean {
-  const tabId = classHomeGraphId(cls);
-  const doc = documents[tabId];
-  return (
-    doc?.nodes.some(
+  return Object.values(documents).some((doc) =>
+    doc.nodes.some(
       (n) => n.data.kindId === 'var_define' && n.data.properties?.symbolId === variableId
-    ) ?? false
+    )
   );
 }
 
@@ -220,12 +232,10 @@ export function hasDefineNodeForFunction(
   cls: ClassSymbol,
   functionId: string
 ): boolean {
-  const tabId = classHomeGraphId(cls);
-  const doc = documents[tabId];
-  return (
-    doc?.nodes.some(
+  return Object.values(documents).some((doc) =>
+    doc.nodes.some(
       (n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === functionId
-    ) ?? false
+    )
   );
 }
 
@@ -234,13 +244,11 @@ export function hasDefineNodeForEvent(
   cls: ClassSymbol,
   eventId: string
 ): boolean {
-  const tabId = classHomeGraphId(cls);
-  const doc = documents[tabId];
-  return (
-    doc?.nodes.some(
+  return Object.values(documents).some((doc) =>
+    doc.nodes.some(
       (n) =>
         n.data.kindId === 'event_member_define' && n.data.properties?.symbolId === eventId
-    ) ?? false
+    )
   );
 }
 
@@ -298,23 +306,35 @@ export function hasHandlerNodeForEvent(
 export function findMemberDeclareNodeForSymbol(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
-  kind: 'function' | 'event',
+  kind: 'variable' | 'function' | 'event',
   symbolId: string
 ): { tabId: string; nodeId: string } | undefined {
-  const tabId = classHomeGraphId(cls);
-  const doc = documents[tabId];
-  if (!doc) return undefined;
-  const nodes = findDefineNodesForSymbol(doc, kind, symbolId);
-  const node = nodes[0];
-  return node ? { tabId, nodeId: node.id } : undefined;
+  // Prefer the class home graph so tree double-click never jumps into a function tab.
+  const homeTab = classHomeGraphId(cls);
+  const homeDoc = documents[homeTab];
+  if (homeDoc) {
+    const homeNodes = findDefineNodesForSymbol(homeDoc, kind, symbolId);
+    if (homeNodes.length > 0) return { tabId: homeTab, nodeId: homeNodes[0]!.id };
+  }
+  for (const [tabId, doc] of Object.entries(documents)) {
+    if (tabId === homeTab) continue;
+    const nodes = findDefineNodesForSymbol(doc, kind, symbolId);
+    if (nodes.length > 0) return { tabId, nodeId: nodes[0]!.id };
+  }
+  return undefined;
 }
 
 export function insertDefineNodeForVariable(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
-  variable: VariableSymbol
+  variable: VariableSymbol,
+  activeGraphTab?: string
 ): Record<string, GraphDocument> {
-  const tabId = classHomeGraphId(cls);
+  // Function/node-scoped locals must not become class members.
+  if (variable.graphTabId || variable.scopedNodeId) return documents;
+
+  const classNodeLoc = findClassDefineNode(documents, cls);
+  const tabId = classNodeLoc?.tabId ?? activeGraphTab ?? classHomeGraphId(cls);
   const doc = documents[tabId] ?? { nodes: [], edges: [] };
   const existing = doc.nodes.filter(
     (n) => n.data.kindId === 'var_define' && n.data.properties?.symbolId === variable.id
@@ -334,9 +354,11 @@ export function insertDefineNodeForVariable(
 export function insertDefineNodeForFunction(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
-  func: FunctionSymbol
+  func: FunctionSymbol,
+  activeGraphTab?: string
 ): Record<string, GraphDocument> {
-  const tabId = classHomeGraphId(cls);
+  const classNodeLoc = findClassDefineNode(documents, cls);
+  const tabId = classNodeLoc?.tabId ?? activeGraphTab ?? classHomeGraphId(cls);
   const doc = documents[tabId] ?? { nodes: [], edges: [] };
   const existing = doc.nodes.filter(
     (n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === func.id
@@ -356,9 +378,11 @@ export function insertDefineNodeForFunction(
 export function insertDefineNodeForEvent(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
-  event: ProjectEventDefinition
+  event: ProjectEventDefinition,
+  activeGraphTab?: string
 ): Record<string, GraphDocument> {
-  const tabId = classHomeGraphId(cls);
+  const classNodeLoc = findClassDefineNode(documents, cls);
+  const tabId = classNodeLoc?.tabId ?? activeGraphTab ?? classHomeGraphId(cls);
   const doc = documents[tabId] ?? { nodes: [], edges: [] };
   const existing = doc.nodes.filter(
     (n) =>
@@ -379,9 +403,10 @@ export function insertDefineNodeForEvent(
 export function insertProgramEntryHandlerNode(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
-  event: ProjectEventDefinition
+  event: ProjectEventDefinition,
+  targetTabId?: string
 ): Record<string, GraphDocument> {
-  const tabId = classHomeGraphId(cls);
+  const tabId = targetTabId ?? classHomeGraphId(cls);
   const doc = documents[tabId] ?? { nodes: [], edges: [] };
   const exists = doc.nodes.some(
     (n) =>
@@ -421,9 +446,10 @@ export function insertProgramEntryHandlerNode(
 
 export function insertClassDefineNode(
   documents: Record<string, GraphDocument>,
-  cls: ClassSymbol
+  cls: ClassSymbol,
+  activeGraphTab?: string
 ): Record<string, GraphDocument> {
-  const tabId = classHomeGraphId(cls);
+  const tabId = activeGraphTab ?? classHomeGraphId(cls);
   const doc = documents[tabId] ?? { nodes: [], edges: [] };
   if (doc.nodes.some((n) => classDefineMatchesClass(n, cls, doc))) return documents;
 
@@ -439,7 +465,7 @@ export function insertClassDefineNode(
   };
   return {
     ...documents,
-    [tabId]: insertNodeOnMemberChain(doc, node),
+    [tabId]: { ...doc, nodes: [...doc.nodes, node] },
   };
 }
 
@@ -540,18 +566,18 @@ function syncDefineNodeData(
   if (kind === 'variable') {
     return {
       ...node,
-      data: buildVarDefineData(symbol as VariableSymbol),
+      data: buildVarDefineData(symbol as VariableSymbol, node.data.properties),
     };
   }
   if (kind === 'function') {
     return {
       ...node,
-      data: buildFunctionDefineData(symbol as FunctionSymbol),
+      data: buildFunctionDefineData(symbol as FunctionSymbol, node.data.properties),
     };
   }
   return {
     ...node,
-    data: buildEventDefineData(symbol as ProjectEventDefinition),
+    data: buildEventDefineData(symbol as ProjectEventDefinition, node.data.properties),
   };
 }
 
@@ -626,19 +652,24 @@ export function removeDefineNodesForSymbol(
 export function bootstrapClassHomeDocuments(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
-  entry: ProjectEventDefinition
+  entry: ProjectEventDefinition,
+  activeGraphTab: string
 ): Record<string, GraphDocument> {
-  const homeGraphId = classHomeGraphId(cls);
-  const existing = documents[homeGraphId];
+  const targetTabId = activeGraphTab ?? classHomeGraphId(cls);
+  const existing = documents[targetTabId];
   const empty = !existing || (existing.nodes.length === 0 && existing.edges.length === 0);
-  if (empty) {
+
+  // Legacy path: when the target is the class home graph and it's empty,
+  // use the full bootstrap (class_define + event handler chain).
+  if (empty && targetTabId === classHomeGraphId(cls)) {
     const { document } = createClassHomeBootstrap(cls, entry);
-    return { ...documents, [homeGraphId]: document as unknown as GraphDocument };
+    return { ...documents, [targetTabId]: document as unknown as GraphDocument };
   }
+
   let next = { ...documents };
-  next = insertClassDefineNode(next, cls);
-  next = insertDefineNodeForEvent(next, cls, entry);
-  next = insertProgramEntryHandlerNode(next, cls, entry);
+  next = insertClassDefineNode(next, cls, targetTabId);
+  next = insertDefineNodeForEvent(next, cls, entry, targetTabId);
+  next = insertProgramEntryHandlerNode(next, cls, entry, targetTabId);
   return next;
 }
 

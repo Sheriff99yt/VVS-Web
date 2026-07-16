@@ -53,6 +53,7 @@ export function useGraphState(initialNodes: VVSNode[] = [], initialEdges: VVSEdg
         (c) =>
           c.type === 'add' ||
           c.type === 'remove' ||
+          c.type === 'replace' ||
           (c.type === 'position' && c.dragging === false)
       );
       const isDragEnd = changes.some(

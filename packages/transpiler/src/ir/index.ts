@@ -1,6 +1,7 @@
 export type {
   IrAwaitWait,
   IrAssignVariable,
+  IrArrayPush,
   IrBase,
   IrCallFunction,
   IrCallNative,
@@ -9,6 +10,7 @@ export type {
   IrEventHandler,
   IrExpr,
   IrExprKind,
+  IrForEach,
   IrForLoop,
   IrIfBranch,
   IrClass,

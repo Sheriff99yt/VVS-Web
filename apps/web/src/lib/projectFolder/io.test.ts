@@ -7,7 +7,7 @@ import {
   sanitizeGraphFileStem,
   MAIN_GRAPH_CONTAINER_ID,
 } from '@vvs/graph-types';
-import { createCalculatorUsabilityTestSnapshot } from '../usabilityExampleTests/calculatorUsabilityTest';
+import { createCoverageLabUsabilityTestSnapshot } from '../usabilityExampleTests/coverageLabUsabilityTest';
 
 describe('projectFolder graph manifest helpers', () => {
   test('sanitizeGraphFileStem strips Function prefix and unsafe chars', () => {
@@ -20,19 +20,16 @@ describe('projectFolder graph manifest helpers', () => {
     expect(containerGraphRelativePath('main-graph')).toBe(
       'graphs/containers/main-graph.graph.json'
     );
-    expect(containerGraphRelativePath('calc-calculator-graph')).toBe(
-      'graphs/containers/calc-calculator-graph.graph.json'
-    );
   });
 
   test('functionGraphRelativePath uses functions subdirectory', () => {
-    expect(functionGraphRelativePath({ id: 'fn-add', type: 'function', name: 'Function: Add' })).toBe(
-      'graphs/functions/Add.graph.json'
+    expect(functionGraphRelativePath({ id: 'fn-boot', type: 'function', name: 'Function: Boot' })).toBe(
+      'graphs/functions/Boot.graph.json'
     );
   });
 
   test('buildFolderGraphManifest maps every container id for v2 layout', () => {
-    const snapshot = normalizeProjectSnapshot(createCalculatorUsabilityTestSnapshot())!;
+    const snapshot = normalizeProjectSnapshot(createCoverageLabUsabilityTestSnapshot())!;
     const graphs = buildFolderGraphManifest(snapshot);
 
     expect(graphs.main).toBeUndefined();
@@ -44,13 +41,13 @@ describe('projectFolder graph manifest helpers', () => {
     }
 
     expect(Object.keys(graphs.functions)).toEqual(
-      expect.arrayContaining(['fn-add', 'fn-clear'])
+      expect.arrayContaining(['fn-boot', 'fn-shutdown', 'fn-sample', 'fn-report'])
     );
-    expect(graphs.functions['fn-add']).toBe('graphs/functions/Add.graph.json');
+    expect(graphs.functions['fn-boot']).toBe('graphs/functions/Boot.graph.json');
   });
 
-  test('normalized complex example has no documents.main key', () => {
-    const snapshot = normalizeProjectSnapshot(createCalculatorUsabilityTestSnapshot())!;
+  test('normalized coverage lab has no documents.main key', () => {
+    const snapshot = normalizeProjectSnapshot(createCoverageLabUsabilityTestSnapshot())!;
     expect(snapshot.documents.main).toBeUndefined();
     expect(snapshot.documents[MAIN_GRAPH_CONTAINER_ID]).toBeDefined();
   });

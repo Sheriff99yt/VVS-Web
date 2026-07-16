@@ -1,6 +1,6 @@
 import type { Connection } from '@xyflow/react';
 import type { PinDefinition, PinType, VVSEdge, VVSNode } from '@/types/graph';
-import { pinsAreCompatible } from '@vvs/graph-types';
+import { pinsAreCompatible, type TypeRef } from '@vvs/graph-types';
 import { wouldWireCreateCycle } from './graphCycles';
 
 export type WireRejectionReason =
@@ -22,6 +22,7 @@ export interface ResolvedWirePin {
   nodeId: string;
   pinId: string;
   pinType: PinType;
+  typeRef?: TypeRef;
   direction: 'input' | 'output';
 }
 
@@ -55,12 +56,24 @@ export function resolveNodePin(
   if (direction === 'source') {
     const pin = node.data.outputs.find((o) => o.id === handleId);
     if (!pin) return null;
-    return { nodeId: node.id, pinId: pin.id, pinType: pin.type, direction: 'output' };
+    return {
+      nodeId: node.id,
+      pinId: pin.id,
+      pinType: pin.type,
+      typeRef: pin.typeRef,
+      direction: 'output',
+    };
   }
 
   const pin = node.data.inputs.find((i) => i.id === handleId);
   if (!pin) return null;
-  return { nodeId: node.id, pinId: pin.id, pinType: pin.type, direction: 'input' };
+  return {
+    nodeId: node.id,
+    pinId: pin.id,
+    pinType: pin.type,
+    typeRef: pin.typeRef,
+    direction: 'input',
+  };
 }
 
 export function wireRejectionMessage(reason: WireRejectionReason): string {
@@ -109,7 +122,7 @@ export function evaluateWireConnection(
     return { ok: false, reason: 'incompatible_channel' };
   }
 
-  if (!pinsAreCompatible(source.pinType, target.pinType)) {
+  if (!pinsAreCompatible(source.pinType, target.pinType, source.typeRef, target.typeRef)) {
     return { ok: false, reason: 'incompatible_type' };
   }
 

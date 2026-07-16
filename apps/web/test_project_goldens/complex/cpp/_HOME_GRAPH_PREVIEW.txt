@@ -1,0 +1,89 @@
+// ===== src/CoverageLab.cpp =====
+#include <iostream>
+// (x) Import System
+#include <string>
+// (x) Import Enum
+#include <vector>
+#include <unordered_map>
+// (x) Import Collections.Generic
+class Machine {
+protected:
+        float Power = 0;
+public:
+        inline static float Serial = 0;
+        const float MaxPower = 100;
+        bool Ready = false;
+    virtual void Boot() {
+        // Boot
+        Ready = true;
+        std::cout << "Booted" << std::endl;
+        Sensor().on_tick();
+    }
+protected:
+    virtual void Diagnose() = 0;
+public:
+    void Shutdown() {
+        // Shutdown
+        Ready = false;
+        std::cout << "Shutdown" << std::endl;
+    }
+    void on_pulse() {
+        std::cout << ("Power=" + std::to_string(Power)) << std::endl;
+    }
+    void on_start() {
+        std::cout << "Operator name?";
+        std::string _vvs_input_lab_get_input;
+        std::getline(std::cin, _vvs_input_lab_get_input);
+        std::cout << _vvs_input_lab_get_input << std::endl;
+        Boot();
+        if (Ready) {
+            on_pulse();
+        } else {
+            // (x) Import json
+            std::cout << "Not ready" << std::endl;
+        }
+    }
+};
+enum class SensorStatus {
+    OK,
+    WARN,
+    FAIL
+};
+class Sensor : public Machine {
+public:
+        std::vector<float> Readings = {};
+        SensorStatus Status = SensorStatus::OK;
+        Machine Host = {};
+        std::unordered_map<std::string, std::string> Tags = 0;
+    void Sample() {
+        // Sample
+        Readings.push_back(Power);
+        std::cout << "Sampled" << std::endl;
+    }
+    void Report() {
+        // Report
+        std::cout << "--- Readings ---" << std::endl;
+        for (float val : Readings) {
+            std::cout << std::to_string(val) << std::endl;
+        }
+    }
+    void on_tick() {
+        std::cout << "Tick" << std::endl;
+    }
+    virtual void on_start() override {
+        switch (Status) {
+          case SensorStatus::OK:
+            Sample();
+            Report();
+                break;
+          case SensorStatus::WARN:
+            std::cout << "Warn" << std::endl;
+            Report();
+                break;
+          case SensorStatus::FAIL:
+            std::cout << "Fail" << std::endl;
+            Report();
+                break;
+        }
+    }
+};

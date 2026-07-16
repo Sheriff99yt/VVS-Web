@@ -1,6 +1,6 @@
 import type { GraphNode, GraphEdge, ProjectEventDefinition, ClassSymbol, FunctionSymbol } from '@vvs/graph-types';
-import { MAIN_CLASS_ID } from '@vvs/graph-types';
-import { buildExecutionOrder, findSimulationStartNode } from '../analyze/graphOrder';
+import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+import { buildExecutionOrder, findAllExecutionHeads } from '../analyze/graphOrder';
 import { getInputKind, inputTempVarName } from '../inputHelpers';
 import {
   binaryOpIr,
@@ -44,6 +44,7 @@ interface LowerContext {
   classes?: ClassSymbol[];
   activeClassId?: string;
   projectModuleName?: string;
+  variables: import('@vvs/graph-types').VariableSymbol[];
 }
 
 function isImportClassNode(node: GraphNode): boolean {
@@ -54,6 +55,7 @@ function isImportClassNode(node: GraphNode): boolean {
 function isImportNode(node: GraphNode): boolean {
   const kindId = resolveNodeKindId(node.data);
   return (
+    kindId === 'vvs.project.import_module' ||
     kindId.startsWith('import_module_') ||
     node.data.linkKind === 'import_module' ||
     isImportClassNode(node)
@@ -130,6 +132,10 @@ function resolveNodeOutputExpr(
   const varName = getVariableName(node.data);
 
   if (kindId === 'variable_get' && varName) {
+    const symbol = ctx.variables.find((v) => v.name === varName);
+    if (symbol?.graphTabId || symbol?.scopedNodeId) {
+      return { kind: 'LocalRef', sourceGraphNodeId: node.id, name: varName };
+    }
     return instanceRefIr(node.id, varName);
   }
 
@@ -141,6 +147,16 @@ function resolveNodeOutputExpr(
     return { kind: 'LocalRef', sourceGraphNodeId: node.id, name: forIndexVarName(node.id) };
   }
 
+  if (kindId === 'flow_for' && pinId === 'element') {
+    return { kind: 'LocalRef', sourceGraphNodeId: node.id, name: forElementVarName(node.id) };
+  }
+
+  if (kindId === 'string_concat' && pinId === 'result') {
+    const a = resolvePinValueExpr(node, 'a', ctx, depth + 1);
+    const b = resolvePinValueExpr(node, 'b', ctx, depth + 1);
+    return binaryOpIr(node.id, '+', a, b);
+  }
+
   if (kindId === 'convert_to_string' && pinId === 'result') {
     const inner = resolvePinValueExpr(node, 'value', ctx, depth + 1);
     return toStringIrExpr(node.id, inner);
@@ -149,6 +165,16 @@ function resolveNodeOutputExpr(
   if (kindId === 'convert_to_number' && pinId === 'result') {
     const inner = resolvePinValueExpr(node, 'value', ctx, depth + 1);
     return toNumberIrExpr(node.id, inner);
+  }
+
+  if (kindId === 'expr_enum_member' && (pinId === 'val' || pinId === 'result' || !pinId)) {
+    const enumName =
+      typeof node.data.properties?.enumName === 'string' ? node.data.properties.enumName.trim() : '';
+    const member =
+      typeof node.data.properties?.member === 'string' ? node.data.properties.member.trim() : '';
+    if (enumName && member) {
+      return { kind: 'EnumMember', sourceGraphNodeId: node.id, enumName, member };
+    }
   }
 
   const mathOp = mathOpFromKindId(kindId);
@@ -201,8 +227,38 @@ function resolvePinValueExpr(
 }
 
 function moduleSlugFromImportNode(node: GraphNode): string {
+  const fromProps = node.data.properties?.modulePath;
+  if (typeof fromProps === 'string' && fromProps.trim()) return fromProps.trim();
   const label = node.data.label.replace(/^Import\s+/, '').trim();
   return label.replace(/\s+/g, '_').toLowerCase() || 'module';
+}
+
+function importStyleFromNode(node: GraphNode): 'module' | 'from' | 'include_system' {
+  const style = node.data.properties?.importStyle;
+  if (style === 'from' || style === 'include_system' || style === 'module') return style;
+  // Heuristic: named imports imply `from`
+  const names = node.data.properties?.importNames;
+  if (typeof names === 'string' && names.trim()) return 'from';
+  return 'module';
+}
+
+function importNamesFromNode(node: GraphNode): string[] | undefined {
+  const raw = node.data.properties?.importNames;
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function targetLanguagesFromNode(node: GraphNode): string[] | undefined {
+  const raw = node.data.properties?.targetLanguages;
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
+  const list = raw
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return list.length ? list : undefined;
 }
 
 function resolveClassModuleName(cls: ClassSymbol, projectModuleName?: string): string {
@@ -243,12 +299,40 @@ function forIndexVarName(nodeId: string): string {
   return `_vvs_i_${nodeId.replace(/-/g, '_')}`;
 }
 
+function forElementVarName(nodeId: string): string {
+  return `val`;
+}
+
+function flowForIsForEach(node: GraphNode): boolean {
+  return (node.data.inputs ?? []).some((p) => p.id === 'array');
+}
+
 function switchCaseLabel(node: GraphNode, caseIndex: number): string {
   const key = `case${caseIndex}`;
   const prop = node.data.properties?.[key];
   if (typeof prop === 'string' && prop.trim()) return prop;
   if (typeof prop === 'number') return String(prop);
   return String(caseIndex);
+}
+
+/** Structured enum case: switch.enumType + caseN member name, or legacy Enum::Member. */
+function switchCaseRef(
+  node: GraphNode,
+  caseIndex: number
+): { label: string; enumName?: string; member?: string } {
+  const label = switchCaseLabel(node, caseIndex);
+  const enumTypeProp = node.data.properties?.enumType;
+  const enumType =
+    typeof enumTypeProp === 'string' && enumTypeProp.trim() ? enumTypeProp.trim() : undefined;
+
+  const legacy = /^([A-Za-z_][\w]*)::([A-Za-z_][\w]*)$/.exec(label.trim());
+  if (legacy) {
+    return { label, enumName: legacy[1], member: legacy[2] };
+  }
+  if (enumType && /^[A-Za-z_][\w]*$/.test(label.trim())) {
+    return { label, enumName: enumType, member: label.trim() };
+  }
+  return { label };
 }
 
 const CONTROL_FLOW_KINDS = new Set([
@@ -259,20 +343,17 @@ const CONTROL_FLOW_KINDS = new Set([
   'flow_sequence',
 ]);
 
-function execBranchHandles(kindId: string): string[] {
-  if (kindId === 'flow_branch') return ['true_exec', 'false_exec'];
-  if (kindId === 'flow_for' || kindId === 'flow_while') return ['body_exec'];
-  if (kindId === 'flow_switch') return ['case_0', 'case_1', 'default_exec'];
-  if (kindId === 'flow_sequence') return ['then_0', 'then_1', 'then_2'];
-  return [];
-}
-
 function collectBranchDescendantIds(branchNodeId: string, nodes: GraphNode[], edges: GraphEdge[]): Set<string> {
   const node = nodes.find((n) => n.id === branchNodeId);
   if (!node) return new Set();
-  const kindId = resolveNodeKindId(node.data);
+  
   const ids = new Set<string>();
-  for (const handle of execBranchHandles(kindId)) {
+  
+  const branchHandles = (node.data.outputs || [])
+    .filter(p => p.type === 'execution' && p.id !== 'exec')
+    .map(p => p.id);
+
+  for (const handle of branchHandles) {
     followExecFromHandle(branchNodeId, handle, nodes, edges).forEach((id) => ids.add(id));
   }
   return ids;
@@ -319,7 +400,56 @@ function lowerStatement(
   const kindId = resolveNodeKindId(node.data);
   const irKind = stmtKindForNode(node);
 
-  if (isImportNode(node)) return null;
+  if (isImportNode(node)) {
+    const importNames = importNamesFromNode(node);
+    const importStyle = importStyleFromNode(node);
+    const label = typeof node.data.label === 'string' ? node.data.label.trim() : '';
+    const ownerRaw = node.data.properties?.ownerClassId;
+    return {
+      kind: 'ModuleImport' as const,
+      sourceGraphNodeId: node.id,
+      moduleSlug: moduleSlugFromImportNode(node),
+      displayLabel: label || undefined,
+      importStyle:
+        importNames?.length && importStyle === 'module' ? 'from' : importStyle,
+      importNames,
+      targetLanguages: targetLanguagesFromNode(node),
+      ownerClassId:
+        typeof ownerRaw === 'string' && ownerRaw.trim() ? ownerRaw.trim() : undefined,
+    };
+  }
+
+  if (
+    kindId === 'event_on_start' ||
+    kindId === 'event_on_update' ||
+    kindId === 'event_define' ||
+    kindId === 'event_member_define' ||
+    kindId === 'event_custom' ||
+    kindId === 'env.event_handler' ||
+    kindId === 'class_define' ||
+    kindId === 'function_define' ||
+    kindId === 'enum_define' ||
+    kindId === 'event_member_define'
+  ) {
+    return null;
+  }
+
+  if (kindId === 'var_define') {
+    const varName = getVariableName(node.data);
+    if (varName) {
+      const symbol = ctx.variables.find((v) => v.name === varName);
+      if (symbol?.graphTabId || symbol?.scopedNodeId) {
+        return {
+          kind: 'DeclareLocal',
+          sourceGraphNodeId: node.id,
+          name: varName,
+          variableType: symbol.type,
+          defaultValue: symbol.defaultValue,
+        };
+      }
+    }
+    return null;
+  }
 
   if (
     kindId === 'vvs.project.call_function' ||
@@ -340,16 +470,24 @@ function lowerStatement(
     const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
     const crossClass = fnClassId !== activeClassId;
     const targetClass = crossClass ? ctx.classes?.find((c) => c.id === fnClassId) : undefined;
+    const activeClass = ctx.classes?.find((c) => c.id === activeClassId);
+    const targetClassName = targetClass
+      ? resolveClassModuleName(targetClass, ctx.projectModuleName)
+      : undefined;
+    // Inherited methods on the same instance — do not instantiate the base class.
+    const inheritedCall =
+      Boolean(crossClass) &&
+      Boolean(activeClass?.extendsType) &&
+      Boolean(targetClassName) &&
+      activeClass!.extendsType === targetClassName;
     const staticCall = fn?.binding === 'static' || fn?.binding === 'module';
     return {
       kind: 'CallFunction',
       sourceGraphNodeId: node.id,
       calleeName: name,
       instanceCall: !staticCall,
-      crossClass,
-      targetClassName: targetClass
-        ? resolveClassModuleName(targetClass, ctx.projectModuleName)
-        : undefined,
+      crossClass: crossClass && !inheritedCall,
+      targetClassName,
     };
   }
 
@@ -364,11 +502,26 @@ function lowerStatement(
       eventDef?.parameters.map((p) => p.id) ??
       node.data.inputs.filter((p) => p.type !== 'execution').map((p) => p.id);
     const args = paramIds.map((pinId) => resolvePinValueExpr(node, pinId, ctx, 0));
+    const eventClassId = eventDef?.classId ?? MAIN_CLASS_ID;
+    const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
+    const crossClass = eventClassId !== activeClassId;
+    const targetClass = crossClass ? ctx.classes?.find((c) => c.id === eventClassId) : undefined;
+    const activeClass = ctx.classes?.find((c) => c.id === activeClassId);
+    const targetClassName = targetClass
+      ? resolveClassModuleName(targetClass, ctx.projectModuleName)
+      : undefined;
+    const inheritedDispatch =
+      Boolean(crossClass) &&
+      Boolean(activeClass?.extendsType) &&
+      Boolean(targetClassName) &&
+      activeClass!.extendsType === targetClassName;
     return {
       kind: 'DispatchEvent',
       sourceGraphNodeId: node.id,
       handlerName: handler,
       args,
+      crossClass: crossClass && !inheritedDispatch,
+      targetClassName,
     };
   }
 
@@ -385,15 +538,6 @@ function lowerStatement(
     };
   }
 
-  if (
-    kindId === 'event_on_start' ||
-    kindId === 'event_on_update' ||
-    kindId === 'event_define' ||
-    kindId === 'event_custom' ||
-    kindId === 'env.event_handler'
-  ) {
-    return null;
-  }
 
   if (kindId === 'variable_get' || kindId.startsWith('math_') || isConvertKindId(kindId)) return null;
 
@@ -413,6 +557,19 @@ function lowerStatement(
   }
 
   if (kindId === 'flow_for') {
+    if (flowForIsForEach(node)) {
+      const collection = resolvePinValueExpr(node, 'array', ctx, 0);
+      const bodyOrder = followExecFromHandle(node.id, 'loop_body', nodes, edges);
+      const body = buildIrStatements(bodyOrder, ctx, new Set());
+      return {
+        kind: 'ForEach',
+        sourceGraphNodeId: node.id,
+        elementVar: forElementVarName(node.id),
+        elementType: 'data_number',
+        collection,
+        body,
+      };
+    }
     const first = resolvePinValueExpr(node, 'first', ctx, 0);
     const last = resolvePinValueExpr(node, 'last', ctx, 0);
     const bodyOrder = followExecFromHandle(node.id, 'body_exec', nodes, edges);
@@ -424,6 +581,17 @@ function lowerStatement(
       first,
       last,
       body,
+    };
+  }
+
+  if (kindId === 'array_push') {
+    const array = resolvePinValueExpr(node, 'array', ctx, 0);
+    const value = resolvePinValueExpr(node, 'val', ctx, 0);
+    return {
+      kind: 'ArrayPush',
+      sourceGraphNodeId: node.id,
+      array,
+      value,
     };
   }
 
@@ -442,13 +610,24 @@ function lowerStatement(
   if (kindId === 'flow_switch') {
     const selector = resolvePinValueExpr(node, 'selector', ctx, 0);
     const cases: IrSwitchCase[] = [];
-    for (const [idx, handle] of ['case_0', 'case_1'].entries()) {
+    
+    const outputIds = (node.data.outputs || [])
+      .map(o => o.id)
+      .filter(id => id.startsWith('case_'));
+      
+    for (const handle of outputIds) {
+      // Find the index (e.g., 'case_2' -> 2)
+      const idxStr = handle.replace('case_', '');
+      const idx = parseInt(idxStr);
+      if (isNaN(idx)) continue;
+      
       const caseOrder = followExecFromHandle(node.id, handle, nodes, edges);
       cases.push({
-        label: switchCaseLabel(node, idx),
+        ...switchCaseRef(node, idx),
         body: buildIrStatements(caseOrder, ctx, new Set()),
       });
     }
+    
     const defaultOrder = followExecFromHandle(node.id, 'default_exec', nodes, edges);
     const defaultBody = buildIrStatements(defaultOrder, ctx, new Set());
     return {
@@ -498,12 +677,14 @@ function lowerStatement(
     if (!varName) return commentFallback(node.id, 'AssignVariable', 'set (no variable)');
     const pinId = firstInputPinId(node, ['val', 'in_val', 'value']);
     const value = pinId ? resolvePinValueExpr(node, pinId, ctx, 0) : nullIr(node.id);
+    const symbol = ctx.variables.find((v) => v.name === varName);
+    const targetBinding = symbol?.graphTabId || symbol?.scopedNodeId ? 'local' : 'instance';
     return {
       kind: 'AssignVariable',
       sourceGraphNodeId: node.id,
       assignKind: 'variable_set',
       targetName: varName,
-      targetBinding: 'instance',
+      targetBinding,
       value,
     };
   }
@@ -545,8 +726,6 @@ export function buildIrStatements(
     const node = nodes.find((n) => n.id === nodeId);
     if (!node || !isCodegenNode(node)) continue;
 
-    if (isImportNode(node)) continue;
-
     if (CONTROL_FLOW_KINDS.has(resolveNodeKindId(node.data))) {
       const branchDescendants = collectBranchDescendantIds(node.id, nodes, ctx.edges);
       branchDescendants.forEach((id) => skipIds.add(id));
@@ -560,30 +739,7 @@ export function buildIrStatements(
   return statements;
 }
 
-function auxiliaryEventNodes(
-  nodes: GraphNode[],
-  mainOrder: string[],
-  excludeEventIds: Set<string>,
-  projectEvents: ProjectEventDefinition[]
-): GraphNode[] {
-  return nodes.filter((n) => {
-    if (!isCodegenNode(n)) return false;
-    const kindId = resolveNodeKindId(n.data);
-    if (kindId === 'event_on_start') return false;
-    if (
-      kindId !== 'event_on_update' &&
-      kindId !== 'event_define' &&
-      kindId !== 'event_custom' &&
-      kindId !== 'env.event_handler'
-    ) {
-      return false;
-    }
-    if (mainOrder.includes(n.id) || n.data.linkedGraphId) return false;
-    const eventDef = resolveEventForNode(n.data, projectEvents);
-    if (eventDef && excludeEventIds.has(eventDef.id)) return false;
-    return true;
-  });
-}
+
 
 function eventLabelToHandlerName(label: string): string {
   return label.replace(/^On\s+/i, '').toLowerCase().replace(/\s+/g, '_');
@@ -624,8 +780,11 @@ function irStatementsForGraph(
   edges: GraphEdge[],
   lowerCtx: LowerContext
 ): IrStatement[] {
-  const start = findSimulationStartNode(graphNodes);
-  const execOrder = start ? buildExecutionOrder(start.id, graphNodes, edges) : [];
+  const heads = findAllExecutionHeads(graphNodes, edges);
+  const execOrder: string[] = [];
+  for (const head of heads) {
+    execOrder.push(...buildExecutionOrder(head.id, graphNodes, edges));
+  }
   const skipIds = new Set<string>();
   return buildIrStatements(execOrder, { ...lowerCtx, nodes: graphNodes, edges }, skipIds);
 }
@@ -646,20 +805,34 @@ function buildFunctionBodies(
   return bodies;
 }
 
-function collectModuleImports(allNodes: GraphNode[]): IrStatement[] {
-  const seen = new Set<string>();
+function collectModuleImports(
+  allNodes: GraphNode[],
+  activeClassId?: string
+): IrStatement[] {
+  // Honest: every Import Module node emits — no silent dedupe of identical paths.
   const imports: IrStatement[] = [];
   for (const node of allNodes) {
     if (!isCodegenNode(node)) continue;
     if (isImportClassNode(node)) continue;
     if (!isImportNode(node)) continue;
+    const ownerRaw = node.data.properties?.ownerClassId;
+    const ownerClassId =
+      typeof ownerRaw === 'string' && ownerRaw.trim() ? ownerRaw.trim() : undefined;
+    if (ownerClassId && activeClassId && ownerClassId !== activeClassId) continue;
     const mod = moduleSlugFromImportNode(node);
-    if (seen.has(mod)) continue;
-    seen.add(mod);
+    const importStyle = importStyleFromNode(node);
+    const importNames = importNamesFromNode(node);
+    const targetLanguages = targetLanguagesFromNode(node);
+    const label = typeof node.data.label === 'string' ? node.data.label.trim() : '';
     imports.push({
       kind: 'ModuleImport',
       sourceGraphNodeId: node.id,
       moduleSlug: mod,
+      displayLabel: label || undefined,
+      importStyle,
+      importNames,
+      targetLanguages,
+      ownerClassId,
     });
   }
   return imports;
@@ -671,7 +844,7 @@ function collectClassImports(
   projectModuleName?: string
 ): IrStatement[] {
   if (!classes?.length) return [];
-  const seen = new Set<string>();
+  // Honest: every Import Class node emits — no silent dedupe.
   const imports: IrStatement[] = [];
   for (const node of allNodes) {
     if (!isCodegenNode(node) || !isImportClassNode(node)) continue;
@@ -682,9 +855,6 @@ function collectClassImports(
     const className = cls.name;
     const moduleName = resolveClassModuleName(cls, projectModuleName);
     const alias = importAliasFromNode(node);
-    const key = `${moduleName}:${className}:${alias ?? ''}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
     imports.push({
       kind: 'ImportClass',
       sourceGraphNodeId: node.id,
@@ -749,6 +919,7 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     classes: ctx.classes,
     activeClassId: ctx.activeClassId,
     projectModuleName: ctx.projectModuleName ?? moduleName,
+    variables: ctx.variables,
   };
 
   const activeTabId = tabId ?? 'main';
@@ -760,36 +931,113 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
   const memberBuild = buildIrMembers(ctx, graphNodes, edges, lowerCtx);
   const activeClass = resolveActiveClass(ctx);
 
-  const handlerNodes = auxiliaryEventNodes(
-    graphNodes,
-    [],
-    memberBuild.memberEventIds,
-    projectEvents
+  const heads = findAllExecutionHeads(graphNodes, edges);
+  const eventHandlers: IrEventHandler[] = [];
+  const scriptHeads: GraphNode[] = [];
+  let unnamedCount = 0;
+  const handlerNodeLabels: string[] = [];
+
+  for (const head of heads) {
+    if (head.data.linkedGraphId) continue;
+    
+    const kindId = resolveNodeKindId(head.data);
+    const isEvent = kindId.startsWith('event_') || kindId === 'env.event_handler';
+
+    if (isEvent) {
+      const eventDef = resolveEventForNode(head.data, projectEvents);
+      if (eventDef && memberBuild.memberEventIds.has(eventDef.id)) {
+        continue;
+      }
+      // Shared home graph: do not emit another class's On handlers into this module.
+      if (
+        eventDef?.classId &&
+        activeClass?.id &&
+        eventDef.classId !== activeClass.id
+      ) {
+        continue;
+      }
+    }
+
+    if (isEvent) {
+      const subOrder = buildExecutionOrder(head.id, graphNodes, edges);
+      const subSkip = new Set<string>([head.id]);
+      const body = buildIrStatements(
+        subOrder,
+        { ...lowerCtx, nodes: graphNodes, edges },
+        subSkip
+      );
+
+      let handlerName = '';
+      let paramNames: string[] = [];
+      handlerName = handlerNameFromEventNode(head, projectEvents);
+      paramNames = handlerParamNames(head, projectEvents);
+
+      eventHandlers.push({
+        kind: 'EventHandler' as const,
+        sourceGraphNodeId: head.id,
+        handlerName,
+        paramNames,
+        body,
+        properties: head.data.properties,
+      });
+      handlerNodeLabels.push(head.data.label);
+    } else {
+      if (activeClass?.id === MAIN_CLASS_ID) {
+        scriptHeads.push(head);
+      }
+    }
+  }
+
+  const scriptExecOrder: string[] = [];
+  for (const head of scriptHeads) {
+    scriptExecOrder.push(...buildExecutionOrder(head.id, graphNodes, edges));
+  }
+  const onStartBody = buildIrStatements(
+    scriptExecOrder,
+    { ...lowerCtx, nodes: graphNodes, edges },
+    new Set<string>()
   );
 
-  const eventHandlers: IrEventHandler[] = handlerNodes.map((e) => {
-    const subOrder = buildExecutionOrder(e.id, graphNodes, edges);
-    const subSkip = new Set<string>([e.id]);
-    const body = buildIrStatements(
-      subOrder,
-      { ...lowerCtx, nodes: graphNodes, edges },
-      subSkip
-    );
-    return {
-      kind: 'EventHandler' as const,
-      sourceGraphNodeId: e.id,
-      handlerName: handlerNameFromEventNode(e, projectEvents),
-      paramNames: handlerParamNames(e, projectEvents),
-      body,
-    };
-  });
-
   const functionBodies = buildFunctionBodies(documents, functions, lowerCtx);
+  // Imports on the member chain emit in order via members — only keep orphans in ir.imports.
+  // Flow / conditional Import Module nodes emit inside statement bodies — never hoist them.
+  const memberImportNodeIds = new Set(
+    memberBuild.members
+      .filter((m) => m.kind === 'ModuleImport' || m.kind === 'ImportClass')
+      .map((m) => m.sourceGraphNodeId)
+  );
+  const flowImportNodeIds = new Set<string>();
+  const collectFlowImportIds = (stmts: IrStatement[]) => {
+    for (const stmt of stmts) {
+      if (stmt.kind === 'ModuleImport' || stmt.kind === 'ImportClass') {
+        flowImportNodeIds.add(stmt.sourceGraphNodeId);
+      }
+      if (stmt.kind === 'IfBranch') {
+        collectFlowImportIds(stmt.trueBody);
+        collectFlowImportIds(stmt.falseBody);
+      } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+        collectFlowImportIds(stmt.body);
+      } else if (stmt.kind === 'Switch') {
+        for (const c of stmt.cases) collectFlowImportIds(c.body);
+        collectFlowImportIds(stmt.defaultBody);
+      } else if (stmt.kind === 'Sequence') {
+        for (const step of stmt.steps) collectFlowImportIds(step);
+      }
+    }
+  };
+  for (const handler of eventHandlers) collectFlowImportIds(handler.body);
+  collectFlowImportIds(onStartBody);
+  for (const body of Object.values(functionBodies)) collectFlowImportIds(body);
+
   const allNodes = collectAllCodegenNodes(graphNodes, documents, functions);
   const imports = [
-    ...collectModuleImports(allNodes),
+    ...collectModuleImports(allNodes, activeClass?.id),
     ...collectClassImports(allNodes, ctx.classes, ctx.projectModuleName ?? moduleName),
-  ];
+  ].filter(
+    (stmt) =>
+      !memberImportNodeIds.has(stmt.sourceGraphNodeId) &&
+      !flowImportNodeIds.has(stmt.sourceGraphNodeId)
+  );
 
   return {
     moduleName,
@@ -806,14 +1054,15 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     projectEvents,
     documents,
     imports,
-    onStartBody: [],
+    onStartBody,
     eventHandlers,
     functionBodies,
     execOrder: [],
-    handlerNodeLabels: handlerNodes.map((e) => e.data.label),
+    handlerNodeLabels,
     environmentManifest,
     members: memberBuild.members,
     activeClass,
+    emitUnsupportedComments: ctx.emitUnsupportedComments !== false,
   };
 }
 

@@ -7,45 +7,130 @@
     "blockPlaceholder": "pass",
     "commentPrefix": "# ",
     "instanceReceiver": "self",
-    "bodyIndent": "            ",
-    "handlerBodyIndent": "            ",
+    "bodyIndent": "        ",
+    "handlerBodyIndent": "        ",
     "memberChainIndent": "    ",
-    "varDeclIndent": "        ",
+    "varDeclIndent": "    ",
     "emptyHandlerBody": "        pass",
     "emptyFunctionBody": "        pass",
-    "importTemplate": { "quasi": "from {mod} import *" }
+    "importTemplate": {
+      "quasi": "import {mod}"
+    }
   },
   "templates": {
-    "Print": { "quasi": "print({value})" },
-    "AssignInstance": { "quasi": "self.{target} = {value}" },
-    "AssignLocal": { "quasi": "{target} = {value}" },
-    "CallInstance": { "quasi": "self.{callee}()" },
-    "CallFunction": { "quasi": "{callee}()" },
-    "CallCrossClass": { "quasi": "{receiver}.{callee}()" },
-    "DispatchEvent": { "quasi": "self.on_{handler}({args})" },
-    "IfBranchHeader": { "quasi": "if {cond}:" },
-    "IfBranchElse": { "quasi": "else:" },
-    "ForLoopHeader": { "quasi": "for {index} in range({first}, {last} + 1):" },
-    "WhileLoopHeader": { "quasi": "while {cond}:" },
-    "SequenceHeader": { "quasi": "# sequence" },
-    "ModuleImport": { "quasi": "from {mod} import *" },
-    "ImportClass": { "quasi": "from {mod} import {class}" },
-    "ImportClassAlias": { "quasi": "from {mod} import {class} as {alias}" },
-    "AwaitWaitAsync": { "quasi": "await asyncio.sleep({duration})" },
-    "AwaitWaitSync": { "quasi": "time.sleep({duration})" },
-    "CallNative": { "quasi": "{call}" },
-    "ConvertToString": { "quasi": "str({value})" },
-    "ConvertToNumber": { "quasi": "float({value})" },
-    "InstanceRef": { "quasi": "self.{name}" },
-    "NullLiteral": { "quasi": "None" },
-    "BoolLiteralTrue": { "quasi": "True" },
-    "BoolLiteralFalse": { "quasi": "False" },
-    "VarDefine": { "quasi": "self.{name} = {default}" },
-    "ClassDefine": { "quasi": "class {name}:" },
-    "FunctionDefine": { "quasi": "def {name}(self):" },
-    "EventDefine": { "quasi": "# event {name}" },
-    "ClassModuleOpen": { "quasi": "class {name}{extendsSuffix}:" },
-    "EventHandlerOpen": { "quasi": "{linePrefix}    def on_{handler}({paramList}):" },
-    "FunctionDefOpen": { "quasi": "{staticDecorator}{asyncKw}def {name}({paramList}):" }
+    "Print": {
+      "quasi": "print({value})"
+    },
+    "AssignInstance": {
+      "quasi": "self.{target} = {value}"
+    },
+    "AssignLocal": {
+      "quasi": "{target} = {value}"
+    },
+    "CallInstance": {
+      "quasi": "self.{callee}()"
+    },
+    "CallFunction": {
+      "quasi": "{callee}()"
+    },
+    "CallCrossClass": {
+      "quasi": "{receiver}.{callee}()"
+    },
+    "DispatchEvent": {
+      "quasi": "self.on_{handler}({args})"
+    },
+    "DispatchEventCrossClass": {
+      "quasi": "{receiver}.on_{handler}({args})"
+    },
+    "IfBranchHeader": {
+      "quasi": "if {cond}:"
+    },
+    "IfBranchElse": {
+      "quasi": "else:"
+    },
+    "ForLoopHeader": {
+      "quasi": "for {index} in range({first}, {last} + 1):"
+    },
+    "WhileLoopHeader": {
+      "quasi": "while {cond}:"
+    },
+    "SequenceHeader": {
+      "quasi": "# sequence"
+    },
+    "ModuleImport": {
+      "quasi": "import {mod}"
+    },
+    "ImportClass": {
+      "quasi": "from {mod} import {class}"
+    },
+    "ImportClassAlias": {
+      "quasi": "from {mod} import {class} as {alias}"
+    },
+    "AwaitWaitAsync": {
+      "quasi": "await asyncio.sleep({duration})"
+    },
+    "AwaitWaitSync": {
+      "quasi": "time.sleep({duration})"
+    },
+    "CallNative": {
+      "quasi": "{call}"
+    },
+    "ConvertToString": {
+      "quasi": "str({value})"
+    },
+    "ConvertToNumber": {
+      "quasi": "float({value})"
+    },
+    "InstanceRef": {
+      "quasi": "self.{name}"
+    },
+    "NullLiteral": {
+      "quasi": "None"
+    },
+    "BoolLiteralTrue": {
+      "quasi": "True"
+    },
+    "VarDefine": {
+      "quasi": "{name} = {default}"
+    },
+    "DeclareLocal": {
+      "quasi": "{name} = None"
+    },
+    "ClassDefine": {
+      "quasi": "class {name}:"
+    },
+    "FunctionDefine": {
+      "quasi": "def {name}(self):"
+    },
+    "EventDefine": {
+      "quasi": "# event {name}"
+    },
+    "ClassModuleOpen": {
+      "quasi": "{prefix}class {name}{extendsSuffix}:"
+    },
+    "EventHandlerOpen": {
+      "quasi": "{linePrefix}    def on_{handler}({paramList}):"
+    },
+    "FunctionDefOpen": {
+      "quasi": "    {staticKw}{asyncKw}def {name}({paramList}):"
+    },
+    "BoolLiteralFalse": {
+      "quasi": "False"
+    },
+    "ConstructorOpen": {
+      "quasi": "{linePrefix}def __init__(self{comma_params}):"
+    },
+    "EnumMemberAccess": {
+      "quasi": "{enum}.{member}"
+    },
+    "SwitchSelectBind": {
+      "quasi": "{name} = {value}"
+    },
+    "ModuleImportFrom": {
+      "quasi": "from {mod} import {names}"
+    },
+    "ModuleImportIncludeSystem": {
+      "quasi": "# include {mod} (n/a)"
+    }
   }
 }

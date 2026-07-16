@@ -55,7 +55,8 @@ Does the graph meaning change?
 1. **Rosetta golden** — strict string compare for affected `(fixture × family)`
 2. **Span invariants** — behavioral node IDs in `sourceMap`; `expressionSpans` cover expected substrings
 3. **Fidelity linter** — no statement without `sourceGraphNodeId` except `synthetic: true` scaffolding
-4. **Optional parse validation** — Tree-sitter on Python/JS Rosetta output when CI job enabled
+4. **Usability Test Projects (class/import/enum surface)** — Code panel path: `bun apps/web/scripts/extract_test_project_outputs.ts` (Coverage Lab)
+5. **Optional parse validation** — Tree-sitter on Python/JS Rosetta output when CI job enabled
 
 CI failure = do not merge. Agents propose diffs; humans review portability policy only.
 

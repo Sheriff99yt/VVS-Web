@@ -12,6 +12,7 @@ const REQUIRED_TEMPLATES = [
   'CallFunction',
   'CallInstance',
   'DispatchEvent',
+  'DispatchEventCrossClass',
   'IfBranchHeader',
   'ForLoopHeader',
   'WhileLoopHeader',
@@ -28,7 +29,11 @@ const REQUIRED_TEMPLATES = [
   'BoolLiteralTrue',
   'BoolLiteralFalse',
   'VarDefine',
+  'DeclareLocal',
   'SequenceHeader',
+  'EnumMemberAccess',
+  'ModuleImportFrom',
+  'ModuleImportIncludeSystem',
 ] as const;
 
 const REQUIRED_SHELL_TEMPLATES = [
@@ -41,7 +46,7 @@ const OPTIONAL_SHELL_BY_FAMILY: Record<
   (typeof PACK_FAMILIES)[number],
   readonly string[]
 > = {
-  python: [],
+  python: ['SwitchSelectBind'],
   javascript: ['ClassModuleClose', 'EventHandlerClose', 'FunctionTabClose'],
   cpp: [
     'ClassModuleClose',
@@ -50,7 +55,7 @@ const OPTIONAL_SHELL_BY_FAMILY: Record<
     'FunctionTabClose',
     'FunctionDeclPrototype',
   ],
-  gdscript: [],
+  gdscript: ['SwitchSelectBind'],
   verse: [],
   rust: [
     'ClassModuleClose',
@@ -62,6 +67,10 @@ const OPTIONAL_SHELL_BY_FAMILY: Record<
     'SequenceComment',
     'SequenceClose',
     'CallCrossClassStatic',
+    'SwitchSelectBind',
+    'GetInputLineNew',
+    'GetInputLineRead',
+    'GetInputParseLineF32',
   ],
   csharp: [
     'ClassModuleClose',
@@ -73,6 +82,8 @@ const OPTIONAL_SHELL_BY_FAMILY: Record<
     'SequenceComment',
     'SequenceClose',
     'CallCrossClassStatic',
+    'GetInputLineRead',
+    'GetInputParseLineF32',
   ],
 };
 

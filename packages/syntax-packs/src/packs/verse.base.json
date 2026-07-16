@@ -15,32 +15,107 @@
     "emptyFunctionBody": "        # empty"
   },
   "templates": {
-    "Print": { "quasi": "Print({value})" },
-    "AssignInstance": { "quasi": "set {target} = {value}" },
-    "AssignLocal": { "quasi": "set {target} = {value}" },
-    "CallFunction": { "quasi": "{callee}()" },
-    "CallInstance": { "quasi": "{callee}()" },
-    "CallCrossClass": { "quasi": "{receiver}.{callee}()" },
-    "DispatchEvent": { "quasi": "on_{handler}({args})" },
-    "IfBranchHeader": { "quasi": "if ({cond}):" },
-    "IfBranchElse": { "quasi": "else:" },
-    "ForLoopHeader": { "quasi": "loop:" },
-    "WhileLoopHeader": { "quasi": "loop:" },
-    "SequenceHeader": { "quasi": "# sequence" },
-    "ModuleImport": { "quasi": "using { {mod} }" },
-    "ImportClass": { "quasi": "using { {class} }" },
-    "ImportClassAlias": { "quasi": "using { {alias} }" },
-    "AwaitWait": { "quasi": "# wait {duration}s" },
-    "CallNative": { "quasi": "{call}" },
-    "ConvertToString": { "quasi": "ToString({value})" },
-    "ConvertToNumber": { "quasi": "ParseFloat({value})" },
-    "InstanceRef": { "quasi": "{name}" },
-    "NullLiteral": { "quasi": "\"\"" },
-    "BoolLiteralTrue": { "quasi": "true" },
-    "BoolLiteralFalse": { "quasi": "false" },
-    "VarDefine": { "quasi": "var {name} : {type} = {default}" },
-    "ClassModuleOpen": { "quasi": "{name} := class{extendsSuffix}:" },
-    "EventHandlerOpen": { "quasi": "{linePrefix}    {signature}" },
-    "FunctionDefOpen": { "quasi": "    {name}<override>({paramList}) : void =" }
+    "Print": {
+      "quasi": "Print({value})"
+    },
+    "AssignInstance": {
+      "quasi": "set {target} = {value}"
+    },
+    "AssignLocal": {
+      "quasi": "set {target} = {value}"
+    },
+    "CallFunction": {
+      "quasi": "{callee}()"
+    },
+    "CallInstance": {
+      "quasi": "{callee}()"
+    },
+    "CallCrossClass": {
+      "quasi": "{receiver}.{callee}()"
+    },
+    "DispatchEvent": {
+      "quasi": "on_{handler}({args})"
+    },
+    "DispatchEventCrossClass": {
+      "quasi": "{receiver}.on_{handler}({args})"
+    },
+    "IfBranchHeader": {
+      "quasi": "if ({cond}?):"
+    },
+    "IfBranchElse": {
+      "quasi": "else:"
+    },
+    "ForLoopHeader": {
+      "quasi": "loop:"
+    },
+    "WhileLoopHeader": {
+      "quasi": "loop:"
+    },
+    "SequenceHeader": {
+      "quasi": "# sequence"
+    },
+    "ModuleImport": {
+      "quasi": "using { {mod} }"
+    },
+    "ImportClass": {
+      "quasi": "using { {class} }"
+    },
+    "ImportClassAlias": {
+      "quasi": "using { {alias} }"
+    },
+    "AwaitWait": {
+      "quasi": "# wait {duration}s"
+    },
+    "CallNative": {
+      "quasi": "{call}"
+    },
+    "ConvertToString": {
+      "quasi": "ToString({value})"
+    },
+    "ConvertToNumber": {
+      "quasi": "ParseFloat({value})"
+    },
+    "InstanceRef": {
+      "quasi": "{name}"
+    },
+    "NullLiteral": {
+      "quasi": "\"\""
+    },
+    "BoolLiteralTrue": {
+      "quasi": "true"
+    },
+    "VarDefine": {
+      "quasi": "    var {name}{visibility} : {type} = {default}"
+    },
+    "DeclareLocal": {
+      "quasi": "var {name} : {type} = false"
+    },
+    "ClassModuleOpen": {
+      "quasi": "{prefix}{name}{extendsSuffix} := class:"
+    },
+    "EventHandlerOpen": {
+      "quasi": "{linePrefix}    {signature}"
+    },
+    "FunctionDefOpen": {
+      "quasi": "    {name}{visibility}{overrideKw}({paramList}) : void ="
+    },
+    "BoolLiteralFalse": {
+      "quasi": "false"
+    },
+    "ConstructorOpen": {
+      "quasi": "{linePrefix}Init({paramList}):void="
+    },
+    "EnumMemberAccess": {
+      "quasi": "{enum}.{member}"
+    },
+    "ModuleImportFrom": {
+      "quasi": "using {mod}"
+    },
+    "ModuleImportIncludeSystem": {
+      "quasi": "using {mod}"
+    },
+    "ArrayPush": {
+      "quasi": "set {array} += array{{value}}"
+    }
   }
 }

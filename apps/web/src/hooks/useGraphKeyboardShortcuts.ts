@@ -3,13 +3,18 @@
 import { useEffect } from 'react';
 import { dispatchGraphAction } from '@/lib/graphActions';
 import { isTypingTarget } from '@/lib/graphShortcuts';
+import {
+  dispatchFocusGraphNodeSearch,
+  dispatchToggleCompilerLogPin,
+} from '@/lib/uiPreferences';
 
 export interface GraphKeyboardHandlers {
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  onSpawnMenu: () => void;
+  /** @deprecated Space now focuses node search; spawn remains right-click. */
+  onSpawnMenu?: () => void;
   onToggleHelp: () => void;
   isHelpOpen: boolean;
   /** When true, canvas shortcuts are suppressed (e.g. node search expanded). */
@@ -26,7 +31,6 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
     onRedo,
     canUndo,
     canRedo,
-    onSpawnMenu,
     onToggleHelp,
     isHelpOpen,
     suppressCanvasShortcuts = false,
@@ -132,35 +136,34 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
         return;
       }
 
-      if (key === 'f' && e.shiftKey && !mod && !e.altKey) {
-        e.preventDefault();
-        dispatchGraphAction('zoom-fit');
-        return;
-      }
-
       if (key === 'f' && !mod && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         dispatchGraphAction('focus-selection');
         return;
       }
 
+      // Backtick / tilde — toggle compiler log pin.
+      if ((e.key === '`' || e.key === '~') && !mod && !e.altKey) {
+        e.preventDefault();
+        dispatchToggleCompilerLogPin();
+        return;
+      }
+
       if (e.code === 'Space' && !mod) {
         e.preventDefault();
-        onSpawnMenu();
+        dispatchFocusGraphNodeSearch();
+        return;
+      }
+
+      // Keep Ctrl/Cmd+K as alternate search focus.
+      if (mod && key === 'k' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        dispatchFocusGraphNodeSearch();
         return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    onUndo,
-    onRedo,
-    canUndo,
-    canRedo,
-    onSpawnMenu,
-    onToggleHelp,
-    isHelpOpen,
-    suppressCanvasShortcuts,
-  ]);
+  }, [onUndo, onRedo, canUndo, canRedo, onToggleHelp, isHelpOpen, suppressCanvasShortcuts]);
 }

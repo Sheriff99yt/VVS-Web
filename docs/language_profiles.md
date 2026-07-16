@@ -18,7 +18,10 @@ Warnings do **not** block compile unless paired with structural errors.
 
 **Future COA** (see [design/unified_symbol_model.md](design/unified_symbol_model.md)):
 
-- Node effectiveness indicators (dim / badge per language)
+- **Node effectiveness (shipped U66/U67):** `nodeEffectiveness` in `@vvs/language-profiles`
+  - Codegen: pack-prefixed `(x)` + node label (`showUnsupportedComments`, toggle left of Code panel language selector)
+  - Canvas: dim/grey unsupported nodes (`dimUnsupportedNodes`, toggle top bar left of Autosave)
+  - v1 rules: Import Module `targetLanguages` gate only
 - Multi-target export from one graph
 - Optional authoring limits across a language set
 

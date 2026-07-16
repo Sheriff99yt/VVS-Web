@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, BackgroundVariant, useReactFlow, Connection, Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -19,7 +19,7 @@ import { VVSRerouteNode } from './VVSRerouteNode';
 import { GraphAction } from '@/lib/graphActions';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
-import { findGraphEntryNodeId, isLinkedGraphNode } from '@/lib/linkedGraphNodes';
+import { findGraphEntryNodeId, nestedGraphIdForNode } from '@/lib/linkedGraphNodes';
 import { GraphNodeSearch } from './GraphNodeSearch';
 import { GraphSelectionToolbar } from './GraphSelectionToolbar';
 import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT } from '@/components/layout/GraphFloatingDetails';
@@ -78,6 +78,7 @@ import { useSyncProjectSelection } from '@/hooks/useSyncProjectSelection';
 import { useEditorFocus } from '@/hooks/useEditorFocus';
 import { useGraphKeyboardShortcuts } from '@/hooks/useGraphKeyboardShortcuts';
 import { GraphShortcutsHelp } from './GraphShortcutsHelp';
+import { OPEN_SHORTCUTS_HELP_EVENT } from '@/lib/uiPreferences';
 import { activeClass, classGraphTabId, classScopedSymbols, isOnClassHomeGraph } from '@/lib/classScope';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
 import {
@@ -256,6 +257,12 @@ function GraphCanvasInner() {
 
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
+  useEffect(() => {
+    const onOpenHelp = () => setShortcutsHelpOpen(true);
+    window.addEventListener(OPEN_SHORTCUTS_HELP_EVENT, onOpenHelp);
+    return () => window.removeEventListener(OPEN_SHORTCUTS_HELP_EVENT, onOpenHelp);
+  }, []);
+
   const [menu, setMenu] = useState<{
     x: number;
     y: number;
@@ -351,20 +358,13 @@ function GraphCanvasInner() {
 
   const focusGraphNode = useCallback(
     (nodeId: string) => {
-      setNodes((nds) => {
-        const alreadyFocused =
-          nds.length > 0 &&
-          nds.filter((n) => n.selected).length === 1 &&
-          nds.some((n) => n.id === nodeId && n.selected);
-        if (alreadyFocused) return nds;
-        return nds.map((n) => ({
+      setNodes((nds) =>
+        nds.map((n) => ({
           ...n,
           selected: n.id === nodeId,
-        }));
-      });
-      setSelection((prev) =>
-        prev.type === 'node' && prev.id === nodeId ? prev : { type: 'node', id: nodeId }
+        }))
       );
+      setSelection({ type: 'node', id: nodeId });
       setSelectedNodeIds([nodeId]);
       requestAnimationFrame(() => {
         fitView({ nodes: [{ id: nodeId }], padding: 0.6, duration: 200 });
@@ -373,21 +373,19 @@ function GraphCanvasInner() {
     [setNodes, setSelection, setSelectedNodeIds, fitView]
   );
 
-  const processedFocusKeyRef = React.useRef<string | null>(null);
+  const processedFocusRequestRef = React.useRef<number | null>(null);
   const suppressPaneClickRef = React.useRef(false);
 
   React.useEffect(() => {
     if (!pendingCanvasFocus || pendingCanvasFocus.graphTab !== activeGraphTab) {
-      processedFocusKeyRef.current = null;
       return;
     }
-    const focusKey = `${pendingCanvasFocus.graphTab}:${pendingCanvasFocus.nodeId}`;
-    if (processedFocusKeyRef.current === focusKey) return;
+    if (processedFocusRequestRef.current === pendingCanvasFocus.requestId) return;
 
     const nodeExists = nodes.some((n) => n.id === pendingCanvasFocus.nodeId);
     if (!nodeExists) return;
 
-    processedFocusKeyRef.current = focusKey;
+    processedFocusRequestRef.current = pendingCanvasFocus.requestId;
     focusGraphNode(pendingCanvasFocus.nodeId);
     clearPendingCanvasFocus();
   }, [pendingCanvasFocus, activeGraphTab, nodes, focusGraphNode, clearPendingCanvasFocus]);
@@ -852,7 +850,7 @@ function GraphCanvasInner() {
 
           const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
           suppressPaneClickRef.current = true;
-          spawnDispatchNode(projectEvent, position);
+          setEventMenu({ x: event.clientX, y: event.clientY, flowPosition: position, event: projectEvent });
         } catch (e) {
           console.error('Failed to parse dropped event', e);
         }
@@ -947,13 +945,16 @@ function GraphCanvasInner() {
         setEventMenu(null);
         return;
       }
-      const next = insertDefineNodeForEvent(documents, cls, event);
+      const next = insertDefineNodeForEvent(documents, cls, event, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
+      
+      const targetNode = findMemberDeclareNodeForSymbol(next, cls, 'event', event.id);
+      const targetTabId = targetNode?.tabId ?? activeGraphTab ?? classGraphTabId(cls);
+      
+      markTabDirty(targetTabId);
       setCompileState('dirty');
       if (focusAfter) {
-        const target = findMemberDeclareNodeForSymbol(next, cls, 'event', event.id);
-        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+        if (targetNode) dispatchNavigateToNode(targetNode.tabId, targetNode.nodeId);
       }
       setEventMenu(null);
     },
@@ -964,6 +965,7 @@ function GraphCanvasInner() {
       patchAllDocuments,
       markTabDirty,
       setCompileState,
+      activeGraphTab,
     ]
   );
 
@@ -1027,9 +1029,13 @@ function GraphCanvasInner() {
         setVariableMenu(null);
         return;
       }
-      const next = insertDefineNodeForVariable(documents, cls, variable);
+      const next = insertDefineNodeForVariable(documents, cls, variable, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
+      
+      const targetNode = findMemberDeclareNodeForSymbol(next, cls, 'variable', variable.id);
+      const targetTabId = targetNode?.tabId ?? activeGraphTab ?? classGraphTabId(cls);
+      
+      markTabDirty(targetTabId);
       setCompileState('dirty');
       setVariableMenu(null);
     },
@@ -1040,6 +1046,7 @@ function GraphCanvasInner() {
       patchAllDocuments,
       markTabDirty,
       setCompileState,
+      activeGraphTab,
     ]
   );
 
@@ -1052,9 +1059,13 @@ function GraphCanvasInner() {
         setFunctionMenu(null);
         return;
       }
-      const next = insertDefineNodeForFunction(documents, cls, func);
+      const next = insertDefineNodeForFunction(documents, cls, func, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
+      
+      const targetNode = findMemberDeclareNodeForSymbol(next, cls, 'function', func.id);
+      const targetTabId = targetNode?.tabId ?? activeGraphTab ?? classGraphTabId(cls);
+      
+      markTabDirty(targetTabId);
       setCompileState('dirty');
       setFunctionMenu(null);
     },
@@ -1065,6 +1076,7 @@ function GraphCanvasInner() {
       patchAllDocuments,
       markTabDirty,
       setCompileState,
+      activeGraphTab,
     ]
   );
 
@@ -1112,12 +1124,13 @@ function GraphCanvasInner() {
         setClassMenu(null);
         return;
       }
-      const next = insertClassDefineNode(documents, cls);
+      const next = insertClassDefineNode(documents, cls, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
+      
+      const targetTabId = activeGraphTab ?? classGraphTabId(cls);
+      markTabDirty(targetTabId);
       setCompileState('dirty');
       setActiveClassId(cls.id);
-      setActiveGraphTab(classGraphTabId(cls));
       setSelection({ type: 'class', id: cls.id });
       setClassMenu(null);
     },
@@ -1127,7 +1140,7 @@ function GraphCanvasInner() {
       markTabDirty,
       setCompileState,
       setActiveClassId,
-      setActiveGraphTab,
+      activeGraphTab,
       setSelection,
     ]
   );
@@ -1314,7 +1327,10 @@ function GraphCanvasInner() {
 
   const handleFocusSelection = useCallback(() => {
     const selectedNodes = nodes.filter((node) => node.selected);
-    if (selectedNodes.length === 0) return;
+    if (selectedNodes.length === 0) {
+      fitView({ padding: 0.2, duration: 300 });
+      return;
+    }
     fitView({
       nodes: selectedNodes.map((node) => ({ id: node.id })),
       padding: 0.4,
@@ -1426,12 +1442,13 @@ function GraphCanvasInner() {
         focusGraphRef(node.data);
         return;
       }
-      if (!isLinkedGraphNode(node.data) || !node.data.linkedGraphId) return;
-      const entryId = findGraphEntryNodeId(getDocuments() ?? {}, node.data.linkedGraphId);
+      const nestedId = nestedGraphIdForNode(node.data);
+      if (!nestedId) return;
+      const entryId = findGraphEntryNodeId(getDocuments() ?? {}, nestedId);
       if (!entryId) return;
-      dispatchNavigateToNode(node.data.linkedGraphId, entryId);
+      dispatchNavigateToNode(nestedId, entryId);
     },
-    [classes, focusGraphRef, getDocuments]
+    [focusGraphRef, getDocuments]
   );
 
   React.useEffect(() => {
@@ -1526,9 +1543,6 @@ function GraphCanvasInner() {
       <GraphShortcutsHelp open={shortcutsHelpOpen} onClose={() => setShortcutsHelpOpen(false)} />
       <GraphFloatingDetails />
       <GraphFloatingCompilerLog />
-      <div className="absolute bottom-2 left-2 z-10 pointer-events-none text-[10px] text-zinc-600 bg-zinc-950/80 border border-zinc-800/80 rounded px-2 py-1">
-        Alt+click wire to delete · Alt+D disconnect · ? for shortcuts
-      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -1552,11 +1566,14 @@ function GraphCanvasInner() {
         onlyRenderVisibleElements
         selectNodesOnDrag={false}
         selectionOnDrag={false}
+        selectionKeyCode={['Control', 'Meta']}
+        multiSelectionKeyCode={['Control', 'Meta']}
         autoPanOnNodeDrag={false}
         nodeClickDistance={4}
         noWheelClassName="nowheel"
         noPanClassName="nopan"
         noDragClassName="nodrag"
+        proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#333" />
         {graphChromeOpen ? (
@@ -1721,11 +1738,7 @@ function GraphCanvasInner() {
           x={classMenu.x}
           y={classMenu.y}
           onClose={() => setClassMenu(null)}
-          dividersBefore={
-            onActiveClassGraph && currentClass?.id === classMenu.cls.id
-              ? ['open-class-ref', 'declare-class']
-              : ['open-class-ref']
-          }
+          dividersBefore={['open-class-ref', 'declare-class']}
           items={[
             {
               id: 'open-class-ref',
@@ -1736,19 +1749,15 @@ function GraphCanvasInner() {
                   classMenu.flowPosition
                 ),
             },
-            ...(onActiveClassGraph && currentClass?.id === classMenu.cls.id
-              ? [
-                  {
-                    id: 'declare-class',
-                    label: `Declare ${classMenu.cls.name}`,
-                    disabled: classDeclareExists,
-                    title: classDeclareExists
-                      ? 'Class define node already exists on this class graph'
-                      : undefined,
-                    onClick: () => handleDeclareClass(classMenu.cls),
-                  },
-                ]
-              : []),
+            {
+              id: 'declare-class',
+              label: `Declare ${classMenu.cls.name}`,
+              disabled: classDeclareExists,
+              title: classDeclareExists
+                ? 'Class define node already exists in the project'
+                : undefined,
+              onClick: () => handleDeclareClass(classMenu.cls),
+            },
             {
               id: 'open-class-graph',
               label: `Open ${classMenu.cls.name}`,

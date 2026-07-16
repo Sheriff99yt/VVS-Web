@@ -1,14 +1,29 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
+import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
 import { FilePlus, Code2, ChevronDown } from 'lucide-react';
-import { createFunctionSymbol, formatFunctionTabName } from '@/lib/functionTabs';
-import { canCloseGraphTab, reorderOpenTabs } from '@/lib/graphTabs';
-import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+import { createFunctionSymbol } from '@/lib/functionTabs';
+import {
+  canCloseGraphTab,
+  closeGraphTab,
+  openFunctionGraphTab,
+  reorderOpenTabs,
+  selectionForGraphTab,
+} from '@/lib/graphTabs';
 
 export function GraphTabBar() {
-  const { openTabs, activeGraphTab, setOpenTabs, functions, setFunctions, isTabDirty } = useProject();
+  const {
+    openTabs,
+    activeGraphTab,
+    setOpenTabs,
+    setActiveGraphTab,
+    functions,
+    activeClassId,
+    isTabDirty,
+  } = useProject();
   const { navigate } = useEditorNavigation();
+  const { addFunctionWithDefine } = useSymbolLifecycle();
   const [showMenu, setShowMenu] = useState(false);
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
   const [dropTabId, setDropTabId] = useState<string | null>(null);
@@ -30,7 +45,7 @@ export function GraphTabBar() {
         {
           graphTab: tabId,
           editorView: 'canvas',
-          selection: { type: 'graph', id: tabId === 'main' ? null : tabId },
+          selection: selectionForGraphTab(tabId),
         },
         { history: 'push' }
       );
@@ -40,22 +55,13 @@ export function GraphTabBar() {
 
   const handleClose = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const newTabs = openTabs.filter((t) => t.id !== id);
-    setOpenTabs(newTabs);
-    if (activeGraphTab === id && newTabs.length > 0) {
-      const fallback = newTabs[newTabs.length - 1]!.id;
+    const { nextTabs, nextActiveId } = closeGraphTab(openTabs, id, activeGraphTab);
+    setOpenTabs(nextTabs);
+    if (nextActiveId !== activeGraphTab) {
       navigate(
         {
-          graphTab: fallback,
-          selection: { type: 'graph', id: fallback === 'main' ? null : fallback },
-        },
-        { history: 'replace' }
-      );
-    } else if (newTabs.length === 0) {
-      navigate(
-        {
-          graphTab: MAIN_GRAPH_CONTAINER_ID,
-          selection: { type: 'graph', id: MAIN_GRAPH_CONTAINER_ID },
+          graphTab: nextActiveId,
+          selection: selectionForGraphTab(nextActiveId),
         },
         { history: 'replace' }
       );
@@ -88,24 +94,31 @@ export function GraphTabBar() {
     setDropTabId(null);
   };
 
-  const openNewTab = (type: 'function', name?: string, id?: string) => {
-    let tabId = id;
-    let tabName = name;
-
-    if (!tabId) {
-      const func = createFunctionSymbol(tabName || 'NewFunction');
-      tabId = func.id;
-      tabName = func.name;
-      setFunctions((prev) => [...prev, func]);
-    }
-
-    const displayName = formatFunctionTabName(tabName!);
-
-    if (!openTabs.find((t) => t.id === tabId)) {
-      setOpenTabs([...openTabs, { id: tabId!, type, name: displayName }]);
-    }
+  const createNewFunctionTab = () => {
+    const func = createFunctionSymbol('NewFunction', { classId: activeClassId });
+    addFunctionWithDefine(func);
+    // Open explicitly: navigate's ensureGraphTabOpen may not see `func` yet (stale functions).
+    // ensureGraphTabOpen dedupes against prev, so this + navigate will not double-add.
+    openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
     navigate(
-      { graphTab: tabId!, editorView: 'canvas', selection: { type: 'graph', id: tabId! } },
+      {
+        graphTab: func.id,
+        editorView: 'canvas',
+        selection: selectionForGraphTab(func.id),
+      },
+      { history: 'push' }
+    );
+    setShowMenu(false);
+  };
+
+  const openExistingFunctionTab = (func: { id: string; name: string }) => {
+    // Only navigate — ensureGraphTabOpen opens the tab once (deduped).
+    navigate(
+      {
+        graphTab: func.id,
+        editorView: 'canvas',
+        selection: selectionForGraphTab(func.id),
+      },
       { history: 'push' }
     );
     setShowMenu(false);
@@ -173,7 +186,7 @@ export function GraphTabBar() {
         {showMenu && (
           <div className="absolute top-full left-0 origin-top-left mt-2 w-48 bg-zinc-900 border border-zinc-700 shadow-2xl rounded-md py-1 z-50">
             <button
-              onClick={() => openNewTab('function')}
+              onClick={createNewFunctionTab}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
@@ -187,7 +200,7 @@ export function GraphTabBar() {
                 functions.map((func) => (
                   <button
                     key={func.id}
-                    onClick={() => openNewTab('function', func.name, func.id)}
+                    onClick={() => openExistingFunctionTab(func)}
                     className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors group"
                   >
                     <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw } from 'lucide-react';
+import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { VvsApi, getApiMode, ApiError } from '@/lib/api';
@@ -13,7 +13,8 @@ import { dispatchEditorNavigate } from '@/lib/editorNavigate';
 import { useRouter } from 'next/navigation';
 import { upsertRecentProject, isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
 import { persistProjectSnapshot } from '@/lib/cloudPersistence';
-import { saveProjectToFolder } from '@/lib/projectFolder';
+import { saveProjectToFolder, writeGeneratedFilesToFolder } from '@/lib/projectFolder';
+import { emitProjectLikeCodePanel } from '@/lib/emitProjectCode';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { promoteBrowserProjectToDisk, SAVE_ON_DISK_PROMPT_EVENT } from '@/lib/promoteProjectToDisk';
 import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDialog';
@@ -22,7 +23,10 @@ import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { getAccessToken } from '@/lib/auth/session';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
-import { shortcutTitle } from '@/lib/graphShortcuts';
+import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
+import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
+import { useUiPreference } from '@/hooks/useUiPreference';
+import { readUiPreference } from '@/lib/uiPreferences';
 
 import type { EditorViewTab } from '@/types/editorNavigation';
 
@@ -46,6 +50,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [saveBusy, setSaveBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderPickerAvailable = useFolderPickerSupported();
+  const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
 
   const {
     canUndo, canRedo, triggerUndo, triggerRedo,
@@ -303,6 +308,14 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setValidationWarnings(analysis.warnings);
     setCompileState('compiling');
     try {
+      // Same emit as Code | Files (graph → file) before API / disk write (U56).
+      const emitResult = emitProjectLikeCodePanel(snapshot, {
+        emitUnsupportedComments: readUiPreference('showUnsupportedComments'),
+      });
+      if (isFolderProject && folderHandle) {
+        await writeGeneratedFilesToFolder(folderHandle, emitResult);
+        await saveProjectToFolder(folderHandle, snapshot);
+      }
       if (getApiMode() === 'http') {
         const savedAt = await persistSnapshot(snapshot, { requireApiSave: true });
         setLastSavedAt(savedAt);
@@ -325,9 +338,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   }, [
     activeGraphTab,
     buildSnapshot,
+    classes,
     compileState,
     events,
+    folderHandle,
     functions,
+    isFolderProject,
     markTabClean,
     persistSnapshot,
     projectDetails,
@@ -340,6 +356,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     crossOverMode,
     variables,
     openTabs,
+    activeClassId,
   ]);
 
   const handleCommitPreview = useCallback(() => {
@@ -488,10 +505,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
   const autoSaveTitle = autoSave
     ? 'Auto save on — debounced project snapshot to local storage and cloud when signed in'
-    : 'Auto save off — click Save or use Ctrl+S';
+    : `Auto save off — click Save or use ${shortcutKeys('save-project')}`;
   const autoGenerateTitle = autoCompile
     ? 'Auto generate on — debounced validate and transpile on graph changes'
-    : 'Auto generate off — click Generate or use Ctrl+G';
+    : `Auto generate off — click Generate or use ${shortcutKeys('compile')}`;
 
   const handleExport = () => {
     const snapshot = buildSnapshot();
@@ -532,11 +549,24 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'file' ? null : 'file')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'file' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>File</button>
               {openMenu === 'file' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={() => { void handleSave(); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { void handleSave(); setOpenMenu(null); }} title={shortcutTitle('save-project')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Save size={12} className="shrink-0 opacity-70" />
                     Save project
-                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+S</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('save-project')}</span>
                   </button>
+                  {!isFolderProject && folderPickerAvailable ? (
+                    <button
+                      onClick={() => {
+                        setSaveOnDiskPromptMode('manual');
+                        setSaveOnDiskPromptOpen(true);
+                        setOpenMenu(null);
+                      }}
+                      className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                    >
+                      <FolderOutput size={12} className="shrink-0 opacity-70" />
+                      Save on disk…
+                    </button>
+                  ) : null}
                   <button onClick={handleExport} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <FileDown size={12} className="shrink-0 opacity-70" />
                     Export
@@ -559,47 +589,47 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'edit' ? null : 'edit')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'edit' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>Edit</button>
               {openMenu === 'edit' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={() => { void handleCompile(); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { void handleCompile(); setOpenMenu(null); }} title={shortcutTitle('compile')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Zap size={12} className="shrink-0 opacity-70" />
                     Generate
-                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+G</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('compile')}</span>
                   </button>
-                  <button onClick={() => { handleCommitPreview(); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { handleCommitPreview(); setOpenMenu(null); }} title={shortcutTitle('sync-preview')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <RefreshCw size={12} className="shrink-0 opacity-70" />
                     Sync code preview
-                    <span className="ml-auto text-[9px] text-zinc-600">⇧S</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('sync-preview')}</span>
                   </button>
                   <div className="h-px bg-zinc-800 my-1" />
-                  <button onClick={() => { triggerUndo(); setOpenMenu(null); }} disabled={!canUndo} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
+                  <button onClick={() => { triggerUndo(); setOpenMenu(null); }} disabled={!canUndo} title={shortcutTitle('undo')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
                     <Undo2 size={12} className="shrink-0 opacity-70" />
                     Undo
-                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+Z</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('undo')}</span>
                   </button>
-                  <button onClick={() => { triggerRedo(); setOpenMenu(null); }} disabled={!canRedo} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
+                  <button onClick={() => { triggerRedo(); setOpenMenu(null); }} disabled={!canRedo} title={shortcutTitle('redo')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
                     <Redo2 size={12} className="shrink-0 opacity-70" />
                     Redo
-                    <span className="ml-auto text-[9px] text-zinc-600">⇧Z</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('redo')}</span>
                   </button>
                   <div className="h-px bg-zinc-800 my-1" />
-                  <button onClick={() => { dispatchGraphAction('cut'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('cut'); setOpenMenu(null); }} title={shortcutTitle('cut')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Scissors size={12} className="shrink-0 opacity-70" />
                     Cut
-                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+X</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('cut')}</span>
                   </button>
-                  <button onClick={() => { dispatchGraphAction('copy'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('copy'); setOpenMenu(null); }} title={shortcutTitle('copy')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Copy size={12} className="shrink-0 opacity-70" />
                     Copy
-                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+C</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('copy')}</span>
                   </button>
-                  <button onClick={() => { dispatchGraphAction('paste'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('paste'); setOpenMenu(null); }} title={shortcutTitle('paste')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <ClipboardPaste size={12} className="shrink-0 opacity-70" />
                     Paste
-                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+V</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('paste')}</span>
                   </button>
-                  <button onClick={() => { dispatchGraphAction('duplicate'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('duplicate'); setOpenMenu(null); }} title={shortcutTitle('duplicate')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Files size={12} className="shrink-0 opacity-70" />
                     Duplicate
-                    <span className="ml-auto text-[9px] text-zinc-600">Ctrl+D</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('duplicate')}</span>
                   </button>
                 </div>
               )}
@@ -609,33 +639,51 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'view' ? null : 'view')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'view' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>View</button>
               {openMenu === 'view' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={() => { dispatchGraphAction('zoom-fit'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }} title={shortcutTitle('focus-selection')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <ZoomIn size={12} className="shrink-0 opacity-70" />
-                    Zoom to fit
-                    <span className="ml-auto text-[9px] text-zinc-600">Shift+F</span>
+                    Frame selection / fit all
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('focus-selection')}</span>
                   </button>
-                  <button onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('zoom-fit'); setOpenMenu(null); }} title="Zoom to fit all" className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <ZoomIn size={12} className="shrink-0 opacity-70" />
-                    Frame selection
-                    <span className="ml-auto text-[9px] text-zinc-600">F</span>
+                    Zoom to fit all
                   </button>
-                  <button onClick={() => { dispatchGraphAction('group-comment'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('group-comment'); setOpenMenu(null); }} title={shortcutTitle('group-comment')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Group size={12} className="shrink-0 opacity-70" />
                     Group
-                    <span className="ml-auto text-[9px] text-zinc-600">⇧G</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('group-comment')}</span>
                   </button>
-                  <button onClick={() => { dispatchGraphAction('extract-function'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('extract-function'); setOpenMenu(null); }} title={shortcutTitle('extract-function')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     Extract to function
-                    <span className="ml-auto text-[9px] text-zinc-600">⇧E</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('extract-function')}</span>
                   </button>
-                  <button onClick={() => { dispatchGraphAction('ungroup-comment'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('ungroup-comment'); setOpenMenu(null); }} title={shortcutTitle('ungroup-comment')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Ungroup size={12} className="shrink-0 opacity-70" />
                     Ungroup
-                    <span className="ml-auto text-[9px] text-zinc-600">⇧U</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('ungroup-comment')}</span>
                   </button>
-                  <button onClick={() => { dispatchGraphAction('disconnect-selection'); setOpenMenu(null); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('disconnect-selection'); setOpenMenu(null); }} title={shortcutTitle('disconnect')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     Disconnect wires
-                    <span className="ml-auto text-[9px] text-zinc-600">Alt+D</span>
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('disconnect')}</span>
+                  </button>
+                  <div className="h-px bg-zinc-800 my-1" />
+                  <button
+                    onClick={() => {
+                      dispatchOpenSettings('project');
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    Project settings…
+                  </button>
+                  <button
+                    onClick={() => {
+                      dispatchOpenSettings('app');
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    App settings…
                   </button>
                 </div>
               )}
@@ -679,6 +727,13 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         <div className="flex items-center gap-2">
           {activeTab === 'canvas' && (
             <TopNavWorkflowControls
+              dimUnsupportedNodes={dimUnsupportedNodes}
+              onDimUnsupportedToggle={() => setDimUnsupportedNodes(!dimUnsupportedNodes)}
+              dimUnsupportedTitle={
+                dimUnsupportedNodes
+                  ? 'Dim unsupported nodes for current language (on)'
+                  : 'Dim unsupported nodes for current language (off)'
+              }
               autoSave={autoSave}
               onAutoSaveToggle={() => setAutoSave(!autoSave)}
               autoSaveTitle={autoSaveTitle}
@@ -700,6 +755,14 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             title="Connect AI (MCP)"
           >
             <Bot size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => dispatchOpenSettings('project')}
+            className="p-1.5 rounded text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900 transition-colors"
+            title="Settings"
+          >
+            <Settings size={14} />
           </button>
           <AuthButton />
         </div>

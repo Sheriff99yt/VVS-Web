@@ -1,3 +1,4 @@
+import type { TargetLanguage } from '@vvs/graph-types';
 import type {
   IrForLoop,
   IrIfBranch,
@@ -5,6 +6,7 @@ import type {
   IrStatement,
   IrWhileLoop,
 } from '../ir/types';
+import { formatEnumCaseLabel } from '../emit/enumAccess';
 import { offsetSpans } from '../codeExpr';
 import type { ExprSpan } from '../codeExpr';
 import { createDefaultExprPrinter } from './expr';
@@ -37,7 +39,20 @@ export interface BuiltBlock {
 
 function caseLabelLiteral(label: string): string {
   if (/^-?\d+(\.\d+)?$/.test(label)) return label;
+  // Bare identifiers (member names, enum paths already formatted by formatSwitchCaseLabel)
+  if (/^[A-Za-z_][\w.:]*$/.test(label)) return label;
   return JSON.stringify(label);
+}
+
+/** Prefer structured enum refs / legacy `Enum::Member` → pack `EnumMemberAccess`. */
+export function formatSwitchCaseLabel(
+  c: { label: string; enumName?: string; member?: string },
+  family: string
+): string {
+  return formatEnumCaseLabel(c.label, family as TargetLanguage, {
+    enumName: c.enumName,
+    member: c.member,
+  });
 }
 
 function bodyLines(

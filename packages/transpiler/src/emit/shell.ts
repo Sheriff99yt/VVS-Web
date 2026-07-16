@@ -1,5 +1,9 @@
-import type { FunctionSymbol, TargetLanguage } from '@vvs/graph-types';
-import { defaultCodegenTarget, targetLanguageToFamily } from '@vvs/graph-types';
+import type { FunctionSymbol, PinType, TargetLanguage } from '@vvs/graph-types';
+import {
+  defaultCodegenTarget,
+  eventCodegenHandlerName,
+  targetLanguageToFamily,
+} from '@vvs/graph-types';
 import {
   getTemplate,
   renderTemplate,
@@ -14,12 +18,13 @@ import { createPrintContext, type PrintContext } from '../print';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { emptyHandlerBodyLine } from './layout';
 import { appendIrStatements } from './sinkStatements';
+import { typedParamFragment } from './emitTypes';
 
 export function overloadParamNames(func: FunctionSymbol): string[] {
   return func.overloads[0]?.parameters.map((p) => parameterCodegenName(p)) ?? [];
 }
 
-function printContextForIr(
+export function printContextForIr(
   ir: IrModule,
   indent: string,
   environmentManifest?: ProjectEnvironmentManifest
@@ -40,7 +45,7 @@ function profileFor(lang: TargetLanguage) {
   return resolvePrintProfile(family);
 }
 
-function renderShell(
+export function renderShell(
   lang: TargetLanguage,
   templateKey: string,
   slots: Record<string, string>
@@ -86,11 +91,22 @@ export function classExtendsSuffix(lang: TargetLanguage, extendsType?: string): 
 export function renderClassModuleOpen(
   lang: TargetLanguage,
   name: string,
-  extendsType?: string
+  extendsType?: string,
+  properties?: Record<string, unknown>
 ): string {
+  // Unset visibility omits keyword — do not invent `public`.
+  const mods = resolveModifierSlots(lang, properties);
+  const extendsField =
+    lang === 'rust' && extendsType?.trim()
+      ? `    base: ${extendsType.trim()},\n`
+      : '';
   return renderShell(lang, 'ClassModuleOpen', {
+    visibility: mods.visibility,
+    abstractKw: mods.abstractKw,
+    prefix: mods.visibility + mods.abstractKw,
     name,
     extendsSuffix: classExtendsSuffix(lang, extendsType),
+    extendsField,
   });
 }
 
@@ -98,47 +114,67 @@ export function renderClassModuleClose(lang: TargetLanguage): string | null {
   return optionalShell(lang, 'ClassModuleClose');
 }
 
+export function renderClassImplOpen(lang: TargetLanguage, name: string): string | null {
+  return optionalShell(lang, 'ClassImplOpen', { name });
+}
+
 export function renderClassPublicSection(lang: TargetLanguage): string | null {
   return optionalShell(lang, 'ClassPublicSection');
 }
 
-function eventHandlerParamList(lang: TargetLanguage, handler: IrEventHandler): string {
+function eventHandlerParamList(
+  lang: TargetLanguage,
+  handler: IrEventHandler,
+  paramTypes?: (PinType | string | undefined)[]
+): string {
+  const typed = (name: string, i: number) =>
+    typedParamFragment(name, paramTypes?.[i] ?? 'data_number', lang);
+
   if (lang === 'python') {
     return handler.paramNames.length > 0
       ? `self, ${handler.paramNames.join(', ')}`
       : 'self';
   }
-  if (lang === 'gdscript') {
+  if (lang === 'gdscript' || lang === 'javascript') {
     return handler.paramNames.join(', ');
   }
   if (lang === 'rust') {
-    const extras = handler.paramNames.map((p) => `${p}: f64`).join(', ');
+    const extras = handler.paramNames.map((p, i) => typed(p, i)).join(', ');
     return extras ? `&mut self, ${extras}` : '&mut self';
   }
-  if (lang === 'csharp') {
-    return handler.paramNames.map((p) => `double ${p}`).join(', ');
-  }
-  if (lang === 'cpp') {
-    return handler.paramNames.map((p) => `float ${p}`).join(', ');
-  }
-  if (lang === 'verse') {
-    return handler.paramNames.map((p) => `${p} : float`).join(', ');
+  if (
+    lang === 'csharp' ||
+    lang === 'cpp' ||
+    lang === 'verse'
+  ) {
+    return handler.paramNames.map((p, i) => typed(p, i)).join(', ');
   }
   return handler.paramNames.join(', ');
 }
 
-function eventHandlerSignature(lang: TargetLanguage, handler: IrEventHandler): string {
+function eventHandlerSignature(
+  lang: TargetLanguage,
+  handler: IrEventHandler,
+  properties?: Record<string, unknown>,
+  paramTypes?: (PinType | string | undefined)[]
+): string {
   if (lang === 'cpp') {
-    const params = eventHandlerParamList(lang, handler);
-    return params
+    const params = eventHandlerParamList(lang, handler, paramTypes);
+    const isOverride = Boolean(properties?.isOverride);
+    const isVirtual = Boolean(properties?.isVirtual) || isOverride;
+    const virtualKw = isVirtual ? 'virtual ' : '';
+    const overrideSuffix = isOverride ? ' override' : '';
+    const base = params
       ? `void on_${handler.handlerName}(${params})`
       : `void on_${handler.handlerName}()`;
+    return `${virtualKw}${base}${overrideSuffix}`;
   }
   if (lang === 'verse') {
-    const params = eventHandlerParamList(lang, handler);
+    const params = eventHandlerParamList(lang, handler, paramTypes);
+    const overrideTag = properties?.isOverride ? '<override>' : '';
     return params
-      ? `on_${handler.handlerName}<override>(${params}) : void =`
-      : `on_${handler.handlerName}<override>() : void =`;
+      ? `on_${handler.handlerName}${overrideTag}(${params}) : void =`
+      : `on_${handler.handlerName}${overrideTag}() : void =`;
   }
   return '';
 }
@@ -159,22 +195,53 @@ export function appendEventHandlerDefinition(
   ir: IrModule,
   handler: IrEventHandler,
   handlerSourceGraphNodeId: string,
-  options?: { leadingBlankLine?: boolean; leadingNewline?: boolean }
+  options?: {
+    leadingBlankLine?: boolean;
+    leadingNewline?: boolean;
+    defineNodeId?: string;
+    memberProperties?: Record<string, unknown>;
+    paramTypes?: (PinType | string | undefined)[];
+  }
 ): void {
   const lang = ir.targetLanguage;
   if (options?.leadingBlankLine && sink.lineCount > 0) sink.appendRaw('');
 
+  const memberProps = options?.memberProperties;
+  // Prefer event symbol parameters when types not passed explicitly.
+  const paramTypes =
+    options?.paramTypes ??
+    ir.projectEvents.find((e) => eventCodegenHandlerName(e) === handler.handlerName)?.parameters.map(
+      (p) => p.type
+    );
+
+  const mods = resolveModifierSlots(lang, memberProps);
+
   const slots: Record<string, string> = {
     linePrefix: options?.leadingNewline && sink.lineCount > 0 ? '\n' : '',
     handler: handler.handlerName,
-    paramList: eventHandlerParamList(lang, handler),
+    paramList: eventHandlerParamList(lang, handler, paramTypes),
+    class: ir.activeClass?.name || 'Main',
+    visibility: mods.visibility,
+    comma_params:
+      handler.paramNames.length > 0
+        ? ', ' + eventHandlerParamList(lang, handler, paramTypes)
+        : '',
   };
   if (lang === 'cpp' || lang === 'verse') {
-    slots.signature = eventHandlerSignature(lang, handler);
+    slots.signature = eventHandlerSignature(lang, handler, memberProps, paramTypes);
   }
 
   const startLine = sink.lineCount + 1;
-  sink.appendRaw(renderShell(lang, 'EventHandlerOpen', slots));
+  const templateName = handler.isConstructor ? 'ConstructorOpen' : 'EventHandlerOpen';
+  sink.appendRaw(renderShell(lang, templateName as any, slots));
+
+  const anchor = eventHandlerTagAnchor(lang, handler);
+  const signatureLine =
+    options?.leadingNewline && slots.linePrefix.includes('\n') ? startLine + 1 : startLine;
+  // Dual-node events: event_member_define owns the signature line; On handler owns the full span.
+  if (options?.defineNodeId) {
+    sink.tagRange(options.defineNodeId, signatureLine, signatureLine, anchor);
+  }
 
   const family = targetLanguageToFamily(lang) ?? 'python';
   const ctx = printContextForIr(ir, handlerBodyIndent(family), ir.environmentManifest);
@@ -186,108 +253,170 @@ export function appendEventHandlerDefinition(
 
   sink.tagRange(
     handlerSourceGraphNodeId,
-    startLine,
+    signatureLine,
     sink.lineCount,
     eventHandlerTagAnchor(lang, handler)
   );
 }
 
-function functionParamList(func: FunctionSymbol, lang: TargetLanguage): string {
+function functionParamList(
+  func: FunctionSymbol,
+  lang: TargetLanguage,
+  properties?: Record<string, unknown>
+): string {
   const params = overloadParamNames(func);
-  const binding = func.binding ?? 'instance';
+  const overloadParams = func.overloads[0]?.parameters ?? [];
+  const binding = properties?.binding ?? func.binding ?? 'instance';
   if (lang === 'python' && binding === 'instance') {
     return ['self', ...params].join(', ');
   }
-  if (lang === 'gdscript') {
+  if (lang === 'gdscript' || lang === 'javascript' || lang === 'cpp') {
+    // C++ FunctionDefOpen embeds types only when paramList supplies them — use typed fragments.
+    if (lang === 'cpp') {
+      return params
+        .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
+        .join(', ');
+    }
     return params.join(', ');
   }
   if (lang === 'rust') {
-    if (binding === 'static') {
-      return params.map((p) => `${p}: f64`).join(', ');
-    }
-    const typed = params.map((p) => `${p}: f64`).join(', ');
+    const typed = params
+      .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
+      .join(', ');
+    if (binding === 'static') return typed;
     return typed ? `&mut self, ${typed}` : '&mut self';
   }
-  if (lang === 'csharp') {
-    return params.map((p) => `double ${p}`).join(', ');
-  }
-  if (lang === 'verse') {
+  if (lang === 'csharp' || lang === 'verse') {
     return params
-      .map((p, i) => {
-        const param = func.overloads[0]!.parameters[i]!;
-        const t =
-          param.type === 'data_number'
-            ? 'float'
-            : param.type === 'data_string'
-              ? 'string'
-              : 'logic';
-        return `${p} : ${t}`;
-      })
+      .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
       .join(', ');
-  }
-  if (lang === 'cpp') {
-    return params.join(', ');
   }
   return params.join(', ');
 }
 
-function functionDefPrefix(
-  func: FunctionSymbol,
+export function resolveModifierSlots(
   lang: TargetLanguage,
-  isVirtual: boolean
-): string {
-  const binding = func.binding ?? 'instance';
-  if (lang === 'python') {
-    return binding === 'static' ? '    @staticmethod\n    ' : '    ';
-  }
-  if (lang === 'gdscript') {
-    return binding === 'static' ? '    static ' : '    ';
-  }
-  if (lang === 'rust') {
-    return binding === 'static' ? '    ' : '    pub ';
-  }
+  properties?: Record<string, unknown>,
+  fallbackVisibility?: string
+): {
+  visibility: string;
+  staticKw: string;
+  abstractKw: string;
+  virtualKw: string;
+  overrideKw: string;
+  constKw: string;
+  asyncKw: string;
+} {
+  const binding = properties?.binding ?? 'instance';
+  const isVirtual = Boolean(properties?.isVirtual);
+  const isOverride = Boolean(properties?.isOverride);
+  const isAbstract = Boolean(properties?.isAbstract);
+  const isConst = Boolean(properties?.isConst);
+  const isAsync = Boolean(properties?.isAsync);
+  const rawVis = properties?.visibility ?? fallbackVisibility;
+  const vis = rawVis != null && String(rawVis).trim() !== '' ? String(rawVis) : '';
+
+  let visibility = '';
+  let staticKw = '';
+  let abstractKw = '';
+  let virtualKw = '';
+  let overrideKw = '';
+  let constKw = '';
+  let asyncKw = '';
+
   if (lang === 'csharp') {
-    return binding === 'static' ? '    public static ' : '    public ';
+    if (vis === 'public') visibility = 'public ';
+    else if (vis === 'private') visibility = 'private ';
+    else if (vis === 'protected') visibility = 'protected ';
+    if (binding === 'static') staticKw = 'static ';
+    if (isAbstract) abstractKw = 'abstract ';
+    if (isVirtual && !isAbstract) virtualKw = 'virtual ';
+    if (isOverride) overrideKw = 'override ';
+    if (isConst) constKw = 'readonly ';
+    if (isAsync) asyncKw = 'async ';
+  } else if (lang === 'rust') {
+    if (vis === 'public') visibility = 'pub ';
+    if (isConst) constKw = 'const ';
+    if (isAsync) asyncKw = 'async ';
+  } else if (lang === 'cpp') {
+    visibility = '';
+    if (binding === 'static') staticKw = 'inline static ';
+    if (isVirtual || isAbstract) virtualKw = 'virtual ';
+    if (isConst) constKw = 'const ';
+  } else if (lang === 'javascript' || lang === 'python' || lang === 'gdscript') {
+    if (isAsync && lang !== 'gdscript') asyncKw = 'async ';
+    if (binding === 'static') {
+      if (lang === 'python') staticKw = '@staticmethod\n    ';
+      else if (lang === 'javascript') staticKw = 'static ';
+      else if (lang === 'gdscript') staticKw = 'static ';
+    }
+    if (lang === 'javascript' && vis === 'private') visibility = '#';
+  } else if (lang === 'verse') {
+    if (isOverride) overrideKw = '<override>';
+    if (vis === 'public') visibility = '<public>';
+    else if (vis === 'private') visibility = '<private>';
   }
-  if (lang === 'javascript') {
-    return binding === 'static' ? '  static ' : '  ';
-  }
-  if (lang === 'cpp') {
-    if (binding === 'static') return '    static ';
-    if (isVirtual) return '    virtual ';
-    return '    ';
-  }
-  return '    ';
+
+  return { visibility, staticKw, abstractKw, virtualKw, overrideKw, constKw, asyncKw };
 }
 
 export function renderFunctionDefHeader(
   func: FunctionSymbol,
   lang: TargetLanguage,
   isAsync = false,
-  isVirtual = false
+  properties?: Record<string, unknown>
 ): string {
+  const mods = resolveModifierSlots(lang, properties, func.visibility);
+  // Async only when define-node / caller says so — never invent from body scan.
+  const wantAsync = Boolean(properties?.isAsync) || isAsync;
+  const actualAsyncKw = wantAsync
+    ? lang === 'csharp' || lang === 'javascript' || lang === 'rust' || lang === 'python'
+      ? 'async '
+      : mods.asyncKw
+    : '';
+
   return renderShell(lang, 'FunctionDefOpen', {
-    staticDecorator: functionDefPrefix(func, lang, isVirtual),
-    prefix: functionDefPrefix(func, lang, isVirtual),
-    asyncKw: isAsync ? 'async ' : '',
+    visibility: mods.visibility,
+    staticKw: mods.staticKw,
+    abstractKw: mods.abstractKw,
+    virtualKw: mods.virtualKw,
+    overrideKw: mods.overrideKw,
+    asyncKw: actualAsyncKw || (wantAsync ? mods.asyncKw : ''),
+    staticDecorator: mods.staticKw,
+    prefix: Object.values(mods).join(''),
     name: func.name,
-    paramList: functionParamList(func, lang),
+    paramList: functionParamList(func, lang, properties),
   });
 }
 
 export function renderFunctionDeclPrototype(
   func: FunctionSymbol,
   lang: TargetLanguage,
-  isVirtual = false
+  properties?: Record<string, unknown>
 ): string | null {
-  if (lang !== 'cpp') return null;
+  if (lang !== 'cpp' && lang !== 'csharp') return null;
+  const overloadParams = func.overloads[0]?.parameters ?? [];
   const params = overloadParamNames(func)
-    .map((p) => `float ${p}`)
+    .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
     .join(', ');
+
+  const mods = resolveModifierSlots(lang, properties, func.visibility);
+  const isOverride = Boolean(properties?.isOverride ?? false);
+  const isAbstract = Boolean(properties?.isAbstract ?? false);
+  const overrideSuffix = lang === 'cpp' && isOverride ? ' override' : '';
+  const pureSuffix = lang === 'cpp' && isAbstract ? ' = 0' : '';
+
   return renderShell(lang, 'FunctionDeclPrototype', {
-    prefix: functionDefPrefix(func, lang, isVirtual),
+    visibility: mods.visibility,
+    staticKw: mods.staticKw,
+    abstractKw: mods.abstractKw,
+    virtualKw: mods.virtualKw,
+    overrideKw: mods.overrideKw,
+    asyncKw: '',
+    prefix: Object.values(mods).join(''),
     name: func.name,
     paramList: params,
+    suffix: overrideSuffix + pureSuffix,
   });
 }
 

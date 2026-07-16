@@ -24,7 +24,8 @@ description: Triggers when modifying or building the TypeScript code generation 
 
 **Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · Trigger skill: `vvs_visual_code_fidelity/SKILL.md`
 
-- Emit via **`appendIrMembers` / `ir.members` only** — walk the define chain; **no** `appendLegacyPreamble` or `useLegacyPreamble`
+- Emit via **`appendIrMembersInOrder` / `ir.members` only** — walk the define chain; **no** `appendLegacyPreamble` or `useLegacyPreamble`
+- Class shell opens **only** on `ClassDecl` — see `docs/design/fidelity_streamline.md`
 - Every `IrStatement` / member decl needs **`sourceGraphNodeId`** — no emit from `ir.variables` / `ir.functions` without define nodes
 - Lowering produces members from `class_define`, `var_define`, `function_define`, `event_member_define` on the class home graph
 - **Checklist:** Does this PR emit text without a canvas node?
@@ -69,11 +70,26 @@ Enforce separation where possible: (1) Graph Analysis (DAG sorting), (2) IR / ex
 
 # Usability example tests
 
-- `apps/web/src/lib/usabilityExampleTests/helloWorldUsabilityTest.ts` — baseline Declare → On → Print
-- `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts` — full coverage fixture
-- Integrity: `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.test.ts`
-- Builders: `apps/web/src/lib/usabilityExampleTests/usabilityTestGraphBuild.ts` — `usabilityTestDocument()`
+- **Verify as the user sees:** Code panel path — `useProjectTranspileResult` / `bun apps/web/scripts/extract_test_project_outputs.ts` → `apps/web/test_project_outputs/`. Do not ship emit fixes validated only with raw `transpileGraph` that skips multi-class keying or integration `moduleFile`.
+- `coverageLabUsabilityTest.ts` — full coverage (Machine+Sensor, one graph)
+- `firstGraphUsabilityTest.ts` — newcomer Declare / GetInput / Call baseline
+- Hook mirror: `apps/web/src/hooks/useProjectTranspileResult.test.ts`
 - Catalog: `docs/design/language_capability_catalog.md` · skill: `vvs_usability_example_tests/SKILL.md`
+
+# 1:1 member emit (locked)
+
+**Streamline hub:** `docs/design/fidelity_streamline.md`
+
+1. Emit via **`appendIrMembersInOrder`** — one pass, canvas order = text order.
+2. No `# Declare` placeholders; `function_define` / `event_member_define` map to real signatures.
+3. Coverage Lab C++ Machine golden must stay honest (modifiers + access sections + order).
+4. Drive keywords only from define-node `properties` via `resolveModifierSlots` + packs — no inventing class abstract / Default / forced `public`.
+5. Access sections: emit `public:` / `protected:` / `private:` only when visibility **changes** along the member chain (unset visibility omits keyword).
+6. Async only from define-node `isAsync` — never infer from body; C++ no-op until coroutines (UI disables the chip).
+7. Param / for-each types from pin/symbol via `emitTypes.typeNameForPin` — pack slots, no hardcoded float/f64 invent.
+8. Class shell opens only on `ClassDecl`.
+9. **One graph → one file:** emit all classes on a container graph into one module (canvas order). Do **not** use class-per-file `preferFallbackOverModuleFile` as the product default, and do **not** add a split-classes profile.
+10. Imports scoped by `ownerClassId` + `targetLanguages`; enum access via pack `EnumMemberAccess`.
 
 # Pin type validation (shared with UI)
 

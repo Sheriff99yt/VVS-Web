@@ -17,61 +17,6 @@ export interface RoadmapSection {
   emphasis?: 'active' | 'shipped';
 }
 
-export interface RoadmapPhase {
-  number: number;
-  id: string;
-  title: string;
-  summary: string;
-  status: 'shipped' | 'active' | 'planned';
-}
-
-/** High-level phases — aligned with docs/roadmap.md */
-export const ROADMAP_PHASES: RoadmapPhase[] = [
-  {
-    number: 1,
-    id: 'phase-1',
-    title: 'Web editor & transpiler',
-    summary: 'Browser editor, client transpiler, .vvs/ folders, local Go API + MCP',
-    status: 'shipped',
-  },
-  {
-    number: 2,
-    id: 'phase-2',
-    title: 'Persistence, auth & MCP core',
-    summary:
-      'Core project persistence, JWT auth, and authenticated MCP flows are implemented in-repo',
-    status: 'shipped',
-  },
-  {
-    number: 3,
-    id: 'phase-3',
-    title: 'Community library',
-    summary: 'Upload, browse, pgvector semantic search',
-    status: 'active',
-  },
-  {
-    number: 4,
-    id: 'phase-4',
-    title: 'Collaboration',
-    summary: 'Go WebSockets, presence, op log',
-    status: 'planned',
-  },
-  {
-    number: 5,
-    id: 'phase-5',
-    title: 'UE6 plugin',
-    summary: 'In-engine canvas, Verse emission, web round-trip',
-    status: 'planned',
-  },
-  {
-    number: 6,
-    id: 'phase-6',
-    title: 'Scale & polish',
-    summary: 'M3 closed; usability/workflow + perf/env/mobile remain',
-    status: 'active',
-  },
-];
-
 /** Shipped editor and platform capabilities (aligned with docs/current_state.md). */
 export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   {
@@ -151,7 +96,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen — new/open folder (.vvs/ overlay), recent projects, import JSON, Hello World & Calculator **usability test** cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
+          'Start screen — new/open folder (.vvs/ overlay), recent projects, import JSON, First Graph & Coverage Lab Test Project cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
       },
       {
         id: 'nav-history',
@@ -539,7 +484,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'graph-containers',
         title: 'Graph-as-canvas model',
         description:
-          'Each graphContainer is a real canvas (`documents[container.id]`). Project map (`main-graph`) is organizational — graph_ref navigation only, no codegen. Module graphs (e.g. Calculator) hold class_define chains plus runtime flow. Classes are symbols nested under graphs, not separate tabs.',
+          'Each graphContainer is a real canvas (`documents[container.id]`). Project map (`main-graph`) is organizational — graph_ref navigation only, no codegen. Module graphs hold class_define chains plus runtime flow (Coverage Lab: Machine+Sensor on one graph). Classes are symbols nested under graphs, not separate tabs.',
         status: 'done',
       },
       {
@@ -560,21 +505,21 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'class-define-fidelity',
         title: 'Class declare fidelity',
         description:
-          'class_define required when class has symbols or member defines; ORPHAN_DEFINE_NODE for stray class_define; no phantom class shell from symbol table; deleting Declare blocks Generate (DEFINE_NODE_MISSING) but preview shows member chain without class Name: wrapper; Calculator usability test covers deleted Declare.',
+          'class_define required when class has symbols or member defines; ORPHAN_DEFINE_NODE for stray class_define; no phantom class shell from symbol table; deleting Declare blocks Generate (DEFINE_NODE_MISSING) but preview shows member chain without class Name: wrapper; Coverage Lab covers strict declare fidelity.',
         status: 'done',
       },
       {
         id: 'declare-implement-emit',
-        title: 'Declare vs implement codegen',
+        title: '1:1 member-chain emit',
         description:
-          'Member-chain Declare emits native declarations (e.g. C++ prototypes) or comment placeholders (# Declare name) when a target has no declare form; On handlers and function tabs own bodies in a second pass. sourceMap highlights declare lines separately from handler blocks.',
+          'Canvas member-chain order is source order: each define node emits its full construct inline (appendIrMembersInOrder). No # Declare stubs and no deferred implementation pass. Dual-node events: event_member_define tags the signature; On handler spans the body.',
         status: 'done',
       },
       {
         id: 'ordered-emit',
         title: 'Ordered member emit',
         description:
-          'Transpiler walks the member chain for declaration order (appendIrMembers) then implementations (appendMemberImplementations); no sidebar preamble fallback.',
+          'Transpiler walks ir.members once in define-chain order (appendIrMembersInOrder); no sidebar preamble fallback. Coverage Lab locks Machine+Sensor on one graph.',
         status: 'done',
       },
       {
@@ -596,6 +541,41 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Go v3 + MCP class tools',
         description:
           'Domain v3 normalize; list_classes / add_class MCP tools; optional class_id on get_graph and add_node.',
+        status: 'done',
+      },
+      {
+        id: 'graph-equals-file',
+        title: 'One graph → one file (U58)',
+        description:
+          'All class_define chains on a container graph emit into one module (canvas order). Want two files → two graphs. Coverage Lab → src/CoverageLab.*',
+        status: 'done',
+      },
+      {
+        id: 'generate-export-multiclass',
+        title: 'Generate = Code panel emit (U56–U57)',
+        description:
+          'TopNav Generate / CLI / Code preview share emitProjectLikeCodePanel; folder write when on disk. Class-home tabs show the graph’s module file.',
+        status: 'done',
+      },
+      {
+        id: 'fidelity-streamline-0-4',
+        title: 'Fidelity streamline Phases 0–4',
+        description:
+          'Single member emit path, property→pack only, ClassDecl-only shell, Coverage Lab golden. docs/design/fidelity_streamline.md.',
+        status: 'done',
+      },
+      {
+        id: 'fidelity-canvas-surface',
+        title: 'Import Module + enum canvas surface',
+        description:
+          'import_module props; enumType + EnumMemberAccess; expr_enum_member. Verify via extract_test_project_outputs.ts.',
+        status: 'done',
+      },
+      {
+        id: 'user-types-typeref',
+        title: 'User types (TypeRef)',
+        description:
+          'TypeRef for builtin / enum / class / Array / Map; pickers from canvas declares; Coverage Lab Status/Host/Readings. docs/design/user_types.md.',
         status: 'done',
       },
     ],
@@ -771,10 +751,155 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
     ],
   },
+  {
+    id: 'language-platform',
+    title: 'Language platform (seven families)',
+    phase: 6,
+    emphasis: 'shipped',
+    items: [
+      {
+        id: 'languages-more',
+        title: 'Pack-driven language families',
+        description:
+          'Python, JS, C++, Verse, GDScript, Rust, C# — pack-first print + 14×7 Rosetta goldens. Milestone 3 closed July 2026.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-shell-templates',
+        title: 'Pack-driven module shells',
+        description:
+          'ClassModuleOpen/Close, EventHandlerOpen, FunctionDefOpen templates; pack emptyHandlerBody/emptyFunctionBody layout keys.',
+        status: 'done',
+      },
+      {
+        id: 'tree-sitter-ci',
+        title: 'Tree-sitter parse validation',
+        description:
+          'Python/JS Rosetta outputs validated via Tree-sitter on Linux CI; local dev skips when native prebuild unavailable.',
+        status: 'done',
+      },
+      {
+        id: 'gdscript-godot-env-shipped',
+        title: 'Godot environment pack',
+        description:
+          'env.gdscript.godot-game manifest (Node, _ready, _process); GDScript language profile in @vvs/language-profiles.',
+        status: 'done',
+      },
+      {
+        id: 'usability-example-tests',
+        title: 'Usability Test Projects',
+        description:
+          'First Graph + Coverage Lab on StartScreen; verify codegen via Code panel extract (extract_test_project_outputs.ts). Calculator/Async Fetcher/Dual Class Lab retired as StartScreen fixtures.',
+        status: 'done',
+      },
+    ],
+  },
 ];
 
-/** Planned or in-progress capabilities (aligned with docs/roadmap.md and current_state gaps). */
+/** Open / planned only — shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
+  {
+    id: 'editor-ux-next',
+    title: 'Editor UX & fidelity next (U68–U77)',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'comment-c-u68',
+        title: 'Comment [C] on selection (U68)',
+        description:
+          'Comment selected nodes; generated comment lines ordered by canvas Y. Lock toggle default off (free move/resize); on locks group as today.',
+        status: 'planned',
+      },
+      {
+        id: 'user-comments-toggle-u69',
+        title: 'Code panel user-comments toggle (U69)',
+        description:
+          'Separate from (x) unsupported comments — show/hide author comment lines in the Code preview.',
+        status: 'planned',
+      },
+      {
+        id: 'mcp-capabilities-u70',
+        title: 'AI / MCP capabilities revision (U70)',
+        description:
+          'Revise MCP tool surface; consent toggle to enable more dangerous capabilities under user opt-in.',
+        status: 'planned',
+      },
+      {
+        id: 'highlight-reverse-u71',
+        title: 'Code↔graph highlight rethink + reverse select (U71)',
+        description:
+          'Maintainable sourceMap that does not need hand updates per new node kind; double-click Code panel text to select the representing canvas node.',
+        status: 'planned',
+      },
+      {
+        id: 'topnav-right-unify-u72',
+        title: 'Unify TopNav right button styles (U72)',
+        description: 'Consistent look for the top bar right control cluster.',
+        status: 'planned',
+      },
+      {
+        id: 'code-panel-topbar-u73',
+        title: 'Code panel top bar UX (U73)',
+        description: 'Revise usage, layout, and controls of the Code | Files header.',
+        status: 'planned',
+      },
+      {
+        id: 'output-view-u74',
+        title: 'Left panel Output view rethink (U74)',
+        description: 'Make Output more useful — logs, jump-to-node, density / progressive disclosure.',
+        status: 'planned',
+      },
+      {
+        id: 'chain-auto-layout-u75',
+        title: 'Node chain auto-layout (U75)',
+        description:
+          'Select first node + button: organize the connected exec chain and keep it selected so the user can move the group.',
+        status: 'planned',
+      },
+      {
+        id: 'format-json-u76',
+        title: 'Format JSON in Code panel (U76)',
+        description: 'Pretty-format JSON when a JSON file or selection is active in the Code panel.',
+        status: 'planned',
+      },
+      {
+        id: 'go-language-u77',
+        title: 'Go language pack (U77)',
+        description: 'Eighth target language — syntax pack, emit, and Test Project / Rosetta coverage.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
+    id: 'fidelity-streamline',
+    title: 'Fidelity deepen',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'fidelity-u64',
+        title: 'Deeper fidelity (U64)',
+        description:
+          'Temps → pack + expressionSpans. SwitchSelectBind + GetInputLine* (rust/csharp number); selector/prompt spans. Temp names remain TS constants.',
+        status: 'done',
+      },
+      {
+        id: 'test-project-rethink-u65',
+        title: 'Test Project rethink + expected compare (U65)',
+        description:
+          'Stable vvs-test-* localStorage seeds; First Graph+GetInput; Coverage Lab TypeRef map; test_project_goldens + usabilityExampleGoldens.test.ts.',
+        status: 'done',
+      },
+      {
+        id: 'cross-class-refs',
+        title: 'Cross-class event dispatch',
+        description:
+          'DispatchEventCrossClass pack + lower (mirrors CallFunction); CROSS_CLASS_DISPATCH_WITHOUT_IMPORT; Dual Class Boot→Sensor.tick.',
+        status: 'done',
+      },
+    ],
+  },
   {
     id: 'phase-2-deploy',
     title: 'Deployment & operations',
@@ -808,121 +933,15 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
   {
-    id: 'syntax-packs',
-    title: 'Syntax packs & agent maintenance',
-    items: [
-      {
-        id: 'syntax-pack-migration-py-cpp',
-        title: 'Pack migration — Python & C++',
-        description:
-          'Milestone 1 shipped: python/cpp leaf + block emit via JSON templates; render.ts; packCoverage + packMigrationGate CI; get_input + switch registered printers.',
-        status: 'done',
-      },
-      {
-        id: 'syntax-pack-migration-js-verse',
-        title: 'Pack migration — JavaScript & Verse',
-        description:
-          'Milestone 2 shipped: full base packs, pack-first print for all v1 families, switch/get_input registered printers, legacy emitters removed.',
-        status: 'done',
-      },
-      {
-        id: 'syntax-pack-mcp',
-        title: 'MCP syntax pack tools',
-        description:
-          'list_syntax_packs + list_available_nodes + propose_syntax_delta + run_rosetta_suite + validate_generated_parse available on local MCP.',
-        status: 'done',
-      },
-      {
-        id: 'syntax-pack-shell-templates',
-        title: 'Pack-driven module shells',
-        description:
-          'ClassModuleOpen/Close, EventHandlerOpen, FunctionDefOpen templates in base packs; emit/shell.ts + pack emptyHandlerBody/emptyFunctionBody layout keys.',
-        status: 'done',
-      },
-      {
-        id: 'syntax-pack-block-helpers',
-        title: 'Shared block close helpers',
-        description:
-          'blockHelpers.ts — condSpanOffset, blockCloseLine, ifElseLine shared by print/blocks.ts and emit/sinkStatements.ts; C++ ForLoopClose/WhileLoopClose pack keys.',
-        status: 'done',
-      },
-      {
-        id: 'tree-sitter-ci',
-        title: 'Tree-sitter parse validation',
-        description:
-          'Python/JS Rosetta outputs validated via Tree-sitter on Linux CI (`validate:parse --strict` in `.github/workflows/ci.yml`); local dev skips when native prebuild unavailable.',
-        status: 'done',
-      },
-      {
-        id: 'packages-ci',
-        title: 'Monorepo packages CI job',
-        description:
-          'GitHub Actions packages job: syntax-packs + transpiler + graph-types tests; web job lint/build; server job go build + go test.',
-        status: 'done',
-      },
-      {
-        id: 'syntax-pack-gdscript',
-        title: 'GDScript pack family (Phase 6)',
-        description:
-          'Fifth pack-driven family: gdscript.base.json, 14× Rosetta goldens, transpiler wiring, web UI target, golden regen script, Godot env pack + language profile.',
-        status: 'done',
-      },
-    ],
-  },
-  {
-    id: 'phase-6-gdscript',
-    title: 'Phase 6 — GDScript (Godot)',
-    phase: 6,
-    emphasis: 'shipped',
-    items: [
-      {
-        id: 'gdscript-pack-rosetta',
-        title: 'GDScript base pack + Rosetta',
-        description:
-          'gdscript.base.json with Godot idioms (class_name, func, preload, OS.delay_msec); 14 fixtures × gdscript goldens green in rosetta.test.ts.',
-        status: 'done',
-      },
-      {
-        id: 'gdscript-ui-codegen',
-        title: 'GDScript UI codegen target',
-        description:
-          'Selectable per graph and in project defaults; code panel header shows language + .{ext}; Graph settings → This graph / Project defaults.',
-        status: 'done',
-      },
-      {
-        id: 'gdscript-godot-env-shipped',
-        title: 'Godot environment pack + portability',
-        description:
-          'env.gdscript.godot-game manifest (Node, _ready, _process); GDScript language profile in @vvs/language-profiles.',
-        status: 'done',
-      },
-    ],
-  },
-  {
-    id: 'multi-class-future',
-    title: 'Multi-class — next',
-    items: [
-      {
-        id: 'cross-class-refs',
-        title: 'Cross-class references',
-        description:
-          'import_class node + cross-class CallFunction lowering with CROSS_CLASS_CALL_WITHOUT_IMPORT analyzer warning; cross-class event dispatch still planned.',
-        status: 'partial',
-      },
-    ],
-  },
-  {
     id: 'unified-symbols',
     title: 'Unified symbol model & portability UX',
-    phase: 3,
-    emphasis: 'active',
     items: [
       {
         id: 'node-effectiveness',
         title: 'Node effectiveness indicators',
         description:
-          'Show all catalog nodes; dim + badge when ineffective for codegen target (or future COA set). Resolver driven by language profiles + registry portabilityFeatures.',
-        status: 'planned',
+          'U66/U67 shipped: (x) unsupported comments (toggle left of Code language); canvas dim (toggle left of Autosave). Shared nodeEffectiveness resolver; Import targetLanguages v1.',
+        status: 'done',
       },
       {
         id: 'coa-deferred',
@@ -935,7 +954,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-spawn-ux',
         title: 'Declare / implement / invoke spawn UX',
         description:
-          'Role chips in spawn catalog. Done: Project tree Declare/Handler badges, Event panel Declare · handler · Dispatch, canvas drop menus (Call/Declare/Define, Dispatch/Declare/handler). Spec: docs/design/unified_symbol_model.md Phase D.',
+          'Role chips in spawn catalog. Done: Project tree Declare/Handler badges, Event panel Declare · handler · Dispatch, canvas drop menus. Spec: docs/design/unified_symbol_model.md Phase D.',
         status: 'partial',
       },
     ],
@@ -944,6 +963,13 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     id: 'transpiler',
     title: 'Transpiler & languages',
     items: [
+      {
+        id: 'go-language',
+        title: 'Go language pack (see U77)',
+        description:
+          'Tracked as U77 in editor-ux-next — syntax pack, emit, Test Project / Rosetta coverage for Go as an eighth target.',
+        status: 'planned',
+      },
       {
         id: 'overload-codegen',
         title: 'Multi-overload codegen',
@@ -1037,6 +1063,26 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
   {
+    id: 'community',
+    phase: 3,
+    title: 'Phase 3 — Community library',
+    items: [
+      {
+        id: 'library-backend',
+        title: 'Library backend',
+        description:
+          'Upload, browse, version, and rate community graphs, node packs, templates, and environment manifests.',
+        status: 'partial',
+      },
+      {
+        id: 'search',
+        title: 'Semantic library search',
+        description: 'pgvector on self-hosted Postgres — intent search across shared scripts and templates.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
     id: 'collaboration',
     phase: 4,
     title: 'Phase 4 — Real-time collaboration',
@@ -1053,27 +1099,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Per-tab document rows',
         description:
           'Split large projects into graph_documents rows when JSONB snapshots grow or collab needs partial updates.',
-        status: 'planned',
-      },
-    ],
-  },
-  {
-    id: 'community',
-    phase: 3,
-    emphasis: 'active',
-    title: 'Phase 3 — Community library',
-    items: [
-      {
-        id: 'library-backend',
-        title: 'Library backend',
-        description:
-          'Upload, browse, version, and rate community graphs, node packs, templates, and environment manifests.',
-        status: 'partial',
-      },
-      {
-        id: 'search',
-        title: 'Semantic library search',
-        description: 'pgvector on self-hosted Postgres — intent search across shared scripts and templates.',
         status: 'planned',
       },
     ],
@@ -1116,20 +1141,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Phase 6 — Scale, platforms & enterprise',
     items: [
       {
-        id: 'languages-more',
-        title: 'Phase 6 v2 language platform',
-        description:
-          'GDScript, Rust, C# — pack-first families + Rosetta + UI. Milestone 3 closed July 2026.',
-        status: 'done',
-      },
-      {
-        id: 'usability-example-tests',
-        title: 'Usability example tests',
-        description:
-          'Hello World + Calculator fixtures in usabilityExampleTests/ — regression graphs for UI gap discovery (language_capability_catalog.md); Start screen section renamed from Examples.',
-        status: 'done',
-      },
-      {
         id: 'rust-console-env',
         title: 'Rust console environment pack',
         description:
@@ -1165,95 +1176,3 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
 ];
-
-export interface PhaseItemCounts {
-  done: number;
-  partial: number;
-  planned: number;
-  total: number;
-}
-
-export interface PhaseProgress {
-  phase: RoadmapPhase;
-  counts: PhaseItemCounts;
-  /** Weighted completion 0–100 (partial = 50%). */
-  percent: number;
-}
-
-export interface RoadmapProgressSummary {
-  phases: PhaseProgress[];
-  crossCutting: PhaseItemCounts;
-  /** Mean of phase percents (each phase weighted equally). */
-  overallPercent: number;
-}
-
-function countItemsByStatus(
-  items: RoadmapItem[],
-  defaultStatus: RoadmapItemStatus
-): PhaseItemCounts {
-  let done = 0;
-  let partial = 0;
-  let planned = 0;
-  for (const item of items) {
-    const status = item.status ?? defaultStatus;
-    if (status === 'done') done += 1;
-    else if (status === 'partial') partial += 1;
-    else planned += 1;
-  }
-  return { done, partial, planned, total: done + partial + planned };
-}
-
-function weightedPercent(counts: PhaseItemCounts): number {
-  if (counts.total === 0) return 0;
-  const weighted = counts.done + counts.partial * 0.5;
-  return Math.round((weighted / counts.total) * 100);
-}
-
-/** Item-level progress per public roadmap phase (aligned with Roadmap view tabs). */
-export function computeRoadmapProgress(): RoadmapProgressSummary {
-  const phase1Shipped = SHIPPED_FEATURE_SECTIONS.filter((section) => section.phase == null).flatMap(
-    (section) => section.items
-  );
-  const phase1Counts = countItemsByStatus(phase1Shipped, 'done');
-
-  const phases: PhaseProgress[] = ROADMAP_PHASES.map((phase) => {
-    if (phase.number === 1) {
-      return {
-        phase,
-        counts: phase1Counts,
-        percent: phase.status === 'shipped' ? 100 : weightedPercent(phase1Counts),
-      };
-    }
-
-    const shippedItems = SHIPPED_FEATURE_SECTIONS.filter((section) => section.phase === phase.number).flatMap(
-      (section) => section.items
-    );
-    const futureItems = FUTURE_FEATURE_SECTIONS.filter((section) => section.phase === phase.number).flatMap(
-      (section) => section.items
-    );
-    const shippedCounts = countItemsByStatus(shippedItems, 'done');
-    const futureCounts = countItemsByStatus(futureItems, 'planned');
-    const counts = {
-      done: shippedCounts.done + futureCounts.done,
-      partial: shippedCounts.partial + futureCounts.partial,
-      planned: shippedCounts.planned + futureCounts.planned,
-      total: shippedCounts.total + futureCounts.total,
-    };
-    return {
-      phase,
-      counts,
-      percent: weightedPercent(counts),
-    };
-  });
-
-  const crossCuttingItems = FUTURE_FEATURE_SECTIONS.filter((section) => section.phase == null).flatMap(
-    (section) => section.items
-  );
-  const crossCutting = countItemsByStatus(crossCuttingItems, 'planned');
-
-  const overallPercent = Math.round(
-    phases.reduce((sum, entry) => sum + entry.percent, 0) / phases.length
-  );
-
-  return { phases, crossCutting, overallPercent };
-}

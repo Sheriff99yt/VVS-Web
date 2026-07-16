@@ -6,6 +6,7 @@ import { useProject } from '@/contexts/ProjectContext';
 import { getLanguageProfile } from '@vvs/language-profiles';
 import { LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
 import { isCoaAuthoringActive } from '@/lib/coaPolicy';
+import { navigateToValidationMessage } from '@/lib/graphNavigation';
 
 export function PortabilitySummaryPanel() {
   const {
@@ -54,17 +55,25 @@ export function PortabilitySummaryPanel() {
 
       {messages.length > 0 ? (
         <ul className="space-y-1 max-h-32 overflow-y-auto text-[10px]">
-          {messages.slice(0, 8).map((msg, i) => (
-            <li
-              key={`${msg.code ?? 'msg'}-${i}`}
-              className={`flex items-start gap-1 leading-relaxed ${
-                msg.level === 'error' ? 'text-red-400/90' : 'text-amber-400/90'
-              }`}
-            >
-              <AlertTriangle size={10} className="shrink-0 mt-0.5" />
-              <span className="min-w-0">{msg.message}</span>
-            </li>
-          ))}
+          {messages.slice(0, 8).map((msg, i) => {
+            const navigable = Boolean((msg.tabId && msg.nodeId) || msg.symbolId);
+            return (
+              <li key={`${msg.code ?? 'msg'}-${i}`}>
+                <button
+                  type="button"
+                  disabled={!navigable}
+                  onClick={() => navigateToValidationMessage(msg)}
+                  className={`w-full flex items-start gap-1 leading-relaxed text-left rounded px-0.5 ${
+                    msg.level === 'error' ? 'text-red-400/90' : 'text-amber-400/90'
+                  } ${navigable ? 'hover:bg-zinc-800/60 cursor-pointer' : 'cursor-default'}`}
+                  title={navigable ? 'Select and focus related node' : undefined}
+                >
+                  <AlertTriangle size={10} className="shrink-0 mt-0.5" />
+                  <span className="min-w-0">{msg.message}</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p className="text-[10px] text-zinc-600 leading-relaxed">

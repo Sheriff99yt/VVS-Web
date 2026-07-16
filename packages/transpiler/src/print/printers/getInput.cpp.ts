@@ -9,6 +9,7 @@ export function printGetInputCpp(stmt: IrAssignVariable, ctx: PrintContext): Pri
   const varName = stmt.targetName;
   const inputKind = stmt.inputKind ?? 'text';
   const { indent } = ctx;
+  const promptOffset = `${indent}std::cout << `.length;
 
   if (inputKind === 'number') {
     const lines = [
@@ -16,12 +17,18 @@ export function printGetInputCpp(stmt: IrAssignVariable, ctx: PrintContext): Pri
       `${indent}float ${varName};`,
       `${indent}std::cin >> ${varName};`,
     ];
-    return { text: lines.join('\n'), expressionSpans: [] };
+    return {
+      text: lines.join('\n'),
+      expressionSpans: offsetSpans(prompt.spans, promptOffset),
+    };
   }
   const lines = [
     `${indent}std::cout << ${prompt.text};`,
     `${indent}std::string ${varName};`,
     `${indent}std::getline(std::cin, ${varName});`,
   ];
-  return { text: lines.join('\n'), expressionSpans: [] };
+  return {
+    text: lines.join('\n'),
+    expressionSpans: offsetSpans(prompt.spans, promptOffset),
+  };
 }

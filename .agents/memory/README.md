@@ -8,7 +8,7 @@ Durable, agent-oriented context for VVS 2.0. This directory is **not** a substit
 2. [`../../docs/visual_to_text_fidelity.md`](../../docs/visual_to_text_fidelity.md) — **text-shaped graphs** + **canvas is the source of truth** for codegen (locked direction; read before symbol/transpiler work)
 3. [`../../docs/current_state.md`](../../docs/current_state.md) — what exists today (source of truth for implementation)
 4. [`incomplete-ui.md`](incomplete-ui.md) — **open UI work** and depth-first section order
-5. [`decisions.md`](decisions.md) — locked choices (incl. canvas source of truth, no sidebar preamble)
+5. [`decisions.md`](decisions.md) — locked choices (incl. canvas source of truth, no sidebar preamble, **Code panel verification**)
 
 ## Files
 

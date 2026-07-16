@@ -1,2 +1,2 @@
-/** @deprecated Use `createCalculatorUsabilityTestSnapshot` from `@/lib/usabilityExampleTests/calculatorUsabilityTest`. */
-export { createCalculatorUsabilityTestSnapshot as createDemoProjectSnapshot } from '@/lib/usabilityExampleTests/calculatorUsabilityTest';
+/** @deprecated Use `createCoverageLabUsabilityTestSnapshot` from coverageLabUsabilityTest. */
+export { createCoverageLabUsabilityTestSnapshot as createDemoProjectSnapshot } from '@/lib/usabilityExampleTests/coverageLabUsabilityTest';

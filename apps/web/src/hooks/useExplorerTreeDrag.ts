@@ -2,15 +2,18 @@
 
 import { useCallback, useState } from 'react';
 import type { ClassSymbol, GraphContainer } from '@vvs/graph-types';
-import { CLASS_DRAG_MIME, classDragPayload, isClassFolderDragEvent, readClassIdFromFolderDragEvent } from '@/lib/classHelpers';
+import { classDragPayload, isClassFolderDragEvent, readClassIdFromFolderDragEvent } from '@/lib/classHelpers';
 import {
+  clearTreeReorderDrag,
   configureCanvasDrag,
-  configureClassFolderDrag,
   configureTreeReorderDrag,
   graphContainerDragPayload,
+  isTreeReorderDrag,
   parseGraphContainerDragPayload,
+  readTreeReorderId,
   TREE_DRAG_MIME,
 } from '@/lib/treeDrag';
+import { peekSymbolReorder } from '@/lib/symbolReorderSession';
 
 export function useExplorerTreeDrag(input: {
   moveClassToContainer: (classId: string, containerId: string) => void;
@@ -25,15 +28,28 @@ export function useExplorerTreeDrag(input: {
   const [dropGraphContainerId, setDropGraphContainerId] = useState<string | null>(null);
   const [draggingFunctionId, setDraggingFunctionId] = useState<string | null>(null);
   const [dropFunctionId, setDropFunctionId] = useState<string | null>(null);
+  const [draggingVariableId, setDraggingVariableId] = useState<string | null>(null);
+  const [dropVariableId, setDropVariableId] = useState<string | null>(null);
+  const [draggingEventId, setDraggingEventId] = useState<string | null>(null);
+  const [dropEventId, setDropEventId] = useState<string | null>(null);
+  const [dropClassId, setDropClassId] = useState<string | null>(null);
 
   const handleClassDragStart = useCallback((e: React.DragEvent, cls: ClassSymbol) => {
-    configureClassFolderDrag(e, classDragPayload(cls));
-    setDraggingClassId(cls.id);
+    // Reorder primary; folder mime so drop on a graph folder still reassigns output.
+    configureTreeReorderDrag(e, TREE_DRAG_MIME.classReorder, cls.id, {
+      effectAllowed: 'copyMove',
+      extraData: { [TREE_DRAG_MIME.classFolder]: classDragPayload(cls) },
+    });
+    // Defer React UI state: sync setState (opacity / strip) mid-dragstart cancels HTML5 DnD in Chromium.
+    const id = cls.id;
+    requestAnimationFrame(() => setDraggingClassId(id));
   }, []);
 
   const handleClassDragEnd = useCallback(() => {
+    clearTreeReorderDrag();
     setDraggingClassId(null);
     setDropContainerId(null);
+    setDropClassId(null);
   }, []);
 
   const handleContainerDragOver = useCallback(
@@ -73,8 +89,10 @@ export function useExplorerTreeDrag(input: {
       if (!classId) return;
       moveClassToContainer(classId, containerId);
       onClassMoved?.();
+      clearTreeReorderDrag();
       setDraggingClassId(null);
       setDropContainerId(null);
+      setDropClassId(null);
     },
     [
       draggingClassId,
@@ -109,8 +127,31 @@ export function useExplorerTreeDrag(input: {
   }, []);
 
   const handleFunctionDragEnd = useCallback(() => {
+    clearTreeReorderDrag();
     setDraggingFunctionId(null);
     setDropFunctionId(null);
+  }, []);
+
+  const handleVariableDragStart = useCallback((e: React.DragEvent, variableId: string) => {
+    configureTreeReorderDrag(e, TREE_DRAG_MIME.variableReorder, variableId);
+    setDraggingVariableId(variableId);
+  }, []);
+
+  const handleVariableDragEnd = useCallback(() => {
+    clearTreeReorderDrag();
+    setDraggingVariableId(null);
+    setDropVariableId(null);
+  }, []);
+
+  const handleEventDragStart = useCallback((e: React.DragEvent, eventId: string) => {
+    configureTreeReorderDrag(e, TREE_DRAG_MIME.eventReorder, eventId);
+    setDraggingEventId(eventId);
+  }, []);
+
+  const handleEventDragEnd = useCallback(() => {
+    clearTreeReorderDrag();
+    setDraggingEventId(null);
+    setDropEventId(null);
   }, []);
 
   const clearContainerDropHint = useCallback((containerId: string) => {
@@ -121,12 +162,22 @@ export function useExplorerTreeDrag(input: {
   return {
     draggingClassId,
     dropContainerId,
+    dropClassId,
+    setDropClassId,
     draggingGraphContainerId,
     dropGraphContainerId,
     draggingFunctionId,
     setDraggingFunctionId,
     dropFunctionId,
     setDropFunctionId,
+    draggingVariableId,
+    setDraggingVariableId,
+    dropVariableId,
+    setDropVariableId,
+    draggingEventId,
+    setDraggingEventId,
+    dropEventId,
+    setDropEventId,
     handleClassDragStart,
     handleClassDragEnd,
     handleContainerDragOver,
@@ -135,10 +186,74 @@ export function useExplorerTreeDrag(input: {
     handleGraphContainerDragEnd,
     handleFunctionDragStart,
     handleFunctionDragEnd,
+    handleVariableDragStart,
+    handleVariableDragEnd,
+    handleEventDragStart,
+    handleEventDragEnd,
     clearContainerDropHint,
   };
 }
 
+/** Shared drop-target handlers for in-list / grid symbol reorder. */
+export function useListReorderDrop(input: {
+  canReorder: boolean;
+  mimeType: string;
+  draggingId: string | null;
+  setDraggingId: (id: string | null) => void;
+  dropId: string | null;
+  setDropId: (id: string | null) => void;
+  onReorder: (fromId: string, toId: string) => void;
+}) {
+  const { canReorder, mimeType, draggingId, setDraggingId, setDropId, onReorder } = input;
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, targetId: string) => {
+      if (!canReorder) return;
+      if (!isTreeReorderDrag(e, mimeType, draggingId)) return;
+      const fromId = peekSymbolReorder(mimeType) ?? draggingId;
+      if (fromId === targetId) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      setDropId(targetId);
+    },
+    [canReorder, draggingId, mimeType, setDropId]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent, targetId: string) => {
+      if (!canReorder) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const fromId = readTreeReorderId(e, mimeType, draggingId);
+      clearTreeReorderDrag();
+      if (!fromId || fromId === targetId) {
+        setDraggingId(null);
+        setDropId(null);
+        return;
+      }
+      onReorder(fromId, targetId);
+      setDraggingId(null);
+      setDropId(null);
+    },
+    [canReorder, mimeType, draggingId, onReorder, setDraggingId, setDropId]
+  );
+
+  const handleDragLeave = useCallback(
+    (targetId: string) => {
+      if (input.dropId === targetId) setDropId(null);
+    },
+    [input.dropId, setDropId]
+  );
+
+  return {
+    handleDragOver,
+    handleDrop,
+    handleDragLeave,
+  };
+}
+
+/** @deprecated Use useListReorderDrop */
 export function useFunctionReorderDrop(input: {
   canReorder: boolean;
   draggingFunctionId: string | null;
@@ -147,43 +262,19 @@ export function useFunctionReorderDrop(input: {
   setDropFunctionId: (id: string | null) => void;
   reorderFunctions: (fromId: string, toId: string) => void;
 }) {
-  const {
-    canReorder,
-    draggingFunctionId,
-    setDraggingFunctionId,
-    dropFunctionId,
-    setDropFunctionId,
-    reorderFunctions,
-  } = input;
-
-  const handleFunctionDragOver = useCallback(
-    (e: React.DragEvent, funcId: string) => {
-      if (!canReorder || !draggingFunctionId || draggingFunctionId === funcId) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      setDropFunctionId(funcId);
-    },
-    [canReorder, draggingFunctionId, setDropFunctionId]
-  );
-
-  const handleFunctionDrop = useCallback(
-    (e: React.DragEvent, funcId: string) => {
-      if (!canReorder) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const fromId =
-        e.dataTransfer.getData(TREE_DRAG_MIME.functionReorder) || draggingFunctionId;
-      if (!fromId || fromId === funcId) return;
-      reorderFunctions(fromId, funcId);
-      setDraggingFunctionId(null);
-      setDropFunctionId(null);
-    },
-    [canReorder, draggingFunctionId, reorderFunctions, setDraggingFunctionId, setDropFunctionId]
-  );
-
+  const handlers = useListReorderDrop({
+    canReorder: input.canReorder,
+    mimeType: TREE_DRAG_MIME.functionReorder,
+    draggingId: input.draggingFunctionId,
+    setDraggingId: input.setDraggingFunctionId,
+    dropId: input.dropFunctionId,
+    setDropId: input.setDropFunctionId,
+    onReorder: input.reorderFunctions,
+  });
   return {
-    dropFunctionId,
-    handleFunctionDragOver,
-    handleFunctionDrop,
+    dropFunctionId: input.dropFunctionId,
+    handleFunctionDragOver: handlers.handleDragOver,
+    handleFunctionDrop: handlers.handleDrop,
+    handleFunctionDragLeave: handlers.handleDragLeave,
   };
 }

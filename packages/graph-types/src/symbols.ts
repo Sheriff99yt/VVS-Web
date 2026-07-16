@@ -5,6 +5,11 @@ import {
   portabilityFeaturesForDataType,
   type VariableDataType,
 } from './variableTypes';
+import {
+  parseTypeRef,
+  syncTypeFieldsFromRef,
+  type TypeRef,
+} from './typeRef';
 
 export type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'json';
 
@@ -26,7 +31,7 @@ export type PortabilityFeature =
   | 'env.native';
 
 export type FunctionBinding = 'instance' | 'static' | 'module';
-export type SymbolVisibility = 'public' | 'private';
+export type SymbolVisibility = 'public' | 'protected' | 'private';
 export type VariableBinding = 'instance' | 'static' | 'module';
 
 /**
@@ -43,6 +48,7 @@ export interface SymbolParameter {
   id: string;
   label: string;
   type: PinType;
+  typeRef?: TypeRef;
   defaultValue?: unknown;
 }
 
@@ -206,7 +212,7 @@ export interface FunctionSymbol {
   binding: FunctionBinding;
   visibility: SymbolVisibility;
   overloads: FunctionOverload[];
-  flags?: { virtual?: boolean; async?: boolean };
+  flags?: { abstract?: boolean; virtual?: boolean; override?: boolean; async?: boolean };
   /** Planned: owning class — see ClassSymbol and docs/design/multi_class_symbols.md */
   classId?: string;
 }
@@ -217,11 +223,26 @@ export interface VariableSymbol {
   name: string;
   type: VariableDataType;
   defaultValue?: unknown;
+  /**
+   * Canonical type identity (builtin / enum / class / array / map).
+   * Prefer this over `type` + `enumType` when reading for emit or pickers.
+   */
+  typeRef?: TypeRef;
+  /**
+   * Legacy enum overlay — kept in sync from `typeRef` when kind is enum.
+   * Default value should be the **member name** only (e.g. `OK`), not `Enum::OK`.
+   * @deprecated Prefer `typeRef: { kind: 'enum', name }`
+   */
+  enumType?: string;
   binding: VariableBinding;
   visibility: SymbolVisibility;
-  flags?: { readonly?: boolean };
+  flags?: { readonly?: boolean; abstract?: boolean; virtual?: boolean; override?: boolean };
   /** Planned: owning class — see ClassSymbol and docs/design/multi_class_symbols.md */
   classId?: string;
+  /** If set, this variable is scoped to a specific function or event graph tab. */
+  graphTabId?: string;
+  /** If set, this variable is scoped to a specific control-flow block node (e.g. IF, Loop). */
+  scopedNodeId?: string;
 }
 
 /** @deprecated use VariableSymbol */
@@ -232,20 +253,30 @@ export function createVariableSymbol(
   options?: {
     id?: string;
     type?: VariableDataType;
+    typeRef?: TypeRef;
     binding?: VariableBinding;
     classId?: string;
+    graphTabId?: string;
+    scopedNodeId?: string;
   }
 ): VariableSymbol {
-  const type = options?.type ?? 'data_string';
+  const typeRef =
+    options?.typeRef ??
+    (options?.type ? ({ kind: 'builtin', id: options.type } as TypeRef) : { kind: 'builtin', id: 'data_string' });
+  const synced = syncTypeFieldsFromRef(typeRef);
   return {
     kind: 'variable',
     id: options?.id ?? `var-${Date.now()}`,
     name,
-    type,
+    type: synced.type,
+    typeRef: synced.typeRef,
+    enumType: synced.enumType,
     binding: options?.binding ?? 'instance',
     visibility: 'public',
     defaultValue: undefined,
     classId: options?.classId,
+    graphTabId: options?.graphTabId,
+    scopedNodeId: options?.scopedNodeId,
   };
 }
 
@@ -262,18 +293,31 @@ export function migrateLegacyVariable(raw: unknown): VariableSymbol {
   const type = legacyVariableTypeToDataType(
     typeof item.type === 'string' ? item.type : 'string'
   );
+  const enumType =
+    typeof item.enumType === 'string' && item.enumType.trim() ? item.enumType.trim() : undefined;
+  const typeRef =
+    parseTypeRef(item.typeRef) ??
+    (enumType
+      ? ({ kind: 'enum', name: enumType } as TypeRef)
+      : ({ kind: 'builtin', id: type } as TypeRef));
+  const synced = syncTypeFieldsFromRef(typeRef);
   return {
     kind: 'variable',
     id: typeof item.id === 'string' ? item.id : `var-${Date.now()}`,
     name: typeof item.name === 'string' ? item.name : 'Variable',
-    type,
+    type: synced.type,
+    typeRef: synced.typeRef,
     defaultValue: item.defaultValue,
+    enumType: synced.enumType,
     binding:
       item.binding === 'static' || item.binding === 'module' || item.binding === 'instance'
         ? item.binding
         : 'instance',
     visibility: item.visibility === 'private' ? 'private' : 'public',
     flags: readonly ? { readonly: true } : undefined,
+    classId: typeof item.classId === 'string' ? item.classId : undefined,
+    graphTabId: typeof item.graphTabId === 'string' ? item.graphTabId : undefined,
+    scopedNodeId: typeof item.scopedNodeId === 'string' ? item.scopedNodeId : undefined,
   };
 }
 

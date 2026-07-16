@@ -40,6 +40,40 @@ function varDefineNode(id: string, symbolId: string) {
   };
 }
 
+function eventDefineNode(id: string, symbolId: string, y: number) {
+  return {
+    id,
+    type: 'vvs_standard_node' as const,
+    position: { x: 0, y },
+    data: {
+      label: `Declare ${symbolId}`,
+      category: 'Events',
+      kindId: 'event_member_define',
+      inputs: [{ id: 'exec_in', label: '', type: 'execution' as const }],
+      outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
+      inlineValues: {},
+      properties: { symbolId },
+    },
+  };
+}
+
+function functionDefineNode(id: string, symbolId: string, y = 0) {
+  return {
+    id,
+    type: 'vvs_standard_node' as const,
+    position: { x: 0, y },
+    data: {
+      label: `Declare ${symbolId}`,
+      category: 'Functions',
+      kindId: 'function_define',
+      inputs: [{ id: 'exec_in', label: '', type: 'execution' as const }],
+      outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
+      inlineValues: {},
+      properties: { symbolId },
+    },
+  };
+}
+
 describe('defineNodes', () => {
   it('collects ordered member define nodes along exec chain', () => {
     const doc: GraphDocument = {
@@ -63,7 +97,11 @@ describe('defineNodes', () => {
       edges: [edge('class', 'v1'), edge('v1', 'v2')],
     };
 
-    expect(collectMemberDefineNodeIds(doc)).toEqual(['class', 'v1', 'v2']);
+    const mockVars = [
+      { id: 'var-a', name: 'v1', classId: 'main-class' } as any,
+      { id: 'var-b', name: 'v2', classId: 'main-class' } as any,
+    ];
+    expect(collectMemberDefineNodeIds(doc, undefined, mockVars, [], [])).toEqual(['class', 'v1', 'v2']);
     expect(findMemberChainHead(doc)?.id).toBe('class');
     expect(findMemberChainTail(doc)?.id).toBe('v2');
     expect(findDefineNodesForSymbol(doc, 'variable', 'var-a')).toHaveLength(1);
@@ -135,5 +173,61 @@ describe('defineNodes', () => {
         edges: [],
       })
     ).toBe(true);
+  });
+
+  it('orders event defines by canvas Y even when chained event→event', () => {
+    const classNode = {
+      id: 'class',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Declare Machine',
+        category: 'Project',
+        kindId: 'class_define',
+        inputs: [{ id: 'exec_in', label: '', type: 'execution' as const }],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
+        inlineValues: {},
+        properties: { symbolId: 'main-class' },
+      },
+    };
+    const mockFns = [{ id: 'fn-boot', name: 'Boot', classId: 'main-class' } as any];
+    const mockEvts = [
+      { id: 'evt-start', name: 'start', classId: 'main-class' } as any,
+      { id: 'evt-pulse', name: 'pulse', classId: 'main-class' } as any,
+    ];
+
+    // Linear chain (typical dual-write) but pulse is visually higher → pulse first.
+    const pulseHigher: GraphDocument = {
+      nodes: [
+        classNode,
+        functionDefineNode('fn', 'fn-boot', 0),
+        eventDefineNode('evt-start', 'evt-start', 100),
+        eventDefineNode('evt-pulse', 'evt-pulse', -50),
+      ],
+      edges: [edge('class', 'fn'), edge('fn', 'evt-start'), edge('evt-start', 'evt-pulse')],
+    };
+    expect(collectMemberDefineNodeIds(pulseHigher, undefined, [], mockFns, mockEvts)).toEqual([
+      'class',
+      'fn',
+      'evt-pulse',
+      'evt-start',
+    ]);
+
+    // Flip Y → start emits first.
+    const startHigher: GraphDocument = {
+      nodes: [
+        classNode,
+        functionDefineNode('fn', 'fn-boot', 0),
+        eventDefineNode('evt-start', 'evt-start', -80),
+        eventDefineNode('evt-pulse', 'evt-pulse', 40),
+      ],
+      edges: [edge('class', 'fn'), edge('fn', 'evt-start'), edge('evt-start', 'evt-pulse')],
+    };
+    expect(collectMemberDefineNodeIds(startHigher, undefined, [], mockFns, mockEvts)).toEqual([
+      'class',
+      'fn',
+      'evt-start',
+      'evt-pulse',
+    ]);
   });
 });

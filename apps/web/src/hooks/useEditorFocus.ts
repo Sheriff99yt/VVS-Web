@@ -5,6 +5,7 @@ import type { ClassSymbol, FunctionSymbol, GraphContainer } from '@vvs/graph-typ
 import type { VVSNodeData } from '@/types/graph';
 import type { SelectionState } from '@/contexts/ProjectContext';
 import { useProject } from '@/contexts/ProjectContext';
+import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import {
   canvasFocusFrame,
@@ -35,7 +36,9 @@ export function useEditorFocus() {
     focusReference,
     graphContainers,
     classes,
+    activeGraphTab,
   } = useProject();
+  const { getDocuments } = useGraphWorkspace();
 
   const focusCanvas = useCallback(
     (
@@ -50,7 +53,7 @@ export function useEditorFocus() {
 
   const openClassHomeCanvas = useCallback(
     (cls: ClassSymbol, selection: SelectionState): EditorFocusResult => {
-      const target = resolveClassHomeGraphTarget(cls, graphContainers);
+      const target = resolveClassHomeGraphTarget(cls, graphContainers, getDocuments() || {}, activeGraphTab);
       setActiveClassId(cls.id);
       if (target.container) {
         openGraphContainerTab(target.container, setOpenTabs, setActiveGraphTab);
@@ -68,6 +71,8 @@ export function useEditorFocus() {
       setActiveClassId,
       setActiveGraphTab,
       setOpenTabs,
+      getDocuments,
+      activeGraphTab,
     ]
   );
 

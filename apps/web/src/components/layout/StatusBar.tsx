@@ -1,17 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, Terminal, FileCode2, FolderTree, Map, WifiOff, AlertCircle, CheckCircle2, CircleDashed } from 'lucide-react';
 import { isCoaAuthoringActive } from '@/lib/coaPolicy';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { useEditorView } from '@/contexts/EditorViewContext';
-import { dispatchFocusFirstValidationError } from '@/lib/graphNavigation';
+import { dispatchFocusFirstValidationError, firstNavigableValidationMessage, navigateToValidationMessage } from '@/lib/graphNavigation';
 import { useApiHealth } from '@/hooks/useApiHealth';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { formatSavedAt } from '@/lib/formatSavedAt';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { dispatchSaveOnDiskPrompt } from '@/lib/promoteProjectToDisk';
+import { dispatchResetCompilerLogLayout } from '@/lib/uiPreferences';
+import { paneMenuPosition } from '@/lib/paneMenuPosition';
+import { shortcutKeys } from '@/lib/graphShortcuts';
+import { GraphBreadcrumb } from './GraphBreadcrumb';
 
 function apiModeShort(
   apiMode: ReturnType<typeof useApiHealth>['apiMode'],
@@ -49,6 +53,8 @@ export function StatusBar() {
   const { isCanvasActive } = useEditorView();
   const { apiMode, healthState, serviceName, storeMode, authMode, userId } = useApiHealth();
   const folderPickerReady = useFolderPickerSupported();
+  const [logMenu, setLogMenu] = useState<{ x: number; y: number } | null>(null);
+  const logMenuRef = useRef<HTMLDivElement>(null);
 
   const errorCount = validationErrors.length;
   const warningCount = validationWarnings.length;
@@ -74,9 +80,26 @@ export function StatusBar() {
           ? 'Graph changed'
           : 'No errors';
 
+  useEffect(() => {
+    if (!logMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLogMenu(null);
+    };
+    const onDown = (e: MouseEvent) => {
+      if (logMenuRef.current?.contains(e.target as Node)) return;
+      setLogMenu(null);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onDown);
+    };
+  }, [logMenu]);
+
   return (
     <div className="h-6 shrink-0 bg-zinc-950 border-t border-zinc-800 flex items-center justify-between px-2 text-[10px] font-medium text-zinc-500 relative z-50">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0 min-w-0 max-w-[42%]">
         <div className="flex items-center gap-1 px-1.5 text-zinc-600" title="MCP disconnected">
           <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
           <span>MCP</span>
@@ -146,10 +169,14 @@ export function StatusBar() {
         <button
           type="button"
           onClick={toggleConsole}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setLogMenu(paneMenuPosition(e.clientX, e.clientY, 180, 40));
+          }}
           className={`p-1 rounded transition-colors ${
             consoleOpen ? 'text-zinc-200 bg-zinc-800' : 'text-zinc-600 hover:text-zinc-400'
           }`}
-          title="Compiler log"
+          title={`Compiler log · pin ${shortcutKeys('toggle-log-pin')} · right-click to reset layout`}
         >
           <Terminal size={11} />
         </button>
@@ -165,17 +192,24 @@ export function StatusBar() {
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5">
+      {isCanvasActive ? <GraphBreadcrumb compact /> : <div className="flex-1" />}
+
+      <div className="flex items-center gap-1.5 shrink-0">
         {warningCount > 0 ? (
-          <button
-            type="button"
-            onClick={() => {
-              if (!consoleOpen) setCompilerLogOpen(true);
-              else toggleConsole();
-            }}
-            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/15 hover:bg-amber-500/25 transition-colors"
-            title={`${warningCount} portability warning${warningCount === 1 ? '' : 's'} — open log`}
-          >
+            <button
+              type="button"
+              onClick={() => {
+                const target = firstNavigableValidationMessage([], validationWarnings);
+                if (target && navigateToValidationMessage(target)) {
+                  if (!consoleOpen) setCompilerLogOpen(true);
+                  return;
+                }
+                if (!consoleOpen) setCompilerLogOpen(true);
+                else toggleConsole();
+              }}
+              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/15 hover:bg-amber-500/25 transition-colors"
+              title={`${warningCount} portability warning${warningCount === 1 ? '' : 's'} — jump to related node`}
+            >
             <AlertCircle size={10} />
             {warningCount}
           </button>
@@ -183,7 +217,11 @@ export function StatusBar() {
       <button
         type="button"
         disabled={!hasErrors || errorCount === 0}
-        onClick={() => dispatchFocusFirstValidationError()}
+        onClick={() => {
+          const target = firstNavigableValidationMessage(validationErrors, validationWarnings);
+          if (target && navigateToValidationMessage(target)) return;
+          dispatchFocusFirstValidationError();
+        }}
         title={statusTitle}
         className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors ${
           hasErrors && errorCount > 0
@@ -211,6 +249,27 @@ export function StatusBar() {
         ) : null}
       </button>
       </div>
+      {logMenu ? (
+        <div
+          ref={logMenuRef}
+          className="fixed z-[80] min-w-[168px] py-0.5 rounded-md border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/40"
+          style={{ left: logMenu.x, top: logMenu.y }}
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+            onClick={() => {
+              dispatchResetCompilerLogLayout();
+              setCompilerLogOpen(true);
+              setLogMenu(null);
+            }}
+          >
+            Reset size & position
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -12,10 +12,12 @@ import type {
 export const IR_VERSION = 3;
 
 export type IrStmtKind =
+  | 'DeclareLocal'
   | 'CallFunction'
   | 'AssignVariable'
   | 'IfBranch'
   | 'ForLoop'
+  | 'ForEach'
   | 'WhileLoop'
   | 'Switch'
   | 'Sequence'
@@ -27,7 +29,8 @@ export type IrStmtKind =
   | 'AwaitWait'
   | 'SubscribeEvent'
   | 'EmitEvent'
-  | 'CallNative';
+  | 'CallNative'
+  | 'ArrayPush';
 
 export interface IrBase {
   kind: IrStmtKind;
@@ -43,7 +46,8 @@ export type IrExprKind =
   | 'BinaryOp'
   | 'ConvertToString'
   | 'ConvertToNumber'
-  | 'GetInputTemp';
+  | 'GetInputTemp'
+  | 'EnumMember';
 
 export interface IrExprBase {
   kind: IrExprKind;
@@ -88,6 +92,13 @@ export interface IrGetInputTemp extends IrExprBase {
   tempName: string;
 }
 
+/** Canvas `expr_enum_member` — pack formats `Enum.Member` / `Enum::Member`. */
+export interface IrEnumMember extends IrExprBase {
+  kind: 'EnumMember';
+  enumName: string;
+  member: string;
+}
+
 export type IrExpr =
   | IrLiteral
   | IrInstanceRef
@@ -95,7 +106,8 @@ export type IrExpr =
   | IrBinaryOp
   | IrConvertToString
   | IrConvertToNumber
-  | IrGetInputTemp;
+  | IrGetInputTemp
+  | IrEnumMember;
 
 // ── Structured statement IR ─────────────────────────────────────────────────
 
@@ -112,6 +124,13 @@ export interface IrCallFunction extends IrBase {
 export interface IrPrint extends IrBase {
   kind: 'Print';
   value: IrExpr;
+}
+
+export interface IrDeclareLocal extends IrBase {
+  kind: 'DeclareLocal';
+  name: string;
+  variableType: string;
+  defaultValue?: unknown;
 }
 
 export type AssignKind = 'variable_set' | 'get_input';
@@ -141,6 +160,21 @@ export interface IrForLoop extends IrBase {
   body: IrStatement[];
 }
 
+export interface IrForEach extends IrBase {
+  kind: 'ForEach';
+  elementVar: string;
+  /** Element pin / inferred collection element type — pack slot `{elementType}`. */
+  elementType?: import('@vvs/graph-types').PinType | string;
+  collection: IrExpr;
+  body: IrStatement[];
+}
+
+export interface IrArrayPush extends IrBase {
+  kind: 'ArrayPush';
+  array: IrExpr;
+  value: IrExpr;
+}
+
 export interface IrWhileLoop extends IrBase {
   kind: 'WhileLoop';
   condition: IrExpr;
@@ -148,7 +182,11 @@ export interface IrWhileLoop extends IrBase {
 }
 
 export interface IrSwitchCase {
+  /** Display / fallback label (member name, number, or legacy `Enum::Member`). */
   label: string;
+  /** When set with `member`, emit via pack `EnumMemberAccess`. */
+  enumName?: string;
+  member?: string;
   body: IrStatement[];
 }
 
@@ -168,6 +206,10 @@ export interface IrDispatchEvent extends IrBase {
   kind: 'DispatchEvent';
   handlerName: string;
   args: IrExpr[];
+  /** True when dispatching an event owned by another class (not inherited). */
+  crossClass?: boolean;
+  /** Module/class name for cross-class receiver construction. */
+  targetClassName?: string;
 }
 
 export interface IrEmitEvent extends IrBase {
@@ -188,9 +230,21 @@ export interface IrAwaitWait extends IrBase {
   async: boolean;
 }
 
+export type IrModuleImportStyle = 'module' | 'from' | 'include_system';
+
 export interface IrModuleImport extends IrBase {
   kind: 'ModuleImport';
   moduleSlug: string;
+  /** Canvas node label — used for `(x)` unsupported comment lines. */
+  displayLabel?: string;
+  /** `from` → ModuleImportFrom; `include_system` → ModuleImportIncludeSystem; else ModuleImport. */
+  importStyle?: IrModuleImportStyle;
+  /** Named imports for `from` style (e.g. `Enum`). */
+  importNames?: string[];
+  /** When non-empty, emit only for these target languages. */
+  targetLanguages?: string[];
+  /** When set, emit only for this class module. */
+  ownerClassId?: string;
 }
 
 export interface IrImportClass extends IrBase {
@@ -216,6 +270,7 @@ export type IrStructuredStatement =
   | IrAssignVariable
   | IrIfBranch
   | IrForLoop
+  | IrForEach
   | IrWhileLoop
   | IrSwitch
   | IrSequence
@@ -227,7 +282,9 @@ export type IrStructuredStatement =
   | IrSubscribeEvent
   | IrEmitEvent
   | IrCallNative
-  | IrCommentFallback;
+  | IrArrayPush
+  | IrCommentFallback
+  | IrDeclareLocal;
 
 export type IrStatement = IrStructuredStatement;
 
@@ -237,6 +294,9 @@ export interface IrEventHandler {
   handlerName: string;
   paramNames: string[];
   body: IrStatement[];
+  isConstructor?: boolean;
+  /** Handler-node properties (e.g. isOverride) from canvas. */
+  properties?: Record<string, unknown>;
 }
 
 export interface IrStartEvent {
@@ -251,16 +311,19 @@ export type IrMemberDecl =
       sourceGraphNodeId: string;
       name: string;
       extendsType?: string;
+      properties?: Record<string, unknown>;
     }
   | {
       kind: 'VariableDecl';
       sourceGraphNodeId: string;
       symbol: VariableSymbol;
+      properties?: Record<string, unknown>;
     }
   | {
       kind: 'FunctionDecl';
       sourceGraphNodeId: string;
       symbol: FunctionSymbol;
+      properties?: Record<string, unknown>;
     }
   | {
       kind: 'EventDecl';
@@ -271,7 +334,17 @@ export type IrMemberDecl =
       handlerName: string;
       paramNames: string[];
       body: IrStatement[];
-    };
+      properties?: Record<string, unknown>;
+    }
+  | {
+      kind: 'EnumDecl';
+      sourceGraphNodeId: string;
+      name: string;
+      members: string[];
+      properties?: Record<string, unknown>;
+    }
+  | IrModuleImport
+  | IrImportClass;
 
 export interface IrClass {
   classId: string;
@@ -314,4 +387,9 @@ export interface IrModule {
   /** Ordered canvas define nodes; empty when the class graph has no define chain. */
   members: IrMemberDecl[];
   activeClass?: ClassSymbol;
+  /**
+   * When true (default), gated ModuleImport mismatches emit `(x)` comment lines.
+   * When false, mismatched imports are omitted (legacy silent skip).
+   */
+  emitUnsupportedComments?: boolean;
 }

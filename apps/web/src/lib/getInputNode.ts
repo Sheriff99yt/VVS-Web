@@ -21,7 +21,6 @@ export function getInputKindLabel(data: VVSNodeData): string | undefined {
   if (resolveNodeKindId(data) !== 'action_get_input') return undefined;
   const kind = data.properties?.inputKind;
   if (kind === 'number') return 'Number';
-  if (kind === 'password') return 'Password';
   if (kind === 'text') return 'Text';
   return undefined;
 }

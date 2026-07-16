@@ -21,6 +21,15 @@ description: Triggers when building user-facing features, Next.js components, or
 - UI copy: **Declare** on graph emits declarations; panel adds symbols that dual-write define nodes — not "add to code" from sidebar alone
 - Code panel highlight is the trust contract — if selection cannot map via `sourceMap`, fidelity is broken
 
+# Modifier chips (language-aware)
+
+**Canonical:** `docs/design/language_capability_catalog.md` § Modifier effectiveness · component: `apps/web/src/components/graph/NodeModifiers.tsx`
+
+- Neutral `propertySchema` stays on define nodes for all targets
+- For the **current** graph/project `targetLanguage`, chips that do not affect emit are **visible but disabled** (tooltip: not used for this language)
+- Do not hide ineffective modifiers from the schema; do not invent emit so a disabled toggle “works”
+- C++ / Dual Class: `isAsync` ineffective until coroutines ship — disable chip; see catalog § Dual Class Lab · `fidelity_streamline.md`
+
 # App Shell (Locked Layout)
 
 ### Top-level views (TopNav)
@@ -65,7 +74,7 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 ### StartScreen (`components/start/StartScreen.tsx`)
 
 - **Start:** New blank, Open file, folder picker buttons (gated by `useFolderPickerSupported`)
-- **Usability tests:** `USABILITY_EXAMPLE_TESTS` from `lib/usabilityExampleProjects.ts` — regression fixtures (Hello World, Calculator); see `docs/design/language_capability_catalog.md`
+- **Usability tests:** `USABILITY_EXAMPLE_TESTS` from `lib/usabilityExampleProjects.ts` — First Graph + Coverage Lab; verify via Code panel extract (`vvs_usability_example_tests`); see `docs/design/language_capability_catalog.md`
 - **Explore:** shortcuts to Library and Roadmap views in editor
 - **Recent:** via `useRecentProjects()` — deferred localStorage hydration (see below)
 - **AuthButton** when Supabase configured

@@ -1,2 +1,2 @@
-            while True:
-                print("loop")
+        while True:
+            print("loop")

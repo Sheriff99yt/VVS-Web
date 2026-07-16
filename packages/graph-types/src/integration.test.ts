@@ -32,6 +32,30 @@ describe('ProjectIntegrationConfig', () => {
     ).toBe('src/myapp/vvs/logic.py');
   });
 
+  test('resolveModuleEmitPath prefers class file when preferFallbackOverModuleFile', () => {
+    const cfg = createDefaultIntegration({
+      moduleName: 'CoverageLab',
+      defaultTarget: 'python',
+      adoptExisting: true,
+    });
+    expect(
+      resolveModuleEmitPath(cfg, 'python', {
+        tabKind: 'main',
+        moduleName: 'Machine',
+        fallbackFileName: 'machine.py',
+        preferFallbackOverModuleFile: true,
+      })
+    ).toBe('src/machine.py');
+    expect(
+      resolveModuleEmitPath(cfg, 'python', {
+        tabKind: 'main',
+        moduleName: 'Sensor',
+        fallbackFileName: 'sensor.py',
+        preferFallbackOverModuleFile: true,
+      })
+    ).toBe('src/sensor.py');
+  });
+
   test('resolveModuleEmitPath applies container subdir prefix', () => {
     expect(
       resolveModuleEmitPath(undefined, 'python', {

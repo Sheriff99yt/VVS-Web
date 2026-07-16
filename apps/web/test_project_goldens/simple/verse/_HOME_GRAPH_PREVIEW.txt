@@ -1,0 +1,12 @@
+// ===== firstgraph.verse =====
+<public>FirstGraph := class:
+        var VisitorName<public> : string = ""
+    SayHello<public>() : void =
+        # SayHello
+        Print("Hello from SayHello!")
+    on_start() : void =
+        Print("What is your name?")
+        var _vvs_input_fg_get_input : float = 0.0
+        Print(_vvs_input_fg_get_input)
+        SayHello()
+        Print("Done.")

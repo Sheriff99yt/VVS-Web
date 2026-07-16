@@ -10,7 +10,7 @@ export function printGetInputGdscript(stmt: IrAssignVariable, ctx: PrintContext)
   const inputKind = stmt.inputKind ?? 'text';
   const readCall = `OS.read_string_from_stdin()`;
   const rhs = inputKind === 'number' ? `float(${readCall})` : readCall;
-  const prefix = `${ctx.indent}${varName} = `;
+  const prefix = `${ctx.indent}var ${varName} = `;
   return {
     text: `${prefix}${rhs}`,
     expressionSpans: offsetSpans(

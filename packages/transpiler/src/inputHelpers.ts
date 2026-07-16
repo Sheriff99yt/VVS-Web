@@ -4,8 +4,8 @@ export function inputTempVarName(nodeId: string): string {
 
 export function getInputKind(
   properties?: Record<string, unknown>
-): 'text' | 'number' | 'password' {
+): 'text' | 'number' {
   const kind = properties?.inputKind;
-  if (kind === 'number' || kind === 'password') return kind;
+  if (kind === 'number') return 'number';
   return 'text';
 }

@@ -11,8 +11,20 @@ interface PropertySchemaPanelProps {
   onChange: (key: string, value: string | number | boolean) => void;
 }
 
+const INLINE_MODIFIER_KEYS = new Set([
+  'visibility',
+  'binding',
+  'isConst',
+  'isAbstract',
+  'isVirtual',
+  'isOverride',
+  'isAsync',
+]);
+
 export function PropertySchemaPanel({ fields, values, onChange }: PropertySchemaPanelProps) {
-  const visibleFields = fields.filter((field) => isPropertyFieldVisible(field, values));
+  const visibleFields = fields.filter(
+    (field) => isPropertyFieldVisible(field, values) && !INLINE_MODIFIER_KEYS.has(field.key)
+  );
 
   if (visibleFields.length === 0) return null;
 

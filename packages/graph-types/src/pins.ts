@@ -1,3 +1,5 @@
+import type { TypeRef } from './typeRef';
+
 export type PinType =
   | 'execution'
   | 'data_string'
@@ -13,5 +15,7 @@ export interface PinDefinition {
   id: string;
   label: string;
   type: PinType;
+  /** Optional TypeRef for enum/class/container identity (wire compatibility). */
+  typeRef?: TypeRef;
   required?: boolean;
 }

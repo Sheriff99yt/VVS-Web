@@ -65,10 +65,31 @@ Before adding visible UI, answer:
 ### 4. Context-aware inspector
 
 - **No selection:** panel hidden (not an empty form).
-- **Node / variable selected:** show floating inspector immediately.
-- **Graph settings:** behind explicit action (breadcrumb settings icon → `GraphSettingsModal`).
+- **Node / variable selected:** show floating inspector immediately (compact).
+- **Hover (~180ms):** auto-expand; leave collapses unless **pinned**.
+- **Pin:** persists via `detailsPanelPinned` in `uiPreferences` (migrates legacy `detailsPanelExpanded`).
+- **Compact:** header-only strip (title + one-line subtitle); **no** body, **no** resize handle.
+- **Expanded:** full inspector body; **2D resize** from bottom-left corner; top drag handle to move; size/position persist (`detailsPanelExpandedWidth/Height`, `detailsPanelOffsetRight/Top`).
+- **Right-click:** Reset size & position.
+- Auto-collapse paused during move/resize until pointer release.
+- **Graph / project settings:** TopNav gear (**Settings**, right of Connect AI) → Settings modal **Project** tab; View → Project settings… / App settings…
+- **App settings:** browser prefs (dim unsupported, panel defaults, reset floating layouts, shortcuts).
+- Modifiers live on the node chrome; panel owns structure (TypeRef, pins, switch, overloads).
 
 **VVS:** `GraphFloatingDetails.tsx` — floating panel on canvas; `PropertySchemaPanel` + `NodePinsPanel`; force-expand on broken symbol ref.
+
+### 4b. Compiler log (same compact / hover / pin pattern)
+
+- Status bar owns open/close (`compilerLogOpen`).
+- **Compact:** header + subtitle (error counts / last message / Empty).
+- **Hover (~180ms):** expand; leave collapses unless **pinned** (`compilerLogPinned`).
+- **Peek on error:** new errors open the panel and expand without pinning; border **flashes red**.
+- Resize from top-left; move from top handle; **`** / `~` toggles pin.
+- Right-click (panel or status Log icon): Reset size & position.
+- Resize only when expanded (`compilerLogExpandedHeight` / width).
+- Keep jump-to-node, error chip → first error, clear.
+
+**VVS:** `GraphFloatingCompilerLog.tsx`.
 
 ### 5. Secondary indexes behind disclosure
 

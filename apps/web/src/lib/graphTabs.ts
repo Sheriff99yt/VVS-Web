@@ -85,6 +85,43 @@ export function canCloseGraphTab(tab: GraphTab): boolean {
   return tab.id !== MAIN_GRAPH_CONTAINER_ID;
 }
 
+/** Selection payload for a graph tab — `main` maps to null; all other ids keep themselves. */
+export function selectionForGraphTab(tabId: string): { type: 'graph'; id: string | null } {
+  return { type: 'graph', id: tabId === 'main' ? null : tabId };
+}
+
+/**
+ * Close a graph tab. When closing the active tab, activates the previous sibling
+ * if any, otherwise the last remaining tab. Empty list falls back to main-graph.
+ */
+export function closeGraphTab(
+  tabs: GraphTab[],
+  closingId: string,
+  activeId: string
+): { nextTabs: GraphTab[]; nextActiveId: string } {
+  const closing = tabs.find((t) => t.id === closingId);
+  if (!closing || !canCloseGraphTab(closing)) {
+    return { nextTabs: tabs, nextActiveId: activeId };
+  }
+
+  const closingIndex = tabs.findIndex((t) => t.id === closingId);
+  const nextTabs = tabs.filter((t) => t.id !== closingId);
+
+  if (nextTabs.length === 0) {
+    return { nextTabs, nextActiveId: MAIN_GRAPH_CONTAINER_ID };
+  }
+
+  if (activeId !== closingId) {
+    return { nextTabs, nextActiveId: activeId };
+  }
+
+  const previousSibling = closingIndex > 0 ? tabs[closingIndex - 1] : undefined;
+  if (previousSibling) {
+    return { nextTabs, nextActiveId: previousSibling.id };
+  }
+  return { nextTabs, nextActiveId: nextTabs[nextTabs.length - 1]!.id };
+}
+
 export function reorderOpenTabs(tabs: GraphTab[], fromId: string, toId: string): GraphTab[] {
   if (fromId === toId) return tabs;
   const fromIndex = tabs.findIndex((tab) => tab.id === fromId);

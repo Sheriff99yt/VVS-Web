@@ -1,16 +1,20 @@
 'use client';
 
 import React from 'react';
-import { ChevronRight, Settings2 } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { buildGraphBreadcrumb } from '@/lib/projectTree';
 import { formatFunctionTabName } from '@/lib/functionTabs';
 import { openGraphContainerTab } from '@/lib/graphTabs';
-import { GRAPH_SETTINGS_EVENT } from './GraphSettingsModal';
 import { classHomeGraphId, MAIN_GRAPH_CONTAINER_ID } from '@/lib/classScope';
 
-export function GraphBreadcrumb() {
+export function GraphBreadcrumb({
+  compact = false,
+}: {
+  /** Inline path for the status bar (no outer chrome). */
+  compact?: boolean;
+}) {
   const {
     projectDetails,
     activeGraphTab,
@@ -82,18 +86,19 @@ export function GraphBreadcrumb() {
     });
   };
 
-  return (
-    <div className="flex items-center gap-1 px-3 h-7 shrink-0 bg-zinc-950 border-b border-zinc-800/80 text-[11px]">
-      <div className="flex items-center gap-1 min-w-0 flex-1">
+  const path = (
+    <div className={`flex items-center gap-0.5 min-w-0 ${compact ? 'flex-1 justify-center px-2' : 'flex-1'}`}>
       {segments.map((seg, i) => (
         <React.Fragment key={`${seg.label}-${i}`}>
-          {i > 0 && <ChevronRight size={12} className="text-zinc-600 shrink-0" />}
+          {i > 0 && <ChevronRight size={compact ? 10 : 12} className="text-zinc-600 shrink-0" />}
           <button
             type="button"
             onClick={() => navigateToGraph(seg.graphId ?? (i === 0 ? undefined : seg.graphId))}
-            className={`truncate max-w-[140px] transition-colors ${
+            className={`truncate transition-colors ${
+              compact ? 'max-w-[120px] text-[10px]' : 'max-w-[140px] text-[11px]'
+            } ${
               i === segments.length - 1
-                ? 'text-zinc-200 font-medium'
+                ? 'text-zinc-300 font-medium'
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
@@ -101,15 +106,14 @@ export function GraphBreadcrumb() {
           </button>
         </React.Fragment>
       ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => window.dispatchEvent(new CustomEvent(GRAPH_SETTINGS_EVENT))}
-        className="shrink-0 p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors"
-        title="Graph settings"
-      >
-        <Settings2 size={13} />
-      </button>
+    </div>
+  );
+
+  if (compact) return path;
+
+  return (
+    <div className="flex items-center gap-1 px-3 h-7 shrink-0 bg-zinc-950 border-t border-zinc-800/80 text-[11px]">
+      {path}
     </div>
   );
 }

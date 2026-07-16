@@ -2,14 +2,12 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { FunctionBinding, FunctionSymbol, PinType, SymbolVisibility } from '@vvs/graph-types';
-import { createDefaultOverload, FUNCTION_RETURN_TYPE_OPTIONS } from '@vvs/graph-types';
+import type { FunctionBinding, FunctionSymbol, SymbolVisibility } from '@vvs/graph-types';
+import { createDefaultOverload } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { SymbolParameterEditor } from './SymbolParameterEditor';
 import { overloadDisplayLabel } from '@/lib/functionTabs';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-
-const RETURN_TYPES = FUNCTION_RETURN_TYPE_OPTIONS;
 
 interface FunctionPropertiesPanelProps {
   func: FunctionSymbol;
@@ -144,19 +142,6 @@ export function FunctionPropertiesPanel({
             parameters={selectedOverload.parameters}
             onChange={(parameters) => updateOverload(selectedOverload.id, { parameters })}
           />
-          <div className="space-y-1">
-            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Return</label>
-            <SearchableSelect
-              value={selectedOverload.returnType}
-              onChange={(value) =>
-                updateOverload(selectedOverload.id, {
-                  returnType: value as PinType | 'void',
-                })
-              }
-              options={RETURN_TYPES.map((t) => ({ value: t.value, label: t.label }))}
-              placeholder="Return type…"
-            />
-          </div>
         </>
       )}
 

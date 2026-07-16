@@ -118,6 +118,18 @@ VVS must embed cleanly in **any** stack:
 
 Fidelity is what makes third-party integration possible. Hidden transforms make VVS a **plugin for VVS**, not a plugin for **your** product.
 
+### 6. No Hidden Magic (Educational Explicitness)
+
+We **never** automatically inject hidden structural code (like missing module imports, invisible memory allocators, or implicit async wrappers). 
+
+If a dependency is required to make the code compile (e.g., `#include <iostream>` in C++), there must be an explicit **Import Node** or visual module configuration that the user actively manages on the canvas. 
+
+This ensures VVS acts as an **educational tool**. Users learn exactly what is required to make the code work natively. The graph must clearly represent every semantic requirement of the target language, preventing the user from relying on transpiler "magic" that wouldn't translate if they wrote the code by hand.
+
+**Modifiers and keywords:** Visibility, `static`, `virtual`, `override`, `abstract` / pure, `const`, and `async` appear in generated text **only** when set on the corresponding Declare node’s `properties`. The transpiler must not infer class-level keywords from members, invent trait/`Default` impls, or force `override`/`public` defaults that the canvas did not set.
+
+**Language-aware UI:** When the current codegen language does not use a modifier in emit, the editor **disables** that chip (still visible) rather than letting users change a no-op. Inventory and Dual Class Lab pilot: [design/language_capability_catalog.md](design/language_capability_catalog.md) § C++ / Dual Class Lab pilot · § Modifier effectiveness.
+
 ---
 
 ## Authoring decision guide
@@ -203,7 +215,7 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 
 **What it is:** No Wait/Delay until async model is designed.
 
-**Why sync-first is OK temporarily:** Simplest fidelity story; Calculator and tutorials ship now.
+**Why sync-first is OK temporarily:** Simplest fidelity story; Dual Class Lab and tutorials ship now.
 
 **Where full model leads:** Explicit **async function** flag + **Await Wait** nodes — still text-shaped, not latent VM.
 
@@ -229,7 +241,8 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 - Call Function — visible methods and calls (macro/`use_macro` removed; migration on load)
 - Event Declare + On + Dispatch — visible handler methods and direct call lines (`self.on_<name>(…)`)
 - No hidden event runtime — `event_emit` / `event_subscribe` blocked (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does not inject `_emit` / `_subscribe`
-- Import Module — hoisted to file top with `sourceMap` on import line
+- Import Module — emits at **canvas chain position** with `sourceMap`; place shared imports **once at file top** on the first class chain (`targetLanguages` gate). **Flow** Import Module inside branches for conditional imports (e.g. Python `import json`). Optional `ownerClassId` when scoping is required.
+- Member / event order — exec topology first; **event defines are Y-ordered peers** (event→event wires do not force emit order); remaining ties use canvas Y (higher first)
 - Wait / Await Wait — explicit sleep/await in export; async function flag
 - Pin validation — graph shows type fixes via **Conversion** nodes
 - `sourceMap` selection highlight in code panel
@@ -267,10 +280,9 @@ Before adding nodes, transpiler lowering, or UI copy:
 
 ## Related documents
 
-| Document | Topic |
-|----------|--------|
 | [node_system.md](node_system.md) | Nodes, pins, events, functions |
 | [language_profiles.md](language_profiles.md) | Per-target portability |
 | [naming_and_product_direction.md](naming_and_product_direction.md) | Vocabulary — prefer **Function** over Macro |
 | [roadmap.md](roadmap.md) | Phases reframed around fidelity |
+| `.agents/skills/vvs_cross_language_mapping/SKILL.md` | AI Agent guide for node-to-code language mapping |
 | `.agents/memory/decisions.md` | Locked decision record |

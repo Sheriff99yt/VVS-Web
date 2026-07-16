@@ -51,20 +51,32 @@ export function createDefaultIntegration(options?: {
     hostFiles[path] = { strategy };
   }
 
-  const target = options?.defaultTarget ?? 'python';
   const moduleName = options?.moduleName ?? 'App';
-  const ext = resolveTargetFileExtension(target);
+  const moduleDir = options?.adoptExisting ? 'src' : '';
+  const functionDir = options?.adoptExisting ? 'src' : '';
+  const emitTargets: TargetLanguage[] = [
+    'python',
+    'javascript',
+    'cpp',
+    'csharp',
+    'rust',
+    'gdscript',
+    'verse',
+  ];
+  const emit: ProjectIntegrationConfig['emit'] = {};
+  for (const lang of emitTargets) {
+    const ext = resolveTargetFileExtension(lang);
+    emit[lang] = {
+      moduleDir,
+      moduleFile: `${moduleName}.${ext}`,
+      functionDir,
+    };
+  }
 
   return {
     environmentId: options?.environmentId,
     environmentVersion: options?.environmentVersion,
-    emit: {
-      [target]: {
-        moduleDir: options?.adoptExisting ? 'src' : '',
-        moduleFile: `${moduleName}.${ext}`,
-        functionDir: options?.adoptExisting ? 'src' : '',
-      },
-    },
+    emit,
     hostFiles,
   };
 }
@@ -136,12 +148,19 @@ export function resolveModuleEmitPath(
     targetFileExtensions?: TargetFileExtensions;
     /** Extra folder prefix from graph container placement (e.g. `utils/Player.py`). */
     subdirPrefix?: string;
+    /**
+     * Class home modules (especially multi-class on one graph) must use the class-named
+     * fallback file — not a fixed project `moduleFile` — or every class overwrites one path.
+     */
+    preferFallbackOverModuleFile?: boolean;
   }
 ): string {
   const emitCfg = integration?.emit?.[target];
   let path: string;
   if (options.tabKind === 'main') {
-    if (emitCfg?.moduleFile) {
+    if (options.preferFallbackOverModuleFile) {
+      path = joinPath(emitCfg?.moduleDir, options.fallbackFileName);
+    } else if (emitCfg?.moduleFile) {
       path = joinPath(emitCfg.moduleDir, emitCfg.moduleFile);
     } else if (emitCfg?.moduleDir) {
       path = joinPath(emitCfg.moduleDir, options.fallbackFileName);

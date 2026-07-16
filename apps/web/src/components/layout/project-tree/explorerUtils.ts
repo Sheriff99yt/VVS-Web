@@ -6,7 +6,7 @@ export function matchesExplorerFilter(text: string, query: string): boolean {
 }
 
 export function sectionGridSpan(viewMode?: SectionViewMode): string | undefined {
-  return viewMode === 'grid' ? 'col-span-2' : undefined;
+  return viewMode === 'grid' ? 'col-span-full' : undefined;
 }
 
 export function sectionVisible(matchCount: number, isAdding: boolean, query: string): boolean {

@@ -1,6 +1,8 @@
 import { CodeSink } from '../codeSink';
 import { offsetSpans } from '../codeExpr';
 import type {
+  IrArrayPush,
+  IrForEach,
   IrForLoop,
   IrIfBranch,
   IrSequence,
@@ -22,10 +24,40 @@ import {
   innerIndentUnit,
   isPackDrivenFamily,
   printFromTemplate,
+  tryPrintFromTemplate,
+  commentPrefixFromPack,
 } from '../print/template';
 import type { PrintContext } from '../print/types';
+import { typeNameForPin } from './emitTypes';
+import type { TargetLanguage } from '@vvs/graph-types';
+import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
+import type { IrModuleImport } from '../ir/types';
 
-const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'WhileLoop', 'Switch', 'Sequence']);
+const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'ForEach', 'WhileLoop', 'Switch', 'Sequence']);
+const IMPORT_MODULE_KIND = 'vvs.project.import_module';
+
+function appendModuleImportStatement(
+  sink: CodeSink,
+  stmt: IrModuleImport,
+  ctx: PrintContext,
+  emitUnsupportedComments = true
+): void {
+  const effective = isNodeEffectiveForLanguage(
+    IMPORT_MODULE_KIND,
+    { targetLanguages: stmt.targetLanguages },
+    ctx.family as TargetLanguage
+  );
+  if (effective) {
+    appendLeafStatement(sink, stmt, ctx);
+    return;
+  }
+  if (!emitUnsupportedComments) return;
+  const label = (stmt.displayLabel?.trim() || stmt.moduleSlug).trim();
+  sink.appendTagged({
+    nodeId: stmt.sourceGraphNodeId,
+    text: `${ctx.indent}${commentPrefixFromPack(ctx)}(x) ${label}`,
+  });
+}
 
 function appendRawWithExprSpans(
   sink: CodeSink,
@@ -81,7 +113,7 @@ function appendIfBranch(sink: CodeSink, stmt: IrIfBranch, ctx: PrintContext): vo
       sink.appendRaw(ifElseLine(ctx));
       appendBodyOrPlaceholder(sink, stmt.falseBody, inner, placeholder);
     }
-    if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'IfBranchClose'));
     }
   } else {
@@ -111,13 +143,96 @@ function appendForLoop(sink: CodeSink, stmt: IrForLoop, ctx: PrintContext): void
       forSpanOffset(ctx.family, ctx.indent, stmt.indexVar)
     );
     appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
-    if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
     }
   } else {
     sink.appendRaw(`${ctx.indent}// for ${stmt.indexVar}`);
   }
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `for ${stmt.indexVar}`);
+}
+
+function appendForEach(sink: CodeSink, stmt: IrForEach, ctx: PrintContext): void {
+  const printExpr = createDefaultExprPrinter();
+  const collPrinted = printExpr(stmt.collection, ctx);
+  const inner = innerIndentCtx(ctx);
+  const startLine = sink.lineCount + 1;
+  const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
+  const elementTypeName = typeNameForPin(
+    stmt.elementType ?? 'data_number',
+    ctx.family as TargetLanguage
+  );
+
+  let headerText: string;
+  try {
+    headerText = printFromTemplate(ctx, 'ForEachHeader', {
+      element: stmt.elementVar,
+      collection: collPrinted.text,
+      elementType: elementTypeName,
+    }).text;
+  } catch {
+    if (ctx.family === 'python' || ctx.family === 'gdscript') {
+      headerText = `${ctx.indent}for ${stmt.elementVar} in ${collPrinted.text}:`;
+    } else if (ctx.family === 'javascript') {
+      headerText = `${ctx.indent}for (const ${stmt.elementVar} of ${collPrinted.text}) {`;
+    } else if (ctx.family === 'csharp') {
+      headerText = `${ctx.indent}foreach (var ${stmt.elementVar} in ${collPrinted.text}) {`;
+    } else if (ctx.family === 'rust') {
+      headerText = `${ctx.indent}for ${stmt.elementVar} in ${collPrinted.text}.iter() {`;
+    } else {
+      headerText = `${ctx.indent}for (${elementTypeName} ${stmt.elementVar} : ${collPrinted.text}) {`;
+    }
+  }
+
+  if (isPackDrivenFamily(ctx.family)) {
+    appendRawWithExprSpans(sink, headerText, collPrinted.spans, ctx.indent.length);
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
+    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
+      sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
+    }
+  } else {
+    sink.appendRaw(`${ctx.indent}// foreach ${stmt.elementVar}`);
+  }
+  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `foreach ${stmt.elementVar}`);
+}
+
+function appendArrayPush(sink: CodeSink, stmt: IrArrayPush, ctx: PrintContext): void {
+  const printExpr = createDefaultExprPrinter();
+  const arr = printExpr(stmt.array, ctx);
+  const val = printExpr(stmt.value, ctx);
+  const startLine = sink.lineCount + 1;
+  if (isPackDrivenFamily(ctx.family)) {
+    const packed = tryPrintFromTemplate(
+      ctx,
+      'ArrayPush',
+      {
+        array: { text: arr.text, spans: arr.spans },
+        value: { text: val.text, spans: val.spans },
+      },
+      { noIndent: true }
+    );
+    if (packed) {
+      sink.appendRaw(`${ctx.indent}${packed.text}`);
+      sink.tagRange(stmt.sourceGraphNodeId, startLine, startLine, 'push');
+      return;
+    }
+  }
+  if (ctx.family === 'cpp') {
+    sink.appendRaw(`${ctx.indent}${arr.text}.push_back(${val.text});`);
+  } else if (ctx.family === 'python') {
+    sink.appendRaw(`${ctx.indent}${arr.text}.append(${val.text})`);
+  } else if (ctx.family === 'javascript') {
+    sink.appendRaw(`${ctx.indent}${arr.text}.push(${val.text});`);
+  } else if (ctx.family === 'csharp') {
+    sink.appendRaw(`${ctx.indent}${arr.text}.Add(${val.text});`);
+  } else if (ctx.family === 'rust') {
+    sink.appendRaw(`${ctx.indent}${arr.text}.push(${val.text});`);
+  } else if (ctx.family === 'gdscript') {
+    sink.appendRaw(`${ctx.indent}${arr.text}.append(${val.text})`);
+  } else {
+    sink.appendRaw(`${ctx.indent}// push ${val.text}`);
+  }
+  sink.tagRange(stmt.sourceGraphNodeId, startLine, startLine, 'push');
 }
 
 function appendWhileLoop(sink: CodeSink, stmt: IrWhileLoop, ctx: PrintContext): void {
@@ -138,7 +253,7 @@ function appendWhileLoop(sink: CodeSink, stmt: IrWhileLoop, ctx: PrintContext): 
       condSpanOffset(ctx.family, ctx.indent, 'while')
     );
     appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
-    if (ctx.family === 'javascript' || ctx.family === 'cpp') {
+    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'WhileLoopClose'));
     }
   } else {
@@ -185,6 +300,14 @@ function appendIrStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContext)
     appendForLoop(sink, stmt as IrForLoop, ctx);
     return;
   }
+  if (stmt.kind === 'ForEach') {
+    appendForEach(sink, stmt as IrForEach, ctx);
+    return;
+  }
+  if (stmt.kind === 'ArrayPush') {
+    appendArrayPush(sink, stmt as IrArrayPush, ctx);
+    return;
+  }
   if (stmt.kind === 'WhileLoop') {
     appendWhileLoop(sink, stmt as IrWhileLoop, ctx);
     return;
@@ -204,10 +327,14 @@ function appendIrStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContext)
 export function appendIrStatements(
   sink: CodeSink,
   statements: IrStatement[],
-  printCtx: PrintContext
+  printCtx: PrintContext,
+  options?: { emitUnsupportedComments?: boolean }
 ): void {
+  const emitComments = options?.emitUnsupportedComments !== false;
   for (const stmt of statements) {
-    if (NESTED_BODY_KINDS.has(stmt.kind)) {
+    if (stmt.kind === 'ModuleImport') {
+      appendModuleImportStatement(sink, stmt, printCtx, emitComments);
+    } else if (stmt.kind === 'ArrayPush' || NESTED_BODY_KINDS.has(stmt.kind)) {
       appendIrStatement(sink, stmt, printCtx);
     } else {
       appendLeafStatement(sink, stmt, printCtx);

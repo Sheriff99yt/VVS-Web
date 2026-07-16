@@ -15,6 +15,7 @@ export type GraphShortcutId =
   | 'disconnect'
   | 'spawn-menu'
   | 'node-search'
+  | 'toggle-log-pin'
   | 'extract-function'
   | 'select-all'
   | 'select-similar'
@@ -53,10 +54,11 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
   { id: 'paste', label: 'Paste', keysWin: 'Ctrl+V', keysMac: '⌘V', section: 'canvas' },
   { id: 'undo', label: 'Undo', keysWin: 'Ctrl+Z', keysMac: '⌘Z', section: 'canvas' },
   { id: 'redo', label: 'Redo', keysWin: 'Ctrl+Shift+Z', keysMac: '⌘⇧Z', section: 'canvas' },
-  { id: 'focus-selection', label: 'Frame selection', keysWin: 'F', section: 'canvas' },
-  { id: 'zoom-fit', label: 'Zoom to fit all', keysWin: 'Shift+F', section: 'canvas' },
-  { id: 'spawn-menu', label: 'Spawn node menu', keysWin: 'Space', section: 'canvas' },
-  { id: 'node-search', label: 'Search / spawn nodes', keysWin: 'Ctrl+K', keysMac: '⌘K', section: 'canvas' },
+  { id: 'focus-selection', label: 'Frame selection / fit all', keysWin: 'F', section: 'canvas' },
+  { id: 'zoom-fit', label: 'Zoom to fit all', keysWin: '', section: 'canvas' },
+  { id: 'spawn-menu', label: 'Spawn node menu', keysWin: 'Right-click', section: 'canvas' },
+  { id: 'node-search', label: 'Search nodes', keysWin: 'Space', keysMac: 'Space', section: 'canvas' },
+  { id: 'toggle-log-pin', label: 'Pin / unpin log', keysWin: '`', section: 'canvas' },
   { id: 'extract-function', label: 'Extract to function', keysWin: 'Ctrl+Shift+E', keysMac: '⌘⇧E', section: 'canvas' },
   { id: 'help', label: 'Keyboard shortcuts', keysWin: '?', section: 'canvas' },
   { id: 'save-project', label: 'Save project', keysWin: 'Ctrl+S', keysMac: '⌘S', section: 'project' },
@@ -71,16 +73,29 @@ export function isMacPlatform(): boolean {
   return /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 }
 
+/** Platform-aware key chord, e.g. "Ctrl+D" or "⌘D". */
+export function shortcutKeys(id: GraphShortcutId): string {
+  const def = shortcutById.get(id);
+  if (!def) return '';
+  return isMacPlatform() ? (def.keysMac ?? def.keysWin.replace(/Ctrl\+/g, '⌘')) : def.keysWin;
+}
+
 /** Tooltip / menu label, e.g. "Duplicate (Ctrl+D)" */
 export function shortcutTitle(id: GraphShortcutId): string {
   const def = shortcutById.get(id);
   if (!def) return '';
-  const keys = isMacPlatform() ? (def.keysMac ?? def.keysWin.replace(/Ctrl\+/g, '⌘')) : def.keysWin;
-  return `${def.label} (${keys})`;
+  const keys = shortcutKeys(id);
+  return keys ? `${def.label} (${keys})` : def.label;
+}
+
+/** Append shortcut to a custom label, e.g. withShortcut('Pin log', 'toggle-log-pin'). */
+export function withShortcut(label: string, id: GraphShortcutId): string {
+  const keys = shortcutKeys(id);
+  return keys ? `${label} (${keys})` : label;
 }
 
 export function shortcutsForSection(section: GraphShortcutDef['section']): GraphShortcutDef[] {
-  return GRAPH_SHORTCUTS.filter((s) => s.section === section);
+  return GRAPH_SHORTCUTS.filter((s) => s.section === section && Boolean(s.keysWin));
 }
 
 export function isTypingTarget(): boolean {

@@ -5,7 +5,6 @@ import { TopNav } from './TopNav';
 import { GraphExplorer } from './GraphExplorer';
 import { CodeOutputPanel } from './CodeOutputPanel';
 import { GraphTabBar } from './GraphTabBar';
-import { GraphBreadcrumb } from './GraphBreadcrumb';
 import { StatusBar } from './StatusBar';
 import { LibraryView } from '../views/LibraryView';
 import { RoadmapView } from '../views/RoadmapView';
@@ -62,10 +61,7 @@ function CanvasWorkspace() {
 
       <Panel id="center" defaultSize={55} minSize={30}>
         <main className="w-full h-full relative bg-zinc-950 flex flex-col min-h-0 min-w-0">
-          <div className="flex flex-col shrink-0 w-full z-40 relative">
-            <GraphBreadcrumb />
-            <GraphTabBar />
-          </div>
+          <GraphTabBar />
           <div className="flex-1 relative overflow-hidden min-h-0 min-w-0">
             <GraphCanvas />
           </div>

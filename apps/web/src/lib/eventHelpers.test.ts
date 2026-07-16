@@ -7,7 +7,7 @@ import {
   parameterCodegenName,
   resolveEventForDrop,
 } from './eventHelpers';
-import { createCalculatorUsabilityTestSnapshot } from './usabilityExampleTests/calculatorUsabilityTest';
+import { createCoverageLabUsabilityTestSnapshot } from './usabilityExampleTests/coverageLabUsabilityTest';
 
 describe('eventHelpers', () => {
   test('eventHandlerName strips On prefix and snake_cases', () => {
@@ -28,21 +28,18 @@ describe('eventHelpers', () => {
   });
 
   test('inferEventsFromDocuments repairs legacy graphs', () => {
-    const snapshot = createCalculatorUsabilityTestSnapshot();
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
     const { events: _removed, ...withoutEvents } = snapshot;
     const inferred = inferEventsFromDocuments(withoutEvents.documents!);
-    expect(inferred.some((e) => e.name.toLowerCase() === 'calculate')).toBe(true);
-    expect(inferred.some((e) => e.name.toLowerCase() === 'clear')).toBe(true);
+    expect(inferred.some((e) => e.name.toLowerCase() === 'pulse')).toBe(true);
+    expect(inferred.some((e) => e.name.toLowerCase() === 'start')).toBe(true);
   });
 
   test('resolveEventForDrop matches symbol id or legacy dispatcher label', () => {
-    const events = [
-      { id: 'evt-calc', name: 'calculate', parameters: [] },
-      { id: 'evt-clear', name: 'clear', parameters: [] },
-    ];
-    expect(resolveEventForDrop({ eventId: 'evt-calc' }, events)?.id).toBe('evt-calc');
+    const events = [{ id: 'evt-pulse', name: 'pulse', parameters: [] }];
+    expect(resolveEventForDrop({ eventId: 'evt-pulse' }, events)?.id).toBe('evt-pulse');
     expect(
-      resolveEventForDrop({ eventId: 'dispatcher-calculate', eventName: 'calculate' }, events)?.id
-    ).toBe('evt-calc');
+      resolveEventForDrop({ eventId: 'dispatcher-pulse', eventName: 'pulse' }, events)?.id
+    ).toBe('evt-pulse');
   });
 });

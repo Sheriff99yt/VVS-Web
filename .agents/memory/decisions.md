@@ -62,6 +62,26 @@ Choices agents must not undo without explicit user approval.
 
 **Next major track:** Usability & workflow standards — [design/terms_refactor_plan.md](design/terms_refactor_plan.md) (vocabulary V0–V4, spawn catalog, diagnostics copy) and [design/language_capability_catalog.md](design/language_capability_catalog.md) (per-language UI capabilities, usability example tests).
 
+## Coverage Lab + fidelity streamline (July 2026 — locked)
+
+**Canonical:** `docs/design/fidelity_streamline.md` · `docs/design/language_capability_catalog.md` § Coverage Lab · `docs/visual_to_text_fidelity.md` § No Hidden Magic
+
+- **Primary golden:** Coverage Lab (Machine + Sensor on one graph) — modifiers, enum, imports, inheritance, 1:1 order
+- **Verify as the user sees:** Code panel / `useProjectTranspileResult` / `extract_test_project_outputs.ts` — not only raw `transpileGraph` dumps
+- **One graph → one file (locked + shipped):** A container graph is one compilation unit. All `class_define` chains on that graph emit into **one** module file in canvas order (`emitMergedHomeGraphModules`). **No** class-per-file split and **no** “split classes” profile. Want two files? Put classes on two graphs.
+- **No inventing keywords:** Emit modifiers **only** from define-node `properties`
+- **Imports:** Import Module once at file top (`targetLanguages`); flow Import for conditional; optional `ownerClassId` — no auto `#include`
+- **Enum:** TypeRef `{ kind: 'enum' }` (+ legacy `enumType` mirror) + pack `EnumMemberAccess`; no paste of C++ `::` into all languages
+- **User types:** TypeRef for builtin / enum / class / Array / Map — declare on canvas → pick → emit (`docs/design/user_types.md`); locals never get class `var_define`
+- **Skills:** `vvs_usability_example_tests`, `vvs_visual_code_fidelity`, `vvs_transpiler_development`, `vvs_cross_language_mapping`
+
+## Code panel verification (July 2026 — locked)
+
+- Agents **must** validate Test Project codegen against what the **Code | Files** panel shows
+- Canonical extract: `bun apps/web/scripts/extract_test_project_outputs.ts`
+- Emit unit: one file per **container graph** (all classes on that graph), not one file per class
+- Failing a unit test while the panel is wrong (or vice versa) is not done
+
 ## Product UI (July 2026 revision)
 
 - **No in-app Roadmap or Integrations tabs** — planning lives in `docs/`; MCP via Connect AI modal only
@@ -131,7 +151,7 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - **Conversion nodes** (`convert_to_string`, `convert_to_number`) — pure expression; **one node = one call** in generated code; **no transpiler folding**
 - **Print String** requires **`data_string`** — numeric display uses **Get → To String → Print**
 - **`pinCompatibility.ts`** in `@vvs/graph-types` — shared with editor + `analyzeProject` (`PIN_TYPE_MISMATCH`)
-- **Usability example tests:** Calculator exercises input, conversion, functions, events, branch — see `apps/web/src/lib/usabilityExampleTests/` and `docs/design/language_capability_catalog.md`
+- **Usability example tests:** First Graph + Coverage Lab — StartScreen Test Projects; verify via Code panel extract — see `apps/web/src/lib/usabilityExampleProjects.ts` and `docs/design/language_capability_catalog.md`
 
 ## Syntax packs & codegen layers (July 2026)
 
@@ -166,6 +186,19 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - **No Redis v1** — Postgres + in-process cache until horizontal scale requires it
 - **Phase 4 collab:** Go WebSockets + op log — not Supabase Realtime for product paths
 - **`.vvs/` folders** remain first-class alongside cloud sync
+
+## Unsupported nodes per language (July 2026 — locked UX)
+
+**Product rule:** When a canvas node is not effective for the current codegen target, VVS must stay honest in **both** code and canvas — never silent skip.
+
+1. **Unsupported comment lines (codegen)** — Emit a **comment** for that node whose text starts with `(x)` (after the language comment prefix), e.g. `# (x) Import iostream` / `// (x) Import iostream`. The line still maps via `sourceMap` to the canvas node. Prefer pack `commentPrefix` + node display label.
+2. **Unsupported comments toggle** — Button **to the left of the Code panel language selector**. When off, omit `(x)` comment lines from preview/Generate; when on (**default**), show them. Preference: `showUnsupportedComments` in uiPreferences.
+3. **Node dimming (canvas)** — On language change, nodes unsupported for that target are **dimmed / grey**. Selecting a language where the node is supported restores normal chrome. Dimming uses `nodeEffectiveness` (Import `targetLanguages` v1) — same resolver as emit.
+4. **Node dimming toggle** — Control in the **top bar, immediately left of Autosave**. When off, canvas does not grey unsupported nodes (codegen comments still follow the Code-panel toggle independently). Preference: `dimUnsupportedNodes` (default on).
+
+**Do not:** invent real emit for unsupported constructs; hide unsupported nodes from the catalog; couple the two toggles (comments ≠ dimming).
+
+**Implements / expands:** roadmap `node-effectiveness` · unified model Phase C · `docs/language_profiles.md`.
 
 ## Graph system isolation (July 2026)
 

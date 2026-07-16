@@ -23,6 +23,19 @@ describe('VariableSymbol', () => {
     expect(variable.binding).toBe('instance');
   });
 
+  test('migrates enumType overlay into typeRef', () => {
+    const variable = migrateLegacyVariable({
+      id: 'v2',
+      name: 'Status',
+      type: 'data_any',
+      enumType: 'SensorStatus',
+      defaultValue: 'OK',
+    });
+    expect(variable.typeRef).toEqual({ kind: 'enum', name: 'SensorStatus' });
+    expect(variable.enumType).toBe('SensorStatus');
+    expect(variable.type).toBe('data_any');
+  });
+
   test('collects datatype and binding portability features', () => {
     const variable = createVariableSymbol('Items', {
       type: 'data_array',

@@ -99,7 +99,7 @@ export function printStringNode(
 
 export function branchNode(id: string, position: { x: number; y: number }): VVSNode {
   return usabilityTestNode(id, position, {
-    label: 'Branch',
+    label: 'If',
     category: 'Flow Control',
     kindId: 'flow_branch',
     inputs: [
@@ -128,6 +128,165 @@ export function mathAddNode(id: string, position: { x: number; y: number }): VVS
   });
 }
 
+export function mathMulNode(id: string, position: { x: number; y: number }): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: 'Math Multiply',
+    category: 'Math',
+    kindId: 'math_multiply',
+    inputs: [
+      { id: 'a', label: 'A', type: 'data_number' },
+      { id: 'b', label: 'B', type: 'data_number' },
+    ],
+    outputs: [{ id: 'result', label: 'Result', type: 'data_number' }],
+    inlineValues: {},
+  });
+}
+
+export function enumDefineNode(
+  id: string,
+  position: { x: number; y: number },
+  name: string,
+  members: string[]
+): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: `Enum ${name}`,
+    category: 'Project',
+    kindId: 'enum_define',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    properties: { name, symbolId: `enum-${name}`, members },
+    inlineValues: {},
+  });
+}
+
+export function switchNode(
+  id: string,
+  position: { x: number; y: number },
+  cases: string[],
+  options?: { enumType?: string }
+): VVSNode {
+  const properties: Record<string, string> = {};
+  if (options?.enumType) properties.enumType = options.enumType;
+  cases.forEach((c, idx) => {
+    properties[`case${idx}`] = c;
+  });
+  return usabilityTestNode(id, position, {
+    label: 'Switch',
+    kindId: 'flow_switch',
+    category: 'Control Flow',
+    inputs: [EXEC_IN, { id: 'selector', label: 'Selector', type: 'data_any' }],
+    outputs: [
+      ...cases.map((c, idx) => ({ id: `case_${idx}`, label: c, type: 'execution' as const })),
+      { id: 'default_exec', label: 'default', type: 'execution' as const },
+      EXEC_OUT,
+    ],
+    properties,
+    inlineValues: {},
+  });
+}
+
+export function enumMemberNode(
+  id: string,
+  position: { x: number; y: number },
+  enumName: string,
+  member: string
+): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: `${enumName}.${member}`,
+    kindId: 'expr_enum_member',
+    category: 'Enums',
+    inputs: [],
+    outputs: [{ id: 'val', label: 'Member', type: 'data_any' }],
+    properties: { enumName, member },
+    inlineValues: {},
+  });
+}
+
+export function importModuleNode(
+  id: string,
+  position: { x: number; y: number },
+  options: {
+    modulePath: string;
+    importStyle?: 'module' | 'from' | 'include_system';
+    importNames?: string;
+    label?: string;
+    /** When set, import emits only for these target languages. */
+    targetLanguages?: string[];
+    /** When set, import emits only for this class module (shared home graph). */
+    ownerClassId?: string;
+  }
+): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: options.label ?? `Import ${options.modulePath}`,
+    kindId: 'vvs.project.import_module',
+    category: 'Imports',
+    linkKind: 'import_module',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    properties: {
+      modulePath: options.modulePath,
+      importStyle: options.importStyle ?? 'module',
+      importNames: options.importNames ?? '',
+      ...(options.targetLanguages?.length
+        ? { targetLanguages: options.targetLanguages.join(',') }
+        : {}),
+      ...(options.ownerClassId ? { ownerClassId: options.ownerClassId } : {}),
+    },
+    inlineValues: {},
+  });
+}
+
+export function forEachNode(id: string, position: { x: number; y: number }): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: 'For Each',
+    kindId: 'flow_for',
+    category: 'Control Flow',
+    inputs: [EXEC_IN, { id: 'array', label: 'array', type: 'data_array' }],
+    outputs: [
+      { id: 'loop_body', label: 'Loop Body', type: 'execution' },
+      { id: 'completed', label: 'Completed', type: 'execution' },
+      { id: 'element', label: 'Element', type: 'data_any' },
+      { id: 'index', label: 'Index', type: 'data_number' },
+    ],
+    inlineValues: {},
+  });
+}
+
+export function arrayPushNode(id: string, position: { x: number; y: number }): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: 'Array Push',
+    kindId: 'array_push',
+    category: 'Action',
+    inputs: [
+      EXEC_IN,
+      { id: 'array', label: 'Array', type: 'data_array' },
+      { id: 'val', label: 'Value', type: 'data_any' },
+    ],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
+  });
+}
+
+export function stringConcatNode(
+  id: string,
+  position: { x: number; y: number },
+  prefix?: string
+): VVSNode {
+  const inlineValues: Record<string, string | number | boolean> = {};
+  if (prefix !== undefined) inlineValues.a = prefix;
+  return usabilityTestNode(id, position, {
+    label: 'String Concat',
+    kindId: 'string_concat',
+    category: 'Action',
+    inputs: [
+      { id: 'a', label: 'A', type: 'data_string' },
+      { id: 'b', label: 'B', type: 'data_string' },
+    ],
+    outputs: [{ id: 'result', label: 'Result', type: 'data_string' }],
+    inlineValues,
+  });
+}
+
 export function boundVariableGet(
   id: string,
   position: { x: number; y: number },
@@ -148,12 +307,12 @@ export function getUserInputNode(
   position: { x: number; y: number },
   options: {
     prompt: string;
-    inputKind?: 'text' | 'number' | 'password';
+    inputKind?: 'text' | 'number';
   }
 ): VVSNode {
   const inputKind = options.inputKind ?? 'text';
   const valueType = inputKind === 'number' ? 'data_number' : 'data_string';
-  const kindLabel = inputKind === 'number' ? 'Number' : inputKind === 'password' ? 'Password' : 'Text';
+  const kindLabel = inputKind === 'number' ? 'Number' : 'Text';
 
   return usabilityTestNode(id, position, {
     label: `Get User Input · ${kindLabel}`,
@@ -165,7 +324,7 @@ export function getUserInputNode(
       { id: 'value', label: 'Value', type: valueType },
     ],
     inlineValues: { prompt: options.prompt },
-    properties: { inputKind, placeholder: '', required: true },
+    properties: { inputKind },
   });
 }
 
@@ -334,7 +493,11 @@ export function varDefineNode(
       type: variable.type,
       default: variable.defaultValue,
       binding: variable.binding,
+      visibility: variable.visibility,
+      isConst: !!variable.flags?.readonly,
       variableName: variable.name,
+      ...(variable.enumType ? { enumType: variable.enumType } : {}),
+      ...(variable.typeRef ? { typeRef: variable.typeRef } : {}),
     },
   });
 }
@@ -353,12 +516,16 @@ export function functionDefineNode(
     outputs: [EXEC_OUT],
     inlineValues: {},
     linkedGraphId: func.id,
-    linkKind: 'call_function',
     graphBinding: { kind: 'call_function', symbolId: func.id, overloadId: overload?.id },
     properties: {
       symbolId: func.id,
       name: func.name,
       binding: func.binding,
+      visibility: func.visibility,
+      isAbstract: !!func.flags?.abstract,
+      isVirtual: !!func.flags?.virtual,
+      isOverride: !!func.flags?.override,
+      isAsync: !!func.flags?.async,
       returnType: overload?.returnType,
       graphTabId: overload?.graphTabId ?? func.id,
     },

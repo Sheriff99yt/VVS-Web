@@ -1,8 +1,8 @@
 import type { IrSwitch, IrStatement } from '../../ir/types';
-import { createDefaultExprPrinter } from '../expr';
 import { blockPlaceholder, nestedIndent } from '../template';
-import { caseLabelLiteral } from '../blocks';
+import { formatSwitchCaseLabel } from '../blocks';
 import type { PrintContext, PrintedStmt, StmtPrinter } from '../types';
+import { printSwitchSelectBind, SWITCH_SEL_TEMP } from './switchSelectBind';
 
 export function createGdscriptSwitchPrinter(
   printStatements: (stmts: IrStatement[], ctx: PrintContext) => PrintedStmt[]
@@ -10,14 +10,14 @@ export function createGdscriptSwitchPrinter(
   return (stmt, ctx) => {
     if (stmt.kind !== 'Switch') return null;
     const s = stmt as IrSwitch;
-    const printExpr = createDefaultExprPrinter();
-    const selector = printExpr(s.selector, ctx);
+    const bind = printSwitchSelectBind(s, ctx);
     const inner = { ...ctx, indent: nestedIndent(ctx) };
-    const selTemp = '_vvs_sel';
-    const lines = [`${ctx.indent}${selTemp} = ${selector.text}`];
+    const lines = [bind.text];
     s.cases.forEach((c, i) => {
       const kw = i === 0 ? 'if' : 'elif';
-      lines.push(`${ctx.indent}${kw} ${selTemp} == ${caseLabelLiteral(c.label)}:`);
+      lines.push(
+        `${ctx.indent}${kw} ${SWITCH_SEL_TEMP} == ${formatSwitchCaseLabel(c, ctx.family)}:`
+      );
       const body = printStatements(c.body, inner);
       lines.push(
         body.length > 0
@@ -30,6 +30,6 @@ export function createGdscriptSwitchPrinter(
       const body = printStatements(s.defaultBody, inner);
       lines.push(body.map((p) => p.text).join('\n'));
     }
-    return { text: lines.join('\n'), expressionSpans: [] };
+    return { text: lines.join('\n'), expressionSpans: bind.expressionSpans };
   };
 }

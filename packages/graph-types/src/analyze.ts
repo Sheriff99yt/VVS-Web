@@ -133,7 +133,7 @@ function validateDocument(tabId: string, doc: GraphDocument): Diagnostic[] {
       continue;
     }
 
-    if (!pinsAreCompatible(types.sourceType, types.targetType)) {
+    if (!pinsAreCompatible(types.sourceType, types.targetType, types.sourceTypeRef, types.targetTypeRef)) {
       messages.push({
         level: 'error',
         message: `Pin type mismatch (${types.sourceType} → ${types.targetType}) on wire to "${target.data.label}"`,
@@ -634,6 +634,9 @@ function validateOrphanDefineNodes(
       continue;
     }
 
+    // Enums are canvas-declared only (no symbol-table row yet).
+    if (kindId === 'enum_define') continue;
+
     const symbolId = defineNodeSymbolId(node);
     if (!symbolId) continue;
 
@@ -652,6 +655,16 @@ function validateOrphanDefineNodes(
           : eventIds.has(symbolId);
 
     if (known) continue;
+
+    // Another class may share this home graph — its define nodes are not orphans for `cls`.
+    const ownedBySibling =
+      (kindId === 'var_define' &&
+        variables.some((v) => v.id === symbolId && symbolClassId(v) !== cls.id)) ||
+      (kindId === 'function_define' &&
+        functions.some((f) => f.id === symbolId && symbolClassId(f) !== cls.id)) ||
+      (kindId === 'event_member_define' &&
+        events.some((e) => e.id === symbolId && symbolClassId(e) !== cls.id));
+    if (ownedBySibling) continue;
 
     messages.push({
       level: 'error',
@@ -674,8 +687,19 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
   if (classes.length === 0) return messages;
 
   for (const cls of classes) {
-    const tabId = classHomeGraphId(cls);
-    const doc = input.documents[tabId];
+    let tabId = classHomeGraphId(cls);
+    let doc = input.documents[tabId];
+
+    if (!doc || !classGraphHasClassDefine(doc, cls)) {
+      for (const [id, d] of Object.entries(input.documents)) {
+        if (classGraphHasClassDefine(d, cls)) {
+          tabId = id;
+          doc = d;
+          break;
+        }
+      }
+    }
+
     if (!doc) continue;
 
     const classVariables = variables.filter((v) => symbolClassId(v) === cls.id);
@@ -756,10 +780,44 @@ function isCallFunctionNode(node: import('./nodes').GraphNode): boolean {
   );
 }
 
+function isDispatchEventNode(node: import('./nodes').GraphNode): boolean {
+  if (node.type !== 'vvs_standard_node') return false;
+  const kindId = resolveNodeKindId(node.data);
+  return (
+    kindId === 'event_dispatch' ||
+    kindId === 'event_emit' ||
+    node.data.graphBinding?.kind === 'dispatch_event'
+  );
+}
+
 function isImportClassNode(node: import('./nodes').GraphNode): boolean {
   if (node.type !== 'vvs_standard_node') return false;
   const kindId = resolveNodeKindId(node.data);
   return kindId === 'import_class' || node.data.graphBinding?.kind === 'import_class';
+}
+
+function collectDefinedAndImportedClassIds(
+  doc: GraphDocument,
+  classes: ClassSymbol[]
+): { definedClassIds: Set<string>; importedClassIds: Set<string> } {
+  const definedClassIds = new Set<string>();
+  for (const cls of classes) {
+    if (classGraphHasClassDefine(doc, cls)) {
+      definedClassIds.add(cls.id);
+    }
+  }
+
+  const importedClassIds = new Set<string>();
+  for (const node of doc.nodes) {
+    if (!isImportClassNode(node)) continue;
+    const targetClassId =
+      (typeof node.data.properties?.targetClassId === 'string'
+        ? node.data.properties.targetClassId
+        : undefined) ?? node.data.graphBinding?.targetClassId;
+    if (targetClassId) importedClassIds.add(targetClassId);
+  }
+
+  return { definedClassIds, importedClassIds };
 }
 
 function validateCrossClassCalls(input: AnalyzeProjectInput): Diagnostic[] {
@@ -770,18 +828,7 @@ function validateCrossClassCalls(input: AnalyzeProjectInput): Diagnostic[] {
   const functionById = new Map(input.functions.map((f) => [f.id, f]));
 
   for (const [tabId, doc] of Object.entries(input.documents)) {
-    const homeClass = classForHomeGraphId(classes, tabId);
-    if (!homeClass) continue;
-
-    const importedClassIds = new Set<string>();
-    for (const node of doc.nodes) {
-      if (!isImportClassNode(node)) continue;
-      const targetClassId =
-        (typeof node.data.properties?.targetClassId === 'string'
-          ? node.data.properties.targetClassId
-          : undefined) ?? node.data.graphBinding?.targetClassId;
-      if (targetClassId) importedClassIds.add(targetClassId);
-    }
+    const { definedClassIds, importedClassIds } = collectDefinedAndImportedClassIds(doc, classes);
 
     for (const node of doc.nodes) {
       if (!isCallFunctionNode(node)) continue;
@@ -790,13 +837,54 @@ function validateCrossClassCalls(input: AnalyzeProjectInput): Diagnostic[] {
       const fn = functionById.get(symbolId);
       if (!fn) continue;
       const fnClassId = fn.classId ?? MAIN_CLASS_ID;
-      if (fnClassId === homeClass.id) continue;
+
+      // Same-graph class define counts as in-scope — no import required.
+      if (definedClassIds.has(fnClassId)) continue;
       if (importedClassIds.has(fnClassId)) continue;
       const targetClass = classes.find((c) => c.id === fnClassId);
       messages.push({
         level: 'warning',
         message: `Cross-class call to ${targetClass?.name ?? fn.name} without import_class on this graph`,
         code: 'CROSS_CLASS_CALL_WITHOUT_IMPORT',
+        tabId,
+        nodeId: node.id,
+        source: 'semantic',
+      });
+    }
+  }
+
+  return messages;
+}
+
+function validateCrossClassDispatches(input: AnalyzeProjectInput): Diagnostic[] {
+  const messages: Diagnostic[] = [];
+  const classes = input.classes ?? [];
+  if (classes.length < 2) return messages;
+
+  const eventById = new Map((input.events ?? []).map((e) => [e.id, e]));
+
+  for (const [tabId, doc] of Object.entries(input.documents)) {
+    const { definedClassIds, importedClassIds } = collectDefinedAndImportedClassIds(doc, classes);
+
+    for (const node of doc.nodes) {
+      if (!isDispatchEventNode(node)) continue;
+      const symbolId =
+        node.data.graphBinding?.symbolId ??
+        (typeof node.data.properties?.eventId === 'string'
+          ? node.data.properties.eventId
+          : undefined);
+      if (!symbolId) continue;
+      const event = eventById.get(symbolId);
+      if (!event) continue;
+      const eventClassId = event.classId ?? MAIN_CLASS_ID;
+
+      if (definedClassIds.has(eventClassId)) continue;
+      if (importedClassIds.has(eventClassId)) continue;
+      const targetClass = classes.find((c) => c.id === eventClassId);
+      messages.push({
+        level: 'warning',
+        message: `Cross-class dispatch to ${targetClass?.name ?? event.name} without import_class on this graph`,
+        code: 'CROSS_CLASS_DISPATCH_WITHOUT_IMPORT',
         tabId,
         nodeId: node.id,
         source: 'semantic',
@@ -961,6 +1049,7 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   diagnostics.push(...validateProgramEntry(input));
   diagnostics.push(...validateLegacyLifecycleNodes(input));
   diagnostics.push(...validateCrossClassCalls(input));
+  diagnostics.push(...validateCrossClassDispatches(input));
   diagnostics.push(...validateVirtualFunctionFlags(input));
 
   if (input.portabilityDiagnostics) {

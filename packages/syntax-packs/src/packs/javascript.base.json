@@ -14,45 +14,139 @@
     "varDeclIndent": "    ",
     "emptyHandlerBody": "    // empty",
     "emptyFunctionBody": "    // empty",
-    "importTemplate": { "quasi": "import * as {mod} from './{mod}';" }
+    "importTemplate": {
+      "quasi": "import * as {mod} from './{mod}';"
+    }
   },
   "templates": {
-    "Print": { "quasi": "console.log({value});" },
-    "AssignInstance": { "quasi": "this.{target} = {value};" },
-    "AssignLocal": { "quasi": "{target} = {value};" },
-    "CallFunction": { "quasi": "{callee}();" },
-    "CallInstance": { "quasi": "this.{callee}();" },
-    "CallCrossClass": { "quasi": "{receiver}.{callee}();" },
-    "CallCrossClassStatic": { "quasi": "{class}.{callee}();" },
-    "DispatchEvent": { "quasi": "this.on_{handler}({args});" },
-    "IfBranchHeader": { "quasi": "if ({cond}) {" },
-    "IfBranchElse": { "quasi": "} else {" },
-    "IfBranchClose": { "quasi": "};" },
-    "ForLoopHeader": { "quasi": "for (let {index} = {first}; {index} <= {last}; {index}++) {" },
-    "ForLoopClose": { "quasi": "};" },
-    "WhileLoopHeader": { "quasi": "while ({cond}) {" },
-    "WhileLoopClose": { "quasi": "};" },
-    "SequenceHeader": { "quasi": "{" },
-    "SequenceComment": { "quasi": "  // sequence" },
-    "SequenceClose": { "quasi": "};" },
-    "ModuleImport": { "quasi": "import * as {mod} from './{mod}';" },
-    "ImportClass": { "quasi": "import { {class} } from './{mod}.js';" },
-    "ImportClassAlias": { "quasi": "import { {class} as {alias} } from './{mod}.js';" },
-    "AwaitWaitAsync": { "quasi": "await new Promise((resolve) => setTimeout(resolve, {duration} * 1000));" },
-    "AwaitWaitSync": { "quasi": "/* blocking wait {duration}s — use await wait in async context */" },
-    "CallNative": { "quasi": "{call};" },
-    "ConvertToString": { "quasi": "String({value})" },
-    "ConvertToNumber": { "quasi": "parseFloat({value})" },
-    "InstanceRef": { "quasi": "this.{name}" },
-    "NullLiteral": { "quasi": "null" },
-    "BoolLiteralTrue": { "quasi": "true" },
-    "BoolLiteralFalse": { "quasi": "false" },
-    "VarDefine": { "quasi": "this.{name} = {default};" },
-    "ClassModuleOpen": { "quasi": "class {name}{extendsSuffix} {" },
-    "ClassModuleClose": { "quasi": "}" },
-    "EventHandlerOpen": { "quasi": "{linePrefix}  on_{handler}({paramList}) {" },
-    "EventHandlerClose": { "quasi": "  }" },
-    "FunctionDefOpen": { "quasi": "{prefix}{asyncKw}{name}({paramList}) {" },
-    "FunctionTabClose": { "quasi": "  }" }
+    "Print": {
+      "quasi": "console.log({value});"
+    },
+    "AssignInstance": {
+      "quasi": "this.{target} = {value};"
+    },
+    "AssignLocal": {
+      "quasi": "{target} = {value};"
+    },
+    "CallFunction": {
+      "quasi": "{callee}();"
+    },
+    "CallInstance": {
+      "quasi": "this.{callee}();"
+    },
+    "CallCrossClass": {
+      "quasi": "{receiver}.{callee}();"
+    },
+    "CallCrossClassStatic": {
+      "quasi": "{class}.{callee}();"
+    },
+    "DispatchEvent": {
+      "quasi": "this.on_{handler}({args});"
+    },
+    "DispatchEventCrossClass": {
+      "quasi": "{receiver}.on_{handler}({args});"
+    },
+    "IfBranchHeader": {
+      "quasi": "if ({cond}) {"
+    },
+    "IfBranchElse": {
+      "quasi": "} else {"
+    },
+    "IfBranchClose": {
+      "quasi": "};"
+    },
+    "ForLoopHeader": {
+      "quasi": "for (let {index} = {first}; {index} <= {last}; {index}++) {"
+    },
+    "ForLoopClose": {
+      "quasi": "};"
+    },
+    "WhileLoopHeader": {
+      "quasi": "while ({cond}) {"
+    },
+    "WhileLoopClose": {
+      "quasi": "};"
+    },
+    "SequenceHeader": {
+      "quasi": "{"
+    },
+    "SequenceComment": {
+      "quasi": "  // sequence"
+    },
+    "SequenceClose": {
+      "quasi": "};"
+    },
+    "ModuleImport": {
+      "quasi": "import * as {mod} from './{mod}';"
+    },
+    "ImportClass": {
+      "quasi": "import { {class} } from './{mod}.js';"
+    },
+    "ImportClassAlias": {
+      "quasi": "import { {class} as {alias} } from './{mod}.js';"
+    },
+    "AwaitWaitAsync": {
+      "quasi": "await new Promise((resolve) => setTimeout(resolve, {duration} * 1000));"
+    },
+    "AwaitWaitSync": {
+      "quasi": "/* blocking wait {duration}s â€” use await wait in async context */"
+    },
+    "CallNative": {
+      "quasi": "{call};"
+    },
+    "ConvertToString": {
+      "quasi": "String({value})"
+    },
+    "ConvertToNumber": {
+      "quasi": "parseFloat({value})"
+    },
+    "InstanceRef": {
+      "quasi": "this.{name}"
+    },
+    "NullLiteral": {
+      "quasi": "null"
+    },
+    "BoolLiteralTrue": {
+      "quasi": "true"
+    },
+    "VarDefine": {
+      "quasi": "{staticKw}{visibility}{name} = {default};"
+    },
+    "DeclareLocal": {
+      "quasi": "let {name};"
+    },
+    "ClassModuleOpen": {
+      "quasi": "{prefix}class {name}{extendsSuffix} {"
+    },
+    "ClassModuleClose": {
+      "quasi": "}"
+    },
+    "EventHandlerOpen": {
+      "quasi": "{linePrefix}  on_{handler}({paramList}) {"
+    },
+    "EventHandlerClose": {
+      "quasi": "  }"
+    },
+    "FunctionDefOpen": {
+      "quasi": "  {staticKw}{asyncKw}{name}({paramList}) {"
+    },
+    "FunctionTabClose": {
+      "quasi": "  }"
+    },
+    "BoolLiteralFalse": {
+      "quasi": "false"
+    },
+    "ConstructorOpen": {
+      "quasi": "{linePrefix}constructor({paramList}) {"
+    },
+    "EnumMemberAccess": {
+      "quasi": "{enum}.{member}"
+    },
+    "ModuleImportFrom": {
+      "quasi": "import { {names} } from \"{mod}\""
+    },
+    "ModuleImportIncludeSystem": {
+      "quasi": "import \"{mod}\""
+    }
   }
 }

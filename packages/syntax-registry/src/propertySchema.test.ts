@@ -6,43 +6,43 @@ import {
   type PropertyFieldDefinition,
 } from './propertySchema';
 
-const GET_INPUT_SCHEMA: PropertyFieldDefinition[] = [
+const SAMPLE_SCHEMA: PropertyFieldDefinition[] = [
   {
     key: 'inputKind',
     label: 'Input type',
     type: 'enum',
-    enumValues: ['text', 'number', 'password'],
+    enumValues: ['text', 'number'],
     default: 'text',
   },
   {
-    key: 'placeholder',
-    label: 'Placeholder',
+    key: 'hint',
+    label: 'Hint',
     type: 'string',
     default: '',
-    when: { inputKind: ['text', 'password'] },
+    when: { inputKind: ['text'] },
   },
 ];
 
 describe('propertySchema', () => {
   test('defaultPropertiesFromSchema fills enum and string defaults', () => {
-    expect(defaultPropertiesFromSchema(GET_INPUT_SCHEMA)).toEqual({
+    expect(defaultPropertiesFromSchema(SAMPLE_SCHEMA)).toEqual({
       inputKind: 'text',
-      placeholder: '',
+      hint: '',
     });
   });
 
   test('mergePropertyDefaults preserves user overrides', () => {
     expect(
-      mergePropertyDefaults(GET_INPUT_SCHEMA, { inputKind: 'number', placeholder: 'x' })
+      mergePropertyDefaults(SAMPLE_SCHEMA, { inputKind: 'number', hint: 'x' })
     ).toEqual({
       inputKind: 'number',
-      placeholder: 'x',
+      hint: 'x',
     });
   });
 
   test('isPropertyFieldVisible respects when clauses', () => {
-    const placeholder = GET_INPUT_SCHEMA[1]!;
-    expect(isPropertyFieldVisible(placeholder, { inputKind: 'text' })).toBe(true);
-    expect(isPropertyFieldVisible(placeholder, { inputKind: 'number' })).toBe(false);
+    const hint = SAMPLE_SCHEMA[1]!;
+    expect(isPropertyFieldVisible(hint, { inputKind: 'text' })).toBe(true);
+    expect(isPropertyFieldVisible(hint, { inputKind: 'number' })).toBe(false);
   });
 });

@@ -3,11 +3,18 @@
 import React, { useCallback, useMemo } from 'react';
 import { NodeProps, useReactFlow } from '@xyflow/react';
 import { AlertTriangle, FolderOpen } from 'lucide-react';
+import {
+  isNodeEffectiveForLanguage,
+  nodeIneffectiveTooltip,
+} from '@vvs/language-profiles';
 import { VVSNodeData } from '@/types/graph';
 import { useProject } from '@/contexts/ProjectContext';
+import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
+import { useUiPreference } from '@/hooks/useUiPreference';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
 import { NodePinRow } from './NodePinRow';
+import { NodeModifiers } from './NodeModifiers';
 import styles from './VVSNode.module.css';
 
 interface VVSNodeBodyProps {
@@ -18,20 +25,33 @@ interface VVSNodeBodyProps {
 
 function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const { updateNodeData } = useReactFlow();
-  const { validationWarnings, activeGraphTab } = useProject();
+  const { validationErrors, validationWarnings, activeGraphTab } = useProject();
+  const { targetLanguage } = useActiveGraphCodegenSettings();
+  const [dimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
+  const kindId = resolveNodeKindId(data);
+  const isUnsupported =
+    dimUnsupportedNodes &&
+    !isNodeEffectiveForLanguage(kindId, data.properties, targetLanguage);
+  const unsupportedTitle = isUnsupported
+    ? nodeIneffectiveTooltip(kindId, data.properties, targetLanguage)
+    : '';
   const hasBrokenRef = useMemo(
     () =>
-      validationWarnings.some(
+      [...validationErrors, ...validationWarnings].some(
         (w) =>
           w.code === 'UNRESOLVED_SYMBOL_REF' &&
           w.nodeId === id &&
           (w.tabId === undefined || w.tabId === activeGraphTab)
       ),
-    [validationWarnings, id, activeGraphTab]
+    [validationErrors, validationWarnings, id, activeGraphTab]
   );
   const linkedTargetLabel = linkedGraphTargetLabel(data);
-  const isGraphRef = resolveNodeKindId(data) === 'graph_ref' || data.linkKind === 'graph_ref';
+  const isGraphRef = kindId === 'graph_ref' || data.linkKind === 'graph_ref';
   const isImportNode = data.linkKind === 'import_module';
+  const importLangGate =
+    isImportNode && typeof data.properties?.targetLanguages === 'string'
+      ? data.properties.targetLanguages.trim()
+      : '';
   const hasPins = data.inputs.length > 0 || data.outputs.length > 0;
   const title = getNodeDisplayTitle(data);
 
@@ -50,20 +70,23 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   return (
     <>
       <div
-        className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''}`}
+        className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''} ${isUnsupported ? styles.nodeUnsupported : ''}`}
         data-category={data.category}
+        title={unsupportedTitle || undefined}
       >
         <div className={styles.header}>
-          <div className={`${styles.titleBlock} flex items-center gap-1.5 min-w-0`}>
-            {isGraphRef ? (
-              <FolderOpen size={12} className="text-emerald-400/90 shrink-0" aria-hidden />
-            ) : null}
-            <span className={`${styles.title} truncate`}>{title}</span>
-            {hasBrokenRef ? (
-              <span title="Unresolved symbol reference">
-                <AlertTriangle size={12} className="text-amber-400 shrink-0" aria-hidden />
-              </span>
-            ) : null}
+          <div className={styles.titleBlock}>
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isGraphRef ? (
+                <FolderOpen size={12} className="text-emerald-400/90 shrink-0" aria-hidden />
+              ) : null}
+              <span className={`${styles.title} truncate`}>{title}</span>
+              {hasBrokenRef ? (
+                <span title="Unresolved symbol reference">
+                  <AlertTriangle size={12} className="text-amber-400 shrink-0" aria-hidden />
+                </span>
+              ) : null}
+            </div>
             {linkedTargetLabel && (
               <span
                 className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}
@@ -78,6 +101,15 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 {isImportNode ? `↳ ${linkedTargetLabel}` : `→ ${linkedTargetLabel}`}
               </span>
             )}
+            {!linkedTargetLabel && importLangGate ? (
+              <span
+                className={`${styles.linkedSubtitle} ${styles.linkedSubtitleImport}`}
+                title="Emits only for these target languages"
+              >
+                {importLangGate}
+              </span>
+            ) : null}
+            <NodeModifiers id={id} data={data} />
           </div>
         </div>
 

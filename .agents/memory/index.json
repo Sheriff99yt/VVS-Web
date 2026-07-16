@@ -1,36 +1,35 @@
-{
+﻿{
   "version": 1,
-  "lastUpdated": "2026-07-09",
+  "lastUpdated": "2026-07-16",
   "productDirection": "text-shaped-graphs",
   "canonicalDoc": "docs/visual_to_text_fidelity.md",
+  "userTypesDoc": "docs/design/user_types.md",
   "fidelitySkill": ".agents/skills/vvs_visual_code_fidelity/SKILL.md",
+  "usabilitySkill": ".agents/skills/vvs_usability_example_tests/SKILL.md",
+  "codePanelVerification": "apps/web/scripts/extract_test_project_outputs.ts",
+  "activePilot": "docs/design/fidelity_streamline.md",
+  "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
+  "primaryGolden": "dualClassLabUsabilityTest",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
-    "totalItems": 48,
-    "done": 48,
+    "totalItems": 67,
+    "done": 67,
     "open": 0,
-    "depthFirstSection": 7,
-    "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8],
-    "sectionsPartial": []
+    "partial": [],
+    "depthFirstSection": 12,
+    "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "sectionsPartial": [],
+    "openItems": []
   },
   "files": {
-    "README.md": {
-      "role": "hub",
-      "mutable": false
-    },
+    "README.md": { "role": "hub", "mutable": false },
     "incomplete-ui.md": {
       "role": "ui-backlog",
       "refreshAfter": "each UI loop iteration or audit",
       "itemPrefix": "U",
       "openCount": 0
     },
-    "workspace-facts.md": {
-      "role": "stable-facts",
-      "maxSections": 8
-    },
-    "decisions.md": {
-      "role": "locked-choices",
-      "maxBulletsPerSection": 12
-    }
+    "decisions.md": { "role": "locked-product-rules", "mutable": "append-or-revise-with-care" },
+    "workspace-facts.md": { "role": "canonical-paths-and-facts", "mutable": true }
   }
 }

@@ -18,6 +18,7 @@ import type {
   VvsEditorNavigationFrame,
 } from '@/types/editorNavigation';
 import { useProject } from '@/contexts/ProjectContext';
+import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { formatFunctionTabName } from '@/lib/functionTabs';
 import {
   bindEditorMouseNavigation,
@@ -37,6 +38,8 @@ import type { NavigateToNodeDetail } from '@/lib/graphNavigation';
 interface PendingCanvasFocus {
   graphTab: string;
   nodeId: string;
+  /** Bumps on every navigate so re-clicking the same error re-selects/frames. */
+  requestId: number;
 }
 
 interface EditorNavigationContextValue {
@@ -60,23 +63,30 @@ export function EditorNavigationProvider({
   children,
 }: EditorNavigationProviderProps) {
   const {
-    activeGraphTab,
-    setActiveGraphTab,
     openTabs,
     setOpenTabs,
-    functions,
-    variables,
     classes,
+    variables,
+    functions,
+    events,
+    activeClassId,
+    targetLanguage,
+    targetFileExtensions,
+    referenceRootGraphId,
     graphContainers,
     setActiveClassId,
     selection,
     setSelection,
-    referenceRootGraphId,
     referenceVariableName,
     focusReference,
+    activeGraphTab,
+    setActiveGraphTab,
   } = useProject();
 
+  const { getDocuments } = useGraphWorkspace();
+
   const [pendingCanvasFocus, setPendingCanvasFocus] = useState<PendingCanvasFocus | null>(null);
+  const focusRequestIdRef = useRef(0);
 
   const applyingNavigationRef = useRef(false);
   const seededRef = useRef(false);
@@ -113,7 +123,6 @@ export function EditorNavigationProvider({
   const ensureGraphTabOpen = useCallback(
     (graphTab: string) => {
       if (graphTab === 'main') return;
-      if (openTabs.some((tab) => tab.id === graphTab)) return;
 
       const container = graphContainers.find((c) => c.id === graphTab);
       if (container) {
@@ -123,13 +132,18 @@ export function EditorNavigationProvider({
 
       const func = functions.find((f) => f.id === graphTab);
       if (func) {
-        setOpenTabs((prev) => [
-          ...prev,
-          { id: func.id, type: 'function', name: formatFunctionTabName(func.name) },
-        ]);
+        // Deduplicate against `prev` — callers may have already queued an open
+        // in the same React batch (stale `openTabs` would miss it).
+        setOpenTabs((prev) => {
+          if (prev.some((tab) => tab.id === graphTab)) return prev;
+          return [
+            ...prev,
+            { id: func.id, type: 'function', name: formatFunctionTabName(func.name) },
+          ];
+        });
       }
     },
-    [functions, graphContainers, openTabs, setActiveGraphTab, setOpenTabs]
+    [functions, graphContainers, setActiveGraphTab, setOpenTabs]
   );
 
   const applyNavigationFrame = useCallback(
@@ -141,7 +155,12 @@ export function EditorNavigationProvider({
       setSelection(frame.selection);
 
       if (frame.focusedNodeId && frame.editorView === 'canvas') {
-        setPendingCanvasFocus({ graphTab: frame.graphTab, nodeId: frame.focusedNodeId });
+        focusRequestIdRef.current += 1;
+        setPendingCanvasFocus({
+          graphTab: frame.graphTab,
+          nodeId: frame.focusedNodeId,
+          requestId: focusRequestIdRef.current,
+        });
       } else {
         setPendingCanvasFocus(null);
       }
@@ -270,7 +289,7 @@ export function EditorNavigationProvider({
       const { symbolId } = (event as CustomEvent<{ symbolId: string }>).detail;
       if (!symbolId) return;
 
-      const frame = resolveVariableFocusFrame(symbolId, variables, classes, graphContainers);
+      const frame = resolveVariableFocusFrame(symbolId, variables, classes, graphContainers, getDocuments() || {}, activeGraphTab);
       if (!frame) return;
 
       const variable = variables.find((v) => v.id === symbolId);

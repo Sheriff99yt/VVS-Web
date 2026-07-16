@@ -8,7 +8,13 @@
       "title": "On Start",
       "semantics": "event.entry.start",
       "inputs": [],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
     },
     {
       "kindId": "event_on_update",
@@ -19,8 +25,16 @@
       "semantics": "event.entry.update",
       "inputs": [],
       "outputs": [
-        { "id": "exec_out", "label": "", "type": "execution" },
-        { "id": "out_delta", "label": "Delta time", "type": "data_number" }
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "out_delta",
+          "label": "Delta time",
+          "type": "data_number"
+        }
       ]
     },
     {
@@ -31,7 +45,13 @@
       "symbolRole": "implement",
       "semantics": "event.define",
       "inputs": [],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
     },
     {
       "kindId": "event_dispatch",
@@ -40,8 +60,20 @@
       "title": "Dispatch Event",
       "symbolRole": "invoke",
       "semantics": "event.dispatch",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
     },
     {
       "kindId": "event_emit",
@@ -49,8 +81,20 @@
       "category": "Events",
       "title": "Emit Event",
       "semantics": "event.emit",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
     },
     {
       "kindId": "event_subscribe",
@@ -58,8 +102,20 @@
       "category": "Events",
       "title": "Subscribe Event",
       "semantics": "event.subscribe",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
     },
     {
       "kindId": "flow_branch",
@@ -68,12 +124,28 @@
       "title": "Branch",
       "semantics": "flow.branch",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "condition", "label": "Condition", "type": "data_boolean" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "condition",
+          "label": "Condition",
+          "type": "data_boolean"
+        }
       ],
       "outputs": [
-        { "id": "true_exec", "label": "True", "type": "execution" },
-        { "id": "false_exec", "label": "False", "type": "execution" }
+        {
+          "id": "true_exec",
+          "label": "True",
+          "type": "execution"
+        },
+        {
+          "id": "false_exec",
+          "label": "False",
+          "type": "execution"
+        }
       ]
     },
     {
@@ -83,14 +155,38 @@
       "title": "For Loop",
       "semantics": "flow.for",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "first", "label": "First", "type": "data_number" },
-        { "id": "last", "label": "Last", "type": "data_number" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "first",
+          "label": "First",
+          "type": "data_number"
+        },
+        {
+          "id": "last",
+          "label": "Last",
+          "type": "data_number"
+        }
       ],
       "outputs": [
-        { "id": "body_exec", "label": "Body", "type": "execution" },
-        { "id": "exec_out", "label": "", "type": "execution" },
-        { "id": "index", "label": "Index", "type": "data_number" }
+        {
+          "id": "body_exec",
+          "label": "Body",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "index",
+          "label": "Index",
+          "type": "data_number"
+        }
       ]
     },
     {
@@ -100,12 +196,28 @@
       "title": "While Loop",
       "semantics": "flow.while",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "condition", "label": "Condition", "type": "data_boolean" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "condition",
+          "label": "Condition",
+          "type": "data_boolean"
+        }
       ],
       "outputs": [
-        { "id": "body_exec", "label": "Body", "type": "execution" },
-        { "id": "exec_out", "label": "", "type": "execution" }
+        {
+          "id": "body_exec",
+          "label": "Body",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
       ]
     },
     {
@@ -115,16 +227,47 @@
       "title": "Switch",
       "semantics": "flow.switch",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "selector", "label": "Selector", "type": "data_any" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "selector",
+          "label": "Selector",
+          "type": "data_any"
+        }
       ],
       "outputs": [
-        { "id": "case_0", "label": "Case 0", "type": "execution" },
-        { "id": "case_1", "label": "Case 1", "type": "execution" },
-        { "id": "default_exec", "label": "Default", "type": "execution" },
-        { "id": "exec_out", "label": "", "type": "execution" }
+        {
+          "id": "case_0",
+          "label": "Case 0",
+          "type": "execution"
+        },
+        {
+          "id": "case_1",
+          "label": "Case 1",
+          "type": "execution"
+        },
+        {
+          "id": "default_exec",
+          "label": "Default",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
       ],
       "propertySchema": [
+        {
+          "key": "enumType",
+          "label": "Enum type",
+          "type": "string",
+          "default": "",
+          "description": "When set, case values are member names (OK) and emit via EnumMemberAccess"
+        },
         {
           "key": "case0",
           "label": "Case 0 value",
@@ -145,12 +288,34 @@
       "category": "Flow Control",
       "title": "Sequence",
       "semantics": "flow.sequence",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "outputs": [
-        { "id": "then_0", "label": "Then 0", "type": "execution" },
-        { "id": "then_1", "label": "Then 1", "type": "execution" },
-        { "id": "then_2", "label": "Then 2", "type": "execution" },
-        { "id": "exec_out", "label": "", "type": "execution" }
+        {
+          "id": "then_0",
+          "label": "Then 0",
+          "type": "execution"
+        },
+        {
+          "id": "then_1",
+          "label": "Then 1",
+          "type": "execution"
+        },
+        {
+          "id": "then_2",
+          "label": "Then 2",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
       ]
     },
     {
@@ -160,10 +325,24 @@
       "title": "Print String",
       "semantics": "action.print",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "in_str", "label": "String", "type": "data_string" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "in_str",
+          "label": "String",
+          "type": "data_string"
+        }
       ],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
     },
     {
       "kindId": "action_wait",
@@ -171,8 +350,20 @@
       "category": "Action",
       "title": "Wait",
       "semantics": "action.wait.sync",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "propertySchema": [
         {
           "key": "seconds",
@@ -189,8 +380,20 @@
       "category": "Action",
       "title": "Await Wait",
       "semantics": "action.wait.async",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "propertySchema": [
         {
           "key": "seconds",
@@ -208,36 +411,40 @@
       "title": "Get User Input",
       "semantics": "action.input.blocking",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "prompt", "label": "Prompt", "type": "data_string" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "prompt",
+          "label": "Prompt",
+          "type": "data_string"
+        }
       ],
       "outputs": [
-        { "id": "exec_out", "label": "", "type": "execution" },
-        { "id": "value", "label": "Value", "type": "data_string" }
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "value",
+          "label": "Value",
+          "type": "data_string"
+        }
       ],
       "propertySchema": [
         {
           "key": "inputKind",
           "label": "Input type",
           "type": "enum",
-          "enumValues": ["text", "number", "password"],
+          "enumValues": [
+            "text",
+            "number"
+          ],
           "default": "text",
           "description": "Controls parsing and the Value output pin type."
-        },
-        {
-          "key": "placeholder",
-          "label": "Placeholder hint",
-          "type": "string",
-          "default": "",
-          "when": { "inputKind": ["text", "password"] },
-          "description": "Shown in generated code comments when prompt pin is unwired."
-        },
-        {
-          "key": "required",
-          "label": "Required",
-          "type": "boolean",
-          "default": true,
-          "description": "Documented intent — codegen emits a standard blocking read."
         }
       ]
     },
@@ -247,8 +454,20 @@
       "category": "Conversion",
       "title": "To String",
       "semantics": "convert.to_string",
-      "inputs": [{ "id": "value", "label": "Value", "type": "data_any" }],
-      "outputs": [{ "id": "result", "label": "String", "type": "data_string" }]
+      "inputs": [
+        {
+          "id": "value",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "String",
+          "type": "data_string"
+        }
+      ]
     },
     {
       "kindId": "convert_to_number",
@@ -256,8 +475,20 @@
       "category": "Conversion",
       "title": "To Number",
       "semantics": "convert.to_number",
-      "inputs": [{ "id": "value", "label": "Value", "type": "data_string" }],
-      "outputs": [{ "id": "result", "label": "Number", "type": "data_number" }]
+      "inputs": [
+        {
+          "id": "value",
+          "label": "Value",
+          "type": "data_string"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Number",
+          "type": "data_number"
+        }
+      ]
     },
     {
       "kindId": "math_add",
@@ -267,10 +498,24 @@
       "semantics": "math.binary",
       "mathOp": "add",
       "inputs": [
-        { "id": "a", "label": "A", "type": "data_number" },
-        { "id": "b", "label": "B", "type": "data_number" }
+        {
+          "id": "a",
+          "label": "A",
+          "type": "data_number"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "type": "data_number"
+        }
       ],
-      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Result",
+          "type": "data_number"
+        }
+      ]
     },
     {
       "kindId": "math_subtract",
@@ -280,10 +525,24 @@
       "semantics": "math.binary",
       "mathOp": "subtract",
       "inputs": [
-        { "id": "a", "label": "A", "type": "data_number" },
-        { "id": "b", "label": "B", "type": "data_number" }
+        {
+          "id": "a",
+          "label": "A",
+          "type": "data_number"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "type": "data_number"
+        }
       ],
-      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Result",
+          "type": "data_number"
+        }
+      ]
     },
     {
       "kindId": "math_multiply",
@@ -293,10 +552,24 @@
       "semantics": "math.binary",
       "mathOp": "multiply",
       "inputs": [
-        { "id": "a", "label": "A", "type": "data_number" },
-        { "id": "b", "label": "B", "type": "data_number" }
+        {
+          "id": "a",
+          "label": "A",
+          "type": "data_number"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "type": "data_number"
+        }
       ],
-      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Result",
+          "type": "data_number"
+        }
+      ]
     },
     {
       "kindId": "math_divide",
@@ -306,10 +579,24 @@
       "semantics": "math.binary",
       "mathOp": "divide",
       "inputs": [
-        { "id": "a", "label": "A", "type": "data_number" },
-        { "id": "b", "label": "B", "type": "data_number" }
+        {
+          "id": "a",
+          "label": "A",
+          "type": "data_number"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "type": "data_number"
+        }
       ],
-      "outputs": [{ "id": "result", "label": "Result", "type": "data_number" }]
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Result",
+          "type": "data_number"
+        }
+      ]
     },
     {
       "kindId": "variable_get",
@@ -318,7 +605,13 @@
       "title": "Get Variable",
       "semantics": "variable.get",
       "inputs": [],
-      "outputs": [{ "id": "val", "label": "Value", "type": "data_any" }]
+      "outputs": [
+        {
+          "id": "val",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ]
     },
     {
       "kindId": "variable_set",
@@ -327,10 +620,24 @@
       "title": "Set Variable",
       "semantics": "variable.set",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "val", "label": "New Value", "type": "data_any" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "val",
+          "label": "New Value",
+          "type": "data_any"
+        }
       ],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }]
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
     },
     {
       "kindId": "class_define",
@@ -339,17 +646,49 @@
       "title": "Declare Class",
       "symbolRole": "declare",
       "semantics": "class.define",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "propertySchema": [
-        { "key": "name", "label": "Class name", "type": "string", "default": "MyClass" },
-        { "key": "extendsType", "label": "Extends", "type": "string", "default": "" },
+        {
+          "key": "name",
+          "label": "Class name",
+          "type": "string",
+          "default": "MyClass"
+        },
+        {
+          "key": "extendsType",
+          "label": "Extends",
+          "type": "string",
+          "default": ""
+        },
         {
           "key": "visibility",
           "label": "Visibility",
           "type": "enum",
-          "enumValues": ["public", "private"],
+          "enumValues": [
+            "public",
+            "protected",
+            "private"
+          ],
           "default": "public"
+        },
+        {
+          "key": "isAbstract",
+          "label": "Abstract",
+          "type": "boolean",
+          "default": false
         }
       ]
     },
@@ -360,11 +699,33 @@
       "title": "Declare Variable",
       "symbolRole": "declare",
       "semantics": "variable.define",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "propertySchema": [
-        { "key": "symbolId", "label": "Symbol id", "type": "string", "default": "" },
-        { "key": "name", "label": "Name", "type": "string", "default": "Variable" },
+        {
+          "key": "symbolId",
+          "label": "Symbol id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "name",
+          "label": "Name",
+          "type": "string",
+          "default": "Variable"
+        },
         {
           "key": "type",
           "label": "Type",
@@ -379,13 +740,45 @@
           ],
           "default": "data_string"
         },
-        { "key": "default", "label": "Default", "type": "string", "default": "" },
+        {
+          "key": "enumType",
+          "label": "Enum type",
+          "type": "string",
+          "default": "",
+          "description": "When set, variable type is this enum; Default is the member name only (e.g. OK)"
+        },
+        {
+          "key": "default",
+          "label": "Default",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "visibility",
+          "label": "Visibility",
+          "type": "enum",
+          "enumValues": [
+            "public",
+            "protected",
+            "private"
+          ],
+          "default": "public"
+        },
         {
           "key": "binding",
           "label": "Binding",
           "type": "enum",
-          "enumValues": ["instance", "static", "module"],
+          "enumValues": [
+            "instance",
+            "static"
+          ],
           "default": "instance"
+        },
+        {
+          "key": "isConst",
+          "label": "Const / Readonly",
+          "type": "boolean",
+          "default": false
         }
       ]
     },
@@ -396,20 +789,85 @@
       "title": "Declare Function",
       "symbolRole": "declare",
       "semantics": "function.define",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "propertySchema": [
-        { "key": "symbolId", "label": "Symbol id", "type": "string", "default": "" },
-        { "key": "name", "label": "Name", "type": "string", "default": "Function" },
+        {
+          "key": "symbolId",
+          "label": "Symbol id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "name",
+          "label": "Name",
+          "type": "string",
+          "default": "Function"
+        },
+        {
+          "key": "visibility",
+          "label": "Visibility",
+          "type": "enum",
+          "enumValues": [
+            "public",
+            "protected",
+            "private"
+          ],
+          "default": "public"
+        },
         {
           "key": "binding",
           "label": "Binding",
           "type": "enum",
-          "enumValues": ["instance", "static", "module"],
+          "enumValues": [
+            "instance",
+            "static",
+            "module"
+          ],
           "default": "instance"
         },
-        { "key": "returnType", "label": "Return type", "type": "string", "default": "void" },
-        { "key": "graphTabId", "label": "Body graph tab", "type": "string", "default": "" }
+        {
+          "key": "isAbstract",
+          "label": "Abstract",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "isVirtual",
+          "label": "Virtual",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "isOverride",
+          "label": "Override",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "isAsync",
+          "label": "Async",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "graphTabId",
+          "label": "Body graph tab",
+          "type": "string",
+          "default": ""
+        }
       ]
     },
     {
@@ -419,12 +877,62 @@
       "title": "Declare Event",
       "symbolRole": "declare",
       "semantics": "event.member.define",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "propertySchema": [
-        { "key": "symbolId", "label": "Symbol id", "type": "string", "default": "" },
-        { "key": "name", "label": "Name", "type": "string", "default": "event" },
-        { "key": "eventId", "label": "Event id", "type": "string", "default": "" }
+        {
+          "key": "symbolId",
+          "label": "Symbol id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "name",
+          "label": "Name",
+          "type": "string",
+          "default": "event"
+        },
+        {
+          "key": "visibility",
+          "label": "Visibility",
+          "type": "enum",
+          "enumValues": [
+            "public",
+            "protected",
+            "private"
+          ],
+          "default": "public"
+        },
+        {
+          "key": "eventId",
+          "label": "Event id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "isVirtual",
+          "label": "Virtual",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "isOverride",
+          "label": "Override",
+          "type": "boolean",
+          "default": false
+        }
       ]
     },
     {
@@ -436,10 +944,30 @@
       "inputs": [],
       "outputs": [],
       "propertySchema": [
-        { "key": "classId", "label": "Class id", "type": "string", "default": "" },
-        { "key": "containerId", "label": "Graph folder id", "type": "string", "default": "" },
-        { "key": "graphTabId", "label": "Graph tab id", "type": "string", "default": "" },
-        { "key": "refLabel", "label": "Label", "type": "string", "default": "" }
+        {
+          "key": "classId",
+          "label": "Class id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "containerId",
+          "label": "Graph folder id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "graphTabId",
+          "label": "Graph tab id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "refLabel",
+          "label": "Label",
+          "type": "string",
+          "default": ""
+        }
       ]
     },
     {
@@ -449,8 +977,20 @@
       "title": "Call Function",
       "symbolRole": "invoke",
       "semantics": "project.call",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "dynamic": true
     },
     {
@@ -459,8 +999,58 @@
       "category": "Imports",
       "title": "Import Module",
       "semantics": "project.import",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "modulePath",
+          "label": "Module path",
+          "type": "string",
+          "default": "",
+          "description": "stdlib or project module (e.g. enum, iostream, utils)"
+        },
+        {
+          "key": "importStyle",
+          "label": "Import style",
+          "type": "enum",
+          "enumValues": ["module", "from", "include_system"],
+          "default": "module",
+          "description": "module = pack ModuleImport; from = named import; include_system = #include <…>"
+        },
+        {
+          "key": "importNames",
+          "label": "Imported names",
+          "type": "string",
+          "default": "",
+          "description": "Comma-separated names for from-style (e.g. Enum)"
+        },
+        {
+          "key": "targetLanguages",
+          "label": "Target languages",
+          "type": "string",
+          "default": "",
+          "description": "Comma-separated languages that emit this import (empty = all). e.g. python,cpp"
+        },
+        {
+          "key": "ownerClassId",
+          "label": "Owner class id",
+          "type": "string",
+          "default": "",
+          "description": "When set, this import emits only for that class module (shared home graph)"
+        }
+      ],
       "dynamic": true
     },
     {
@@ -469,11 +1059,29 @@
       "category": "Imports",
       "title": "Import Class",
       "semantics": "project.import_class",
-      "inputs": [{ "id": "exec_in", "label": "", "type": "execution" }],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "propertySchema": {
-        "targetClassId": { "type": "string", "title": "Target class" },
-        "alias": { "type": "string", "title": "Alias" }
+        "targetClassId": {
+          "type": "string",
+          "title": "Target class"
+        },
+        "alias": {
+          "type": "string",
+          "title": "Alias"
+        }
       }
     },
     {
@@ -483,10 +1091,24 @@
       "title": "Call Native",
       "semantics": "env.call_native",
       "inputs": [
-        { "id": "exec_in", "label": "", "type": "execution" },
-        { "id": "msg", "label": "Message", "type": "data_string" }
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "msg",
+          "label": "Message",
+          "type": "data_string"
+        }
       ],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "dynamic": true
     },
     {
@@ -496,8 +1118,142 @@
       "title": "Environment Event Handler",
       "semantics": "env.event_handler",
       "inputs": [],
-      "outputs": [{ "id": "exec_out", "label": "", "type": "execution" }],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
       "dynamic": true
+    },
+    {
+      "kindId": "enum_define",
+      "kindVersion": 1,
+      "category": "Project",
+      "title": "Declare Enum",
+      "symbolRole": "declare",
+      "semantics": "enum.define",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "symbolId",
+          "label": "Symbol id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "name",
+          "label": "Name",
+          "type": "string",
+          "default": "Enum"
+        },
+        {
+          "key": "members",
+          "label": "Members",
+          "type": "string",
+          "default": ""
+        }
+      ]
+    },
+    {
+      "kindId": "expr_enum_member",
+      "kindVersion": 1,
+      "category": "Enums",
+      "title": "Get Enum Member",
+      "semantics": "expr.enum_member",
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "val",
+          "label": "Member",
+          "type": "data_any"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "enumName",
+          "label": "Enum name",
+          "type": "string",
+          "default": "MyEnum"
+        },
+        {
+          "key": "member",
+          "label": "Member",
+          "type": "string",
+          "default": "Value"
+        }
+      ]
+    },
+    {
+      "kindId": "array_push",
+      "kindVersion": 1,
+      "category": "Collections",
+      "title": "Array Push",
+      "semantics": "array.push",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "array",
+          "label": "Array",
+          "type": "data_array"
+        },
+        {
+          "id": "val",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
+    },
+    {
+      "kindId": "string_concat",
+      "kindVersion": 1,
+      "category": "Math",
+      "title": "Concat Strings",
+      "semantics": "string.concat",
+      "inputs": [
+        {
+          "id": "a",
+          "label": "A",
+          "type": "data_string"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "type": "data_string"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Result",
+          "type": "data_string"
+        }
+      ]
     }
   ]
 }

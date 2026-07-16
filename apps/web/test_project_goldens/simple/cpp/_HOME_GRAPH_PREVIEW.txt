@@ -1,0 +1,17 @@
+// ===== firstgraph.cpp =====
+class FirstGraph {
+public:
+        std::string VisitorName = "";
+    void SayHello() {
+        // SayHello
+        std::cout << "Hello from SayHello!" << std::endl;
+    }
+    void on_start() {
+        std::cout << "What is your name?";
+        std::string _vvs_input_fg_get_input;
+        std::getline(std::cin, _vvs_input_fg_get_input);
+        std::cout << _vvs_input_fg_get_input << std::endl;
+        SayHello();
+        std::cout << "Done." << std::endl;
+    }
+};

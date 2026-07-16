@@ -25,6 +25,7 @@ interface BuildMembersContext {
   nodes: GraphNode[];
   edges: GraphEdge[];
   functions: FunctionSymbol[];
+  variables: VariableSymbol[];
   projectEvents: ProjectEventDefinition[];
   environmentManifest?: import('@vvs/environment-templates').ProjectEnvironmentManifest;
   classes?: ClassSymbol[];
@@ -126,6 +127,7 @@ function memberDeclFromEntry(
         sourceGraphNodeId: entry.nodeId,
         name: classNameFromNode(node, cls.name),
         extendsType: extendsFromNode(node, cls.extendsType ?? ''),
+        properties: node.data.properties,
       };
     case 'variable': {
       const symbol = variables.find((v) => v.id === entry.symbolId);
@@ -134,6 +136,7 @@ function memberDeclFromEntry(
         kind: 'VariableDecl',
         sourceGraphNodeId: entry.nodeId,
         symbol,
+        properties: node.data.properties,
       };
     }
     case 'function': {
@@ -143,6 +146,7 @@ function memberDeclFromEntry(
         kind: 'FunctionDecl',
         sourceGraphNodeId: entry.nodeId,
         symbol,
+        properties: node.data.properties,
       };
     }
     case 'event': {
@@ -158,6 +162,89 @@ function memberDeclFromEntry(
         handlerName,
         paramNames: handlerParamNamesForEvent(symbol, handlerNode),
         body: eventHandlerBody(node, symbol, graphNodes, edges, lowerCtx),
+        properties: {
+          ...node.data.properties,
+          ...(handlerNode?.data.properties ?? {}),
+        },
+      };
+    }
+    case 'enum': {
+      const name =
+        typeof node.data.properties?.name === 'string' && node.data.properties.name.trim()
+          ? node.data.properties.name.trim()
+          : 'Enum';
+      const rawMembers = node.data.properties?.members;
+      const members = Array.isArray(rawMembers)
+        ? rawMembers.filter((m): m is string => typeof m === 'string')
+        : [];
+      return {
+        kind: 'EnumDecl',
+        sourceGraphNodeId: entry.nodeId,
+        name,
+        members,
+        properties: node.data.properties,
+      };
+    }
+    case 'import_module': {
+      const fromProps = node.data.properties?.modulePath;
+      const mod =
+        typeof fromProps === 'string' && fromProps.trim()
+          ? fromProps.trim()
+          : node.data.label.replace(/^Import\s+/, '').trim().replace(/\s+/g, '_').toLowerCase() ||
+            'module';
+      const style = node.data.properties?.importStyle;
+      const importStyle =
+        style === 'from' || style === 'include_system' || style === 'module' ? style : 'module';
+      const namesRaw = node.data.properties?.importNames;
+      const importNames =
+        typeof namesRaw === 'string' && namesRaw.trim()
+          ? namesRaw
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : undefined;
+      const langsRaw = node.data.properties?.targetLanguages;
+      const targetLanguages =
+        typeof langsRaw === 'string' && langsRaw.trim()
+          ? langsRaw
+              .split(',')
+              .map((s) => s.trim().toLowerCase())
+              .filter(Boolean)
+          : undefined;
+      const ownerRaw = node.data.properties?.ownerClassId;
+      const label = typeof node.data.label === 'string' ? node.data.label.trim() : '';
+      return {
+        kind: 'ModuleImport',
+        sourceGraphNodeId: entry.nodeId,
+        moduleSlug: mod,
+        displayLabel: label || undefined,
+        importStyle:
+          importNames?.length && importStyle === 'module' ? 'from' : importStyle,
+        importNames,
+        targetLanguages: targetLanguages?.length ? targetLanguages : undefined,
+        ownerClassId:
+          typeof ownerRaw === 'string' && ownerRaw.trim() ? ownerRaw.trim() : undefined,
+      };
+    }
+    case 'import_class': {
+      const targetClassId =
+        (typeof node.data.properties?.targetClassId === 'string' &&
+          node.data.properties.targetClassId) ||
+        (typeof node.data.graphBinding?.targetClassId === 'string' &&
+          node.data.graphBinding.targetClassId) ||
+        '';
+      const targetCls = lowerCtx.classes?.find((c) => c.id === targetClassId);
+      if (!targetCls) return undefined;
+      const aliasRaw = node.data.properties?.alias;
+      return {
+        kind: 'ImportClass',
+        sourceGraphNodeId: entry.nodeId,
+        className: targetCls.name,
+        moduleName:
+          targetCls.id === MAIN_CLASS_ID && lowerCtx.projectModuleName?.trim()
+            ? lowerCtx.projectModuleName
+            : targetCls.name,
+        alias: typeof aliasRaw === 'string' && aliasRaw.trim() ? aliasRaw.trim() : undefined,
       };
     }
     default:

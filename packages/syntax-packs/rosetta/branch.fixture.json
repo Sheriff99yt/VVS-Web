@@ -34,7 +34,7 @@
       "type": "vvs_standard_node",
       "position": { "x": 200, "y": 0 },
       "data": {
-        "label": "Branch",
+        "label": "If",
         "category": "Flow",
         "kindId": "flow_branch",
         "inputs": [

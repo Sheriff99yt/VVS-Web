@@ -30,7 +30,10 @@ import { loadEnvironmentManifest, renderHostFileTemplate } from '@vvs/environmen
 import { generatedFileName } from './graphTabs';
 import type { GraphTab } from '@vvs/graph-types';
 import { graphToIr } from './lower/graphToIr';
-import { emitIrModule } from './emit';
+import { emitIrModule, emitClassModule } from './emit';
+import { CodeSink } from './codeSink';
+import type { IrModule } from './ir/types';
+import { resolveNodeKindId } from '@vvs/graph-types';
 
 export interface CodegenContext {
   moduleName: string;
@@ -57,6 +60,11 @@ export interface CodegenContext {
   targetFileExtensions?: TargetFileExtensions;
   /** Container folder prefix for emitted files (from graph folder placement). */
   emitSubdir?: string;
+  /**
+   * When true (default), language-gated imports that do not match the target
+   * emit pack-prefixed `(x)` comment lines instead of being silently omitted.
+   */
+  emitUnsupportedComments?: boolean;
 }
 
 function mergeTranspileResults(results: TranspileResult[]): TranspileResult {
@@ -110,7 +118,13 @@ function resolveTabCodegen(ctx: CodegenContext): {
   tabType: GraphTab['type'];
 } {
   const activeTabId = ctx.tabId ?? 'main';
-  const homeClass = ctx.classes ? classForHomeGraphId(ctx.classes, activeTabId) : undefined;
+  const classesOnHome =
+    ctx.classes?.filter((c) => classHomeGraphId(c) === activeTabId) ?? [];
+  const homeClass =
+    (ctx.activeClassId
+      ? classesOnHome.find((c) => c.id === ctx.activeClassId)
+      : undefined) ??
+    (ctx.classes ? classForHomeGraphId(ctx.classes, activeTabId) : undefined);
   const isFunctionTab = ctx.functions.some((f) => f.id === activeTabId);
   const isOrgGraph = activeTabId === MAIN_GRAPH_CONTAINER_ID && !homeClass;
   const isLegacyMain = activeTabId === 'main';
@@ -121,8 +135,12 @@ function resolveTabCodegen(ctx: CodegenContext): {
   let activeClassId = ctx.activeClassId;
 
   if (homeClass) {
+    // ClassDecl / IR moduleName stays the class name. File path for multi-class
+    // homes is chosen in transpileProject (one graph → one file).
     moduleName =
-      homeClass.id === MAIN_CLASS_ID && ctx.moduleName.trim()
+      homeClass.id === MAIN_CLASS_ID &&
+      classesOnHome.length <= 1 &&
+      ctx.moduleName.trim()
         ? ctx.moduleName
         : homeClass.name;
     extendsType = homeClass.extendsType ?? '';
@@ -184,6 +202,9 @@ export function transpileGraph(ctx: CodegenContext): TranspileResult {
     ),
     targetFileExtensions: ctx.targetFileExtensions,
     subdirPrefix: ctx.emitSubdir,
+    // Single-class focused transpileGraph may still use class-named fallback.
+    // Project emit (transpileProject) merges classes and resolves path without this flag.
+    preferFallbackOverModuleFile: resolved.isClassHomeModule,
   });
 
   const manifest =
@@ -256,20 +277,73 @@ export interface ProjectTranspileInput {
   environmentManifest?: ProjectEnvironmentManifest;
   integration?: ProjectIntegrationConfig;
   codegenTarget?: CodegenTarget;
+  /**
+   * When true (default), language-gated imports that do not match the target
+   * emit pack-prefixed `(x)` comment lines instead of being silently omitted.
+   */
+  emitUnsupportedComments?: boolean;
 }
 
-/** Emit one module file per class home graph (with defines) and per function tab. */
+function classDefineY(doc: GraphDocument, cls: ClassSymbol): number {
+  for (const node of doc.nodes) {
+    if (resolveNodeKindId(node.data) !== 'class_define') continue;
+    const sym =
+      (typeof node.data.properties?.symbolId === 'string' && node.data.properties.symbolId) ||
+      (typeof node.data.graphBinding?.symbolId === 'string' && node.data.graphBinding.symbolId) ||
+      '';
+    if (sym === cls.id) return node.position.y;
+  }
+  return Number.POSITIVE_INFINITY;
+}
+
+function sortClassesByDefineY(doc: GraphDocument, classes: ClassSymbol[]): ClassSymbol[] {
+  return [...classes].sort((a, b) => classDefineY(doc, a) - classDefineY(doc, b));
+}
+
+/** One container graph → one file: emit each class body (imports in chain order). */
+export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[]): TranspileResult {
+  if (classIrs.length === 0) {
+    return { language: 'python', files: [], sourceMap: {} };
+  }
+  if (classIrs.length === 1) {
+    const only = classIrs[0]!;
+    return emitIrModule({ ...only, filePath });
+  }
+
+  const sink = new CodeSink(filePath);
+  const language = classIrs[0]!.targetLanguage;
+
+  for (let i = 0; i < classIrs.length; i++) {
+    if (i > 0 && sink.lineCount > 0) sink.appendRaw('');
+    // Imports live on each class member chain — do not hoist to file top.
+    emitClassModule(sink, { ...classIrs[i]!, filePath, imports: [] });
+  }
+
+  return {
+    language,
+    files: [{ path: filePath, content: sink.content }],
+    sourceMap: sink.sourceMap,
+    fragments: Object.keys(sink.fragments).length > 0 ? sink.fragments : undefined,
+  };
+}
+
+/** Emit one module file per container graph (all classes on that graph) and per function tab. */
 export function transpileProject(input: ProjectTranspileInput): TranspileResult {
   const results: TranspileResult[] = [];
-  const emittedTabIds = new Set<string>();
+  const emittedHomes = new Set<string>();
+  const emittedFunctions = new Set<string>();
 
   const projectDefaults = {
     targetLanguage: input.targetLanguage,
     targetFileExtensions: input.targetFileExtensions,
   };
 
-  const baseCtx: Omit<CodegenContext, 'nodes' | 'edges' | 'tabId' | 'tabLabel' | 'targetLanguage' | 'targetFileExtensions' | 'codegenTarget'> = {
+  const baseCtx: Omit<
+    CodegenContext,
+    'nodes' | 'edges' | 'tabId' | 'tabLabel' | 'targetLanguage' | 'targetFileExtensions' | 'codegenTarget'
+  > = {
     moduleName: input.projectDetails.moduleName,
+    projectModuleName: input.projectDetails.moduleName,
     extendsType: input.projectDetails.extendsType,
     variables: input.variables,
     projectEvents: input.projectEvents,
@@ -280,17 +354,24 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
     environmentId: input.environmentId,
     environmentManifest: input.environmentManifest,
     integration: input.integration,
+    emitUnsupportedComments: input.emitUnsupportedComments,
   };
 
-  const emitTab = (
-    tabId: string,
-    tabLabel: string,
-    doc: GraphDocument,
-    activeClass?: string
-  ) => {
-    if (emittedTabIds.has(tabId)) return;
-    emittedTabIds.add(tabId);
+  const classesByHome = new Map<string, ClassSymbol[]>();
+  for (const cls of input.classes ?? []) {
+    const homeId = classHomeGraphId(cls);
+    const doc = input.documents[homeId];
+    if (!doc || (!classGraphHasDefineNodes(doc) && cls.id !== MAIN_CLASS_ID)) continue;
+    const list = classesByHome.get(homeId) ?? [];
+    list.push(cls);
+    classesByHome.set(homeId, list);
+  }
 
+  for (const [homeId, homeClasses] of classesByHome) {
+    if (emittedHomes.has(homeId)) continue;
+    emittedHomes.add(homeId);
+
+    const doc = input.documents[homeId]!;
     const codegen = resolveGraphCodegenSettings(doc.metadata, projectDefaults);
     const codegenTarget =
       resolveCodegenTarget(codegen.targetLanguage, {
@@ -300,8 +381,93 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
         syntaxPackLock: input.codegenTarget?.packLock
           ? { [input.codegenTarget.family]: input.codegenTarget.packLock }
           : undefined,
-      }) ?? input.codegenTarget ?? undefined;
+      }) ??
+      input.codegenTarget ??
+      undefined;
 
+    const sorted = sortClassesByDefineY(doc, homeClasses);
+    const projectModuleName = input.projectDetails.moduleName.trim() || sorted[0]!.name;
+    const tab = input.openTabs?.find((t) => t.id === homeId);
+    const filePath = resolveModuleEmitPath(input.integration, codegen.targetLanguage, {
+      tabKind: 'main',
+      moduleName: projectModuleName,
+      fallbackFileName: generatedFileName(
+        { id: homeId, type: 'main', name: tab?.name ?? projectModuleName },
+        projectModuleName,
+        codegen.targetLanguage,
+        codegen.targetFileExtensions,
+        projectModuleName
+      ),
+      targetFileExtensions: codegen.targetFileExtensions,
+      preferFallbackOverModuleFile: false,
+    });
+
+    const classIrs: IrModule[] = sorted.map((cls) => {
+      const ctx: CodegenContext = {
+        ...baseCtx,
+        targetLanguage: codegen.targetLanguage,
+        targetFileExtensions: codegen.targetFileExtensions,
+        codegenTarget,
+        nodes: doc.nodes,
+        edges: doc.edges,
+        tabId: homeId,
+        tabLabel: tab?.name ?? cls.name,
+        moduleName: cls.name,
+        extendsType: cls.extendsType ?? '',
+        activeClassId: cls.id,
+      };
+      const manifest =
+        ctx.environmentManifest ??
+        (ctx.environmentId ? loadEnvironmentManifest(ctx.environmentId) : undefined);
+      const resolvedTarget =
+        ctx.codegenTarget ??
+        resolveCodegenTarget(codegen.targetLanguage, {
+          capabilities: undefined,
+          syntaxPackLock: undefined,
+        }) ??
+        undefined;
+      return graphToIr(
+        {
+          ...ctx,
+          moduleName: cls.name,
+          projectModuleName,
+          extendsType: cls.extendsType ?? '',
+          activeClassId: cls.id,
+          environmentManifest: manifest,
+          codegenTarget: resolvedTarget,
+        },
+        filePath
+      );
+    });
+
+    let homeResult = emitMergedHomeGraphModules(filePath, classIrs);
+    const manifest =
+      input.environmentManifest ??
+      (input.environmentId ? loadEnvironmentManifest(input.environmentId) : undefined);
+    if (manifest) {
+      homeResult = appendHostFiles(homeResult, projectModuleName, manifest, input.integration);
+    }
+    results.push(homeResult);
+  }
+
+  for (const func of input.functions) {
+    if (emittedFunctions.has(func.id)) continue;
+    emittedFunctions.add(func.id);
+    const doc = input.documents[func.id];
+    if (!doc) continue;
+    const tab = input.openTabs?.find((t) => t.id === func.id);
+    const codegen = resolveGraphCodegenSettings(doc.metadata, projectDefaults);
+    const codegenTarget =
+      resolveCodegenTarget(codegen.targetLanguage, {
+        capabilities: input.codegenTarget
+          ? { [input.codegenTarget.family]: input.codegenTarget.capabilities }
+          : undefined,
+        syntaxPackLock: input.codegenTarget?.packLock
+          ? { [input.codegenTarget.family]: input.codegenTarget.packLock }
+          : undefined,
+      }) ??
+      input.codegenTarget ??
+      undefined;
     results.push(
       transpileGraph({
         ...baseCtx,
@@ -310,26 +476,11 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
         codegenTarget,
         nodes: doc.nodes,
         edges: doc.edges,
-        tabId,
-        tabLabel,
-        activeClassId: activeClass ?? input.activeClassId,
+        tabId: func.id,
+        tabLabel: tab?.name ?? `Function: ${func.name}`,
+        activeClassId: func.classId ?? input.activeClassId,
       })
     );
-  };
-
-  for (const cls of input.classes ?? []) {
-    const homeId = classHomeGraphId(cls);
-    const doc = input.documents[homeId];
-    if (!doc || !classGraphHasDefineNodes(doc)) continue;
-    const tab = input.openTabs?.find((t) => t.id === homeId);
-    emitTab(homeId, tab?.name ?? cls.name, doc, cls.id);
-  }
-
-  for (const func of input.functions) {
-    const doc = input.documents[func.id];
-    if (!doc) continue;
-    const tab = input.openTabs?.find((t) => t.id === func.id);
-    emitTab(func.id, tab?.name ?? `Function: ${func.name}`, doc);
   }
 
   return mergeTranspileResults(results);

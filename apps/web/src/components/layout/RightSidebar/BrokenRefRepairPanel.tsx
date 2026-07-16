@@ -28,39 +28,40 @@ export function BrokenRefRepairPanel({
         <div>
           <p className="text-[11px] font-medium text-amber-200">Broken {symbolRef.kind} reference</p>
           <p className="text-[10px] text-amber-200/70 mt-0.5 leading-relaxed">
-            Missing {symbolRef.kind} <span className="text-amber-100">{label}</span>. Repair or remove
-            referencing nodes below.
+            This node is invalid — missing {symbolRef.kind}{' '}
+            <span className="text-amber-100">{label}</span>. Recreate the symbol from this node, or
+            remove the node(s).
           </p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-1.5">
         <button
           type="button"
-          onClick={onDeleteNode}
-          className="text-left rounded border border-zinc-800 bg-zinc-900/80 px-2.5 py-1.5 text-[10px] text-zinc-300 hover:bg-zinc-800 transition-colors"
-        >
-          Delete this broken node
-        </button>
-        <button
-          type="button"
-          onClick={onDeleteAllForSymbol}
-          className="text-left rounded border border-zinc-800 bg-zinc-900/80 px-2.5 py-1.5 text-[10px] text-zinc-300 hover:bg-zinc-800 transition-colors"
-        >
-          Delete all broken nodes for this {symbolRef.kind}
-        </button>
-        <button
-          type="button"
           onClick={onRecreateSymbol}
           className="text-left rounded border border-indigo-900/50 bg-indigo-950/30 px-2.5 py-1.5 text-[10px] text-indigo-200 hover:bg-indigo-950/50 transition-colors"
         >
-          Recreate missing {symbolRef.kind} for this node
+          Recreate {symbolRef.kind} from this node
         </button>
         <button
           type="button"
           onClick={onRecreateAllSymbols}
           className="text-left rounded border border-indigo-900/50 bg-indigo-950/30 px-2.5 py-1.5 text-[10px] text-indigo-200 hover:bg-indigo-950/50 transition-colors"
         >
-          Recreate all missing {symbolRef.kind} symbols
+          Recreate all missing {symbolRef.kind}s from invalid nodes
+        </button>
+        <button
+          type="button"
+          onClick={onDeleteNode}
+          className="text-left rounded border border-zinc-800 bg-zinc-900/80 px-2.5 py-1.5 text-[10px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+        >
+          Delete this invalid node
+        </button>
+        <button
+          type="button"
+          onClick={onDeleteAllForSymbol}
+          className="text-left rounded border border-zinc-800 bg-zinc-900/80 px-2.5 py-1.5 text-[10px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+        >
+          Delete all invalid nodes for this {symbolRef.kind}
         </button>
       </div>
     </div>

@@ -3,9 +3,9 @@
 Tracked gaps between **what the shell shows** and **what the UI skill / product matrix requires**.  
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
-**Last updated:** 2026-07-05  
-**Depth-first:** Section **7 done**; Section **3 polish done**. **Frontend UI backlog complete.**  
-**Score:** 48 / 48 done · 0 open
+**Last updated:** 2026-07-16  
+**Depth-first:** Sections **1–12** complete (U66/U67 shipped). **§13 open** (U68–U77).  
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **0 / 10** · Cross-class dispatch + TypeRef + U64–U67 shipped
 
 ## Status legend
 
@@ -148,7 +148,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-_All UI backlog rows complete (2026-07-05). **Codegen depth:** Call Function, Branch, Get User Input, Conversion nodes, cross-language example tests — done. Next: string concat / compare nodes, IR module split._
+**§13 open (U68–U77):** comments → reverse highlight → chrome/Output → chain layout → JSON format → Go language. Prefer U68/U71 early (fidelity-adjacent). Older UI rows (§1–12) complete.
 
 ---
 
@@ -164,6 +164,84 @@ _All UI backlog rows complete (2026-07-05). **Codegen depth:** Call Function, Br
 - Cycle prevention: wires + cross-graph function/macro calls
 - Call Function nodes: explicit `linkedGraphId`, Project palette, complex example multifile demo
 - Project tree dual mode: canvas selection vs reference focus (no view hijacking)
+
+---
+
+## 9. Modifier effectiveness & Dual Class Lab pilot — **Done** (July 2026)
+
+Canonical plan: [`docs/design/language_capability_catalog.md`](../../docs/design/language_capability_catalog.md) § Dual Class Lab · § Modifier effectiveness.
+
+| # | Item | Status | Key files |
+|---|------|--------|-----------|
+| U49 | C++ Dual Class Lab golden (1:1 modifiers + access sections) | **Done** | Dual Class Lab Machine C++ (Calculator retired) |
+| U50 | Strip emit magic (inferred abstract, unconditional `public:`, invented Default/override) | **Done** | `emit/classModule.ts`, `emit/shell.ts`, `emit/members.ts` |
+| U51 | `modifierEffectiveness` table + disable ineffective `NodeModifiers` chips | **Done** | `packages/language-profiles/src/modifierEffectiveness.ts`; `NodeModifiers.tsx` |
+| U52 | Roll same property→pack flow to other languages after C++ green | **Done** | packs + `calculatorModifierRollout.test.ts` (Dual Class Lab) |
+| U53 | Enum/array/switch/for coverage | **Done** → Coverage Lab Sensor | `coverageLabUsabilityTest.ts` |
+
+---
+
+## 10. Many classes per graph (**Done** — July 2026)
+
+**Product rule:** Any graph may host **N** `class_define` chains. Generated output must include **every** class on that canvas — not only `activeClassId`.
+
+**Root cause (investigated):** `packages/transpiler` `transpileProject` already keys emits as `` `${tabId}:${classId}` ``. The web hook `useProjectTranspileResult` keyed only by `tabId`, so the second class on a shared home graph was skipped. Code preview `liveResult` called `transpileGraph` once with `classForHomeGraphId` (first class only).
+
+Canonical: [`docs/design/multi_class_symbols.md`](../../docs/design/multi_class_symbols.md) · Dual Class Lab fixture.
+
+| # | Item | Status | Key files |
+|---|------|--------|-----------|
+| U54 | Project Files emit includes every class on a shared home | **Done** | Superseded by U58 graph=file; `emitProjectLikeCodePanel` |
+| U55 | Code preview shows owned module(s) for the open graph | **Done** | `CodePreviewPanel` uses project emit for class-home tabs |
+| U56 | Generate / export same emit as Code panel | **Done** | `emitProjectLikeCodePanel` + folder `writeGeneratedFilesToFolder` on Generate; CLI `transpileProject` |
+| U57 | Code panel graph-file UX (one module per open graph) | **Done** | Class-home tabs always show project-owned file(s); no per-class file picker (graph=file lock) |
+| U58 | **One graph → one file** | **Done** | `emitMergedHomeGraphModules`; Coverage Lab → `src/CoverageLab.*` |
+
+---
+
+## 11. Fidelity streamline (July 2026)
+
+**Goal:** Keep analyze → IR → pack/emit; remove wrongful emit magic. Canonical: [`docs/design/fidelity_streamline.md`](../../docs/design/fidelity_streamline.md) · Dual Class Lab.
+
+| # | Item | Status | Key files |
+|---|------|--------|-----------|
+| U59 | Design lock — hub doc + backlog §11 + roadmap Phase 6 track | **Done** | `docs/design/fidelity_streamline.md`, this §11, `docs/roadmap.md` |
+| U60 | Delete dead dual paths (`appendMemberImplementations`, unused declare helpers) | **Done** | `packages/transpiler/src/emit/members.ts` (removed); `memberDeclare.ts` deleted; `validate_matrix.ts` uses `appendIrMembersInOrder` only |
+| U61 | Property → slot → pack only (types, async, visibility; no invent) | **Done** | `emit/emitTypes.ts`, `shell.ts`, `helpers.ts`, `members.ts`, `sinkStatements.ts`; Dual Class goldens |
+| U62 | Strict class shell — open only on `ClassDecl` | **Done** | `emit/classModule.ts` — removed `onBeforeField`/`onBeforeMethod` auto-`openClassShell`; Rust `ensureRustImpl` remains layout-only |
+| U63 | Doc/skill realignment — Dual Class Lab + streamline hub | **Done** | catalog, decisions, fidelity/transpiler/cross-lang/usability skills, `current_state.md`, `multi_class_symbols.md` |
+| U64 | Phase 5 deeper fidelity — temps pack+sourceMap; Import-only stdlib | **Done** | **U64a:** `SwitchSelectBind` + selector spans. **U64b:** `GetInputLineNew` / `GetInputLineRead` / `GetInputParseLineF32` (rust/csharp number paths); string literal spans; C++ GetInput prompt spans. Temp **names** still TS constants. |
+| U65 | Rethink Test Projects → localStorage → expected codegen compare | **Done** | Stable `vvs-test-*` ids; seed/open refreshes fixtures (`source: test`). First Graph + GetInput; Coverage Lab + TypeRef map `Tags`. `test_project_goldens/` + `usabilityExampleGoldens.test.ts`; extract `--update-goldens`. |
+
+---
+
+## 12. Per-language unsupported nodes (**Done** — July 2026)
+
+**Canonical:** `.agents/memory/decisions.md` § Unsupported nodes per language · expands roadmap `node-effectiveness`.
+
+| # | Item | Status | Spec |
+|---|------|--------|------|
+| U66 | `(x)` unsupported comment lines in codegen | **Done** | `nodeEffectiveness` + `appendHoistedImports`; pack `commentPrefix` + `(x)` + label; `sourceMap` tagged; toggle **left of Code panel language selector** (`showUnsupportedComments`, default on) |
+| U67 | Canvas dim unsupported nodes for current language | **Done** | `VVSNode` `.nodeUnsupported`; graph language via `useActiveGraphCodegenSettings`; toggle **top bar left of Autosave** (`dimUnsupportedNodes`, default on) |
+
+---
+
+## 13. Editor UX, comments, highlight, Go (July 2026) — **Open**
+
+Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `editor-ux-next`.
+
+| # | Item | Status | Spec |
+|---|------|--------|------|
+| U68 | Comment **[C]** on selection; emit by canvas **Y**; **lock toggle** (default off = free move/resize; on = group lock as today) | **Open** | Extend comment nodes; codegen inserts comment lines ordered by `position.y`; lock = current parent/group behavior |
+| U69 | Code panel toggle for **user-added comments** (separate from `(x)` unsupported) | **Open** | Pref next to Code language / unsupported toggle |
+| U70 | AI / MCP capabilities revision + **dangerous capabilities** consent toggle | **Open** | Connect AI / MCP tool surface; opt-in for higher-risk tools |
+| U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Open** | Prefer maintainable `sourceMap` that does not need per-node-kind hand updates; bidirectional selection |
+| U72 | Unify **TopNav right** button cluster styles | **Open** | Visual consistency of right-side controls |
+| U73 | Revise **Code panel top bar** usage / UI / UX | **Open** | Header density, toggles, language/Files affordances |
+| U74 | Rethink left panel **Output** view usefulness | **Open** | Logs, jump-to-node, progressive disclosure |
+| U75 | Node chain **auto-layout** (select head + button → layout + select connected chain) | **Open** | Exec-connected organize; leave selection for drag |
+| U76 | **Format JSON** when selected in Code panel | **Open** | Pretty-print JSON preview/selection |
+| U77 | Add **Go** as target language | **Open** | Pack + lower/emit + Coverage Lab / Rosetta slice |
 
 ---
 

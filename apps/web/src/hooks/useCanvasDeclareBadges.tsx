@@ -39,6 +39,7 @@ export function useCanvasDeclareBadges(input: {
   setCompileState: React.Dispatch<
     React.SetStateAction<'clean' | 'dirty' | 'compiling' | 'success' | 'error'>
   >;
+  activeGraphTab: string;
 }) {
   const {
     documents,
@@ -52,14 +53,15 @@ export function useCanvasDeclareBadges(input: {
     patchAllDocuments,
     markTabDirty,
     setCompileState,
+    activeGraphTab,
   } = input;
 
   const focusOrInsertClassDeclare = useCallback(
-    (cls: ClassSymbol, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (cls: ClassSymbol, e?: React.MouseEvent) => {
+      e?.stopPropagation();
       if (!documents || isReferenceMode) return;
 
-      editorFocus.focusTreeSymbolOnClass(cls, { type: 'class', id: cls.id });
+      editorFocus.focusClass(cls);
 
       if (hasDefineNodeForClass(documents, cls)) {
         const target = findClassDefineNode(documents, cls);
@@ -67,19 +69,22 @@ export function useCanvasDeclareBadges(input: {
         return;
       }
 
-      const next = insertClassDefineNode(documents, cls);
+      const next = insertClassDefineNode(documents, cls, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
-      setCompileState('dirty');
+      // Determine where it actually spawned
       const target = findClassDefineNode(next, cls);
-      if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+      if (target) {
+        markTabDirty(target.tabId);
+        setCompileState('dirty');
+        dispatchNavigateToNode(target.tabId, target.nodeId);
+      }
     },
-    [documents, isReferenceMode, editorFocus, patchAllDocuments, markTabDirty, setCompileState]
+    [documents, isReferenceMode, editorFocus, patchAllDocuments, markTabDirty, setCompileState, activeGraphTab]
   );
 
   const focusOrInsertVariableDeclare = useCallback(
-    (variableId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (variableId: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
       if (!documents || isReferenceMode) return;
       const variable = variables.find((v) => v.id === variableId);
       const cls = variable ? classes.find((c) => c.id === symbolClassId(variable)) : undefined;
@@ -88,34 +93,31 @@ export function useCanvasDeclareBadges(input: {
       editorFocus.focusTreeSymbolOnClass(cls, { type: 'variable', id: variableId });
 
       if (hasDefineNodeForVariable(documents, cls, variableId)) {
-        const tabId = classHomeGraphId(cls);
-        const node = documents[tabId]?.nodes.find(
-          (n) => n.data.kindId === 'var_define' && n.data.properties?.symbolId === variableId
-        );
-        if (node) dispatchNavigateToNode(tabId, node.id);
+        const target = findMemberDeclareNodeForSymbol(documents, cls, 'variable', variableId);
+        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
         return;
       }
 
-      const next = insertDefineNodeForVariable(documents, cls, variable);
+      const next = insertDefineNodeForVariable(documents, cls, variable, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
-      setCompileState('dirty');
-      const nextTabId = classHomeGraphId(cls);
-      const nextNode = next[nextTabId]?.nodes.find(
-        (n) => n.data.kindId === 'var_define' && n.data.properties?.symbolId === variableId
-      );
-      if (nextNode) dispatchNavigateToNode(nextTabId, nextNode.id);
+      const target = findMemberDeclareNodeForSymbol(next, cls, 'variable', variableId);
+      if (target) {
+        markTabDirty(target.tabId);
+        setCompileState('dirty');
+        dispatchNavigateToNode(target.tabId, target.nodeId);
+      }
     },
-    [documents, isReferenceMode, variables, classes, editorFocus, patchAllDocuments, markTabDirty, setCompileState]
+    [documents, isReferenceMode, variables, classes, editorFocus, patchAllDocuments, markTabDirty, setCompileState, activeGraphTab]
   );
 
   const focusOrInsertFunctionDeclare = useCallback(
-    (func: FunctionSymbol, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (func: FunctionSymbol, e?: React.MouseEvent) => {
+      e?.stopPropagation();
       if (!documents || isReferenceMode) return;
       const cls = classes.find((c) => c.id === symbolClassId(func));
       if (!cls) return;
 
+      // Stay on the class home graph — never open the function body from the tree.
       editorFocus.focusTreeSymbolOnClass(cls, { type: 'function', id: func.id });
 
       if (hasDefineNodeForFunction(documents, cls, func.id)) {
@@ -124,19 +126,21 @@ export function useCanvasDeclareBadges(input: {
         return;
       }
 
-      const next = insertDefineNodeForFunction(documents, cls, func);
+      const next = insertDefineNodeForFunction(documents, cls, func, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
-      setCompileState('dirty');
       const target = findMemberDeclareNodeForSymbol(next, cls, 'function', func.id);
-      if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+      if (target) {
+        markTabDirty(target.tabId);
+        setCompileState('dirty');
+        dispatchNavigateToNode(target.tabId, target.nodeId);
+      }
     },
-    [documents, isReferenceMode, classes, editorFocus, patchAllDocuments, markTabDirty, setCompileState]
+    [documents, isReferenceMode, classes, editorFocus, patchAllDocuments, markTabDirty, setCompileState, activeGraphTab]
   );
 
   const focusOrInsertEventDeclare = useCallback(
-    (eventId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (eventId: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
       if (!documents || isReferenceMode) return;
       const event = events.find((item) => item.id === eventId);
       const cls = event ? classes.find((c) => c.id === symbolClassId(event)) : undefined;
@@ -150,19 +154,21 @@ export function useCanvasDeclareBadges(input: {
         return;
       }
 
-      const next = insertDefineNodeForEvent(documents, cls, event);
+      const next = insertDefineNodeForEvent(documents, cls, event, activeGraphTab);
       patchAllDocuments(() => next);
-      markTabDirty(classGraphTabId(cls));
-      setCompileState('dirty');
       const target = findMemberDeclareNodeForSymbol(next, cls, 'event', eventId);
-      if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+      if (target) {
+        markTabDirty(target.tabId);
+        setCompileState('dirty');
+        dispatchNavigateToNode(target.tabId, target.nodeId);
+      }
     },
-    [documents, isReferenceMode, events, classes, editorFocus, patchAllDocuments, markTabDirty, setCompileState]
+    [documents, isReferenceMode, events, classes, editorFocus, patchAllDocuments, markTabDirty, setCompileState, activeGraphTab]
   );
 
   const focusOrInsertEventHandler = useCallback(
-    (eventId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (eventId: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
       if (!documents || isReferenceMode) return;
       const event = events.find((item) => item.id === eventId);
       const cls = event ? classes.find((c) => c.id === symbolClassId(event)) : undefined;
@@ -185,7 +191,13 @@ export function useCanvasDeclareBadges(input: {
     [documents, isReferenceMode, events, classes, editorFocus]
   );
 
-  const renderClassCanvasStatus = (cls: ClassSymbol, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
+  const renderClassCanvasStatus = (
+    cls: ClassSymbol,
+    rowSelected = false,
+    onlyErrors = false,
+    onlySuccess = false,
+    variant: 'chip' | 'pip' = 'chip'
+  ) => {
     if (!documents || isReferenceMode) return null;
     const declared = hasDefineNodeForClass(documents, cls);
     if (onlyErrors && declared) return null;
@@ -195,12 +207,19 @@ export function useCanvasDeclareBadges(input: {
         label="Declare"
         ok={declared}
         emphasize={rowSelected && !declared}
+        variant={variant}
         onClick={(e) => focusOrInsertClassDeclare(cls, e)}
       />
     );
   };
 
-  const renderVariableCanvasStatus = (variableId: string, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
+  const renderVariableCanvasStatus = (
+    variableId: string,
+    rowSelected = false,
+    onlyErrors = false,
+    onlySuccess = false,
+    variant: 'chip' | 'pip' = 'chip'
+  ) => {
     if (!documents || isReferenceMode || !activeClass) return null;
     const declared = hasDefineNodeForVariable(documents, activeClass, variableId);
     if (onlyErrors && declared) return null;
@@ -210,12 +229,19 @@ export function useCanvasDeclareBadges(input: {
         label="Declare"
         ok={declared}
         emphasize={rowSelected && !declared}
+        variant={variant}
         onClick={(e) => focusOrInsertVariableDeclare(variableId, e)}
       />
     );
   };
 
-  const renderFunctionCanvasStatus = (func: FunctionSymbol, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
+  const renderFunctionCanvasStatus = (
+    func: FunctionSymbol,
+    rowSelected = false,
+    onlyErrors = false,
+    onlySuccess = false,
+    variant: 'chip' | 'pip' = 'chip'
+  ) => {
     if (!documents || isReferenceMode) return null;
     const cls = classes.find((c) => c.id === symbolClassId(func));
     if (!cls) return null;
@@ -227,12 +253,19 @@ export function useCanvasDeclareBadges(input: {
         label="Declare"
         ok={declared}
         emphasize={rowSelected && !declared}
+        variant={variant}
         onClick={(e) => focusOrInsertFunctionDeclare(func, e)}
       />
     );
   };
 
-  const renderEventCanvasStatus = (eventId: string, rowSelected = false, onlyErrors = false, onlySuccess = false) => {
+  const renderEventCanvasStatus = (
+    eventId: string,
+    rowSelected = false,
+    onlyErrors = false,
+    onlySuccess = false,
+    variant: 'chip' | 'pip' = 'chip'
+  ) => {
     if (!documents || isReferenceMode) return null;
     const event = events.find((item) => item.id === eventId);
     const cls = event ? classes.find((c) => c.id === symbolClassId(event)) : undefined;
@@ -250,6 +283,7 @@ export function useCanvasDeclareBadges(input: {
             label="Declare"
             ok={declared}
             emphasize={rowSelected && !declared}
+            variant={variant}
             onClick={(e) => focusOrInsertEventDeclare(eventId, e)}
           />
         ) : null}
@@ -258,6 +292,7 @@ export function useCanvasDeclareBadges(input: {
             label="Handler"
             ok={hasHandler}
             emphasize={rowSelected && !hasHandler}
+            variant={variant}
             onClick={(e) => focusOrInsertEventHandler(eventId, e)}
           />
         ) : null}
@@ -270,5 +305,10 @@ export function useCanvasDeclareBadges(input: {
     renderVariableCanvasStatus,
     renderFunctionCanvasStatus,
     renderEventCanvasStatus,
+    focusOrInsertClassDeclare,
+    focusOrInsertVariableDeclare,
+    focusOrInsertFunctionDeclare,
+    focusOrInsertEventDeclare,
+    focusOrInsertEventHandler,
   };
 }

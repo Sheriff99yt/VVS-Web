@@ -7,7 +7,6 @@ import {
   applyProjectGraphTargetToGraphRef,
   buildProjectClassOptions,
   buildProjectGraphTargets,
-  decodeProjectGraphTargetId,
   encodeProjectGraphTargetId,
   projectGraphTargetOptions,
   resolveGraphRefTargetFromNode,
@@ -121,45 +120,7 @@ export function ImportGraphTargetPanel({
     );
   }
 
-  if (kindId === 'vvs.project.import_module' || nodeData.linkKind === 'import_module') {
-    const moduleTargets = graphTargets.filter((t) => t.kind !== 'organizational');
-    const moduleOptions = projectGraphTargetOptions(moduleTargets);
-    const current =
-      moduleOptions.find((o) => {
-        const decoded = decodeProjectGraphTargetId(o.value);
-        return decoded?.graphTabId === nodeData.linkedGraphId;
-      })?.value ?? '';
-
-    return (
-      <div className="space-y-2 mb-2 pb-2 border-b border-zinc-800/80">
-        <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
-          Import module graph
-        </label>
-        <SearchableSelect
-          value={current}
-          onChange={(encoded) => {
-            const full = moduleTargets.find((t) => encodeProjectGraphTargetId(t) === encoded);
-            if (!full) return;
-            const func = functions.find((f) => f.id === full.graphTabId);
-            const label = func ? `Import ${func.name}` : `Import ${full.label}`;
-            onApply(
-              normalizeNodeData({
-                ...nodeData,
-                label,
-                kindId: 'vvs.project.import_module',
-                linkKind: 'import_module',
-                linkedGraphId: full.graphTabId,
-                graphBinding: { kind: 'import_module', symbolId: full.graphTabId },
-              })
-            );
-          }}
-          options={moduleOptions}
-          placeholder="Select graph to import…"
-          emptyLabel="No importable graphs"
-        />
-      </div>
-    );
-  }
-
+  // Stdlib Import Module uses propertySchema (modulePath / importStyle / targetLanguages).
+  // Do not show a graph-target picker — it hid those settings and never fed codegen.
   return null;
 }

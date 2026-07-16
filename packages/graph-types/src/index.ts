@@ -3,6 +3,7 @@ export * from './pinCompatibility';
 export * from './nodes';
 export * from './symbols';
 export * from './variableTypes';
+export * from './typeRef';
 export * from './typeNaming';
 export * from './diagnostic';
 export * from './transpile';

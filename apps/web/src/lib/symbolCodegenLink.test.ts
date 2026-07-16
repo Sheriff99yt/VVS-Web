@@ -1,12 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { createCalculatorUsabilityTestSnapshot } from './usabilityExampleTests/calculatorUsabilityTest';
+import { createCoverageLabUsabilityTestSnapshot } from './usabilityExampleTests/coverageLabUsabilityTest';
 import { resolveSymbolCodegenLink } from './symbolCodegenLink';
 import { resolveCodePreviewHighlightNodeIds } from './projectSelection';
-
-const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
+import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
 describe('resolveSymbolCodegenLink', () => {
-  const snapshot = createCalculatorUsabilityTestSnapshot();
+  const snapshot = createCoverageLabUsabilityTestSnapshot();
   const documents = snapshot.documents!;
   const baseInput = {
     documents,
@@ -18,85 +17,63 @@ describe('resolveSymbolCodegenLink', () => {
     selectedNodeIds: [] as string[],
   };
 
-  test('evt-calc links to calculator graph and highlights member define', () => {
+  test('evt-pulse links to home graph and highlights member define', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'event', id: 'evt-calc' },
+      selection: { type: 'event', id: 'evt-pulse' },
     });
 
     expect(link).not.toBeNull();
-    expect(link!.tabId).toBe(CALCULATOR_GRAPH_ID);
-    expect(link!.highlightNodeIds).toContain('calc-evt-calc-member');
-    expect(link!.primaryNodeId).toBe('calc-evt-calc-member');
+    expect(link!.tabId).toBe(MAIN_GRAPH_CONTAINER_ID);
+    expect(link!.highlightNodeIds).toContain('lab-evt-pulse-mem');
+    expect(link!.primaryNodeId).toBe('lab-evt-pulse-mem');
   });
 
-  test('evt-clear links to calculator graph and highlights member define', () => {
+  test('var-power links to home graph and highlights var define', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'event', id: 'evt-clear' },
+      selection: { type: 'variable', id: 'var-power' },
     });
 
     expect(link).not.toBeNull();
-    expect(link!.tabId).toBe(CALCULATOR_GRAPH_ID);
-    expect(link!.highlightNodeIds).toContain('calc-evt-clear-member');
-    expect(link!.primaryNodeId).toBe('calc-evt-clear-member');
+    expect(link!.tabId).toBe(MAIN_GRAPH_CONTAINER_ID);
+    expect(link!.highlightNodeIds).toContain('lab-var-power');
+    expect(link!.primaryNodeId).toBe('lab-var-power');
   });
 
-  test('var-a links to calculator graph and highlights var define', () => {
+  test('fn-boot links to function graph and highlights function entry', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'variable', id: 'var-a' },
+      selection: { type: 'function', id: 'fn-boot' },
     });
 
     expect(link).not.toBeNull();
-    expect(link!.tabId).toBe(CALCULATOR_GRAPH_ID);
-    expect(link!.highlightNodeIds).toContain('calc-var-a-define');
-    expect(link!.primaryNodeId).toBe('calc-var-a-define');
-  });
-
-  test('fn-add links to function graph and highlights function entry', () => {
-    const link = resolveSymbolCodegenLink({
-      ...baseInput,
-      selection: { type: 'function', id: 'fn-add' },
-    });
-
-    expect(link).not.toBeNull();
-    expect(link!.tabId).toBe('fn-add');
-    expect(link!.highlightNodeIds).toContain('calc-add-entry');
-    expect(link!.primaryNodeId).toBe('calc-add-entry');
+    expect(link!.tabId).toBe('fn-boot');
+    expect(link!.highlightNodeIds).toContain('lab-boot-entry');
+    expect(link!.primaryNodeId).toBe('lab-boot-entry');
   });
 
   test('node selection falls back to active tab and selected node ids', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      activeGraphTab: CALCULATOR_GRAPH_ID,
-      selectedNodeIds: ['calc-set-a'],
-      selection: { type: 'node', id: 'calc-set-a' },
+      activeGraphTab: MAIN_GRAPH_CONTAINER_ID,
+      selectedNodeIds: ['lab-dispatch-pulse'],
+      selection: { type: 'node', id: 'lab-dispatch-pulse' },
     });
 
     expect(link).not.toBeNull();
-    expect(link!.tabId).toBe(CALCULATOR_GRAPH_ID);
-    expect(link!.highlightNodeIds).toEqual(['calc-set-a']);
-  });
-
-  test('symbol selection previews calculator graph while on project map', () => {
-    const link = resolveSymbolCodegenLink({
-      ...baseInput,
-      activeGraphTab: 'main-graph',
-      selection: { type: 'event', id: 'evt-calc' },
-    });
-
-    expect(link!.tabId).toBe(CALCULATOR_GRAPH_ID);
+    expect(link!.tabId).toBe(MAIN_GRAPH_CONTAINER_ID);
+    expect(link!.highlightNodeIds).toEqual(['lab-dispatch-pulse']);
   });
 
   test('function selection prefers active overload graph tab', () => {
-    const func = snapshot.functions.find((f) => f.id === 'fn-add')!;
+    const func = snapshot.functions.find((f) => f.id === 'fn-boot')!;
     const overloadTab = func.overloads[0]?.graphTabId ?? func.id;
 
     const link = resolveSymbolCodegenLink({
       ...baseInput,
       activeGraphTab: overloadTab,
-      selection: { type: 'function', id: 'fn-add' },
+      selection: { type: 'function', id: 'fn-boot' },
     });
 
     expect(link).not.toBeNull();
@@ -106,29 +83,16 @@ describe('resolveSymbolCodegenLink', () => {
   test('dispatch node canvas selection highlights dispatch not member define', () => {
     const eventLink = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'event', id: 'evt-calc' },
+      selection: { type: 'event', id: 'evt-pulse' },
     });
 
     const highlightNodeIds = resolveCodePreviewHighlightNodeIds(
-      { type: 'event', id: 'evt-calc' },
-      ['calc-dispatch'],
+      { type: 'event', id: 'evt-pulse' },
+      ['lab-dispatch-pulse'],
       eventLink?.highlightNodeIds
     );
 
-    expect(highlightNodeIds).toEqual(['calc-dispatch']);
-    expect(highlightNodeIds).not.toContain('calc-evt-calc-member');
-  });
-
-  test('node selection resolves to selected dispatch id for codegen link', () => {
-    const link = resolveSymbolCodegenLink({
-      ...baseInput,
-      activeGraphTab: CALCULATOR_GRAPH_ID,
-      selectedNodeIds: ['calc-dispatch'],
-      selection: { type: 'node', id: 'calc-dispatch' },
-    });
-
-    expect(link).not.toBeNull();
-    expect(link!.highlightNodeIds).toEqual(['calc-dispatch']);
-    expect(link!.primaryNodeId).toBe('calc-dispatch');
+    expect(highlightNodeIds).toEqual(['lab-dispatch-pulse']);
+    expect(highlightNodeIds).not.toContain('lab-evt-pulse-mem');
   });
 });

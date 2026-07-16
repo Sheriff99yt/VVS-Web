@@ -1,0 +1,93 @@
+// ===== src/CoverageLab.rs =====
+// (x) Import iostream
+// (x) Import System
+// (x) Import string
+// (x) Import Enum
+// (x) Import vector
+// (x) Import unordered_map
+// (x) Import Collections.Generic
+pub struct Machine {
+
+        Power: f32,
+        pub Serial: f32,
+        pub MaxPower: f32,
+        pub Ready: bool,
+}
+impl Machine {
+
+    pub fn Boot(&mut self) {
+        // Boot
+        self.Ready = true;
+        println!("{}", "Booted");
+        Sensor::new().on_tick();
+    }
+    // abstract Diagnose
+    pub async fn Shutdown(&mut self) {
+        // Shutdown
+        self.Ready = false;
+        println!("{}", "Shutdown");
+    }
+    pub fn on_pulse(&mut self) {
+        println!("{}", ("Power=" + self.Power.to_string()));
+    }
+    pub fn on_start(&mut self) {
+        print!("{}", "Operator name?");
+        std::io::Write::flush(&mut std::io::stdout()).unwrap();
+        let mut _vvs_input_lab_get_input = String::new();
+        std::io::stdin().read_line(&mut _vvs_input_lab_get_input).unwrap();
+        _vvs_input_lab_get_input = _vvs_input_lab_get_input.trim_end().to_string();
+        println!("{}", _vvs_input_lab_get_input);
+        self.Boot();
+        if self.Ready {
+            self.on_pulse();
+        } else {
+            // (x) Import json
+            println!("{}", "Not ready");
+        }
+    }
+}
+
+pub enum SensorStatus {
+    OK,
+    WARN,
+    FAIL
+}
+pub struct Sensor {
+    base: Machine,
+
+        pub Readings: Vec<f32>,
+        pub Status: SensorStatus,
+        pub Host: Machine,
+        pub Tags: HashMap<String, String>,
+}
+impl Sensor {
+
+    pub async fn Sample(&mut self) {
+        // Sample
+        self.Readings.push(self.Power);
+        println!("{}", "Sampled");
+    }
+    pub fn Report(&mut self) {
+        // Report
+        println!("{}", "--- Readings ---");
+        for val in self.Readings.iter() {
+            println!("{}", val.to_string());
+        }
+    }
+    pub fn on_tick(&mut self) {
+        println!("{}", "Tick");
+    }
+    pub fn on_start(&mut self) {
+        let _vvs_sel = self.Status;
+        if _vvs_sel == SensorStatus::OK {
+            self.Sample();
+            self.Report();
+        } else if _vvs_sel == SensorStatus::WARN {
+            println!("{}", "Warn");
+            self.Report();
+        } else if _vvs_sel == SensorStatus::FAIL {
+            println!("{}", "Fail");
+            self.Report();
+        }
+    }
+}

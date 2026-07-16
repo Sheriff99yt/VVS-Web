@@ -1,4 +1,4 @@
-export { buildExecutionOrder, findSimulationStartNode } from './graphOrder';
+export { buildExecutionOrder, findAllExecutionHeads } from './graphOrder';
 export { buildSymbolIndex, type SymbolIndex } from './symbolIndex';
 export {
   analyzeClassMembers,

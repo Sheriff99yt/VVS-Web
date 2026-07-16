@@ -132,6 +132,7 @@ export function GraphWorkspaceHost({
         (c) =>
           c.type === 'add' ||
           c.type === 'remove' ||
+          c.type === 'replace' ||
           (c.type === 'position' && c.dragging === false)
       );
       onNodesChangeBase(changes);

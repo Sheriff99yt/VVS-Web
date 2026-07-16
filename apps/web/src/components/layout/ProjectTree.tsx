@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   Plus,
   Trash2,
@@ -8,13 +8,12 @@ import {
   PlaySquare,
   GitBranch,
   Radio,
-  GripVertical,
   Boxes,
   FolderOutput,
   PenLine,
 } from 'lucide-react';
 import type { FunctionBinding, FunctionSymbol, ClassSymbol, GraphContainer, VariableSymbol } from '@vvs/graph-types';
-import { createVariableSymbol, LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
+import { createVariableSymbol, resolveNodeKindId } from '@vvs/graph-types';
 import { useProject } from '@/contexts/ProjectContext';
 import {
   createFunctionSymbol,
@@ -28,11 +27,14 @@ import {
   commitFunctionSymbolUpdate,
 } from '@/lib/functionHelpers';
 import { defaultValueForVariableType, VariableType } from '@/lib/variableDefaults';
-import { mergeDemoVariables } from '@/lib/demoVariables';
 import {
   isBindingCoaAllowed,
   isDataTypeCoaAllowed,
 } from '@/lib/variableCoaUi';
+import {
+  applyPickerValueToVariableFields,
+  buildTypePickerOptions,
+} from '@/lib/typePickerOptions';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import type { VariableBinding } from '@/types/graph';
 import { findGraphIdsUsingVariable } from '@/lib/graphRelations';
@@ -47,7 +49,7 @@ import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
 import { useClassLifecycle } from '@/hooks/useClassLifecycle';
 import { useGraphContainerLifecycle } from '@/hooks/useGraphContainerLifecycle';
 import { useExplorerPanelState } from '@/hooks/useExplorerPanelState';
-import { useExplorerTreeDrag, useFunctionReorderDrop } from '@/hooks/useExplorerTreeDrag';
+import { useExplorerTreeDrag, useListReorderDrop } from '@/hooks/useExplorerTreeDrag';
 import { useCanvasDeclareBadges } from '@/hooks/useCanvasDeclareBadges';
 import { CLASS_DRAG_MIME, classDragPayload } from '@/lib/classHelpers';
 import {
@@ -58,7 +60,11 @@ import {
 } from '@/lib/classScope';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { getSymbolDisplayName } from '@/lib/symbolLifecycle';
+import { hasDefineNodeForClass, insertClassDefineNode } from '@/lib/defineNodeSync';
 import type { SymbolRefKind } from '@vvs/graph-types';
+import { paneMenuPosition } from '@/lib/paneMenuPosition';
+import { reorderById } from '@/lib/symbolOrder';
+import { TREE_DRAG_MIME } from '@/lib/treeDrag';
 import { TreeRow } from './project-tree/TreeRow';
 import { CategorySection } from './project-tree/CategorySection';
 import { PanelFilter } from './project-tree/PanelFilter';
@@ -71,11 +77,9 @@ export type { ProjectTreeMode } from './project-tree/constants';
 import { ProjectScopeHeader } from './project-tree/ProjectScopeHeader';
 import { CodegenSuffix } from './project-tree/CodegenSuffix';
 import { SymbolCreatePopover } from './project-tree/SymbolCreatePopover';
-import { ClassFolderDropStrip } from './project-tree/ClassFolderDropStrip';
 import { ProjectFilesExplorer } from './project-tree/ProjectFilesExplorer';
 import { GraphFoldersSection } from './project-tree/GraphFoldersSection';
 import { SymbolsScopeBar } from './project-tree/SymbolsScopeBar';
-import { ExplorerFooterHint } from './project-tree/ExplorerFooterHint';
 import { EventDispatchChip } from './project-tree/EventDispatchChip';
 import { EnvironmentApiSection } from './project-tree/EnvironmentApiSection';
 import { VariableRow } from './project-tree/VariableRow';
@@ -105,7 +109,6 @@ import { graphContainerLabel } from './project-tree/graphContainerLabels';
 import {
   eventRowMeta,
   getVariableColor,
-  sectionGridSpan,
 } from './project-tree/explorerUtils';
 import { useProjectFolderPaths } from '@/hooks/useProjectFolderPaths';
 import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
@@ -121,9 +124,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     variables,
     setVariables,
     events,
+    setEvents,
     functions,
     setFunctions,
     classes,
+    setClasses,
     graphContainers,
     activeClassId,
     setActiveClassId,
@@ -154,7 +159,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     [projectFolderPaths]
   );
   const { patchAllDocuments } = useGraphWorkspace();
-  const { deleteSymbol, getUsageSummary, addVariableWithDefine, addFunctionWithDefine, addEventWithDefine, addClassWithDefine } =
+  const { deleteSymbol, getUsageSummary, addVariableWithDefine, addFunctionWithDefine, addEventWithDefine, addClassWithDefine, duplicateVariable, duplicateFunction, duplicateEvent } =
     useSymbolLifecycle();
   const { renameClass, deleteClass, canDeleteClass, moveClassToContainer } =
     useClassLifecycle();
@@ -171,7 +176,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     () => classScopedSymbols(activeClassId, { variables, functions, events }),
     [activeClassId, variables, functions, events]
   );
-  const classVariables = scopedSymbols.variables;
+  const classVariables = useMemo(
+    () => scopedSymbols.variables.filter((v) => !v.graphTabId && !v.scopedNodeId),
+    [scopedSymbols.variables]
+  );
   const classFunctions = scopedSymbols.functions;
   const classEvents = scopedSymbols.events;
 
@@ -218,10 +226,17 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   );
 
   const [pendingDelete, setPendingDelete] = useState<{
-    kind: SymbolRefKind;
-    symbolId: string;
-    symbolName: string;
+    items: Array<{ kind: SymbolRefKind; symbolId: string; symbolName: string }>;
   } | null>(null);
+
+  type SymbolMultiKey = { kind: 'variable' | 'function' | 'event'; id: string };
+  const [selectedSymbols, setSelectedSymbols] = useState<SymbolMultiKey[]>([]);
+  const [symbolMenu, setSymbolMenu] = useState<{
+    x: number;
+    y: number;
+    targets: SymbolMultiKey[];
+  } | null>(null);
+  const symbolMenuRef = useRef<HTMLDivElement>(null);
 
   const [newContainerName, setNewContainerName] = useState('');
   const [renamingContainerId, setRenamingContainerId] = useState<string | null>(null);
@@ -233,8 +248,51 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const [renameClassName, setRenameClassName] = useState('');
   const [isAddingVariable, setIsAddingVariable] = useState(false);
   const [newVarName, setNewVarName] = useState('');
-  const [newVarType, setNewVarType] = useState<VariableType>('data_string');
+  const [newVarType, setNewVarType] = useState<string>('data_string');
   const [newVarBinding, setNewVarBinding] = useState<VariableBinding>('instance');
+
+  const typePickerOptions = useMemo(
+    () =>
+      buildTypePickerOptions({
+        documents: documents ?? {},
+        classes,
+        includeClasses: true,
+        includeContainers: true,
+        formatBuiltinLabel: (id, label) =>
+          `${label}${!isDataTypeCoaAllowed(id as VariableType, crossOverMode) ? ' (COA)' : ''}`,
+      }),
+    [documents, classes, crossOverMode]
+  );
+
+  const activeScope = useMemo(() => {
+    if (isReferenceMode) return null;
+    const activeFunc = functions.find(
+      (f) => f.id === activeGraphTab || f.overloads.some((o) => o.graphTabId === activeGraphTab)
+    );
+    if (activeFunc) {
+      return { id: activeGraphTab, name: activeFunc.name, type: 'function' as const };
+    }
+    if (selection.type === 'node' && selection.id) {
+      // Intentionally removed block-scope detection. 
+      // Local variables are now strictly limited to Functions to enforce 
+      // pure visual scripting flow (output pins) for block constructs.
+    }
+    return null;
+  }, [isReferenceMode, activeGraphTab, functions, selection, documents]);
+
+  const activeScopeVariables = useMemo(() => {
+    if (!activeScope) return [];
+    return variables.filter((v) =>
+      activeScope.type === 'function'
+        ? v.graphTabId === activeScope.id
+        : v.scopedNodeId === activeScope.id
+    );
+  }, [activeScope, variables]);
+
+  const [isAddingLocalVariable, setIsAddingLocalVariable] = useState(false);
+  const [newLocalVarName, setNewLocalVarName] = useState('');
+  const [newLocalVarType, setNewLocalVarType] = useState<string>('data_string');
+
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [newEventName, setNewEventName] = useState('');
   const [isAddingFunction, setIsAddingFunction] = useState(false);
@@ -384,6 +442,12 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     },
   });
 
+  const filteredLocalVariables = useMemo(() => {
+    if (!q) return activeScopeVariables;
+    const lower = q.toLowerCase();
+    return activeScopeVariables.filter((v) => v.name.toLowerCase().includes(lower));
+  }, [activeScopeVariables, q]);
+
   const treeDrag = useExplorerTreeDrag({
     moveClassToContainer,
     reorderGraphContainers,
@@ -393,12 +457,22 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   const {
     draggingClassId,
     dropContainerId,
+    dropClassId,
+    setDropClassId,
     draggingGraphContainerId,
     dropGraphContainerId,
     draggingFunctionId,
     setDraggingFunctionId,
     dropFunctionId,
     setDropFunctionId,
+    draggingVariableId,
+    setDraggingVariableId,
+    dropVariableId,
+    setDropVariableId,
+    draggingEventId,
+    setDraggingEventId,
+    dropEventId,
+    setDropEventId,
     handleClassDragStart,
     handleClassDragEnd,
     handleContainerDragOver,
@@ -407,18 +481,71 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     handleGraphContainerDragEnd,
     handleFunctionDragStart,
     handleFunctionDragEnd,
+    handleVariableDragStart,
+    handleVariableDragEnd,
+    handleEventDragStart,
+    handleEventDragEnd,
     clearContainerDropHint,
   } = treeDrag;
 
-  const canReorderFunctions = !q;
+  const canReorderSymbols = !q && !isReferenceMode;
 
-  const { handleFunctionDragOver, handleFunctionDrop } = useFunctionReorderDrop({
-    canReorder: canReorderFunctions,
-    draggingFunctionId,
-    setDraggingFunctionId,
-    dropFunctionId,
-    setDropFunctionId,
-    reorderFunctions: (fromId, toId) => setFunctions((prev) => reorderFunctionSymbols(prev, fromId, toId)),
+  const {
+    handleDragOver: handleFunctionDragOver,
+    handleDrop: handleFunctionDrop,
+    handleDragLeave: handleFunctionDragLeave,
+  } = useListReorderDrop({
+    canReorder: canReorderSymbols,
+    mimeType: TREE_DRAG_MIME.functionReorder,
+    draggingId: draggingFunctionId,
+    setDraggingId: setDraggingFunctionId,
+    dropId: dropFunctionId,
+    setDropId: setDropFunctionId,
+    onReorder: (fromId, toId) => setFunctions((prev) => reorderFunctionSymbols(prev, fromId, toId)),
+  });
+
+  const {
+    handleDragOver: handleVariableDragOver,
+    handleDrop: handleVariableDrop,
+    handleDragLeave: handleVariableDragLeave,
+  } = useListReorderDrop({
+    canReorder: canReorderSymbols,
+    mimeType: TREE_DRAG_MIME.variableReorder,
+    draggingId: draggingVariableId,
+    setDraggingId: setDraggingVariableId,
+    dropId: dropVariableId,
+    setDropId: setDropVariableId,
+    onReorder: (fromId, toId) => setVariables((prev) => reorderById(prev, fromId, toId)),
+  });
+
+  const {
+    handleDragOver: handleEventDragOver,
+    handleDrop: handleEventDrop,
+    handleDragLeave: handleEventDragLeave,
+  } = useListReorderDrop({
+    canReorder: canReorderSymbols,
+    mimeType: TREE_DRAG_MIME.eventReorder,
+    draggingId: draggingEventId,
+    setDraggingId: setDraggingEventId,
+    dropId: dropEventId,
+    setDropId: setDropEventId,
+    onReorder: (fromId, toId) => setEvents((prev) => reorderById(prev, fromId, toId)),
+  });
+
+  const {
+    handleDragOver: handleClassReorderDragOver,
+    handleDrop: handleClassReorderDrop,
+    handleDragLeave: handleClassReorderDragLeave,
+  } = useListReorderDrop({
+    canReorder: canReorderSymbols,
+    mimeType: TREE_DRAG_MIME.classReorder,
+    draggingId: draggingClassId,
+    setDraggingId: (id) => {
+      if (id === null) handleClassDragEnd();
+    },
+    dropId: dropClassId,
+    setDropId: setDropClassId,
+    onReorder: (fromId, toId) => setClasses((prev) => reorderById(prev, fromId, toId)),
   });
 
   const {
@@ -426,6 +553,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     renderVariableCanvasStatus,
     renderFunctionCanvasStatus,
     renderEventCanvasStatus,
+    focusOrInsertClassDeclare,
+    focusOrInsertVariableDeclare,
+    focusOrInsertFunctionDeclare,
+    focusOrInsertEventDeclare,
   } = useCanvasDeclareBadges({
     documents,
     isReferenceMode,
@@ -438,6 +569,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     patchAllDocuments,
     markTabDirty,
     setCompileState,
+    activeGraphTab,
   });
 
   const projectCodegenDefaults = useMemo(
@@ -465,9 +597,16 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const openClassGraph = useCallback(
     (cls: ClassSymbol) => {
+      if (!documents) {
+        editorFocus.focusClass(cls);
+        return;
+      }
+      if (!hasDefineNodeForClass(documents, cls)) {
+        patchAllDocuments((d) => insertClassDefineNode(d, cls, activeGraphTab));
+      }
       editorFocus.focusClass(cls);
     },
-    [editorFocus]
+    [editorFocus, documents, patchAllDocuments, activeGraphTab]
   );
 
   const revealClassGraphInTree = useCallback((_container?: GraphContainer) => {
@@ -536,6 +675,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const selectClass = useCallback(
     (cls: ClassSymbol) => {
+      setSelectedSymbols([]);
       setActiveClassId(cls.id);
       setSelection({ type: 'class', id: cls.id });
       setExpanded((s) => ({ ...s, classes: true }));
@@ -543,9 +683,29 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     [setActiveClassId, setSelection]
   );
 
+  const symbolKeyEquals = (a: SymbolMultiKey, b: SymbolMultiKey) =>
+    a.kind === b.kind && a.id === b.id;
+
+  const isSymbolMultiSelected = useCallback(
+    (kind: SymbolMultiKey['kind'], id: string) =>
+      selectedSymbols.some((s) => s.kind === kind && s.id === id),
+    [selectedSymbols]
+  );
+
   const selectFunction = useCallback(
-    (func: FunctionSymbol) => {
-      setSelection({ type: 'function', id: func.id });
+    (func: FunctionSymbol, e?: React.MouseEvent) => {
+      const key: SymbolMultiKey = { kind: 'function', id: func.id };
+      if (e && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSelectedSymbols((prev) => {
+          const exists = prev.some((s) => symbolKeyEquals(s, key));
+          return exists ? prev.filter((s) => !symbolKeyEquals(s, key)) : [...prev, key];
+        });
+        setSelection({ type: 'function', id: func.id });
+      } else {
+        setSelectedSymbols([key]);
+        setSelection({ type: 'function', id: func.id });
+      }
       const classId = symbolClassId(func);
       if (classId) setActiveClassId(classId);
       setExpanded((s) => ({ ...s, functions: true }));
@@ -584,6 +744,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const selectGraphInCanvas = useCallback(
     (graphId: string) => {
+      setSelectedSymbols([]);
       setSelection({ type: 'graph', id: graphId === 'main' ? null : graphId });
     },
     [setSelection]
@@ -593,6 +754,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const selectVariableForReferences = useCallback(
     (varId: string, varName: string) => {
+      setSelectedSymbols([{ kind: 'variable', id: varId }]);
       setSelection({ type: 'variable', id: varId });
       if (!documents) {
         focusReference('main', varName);
@@ -605,8 +767,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   );
 
   const selectVariableInCanvas = useCallback(
-    (varId: string) => {
-      setSelection({ type: 'variable', id: varId });
+    (varId: string, e?: React.MouseEvent) => {
+      const key: SymbolMultiKey = { kind: 'variable', id: varId };
+      if (e && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSelectedSymbols((prev) => {
+          const exists = prev.some((s) => symbolKeyEquals(s, key));
+          return exists ? prev.filter((s) => !symbolKeyEquals(s, key)) : [...prev, key];
+        });
+        setSelection({ type: 'variable', id: varId });
+      } else {
+        setSelectedSymbols([key]);
+        setSelection({ type: 'variable', id: varId });
+      }
     },
     [setSelection]
   );
@@ -626,8 +799,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
   );
 
   const selectEvent = useCallback(
-    (eventId: string) => {
-      setSelection({ type: 'event', id: eventId });
+    (eventId: string, e?: React.MouseEvent) => {
+      const key: SymbolMultiKey = { kind: 'event', id: eventId };
+      if (e && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSelectedSymbols((prev) => {
+          const exists = prev.some((s) => symbolKeyEquals(s, key));
+          return exists ? prev.filter((s) => !symbolKeyEquals(s, key)) : [...prev, key];
+        });
+        setSelection({ type: 'event', id: eventId });
+      } else {
+        setSelectedSymbols([key]);
+        setSelection({ type: 'event', id: eventId });
+      }
       setExpanded((s) => ({ ...s, events: true }));
     },
     [setSelection]
@@ -648,24 +832,120 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     [events, classes, editorFocus, revealClassGraphInTree]
   );
 
-  const selectVariable = isReferenceMode ? selectVariableForReferences : selectVariableInCanvas;
+  const selectVariable = isReferenceMode
+    ? (varId: string, varName: string, _e?: React.MouseEvent) =>
+        selectVariableForReferences(varId, varName)
+    : (varId: string, _varName?: string, e?: React.MouseEvent) =>
+        selectVariableInCanvas(varId, e);
 
   const isVariableActive = useCallback(
     (varId: string, varName: string) =>
       isReferenceMode
         ? referenceVariableName === varName
-        : selection.type === 'variable' && selection.id === varId,
-    [isReferenceMode, referenceVariableName, selection]
+        : isSymbolMultiSelected('variable', varId) ||
+          (selection.type === 'variable' && selection.id === varId),
+    [isReferenceMode, referenceVariableName, selection, isSymbolMultiSelected]
   );
+
+  const requestDeleteSymbols = useCallback(
+    (items: Array<{ kind: SymbolRefKind; symbolId: string }>) => {
+      if (items.length === 0) return;
+      const symbols = { variables, functions, events, openTabs };
+      setPendingDelete({
+        items: items.map((item) => ({
+          ...item,
+          symbolName: getSymbolDisplayName(item.kind, item.symbolId, symbols),
+        })),
+      });
+    },
+    [variables, functions, events, openTabs]
+  );
+
+  const requestDeleteSymbol = useCallback(
+    (kind: SymbolRefKind, symbolId: string) => {
+      requestDeleteSymbols([{ kind, symbolId }]);
+    },
+    [requestDeleteSymbols]
+  );
+
+  const openSymbolContextMenu = useCallback(
+    (e: React.MouseEvent, target: SymbolMultiKey) => {
+      if (isReferenceMode) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const inSelection = selectedSymbols.some((s) => symbolKeyEquals(s, target));
+      const targets = inSelection && selectedSymbols.length > 0 ? selectedSymbols : [target];
+      if (!inSelection) {
+        setSelectedSymbols([target]);
+        setSelection({ type: target.kind, id: target.id });
+      }
+      setSymbolMenu({
+        ...paneMenuPosition(e.clientX, e.clientY, 160, 72),
+        targets,
+      });
+    },
+    [isReferenceMode, selectedSymbols, setSelection]
+  );
+
+  const handleSymbolMenuDuplicate = useCallback(() => {
+    if (!symbolMenu) return;
+    for (const target of symbolMenu.targets) {
+      if (target.kind === 'variable') duplicateVariable(target.id);
+      else if (target.kind === 'function') duplicateFunction(target.id);
+      else duplicateEvent(target.id);
+    }
+    setSymbolMenu(null);
+  }, [symbolMenu, duplicateVariable, duplicateFunction, duplicateEvent]);
+
+  const handleSymbolMenuDelete = useCallback(() => {
+    if (!symbolMenu) return;
+    requestDeleteSymbols(
+      symbolMenu.targets.map((t) => ({ kind: t.kind, symbolId: t.id }))
+    );
+    setSymbolMenu(null);
+  }, [symbolMenu, requestDeleteSymbols]);
+
+  useEffect(() => {
+    if (!symbolMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSymbolMenu(null);
+    };
+    const onDown = (e: MouseEvent) => {
+      if (symbolMenuRef.current?.contains(e.target as Node)) return;
+      setSymbolMenu(null);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onDown);
+    };
+  }, [symbolMenu]);
+
+  const pendingUsage = pendingDelete
+    ? pendingDelete.items.reduce(
+        (acc, item) => {
+          const usage = getUsageSummary(item.kind, item.symbolId);
+          return {
+            nodeCount: acc.nodeCount + usage.nodeCount,
+            graphCount: acc.graphCount + usage.graphCount,
+          };
+        },
+        { nodeCount: 0, graphCount: 0 }
+      )
+    : { nodeCount: 0, graphCount: 0 };
 
   const handleSaveVariable = () => {
     if (!newVarName.trim()) return;
+    const applied = applyPickerValueToVariableFields(newVarType);
     const variable = createVariableSymbol(newVarName.trim(), {
-      type: newVarType,
+      type: applied?.type ?? 'data_string',
+      typeRef: applied?.typeRef,
       binding: newVarBinding,
       classId: activeClassId,
     });
-    variable.defaultValue = defaultValueForVariableType(newVarType);
+    variable.defaultValue = applied?.defaultValue ?? defaultValueForVariableType(variable.type);
+    if (applied?.enumType) variable.enumType = applied.enumType;
     addVariableWithDefine(variable);
     setNewVarName('');
     setNewVarBinding('instance');
@@ -673,28 +953,25 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     setExpanded((s) => ({ ...s, variables: true }));
   };
 
-  const handleLoadDemoVariables = () => {
-    setVariables((list) =>
-      mergeDemoVariables(list).map((v) => ({ ...v, classId: v.classId ?? activeClassId }))
-    );
-    setExpanded((s) => ({ ...s, variables: true }));
+  const handleSaveLocalVariable = () => {
+    if (!newLocalVarName.trim() || !activeScope) return;
+    // Function/node locals are not class members — no var_define dual-write.
+    const applied = applyPickerValueToVariableFields(newLocalVarType);
+    const variable = createVariableSymbol(newLocalVarName.trim(), {
+      type: applied?.type ?? 'data_string',
+      typeRef: applied?.typeRef,
+      binding: 'instance',
+      classId: activeClassId,
+      ...(activeScope.type === 'function'
+        ? { graphTabId: activeScope.id }
+        : { scopedNodeId: activeScope.id }),
+    });
+    variable.defaultValue = applied?.defaultValue ?? defaultValueForVariableType(variable.type);
+    if (applied?.enumType) variable.enumType = applied.enumType;
+    setVariables((list) => [...list, variable]);
+    setNewLocalVarName('');
+    setIsAddingLocalVariable(false);
   };
-
-  const requestDeleteSymbol = useCallback(
-    (kind: SymbolRefKind, symbolId: string) => {
-      const symbols = { variables, functions, events, openTabs };
-      setPendingDelete({
-        kind,
-        symbolId,
-        symbolName: getSymbolDisplayName(kind, symbolId, symbols),
-      });
-    },
-    [variables, functions, events, openTabs]
-  );
-
-  const pendingUsage = pendingDelete
-    ? getUsageSummary(pendingDelete.kind, pendingDelete.symbolId)
-    : { nodeCount: 0, graphCount: 0 };
 
   const handleDeleteVariable = (varId: string) => {
     requestDeleteSymbol('variable', varId);
@@ -842,17 +1119,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           symbolCount={activeClassSymbolCount}
           missingDeclareCount={activeClassMissingDeclares}
           onFocusClass={activeClass ? () => openClassGraph(activeClass) : undefined}
-        />
-      ) : null}
-
-      {!isReferenceMode && panelTab === 'symbols' ? (
-        <ClassFolderDropStrip
-          containers={visibleGraphContainers}
-          draggingClassId={draggingClassId}
-          dropContainerId={dropContainerId}
-          onContainerDragOver={handleContainerDragOver}
-          onContainerDrop={handleContainerDrop}
-          onContainerDragLeave={clearContainerDropHint}
         />
       ) : null}
 
@@ -1008,25 +1274,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     <TreeRow
                       layout={sectionViewModes.classes}
                       active={isActive && activeGraphTab === mainTabId}
-                      leading={
-                        !isReferenceMode ? (
-                          <span
-                            draggable
-                            className="inline-flex items-center cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 p-0"
-                            title="Drag grip to move output graph"
-                            onClick={(e) => e.stopPropagation()}
-                            onDragStart={(e) => {
-                              e.stopPropagation();
-                              handleClassDragStart(e, cls);
-                            }}
-                            onDragEnd={handleClassDragEnd}
-                          >
-                            <GripVertical size={10} />
-                          </span>
-                        ) : (
-                          <span className="w-2.5" />
-                        )
-                      }
                       icon={<Boxes size={10} className="text-violet-400/80 shrink-0" />}
                       label={
                         renamingClassId === cls.id ? (
@@ -1052,14 +1299,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       hint={[
                         `Class · outputs to ${folderName}`,
                         isActive ? 'active class' : undefined,
-                        'Drag row to graph · drag grip to reassign output · double-click to open',
+                        canReorderSymbols
+                          ? 'Drag grip to reorder · drag name to graph · drop grip on a Graphs folder to reassign · double-click to focus Declare'
+                          : 'Drag row to graph · double-click to focus Declare',
                       ]
                         .filter(Boolean)
                         .join(' · ')}
                       onSelect={() => selectClass(cls)}
-                      onOpen={() => openClassGraph(cls)}
+                      onOpen={() =>
+                        isReferenceMode ? openClassGraph(cls) : focusOrInsertClassDeclare(cls)
+                      }
+                      onOpenAffordance={() => openClassGraph(cls)}
                       showOpenAffordance
-                      isDragging={draggingClassId === cls.id}
                       canvasDrag={
                         !isReferenceMode
                           ? {
@@ -1068,9 +1319,25 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                             }
                           : undefined
                       }
+                      reorder={
+                        canReorderSymbols
+                          ? {
+                              enabled: true,
+                              title: 'Drag to reorder · drop on a Graphs folder to reassign output',
+                              // Do not dim the drag source — opacity changes mid-drag cancel HTML5 DnD in Chromium.
+                              isDragging: false,
+                              isDropTarget: dropClassId === cls.id,
+                              onDragStart: (e) => handleClassDragStart(e, cls),
+                              onDragEnd: handleClassDragEnd,
+                              onDragOver: (e) => handleClassReorderDragOver(e, cls.id),
+                              onDrop: (e) => handleClassReorderDrop(e, cls.id),
+                              onDragLeave: () => handleClassReorderDragLeave(cls.id),
+                            }
+                          : undefined
+                      }
                       suffix={
                         <div className="flex items-center gap-0.5 shrink-0">
-                          {isActive ? (
+                          {sectionViewModes.classes === 'list' && isActive ? (
                             <span
                               className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"
                               title="Active class"
@@ -1089,14 +1356,21 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                             </button>
                           ) : !isReferenceMode ? (
                             <>
-                              {isTabDirty(mainTabId) ? (
+                              {renderClassCanvasStatus(
+                                cls,
+                                isActive && activeGraphTab === mainTabId,
+                                true,
+                                false,
+                                sectionViewModes.classes === 'grid' ? 'pip' : 'chip'
+                              )}
+                              {sectionViewModes.classes === 'list' && isTabDirty(mainTabId) ? (
                                 <span
                                   className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mr-1"
                                   title="Uncompiled changes"
                                 />
                               ) : null}
                             </>
-                          ) : isTabDirty(mainTabId) ? (
+                          ) : sectionViewModes.classes === 'list' && isTabDirty(mainTabId) ? (
                             <span
                               className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
                               title="Uncompiled changes"
@@ -1105,9 +1379,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         </div>
                       }
                       hoverActions={
-                        !isReferenceMode && renamingClassId !== cls.id ? (
+                        sectionViewModes.classes === 'list' &&
+                        !isReferenceMode &&
+                        renamingClassId !== cls.id ? (
                           <>
-                            {renderClassCanvasStatus(cls, isActive && activeGraphTab === mainTabId, false, false)}
+                            {renderClassCanvasStatus(cls, isActive && activeGraphTab === mainTabId, false, true)}
                             <CodegenSuffix
                               tabId={mainTabId}
                               documents={documents}
@@ -1191,24 +1467,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 <React.Fragment key={f.id}>
                   <TreeRow
                     layout={sectionViewModes.functions}
-                    active={selection.type === 'function' && selection.id === f.id}
-                    isDragging={draggingFunctionId === f.id}
-                    isDropTarget={dropFunctionId === f.id}
-                    leading={
-                      canReorderFunctions ? (
-                        <span
-                          draggable
-                          onDragStart={(e) => handleFunctionDragStart(e, f.id)}
-                          onDragEnd={handleFunctionDragEnd}
-                          className="inline-flex items-center cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 p-0"
-                          title="Drag to reorder"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <GripVertical size={11} />
-                        </span>
-                      ) : (
-                        <span className="w-2.5" />
-                      )
+                    active={
+                      isSymbolMultiSelected('function', f.id) ||
+                      (selection.type === 'function' && selection.id === f.id)
                     }
                     icon={<div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
                     label={
@@ -1243,12 +1504,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                              : undefined
                      }
                      hint={
-                       canReorderFunctions
-                         ? 'Drag grip to reorder · drag row to call · double-click to open'
-                         : 'Drag row to call · click to select · double-click to open'
+                       canReorderSymbols
+                         ? 'Drag grip to reorder · drag name to call · double-click to focus Declare · open icon for body'
+                         : 'Drag row to call · click to select · double-click to focus Declare · open icon for body'
                      }
-                     onSelect={() => selectFunction(f)}
-                     onOpen={() => openGraph(f.id, 'function')}
+                     onSelect={(e) => selectFunction(f, e)}
+                     onOpen={() =>
+                       isReferenceMode
+                         ? openGraph(f.id, 'function')
+                         : focusOrInsertFunctionDeclare(f)
+                     }
+                     onOpenAffordance={() => openGraph(f.id, 'function')}
+                     onContextMenu={(e) => openSymbolContextMenu(e, { kind: 'function', id: f.id })}
                      showOpenAffordance
                      canvasDrag={
                        !isReferenceMode && primaryDragPayload
@@ -1258,16 +1525,34 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                            }
                          : undefined
                      }
-                     onDragOver={(e) => handleFunctionDragOver(e, f.id)}
-                     onDrop={(e) => handleFunctionDrop(e, f.id)}
-                     onDragLeave={() => {
-                       if (dropFunctionId === f.id) setDropFunctionId(null);
-                     }}
+                     reorder={
+                       canReorderSymbols
+                         ? {
+                             enabled: true,
+                             isDragging: draggingFunctionId === f.id,
+                             isDropTarget: dropFunctionId === f.id,
+                             onDragStart: (e) => handleFunctionDragStart(e, f.id),
+                             onDragEnd: handleFunctionDragEnd,
+                             onDragOver: (e) => handleFunctionDragOver(e, f.id),
+                             onDrop: (e) => handleFunctionDrop(e, f.id),
+                             onDragLeave: () => handleFunctionDragLeave(f.id),
+                           }
+                         : undefined
+                     }
                      suffix={
                        <div className="flex items-center gap-0.5 shrink-0">
-                         {isTabDirty(f.id) ? (
+                         {sectionViewModes.functions === 'list' && isTabDirty(f.id) ? (
                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1" title="Uncompiled changes" />
                          ) : null}
+                         {!isReferenceMode && renamingFunctionId !== f.id
+                           ? renderFunctionCanvasStatus(
+                               f,
+                               selection.type === 'function' && selection.id === f.id,
+                               true,
+                               false,
+                               sectionViewModes.functions === 'grid' ? 'pip' : 'chip'
+                             )
+                           : null}
                          {renamingFunctionId === f.id ? (
                            <button
                              type="button"
@@ -1283,7 +1568,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                        </div>
                      }
                       hoverActions={
-                        !isReferenceMode && renamingFunctionId !== f.id ? (
+                        sectionViewModes.functions === 'list' &&
+                        !isReferenceMode &&
+                        renamingFunctionId !== f.id ? (
                           <>
                             <CodegenSuffix
                               tabId={f.id}
@@ -1422,7 +1709,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   eventId: entry.id,
                   eventName: entry.label,
                 };
-                const rowSelected = selection.type === 'event' && selection.id === entry.id;
+                const rowSelected =
+                  isSymbolMultiSelected('event', entry.id) ||
+                  (selection.type === 'event' && selection.id === entry.id);
                 return (
                   <React.Fragment key={entry.id}>
                     <TreeRow
@@ -1453,10 +1742,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       hint={
                         isReferenceMode
                           ? rowHint
-                          : 'Drag row to graph · double-click to open handler'
+                          : canReorderSymbols
+                            ? 'Drag grip to reorder · drag name to graph · double-click to focus Declare'
+                            : 'Drag row to graph · double-click to focus Declare'
                       }
-                      onSelect={() => selectEvent(entry.id)}
-                      onOpen={() => openEventHomeGraph(entry.id)}
+                      onSelect={(e) => selectEvent(entry.id, e)}
+                      onOpen={() =>
+                        isReferenceMode
+                          ? openEventHomeGraph(entry.id)
+                          : focusOrInsertEventDeclare(entry.id)
+                      }
+                      onOpenAffordance={() => openEventHomeGraph(entry.id)}
+                      onContextMenu={(e) => openSymbolContextMenu(e, { kind: 'event', id: entry.id })}
                       showOpenAffordance
                       canvasDrag={
                         !isReferenceMode
@@ -1466,9 +1763,32 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                             }
                           : undefined
                       }
+                      reorder={
+                        canReorderSymbols
+                          ? {
+                              enabled: true,
+                              isDragging: draggingEventId === entry.id,
+                              isDropTarget: dropEventId === entry.id,
+                              onDragStart: (e) => handleEventDragStart(e, entry.id),
+                              onDragEnd: handleEventDragEnd,
+                              onDragOver: (e) => handleEventDragOver(e, entry.id),
+                              onDrop: (e) => handleEventDrop(e, entry.id),
+                              onDragLeave: () => handleEventDragLeave(entry.id),
+                            }
+                          : undefined
+                      }
                       suffix={
                         isReferenceMode ? undefined : (
                           <div className="flex items-center gap-0.5 shrink-0">
+                            {renamingEventId !== entry.id
+                              ? renderEventCanvasStatus(
+                                  entry.id,
+                                  rowSelected,
+                                  true,
+                                  false,
+                                  sectionViewModes.events === 'grid' ? 'pip' : 'chip'
+                                )
+                              : null}
                             {renamingEventId === entry.id ? (
                               <button
                                 type="button"
@@ -1485,10 +1805,12 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         )
                       }
                       hoverActions={
-                        !isReferenceMode && renamingEventId !== entry.id ? (
+                        sectionViewModes.events === 'list' &&
+                        !isReferenceMode &&
+                        renamingEventId !== entry.id ? (
                           <>
                             <EventDispatchChip dispatchCount={entry.dispatchCount} />
-                            {renderEventCanvasStatus(entry.id, rowSelected, false, false)}
+                            {renderEventCanvasStatus(entry.id, rowSelected, false, true)}
                             <RowActionsMenu
                               actions={[
                                 {
@@ -1532,17 +1854,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           }}
           addLabel="New variable"
         >
-          {!isReferenceMode && variables.length < 3 ? (
-            <div className={`${INDENT.l1} py-1 pr-2 ${sectionGridSpan(sectionViewModes.variables) ?? ''}`}>
-              <button
-                type="button"
-                onClick={handleLoadDemoVariables}
-                className="text-[10px] text-indigo-400/90 hover:text-indigo-300"
-              >
-                Load sample variables (datatypes demo)
-              </button>
-            </div>
-          ) : null}
           {isAddingVariable && (
             <SectionPopoverAnchor viewMode={sectionViewModes.variables}>
             <SymbolCreatePopover
@@ -1571,17 +1882,16 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 className="w-full"
                 value={newVarType}
                 onChange={(value) => {
-                  if (!isDataTypeCoaAllowed(value as VariableType, crossOverMode)) return;
-                  setNewVarType(value as VariableType);
+                  if (value.startsWith('data_') && !isDataTypeCoaAllowed(value as VariableType, crossOverMode)) {
+                    return;
+                  }
+                  setNewVarType(value);
                 }}
-                options={LOGICAL_DATA_TYPE_DESCRIPTORS.map((descriptor) => ({
-                  value: descriptor.id,
-                  label: `${descriptor.label}${!isDataTypeCoaAllowed(descriptor.id, crossOverMode) ? ' (COA)' : ''}`,
-                }))}
+                options={typePickerOptions}
                 placeholder="Type…"
               />
               <div className="flex flex-wrap gap-1">
-                {(['instance', 'static', 'module'] as VariableBinding[]).map((binding) => (
+                {(['instance', 'static'] as VariableBinding[]).map((binding) => (
                   <button
                     key={binding}
                     type="button"
@@ -1611,24 +1921,183 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     variable={v}
                     isSelected={isVariableActive(v.id, v.name)}
                     color={getVariableColor(v.type)}
-                    declareBadge={undefined}
-                    hoverBadge={
+                    canReorder={canReorderSymbols}
+                    isDragging={draggingVariableId === v.id}
+                    isDropTarget={dropVariableId === v.id}
+                    onReorderDragStart={(e) => handleVariableDragStart(e, v.id)}
+                    onReorderDragEnd={handleVariableDragEnd}
+                    onReorderDragOver={(e) => handleVariableDragOver(e, v.id)}
+                    onReorderDrop={(e) => handleVariableDrop(e, v.id)}
+                    onReorderDragLeave={() => handleVariableDragLeave(v.id)}
+                    declareBadge={
                       isReferenceMode
                         ? undefined
                         : renderVariableCanvasStatus(
                             v.id,
                             selection.type === 'variable' && selection.id === v.id,
+                            true,
                             false,
-                            false
+                            sectionViewModes.variables === 'grid' ? 'pip' : 'chip'
+                          )
+                    }
+                    hoverBadge={
+                      isReferenceMode || sectionViewModes.variables === 'grid'
+                        ? undefined
+                        : renderVariableCanvasStatus(
+                            v.id,
+                            selection.type === 'variable' && selection.id === v.id,
+                            false,
+                            true
                           )
                     }
                     hint={
                       isReferenceMode
                         ? 'Click to focus references · Double-click to edit in inspector'
-                        : 'Click to select · Double-click to open class graph'
+                        : canReorderSymbols
+                          ? 'Drag grip to reorder · drag name to graph · double-click to focus Declare'
+                          : 'Click to select · Double-click to focus Declare'
                     }
-                    onSelect={() => selectVariable(v.id, v.name)}
-                    onOpen={() => openVariableHomeGraph(v.id)}
+                    onSelect={(e) => selectVariable(v.id, v.name, e)}
+                    onOpen={() =>
+                      isReferenceMode
+                        ? openVariableHomeGraph(v.id)
+                        : focusOrInsertVariableDeclare(v.id)
+                    }
+                    onContextMenu={
+                      isReferenceMode
+                        ? undefined
+                        : (e) => openSymbolContextMenu(e, { kind: 'variable', id: v.id })
+                    }
+                    onRename={() => {
+                      setRenamingVariableId(v.id);
+                      setRenameVariableName(v.name);
+                    }}
+                    onDelete={isReferenceMode ? undefined : () => handleDeleteVariable(v.id)}
+                    isRenaming={renamingVariableId === v.id}
+                    renameValue={renameVariableName}
+                    onRenameValueChange={setRenameVariableName}
+                    onSaveRename={() => handleSaveVariableRename(v)}
+                    onCancelRename={() => setRenamingVariableId(null)}
+                  />
+                </React.Fragment>
+              ))
+          )}
+        </CategorySection>
+        ) : null}
+
+        {activeScope && showVariablesSection ? (
+        <CategorySection
+          title={`Local Variables (${activeScope.name})`}
+          count={activeScopeVariables.length}
+          issueCount={0}
+          icon={<Variable size={12} className="text-teal-400/80 shrink-0" />}
+          expanded={true}
+          onToggle={() => {}}
+          viewMode={sectionViewModes.variables}
+          onViewModeChange={(mode) => setSectionView('variables', mode)}
+          onAdd={() => setIsAddingLocalVariable(true)}
+          addLabel="New local variable"
+        >
+          {isAddingLocalVariable && (
+            <SectionPopoverAnchor viewMode={sectionViewModes.variables}>
+            <SymbolCreatePopover
+              open={isAddingLocalVariable}
+              title="New local variable"
+              onClose={() => {
+                setIsAddingLocalVariable(false);
+                setNewLocalVarName('');
+              }}
+              anchorClassName={INDENT.l1}
+            >
+              <input
+                type="text"
+                placeholder="Variable name"
+                className={explorerInputClass}
+                value={newLocalVarName}
+                onChange={(e) => setNewLocalVarName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveLocalVariable();
+                  if (e.key === 'Escape') setIsAddingLocalVariable(false);
+                }}
+              />
+              <SearchableSelect
+                className="w-full"
+                value={newLocalVarType}
+                onChange={(value) => {
+                  if (value.startsWith('data_') && !isDataTypeCoaAllowed(value as VariableType, crossOverMode)) {
+                    return;
+                  }
+                  setNewLocalVarType(value);
+                }}
+                options={typePickerOptions}
+                placeholder="Type…"
+              />
+              <button type="button" className={explorerBtnSecondaryClass} onClick={handleSaveLocalVariable}>
+                Add
+              </button>
+            </SymbolCreatePopover>
+            </SectionPopoverAnchor>
+          )}
+          {filteredLocalVariables.length === 0 && !isAddingLocalVariable ? (
+            <ExplorerEmptyHint viewMode={sectionViewModes.variables}>
+              {activeScopeVariables.length === 0 ? 'No local variables.' : 'No match.'}
+            </ExplorerEmptyHint>
+          ) : (
+            filteredLocalVariables.map((v) => (
+                <React.Fragment key={v.id}>
+                  <VariableRow
+                    layout={sectionViewModes.variables}
+                    variable={v}
+                    isSelected={isVariableActive(v.id, v.name)}
+                    color={getVariableColor(v.type)}
+                    canReorder={canReorderSymbols}
+                    isDragging={draggingVariableId === v.id}
+                    isDropTarget={dropVariableId === v.id}
+                    onReorderDragStart={(e) => handleVariableDragStart(e, v.id)}
+                    onReorderDragEnd={handleVariableDragEnd}
+                    onReorderDragOver={(e) => handleVariableDragOver(e, v.id)}
+                    onReorderDrop={(e) => handleVariableDrop(e, v.id)}
+                    onReorderDragLeave={() => handleVariableDragLeave(v.id)}
+                    declareBadge={
+                      isReferenceMode
+                        ? undefined
+                        : renderVariableCanvasStatus(
+                            v.id,
+                            selection.type === 'variable' && selection.id === v.id,
+                            true,
+                            false,
+                            sectionViewModes.variables === 'grid' ? 'pip' : 'chip'
+                          )
+                    }
+                    hoverBadge={
+                      isReferenceMode || sectionViewModes.variables === 'grid'
+                        ? undefined
+                        : renderVariableCanvasStatus(
+                            v.id,
+                            selection.type === 'variable' && selection.id === v.id,
+                            false,
+                            true
+                          )
+                    }
+                    hint={
+                      isReferenceMode
+                        ? 'Click to focus references · Double-click to edit in inspector'
+                        : canReorderSymbols
+                          ? 'Drag grip to reorder · drag name to graph · double-click to focus Declare'
+                          : 'Click to select · Double-click to focus Declare'
+                    }
+                    onSelect={(e) => selectVariable(v.id, v.name, e)}
+                    onOpen={() =>
+                      isReferenceMode
+                        ? openVariableHomeGraph(v.id)
+                        : focusOrInsertVariableDeclare(v.id)
+                    }
+                    onContextMenu={
+                      isReferenceMode
+                        ? undefined
+                        : (e) => openSymbolContextMenu(e, { kind: 'variable', id: v.id })
+                    }
                     onRename={() => {
                       setRenamingVariableId(v.id);
                       setRenameVariableName(v.name);
@@ -1672,26 +2141,60 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         ) : null}
       </ExplorerScrollRegion>
 
-      <ExplorerFooterHint tab={panelTab} mode={mode} />
-
       <SymbolDeleteDialog
         open={pendingDelete !== null}
-        kind={pendingDelete?.kind ?? 'variable'}
-        symbolName={pendingDelete?.symbolName ?? ''}
+        kind={pendingDelete?.items[0]?.kind ?? 'variable'}
+        symbolName={
+          pendingDelete && pendingDelete.items.length > 1
+            ? pendingDelete.items.map((i) => i.symbolName).join(', ')
+            : (pendingDelete?.items[0]?.symbolName ?? '')
+        }
+        itemCount={pendingDelete?.items.length ?? 1}
         nodeCount={pendingUsage.nodeCount}
         graphCount={pendingUsage.graphCount}
         onCancel={() => setPendingDelete(null)}
         onDeleteSymbolOnly={() => {
           if (!pendingDelete) return;
-          deleteSymbol(pendingDelete.kind, pendingDelete.symbolId, 'symbol_only');
+          for (const item of pendingDelete.items) {
+            deleteSymbol(item.kind, item.symbolId, 'symbol_only');
+          }
+          setSelectedSymbols([]);
           setPendingDelete(null);
         }}
         onDeleteSymbolAndRefs={() => {
           if (!pendingDelete) return;
-          deleteSymbol(pendingDelete.kind, pendingDelete.symbolId, 'symbol_and_refs');
+          for (const item of pendingDelete.items) {
+            deleteSymbol(item.kind, item.symbolId, 'symbol_and_refs');
+          }
+          setSelectedSymbols([]);
           setPendingDelete(null);
         }}
       />
+      {symbolMenu ? (
+        <div
+          ref={symbolMenuRef}
+          className="fixed z-[80] min-w-[140px] py-0.5 rounded-md border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/40"
+          style={{ left: symbolMenu.x, top: symbolMenu.y }}
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+            onClick={handleSymbolMenuDuplicate}
+          >
+            Duplicate{symbolMenu.targets.length > 1 ? ` (${symbolMenu.targets.length})` : ''}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="w-full text-left px-2.5 py-1.5 text-[11px] text-red-300 hover:bg-zinc-800 hover:text-red-200"
+            onClick={handleSymbolMenuDelete}
+          >
+            Delete{symbolMenu.targets.length > 1 ? ` (${symbolMenu.targets.length})` : ''}
+          </button>
+        </div>
+      ) : null}
     </ExplorerPanelShell>
   );
 }

@@ -35,27 +35,21 @@ export function buildExecutionOrder(
   return order;
 }
 
-export function findSimulationStartNode(
+export function findAllExecutionHeads(
   nodes: GraphNode[],
-  events?: ProjectEventDefinition[]
-): GraphNode | undefined {
-  const entry = events?.find((e) => e.role === 'entry');
-  if (entry) {
-    const handler = nodes.find((n) => {
-      if (n.type !== 'vvs_standard_node') return false;
-      const kindId = resolveNodeKindId(n.data);
-      if (kindId !== 'event_define' && kindId !== 'event_custom') return false;
-      return n.data.properties?.eventId === entry.id;
-    });
-    if (handler) return handler;
-  }
+  edges: GraphEdge[]
+): GraphNode[] {
+  const heads = nodes.filter((n) => {
+    if (n.type !== 'vvs_standard_node') return false;
+    
+    // A node is a head if it has NO incoming execution wires.
+    const hasIncomingExec = edges.some(
+      (e) => e.target === n.id && e.data?.pinType === 'execution'
+    );
+    
+    return !hasIncomingExec;
+  });
 
-  return (
-    nodes.find(
-      (n) =>
-        n.type === 'vvs_standard_node' &&
-        (n.data.kindId === 'event_on_start' || n.data.label === 'On Start')
-    ) ??
-    nodes.find((n) => n.type === 'vvs_standard_node' && n.data.category === 'Events')
-  );
+  heads.sort((a, b) => a.position.y - b.position.y);
+  return heads;
 }

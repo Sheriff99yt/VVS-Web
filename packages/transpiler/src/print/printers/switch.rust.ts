@@ -1,8 +1,8 @@
 import type { IrStatement, IrSwitch } from '../../ir/types';
-import { createDefaultExprPrinter } from '../expr';
 import { blockPlaceholder, nestedIndent } from '../template';
-import { caseLabelLiteral } from '../blocks';
+import { formatSwitchCaseLabel } from '../blocks';
 import type { PrintContext, PrintedStmt, StmtPrinter } from '../types';
+import { printSwitchSelectBind, SWITCH_SEL_TEMP } from './switchSelectBind';
 
 export function createRustSwitchPrinter(
   printStatements: (stmts: IrStatement[], ctx: PrintContext) => PrintedStmt[]
@@ -10,16 +10,14 @@ export function createRustSwitchPrinter(
   return (stmt, ctx) => {
     if (stmt.kind !== 'Switch') return null;
     const s = stmt as IrSwitch;
-    const printExpr = createDefaultExprPrinter();
-    const selector = printExpr(s.selector, ctx);
+    const bind = printSwitchSelectBind(s, ctx);
     const inner = { ...ctx, indent: nestedIndent(ctx) };
-    const selTemp = '_vvs_sel';
-    const lines = [`${ctx.indent}let ${selTemp} = ${selector.text};`];
+    const lines = [bind.text];
     s.cases.forEach((c, i) => {
       const header =
         i === 0
-          ? `${ctx.indent}if ${selTemp} == ${caseLabelLiteral(c.label)} {`
-          : `${ctx.indent}} else if ${selTemp} == ${caseLabelLiteral(c.label)} {`;
+          ? `${ctx.indent}if ${SWITCH_SEL_TEMP} == ${formatSwitchCaseLabel(c, ctx.family)} {`
+          : `${ctx.indent}} else if ${SWITCH_SEL_TEMP} == ${formatSwitchCaseLabel(c, ctx.family)} {`;
       lines.push(header);
       const body = printStatements(c.body, inner);
       lines.push(
@@ -36,6 +34,6 @@ export function createRustSwitchPrinter(
     } else if (s.cases.length > 0) {
       lines.push(`${ctx.indent}}`);
     }
-    return { text: lines.join('\n'), expressionSpans: [] };
+    return { text: lines.join('\n'), expressionSpans: bind.expressionSpans };
   };
 }

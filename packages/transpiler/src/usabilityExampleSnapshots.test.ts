@@ -1,16 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 import { analyzeProject, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { transpileGraph } from './generate';
-import { createHelloWorldUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/helloWorldUsabilityTest';
-import { createCalculatorUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest';
+import { createFirstGraphUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/firstGraphUsabilityTest';
+import {
+  createCoverageLabUsabilityTestSnapshot,
+  MACHINE_CLASS,
+} from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
 import type { CodegenContext } from './generate';
 
 type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse';
 
-const CALCULATOR_GRAPH_ID = 'calc-calculator-graph';
-
 function transpileMain(
-  snapshot: ReturnType<typeof createHelloWorldUsabilityTestSnapshot>,
+  snapshot: ReturnType<typeof createFirstGraphUsabilityTestSnapshot>,
   targetLanguage: TargetLanguage
 ) {
   const main = snapshot.documents![MAIN_GRAPH_CONTAINER_ID];
@@ -32,64 +33,56 @@ function transpileMain(
   return transpileGraph(ctx);
 }
 
-function transpileComplexCalculator(
-  snapshot: ReturnType<typeof createCalculatorUsabilityTestSnapshot>,
+function transpileMachine(
+  snapshot: ReturnType<typeof createCoverageLabUsabilityTestSnapshot>,
   targetLanguage: TargetLanguage
 ) {
-  const calc = snapshot.documents![CALCULATOR_GRAPH_ID];
-  if (!calc) throw new Error(`missing ${CALCULATOR_GRAPH_ID}`);
+  const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
   const ctx: CodegenContext = {
-    moduleName: snapshot.projectDetails.moduleName,
-    extendsType: snapshot.projectDetails.extendsType,
+    moduleName: 'Machine',
+    extendsType: '',
     targetLanguage,
     variables: snapshot.variables,
     projectEvents: snapshot.events,
     functions: snapshot.functions,
-    nodes: calc.nodes,
-    edges: calc.edges,
-    tabId: CALCULATOR_GRAPH_ID,
+    nodes: home.nodes,
+    edges: home.edges,
+    tabId: MAIN_GRAPH_CONTAINER_ID,
     documents: snapshot.documents,
     classes: snapshot.classes,
-    activeClassId: snapshot.activeClassId,
+    activeClassId: MACHINE_CLASS.id,
   };
   return transpileGraph(ctx);
 }
 
 const HELLO_WORLD_EXPECTS: Record<TargetLanguage, string[]> = {
-  python: ['def on_start', 'print('],
-  javascript: ['on_start()', 'console.log'],
+  python: ['def on_start(self):', 'print('],
+  javascript: ['on_start(', 'console.log'],
   cpp: ['void on_start', 'std::cout'],
-  verse: ['on_start', 'Print'],
+  verse: ['on_start', 'Print('],
 };
 
-const CALCULATOR_EXPECTS: Record<TargetLanguage, string[]> = {
-  python: [
-    'def on_calculate',
-    'self.Add()',
+const MACHINE_EXPECTS: Record<TargetLanguage, string[]> = {
+  python: ['def Boot(', 'self.Boot()', 'if ', 'async def Shutdown', 'def on_pulse', 'def on_start'],
+  javascript: ['Boot(', 'this.Boot()', 'if ', 'async Shutdown', 'on_pulse', 'on_start'],
+  cpp: [
+    'void Boot(',
+    'Boot()',
     'if ',
-    'def Add(',
-    'def on_clear',
-    'self.Clear()',
-    'print(str(self.Result))',
-    'float(input("Enter A:"))',
+    'void Shutdown',
+    'void on_pulse',
+    'void on_start',
+    'virtual void Boot',
+    'Diagnose() = 0',
+    'inline static',
   ],
-  javascript: [
-    'on_calculate',
-    'this.Add()',
-    'if ',
-    'on_clear',
-    'this.Clear()',
-    'this.Result',
-    'parseFloat(prompt("Enter A:")',
-  ],
-  cpp: ['void on_calculate', 'Add()', 'if ', 'void on_clear', 'Clear()', 'Result', 'Enter A:'],
-  verse: ['on_calculate', 'Add', 'if ', 'on_clear', 'Clear', 'Result', 'Enter A:'],
+  verse: ['Boot', 'if ', 'Shutdown', 'on_pulse', 'on_start'],
 };
 
 describe('usability example test snapshots', () => {
   for (const lang of ['python', 'javascript', 'cpp', 'verse'] as const) {
-    test(`hello world usability test transpiles for ${lang}`, () => {
-      const snapshot = createHelloWorldUsabilityTestSnapshot();
+    test(`first graph usability test transpiles for ${lang}`, () => {
+      const snapshot = createFirstGraphUsabilityTestSnapshot();
       const result = transpileMain(snapshot, lang);
       const content = result.files[0]!.content;
 
@@ -97,25 +90,28 @@ describe('usability example test snapshots', () => {
       for (const anchor of HELLO_WORLD_EXPECTS[lang]) {
         expect(content).toContain(anchor);
       }
-      expect(content).toContain('Hello from VVS!');
+      expect(content).toContain('Done.');
+      expect(content).toMatch(/What is your name\?/);
     });
 
-    test(`calculator usability test transpiles for ${lang}`, () => {
-      const snapshot = createCalculatorUsabilityTestSnapshot();
-      const result = transpileComplexCalculator(snapshot, lang);
+    test(`coverage lab Machine transpiles for ${lang}`, () => {
+      const snapshot = createCoverageLabUsabilityTestSnapshot();
+      const result = transpileMachine(snapshot, lang);
       const content = result.files[0]!.content;
 
       expect(content.length).toBeGreaterThan(0);
-      for (const anchor of CALCULATOR_EXPECTS[lang]) {
+      for (const anchor of MACHINE_EXPECTS[lang]) {
         expect(content).toContain(anchor);
       }
-      expect(content).not.toContain('import_module');
-      expect(content).not.toMatch(/^import /m);
+      if (lang === 'cpp') {
+        expect(content).not.toContain('// Declare');
+      }
+      expect(content).not.toContain('# Declare');
     });
   }
 
-  test('calculator usability test has no error-level analysis diagnostics', () => {
-    const snapshot = createCalculatorUsabilityTestSnapshot();
+  test('coverage lab has no error-level analysis diagnostics', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
     const result = analyzeProject({
       documents: snapshot.documents!,
       variables: snapshot.variables,
@@ -124,6 +120,8 @@ describe('usability example test snapshots', () => {
       openTabs: snapshot.openTabs,
       projectDetails: { extendsType: snapshot.projectDetails.extendsType },
       targetLanguage: 'python',
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
     });
 
     const errors = result.diagnostics.filter((d) => d.level === 'error');

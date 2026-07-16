@@ -92,9 +92,18 @@ Symbol **flags** (static, async, virtual, readonly, overloads) ride on `Function
 
 ---
 
-## Node effectiveness (planned — prerequisite for COA)
+## Node effectiveness (shipped U66/U67 — prerequisite for COA)
 
-Show **all** node kinds in catalog; dim + badge when ineffective for current target (or COA language set).
+Show **all** node kinds in catalog; dim when ineffective for current target (or COA language set).
+
+**Chrome (July 2026 — shipped):**
+
+| Surface | Behavior | Toggle |
+|---------|----------|--------|
+| Generated code | Comment line whose body starts with `(x)` + node label (pack comment prefix) | Button **left of Code panel language selector** (`showUnsupportedComments`) |
+| Canvas | Unsupported nodes **dimmed / grey** for current target; restore when language supports them | Top bar **left of Autosave** (`dimUnsupportedNodes`) |
+
+Toggles are independent. Resolver: `@vvs/language-profiles` `nodeEffectiveness` — v1 Import Module `targetLanguages` gate (registry `portabilityFeatures` later).
 
 | Level | UI | Generate |
 |-------|-----|----------|
@@ -140,7 +149,7 @@ Future **subscribe** nodes must emit one visible registration line per node (e.g
 
 | Phase | Focus | Outcome |
 |-------|--------|---------|
-| **A (done)** | Canvas source of truth, define chain, program entry, event dispatch | Calculator / Hello World fidelity anchors |
+| **A (done)** | Canvas source of truth, define chain, program entry, event dispatch | Coverage Lab / First Graph fidelity anchors |
 | **B (done)** | Defer COA UI; keep single-target portability | Honest product surface |
 | **C** | Node effectiveness resolver + catalog/canvas chrome | Show all nodes; dim ineffective |
 | **D (in progress)** | Unify spawn UX: **Declare** (all member slots) / **On** (handler) / **Call** / **Dispatch** | Same mental model in catalog, canvas, inspector, project tree |

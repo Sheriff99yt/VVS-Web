@@ -9,7 +9,7 @@ export function printGetInputVerse(stmt: IrAssignVariable, ctx: PrintContext): P
   const prompt = stmt.prompt ? printExpr(stmt.prompt, ctx) : { text: '""', spans: [] };
   const prefix = `${ctx.indent}Print(`;
   const suffix = ')';
-  const text = `${prefix}${prompt.text}${suffix}`;
+  const text = `${prefix}${prompt.text}${suffix}\n${ctx.indent}var ${stmt.targetName} : float = 0.0`;
   return {
     text,
     expressionSpans: offsetSpans(prompt.spans, prefix.length),

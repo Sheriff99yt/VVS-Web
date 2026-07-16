@@ -16,6 +16,7 @@ export {
   createProjectInFolder,
   type LoadedFolderProject,
 } from './io';
+export { writeGeneratedFilesToFolder } from './writeGenerated';
 export { listDirectoryTree, type DirectoryEntry } from './listDirectory';
 export {
   resolveProjectFolderHandle,

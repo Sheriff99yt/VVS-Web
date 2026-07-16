@@ -18,6 +18,7 @@ import {
   findUnresolvedNodes,
   unresolvedRefGroupKey,
   buildProjectSymbolIndex,
+  classForHomeGraphId,
   type SymbolRefKind,
   type ResolvedSymbolRef,
 } from '@vvs/graph-types';
@@ -32,7 +33,13 @@ import {
   removeDefineNodesForSymbol,
   syncDefineNodesForSymbol,
   syncDefineNodesForClass,
+  insertDefineNodeForVariable,
+  insertDefineNodeForFunction,
+  insertDefineNodeForEvent,
+  insertClassDefineNode,
+  hasDefineNodeForClass,
 } from '@/lib/defineNodeSync';
+import { MAIN_CLASS_ID } from '@/lib/classScope';
 
 function asCoreDocuments(docs: Record<string, GraphDocument>): Record<string, CoreGraphDocument> {
   return docs as unknown as Record<string, CoreGraphDocument>;
@@ -301,6 +308,50 @@ export interface RecreateSymbolResult {
   nextDocuments: Record<string, GraphDocument>;
 }
 
+/** Owning class + home graph context so recreate can dual-write Declare from invalid use nodes. */
+export interface RecreateSymbolContext {
+  classes: ClassSymbol[];
+  preferredClassId?: string;
+  activeGraphTab?: string;
+}
+
+function resolveClassForRecreate(
+  ctx: RecreateSymbolContext | undefined,
+  tabId: string
+): ClassSymbol | undefined {
+  if (!ctx?.classes.length) return undefined;
+  const onHome = classForHomeGraphId(ctx.classes, tabId);
+  if (onHome) return onHome;
+  if (ctx.preferredClassId) {
+    const preferred = ctx.classes.find((c) => c.id === ctx.preferredClassId);
+    if (preferred) return preferred;
+  }
+  return ctx.classes[0];
+}
+
+function dualWriteDeclareFromRecreatedSymbol(
+  documents: Record<string, GraphDocument>,
+  kind: SymbolRefKind,
+  symbol: VariableSymbol | FunctionSymbol | ProjectEventDefinition,
+  cls: ClassSymbol,
+  activeGraphTab?: string
+): Record<string, GraphDocument> {
+  let next = documents;
+  if (!hasDefineNodeForClass(next, cls)) {
+    next = insertClassDefineNode(next, cls, activeGraphTab);
+  }
+  if (kind === 'variable') {
+    return insertDefineNodeForVariable(next, cls, symbol as VariableSymbol, activeGraphTab);
+  }
+  if (kind === 'function' || kind === 'macro') {
+    return insertDefineNodeForFunction(next, cls, symbol as FunctionSymbol, activeGraphTab);
+  }
+  if (kind === 'event') {
+    return insertDefineNodeForEvent(next, cls, symbol as ProjectEventDefinition, activeGraphTab);
+  }
+  return next;
+}
+
 function rebindNode(
   node: GraphNode,
   kind: SymbolRefKind,
@@ -321,11 +372,16 @@ function rebindNode(
   }
 }
 
+/**
+ * Rebuild a missing symbol from an invalid use node still on the canvas
+ * (after "delete symbol only"). Rebinds matching invalid nodes and dual-writes Declare.
+ */
 export function recreateSymbolForNode(
   symbols: ProjectSymbolsState,
   documents: Record<string, GraphDocument>,
   tabId: string,
-  nodeId: string
+  nodeId: string,
+  ctx?: RecreateSymbolContext
 ): RecreateSymbolResult | null {
   const doc = documents[tabId];
   const node = doc?.nodes.find((n) => n.id === nodeId);
@@ -345,6 +401,9 @@ export function recreateSymbolForNode(
   const inferred = inferSymbolFromOrphanNode(node as GraphNode, unresolved.ref);
   if (!inferred) return null;
 
+  const cls = resolveClassForRecreate(ctx, tabId);
+  const classId = cls?.id ?? MAIN_CLASS_ID;
+
   const nextSymbols: ProjectSymbolsState = {
     variables: [...symbols.variables],
     functions: [...symbols.functions],
@@ -359,6 +418,7 @@ export function recreateSymbolForNode(
     if (symbols.variables.some((x) => x.id === v.id)) {
       v.id = `var-${Date.now()}`;
     }
+    v.classId = classId;
     nextSymbols.variables.push(v);
   } else if (inferred.kind === 'function') {
     const f = inferred.symbol as FunctionSymbol;
@@ -367,6 +427,7 @@ export function recreateSymbolForNode(
     if (symbols.functions.some((x) => x.id === f.id)) {
       f.id = `func-${Date.now()}`;
     }
+    f.classId = classId;
     nextSymbols.functions.push(f);
     if (!nextSymbols.openTabs.some((t) => t.id === f.id)) {
       nextSymbols.openTabs.push({
@@ -384,11 +445,12 @@ export function recreateSymbolForNode(
     if (symbols.events.some((x) => x.id === e.id)) {
       e.id = createEventId();
     }
+    e.classId = classId;
     nextSymbols.events.push(e);
   }
 
   const groupKey = unresolvedRefGroupKey(unresolved.ref);
-  const nextDocuments = fromCoreDocuments(
+  let nextDocuments = fromCoreDocuments(
     mapDocuments(asCoreDocuments(documents), (_tid, n) => {
       const nodeRef = resolveNodeSymbolRef(n);
       if (!nodeRef || unresolvedRefGroupKey(nodeRef) !== groupKey) return n;
@@ -396,13 +458,24 @@ export function recreateSymbolForNode(
     })
   );
 
+  if (cls) {
+    nextDocuments = dualWriteDeclareFromRecreatedSymbol(
+      nextDocuments,
+      inferred.kind,
+      inferred.symbol,
+      cls,
+      ctx?.activeGraphTab ?? tabId
+    );
+  }
+
   return { nextSymbols, nextDocuments };
 }
 
 export function recreateAllUnresolvedSymbols(
   symbols: ProjectSymbolsState,
   documents: Record<string, GraphDocument>,
-  filterRef?: ResolvedSymbolRef
+  filterRef?: ResolvedSymbolRef,
+  ctx?: RecreateSymbolContext
 ): RecreateSymbolResult {
   const index = buildProjectSymbolIndex({
     variables: symbols.variables,
@@ -416,7 +489,13 @@ export function recreateAllUnresolvedSymbols(
     unresolved = unresolved.filter((u) => unresolvedRefGroupKey(u.ref) === key);
   }
 
-  let nextSymbols = { ...symbols, variables: [...symbols.variables], functions: [...symbols.functions], events: [...symbols.events], openTabs: [...symbols.openTabs] };
+  let nextSymbols = {
+    ...symbols,
+    variables: [...symbols.variables],
+    functions: [...symbols.functions],
+    events: [...symbols.events],
+    openTabs: [...symbols.openTabs],
+  };
   let nextDocuments = documents;
 
   const seenGroups = new Set<string>();
@@ -424,7 +503,13 @@ export function recreateAllUnresolvedSymbols(
     const key = unresolvedRefGroupKey(entry.ref);
     if (seenGroups.has(key)) continue;
     seenGroups.add(key);
-    const result = recreateSymbolForNode(nextSymbols, nextDocuments, entry.tabId, entry.node.id);
+    const result = recreateSymbolForNode(
+      nextSymbols,
+      nextDocuments,
+      entry.tabId,
+      entry.node.id,
+      ctx
+    );
     if (result) {
       nextSymbols = result.nextSymbols;
       nextDocuments = result.nextDocuments;

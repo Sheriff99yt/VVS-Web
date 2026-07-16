@@ -8,12 +8,13 @@ import type {
   IrIfBranch,
   IrModuleImport,
   IrImportClass,
-  IrPrint,
   IrSequence,
   IrStructuredStatement,
   IrStatement,
+  IrDeclareLocal,
   IrSwitch,
   IrWhileLoop,
+  IrPrint,
 } from '../ir/types';
 import { resolveMethodBinding, substituteCallExpr } from '@vvs/environment-templates';
 import { PackTemplateMissingError } from '@vvs/syntax-packs';
@@ -180,6 +181,30 @@ export function createStmtPrinters(
       const s = stmt as IrDispatchEvent;
       const argExprs = s.args.map((a) => printExpr(a, ctx));
       const merged = mergeArgs(argExprs);
+      const { family } = ctx;
+
+      if (s.crossClass && s.targetClassName) {
+        const classRef = s.targetClassName;
+        let receiver = classRef;
+        if (family === 'python') receiver = `${classRef}()`;
+        else if (family === 'javascript' || family === 'csharp') receiver = `new ${classRef}()`;
+        else if (family === 'gdscript') receiver = `${classRef}.new()`;
+        else if (family === 'rust') receiver = `${classRef}::new()`;
+        else if (family === 'cpp') receiver = `${classRef}()`;
+        // verse: class name as receiver (matches CallCrossClass)
+
+        const printed = printFromTemplate(ctx, 'DispatchEventCrossClass', {
+          receiver,
+          handler: s.handlerName,
+          args: { text: merged.text, spans: merged.spans },
+        });
+        const argsOffset = printed.text.indexOf(merged.text);
+        return {
+          text: printed.text,
+          expressionSpans: offsetSpans(merged.spans, argsOffset >= 0 ? argsOffset : printed.text.length),
+        };
+      }
+
       const printed = printFromTemplate(ctx, 'DispatchEvent', {
         handler: s.handlerName,
         args: { text: merged.text, spans: merged.spans },
@@ -209,7 +234,17 @@ export function createStmtPrinters(
     ModuleImport: (stmt, ctx) => {
       if (stmt.kind !== 'ModuleImport') return null;
       const s = stmt as IrModuleImport;
-      return printFromTemplate(ctx, 'ModuleImport', { mod: s.moduleSlug }, { noIndent: true });
+      // Respect ctx.indent so file-top (indent '') and conditional/in-body imports both work.
+      if (s.importStyle === 'include_system') {
+        return printFromTemplate(ctx, 'ModuleImportIncludeSystem', { mod: s.moduleSlug });
+      }
+      if (s.importStyle === 'from') {
+        return printFromTemplate(ctx, 'ModuleImportFrom', {
+          mod: s.moduleSlug,
+          names: (s.importNames ?? []).join(', ') || '*',
+        });
+      }
+      return printFromTemplate(ctx, 'ModuleImport', { mod: s.moduleSlug });
     },
 
     ImportClass: (stmt, ctx) => {
@@ -263,6 +298,22 @@ export function createStmtPrinters(
       }
       const callText = substituteCallExpr(binding.callExpr, args);
       return printFromTemplate(ctx, 'CallNative', { call: callText });
+    },
+
+    DeclareLocal: (stmt, ctx) => {
+      if (stmt.kind !== 'DeclareLocal') return null;
+      const s = stmt as IrDeclareLocal;
+      const { family } = ctx;
+      if (family === 'javascript' || family === 'verse') {
+        return printFromTemplate(ctx, 'DeclareLocal', { name: s.name, type: s.variableType });
+      }
+      if (family === 'python' || family === 'gdscript') {
+        return printFromTemplate(ctx, 'DeclareLocal', { name: s.name });
+      }
+      if (family === 'cpp' || family === 'csharp' || family === 'rust') {
+        return printFromTemplate(ctx, 'DeclareLocal', { name: s.name, type: s.variableType });
+      }
+      return { text: `${ctx.indent}var ${s.name};`, expressionSpans: [] };
     },
   };
 }

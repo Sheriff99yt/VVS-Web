@@ -15,7 +15,7 @@ import { VVSNode, VVSEdge } from '@/types/graph';
 import { transpileGraph, withProjectCodegenTarget } from '@/lib/codegen';
 import type { TranspileResult } from '@/types/transpile';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
-import { MAIN_GRAPH_CONTAINER_ID, classForHomeGraphId } from '@/lib/classScope';
+import { MAIN_GRAPH_CONTAINER_ID, classForHomeGraphId, classHomeGraphId } from '@/lib/classScope';
 import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
 import type { CodeHighlightRange } from '@/components/code/types';
 import { CopyPathButton } from '@/components/ui/CopyPathButton';
@@ -24,6 +24,7 @@ import { resolveSymbolCodegenLink } from '@/lib/symbolCodegenLink';
 import { resolveCodePreviewHighlightNodeIds } from '@/lib/projectSelection';
 import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
+import { useUiPreference } from '@/hooks/useUiPreference';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { TARGET_FILE_EXTENSIONS, formatTargetFileExtension } from '@vvs/graph-types';
 import type { TargetLanguage } from '@/contexts/ProjectContext';
@@ -155,6 +156,9 @@ export function CodePreviewPanel({
     setGraphTargetFileExtension,
     isOrgGraph: previewOrgGraph,
   } = useActiveGraphCodegenSettings(codegenTabId);
+  const [showUnsupportedComments, setShowUnsupportedComments] = useUiPreference(
+    'showUnsupportedComments'
+  );
 
   const extensionOptions = useMemo(
     () =>
@@ -185,8 +189,25 @@ export function CodePreviewPanel({
     const nodes = (previewDocument?.nodes ?? []) as VVSNode[];
     const edges = (previewDocument?.edges ?? []) as VVSEdge[];
     const previewMetadata = previewDocument?.metadata;
-    const homeClass = classForHomeGraphId(classes, previewTabId);
+    const classesOnPreview = classes.filter((c) => classHomeGraphId(c) === previewTabId);
+    const homeClass =
+      (activeClassId ? classesOnPreview.find((c) => c.id === activeClassId) : undefined) ??
+      classForHomeGraphId(classes, previewTabId);
     const isModuleGraph = homeClass != null || previewTabId === 'main';
+    const isFunctionTab = functions.some((f) => f.id === previewTabId);
+
+    // Container / class-home graphs: always show project emit (one graph → one file).
+    // Function tabs keep a focused single-graph transpile.
+    if (!isFunctionTab && isModuleGraph) {
+      const ownedFiles = projectResult.files.filter((file) => fileOwners[file.path] === previewTabId);
+      if (ownedFiles.length > 0) {
+        return {
+          language: projectResult.language,
+          files: ownedFiles,
+          sourceMap: projectResult.sourceMap,
+        } satisfies TranspileResult;
+      }
+    }
 
     const codegenCtx = {
       moduleName: homeClass?.name ?? (isModuleGraph ? projectDetails.moduleName : previewMetadata?.moduleName ?? activeTab?.name ?? 'Graph'),
@@ -205,6 +226,7 @@ export function CodePreviewPanel({
       activeClassId: homeClass?.id ?? activeClassId,
       environmentId,
       integration,
+      emitUnsupportedComments: showUnsupportedComments,
     };
 
     return transpileGraph(
@@ -234,6 +256,9 @@ export function CodePreviewPanel({
     activeClassId,
     syntaxPackLock,
     codegenCapabilities,
+    projectResult,
+    fileOwners,
+    showUnsupportedComments,
   ]);
 
   const [prevCompileState, setPrevCompileState] = useState(compileState);
@@ -402,13 +427,7 @@ export function CodePreviewPanel({
     }
   }
 
-  const previewClass = classForHomeGraphId(classes, previewTabId);
-  const missingClassDeclareOnPreview = validationErrors.some(
-    (e) =>
-      e.code === 'DEFINE_NODE_MISSING' &&
-      previewClass != null &&
-      e.symbolId === previewClass.id
-  );
+
   const hasBlockingAnalysisErrors = validationErrors.length > 0;
   const hasBlockingIssues = compileState === 'error' || hasBlockingAnalysisErrors;
 
@@ -499,6 +518,20 @@ export function CodePreviewPanel({
 
           {!isOrgGraph ? (
             <div className="flex items-center gap-1 border-l border-zinc-800 pl-1.5">
+              <button
+                type="button"
+                onClick={() => setShowUnsupportedComments(!showUnsupportedComments)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition-colors ${
+                  showUnsupportedComments
+                    ? 'border-amber-500/40 bg-amber-500/15 text-amber-300'
+                    : 'border-zinc-700 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
+                }`}
+                title="Show unsupported as (x) comments"
+                aria-pressed={showUnsupportedComments}
+                aria-label="Show unsupported as (x) comments"
+              >
+                (x)
+              </button>
               <SearchableSelect
                 variant="compact"
                 value={targetLanguage}
@@ -557,12 +590,6 @@ export function CodePreviewPanel({
                 : validationErrors.length > 0
                   ? 'Fix compile errors to export — restore missing Declare nodes on the class graph.'
                   : 'Wire nodes to preview code.'}
-            </p>
-          </div>
-        ) : missingClassDeclareOnPreview ? (
-          <div className="absolute top-2 left-2 right-2 z-10 pointer-events-none">
-            <p className="text-[10px] text-amber-300/90 bg-amber-500/10 border border-amber-500/25 rounded px-2 py-1">
-              Preview only — restore class Declare on graph to export.
             </p>
           </div>
         ) : null}

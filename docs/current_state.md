@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped).
+Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -155,7 +155,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Layer | File | Role |
 |-------|------|------|
 | Focus API | `hooks/useEditorFocus.ts` | Tree/canvas entry: opens tabs + `navigate(canvasFocusFrame(...))` with explicit `selection` |
-| Pure helpers | `lib/editorFocus.ts` | `resolveClassHomeGraphTarget`, `canvasFocusFrame`, `resolveVariableFocusFrame` |
+| Pure helpers | `lib/editorFocus.ts` | `resolveClassHomeGraphTarget` (dynamic: searches all docs for `class_define`), `canvasFocusFrame`, `resolveVariableFocusFrame` |
 | Selection invariants | `lib/projectSelection.ts` | `isTreeSymbolSelection`, `clearCanvasSelectionKeepTreeSymbol` |
 | Code preview link | `lib/symbolCodegenLink.ts` | Maps `selection` → `tabId` + `highlightNodeIds` via `collectSymbolUsages` |
 | Live validation sync | `hooks/useLiveProjectValidation.ts` in `GraphWorkspaceHost` | Memoized `runProjectAnalysis`; syncs validation to ProjectContext when signature changes (StatusBar + code panel even when output collapsed) |
@@ -163,6 +163,8 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | History | `contexts/EditorNavigationContext.tsx` | Versioned frames in `history.state`; `ensureGraphTabOpen` opens container + function tabs |
 
 **Flow:** ProjectTree / compiler log / graph_ref double-click → `useEditorFocus` → `EditorNavigationContext.navigate` → `ProjectContext.selection` + `activeGraphTab` → `CodePreviewPanel` resolves `symbolCodegenLink` (preview tab may differ from active canvas tab on project map) → `displayResultForView.sourceMap` highlight ranges (aligned with pinned **Files** tab paths).
+
+**Class/graph decoupling (July 2026):** Classes are no longer coupled to a fixed "home graph" tab. `class_define` and member define nodes can be placed on **any** graph. The transpiler (`analyzeClassMembers`) discovers class members dynamically across all documents. `insertDefineNode*` resolves the target graph via: (1) existing `class_define` node location, (2) active graph tab, (3) legacy home graph fallback. Double-clicking a class in the ProjectTree spawns a `class_define` on the active graph if one doesn't already exist. Project Tree action badges use absolute overlay positioning to avoid layout shifts.
 
 **Invariants:** Tree symbol selection is never cleared by tab switches or React Flow deselect (`GraphCanvas` + `useSyncProjectSelection`). Tab bar / breadcrumb navigation sets `selection: { type: 'graph', ... }` intentionally. Browser back/forward restores all selection types including `event` / `function` / `class`. Highlight navigation uses the same `sourceMap` as the file list being shown — avoids path oscillation between graph-only and project-wide emit paths.
 
@@ -203,7 +205,7 @@ Context-aware (`ProjectContext.selection`), shown on graph canvas when something
 | Function | `FunctionPropertiesPanel` — name, binding, visibility, overloads, return type, flags |
 | Node | `PropertySchemaPanel` (when kind defines `propertySchema`) + `NodePinsPanel` — pins, inline values, linked graph; event define/dispatch binding plugin |
 
-Graph-level settings (module name, **per-graph codegen language & file extension**, integration paths) → breadcrumb **settings** modal (`GraphSettingsModal`). **Project defaults** (default language + extension for **new graphs**) live in the same modal under **Project defaults**.
+Graph-level and project settings → TopNav **Settings** (gear, right of Connect AI) / View → **Project settings** (`GraphSettingsModal` Project tab: active-graph codegen, properties, project defaults, syntax packs). **App settings** (same modal App tab): browser UI prefs — dim unsupported, panel defaults, reset floating layouts.
 
 **Codegen model:** `documents[tabId].metadata.targetLanguage` and `targetFileExtension` override project-level `targetLanguage` / `targetFileExtensions` for that graph. Unset fields inherit project defaults at emit time (`resolveGraphCodegenSettings` in `@vvs/graph-types`). New graphs seed metadata from project defaults when first opened (`useGraphTabSync`).
 
@@ -221,8 +223,8 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Get User Input node (`action_get_input`) | Done — registry kind, schema-driven Settings, Python/JS/C++/Verse emit |
 | Conversion nodes (`convert_to_string`, `convert_to_number`) | Done — explicit per-language calls, source-map highlights, no implicit casts |
 | Pin type validation on wires | Done — `PIN_TYPE_MISMATCH` in `@vvs/graph-types` analyze; shared with editor wiring |
-| Usability example tests (Hello World, Calculator) | Done — `usabilityExampleTests/*`, `calculatorUsabilityTest.test.ts` |
-| Usability test integrity | Done — analyze + wiring + 7-language codegen; drives UI gap discovery per `language_capability_catalog.md` |
+| Usability example tests (First Graph, Coverage Lab) | Done — `firstGraphUsabilityTest.ts`, `coverageLabUsabilityTest.ts` (+ tests); Async Fetcher / Dual Class Lab / calculators removed |
+| Usability test integrity | Done — analyze + wiring + multi-language codegen; drives UI gap discovery per `language_capability_catalog.md` |
 | Call Function nodes (`vvs.project.call_function` + `graphBinding`) | Done |
 | Dispatch event nodes (`event_dispatch` + `graphBinding.kind: dispatch_event`) | Done — per-event spawn in context menu / tree drag; canvas-first **New event here…** on class graph; emits direct handler call (`self.on_<name>(…)`) |
 | Event emit/subscribe nodes (`event_emit`, `event_subscribe`) | **Blocked** — excluded from spawn catalog; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` blocks Generate; no `_emit` / `_subscribe` injection in transpiler |
@@ -275,7 +277,10 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Core node pack | `packages/syntax-registry/core-pack.json` |
 | Spawn catalog (web) | `apps/web/src/lib/nodeCatalog.ts` → `buildCoreCategories()` |
 | Project call palette | `apps/web/src/lib/projectNodeCatalog.ts` → `expandProjectSymbols()` |
-| Calculator usability test (multi-graph) | `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts` |
+| Coverage Lab usability test (two classes / one graph) | `apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest.ts` |
+| First Graph usability test | `apps/web/src/lib/usabilityExampleTests/firstGraphUsabilityTest.ts` |
+| Code panel Test Project extract | `apps/web/scripts/extract_test_project_outputs.ts` → `apps/web/test_project_outputs/` |
+| Project transpile (Code panel) | `apps/web/src/hooks/useProjectTranspileResult.ts` |
 | Codegen | `packages/transpiler` + `@vvs/syntax-packs` — web facade: `apps/web/src/lib/codegen.ts` |
 | Rosetta fixtures | `packages/syntax-packs/rosetta/` — print, branch, assign, call, convert, dispatch, wait, for, while, switch, sequence, import_module, await_wait, call_native (+ `.golden.txt` per family) |
 | Syntax pack lock | `.vvs/project.json` → optional `syntaxPackLock` on `VvsProjectManifest` |
@@ -346,7 +351,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 
 | Rule | Implementation |
 |------|----------------|
-| **Emit path** | `appendIrMembers` / `ir.members` from member chain only — **no** sidebar preamble (`appendLegacyPreamble` removed) |
+| **Emit path** | `appendIrMembersInOrder` / `ir.members` from member chain only — **no** sidebar preamble (`appendLegacyPreamble` removed); class shell only on `ClassDecl` |
 | **Symbol tables** | `variables[]`, `functions[]`, `events[]` are indexes; panel creates **dual-write** define nodes via `defineNodeSync` / `useSymbolLifecycle` |
 | **Define nodes** | `class_define`, `var_define`, `function_define`, `event_member_define` on `classHomeGraphId` exec chain |
 | **Class declare** | `class_define` required when home graph has any member define chain (`classRequiresClassDefine`); blank class with no defines passes analysis; symbols-only off-canvas → `DECLARATION_NOT_ON_CANVAS` (not duplicate class `DEFINE_NODE_MISSING`); deleting class Declare omits `class Name:` shell in preview but **blocks Generate** |
@@ -355,8 +360,12 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Event model** | **Dispatch** supported (direct call); **Emit** / **Subscribe** blocked — no hidden `_emit` / `_subscribe` runtime; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` |
 | **Strict diagnostics** | `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE` |
 | **sourceMap** | Every emitted declaration and statement maps to a canvas `nodeId` for code-panel highlight |
+| **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
+| **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-Calculator and Hello World examples pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
+**Active next (July 2026):** Phase 6 — **U68–U77** (comments [C], reverse code↔node select, chrome/Output rethink, chain auto-layout, JSON format, Go language). See [roadmap.md](roadmap.md) § Next.
+
+Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
 
 ---
 
@@ -377,7 +386,7 @@ Calculator and Hello World examples pass strict analysis. Environment templates 
 | WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
 | PWA / offline sync | — | Not started |
 | Community library backend | Supabase + pgvector | UI skeleton only |
-| **UE6 editor plugin (Verse)** | `plugins/` (planned) | Roadmap — [roadmap.md](roadmap.md#phase-5--unreal-engine-6-editor-plugin-strategic) |
+| **UE6 editor plugin (Verse)** | `plugins/` (planned) | Roadmap — [roadmap.md](roadmap.md) Phase 5 |
 
 ---
 
@@ -425,7 +434,7 @@ Calculator and Hello World examples pass strict analysis. Environment templates 
 | `.agents/memory/` | Agentic memory — decisions, loop progress, **incomplete UI backlog** |
 | `.agents/skills/vvs_agentic_memory/SKILL.md` | When to read/update agent memory |
 
-**Do not** duplicate `docs/roadmap.md` phase tables elsewhere in the app — the Roadmap view summarizes shipped vs planned features only.
+**Do not** duplicate `docs/roadmap.md` phase tables elsewhere in the app — the Roadmap view shows Open tracks vs Done only.
 
 ---
 

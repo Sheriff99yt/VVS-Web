@@ -1,7 +1,7 @@
 # Multi-Class Projects & Canvas-Defined Symbols
 
 **Status:** Design alignment (July 2026) — **canvas define nodes shipped**; strict emit (no sidebar preamble) locked.  
-**Companion:** [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [naming_and_product_direction.md](../naming_and_product_direction.md) · [node_system.md](../node_system.md) · [current_state.md](../current_state.md)
+**Companion:** [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [fidelity_streamline.md](fidelity_streamline.md) · [naming_and_product_direction.md](../naming_and_product_direction.md) · [node_system.md](../node_system.md) · [current_state.md](../current_state.md)
 
 ---
 
@@ -17,15 +17,15 @@ Today: `ProjectSnapshot` v3, `class_define` / `var_define` / `function_define` /
 
 | Area | Current (shipped) | User vision |
 |------|-------------------|-------------|
-| **Module scope** | One `moduleName` on `projectDetails`; one emitted class/module per compile unit | Multiple **classes** per project; each class is a first-class symbol |
-| **Project panel** | Flat sections: Graphs (Main only), Functions, Variables, Event Dispatchers | **Classes** section above/beside functions; selecting a class filters child symbols |
-| **Symbol ownership** | `variables[]`, `functions[]`, `events[]` on `ProjectSnapshotV2` — no parent | Variables, functions, events scoped by `classId` |
-| **Variable declaration** | Created in Project panel (`createVariableSymbol`); emitted in emitter preamble (`emitPythonModule` loops `ir.variables`) | **`var_define`** (or equivalent) node on canvas emits declaration at that position |
-| **Function declaration** | Created in panel; signature emitted from symbol table; body from function graph tab + `function_entry` node | **`function_define`** node on class graph emits signature; body still in linked sub-graph |
-| **Class declaration** | Implicit — emitter opens `class ${moduleName}` | **`class_define`** node (or ordered chain) opens class body; user sees formation order |
-| **Graph tabs** | `main` + one tab per function/overload | Class may own a **class graph** tab; functions remain sub-graph tabs scoped to class |
-| **Codegen fidelity** | Define nodes + `sourceMap`; `appendIrMembers` only | Declarations must map to visible text and `sourceMap` like usage nodes — **required**, not optional |
-| **Calculator example** | Class graph define chain for `A`, `B`, `Result`, `Add`, `Clear`; usage nodes in flow | Same — fidelity reference template |
+| **Module scope** | Multiple classes per project; `transpileProject` emits one module per `(homeGraph, classId)` | **Locked:** one **container graph → one file** (all classes). Want separate files → separate graphs. No split-class profile. |
+| **Project panel** | Classes / folders in Structure; Symbols tab filtered by active class | Same |
+| **Symbol ownership** | `variables[]`, `functions[]`, `events[]` scoped by `classId` | Same |
+| **Variable declaration** | **`var_define`** on canvas emits via `appendIrMembersInOrder` | Same |
+| **Function declaration** | **`function_define`** on class graph; body in linked sub-graph | Same |
+| **Class declaration** | **`class_define`** required for class shell; shell opens only on `ClassDecl` | Same |
+| **Graph tabs** | Any graph may host N `class_define` chains (Dual Class Lab) | Same + Generate/export honesty (U56); emit unit = graph (U58) |
+| **Codegen fidelity** | Define nodes + `sourceMap`; `appendIrMembersInOrder` only | Same — see [fidelity_streamline.md](fidelity_streamline.md) |
+| **Primary golden** | **Coverage Lab** (Machine + Sensor) | Same — not Calculator-era shortcuts |
 
 ### Architectural model (locked)
 
@@ -77,7 +77,7 @@ interface ProjectSnapshotV3 {
 |--------|-------------------|-------------|
 | Variable | yes | Static/module binding may be referenced across classes via explicit import/call — **defer cross-class refs to slice 4** |
 | Function | yes | Call Function nodes resolve within class first; cross-class = future `import` node |
-| Event | yes | Dispatch/subscribe within class; cross-class events deferred |
+| Event | yes | Dispatch/subscribe within class; cross-class = `import_class` + Dispatch (or same-graph multi-class); inherited → `self` |
 | Graph tab | optional `classId` on tab metadata | `main` tab becomes **class graph** for active class |
 
 ### 1.3 Graph node kinds (new registry entries)
@@ -120,13 +120,32 @@ type IrMemberDecl =
   | { kind: 'EventDecl'; sourceGraphNodeId: string; symbol: ProjectEventDefinition };
 ```
 
-**Emitter rule (strict):** For class-scoped compile, **do not** iterate `ir.variables` / `ir.functions` independently of `members`. Walk `members` in order via `appendIrMembers`, then append handlers/start bodies wired from define/handler nodes.
+**Emitter rule (strict):** For class-scoped compile, **do not** iterate `ir.variables` / `ir.functions` independently of `members`. Walk `members` in order via `appendIrMembersInOrder`. Class shell opens only on `ClassDecl`.
 
 **No legacy preamble:** `appendLegacyPreamble` and `useLegacyPreamble` are **removed**. If symbols exist without define nodes, `analyzeProject` emits `DEFINE_NODE_MISSING` or `DECLARATION_NOT_ON_CANVAS` and blocks Generate.
 
 **Class declare rules (July 2026):** `class_define` is required when the home graph has **any member define chain** (`classRequiresClassDefine`). A blank class with no defines passes analysis. Symbols listed in the panel but absent from canvas → `DECLARATION_NOT_ON_CANVAS` (not a duplicate class-level `DEFINE_NODE_MISSING`). Deleting `class_define` while other defines remain blocks Generate (`DEFINE_NODE_MISSING` for the class) but the code **preview** may still show the member chain without a `class Name:` shell.
 
-Multi-class compile: one output file per class (existing multi-file pattern) or single file with multiple classes — profile-driven via `integration.json` / language profile.
+Multi-class compile: **one output file per container graph** (all classes on that canvas in author order). File boundaries are graph boundaries — not a language-profile invent.
+
+### Many classes per graph (active — July 2026)
+
+**Product rule (locked):** Authors may place **many** `class_define` chains on **any** graph. That graph is **one file**. Generated code includes **all** classes on the canvas in author order.
+
+**No magic file split:** VVS does **not** invent one file per class or offer a “split classes” profile. File boundaries are a **user awareness** problem — put classes on separate graphs if you want separate files. See [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) § No Hidden Magic.
+
+| Layer | Required behavior |
+|-------|-------------------|
+| Analyzer | Scope orphan/define checks per `classId` (sibling defines on shared home are not orphans) |
+| Emit | **One module file per container graph** — all classes on that graph (U58 target; today still per-class — migrate) |
+| `useProjectTranspileResult` / Code preview | One owned file for the open graph listing every class’s text in order |
+| Generate / disk export | Same graph→file emit (backlog U56) |
+
+**Fixture:** Dual Class Lab (`Machine` + `Sensor` on `main-graph`) → **one** module file containing both classes.
+
+**Verify as the user sees:** `useProjectTranspileResult` / `bun apps/web/scripts/extract_test_project_outputs.ts` → single Dual Class home file (not `machine.py` + `sensor.py`).
+
+**Backlog:** `.agents/memory/incomplete-ui.md` §10 (U56–U58).
 
 ---
 
@@ -211,7 +230,9 @@ Each `*_define` node registers spans for the declaration line(s) — same `sourc
 
 ---
 
-## 4. Calculator migration (canvas shape)
+## 4. Calculator migration (canvas shape) — historical
+
+> **Superseded as primary golden by Dual Class Lab** (`dualClassLabUsabilityTest.ts`). Kept for migration narrative; do not treat Calculator fixtures as the fidelity program.
 
 ### 4.1 Today
 
@@ -281,7 +302,7 @@ During slice 2, creating a symbol from the panel also inserts a define node on t
 | **Phase 3** | Community templates benefit from multi-class example projects |
 | **Phase 5** | UE plugin inherits `ClassSymbol` + define nodes for Verse modules |
 
-**In-app Roadmap:** add under **Coming soon** → “Multi-class projects & canvas-defined symbols” linking here (see `developmentRoadmap.ts`).
+**In-app Roadmap:** Open tracks → **Fidelity deepen** (`developmentRoadmap.ts`); shipped multi-class / graph=file under Done.
 
 ---
 
@@ -303,7 +324,10 @@ During slice 2, creating a symbol from the panel also inserts a define node on t
 | Project panel | `apps/web/src/components/layout/ProjectTree.tsx` |
 | Symbol CRUD/rename | `apps/web/src/hooks/useSymbolLifecycle.ts` |
 | Function ↔ tab link | `apps/web/src/lib/functionTabs.ts` |
-| Calculator usability test | `apps/web/src/lib/usabilityExampleTests/calculatorUsabilityTest.ts` |
-| Preamble emission | `packages/transpiler/src/emit/python.ts` (and js/cpp/verse) |
+| Dual Class Lab usability test | `apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest.ts` (renamed Coverage Lab) |
+| Code panel extract | `apps/web/scripts/extract_test_project_outputs.ts` |
+| Project transpile hook | `apps/web/src/hooks/useProjectTranspileResult.ts` |
+| Prefer graph path (not per-class) | Emit path from graph/`moduleFile` — **not** `preferFallbackOverModuleFile` per class (superseded by graph=file lock) |
+| Preamble emission | **Removed** — no `appendLegacyPreamble`; emit via `ir.members` only |
 | IR module shape | `packages/transpiler/src/ir/types.ts` |
 | Lowering entry | `packages/transpiler/src/lower/graphToIr.ts` |

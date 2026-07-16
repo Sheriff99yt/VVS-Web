@@ -1,4 +1,4 @@
-export type ProjectSource = 'new' | 'recent' | 'import' | 'template' | 'demo';
+export type ProjectSource = 'new' | 'recent' | 'import' | 'template' | 'demo' | 'test';
 
 export type ProjectStorageKind = 'local' | 'folder';
 

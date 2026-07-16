@@ -50,7 +50,10 @@ export function printLiteralExpr(expr: IrExpr, ctx: PrintContext): PrintedExpr {
   if (expr.literalType === 'raw') text = String(expr.value);
   else if (expr.literalType === 'string') text = `"${expr.value}"`;
   else text = String(expr.value);
-  return { text, spans: [] };
+  return {
+    text,
+    spans: [{ nodeId: expr.sourceGraphNodeId, start: 0, end: text.length }],
+  };
 }
 
 export function printInstanceRefExpr(expr: IrExpr, ctx: PrintContext): PrintedExpr {
@@ -108,6 +111,19 @@ export function printGetInputTempExpr(expr: IrExpr): PrintedExpr {
   };
 }
 
+export function printEnumMemberExpr(expr: IrExpr, ctx: PrintContext): PrintedExpr {
+  if (expr.kind !== 'EnumMember') throw new Error('expected EnumMember');
+  return renderExprTemplate(
+    ctx,
+    'EnumMemberAccess',
+    {
+      enum: { text: expr.enumName, spans: [] },
+      member: { text: expr.member, spans: [] },
+    },
+    expr.sourceGraphNodeId
+  );
+}
+
 export function createDefaultExprPrinter(): ExprPrinter {
   const printExpr: ExprPrinter = (expr, ctx) => {
     switch (expr.kind) {
@@ -125,6 +141,8 @@ export function createDefaultExprPrinter(): ExprPrinter {
         return printConvertToNumberExpr(expr, ctx, printExpr);
       case 'GetInputTemp':
         return printGetInputTempExpr(expr);
+      case 'EnumMember':
+        return printEnumMemberExpr(expr, ctx);
       default:
         if (isPackDrivenFamily(ctx.family)) {
           throw new PackTemplateMissingError((expr as any).kind, ctx.family);

@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { transpileGraphCode, transpileGraph, withProjectCodegenTarget } from './codegen';
-import { createHelloWorldUsabilityTestSnapshot } from './usabilityExampleTests/helloWorldUsabilityTest';
+import { createFirstGraphUsabilityTestSnapshot } from './usabilityExampleTests/firstGraphUsabilityTest';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
 describe('transpileGraphCode', () => {
   test('emits python class from simple example', () => {
-    const snapshot = createHelloWorldUsabilityTestSnapshot();
+    const snapshot = createFirstGraphUsabilityTestSnapshot();
     const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
     const code = transpileGraphCode({
       moduleName: snapshot.projectDetails.moduleName,
@@ -20,12 +20,12 @@ describe('transpileGraphCode', () => {
       activeClassId: snapshot.activeClassId,
       tabId: MAIN_GRAPH_CONTAINER_ID,
     });
-    expect(code).toContain('class HelloWorld');
+    expect(code).toContain('class FirstGraph');
     expect(code).toContain('print(');
   });
 
   test('transpile result includes sourceMap for statement nodes', () => {
-    const snapshot = createHelloWorldUsabilityTestSnapshot();
+    const snapshot = createFirstGraphUsabilityTestSnapshot();
     const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
     const result = transpileGraph({
       moduleName: snapshot.projectDetails.moduleName,
@@ -44,7 +44,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('es2022 capability resolves via project codegen target', () => {
-    const snapshot = createHelloWorldUsabilityTestSnapshot();
+    const snapshot = createFirstGraphUsabilityTestSnapshot();
     const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
     const ctx = withProjectCodegenTarget(
       {

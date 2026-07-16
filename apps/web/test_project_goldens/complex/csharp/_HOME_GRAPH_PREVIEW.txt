@@ -1,0 +1,83 @@
+// ===== src/CoverageLab.cs =====
+// (x) Import iostream
+using System;
+// (x) Import string
+// (x) Import Enum
+// (x) Import vector
+// (x) Import unordered_map
+using System.Collections.Generic;
+public class Machine {
+        protected float Power = 0;
+        public static float Serial = 0;
+        public readonly float MaxPower = 100;
+        public bool Ready = false;
+    public virtual void Boot() {
+        // Boot
+        this.Ready = true;
+        Console.WriteLine("Booted");
+        new Sensor().on_tick();
+    }
+    protected abstract void Diagnose();
+    public async void Shutdown() {
+        // Shutdown
+        this.Ready = false;
+        Console.WriteLine("Shutdown");
+    }
+    public void on_pulse() {
+        Console.WriteLine(("Power=" + this.Power.ToString()));
+    }
+    public void on_start() {
+        Console.Write("Operator name?");
+        var _vvs_input_lab_get_input = Console.ReadLine() ?? "";
+        Console.WriteLine(_vvs_input_lab_get_input);
+        this.Boot();
+        if (this.Ready) {
+            this.on_pulse();
+        } else {
+            // (x) Import json
+            Console.WriteLine("Not ready");
+        }
+    }
+}
+public enum SensorStatus {
+    OK,
+    WARN,
+    FAIL
+}
+public class Sensor : Machine {
+        public List<float> Readings = new List<float>();
+        public SensorStatus Status = SensorStatus.OK;
+        public Machine Host = null;
+        public Dictionary<string, string> Tags = 0;
+    public async void Sample() {
+        // Sample
+        this.Readings.Add(this.Power);
+        Console.WriteLine("Sampled");
+    }
+    public override void Report() {
+        // Report
+        Console.WriteLine("--- Readings ---");
+        foreach (var val in this.Readings) {
+            Console.WriteLine(val.ToString());
+        }
+    }
+    public void on_tick() {
+        Console.WriteLine("Tick");
+    }
+    public void on_start() {
+        switch (this.Status) {
+            case SensorStatus.OK:
+            this.Sample();
+            this.Report();
+                    break;
+            case SensorStatus.WARN:
+            Console.WriteLine("Warn");
+            this.Report();
+                    break;
+            case SensorStatus.FAIL:
+            Console.WriteLine("Fail");
+            this.Report();
+                    break;
+        }
+    }
+}
