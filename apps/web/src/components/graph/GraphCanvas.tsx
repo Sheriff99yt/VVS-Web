@@ -75,6 +75,17 @@ import {
   writeSystemGraphClipboard,
   type GraphClipboardPayload,
 } from '@/lib/graphClipboard';
+import { detachFromParent, normalizeParenting } from '@/lib/graphParenting';
+import {
+  getCommentMemberIds,
+  isCommentLocked,
+  lockCommentMembers,
+  pruneCommentMembership,
+  resizeCommentToFitMembers,
+  unlockCommentMembers,
+  withCommentProps,
+  wrapSelectionAsComment,
+} from '@/lib/graphCommentMembership';
 import { useSyncProjectSelection } from '@/hooks/useSyncProjectSelection';
 import { useEditorFocus } from '@/hooks/useEditorFocus';
 import { useGraphKeyboardShortcuts } from '@/hooks/useGraphKeyboardShortcuts';
@@ -110,48 +121,11 @@ function wrapSelectionInComment(
   nodes: VVSNodeType[],
   setNodesWithHistory: React.Dispatch<React.SetStateAction<VVSNodeType[]>>
 ) {
-  const selectedNodes = nodes.filter((n) => n.selected && n.type !== 'vvs_comment_node');
-  if (selectedNodes.length === 0) return;
-
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  selectedNodes.forEach((n) => {
-    if (n.position.x < minX) minX = n.position.x;
-    if (n.position.y < minY) minY = n.position.y;
-    if (n.position.x + (n.measured?.width || 200) > maxX) maxX = n.position.x + (n.measured?.width || 200);
-    if (n.position.y + (n.measured?.height || 150) > maxY) maxY = n.position.y + (n.measured?.height || 150);
-  });
-
-  const padding = 50;
-  const commentId = `comment-${Date.now()}`;
-  const newCommentNode: VVSNodeType = {
-    id: commentId,
-    type: 'vvs_comment_node',
-    position: { x: minX - padding, y: minY - padding - 40 },
-    style: { width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 + 40 },
-      data: { label: 'New Comment', category: 'Comment', inputs: [], outputs: [], inlineValues: {}, commentColor: '#6366f1' },
-    zIndex: -1,
-  };
-
-  setNodesWithHistory((nds) => {
-    const updatedNodes = nds.map((n) => {
-      if (n.selected && n.type !== 'vvs_comment_node') {
-        return {
-          ...n,
-          parentId: commentId,
-          position: {
-            x: n.position.x - newCommentNode.position.x,
-            y: n.position.y - newCommentNode.position.y,
-          },
-          expandParent: true,
-        };
-      }
-      return n;
-    });
-    return [newCommentNode, ...updatedNodes];
-  });
+  const selectedIds = nodes
+    .filter((n) => n.selected && n.type !== 'vvs_comment_node')
+    .map((n) => n.id);
+  if (selectedIds.length === 0) return;
+  setNodesWithHistory((nds) => wrapSelectionAsComment(nds, selectedIds));
 }
 
 function nodesMatchSimilarity(primary: VVSNodeType, candidate: VVSNodeType): boolean {
@@ -165,28 +139,97 @@ function ungroupSelectionInComment(
   nodes: VVSNodeType[],
   setNodesWithHistory: React.Dispatch<React.SetStateAction<VVSNodeType[]>>
 ) {
-  const grouped = nodes.filter((n) => n.selected && n.parentId);
-  if (grouped.length === 0) return;
+  const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
+  if (selectedIds.size === 0) return;
 
   setNodesWithHistory((nds) => {
+    // Soft membership: remove selected nodes from unlocked comments' member lists.
+    let next = nds.map((n) => {
+      if (n.type !== 'vvs_comment_node') return n;
+      const members = getCommentMemberIds(n).filter((id) => !selectedIds.has(id));
+      if (members.length === getCommentMemberIds(n).length) return n;
+      return withCommentProps(n, { commentMemberIds: members });
+    });
+
+    const grouped = next.filter((n) => n.selected && n.parentId);
     const parentIdsToRemove = new Set(
       grouped.map((n) => n.parentId).filter((id): id is string => Boolean(id))
     );
-    return nds
+
+    // If an unlocked comment is selected, drop it (members already peers).
+    const selectedUnlockedComments = new Set(
+      next
+        .filter(
+          (n) =>
+            n.selected &&
+            n.type === 'vvs_comment_node' &&
+            !n.data.properties?.commentLocked
+        )
+        .map((n) => n.id)
+    );
+
+    next = next
       .map((n) => {
         if (!n.selected || !n.parentId) return n;
-        const parent = nds.find((p) => p.id === n.parentId);
+        const parent = next.find((p) => p.id === n.parentId);
         return {
-          ...n,
-          parentId: undefined,
-          expandParent: undefined,
+          ...detachFromParent(n),
           position: {
             x: n.position.x + (parent?.position.x ?? 0),
             y: n.position.y + (parent?.position.y ?? 0),
           },
         };
       })
-      .filter((n) => !(n.type === 'vvs_comment_node' && parentIdsToRemove.has(n.id) && n.selected));
+      .filter(
+        (n) =>
+          !(n.type === 'vvs_comment_node' && parentIdsToRemove.has(n.id) && n.selected) &&
+          !selectedUnlockedComments.has(n.id)
+      );
+
+    // Unlock any locked comments that lost all children via ungroup.
+    for (const id of parentIdsToRemove) {
+      const still = next.find((n) => n.id === id);
+      if (still?.type === 'vvs_comment_node' && still.data.properties?.commentLocked) {
+        const hasKids = next.some((n) => n.parentId === id);
+        if (!hasKids) next = unlockCommentMembers(next, id);
+      }
+    }
+
+    return normalizeParenting(pruneCommentMembership(next));
+  });
+}
+
+function toggleLockOnSelectedComments(
+  nodes: VVSNodeType[],
+  setNodesWithHistory: React.Dispatch<React.SetStateAction<VVSNodeType[]>>
+) {
+  const selectedComments = nodes.filter((n) => n.selected && n.type === 'vvs_comment_node');
+  if (selectedComments.length === 0) return;
+  setNodesWithHistory((nds) => {
+    let next = nds;
+    for (const comment of selectedComments) {
+      const current = next.find((n) => n.id === comment.id);
+      if (!current || current.type !== 'vvs_comment_node') continue;
+      next = isCommentLocked(current)
+        ? unlockCommentMembers(next, comment.id)
+        : lockCommentMembers(next, comment.id);
+    }
+    return next;
+  });
+}
+
+function snapSelectedCommentsToMembers(
+  nodes: VVSNodeType[],
+  setNodesWithHistory: React.Dispatch<React.SetStateAction<VVSNodeType[]>>
+) {
+  const selectedComments = nodes.filter((n) => n.selected && n.type === 'vvs_comment_node');
+  if (selectedComments.length === 0) return;
+  setNodesWithHistory((nds) => {
+    let next = nds;
+    for (const comment of selectedComments) {
+      next = resizeCommentToFitMembers(next, comment.id);
+    }
+    return next;
   });
 }
 
@@ -1331,7 +1374,9 @@ function GraphCanvasInner() {
 
   const handleCut = useCallback(() => {
     handleCopy();
-    setNodesWithHistory((nds) => nds.filter((n) => !n.selected));
+    setNodesWithHistory((nds) =>
+      normalizeParenting(pruneCommentMembership(nds.filter((n) => !n.selected)))
+    );
     setEdgesWithHistory((eds) =>
       eds.filter((edge) => !nodes.find((n) => n.selected && (n.id === edge.source || n.id === edge.target)))
     );
@@ -1359,7 +1404,9 @@ function GraphCanvasInner() {
           !selectedNodeIds.has(edge.target)
       )
     );
-    setNodesWithHistory((nds) => nds.filter((node) => !node.selected));
+    setNodesWithHistory((nds) =>
+      normalizeParenting(pruneCommentMembership(nds.filter((node) => !node.selected)))
+    );
   }, [nodes, edges, setNodesWithHistory, setEdgesWithHistory]);
 
   const handleDisconnectSelection = useCallback(() => {
@@ -1455,6 +1502,8 @@ function GraphCanvasInner() {
       if (action === 'zoom-fit') fitView({ duration: 300 });
       if (action === 'group-comment') wrapSelectionInComment(nodes, setNodesWithHistory);
       if (action === 'ungroup-comment') ungroupSelectionInComment(nodes, setNodesWithHistory);
+      if (action === 'toggle-comment-lock') toggleLockOnSelectedComments(nodes, setNodesWithHistory);
+      if (action === 'snap-comment-members') snapSelectedCommentsToMembers(nodes, setNodesWithHistory);
       if (action === 'extract-function') handleExtractToFunction();
       if (action === 'select-all') handleSelectAll();
       if (action === 'select-similar') handleSelectSimilar();

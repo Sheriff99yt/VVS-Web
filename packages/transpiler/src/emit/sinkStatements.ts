@@ -36,6 +36,12 @@ import type { IrModuleImport } from '../ir/types';
 const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'ForEach', 'WhileLoop', 'Switch', 'Sequence']);
 const IMPORT_MODULE_KIND = 'vvs.project.import_module';
 
+export type AppendIrStatementsOptions = {
+  emitUnsupportedComments?: boolean;
+  /** Author Comment [C] attach — called with each statement's sourceGraphNodeId + indent. */
+  onBeforeNode?: (sourceGraphNodeId: string, indent: string) => void;
+};
+
 function appendModuleImportStatement(
   sink: CodeSink,
   stmt: IrModuleImport,
@@ -76,10 +82,11 @@ function appendBodyOrPlaceholder(
   sink: CodeSink,
   statements: IrStatement[],
   ctx: PrintContext,
-  placeholder: string
+  placeholder: string,
+  options?: AppendIrStatementsOptions
 ): void {
   if (statements.length === 0) sink.appendRaw(placeholder);
-  else appendIrStatements(sink, statements, ctx);
+  else appendIrStatements(sink, statements, ctx, options);
 }
 
 function appendLeafStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContext): void {
@@ -91,7 +98,12 @@ function appendLeafStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContex
   });
 }
 
-function appendIfBranch(sink: CodeSink, stmt: IrIfBranch, ctx: PrintContext): void {
+function appendIfBranch(
+  sink: CodeSink,
+  stmt: IrIfBranch,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
   const printExpr = createDefaultExprPrinter();
   const condPrinted = printExpr(stmt.condition, ctx);
   const inner = innerIndentCtx(ctx);
@@ -108,10 +120,10 @@ function appendIfBranch(sink: CodeSink, stmt: IrIfBranch, ctx: PrintContext): vo
       condPrinted.spans,
       condSpanOffset(ctx.family, ctx.indent, 'if')
     );
-    appendBodyOrPlaceholder(sink, stmt.trueBody, inner, placeholder);
+    appendBodyOrPlaceholder(sink, stmt.trueBody, inner, placeholder, options);
     if (stmt.falseBody.length > 0) {
       sink.appendRaw(ifElseLine(ctx));
-      appendBodyOrPlaceholder(sink, stmt.falseBody, inner, placeholder);
+      appendBodyOrPlaceholder(sink, stmt.falseBody, inner, placeholder, options);
     }
     if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'IfBranchClose'));
@@ -122,7 +134,12 @@ function appendIfBranch(sink: CodeSink, stmt: IrIfBranch, ctx: PrintContext): vo
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'if');
 }
 
-function appendForLoop(sink: CodeSink, stmt: IrForLoop, ctx: PrintContext): void {
+function appendForLoop(
+  sink: CodeSink,
+  stmt: IrForLoop,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
   const printExpr = createDefaultExprPrinter();
   const firstPrinted = printExpr(stmt.first, ctx);
   const lastPrinted = printExpr(stmt.last, ctx);
@@ -142,7 +159,7 @@ function appendForLoop(sink: CodeSink, stmt: IrForLoop, ctx: PrintContext): void
       [...firstPrinted.spans, ...offsetSpans(lastPrinted.spans, firstPrinted.text.length + 2)],
       forSpanOffset(ctx.family, ctx.indent, stmt.indexVar)
     );
-    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
     if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
     }
@@ -152,7 +169,12 @@ function appendForLoop(sink: CodeSink, stmt: IrForLoop, ctx: PrintContext): void
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `for ${stmt.indexVar}`);
 }
 
-function appendForEach(sink: CodeSink, stmt: IrForEach, ctx: PrintContext): void {
+function appendForEach(
+  sink: CodeSink,
+  stmt: IrForEach,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
   const printExpr = createDefaultExprPrinter();
   const collPrinted = printExpr(stmt.collection, ctx);
   const inner = innerIndentCtx(ctx);
@@ -186,7 +208,7 @@ function appendForEach(sink: CodeSink, stmt: IrForEach, ctx: PrintContext): void
 
   if (isPackDrivenFamily(ctx.family)) {
     appendRawWithExprSpans(sink, headerText, collPrinted.spans, ctx.indent.length);
-    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
     if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
     }
@@ -235,7 +257,12 @@ function appendArrayPush(sink: CodeSink, stmt: IrArrayPush, ctx: PrintContext): 
   sink.tagRange(stmt.sourceGraphNodeId, startLine, startLine, 'push');
 }
 
-function appendWhileLoop(sink: CodeSink, stmt: IrWhileLoop, ctx: PrintContext): void {
+function appendWhileLoop(
+  sink: CodeSink,
+  stmt: IrWhileLoop,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
   const printExpr = createDefaultExprPrinter();
   const condPrinted = printExpr(stmt.condition, ctx);
   const inner = innerIndentCtx(ctx);
@@ -252,7 +279,7 @@ function appendWhileLoop(sink: CodeSink, stmt: IrWhileLoop, ctx: PrintContext): 
       condPrinted.spans,
       condSpanOffset(ctx.family, ctx.indent, 'while')
     );
-    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder);
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
     if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'WhileLoopClose'));
     }
@@ -266,7 +293,12 @@ function appendSwitch(sink: CodeSink, stmt: IrSwitch, ctx: PrintContext): void {
   appendLeafStatement(sink, stmt, ctx);
 }
 
-function appendSequence(sink: CodeSink, stmt: IrSequence, ctx: PrintContext): void {
+function appendSequence(
+  sink: CodeSink,
+  stmt: IrSequence,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
   const inner = innerIndentCtx(ctx);
   const startLine = sink.lineCount + 1;
   const steps = stmt.steps.filter((step) => step.length > 0);
@@ -275,13 +307,13 @@ function appendSequence(sink: CodeSink, stmt: IrSequence, ctx: PrintContext): vo
     if (ctx.family === 'python' || ctx.family === 'verse' || ctx.family === 'gdscript') {
       sink.appendRaw(printFromTemplate(ctx, 'SequenceHeader', {}).text);
       for (const step of steps) {
-        appendIrStatements(sink, step, inner);
+        appendIrStatements(sink, step, inner, options);
       }
     } else {
       sink.appendRaw(printFromTemplate(ctx, 'SequenceHeader', {}).text);
       sink.appendRaw(printFromTemplate(ctx, 'SequenceComment', {}).text);
       for (const step of steps) {
-        appendIrStatements(sink, step, inner);
+        appendIrStatements(sink, step, inner, options);
       }
       sink.appendRaw(printFromTemplate(ctx, 'SequenceClose', {}).text);
     }
@@ -291,17 +323,22 @@ function appendSequence(sink: CodeSink, stmt: IrSequence, ctx: PrintContext): vo
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'sequence');
 }
 
-function appendIrStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContext): void {
+function appendIrStatement(
+  sink: CodeSink,
+  stmt: IrStatement,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
   if (stmt.kind === 'IfBranch') {
-    appendIfBranch(sink, stmt as IrIfBranch, ctx);
+    appendIfBranch(sink, stmt as IrIfBranch, ctx, options);
     return;
   }
   if (stmt.kind === 'ForLoop') {
-    appendForLoop(sink, stmt as IrForLoop, ctx);
+    appendForLoop(sink, stmt as IrForLoop, ctx, options);
     return;
   }
   if (stmt.kind === 'ForEach') {
-    appendForEach(sink, stmt as IrForEach, ctx);
+    appendForEach(sink, stmt as IrForEach, ctx, options);
     return;
   }
   if (stmt.kind === 'ArrayPush') {
@@ -309,7 +346,7 @@ function appendIrStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContext)
     return;
   }
   if (stmt.kind === 'WhileLoop') {
-    appendWhileLoop(sink, stmt as IrWhileLoop, ctx);
+    appendWhileLoop(sink, stmt as IrWhileLoop, ctx, options);
     return;
   }
   if (stmt.kind === 'Switch') {
@@ -317,7 +354,7 @@ function appendIrStatement(sink: CodeSink, stmt: IrStatement, ctx: PrintContext)
     return;
   }
   if (stmt.kind === 'Sequence') {
-    appendSequence(sink, stmt as IrSequence, ctx);
+    appendSequence(sink, stmt as IrSequence, ctx, options);
     return;
   }
   appendLeafStatement(sink, stmt, ctx);
@@ -328,14 +365,15 @@ export function appendIrStatements(
   sink: CodeSink,
   statements: IrStatement[],
   printCtx: PrintContext,
-  options?: { emitUnsupportedComments?: boolean }
+  options?: AppendIrStatementsOptions
 ): void {
   const emitComments = options?.emitUnsupportedComments !== false;
   for (const stmt of statements) {
+    options?.onBeforeNode?.(stmt.sourceGraphNodeId, printCtx.indent);
     if (stmt.kind === 'ModuleImport') {
       appendModuleImportStatement(sink, stmt, printCtx, emitComments);
     } else if (stmt.kind === 'ArrayPush' || NESTED_BODY_KINDS.has(stmt.kind)) {
-      appendIrStatement(sink, stmt, printCtx);
+      appendIrStatement(sink, stmt, printCtx, options);
     } else {
       appendLeafStatement(sink, stmt, printCtx);
     }

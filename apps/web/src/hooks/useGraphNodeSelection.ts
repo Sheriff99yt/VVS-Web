@@ -49,14 +49,35 @@ export function resolveSelectionAnchorFlowPoint(
   return { x: (minX + maxX) / 2, y: minY };
 }
 
+function commentMemberIds(node: VVSNode): string[] {
+  const raw = node.data.properties?.commentMemberIds;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((id): id is string => typeof id === 'string');
+}
+
 function buildGraphNodeSelection(
   selectedNodes: VVSNode[],
-  getAbsolutePosition?: (nodeId: string) => { x: number; y: number } | undefined
+  getAbsolutePosition?: (nodeId: string) => { x: number; y: number } | undefined,
+  allNodes?: VVSNode[]
 ): GraphNodeSelection {
   const primaryNode = selectedNodes[0] ?? null;
   const groupable = selectedNodes.filter((node) => node.type !== 'vvs_comment_node');
-  const canGroup = groupable.length >= 2;
-  const canUngroup = selectedNodes.some((node) => Boolean(node.parentId));
+  const canGroup = groupable.length >= 1;
+  const selectedIds = new Set(selectedNodes.map((n) => n.id));
+  const softMemberSelected = Boolean(
+    allNodes?.some(
+      (n) =>
+        n.type === 'vvs_comment_node' &&
+        commentMemberIds(n).some((id) => selectedIds.has(id))
+    )
+  );
+  const canUngroup =
+    softMemberSelected ||
+    selectedNodes.some(
+      (node) =>
+        Boolean(node.parentId) ||
+        (node.type === 'vvs_comment_node' && commentMemberIds(node).length > 0)
+    );
 
   return {
     selectedNodes,
@@ -86,7 +107,7 @@ export function useGraphNodeSelection(
 ): GraphNodeSelection {
   return useMemo(() => {
     const selectedNodes = nodes.filter((node) => node.selected);
-    return buildGraphNodeSelection(selectedNodes, getAbsolutePosition);
+    return buildGraphNodeSelection(selectedNodes, getAbsolutePosition, nodes);
   }, [nodes, getAbsolutePosition]);
 }
 

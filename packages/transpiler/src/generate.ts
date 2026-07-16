@@ -130,6 +130,11 @@ export interface CodegenContext {
    * emit pack-prefixed `(x)` comment lines instead of being omitted.
    */
   emitUnsupportedComments?: boolean;
+  /**
+   * When true (default), author Comment [C] boxes emit pack-prefixed comment lines (U69).
+   * Independent of emitUnsupportedComments.
+   */
+  emitUserComments?: boolean;
 }
 
 function mergeTranspileResults(results: TranspileResult[]): TranspileResult {
@@ -343,6 +348,11 @@ export interface ProjectTranspileInput {
    * emit pack-prefixed `(x)` comment lines instead of being omitted.
    */
   emitUnsupportedComments?: boolean;
+  /**
+   * When true (default), author Comment [C] boxes emit pack-prefixed comment lines (U69).
+   * Independent of emitUnsupportedComments.
+   */
+  emitUserComments?: boolean;
 }
 
 function classDefineY(doc: GraphDocument, cls: ClassSymbol): number {
@@ -376,8 +386,16 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
 
   for (let i = 0; i < classIrs.length; i++) {
     if (i > 0 && sink.lineCount > 0) sink.appendRaw('');
+    const ir = { ...classIrs[i]!, filePath, imports: [] };
+    // Orphan Comment [C] (no attach target) emit once on the first class only.
+    if (i > 0) {
+      ir.userComments = (ir.userComments ?? []).filter((c) => Boolean(c.beforeNodeId));
+    }
     // Imports live on each class member chain — do not hoist to file top.
-    emitClassModule(sink, { ...classIrs[i]!, filePath, imports: [] });
+    // Follow-up classes must not flush comments owned by another class's emit set.
+    emitClassModule(sink, ir, {
+      allowUnownedCommentAttachAsOrphan: i === 0,
+    });
   }
 
   return {
@@ -415,6 +433,7 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
     environmentManifest: input.environmentManifest,
     integration: input.integration,
     emitUnsupportedComments: input.emitUnsupportedComments,
+    emitUserComments: input.emitUserComments,
   };
 
   const classesByHome = new Map<string, ClassSymbol[]>();

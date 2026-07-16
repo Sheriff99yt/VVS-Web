@@ -133,9 +133,9 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6 polish</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        Just shipped: Function Declare ≠ Define (U81/U82) across all seven languages, plus U66/U67{' '}
-        <span className="text-zinc-400">(x)</span> comments and canvas dim. Open next: comments [C]
-        (U68–U69), highlight rethink (U71), chain auto-layout (U75), Go pack (U77), pack versions
+        Just shipped: author Comment [C] + user-comments toggle (U68/U69), Function Declare ≠ Define
+        (U81/U82), and U66/U67 <span className="text-zinc-400">(x)</span> comments + canvas dim.
+        Open next: highlight rethink (U71), chain auto-layout (U75), Go pack (U77), pack versions
         (U78), Y-order audit (U79).
       </p>
     </div>

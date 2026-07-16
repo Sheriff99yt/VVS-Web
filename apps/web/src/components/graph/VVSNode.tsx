@@ -11,6 +11,8 @@ import { VVSNodeData } from '@/types/graph';
 import { useProject } from '@/contexts/ProjectContext';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import { useUiPreference } from '@/hooks/useUiPreference';
+import { useGraphDocuments } from '@/hooks/useGraphDocuments';
+import { hasHandlerNodeForEvent } from '@/lib/defineNodeSync';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
 import { NodePinRow } from './NodePinRow';
@@ -26,14 +28,29 @@ interface VVSNodeBodyProps {
 function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const { updateNodeData } = useReactFlow();
   const { validationErrors, validationWarnings, activeGraphTab } = useProject();
+  const documents = useGraphDocuments();
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const [dimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
   const kindId = resolveNodeKindId(data);
+  const eventId =
+    kindId === 'event_member_define'
+      ? typeof data.properties?.eventId === 'string' && data.properties.eventId
+        ? data.properties.eventId
+        : typeof data.properties?.symbolId === 'string'
+          ? data.properties.symbolId
+          : ''
+      : '';
+  const eventHasHandler =
+    kindId === 'event_member_define'
+      ? Boolean(eventId && documents && hasHandlerNodeForEvent(documents, eventId))
+      : undefined;
+  const effectivenessOpts =
+    kindId === 'event_member_define' ? { eventHasHandler } : undefined;
   const isUnsupported =
     dimUnsupportedNodes &&
-    !isNodeEffectiveForLanguage(kindId, data.properties, targetLanguage);
+    !isNodeEffectiveForLanguage(kindId, data.properties, targetLanguage, effectivenessOpts);
   const unsupportedTitle = isUnsupported
-    ? nodeIneffectiveTooltip(kindId, data.properties, targetLanguage)
+    ? nodeIneffectiveTooltip(kindId, data.properties, targetLanguage, effectivenessOpts)
     : '';
   const hasBrokenRef = useMemo(
     () =>

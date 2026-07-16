@@ -21,7 +21,7 @@ impl Machine {
         println!("{}", "Booted");
         Sensor::new().on_tick();
     }
-    // abstract Diagnose
+    // (x) Declare Diagnose
     // (x) Declare Shutdown
     pub async fn Shutdown(&mut self) {
         self.Ready = false;

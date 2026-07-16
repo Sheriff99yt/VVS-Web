@@ -114,7 +114,7 @@ To demonstrate exactly how the VVS Transpiler handles **Modifiers**, **Setups**,
 12. **Error Handling & Lambdas:** `try/catch/finally` blocks and passing callbacks.
 13. **Events:** Handler functions triggered via dispatch.
 
-*Note: **U81 Function Declare ≠ Define.** Canvas **Declare** owns existence/signature; **Define** (`function_implement`) places the body. **C++ is the reference language** for this split (U82: real prototypes / out-of-line). On languages without a separate prototype (Python, JS, C#, Rust, GDScript, Verse), non-abstract Declare is **ineffective**: U66 `# (x) Declare Name` / `// (x) Declare Name` + U67 canvas dim — never invent a forward-decl and never silent-skip. Abstract still emits (`# abstract` / `// abstract` / C++ `= 0` / C# real `abstract` prototype). Do **not** emit stub `# Declare` / `// Declare` placeholders without `(x)`. **sourceMap:** Declare maps only to what it emits (prototype or `(x)`); Define maps to the method/`def` header + body — never dual-tag the Define line onto Declare.*
+*Note: **U81 Function Declare ≠ Define.** Canvas **Declare** owns existence/signature; **Define** (`function_implement`) places the body. **C++ is the reference language** for this split (U82: real prototypes / out-of-line). On languages without a separate prototype (Python, JS, C#, Rust, GDScript, Verse), non-abstract Declare is **ineffective**: U66 `# (x) Declare Name` / `// (x) Declare Name` + U67 canvas dim — never invent a forward-decl and never silent-skip. **Abstract** is native only on C++ / C#; elsewhere abstract Declare also uses U66 `(x)` + dim (Coverage Lab **Declare Diagnose**). Do **not** emit stub `# Declare` / `// Declare` / `# abstract` placeholders without `(x)` on non-native langs. **sourceMap:** Declare maps only to what it emits (prototype or `(x)`); Define maps to the method/`def` header + body — never dual-tag the Define line onto Declare.*
 
 **File boundaries (locked — no magic):** one container graph → one file. Want `.h` + `.cpp` → **two graphs** + user-picked extensions + explicit **Import Module**. Never auto-split one graph into header/source.
 
@@ -198,7 +198,7 @@ int Machine::Add(int a, int b) {  // Define Add
 | Canvas | Python emit |
 |--------|-------------|
 | **Declare** `Boot` (non-abstract) | `# (x) Declare Boot` + dim (ineffective — no forward-decl invent) |
-| **Declare** `Diagnose` (`isAbstract`) | `# abstract Diagnose` |
+| **Declare** `Diagnose` (`isAbstract`) | `# (x) Declare Diagnose` + dim |
 | **Define** `Boot` | in-class `def Boot(self):` + body |
 
 ```python
@@ -206,7 +206,7 @@ class Machine:
     # (x) Declare Boot
     def Boot(self):
         print("Booted")
-    # abstract Diagnose
+    # (x) Declare Diagnose
 ```
 
 **sourceMap:** Declare → `(x)` / abstract line only; Define → `def` header + body.
@@ -380,7 +380,7 @@ private:
 | Canvas | JavaScript emit |
 |--------|-----------------|
 | **Declare** `Boot` (non-abstract) | `// (x) Declare Boot` + dim |
-| **Declare** `Diagnose` (`isAbstract`) | `// abstract Diagnose` |
+| **Declare** `Diagnose` (`isAbstract`) | `// (x) Declare Diagnose` + dim |
 | **Define** `Boot` | in-class `Boot() { … }` |
 
 ```javascript
@@ -389,7 +389,7 @@ class Machine {
     Boot() {
         console.log("Booted");
     }
-    // abstract Diagnose
+    // (x) Declare Diagnose
 }
 ```
 
@@ -543,7 +543,7 @@ public class AdvancedClass : BaseClass, IDamageable {
 | Canvas | Rust emit |
 |--------|-----------|
 | **Declare** `Boot` (non-abstract) | `// (x) Declare Boot` + dim |
-| **Declare** `Diagnose` (`isAbstract`) | `// abstract Diagnose` |
+| **Declare** `Diagnose` (`isAbstract`) | `// (x) Declare Diagnose` + dim |
 | **Define** `Boot` | in-`impl` `pub fn Boot(&mut self) { … }` — **no** out-of-line invent |
 
 ```rust
@@ -552,7 +552,7 @@ impl Machine {
     pub fn Boot(&mut self) {
         println!("{}", "Booted");
     }
-    // abstract Diagnose
+    // (x) Declare Diagnose
 }
 ```
 
@@ -636,7 +636,7 @@ impl AdvancedClass {
 | Canvas | GDScript emit |
 |--------|---------------|
 | **Declare** `Boot` (non-abstract) | `# (x) Declare Boot` + dim |
-| **Declare** `Diagnose` (`isAbstract`) | `# abstract Diagnose` |
+| **Declare** `Diagnose` (`isAbstract`) | `# (x) Declare Diagnose` + dim |
 | **Define** `Boot` | in-class `func Boot() -> void:` + body |
 
 ```gdscript
@@ -644,7 +644,7 @@ class_name Machine
     # (x) Declare Boot
     func Boot() -> void:
         print("Booted")
-    # abstract Diagnose
+    # (x) Declare Diagnose
 ```
 
 ```gdscript
@@ -710,7 +710,7 @@ func on_calculate() -> void:
 | Canvas | Verse emit |
 |--------|------------|
 | **Declare** `Boot` (non-abstract) | `# (x) Declare Boot` + dim |
-| **Declare** `Diagnose` (`isAbstract`) | `# abstract Diagnose` |
+| **Declare** `Diagnose` (`isAbstract`) | `# (x) Declare Diagnose` + dim |
 | **Define** `Boot` | in-class `Boot<public>() : void =` + body |
 
 ```verse
@@ -718,7 +718,7 @@ Machine := class:
     # (x) Declare Boot
     Boot<public>() : void =
         Print("Booted")
-    # abstract Diagnose
+    # (x) Declare Diagnose
 ```
 
 ```verse

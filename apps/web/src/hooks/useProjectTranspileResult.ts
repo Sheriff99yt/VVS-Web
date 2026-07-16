@@ -49,6 +49,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
   } = useProject();
   const documents = useGraphDocuments();
   const [showUnsupportedComments] = useUiPreference('showUnsupportedComments');
+  const [showUserComments] = useUiPreference('showUserComments');
 
   return useMemo(() => {
     if (!documents) {
@@ -83,6 +84,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
 
     const result = emitProjectLikeCodePanel(snapshot, {
       emitUnsupportedComments: showUnsupportedComments,
+      emitUserComments: showUserComments,
     });
     return { result, fileOwners: fileOwnersForEmitResult(snapshot, result) };
   }, [
@@ -108,5 +110,6 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     graphContainers,
     installedLibrary,
     showUnsupportedComments,
+    showUserComments,
   ]);
 }

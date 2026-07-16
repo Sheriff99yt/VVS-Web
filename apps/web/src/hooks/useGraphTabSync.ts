@@ -13,6 +13,7 @@ import { GraphTab } from '@/contexts/ProjectContext';
 import { graphDisplayName } from '@/lib/graphTabs';
 import { useLatestRef } from '@/hooks/useLatestRef';
 import { clearEdgeSelectionFlags, clearNodeSelectionFlags } from '@/lib/graphSelection';
+import { normalizeParenting } from '@/lib/graphParenting';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
 function documentTabType(
@@ -179,7 +180,7 @@ export function useGraphTabSync({
       prevTabRef.current = activeTab;
       const doc = documentsRef.current.get(activeTab) ?? { nodes: [], edges: [] };
       const loaded = cloneDocument(doc);
-      setNodes(clearNodeSelectionFlags(loaded.nodes));
+      setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
       setEdges(clearEdgeSelectionFlags(loaded.edges));
       clearHistory();
       notifyMetadata();
@@ -295,7 +296,7 @@ export function useGraphTabSync({
     }
 
     const loaded = cloneDocument(nextDoc);
-    setNodes(clearNodeSelectionFlags(loaded.nodes));
+    setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
     setEdges(clearEdgeSelectionFlags(loaded.edges));
     clearHistory();
     prevTabRef.current = activeGraphTab;
@@ -323,7 +324,7 @@ export function useGraphTabSync({
         getProjectCodegenDefaults()
       );
       documentsRef.current.set(tab.id, doc);
-      setNodes(clearNodeSelectionFlags(doc.nodes));
+      setNodes(clearNodeSelectionFlags(normalizeParenting(doc.nodes)));
       setEdges(clearEdgeSelectionFlags(doc.edges));
       prevTabRef.current = tab.id;
       clearHistory();
@@ -348,7 +349,7 @@ export function useGraphTabSync({
       );
       const activeDoc = documentsRef.current.get(activeGraphTab) ?? { nodes: [], edges: [] };
       const loaded = cloneDocument(activeDoc);
-      setNodes(clearNodeSelectionFlags(loaded.nodes));
+      setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
       setEdges(clearEdgeSelectionFlags(loaded.edges));
       clearHistory();
       notifyMetadata();

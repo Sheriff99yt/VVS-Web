@@ -159,7 +159,8 @@ export function appendFunctionBody(
   environmentManifest?: ProjectEnvironmentManifest,
   sourceGraphNodeId?: string,
   /** Override pack bodyIndent (e.g. C++ out-of-line uses 4 spaces). */
-  indentOverride?: string
+  indentOverride?: string,
+  options?: { onBeforeNode?: (sourceGraphNodeId: string, indent: string) => void }
 ): void {
   const body = ir.functionBodies[funcId];
   const bodyStartLine = sink.lineCount + 1;
@@ -173,7 +174,10 @@ export function appendFunctionBody(
   const family = ir.codegenTarget?.family ?? 'python';
   const indent = indentOverride ?? bodyIndent(family);
   const ctx = printContextForIr(ir, indent, environmentManifest);
-  appendIrStatements(sink, body, ctx);
+  appendIrStatements(sink, body, ctx, {
+    emitUnsupportedComments: ir.emitUnsupportedComments,
+    onBeforeNode: options?.onBeforeNode,
+  });
   if (sourceGraphNodeId) {
     sink.tagRange(sourceGraphNodeId, bodyStartLine, sink.lineCount);
   }

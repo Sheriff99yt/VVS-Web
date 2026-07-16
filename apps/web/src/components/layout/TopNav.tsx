@@ -675,7 +675,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   </button>
                   <button onClick={() => { dispatchGraphAction('group-comment'); setOpenMenu(null); }} title={shortcutTitle('group-comment')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Group size={12} className="shrink-0 opacity-70" />
-                    Group
+                    Comment selection
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('group-comment')}</span>
                   </button>
                   <button onClick={() => { dispatchGraphAction('extract-function'); setOpenMenu(null); }} title={shortcutTitle('extract-function')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
@@ -684,8 +684,16 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   </button>
                   <button onClick={() => { dispatchGraphAction('ungroup-comment'); setOpenMenu(null); }} title={shortcutTitle('ungroup-comment')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <Ungroup size={12} className="shrink-0 opacity-70" />
-                    Ungroup
+                    Release from comment
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('ungroup-comment')}</span>
+                  </button>
+                  <button onClick={() => { dispatchGraphAction('toggle-comment-lock'); setOpenMenu(null); }} title={shortcutTitle('toggle-comment-lock')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                    Lock / unlock comment
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('toggle-comment-lock')}</span>
+                  </button>
+                  <button onClick={() => { dispatchGraphAction('snap-comment-members'); setOpenMenu(null); }} title={shortcutTitle('snap-comment-members')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                    Resize comment to fit members
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('snap-comment-members')}</span>
                   </button>
                   <button onClick={() => { dispatchGraphAction('disconnect-selection'); setOpenMenu(null); }} title={shortcutTitle('disconnect')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     Disconnect wires

@@ -19,7 +19,7 @@ description: >-
 - Strict errors block Generate: `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`
 - Function release menu (locked): **Call** / **Declare** / **Define** — not header-file focus
 - **C++ (U82):** Declare → in-class prototype; Define → out-of-line `Class::Method` after `};` (or separate `.cpp` graph). Never auto-split one graph into `.h`+`.cpp`.
-- **Other langs:** non-abstract Function Declare is ineffective → U66 `(x) Declare Name` + U67 dim (same as gated imports). Abstract still emits (`#`/`// abstract`, or C# real `abstract` prototype). Body stays on Define. **sourceMap:** Declare↔own emit only; Define↔header+body.
+- **Other langs:** non-abstract Function Declare is ineffective → U66 `(x) Declare Name` + U67 dim (same as gated imports). Abstract is native only on C++/C#; elsewhere also `(x)` + dim (e.g. Coverage Lab Declare Diagnose). Body stays on Define. **sourceMap:** Declare↔own emit only; Define↔header+body.
 
 ## Core Philosophy: No Hidden Magic
 

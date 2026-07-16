@@ -364,7 +364,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U68–U69, U71, U75, U77–U79** (comments [C], reverse highlight rethink, chain auto-layout, Go language, pack versions, Y-order). U64–U67, U70/U72–U74/U76, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
+**Active next (July 2026):** Phase 6 — **U71, U75, U77–U79** (highlight rethink, chain auto-layout, Go language, pack versions, Y-order). U64–U70, U72–U74/U76, U68–U69, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
 

@@ -164,6 +164,7 @@ export function CodePreviewPanel({
   const [showUnsupportedComments, setShowUnsupportedComments] = useUiPreference(
     'showUnsupportedComments'
   );
+  const [showUserComments, setShowUserComments] = useUiPreference('showUserComments');
 
   const extensionOptions = useMemo(
     () =>
@@ -232,6 +233,7 @@ export function CodePreviewPanel({
       environmentId,
       integration,
       emitUnsupportedComments: showUnsupportedComments,
+      emitUserComments: showUserComments,
     };
 
     return transpileGraph(
@@ -259,11 +261,12 @@ export function CodePreviewPanel({
     integration,
     classes,
     activeClassId,
-    syntaxPackLock,
     codegenCapabilities,
+    syntaxPackLock,
     projectResult,
     fileOwners,
     showUnsupportedComments,
+    showUserComments,
   ]);
 
   const [prevCompileState, setPrevCompileState] = useState(compileState);
@@ -562,6 +565,20 @@ export function CodePreviewPanel({
 
           {!isOrgGraph ? (
             <div className="flex items-center gap-1 border-l border-zinc-800 pl-1.5">
+              <button
+                type="button"
+                onClick={() => setShowUserComments(!showUserComments)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition-colors ${
+                  showUserComments
+                    ? 'border-sky-500/40 bg-sky-500/15 text-sky-300'
+                    : 'border-zinc-700 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
+                }`}
+                title="Show author Comment [C] lines"
+                aria-pressed={showUserComments}
+                aria-label="Show author Comment [C] lines"
+              >
+                {'//'}
+              </button>
               <button
                 type="button"
                 onClick={() => setShowUnsupportedComments(!showUnsupportedComments)}

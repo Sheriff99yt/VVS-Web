@@ -1,16 +1,78 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { NodeProps, NodeResizer } from '@xyflow/react';
+import { Lock, LockOpen, Maximize2 } from 'lucide-react';
+import { useGraphEdit } from '@/contexts/GraphEditContext';
+import {
+  isCommentLocked,
+  lockCommentMembers,
+  resizeCommentToFitMembers,
+  unlockCommentMembers,
+} from '@/lib/graphCommentMembership';
 import { VVSNodeData } from '@/types/graph';
 import styles from './VVSCommentNode.module.css';
 
 export function VVSCommentNode({
+  id,
   selected,
   data,
 }: NodeProps<import('@xyflow/react').Node<VVSNodeData>>) {
+  const { setNodes, setNodesWithHistory } = useGraphEdit();
   const isSelected = Boolean(selected);
   const customBorder = !isSelected && data.commentColor ? `${data.commentColor}99` : undefined;
+  const locked = Boolean(data.properties?.commentLocked);
+  const memberCount = Array.isArray(data.properties?.commentMemberIds)
+    ? (data.properties.commentMemberIds as unknown[]).length
+    : 0;
+  const label =
+    (typeof data.properties?.commentText === 'string' && data.properties.commentText) ||
+    data.label ||
+    'Comment';
+
+  const setLabel = useCallback(
+    (next: string) => {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== id) return n;
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              label: next,
+              properties: {
+                ...(n.data.properties ?? {}),
+                commentText: next,
+              },
+            },
+          };
+        })
+      );
+    },
+    [id, setNodes]
+  );
+
+  const toggleLock = useCallback(() => {
+    setNodesWithHistory((nds) => {
+      const comment = nds.find((n) => n.id === id);
+      if (!comment) return nds;
+      return isCommentLocked(comment)
+        ? unlockCommentMembers(nds, id)
+        : lockCommentMembers(nds, id);
+    });
+  }, [id, setNodesWithHistory]);
+
+  const resizeToFit = useCallback(() => {
+    setNodesWithHistory((nds) => resizeCommentToFitMembers(nds, id));
+  }, [id, setNodesWithHistory]);
+
+  const containerClass = [
+    styles.container,
+    locked ? styles.containerLocked : styles.containerUnlocked,
+    isSelected ? styles.containerSelected : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <>
@@ -21,13 +83,58 @@ export function VVSCommentNode({
         minHeight={100}
       />
       <div
-        className={`${styles.container} ${isSelected ? styles.containerSelected : ''}`}
+        className={containerClass}
         style={{
           ...(customBorder ? { borderColor: customBorder } : {}),
-          ...(data.commentColor ? { backgroundColor: `${data.commentColor}14` } : {}),
+          ...(data.commentColor
+            ? {
+                backgroundColor: locked
+                  ? `${data.commentColor}22`
+                  : `${data.commentColor}12`,
+              }
+            : {}),
         }}
       >
-        <div className={styles.header}>{data.label || 'Comment Box'}</div>
+        <div className={styles.header}>
+          <input
+            className={styles.titleInput}
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            onMouseDown={(e) => e.stopPropagation()}
+            placeholder="Comment"
+            aria-label="Comment text"
+          />
+          {memberCount > 0 ? (
+            <button
+              type="button"
+              className={styles.lockBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                resizeToFit();
+              }}
+              title="Resize to fit members (Ctrl+Shift+M)"
+              aria-label="Resize comment to fit members"
+            >
+              <Maximize2 size={12} />
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={styles.lockBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleLock();
+            }}
+            title={
+              locked
+                ? 'Unlock — comment moves alone; members stay put (L)'
+                : 'Lock — adopt nodes currently inside the comment body (L)'
+            }
+            aria-pressed={locked}
+          >
+            {locked ? <Lock size={12} /> : <LockOpen size={12} />}
+          </button>
+        </div>
         <div className={styles.body} />
       </div>
     </>

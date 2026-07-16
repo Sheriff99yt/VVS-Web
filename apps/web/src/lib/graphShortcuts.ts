@@ -5,6 +5,8 @@ export type GraphShortcutId =
   | 'duplicate'
   | 'group-comment'
   | 'ungroup-comment'
+  | 'toggle-comment-lock'
+  | 'snap-comment-members'
   | 'copy'
   | 'cut'
   | 'paste'
@@ -46,8 +48,22 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
     keysMac: '⌘⇧A',
     section: 'canvas',
   },
-  { id: 'group-comment', label: 'Group in comment', keysWin: 'Ctrl+Shift+G', keysMac: '⌘⇧G', section: 'canvas' },
-  { id: 'ungroup-comment', label: 'Ungroup from comment', keysWin: 'Ctrl+Shift+U', keysMac: '⌘⇧U', section: 'canvas' },
+  { id: 'group-comment', label: 'Comment selection', keysWin: 'C', keysMac: 'C', section: 'canvas' },
+  { id: 'ungroup-comment', label: 'Release from comment', keysWin: 'Ctrl+Shift+U', keysMac: '⌘⇧U', section: 'canvas' },
+  {
+    id: 'toggle-comment-lock',
+    label: 'Lock / unlock comment',
+    keysWin: 'L',
+    keysMac: 'L',
+    section: 'canvas',
+  },
+  {
+    id: 'snap-comment-members',
+    label: 'Resize comment to fit members',
+    keysWin: 'Ctrl+Shift+M',
+    keysMac: '⌘⇧M',
+    section: 'canvas',
+  },
   { id: 'disconnect', label: 'Disconnect wires', keysWin: 'Alt+D', keysMac: '⌥D', section: 'canvas' },
   { id: 'copy', label: 'Copy', keysWin: 'Ctrl+C', keysMac: '⌘C', section: 'canvas' },
   { id: 'cut', label: 'Cut', keysWin: 'Ctrl+X', keysMac: '⌘X', section: 'canvas' },

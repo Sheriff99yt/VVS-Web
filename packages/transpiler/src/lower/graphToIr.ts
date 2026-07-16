@@ -23,7 +23,7 @@ import {
 } from '../nodeHelpers';
 import type { CodegenContext } from '../generate';
 import { buildIrMembers, resolveActiveClass, type BuildMembersResult } from './buildMembers';
-import type {
+import { collectUserComments } from './userComments';import type {
   IrEventHandler,
   IrExpr,
   IrModule,
@@ -1066,6 +1066,8 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     members: memberBuild.members,
     activeClass,
     emitUnsupportedComments: ctx.emitUnsupportedComments !== false,
+    emitUserComments: ctx.emitUserComments !== false,
+    userComments: collectUserComments(nodes),
   };
 }
 

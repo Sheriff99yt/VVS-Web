@@ -16,7 +16,7 @@
         set Ready = true
         Print("Booted")
         Sensor.on_tick()
-    # abstract Diagnose
+    # (x) Declare Diagnose
     # (x) Declare Shutdown
     Shutdown<public>() : void =
         set Ready = false

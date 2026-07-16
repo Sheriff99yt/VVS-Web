@@ -48,7 +48,7 @@ Class homes: **target** is one file per container graph (all classes). Do **not*
 | **Allowed layout** | Language-required structure that still traces to canvas nodes | Rust `struct` then `impl` when methods appear (`ensureRustImpl`); C++ Declare → in-class prototype + Define → out-of-line `Class::Method` after `};` (U82); empty-body `pass` when a handler exists but has no statements; access-section separators from pack slots when visibility is set on the node |
 | **Require canvas node** | Semantic requirement must appear as a define/use/Import node | `class_define` for a class shell; Import Declare for `#include` / `import`; `isAsync` on `function_define` for async keywords; pin/symbol type for typed params |
 
-**Non-C++ Function Declare:** ineffective non-abstract Declare uses U66 `(x) Declare Name` — **not** silent skip. Abstract still emits a comment (or C# real `abstract` prototype). Only `cpp` stays in `FUNCTION_DECLARE_PROTOTYPE_LANGS`.
+**Non-C++ Function Declare:** ineffective Declare uses U66 `(x) Declare Name` — **not** silent skip. That includes **abstract** on languages without a real abstract/pure form (Python, JS, Rust, GDScript, Verse). C# keeps a real `abstract` prototype; C++ keeps `= 0`. Only `cpp` stays in `FUNCTION_DECLARE_PROTOTYPE_LANGS`.
 
 ---
 
@@ -102,7 +102,7 @@ These systems are **required** and must stay:
 | Parallel type overlay vs pin type | **TypeRef** unifies builtin / enum / class / Array / Map — [user_types.md](user_types.md) |
 | Verse Array Push stub comment | pack `ArrayPush` template |
 | Rust Sensor dropped inheritance | ClassDecl `extendsType` → Rust `base: Machine` composition field |
-| Abstract invented `pass` / empty body | Ineffective langs emit `# abstract Name` / `// abstract Name` only |
+| Abstract invented `pass` / empty body | Non-native langs: U66 `(x) Declare Name` + dim; C# real prototype; C++ `= 0` |
 | Multi-class one graph | **Locked:** one graph → one file (all classes). Per-class `preferFallbackOverModuleFile` was interim — migrate to graph emit (U58). No split-class profile. |
 | Unit tests ≠ Code panel | Locked: verify via `extract_test_project_outputs.ts` / `useProjectTranspileResult` |
 | Switch selector temp (`_vvs_sel`) | Pack `SwitchSelectBind` (py/gd/rs) + selector `expressionSpans` on all switch printers; name still TS `SWITCH_SEL_TEMP` — U64a |

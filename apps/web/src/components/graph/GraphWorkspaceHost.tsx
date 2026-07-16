@@ -10,6 +10,7 @@ import { GraphEditProvider } from '@/contexts/GraphEditContext';
 import { useProject } from '@/contexts/ProjectContext';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { VVSNode, VVSEdge } from '@/types/graph';
+import { appendUnlockedCommentFollowChanges } from '@/lib/graphCommentMembership';
 import {
   dualWriteLibraryImportDefines,
   type LibraryImportPayload,
@@ -127,22 +128,23 @@ export function GraphWorkspaceHost({
 
   const onNodesChange = useCallback(
     (changes: NodeChange<VVSNode>[]) => {
-      const isDragging = changes.some(
+      const withFollow = appendUnlockedCommentFollowChanges(nodes, changes);
+      const isDragging = withFollow.some(
         (c) => c.type === 'position' && c.dragging === true
       );
-      const dragEnded = changes.some(
+      const dragEnded = withFollow.some(
         (c) => c.type === 'position' && c.dragging === false
       );
       isDraggingRef.current = isDragging;
 
-      const isSignificant = changes.some(
+      const isSignificant = withFollow.some(
         (c) =>
           c.type === 'add' ||
           c.type === 'remove' ||
           c.type === 'replace' ||
           (c.type === 'position' && c.dragging === false)
       );
-      onNodesChangeBase(changes);
+      onNodesChangeBase(withFollow);
       if (isSignificant) {
         startTransition(() => markCurrentTabDirty());
       }
@@ -150,7 +152,7 @@ export function GraphWorkspaceHost({
         requestAnimationFrame(() => scheduleMetadataSync(true));
       }
     },
-    [onNodesChangeBase, markCurrentTabDirty, scheduleMetadataSync]
+    [nodes, onNodesChangeBase, markCurrentTabDirty, scheduleMetadataSync]
   );
 
   const onEdgesChange = useCallback(

@@ -51,11 +51,12 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     expect(code).not.toContain('virtual void Boot() {');
   });
 
-  test('Python — async Shutdown; abstract as comment (no invented body/keywords)', () => {
+  test('Python — async Shutdown; abstract Diagnose → (x) (no invented body)', () => {
     const code = transpileMachine('python');
     expect(code).toContain('async def Shutdown(self):');
     expect(code).toContain('def Boot(self):');
-    expect(code).toContain('# abstract Diagnose');
+    expect(code).toContain('# (x) Declare Diagnose');
+    expect(code).not.toContain('# abstract Diagnose');
     expect(code).not.toContain('def Diagnose(self):');
     expect(code).not.toContain('virtual');
     expect(code).not.toContain('protected');
@@ -63,11 +64,12 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     expect(code).toContain('from enum import Enum');
   });
 
-  test('JavaScript — static Serial and async Shutdown; abstract comment', () => {
+  test('JavaScript — static Serial and async Shutdown; abstract Diagnose → (x)', () => {
     const code = transpileMachine('javascript');
     expect(code).toContain('static Serial = 0');
     expect(code).toContain('async Shutdown()');
-    expect(code).toContain('// abstract Diagnose');
+    expect(code).toContain('// (x) Declare Diagnose');
+    expect(code).not.toContain('// abstract Diagnose');
     expect(code).not.toContain('virtual');
   });
 

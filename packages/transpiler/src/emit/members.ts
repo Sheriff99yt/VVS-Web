@@ -38,6 +38,10 @@ export interface MemberEmitHooks {
   onBeforeField?: () => void;
   /** Before emitting a method body (FunctionDecl / EventDecl with handler). */
   onBeforeMethod?: () => void;
+  /** Before any member whose sourceGraphNodeId is known — user Comment [C] attach point. */
+  onBeforeMemberNode?: (sourceGraphNodeId: string, indent: string) => void;
+  /** Before flow statements inside function / handler bodies. */
+  onBeforeFlowNode?: (sourceGraphNodeId: string, indent: string) => void;
   /**
    * C++: queue FunctionDecl with emitBody for out-of-line emit after class close.
    * Return true when deferred (caller must not emit in-class).
@@ -205,7 +209,8 @@ function appendVariableDecl(
 function appendEventDefinition(
   sink: CodeSink,
   ir: IrModule,
-  member: Extract<IrMemberDecl, { kind: 'EventDecl' }>
+  member: Extract<IrMemberDecl, { kind: 'EventDecl' }>,
+  onBeforeFlowNode?: (sourceGraphNodeId: string, indent: string) => void
 ): void {
   const handlerNodeId = member.handlerSourceGraphNodeId;
   if (!handlerNodeId) return;
@@ -224,6 +229,7 @@ function appendEventDefinition(
     defineNodeId: member.sourceGraphNodeId,
     memberProperties: member.properties,
     paramTypes: member.symbol.parameters.map((p) => p.type),
+    onBeforeFlowNode,
   });
 }
 
@@ -288,7 +294,8 @@ function appendFunctionDeclare(
 function appendFunctionDefinition(
   sink: CodeSink,
   ir: IrModule,
-  member: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>
+  member: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>,
+  onBeforeFlowNode?: (sourceGraphNodeId: string, indent: string) => void
 ): void {
   const { symbol } = member;
   const emptyLine = emptyFunctionBodyLine(ir.targetLanguage);
@@ -321,7 +328,9 @@ function appendFunctionDefinition(
     member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
   sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
 
-  appendFunctionBody(sink, ir, symbol.id, emptyLine, ir.environmentManifest, defineNodeId);
+  appendFunctionBody(sink, ir, symbol.id, emptyLine, ir.environmentManifest, defineNodeId, undefined, {
+    onBeforeNode: onBeforeFlowNode,
+  });
 
   const tabClose = renderFunctionTabClose(ir.targetLanguage);
   if (tabClose) {
@@ -337,7 +346,8 @@ export function appendCppOutOfLineFunction(
   sink: CodeSink,
   ir: IrModule,
   member: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>,
-  className: string
+  className: string,
+  onBeforeFlowNode?: (sourceGraphNodeId: string, indent: string) => void
 ): void {
   const { symbol } = member;
   if (sink.lineCount > 0) sink.appendRaw('');
@@ -364,7 +374,8 @@ export function appendCppOutOfLineFunction(
     '    // empty',
     ir.environmentManifest,
     defineNodeId,
-    '    '
+    '    ',
+    { onBeforeNode: onBeforeFlowNode }
   );
 
   sink.appendRaw(renderFunctionOutOfLineClose('cpp'));
@@ -412,6 +423,21 @@ export function appendIrMembersInOrder(
   hooks: MemberEmitHooks = {}
 ): void {
   for (const member of ir.members) {
+    const nodeId =
+      'sourceGraphNodeId' in member && typeof member.sourceGraphNodeId === 'string'
+        ? member.sourceGraphNodeId
+        : undefined;
+    if (nodeId) {
+      // Match indent of the emitted construct (fields/methods are member-chain indented).
+      const indent =
+        member.kind === 'VariableDecl' ||
+        member.kind === 'FunctionDecl' ||
+        member.kind === 'EventDecl'
+          ? memberChainIndentFor(printContextForIr(ir, '', ir.environmentManifest))
+          : '';
+      hooks.onBeforeMemberNode?.(nodeId, indent);
+    }
+
     switch (member.kind) {
       case 'ModuleImport':
       case 'ImportClass':
@@ -461,12 +487,26 @@ export function appendIrMembersInOrder(
             ensureCppVisibility(sink, ir, state, vis);
           }
         }
-        appendFunctionDefinition(sink, ir, member);
+        appendFunctionDefinition(sink, ir, member, hooks.onBeforeFlowNode);
         break;
       }
       case 'EventDecl': {
-        // event_member without an On handler has no text construct (handler owns the method).
-        if (!member.handlerSourceGraphNodeId) break;
+        // Unpaired Event Declare → U66 `(x)` (never silent skip). Paired On owns the method body.
+        if (!member.handlerSourceGraphNodeId) {
+          if (ir.emitUnsupportedComments !== false) {
+            const ctx = printContextForIr(ir, '', ir.environmentManifest);
+            const indent = memberChainIndentFor(ctx);
+            const prefix = commentPrefixFromPack(ctx);
+            const label =
+              (typeof member.properties?.name === 'string' && member.properties.name.trim()) ||
+              member.symbol.name;
+            sink.appendTagged({
+              nodeId: member.sourceGraphNodeId,
+              text: `${indent}${prefix}(x) Declare ${label}`,
+            });
+          }
+          break;
+        }
         hooks.onBeforeMethod?.();
         if (ir.targetLanguage === 'cpp') {
           const vis = String(
@@ -476,7 +516,7 @@ export function appendIrMembersInOrder(
           );
           ensureCppVisibility(sink, ir, state, vis);
         }
-        appendEventDefinition(sink, ir, member);
+        appendEventDefinition(sink, ir, member, hooks.onBeforeFlowNode);
         break;
       }
     }

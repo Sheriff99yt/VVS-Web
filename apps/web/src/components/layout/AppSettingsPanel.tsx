@@ -20,6 +20,7 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
   const [showUnsupportedComments, setShowUnsupportedComments] = useUiPreference(
     'showUnsupportedComments'
   );
+  const [showUserComments, setShowUserComments] = useUiPreference('showUserComments');
   const {
     codeOpen,
     graphNavOpen,
@@ -53,6 +54,12 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
           description="Emit comment lines for language-ineffective nodes in the code panel"
           checked={showUnsupportedComments}
           onChange={setShowUnsupportedComments}
+        />
+        <ToggleRow
+          label="Author comments"
+          description="Emit Comment [C] box text in the code panel (separate from (x))"
+          checked={showUserComments}
+          onChange={setShowUserComments}
         />
       </section>
 

@@ -401,4 +401,23 @@ export interface IrModule {
    * When false, mismatched imports are omitted (legacy silent skip).
    */
   emitUnsupportedComments?: boolean;
+  /**
+   * When true (default), author Comment [C] boxes emit pack-prefixed lines (U68/U69).
+   * Independent of emitUnsupportedComments.
+   */
+  emitUserComments?: boolean;
+  /**
+   * Author comments from `vvs_comment_node`. Emit before `beforeNodeId` when set;
+   * otherwise as orphan file-scope lines (after imports), Y-ordered.
+   */
+  userComments?: IrUserComment[];
+}
+
+/** Canvas Comment [C] — author text, never `(x)`. */
+export interface IrUserComment {
+  sourceGraphNodeId: string;
+  text: string;
+  absoluteY: number;
+  /** Emit immediately before this graph node's codegen (first wrapped child). */
+  beforeNodeId?: string;
 }

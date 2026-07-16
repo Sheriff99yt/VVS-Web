@@ -872,6 +872,20 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           '(x) comment lines for ineffective nodes (gated imports + non-C++ Function Declare); canvas dim. Toggles: Code panel comments + TopNav Dim. Shared nodeEffectiveness resolver.',
         status: 'done',
       },
+      {
+        id: 'comment-c-u68',
+        title: 'Comment [C] on selection (U68)',
+        description:
+          'Comment selected nodes; soft memberIds; lock = adopt body contents; unlock = free peers + position follow; resize-to-fit on demand; dashed vs solid. Pack prefix — never (x).',
+        status: 'done',
+      },
+      {
+        id: 'user-comments-toggle-u69',
+        title: 'Code panel user-comments toggle (U69)',
+        description:
+          'showUserComments / emitUserComments — independent of (x) unsupported comments.',
+        status: 'done',
+      },
     ],
   },
 ];
@@ -884,20 +898,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     phase: 6,
     emphasis: 'active',
     items: [
-      {
-        id: 'comment-c-u68',
-        title: 'Comment [C] on selection (U68)',
-        description:
-          'Comment selected nodes; generated comment lines ordered by canvas Y. Lock toggle default off (free move/resize); on locks group as today.',
-        status: 'planned',
-      },
-      {
-        id: 'user-comments-toggle-u69',
-        title: 'Code panel user-comments toggle (U69)',
-        description:
-          'Separate from (x) unsupported comments â€” show/hide author comment lines in the Code preview.',
-        status: 'planned',
-      },
       {
         id: 'highlight-reverse-u71',
         title: 'Codeâ†”graph highlight rethink (U71)',
@@ -929,8 +929,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'y-order-rethink-u79',
         title: 'Investigate canvas Y â†’ code order (U79)',
         description:
-          'Audit member/event/flow emit vs position.y (topo + Y tie-break, event peers, comments). Rethink when chain wires and vertical height conflict for authors.',
-        status: 'planned',
+          'Comment attach uses topmost member absolute Y (locked). Still open: full member/event/flow rethink when chain wires and vertical height conflict.',
+        status: 'partial',
       },
     ],
   },

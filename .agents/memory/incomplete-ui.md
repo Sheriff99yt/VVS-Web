@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-16  
-**Depth-first:** Sections **1–12** complete (U66/U67 shipped). **§13–§14** — U70 done (stub); U71 partial (reverse select); U72–U74/U76 done; U68–U69/U75/U77–U79 open.  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **5.5 / 10** · §14 **0 / 2** · Cross-class dispatch + TypeRef + U64–U67 shipped
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U70/U72–U74/U76 done; U71/U79 partial; U75/U77–U78 open.
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **7.5 / 10** · §14 **0.5 / 2** · Cross-class dispatch + TypeRef + U64–U69 shipped
 
 ## Status legend
 
@@ -148,7 +148,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13–§14 open (U68–U79):** comments → reverse highlight → chrome/Output → chain layout → JSON → Go → Pack versions → **Y-order rethink**. Prefer U68/U71/U79 early (fidelity-adjacent). Older UI rows (§1–12) complete.
+**§13–§14 open (U71, U75, U77–U79):** reverse highlight → chain layout → Go → Pack versions → **Y-order rethink** (comment slice done). Prefer U71/U79 remainder early. U68/U69 shipped complete.
 
 ---
 
@@ -232,8 +232,8 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U68 | Comment **[C]** on selection; emit by canvas **Y**; **lock toggle** (default off = free move/resize; on = group lock as today) | **Open** | Extend comment nodes; codegen inserts comment lines ordered by `position.y`; lock = current parent/group behavior |
-| U69 | Code panel toggle for **user-added comments** (separate from `(x)` unsupported) | **Open** | Pref next to Code language / unsupported toggle |
+| U68 | Comment **[C]** on selection; soft `memberIds`; **lock** = move-comment-moves-members (+ overlap recapture); **unlock** = free peers + AABB follow + snap; dashed vs solid | **Done** | `graphCommentMembership.ts`, `VVSCommentNode`; pack prefix; never `(x)` |
+| U69 | Code panel toggle for **user-added comments** (separate from `(x)` unsupported) | **Done** | `showUserComments` / `emitUserComments` next to `(x)` |
 | U70 | AI / MCP panel — paste IDE/CLI config; **local MCP** on device; dangerous-tools consent | **Done** (stub) | Paste Cursor/Claude + CLI hint; `mcpAllowDangerousTools` pref; hosted probe gated |
 | U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Partial** | Reverse select via `sourceMapReverse` + CodeMirror dblclick; full sourceMap rethink still open |
 | U72 | Unify **TopNav right** button cluster styles | **Done** | Shared zinc border icon buttons (Bot / Settings) |
@@ -254,7 +254,7 @@ Top-level **views** beyond canvas (Pack versions is the first named; more TBD).
 | # | Item | Status | Spec |
 |---|------|--------|------|
 | U78 | **Pack versions** manager view | **Open** | Pack releases **accumulate** (never overwrite). List installed versions; user sets **active**. GitHub check prompts to **add** a version. First of multiple new views (Library git catalog, etc.) |
-| U79 | **Investigate / rethink canvas Y → code order** | **Open** | Audit emit order vs `position.y` (member topo+Y, event peers, comments U68). Rethink system when exec chain and vertical height disagree for authors |
+| U79 | **Investigate / rethink canvas Y → code order** | **Partial** | **Comments locked:** attach to topmost member absolute Y; orphans by comment Y. Still open: member/event/flow when chain wires vs vertical height disagree |
 | U80 | **Same-file function emit** — stop per-function output files; function tabs = **Edit function body** only | **Done** | `transpileProject` no longer emits function-tab files; fixtures rev 2; goldens refreshed |
 | U81 | **Function Declare ≠ Define** — `function_define` (Declare, chain) + `function_implement` (Define, chain placement); no stub without Define; no legacy fold | **Done** | Emit/order/sourceMap; tree badges; release menu; Test Project fixtures on chain |
 | U82 | **C++ honest Declare/Define emit** — non-abstract Declare → prototype; Define out-of-line / dual-graph `.h`+`.cpp` (no auto-split) | **Done** | Lowering + `FunctionDefOutOfLineOpen`; two-phase C++ emit; impl-only graphs; Coverage Lab / First Graph C++ goldens; two-graph test |

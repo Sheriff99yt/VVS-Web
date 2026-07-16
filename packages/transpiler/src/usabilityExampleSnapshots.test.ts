@@ -156,7 +156,8 @@ describe('usability example test snapshots', () => {
         if (lang === 'csharp') {
           expect(content).toMatch(/abstract\s+void\s+Diagnose/);
         } else {
-          expect(content).toContain('abstract Diagnose');
+          expect(content).toContain('(x) Declare Diagnose');
+          expect(content).not.toContain('abstract Diagnose');
         }
       }
     });
@@ -182,9 +183,9 @@ describe('usability example test snapshots', () => {
           expect(absLine).toBeGreaterThan(0);
           expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(absLine);
         } else {
-          const absLine = lines.findIndex((l) => l.includes('abstract Diagnose')) + 1;
-          expect(absLine).toBeGreaterThan(0);
-          expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(absLine);
+          const xDiag = lines.findIndex((l) => l.includes('(x) Declare Diagnose')) + 1;
+          expect(xDiag).toBeGreaterThan(0);
+          expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(xDiag);
         }
       });
     }

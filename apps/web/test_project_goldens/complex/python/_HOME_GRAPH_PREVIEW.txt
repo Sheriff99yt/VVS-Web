@@ -16,7 +16,7 @@ class Machine:
         self.Ready = True
         print("Booted")
         Sensor().on_tick()
-    # abstract Diagnose
+    # (x) Declare Diagnose
     # (x) Declare Shutdown
     async def Shutdown(self):
         self.Ready = False

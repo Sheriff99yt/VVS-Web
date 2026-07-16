@@ -16,7 +16,7 @@ class_name Machine
         self.Ready = true
         print("Booted")
         Sensor.new().on_tick()
-    # abstract Diagnose
+    # (x) Declare Diagnose
     # (x) Declare Shutdown
     func Shutdown() -> void:
         self.Ready = false

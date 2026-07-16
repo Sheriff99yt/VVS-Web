@@ -12,6 +12,8 @@ export function emitProjectLikeCodePanel(
     targetLanguage?: ProjectSnapshot['targetLanguage'];
     /** When true (default), emit `(x)` comments for language-gated ineffective imports. */
     emitUnsupportedComments?: boolean;
+    /** When true (default), emit author Comment [C] lines (U69). */
+    emitUserComments?: boolean;
   }
 ): TranspileResult {
   const targetLanguage = options?.targetLanguage ?? snapshot.targetLanguage;
@@ -31,6 +33,7 @@ export function emitProjectLikeCodePanel(
         environmentId: snapshot.environmentId,
         integration: snapshot.integration,
         emitUnsupportedComments: options?.emitUnsupportedComments !== false,
+        emitUserComments: options?.emitUserComments !== false,
       },
       {
         targetLanguage,

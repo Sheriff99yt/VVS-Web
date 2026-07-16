@@ -16,6 +16,12 @@ import {
   type MemberState,
 } from './members';
 import {
+  buildUserCommentEmitState,
+  emitOrphanUserComments,
+  emitRemainingUserComments,
+  emitUserCommentsBeforeNode,
+} from './userComments';
+import {
   appendEventHandlerDefinition,
   renderClassModuleClose,
   renderClassModuleOpen,
@@ -23,6 +29,7 @@ import {
   renderFunctionTabClose,
 } from './shell';
 import { appendIrStatements } from './sinkStatements';
+import { collectIrEmitNodeIds } from '../lower/userComments';
 
 function resolveCppClassName(ir: IrModule): string {
   const classDecl = ir.members.find(
@@ -36,12 +43,17 @@ function resolveCppClassName(ir: IrModule): string {
 /**
  * Emit a class module with **canvas member-chain order = source order** (1:1).
  * C++: Declare → in-class prototype; Define → out-of-line after `};` (U82).
- * Other langs: Define emits full method at chain position; non-abstract Declare is silent.
+ * Other langs: Define emits full method at chain position; non-abstract Declare → U66 `(x)`.
+ * Abstract Declare is real only on C++/C#; elsewhere also U66 `(x)` + dim.
  */
 export function emitClassModule(
   sink: CodeSink,
   ir: IrModule,
-  options?: { skipImports?: boolean }
+  options?: {
+    skipImports?: boolean;
+    /** Multi-class merge: only the first class may flush unowned attach targets as orphans. */
+    allowUnownedCommentAttachAsOrphan?: boolean;
+  }
 ): void {
   const classDecl = ir.members.find(
     (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
@@ -96,12 +108,20 @@ export function emitClassModule(
 
   const cppOutOfLine: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>[] = [];
 
+  const userCommentState = buildUserCommentEmitState(ir);
+  const beforeUserComment = (nodeId: string | undefined, indent = '') => {
+    emitUserCommentsBeforeNode(sink, ir, userCommentState, nodeId, indent);
+  };
+  emitOrphanUserComments(sink, ir, userCommentState);
+
   appendIrMembersInOrder(sink, ir, state, {
     onClassDecl: openClassShell,
     // Rust layout only — never invent a class shell from fields/methods without ClassDecl.
     onBeforeMethod: () => {
       ensureRustImpl();
     },
+    onBeforeMemberNode: beforeUserComment,
+    onBeforeFlowNode: beforeUserComment,
     deferCppOutOfLineMethod: (member) => {
       if (lang !== 'cpp') return false;
       cppOutOfLine.push(member);
@@ -114,9 +134,11 @@ export function emitClassModule(
   if (ir.eventHandlers.length > 0) {
     if (state.classOpened) ensureRustImpl();
     for (const handler of ir.eventHandlers) {
+      beforeUserComment(handler.sourceGraphNodeId, '');
       appendEventHandlerDefinition(sink, ir, handler, handler.sourceGraphNodeId, {
         leadingBlankLine: true,
         memberProperties: handler.properties,
+        onBeforeFlowNode: beforeUserComment,
       });
     }
   }
@@ -124,7 +146,10 @@ export function emitClassModule(
   // Script body when there is no class shell (no class_define).
   if (!classDecl && ir.onStartBody.length > 0) {
     const ctx = printContextForIr(ir, '');
-    appendIrStatements(sink, ir.onStartBody, ctx);
+    appendIrStatements(sink, ir.onStartBody, ctx, {
+      emitUnsupportedComments: ir.emitUnsupportedComments,
+      onBeforeNode: beforeUserComment,
+    });
   }
 
   if (state.classOpened && supportedClassLang) {
@@ -141,15 +166,33 @@ export function emitClassModule(
   if (lang === 'cpp' && cppOutOfLine.length > 0) {
     const className = resolveCppClassName(ir);
     for (const member of cppOutOfLine) {
-      appendCppOutOfLineFunction(sink, ir, member, className);
+      appendCppOutOfLineFunction(sink, ir, member, className, beforeUserComment);
     }
   }
+
+  // Never silently drop Comment [C] whose attach target was not visited.
+  const emitNodeIds = collectIrEmitNodeIds({
+    members: ir.members,
+    onStartBody: ir.onStartBody,
+    eventHandlers: ir.eventHandlers,
+    functionBodies: ir.functionBodies,
+  });
+  emitRemainingUserComments(sink, ir, userCommentState, {
+    emitNodeIds,
+    allowUnownedAttachAsOrphan: options?.allowUnownedCommentAttachAsOrphan !== false,
+  });
 }
 
 export function emitFunctionTab(sink: CodeSink, ir: IrModule): void {
   const func = ir.activeFunction!;
   const lang = ir.targetLanguage;
   const emptyLine = emptyFunctionBodyLine(lang);
+
+  const userCommentState = buildUserCommentEmitState(ir);
+  const beforeUserComment = (nodeId: string | undefined, indent = '') => {
+    emitUserCommentsBeforeNode(sink, ir, userCommentState, nodeId, indent);
+  };
+  emitOrphanUserComments(sink, ir, userCommentState);
 
   sink.appendRaw(
     formatFunctionDefHeader(func, lang, functionNeedsAsync(ir, func.id, {
@@ -165,10 +208,14 @@ export function emitFunctionTab(sink: CodeSink, ir: IrModule): void {
     })
   );
 
-  appendFunctionBody(sink, ir, func.id, emptyLine, ir.environmentManifest);
+  appendFunctionBody(sink, ir, func.id, emptyLine, ir.environmentManifest, undefined, undefined, {
+    onBeforeNode: beforeUserComment,
+  });
 
   const tabClose = renderFunctionTabClose(lang);
   if (tabClose) sink.appendRaw(tabClose);
+
+  emitRemainingUserComments(sink, ir, userCommentState);
 }
 
 /** @deprecated Use emitClassModule — kept for callers keyed by language name. */

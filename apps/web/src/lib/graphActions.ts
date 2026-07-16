@@ -9,6 +9,8 @@ export type GraphAction =
   | 'zoom-fit'
   | 'group-comment'
   | 'ungroup-comment'
+  | 'toggle-comment-lock'
+  | 'snap-comment-members'
   | 'extract-function'
   | 'select-all'
   | 'select-similar';

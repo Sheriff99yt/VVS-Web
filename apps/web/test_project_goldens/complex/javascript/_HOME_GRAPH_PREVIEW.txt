@@ -17,7 +17,7 @@ class Machine {
         console.log("Booted");
         new Sensor().on_tick();
     }
-    // abstract Diagnose
+    // (x) Declare Diagnose
     // (x) Declare Shutdown
     async Shutdown() {
         this.Ready = false;

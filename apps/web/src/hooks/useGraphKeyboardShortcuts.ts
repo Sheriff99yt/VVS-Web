@@ -124,9 +124,28 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
         return;
       }
 
+      // U68: plain C comments the selection (Ctrl/Cmd+C remains copy).
+      if (key === 'c' && !mod && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        dispatchGraphAction('group-comment');
+        return;
+      }
+
       if (mod && e.shiftKey && key === 'u') {
         e.preventDefault();
         dispatchGraphAction('ungroup-comment');
+        return;
+      }
+
+      if (key === 'l' && !mod && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        dispatchGraphAction('toggle-comment-lock');
+        return;
+      }
+
+      if (mod && e.shiftKey && key === 'm') {
+        e.preventDefault();
+        dispatchGraphAction('snap-comment-members');
         return;
       }
 

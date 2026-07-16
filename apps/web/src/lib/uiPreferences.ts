@@ -28,6 +28,8 @@ export interface UiPreferences {
   detailsPanelOffsetTop: number;
   /** U66: emit `(x)` comment lines for language-ineffective nodes (default on). */
   showUnsupportedComments: boolean;
+  /** U69: emit author Comment [C] lines in Code preview (default on). Separate from `(x)`. */
+  showUserComments: boolean;
   /** U67: dim language-ineffective nodes on the canvas (default on). */
   dimUnsupportedNodes: boolean;
   /** U70: allow MCP tools that can mutate/delete graphs (default off). */
@@ -51,6 +53,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   detailsPanelOffsetRight: 10,
   detailsPanelOffsetTop: 10,
   showUnsupportedComments: true,
+  showUserComments: true,
   dimUnsupportedNodes: true,
   mcpAllowDangerousTools: false,
 };

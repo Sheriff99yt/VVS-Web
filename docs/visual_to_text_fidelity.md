@@ -134,17 +134,17 @@ This ensures VVS acts as an **educational tool**. Users learn exactly what is re
 
 ### Function Declare / Define per language (U81 / U82 / U66)
 
-All seven targets follow the same canvas roles. Only **C++** is in `FUNCTION_DECLARE_PROTOTYPE_LANGS`. Non-abstract Declare elsewhere is **ineffective** → U66 `(x) Declare Name` (never silent skip). C# abstract keeps a real prototype; C# / Rust never invent out-of-line definitions.
+All seven targets follow the same canvas roles. Only **C++** is in `FUNCTION_DECLARE_PROTOTYPE_LANGS`. Non-abstract Declare elsewhere is **ineffective** → U66 `(x) Declare Name` (never silent skip). **Abstract** is a real construct only on **C++** / **C#** (aligned with `modifierEffectiveness`); elsewhere abstract Declare is also U66 `(x)` + U67 dim — never invent `# abstract` stubs. C# / Rust never invent out-of-line definitions.
 
 | Target | Declare (non-abstract) | Declare (`isAbstract`) | Define |
 |--------|------------------------|------------------------|--------|
 | **C++** | in-class prototype | `virtual … = 0;` | out-of-line `Class::Method` after `};` |
-| **Python** | `# (x) Declare Name` | `# abstract Name` | in-class `def` + body |
-| **JavaScript** | `// (x) Declare Name` | `// abstract Name` | in-class method + body |
+| **Python** | `# (x) Declare Name` | `# (x) Declare Name` + dim | in-class `def` + body |
+| **JavaScript** | `// (x) Declare Name` | `// (x) Declare Name` + dim | in-class method + body |
 | **C#** | `// (x) Declare Name` | real `abstract void Name();` | in-class method + body |
-| **Rust** | `// (x) Declare Name` | `// abstract Name` | in-`impl` method + body |
-| **GDScript** | `# (x) Declare Name` | `# abstract Name` | in-class `func` + body |
-| **Verse** | `# (x) Declare Name` | `# abstract Name` | in-class method + body |
+| **Rust** | `// (x) Declare Name` | `// (x) Declare Name` + dim | in-`impl` method + body |
+| **GDScript** | `# (x) Declare Name` | `# (x) Declare Name` + dim | in-class `func` + body |
+| **Verse** | `# (x) Declare Name` | `# (x) Declare Name` + dim | in-class method + body |
 
 **sourceMap:** Declare maps only to its own emit (prototype, `(x)`, or abstract line); Define maps to the method/`def` header + body — never dual-tag the Define line onto Declare.
 

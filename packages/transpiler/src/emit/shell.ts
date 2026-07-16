@@ -201,6 +201,7 @@ export function appendEventHandlerDefinition(
     defineNodeId?: string;
     memberProperties?: Record<string, unknown>;
     paramTypes?: (PinType | string | undefined)[];
+    onBeforeFlowNode?: (sourceGraphNodeId: string, indent: string) => void;
   }
 ): void {
   const lang = ir.targetLanguage;
@@ -246,7 +247,11 @@ export function appendEventHandlerDefinition(
   const family = targetLanguageToFamily(lang) ?? 'python';
   const ctx = printContextForIr(ir, handlerBodyIndent(family), ir.environmentManifest);
   if (handler.body.length === 0) sink.appendRaw(emptyHandlerBodyLine(lang));
-  else appendIrStatements(sink, handler.body, ctx);
+  else
+    appendIrStatements(sink, handler.body, ctx, {
+      emitUnsupportedComments: ir.emitUnsupportedComments,
+      onBeforeNode: options?.onBeforeFlowNode,
+    });
 
   const close = optionalShell(lang, 'EventHandlerClose');
   if (close) sink.appendRaw(close);

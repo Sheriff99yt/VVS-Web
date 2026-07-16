@@ -1,14 +1,28 @@
 .container {
   width: 100%;
   height: 100%;
-  background-color: rgba(24, 24, 27, 0.6);
-  border: 2px solid rgba(63, 63, 70, 0.5);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: visible;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-style 0.15s ease;
+}
+
+/* Unlocked: soft annotation — dashed affiliation, light fill */
+.containerUnlocked {
+  background-color: rgba(24, 24, 27, 0.35);
+  border: 2px dashed rgba(113, 113, 122, 0.65);
+}
+
+/* Locked: real group frame — solid border, stronger fill */
+.containerLocked {
+  background-color: rgba(24, 24, 27, 0.6);
+  border: 2px solid rgba(63, 63, 70, 0.75);
 }
 
 .containerSelected {
@@ -17,16 +31,50 @@
 }
 
 .header {
-  padding: 8px 16px;
+  padding: 6px 10px 6px 16px;
   font-size: 18px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
   cursor: grab;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
 }
 
 .header:active {
   cursor: grabbing;
+}
+
+.titleInput {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+
+.lockBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(63, 63, 70, 0.8);
+  background: rgba(24, 24, 27, 0.8);
+  color: rgba(161, 161, 170, 0.95);
+  cursor: pointer;
+}
+
+.lockBtn:hover {
+  color: rgba(228, 228, 231, 0.95);
+  border-color: rgba(113, 113, 122, 0.9);
 }
 
 .body {

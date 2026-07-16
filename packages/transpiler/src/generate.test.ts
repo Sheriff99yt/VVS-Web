@@ -47,70 +47,75 @@ describe('transpileGraphCode', () => {
     expect(code).toContain('async def Shutdown(self):');
     expect(code).toContain('# (x) Declare Boot');
     expect(code).toContain('# (x) Declare Shutdown');
-    expect(code).toContain('# abstract Diagnose');
+    expect(code).toContain('# (x) Declare Diagnose');
+    expect(code).not.toContain('# abstract Diagnose');
   });
 
-  test('Python sourceMap: Declare→(x) only; Define→def; abstract→comment', () => {
+  test('Python sourceMap: Declare→(x) only; Define→def; abstract Diagnose→(x)', () => {
     const snapshot = createCoverageLabUsabilityTestSnapshot();
     const result = transpileGraph(machineCtx(snapshot));
     const lines = result.files[0]!.content.split('\n');
     const xBoot = lines.findIndex((l) => l.includes('(x) Declare Boot')) + 1;
     const defBoot = lines.findIndex((l) => l.includes('def Boot(self):')) + 1;
-    const absLine = lines.findIndex((l) => l.includes('abstract Diagnose')) + 1;
+    const xDiag = lines.findIndex((l) => l.includes('(x) Declare Diagnose')) + 1;
     expect(xBoot).toBeGreaterThan(0);
     expect(defBoot).toBeGreaterThan(0);
-    expect(absLine).toBeGreaterThan(0);
+    expect(xDiag).toBeGreaterThan(0);
     const declareBoot = result.sourceMap['lab-fn-boot']!.map((r) => r.startLine);
     const defineBoot = result.sourceMap['lab-fn-boot-impl']!.map((r) => r.startLine);
     expect(declareBoot).toContain(xBoot);
     expect(declareBoot).not.toContain(defBoot);
     expect(defineBoot).toContain(defBoot);
-    expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(absLine);
+    expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(xDiag);
   });
 
-  test('non-C++ Coverage Lab langs: (x) Declare, abstract, sourceMap split', () => {
+  test('non-C++ Coverage Lab langs: (x) Declare including abstract Diagnose', () => {
     const snapshot = createCoverageLabUsabilityTestSnapshot();
     const cases: Array<{
       lang: 'javascript' | 'csharp' | 'rust' | 'gdscript' | 'verse';
       bootHeader: RegExp;
-      abstractNeedle: string | RegExp;
+      diagnoseNeedle: string | RegExp;
     }> = [
-      { lang: 'javascript', bootHeader: /^\s*Boot\(\)\s*\{/, abstractNeedle: 'abstract Diagnose' },
-      { lang: 'csharp', bootHeader: /void Boot\(\)\s*\{/, abstractNeedle: /abstract\s+void\s+Diagnose/ },
-      { lang: 'rust', bootHeader: /fn Boot\(/, abstractNeedle: 'abstract Diagnose' },
-      { lang: 'gdscript', bootHeader: /func Boot\(/, abstractNeedle: 'abstract Diagnose' },
-      { lang: 'verse', bootHeader: /^\s*Boot.*: void/, abstractNeedle: 'abstract Diagnose' },
+      { lang: 'javascript', bootHeader: /^\s*Boot\(\)\s*\{/, diagnoseNeedle: '(x) Declare Diagnose' },
+      {
+        lang: 'csharp',
+        bootHeader: /void Boot\(\)\s*\{/,
+        diagnoseNeedle: /abstract\s+void\s+Diagnose/,
+      },
+      { lang: 'rust', bootHeader: /fn Boot\(/, diagnoseNeedle: '(x) Declare Diagnose' },
+      { lang: 'gdscript', bootHeader: /func Boot\(/, diagnoseNeedle: '(x) Declare Diagnose' },
+      { lang: 'verse', bootHeader: /^\s*Boot.*: void/, diagnoseNeedle: '(x) Declare Diagnose' },
     ];
-    for (const { lang, bootHeader, abstractNeedle } of cases) {
+    for (const { lang, bootHeader, diagnoseNeedle } of cases) {
       const result = transpileGraph(machineCtx(snapshot, { targetLanguage: lang }));
       const content = result.files[0]!.content;
       const lines = content.split('\n');
       expect(content).toContain('(x) Declare Boot');
       const xBoot = lines.findIndex((l) => l.includes('(x) Declare Boot')) + 1;
       const defBoot = lines.findIndex((l) => bootHeader.test(l)) + 1;
-      const absLine =
-        typeof abstractNeedle === 'string'
-          ? lines.findIndex((l) => l.includes(abstractNeedle)) + 1
-          : lines.findIndex((l) => abstractNeedle.test(l)) + 1;
+      const diagLine =
+        typeof diagnoseNeedle === 'string'
+          ? lines.findIndex((l) => l.includes(diagnoseNeedle)) + 1
+          : lines.findIndex((l) => diagnoseNeedle.test(l)) + 1;
       expect(xBoot).toBeGreaterThan(0);
       expect(defBoot).toBeGreaterThan(0);
-      expect(absLine).toBeGreaterThan(0);
+      expect(diagLine).toBeGreaterThan(0);
       const declareBoot = result.sourceMap['lab-fn-boot']!.map((r) => r.startLine);
       expect(declareBoot).toContain(xBoot);
       expect(declareBoot).not.toContain(defBoot);
       expect(result.sourceMap['lab-fn-boot-impl']!.map((r) => r.startLine)).toContain(defBoot);
-      expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(absLine);
+      expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(diagLine);
     }
   });
 
-  test('emitUnsupportedComments false omits (x) Declare; abstract still emits', () => {
+  test('emitUnsupportedComments false omits (x); C# abstract prototype still emits', () => {
     const snapshot = createCoverageLabUsabilityTestSnapshot();
     const py = transpileGraphCode(
       machineCtx(snapshot, { emitUnsupportedComments: false })
     );
     expect(py).toContain('def Boot(self):');
     expect(py).not.toContain('(x) Declare');
-    expect(py).toContain('# abstract Diagnose');
+    expect(py).not.toContain('abstract Diagnose');
 
     const cs = transpileGraphCode(
       machineCtx(snapshot, {

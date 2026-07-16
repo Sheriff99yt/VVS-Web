@@ -216,11 +216,16 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 3. **Node dimming (canvas)** — On language change, nodes unsupported for that target are **dimmed / grey**. Selecting a language where the node is supported restores normal chrome. Dimming uses `nodeEffectiveness` (Import `targetLanguages` + non-abstract Function Declare outside C++) — same resolver as emit.
 4. **Node dimming toggle** — Control in the **top bar, immediately left of Autosave**. When off, canvas does not grey unsupported nodes (codegen comments still follow the Code-panel toggle independently). Preference: `dimUnsupportedNodes` (default on).
 
-**Function Declare (U82 + U66):** Non-abstract `function_define` is effective only for **cpp** (prototype). Elsewhere emit `# (x) Declare Name` (or omit when comments off) and dim the node. Abstract Declare stays effective (`# abstract` / `= 0` / C# real `abstract` prototype). **sourceMap lock:** Declare maps only to its own emit; Define maps to method/`def` header + body — never dual-tag.
+**Function Declare (U82 + U66):** Non-abstract `function_define` is effective only for **cpp** (prototype). Elsewhere emit `# (x) Declare Name` (or omit when comments off) and dim the node. **Abstract** Declare effectiveness is **derived from** `modifierEffectiveness(lang, 'isAbstract')` — do not maintain a parallel allow-list. C++ (`= 0`) / C# (real prototype) only; other langs U66 `(x)` + U67 dim (Coverage Lab **Declare Diagnose** lock test). **sourceMap lock:** Declare maps only to its own emit; Define maps to method/`def` header + body — never dual-tag.
 
 - **All seven targets follow the same Declare/Define table** — C++ = prototypes + out-of-line Define; Python / JS / C# / Rust / GDScript / Verse = U66 `(x)` for non-abstract Declare + in-class Define; no silent skip; no expanding `FUNCTION_DECLARE_PROTOTYPE_LANGS` beyond `cpp`; no out-of-line invent for C#/Rust. Spec: `docs/visual_to_text_fidelity.md` · skill `vvs_cross_language_mapping`.
 
-**Do not:** invent real emit for unsupported constructs; hide unsupported nodes from the catalog; couple the two toggles (comments ≠ dimming).
+**Do not:** invent real emit for unsupported constructs; hide unsupported nodes from the catalog; couple the two toggles (comments ≠ dimming). **Author Comment [C] (U68/U69)** is a third channel — `showUserComments` / `emitUserComments` — never emit as `(x)` and never gate with `emitUnsupportedComments`.
+
+**Comment lock semantics (July 2026 — locked):**
+- **Unlocked (default):** soft `commentMemberIds`; no RF `parentId`; members move freely; comment follows member AABB; optional `commentFollowOffset` after manual drag; **Snap** clears offset.
+- **Locked:** RF parent so **moving the comment moves members**; members stay independently draggable; lock **recaptures** nodes overlapping the comment rect into membership.
+- **U79 comment order:** attached comments emit before the **topmost member** (absolute canvas Y); orphan comments sort by comment box Y. Member-chain topo still owns member↔member order — comments do not invent a parallel Y-only member order.
 
 **Implements / expands:** roadmap `node-effectiveness` · unified model Phase C · `docs/language_profiles.md`.
 

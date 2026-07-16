@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { analyzeProject } from '@vvs/graph-types';
+import { nodeEffectiveness } from '@vvs/language-profiles';
 import { transpileGraph, transpileProject } from '@vvs/transpiler';
 import {
   createCoverageLabUsabilityTestSnapshot,
@@ -53,7 +54,41 @@ describe('coverage lab usability example', () => {
     expect(onPulse).toBeGreaterThan(boot);
     expect(onStart).toBeGreaterThan(onPulse);
     expect(code).toContain('# (x) Declare Boot');
-    expect(code).toContain('# abstract Diagnose');
+    expect(code).toContain('# (x) Declare Diagnose');
+    expect(code).not.toContain('# abstract Diagnose');
+  });
+
+  test('lock: Coverage Lab Function Declares use U66 (x) on Python (no fake # abstract)', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
+    const declares = home.nodes.filter((n) => n.data.kindId === 'function_define');
+    expect(declares.length).toBeGreaterThanOrEqual(3);
+    for (const node of declares) {
+      expect(
+        nodeEffectiveness('function_define', node.data.properties ?? {}, 'python')
+      ).toBe('ineffective');
+    }
+    const code =
+      transpileGraph({
+        moduleName: 'Machine',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: snapshot.variables,
+        projectEvents: snapshot.events,
+        functions: snapshot.functions,
+        nodes: home.nodes,
+        edges: home.edges,
+        tabId: MAIN_GRAPH_CONTAINER_ID,
+        documents: snapshot.documents,
+        classes: snapshot.classes,
+        activeClassId: MACHINE_CLASS.id,
+      }).files[0]?.content ?? '';
+    // Ban the old stub form that skipped dim/(x) for abstract Declare Diagnose.
+    expect(code).not.toMatch(/^\s*# abstract /m);
+    expect(code).not.toMatch(/^\s*\/\/ abstract /m);
+    for (const name of ['Boot', 'Diagnose', 'Shutdown']) {
+      expect(code).toContain(`# (x) Declare ${name}`);
+    }
   });
 
   test('Python boolean literals use True/False', () => {

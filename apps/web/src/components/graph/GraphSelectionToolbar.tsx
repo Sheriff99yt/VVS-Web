@@ -50,7 +50,7 @@ export function GraphSelectionToolbar() {
             type="button"
             className={styles.button}
             title={shortcutTitle('group-comment')}
-            aria-label="Group selection in comment"
+            aria-label="Comment selection"
             onClick={() => dispatchGraphAction('group-comment')}
           >
             <MessageSquarePlus size={14} />
@@ -61,7 +61,7 @@ export function GraphSelectionToolbar() {
             type="button"
             className={styles.button}
             title={shortcutTitle('ungroup-comment')}
-            aria-label="Ungroup selection from comment"
+            aria-label="Release from comment"
             onClick={() => dispatchGraphAction('ungroup-comment')}
           >
             <Ungroup size={14} />
