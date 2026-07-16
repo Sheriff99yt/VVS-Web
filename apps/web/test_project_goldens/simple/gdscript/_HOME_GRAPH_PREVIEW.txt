@@ -1,4 +1,4 @@
-// ===== firstgraph.gd =====
+// ===== src/FirstGraph.gd =====
 class_name FirstGraph
     var VisitorName = ""
     # (x) Declare SayHello

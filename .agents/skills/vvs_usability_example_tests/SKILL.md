@@ -22,7 +22,7 @@ Graph fixtures under `apps/web/src/lib/usabilityExampleTests/` exist to **discov
 
 ### Validation cycle (folder-backed — preferred)
 
-Clear → seed from fixtures → emit → compare to goldens:
+Clear → seed from fixtures → **load from disk** → emit → compare to goldens:
 
 ```bash
 bun apps/web/scripts/validate_test_projects_folder.ts
@@ -34,8 +34,11 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 |------|------|
 | **1. Clear** | Delete repo-root `Test Projects/` (gitignored) |
 | **2. Seed** | Write First Graph + Coverage Lab as on-disk `.vvs/` projects |
-| **3. Emit** | Code-panel path (`emitProjectLikeCodePanel`) into each folder |
+| **2b. Load** | `loadProjectSnapshotFromPath` — emit must **not** use the in-memory `fixture.create()` object |
+| **3. Emit** | Code-panel path (`emitProjectLikeCodePanel`) from the **disk-loaded** snapshot |
 | **4. Compare** | Home-graph preview vs `apps/web/test_project_goldens/` |
+
+**Anti-pattern:** Seeding disk then calling `emitProjectLikeCodePanel(fixture.create())` — that skips the Open Folder path and can hide document/Y sync bugs.
 
 ### Extract-only (CI / quick)
 

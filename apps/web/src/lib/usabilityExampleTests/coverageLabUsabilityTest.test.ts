@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { analyzeProject } from '@vvs/graph-types';
 import { nodeEffectiveness } from '@vvs/language-profiles';
 import { transpileGraph, transpileProject } from '@vvs/transpiler';
+import { emitProjectLikeCodePanel } from '@/lib/emitProjectCode';
 import {
   createCoverageLabUsabilityTestSnapshot,
   MACHINE_CLASS,
@@ -56,6 +57,48 @@ describe('coverage lab usability example', () => {
     expect(code).toContain('# (x) Declare Boot');
     expect(code).toContain('# (x) Declare Diagnose');
     expect(code).not.toContain('# abstract Diagnose');
+  });
+
+  test('U79 Code panel path: two Event Declare Y orders flip on_pulse / on_start', () => {
+    const base = createCoverageLabUsabilityTestSnapshot();
+    const home = base.documents![MAIN_GRAPH_CONTAINER_ID]!;
+
+    const homePreview = (snapshot: typeof base) => {
+      const result = emitProjectLikeCodePanel(snapshot, { targetLanguage: 'python' });
+      return result.files.find((f) => f.path === 'src/CoverageLab.py')?.content ?? '';
+    };
+
+    // Order A — fixture default: pulse higher (y:-280) than start (y:-120)
+    const orderA = homePreview(base);
+    const pulseA = orderA.indexOf('def on_pulse(self):');
+    const startA = orderA.indexOf('def on_start(self):');
+    expect(pulseA).toBeGreaterThan(-1);
+    expect(startA).toBeGreaterThan(-1);
+    expect(pulseA).toBeLessThan(startA);
+
+    // Order B — same wires; start higher than pulse
+    const flippedNodes = home.nodes.map((n) => {
+      if (n.id === 'lab-evt-pulse-mem') return { ...n, position: { ...n.position, y: -120 } };
+      if (n.id === 'lab-evt-start-mem') return { ...n, position: { ...n.position, y: -280 } };
+      return n;
+    });
+    const orderB = homePreview({
+      ...base,
+      documents: {
+        ...base.documents,
+        [MAIN_GRAPH_CONTAINER_ID]: { ...home, nodes: flippedNodes },
+      },
+    });
+    const pulseB = orderB.indexOf('def on_pulse(self):');
+    const startB = orderB.indexOf('def on_start(self):');
+    expect(startB).toBeGreaterThan(-1);
+    expect(pulseB).toBeGreaterThan(-1);
+    expect(startB).toBeLessThan(pulseB);
+
+    // Def placement actually changed between the two Code-panel emits
+    expect(pulseA < startA).toBe(true);
+    expect(startB < pulseB).toBe(true);
+    expect(orderA).not.toEqual(orderB);
   });
 
   test('lock: Coverage Lab Function Declares use U66 (x) on Python (no fake # abstract)', () => {

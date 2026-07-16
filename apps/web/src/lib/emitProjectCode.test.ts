@@ -34,4 +34,12 @@ describe('emitProjectLikeCodePanel (U56)', () => {
     const home = result.files.find((f) => f.path === 'src/CoverageLab.py')!.content;
     expect(home).toContain('def Boot(');
   });
+
+  test('U79 Code panel: Coverage Lab default has on_pulse before on_start', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const home = emitProjectLikeCodePanel(snapshot, { targetLanguage: 'python' }).files.find(
+      (f) => f.path === 'src/CoverageLab.py'
+    )!.content;
+    expect(home.indexOf('def on_pulse(self):')).toBeLessThan(home.indexOf('def on_start(self):'));
+  });
 });

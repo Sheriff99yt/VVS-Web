@@ -27,6 +27,7 @@ import {
   resolveNodeKindId,
 } from './defineNodes';
 import { analyzeClassMembers } from './classMembers';
+import { validateCanvasOrderYHints } from './canvasOrderY';
 import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryEvent } from './symbols';
 
 export interface AnalyzeProjectInput {
@@ -1051,6 +1052,7 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   diagnostics.push(...validateCrossClassCalls(input));
   diagnostics.push(...validateCrossClassDispatches(input));
   diagnostics.push(...validateVirtualFunctionFlags(input));
+  diagnostics.push(...validateCanvasOrderYHints(input.documents));
 
   if (input.portabilityDiagnostics) {
     diagnostics.push(...input.portabilityDiagnostics);

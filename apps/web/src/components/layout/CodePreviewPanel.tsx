@@ -290,11 +290,13 @@ export function CodePreviewPanel({
       const { state } = (event as CustomEvent<{ state: string }>).detail;
       if (state === 'compiling') {
         setHeldResult(lastCleanResult);
+      } else if (state === 'success' || state === 'clean' || state === 'error') {
+        setHeldResult(null);
       }
     };
     window.addEventListener('vvs:compile-state', onCompileState);
     return () => window.removeEventListener('vvs:compile-state', onCompileState);
-  }, []);
+  }, [lastCleanResult]);
 
   useEffect(() => {
     return () => {

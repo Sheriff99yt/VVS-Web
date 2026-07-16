@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useCallback, startTransition } from 'react';
-import { NodeChange, EdgeChange } from '@xyflow/react';
+import { NodeChange, EdgeChange, applyNodeChanges } from '@xyflow/react';
 import { useGraphState } from '@/hooks/useGraphState';
 import { useGraphTabSync } from '@/hooks/useGraphTabSync';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
@@ -11,10 +11,12 @@ import { useProject } from '@/contexts/ProjectContext';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { VVSNode, VVSEdge } from '@/types/graph';
 import { appendUnlockedCommentFollowChanges } from '@/lib/graphCommentMembership';
+import { syncEventDeclareYFromOnHandlers } from '@/lib/syncEventDeclareYFromOnHandlers';
 import {
   dualWriteLibraryImportDefines,
   type LibraryImportPayload,
 } from '@/lib/libraryImport';
+import { resolveNodeKindId } from '@vvs/graph-types';
 
 interface GraphWorkspaceHostProps {
   initialNodes?: VVSNode[];
@@ -104,7 +106,7 @@ export function GraphWorkspaceHost({
     updateActiveTabMetadata,
     subscribeMetadata,
     importGraphTab,
-    scheduleMetadataSync,
+    flushAndNotify,
   } = useGraphTabSync({
     activeGraphTab,
     openTabs,
@@ -135,7 +137,7 @@ export function GraphWorkspaceHost({
       const dragEnded = withFollow.some(
         (c) => c.type === 'position' && c.dragging === false
       );
-      isDraggingRef.current = isDragging;
+      isDraggingRef.current = dragEnded ? false : isDragging;
 
       const isSignificant = withFollow.some(
         (c) =>
@@ -149,10 +151,39 @@ export function GraphWorkspaceHost({
         startTransition(() => markCurrentTabDirty());
       }
       if (dragEnded) {
-        requestAnimationFrame(() => scheduleMetadataSync(true));
+        let nextNodes = applyNodeChanges(withFollow, nodes) as VVSNode[];
+        const movedIds = new Set(
+          withFollow.filter((c) => c.type === 'position').map((c) => c.id)
+        );
+        const movedOnHandler = nextNodes.some(
+          (n) => movedIds.has(n.id) && resolveNodeKindId(n.data) === 'event_define'
+        );
+        if (movedOnHandler) {
+          nextNodes = syncEventDeclareYFromOnHandlers(nextNodes);
+        }
+        flushAndNotify(nextNodes);
+        if (movedOnHandler) {
+          // Keep RF canvas Declares in sync with documents.
+          onNodesChangeBase(
+            nextNodes
+              .filter((n) => {
+                const prev = nodes.find((p) => p.id === n.id);
+                return (
+                  prev &&
+                  (prev.position.x !== n.position.x || prev.position.y !== n.position.y)
+                );
+              })
+              .map((n) => ({
+                type: 'position' as const,
+                id: n.id,
+                position: n.position,
+                dragging: false,
+              }))
+          );
+        }
       }
     },
-    [nodes, onNodesChangeBase, markCurrentTabDirty, scheduleMetadataSync]
+    [nodes, onNodesChangeBase, markCurrentTabDirty, flushAndNotify]
   );
 
   const onEdgesChange = useCallback(

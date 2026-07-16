@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 done; U79 partial; U77–U78 open.
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **9 / 10** · §14 **0.5 / 2** · Cross-class dispatch + TypeRef + U64–U75 shipped
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79 done; U77–U78 open.
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **9 / 10** (U77 open) · §14 **U78 open** · U64–U79 shipped
 
 ## Status legend
 
@@ -148,7 +148,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13–§14 open (U77–U79):** Go → Pack versions → **Y-order rethink**. U68–U71 / U75 shipped.
+**§13–§14 open (U77–U78):** Go → Pack versions. U68–U71 / U75 / U79 shipped.
 
 ---
 
@@ -254,7 +254,7 @@ Top-level **views** beyond canvas (Pack versions is the first named; more TBD).
 | # | Item | Status | Spec |
 |---|------|--------|------|
 | U78 | **Pack versions** manager view | **Open** | Pack releases **accumulate** (never overwrite). List installed versions; user sets **active**. GitHub check prompts to **add** a version. First of multiple new views (Library git catalog, etc.) |
-| U79 | **Investigate / rethink canvas Y → code order** | **Partial** | **Comments locked:** attach to topmost member absolute Y; orphans by comment Y. Still open: member/event/flow when chain wires vs vertical height disagree |
+| U79 | **Investigate / rethink canvas Y → code order** | **Done** | **Locked:** chain = primary emit/nest order; Y = secondary for unconnected heads (+ event peers). Teaching warnings `CHAIN_ORDER_Y_MISMATCH` / `EVENT_PEER_Y_ORDER` — no auto-reorder. Comment attach topmost Y remains. |
 | U80 | **Same-file function emit** — stop per-function output files; function tabs = **Edit function body** only | **Done** | `transpileProject` no longer emits function-tab files; fixtures rev 2; goldens refreshed |
 | U81 | **Function Declare ≠ Define** — `function_define` (Declare, chain) + `function_implement` (Define, chain placement); no stub without Define; no legacy fold | **Done** | Emit/order/sourceMap; tree badges; release menu; Test Project fixtures on chain |
 | U82 | **C++ honest Declare/Define emit** — non-abstract Declare → prototype; Define out-of-line / dual-graph `.h`+`.cpp` (no auto-split) | **Done** | Lowering + `FunctionDefOutOfLineOpen`; two-phase C++ emit; impl-only graphs; Coverage Lab / First Graph C++ goldens; two-graph test |

@@ -15,6 +15,7 @@ import {
   normalizeGraphContainers,
   PROJECT_MAP_CONTAINER_NAME,
   createVariableSymbol,
+  createDefaultIntegration,
 } from '@vvs/graph-types';
 import { createFunctionSymbol } from '@/lib/functionTabs';
 import { defaultTabMetadata } from '@/lib/graphDefaults';
@@ -134,5 +135,10 @@ export function createFirstGraphUsabilityTestSnapshot(): ProjectSnapshot {
       },
     },
     installedLibrary: [],
+    integration: createDefaultIntegration({
+      moduleName: 'FirstGraph',
+      defaultTarget: 'python',
+      adoptExisting: true,
+    }),
   };
 }

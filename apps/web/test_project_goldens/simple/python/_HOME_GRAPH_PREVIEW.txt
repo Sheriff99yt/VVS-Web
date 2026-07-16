@@ -1,4 +1,4 @@
-// ===== firstgraph.py =====
+// ===== src/FirstGraph.py =====
 class FirstGraph:
     VisitorName = ""
     # (x) Declare SayHello

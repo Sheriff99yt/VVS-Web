@@ -927,10 +927,10 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'y-order-rethink-u79',
-        title: 'Investigate canvas Y â†’ code order (U79)',
+        title: 'Investigate canvas Y → code order (U79)',
         description:
-          'Comment attach uses topmost member absolute Y (locked). Still open: full member/event/flow rethink when chain wires and vertical height conflict.',
-        status: 'partial',
+          'Locked: connected exec chain = primary nest/emit order; vertical Y = secondary for unconnected heads (+ event peers). Teaching warnings CHAIN_ORDER_Y_MISMATCH / EVENT_PEER_Y_ORDER — no auto-reorder. Comment attach topmost Y.',
+        status: 'done',
       },
     ],
   },

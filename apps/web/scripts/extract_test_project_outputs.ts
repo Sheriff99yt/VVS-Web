@@ -8,14 +8,19 @@
  * Output: apps/web/test_project_outputs/<fixture>/<lang>/
  * Goldens: apps/web/test_project_goldens/<fixture>/<lang>/_HOME_GRAPH_PREVIEW.txt (with --update-goldens)
  */
-import { mkdirSync, writeFileSync, rmSync } from 'fs';
+import { mkdirSync, writeFileSync, rmSync, mkdtempSync } from 'fs';
 import { dirname, join } from 'path';
+import { tmpdir } from 'os';
 import { fileURLToPath } from 'url';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import {
   emitProjectLikeCodePanel,
   fileOwnersForEmitResult,
 } from '../src/lib/emitProjectCode';
+import {
+  loadProjectSnapshotFromPath,
+  saveProjectSnapshotToPath,
+} from '../src/lib/projectFolder/nodeIo';
 import { USABILITY_EXAMPLE_TESTS } from '../src/lib/usabilityExampleProjects';
 import type { TargetLanguage } from '@vvs/graph-types';
 import type { TranspileResult } from '../src/types/transpile';
@@ -98,13 +103,22 @@ if (UPDATE_GOLDENS) {
 const summary: string[] = [
   '# Test Project generated code (Code panel + Generate path)',
   '',
-  'Extracted via `emitProjectLikeCodePanel` — **one graph → one file**.',
+  'Extracted via disk seed→load→`emitProjectLikeCodePanel` — **one graph → one file**.',
   UPDATE_GOLDENS ? 'Also refreshed `test_project_goldens/` home previews.' : '',
   '',
 ];
 
 for (const fixture of USABILITY_EXAMPLE_TESTS) {
-  const snapshot = fixture.create();
+  const tmpDir = mkdtempSync(join(tmpdir(), `vvs-extract-${fixture.id}-`));
+  let snapshot: NonNullable<ReturnType<typeof loadProjectSnapshotFromPath>>;
+  try {
+    saveProjectSnapshotToPath(tmpDir, fixture.create());
+    const loaded = loadProjectSnapshotFromPath(tmpDir);
+    if (!loaded) throw new Error(`failed to load ${fixture.id} from disk`);
+    snapshot = loaded;
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
   const fixtureDir = join(OUT_ROOT, fixture.id);
   summary.push(`## ${fixture.title} (\`${fixture.id}\`)`);
   summary.push('');

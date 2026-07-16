@@ -1,10 +1,8 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useRef } from 'react';
 
-/** Keeps a ref in sync with the latest value (updated after render, before paint). */
+/** Keeps a ref in sync with the latest value (updated during render — safe for flush-on-event). */
 export function useLatestRef<T>(value: T) {
   const ref = useRef(value);
-  useLayoutEffect(() => {
-    ref.current = value;
-  });
+  ref.current = value;
   return ref;
 }

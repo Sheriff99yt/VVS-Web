@@ -1,4 +1,4 @@
-// ===== firstgraph.verse =====
+// ===== src/FirstGraph.verse =====
 <public>FirstGraph := class:
     var VisitorName<public> : string = ""
     # (x) Declare SayHello

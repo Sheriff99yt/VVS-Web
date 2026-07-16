@@ -260,7 +260,7 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 - Event Declare + On + Dispatch — visible handler methods and direct call lines (`self.on_<name>(…)`)
 - No hidden event runtime — `event_emit` / `event_subscribe` blocked (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does not inject `_emit` / `_subscribe`
 - Import Module — emits at **canvas chain position** with `sourceMap`; place shared imports **once at file top** on the first class chain (`targetLanguages` gate). **Flow** Import Module inside branches for conditional imports (e.g. Python `import json`). Optional `ownerClassId` when scoping is required.
-- Member / event order — exec topology first; **event defines are Y-ordered peers** (event→event wires do not force emit order); remaining ties use canvas Y (higher first)
+- Member / event order — **primary:** connected exec chain = nest/emit order; **secondary:** canvas Y among **unconnected chain heads** (and event Declare peers — event→event wires do not force emit). When height and wires disagree, emit still follows these rules; **Compiler Log warnings** teach the fundamentals (`CHAIN_ORDER_Y_MISMATCH`, `EVENT_PEER_Y_ORDER`) without reordering.
 - Wait / Await Wait — explicit sleep/await in export; async function flag
 - Pin validation — graph shows type fixes via **Conversion** nodes
 - `sourceMap` selection highlight in code panel

@@ -137,7 +137,7 @@ function FocusCallout() {
         separate), Code↔graph highlight (U71), author Comment [C] (U68/U69, create locks), Function
         Declare ≠ Define (U81/U82), and U66/U67{' '}
         <span className="text-zinc-400">(x)</span> comments + canvas dim. Open next: Go pack (U77),
-        pack versions (U78), canvas Y→code order (U79).
+        pack versions (U78). U79 Y→code order locked (chain primary; teaching warnings).
       </p>
     </div>
   );

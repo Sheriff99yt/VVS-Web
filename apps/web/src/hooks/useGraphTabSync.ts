@@ -132,45 +132,61 @@ export function useGraphTabSync({
     [getMainMetadata, getProjectCodegenDefaults, openTabs]
   );
 
-  const flushCurrentTab = useCallback(() => {
-    const tabId = prevTabRef.current;
-    const tabMeta = openTabs.find((t) => t.id === tabId);
-    const codegenDefaults = getProjectCodegenDefaults();
-    const existingMetadata = documentsRef.current.get(tabId)?.metadata;
+  const flushCurrentTab = useCallback(
+    (nodesOverride?: VVSNode[], edgesOverride?: VVSEdge[]) => {
+      const tabId = prevTabRef.current;
+      const tabMeta = openTabs.find((t) => t.id === tabId);
+      const codegenDefaults = getProjectCodegenDefaults();
+      const existingMetadata = documentsRef.current.get(tabId)?.metadata;
 
-    let metadata: GraphTabMetadata;
-    if (tabId === 'main') {
-      metadata = {
-        ...defaultTabMetadata('main', tabMeta?.name ?? 'Main graph', codegenDefaults),
-        ...getMainMetadata(),
-        ...(existingMetadata?.targetLanguage !== undefined
-          ? { targetLanguage: existingMetadata.targetLanguage }
-          : {}),
-        ...(existingMetadata?.targetFileExtension !== undefined
-          ? { targetFileExtension: existingMetadata.targetFileExtension }
-          : {}),
-      };
-    } else {
-      metadata =
-        existingMetadata ??
-        defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph', codegenDefaults);
-    }
+      let metadata: GraphTabMetadata;
+      if (tabId === 'main') {
+        metadata = {
+          ...defaultTabMetadata('main', tabMeta?.name ?? 'Main graph', codegenDefaults),
+          ...getMainMetadata(),
+          ...(existingMetadata?.targetLanguage !== undefined
+            ? { targetLanguage: existingMetadata.targetLanguage }
+            : {}),
+          ...(existingMetadata?.targetFileExtension !== undefined
+            ? { targetFileExtension: existingMetadata.targetFileExtension }
+            : {}),
+        };
+      } else {
+        metadata =
+          existingMetadata ??
+          defaultTabMetadata(documentTabType(tabMeta?.type), tabMeta?.name ?? 'Graph', codegenDefaults);
+      }
 
-    documentsRef.current.set(tabId, {
-      nodes: clearNodeSelectionFlags(structuredClone(nodesRef.current)),
-      edges: clearEdgeSelectionFlags(structuredClone(edgesRef.current)),
-      metadata,
-    });
-  }, [getMainMetadata, getProjectCodegenDefaults, openTabs]);
+      documentsRef.current.set(tabId, {
+        nodes: clearNodeSelectionFlags(structuredClone(nodesOverride ?? nodesRef.current)),
+        edges: clearEdgeSelectionFlags(structuredClone(edgesOverride ?? edgesRef.current)),
+        metadata,
+      });
+    },
+    [getMainMetadata, getProjectCodegenDefaults, openTabs, nodesRef, edgesRef]
+  );
+
+  const flushAndNotify = useCallback(
+    (nodesOverride?: VVSNode[], edgesOverride?: VVSEdge[]) => {
+      if (nodesOverride) nodesRef.current = nodesOverride;
+      if (edgesOverride) edgesRef.current = edgesOverride;
+      flushCurrentTab(nodesOverride, edgesOverride);
+      notifyMetadata();
+    },
+    [flushCurrentTab, notifyMetadata, nodesRef, edgesRef]
+  );
 
   const getAllDocuments = useCallback((): Record<string, GraphDocument> => {
-    flushCurrentTab();
+    // Skip mid-drag re-flush so in-flight RF positions do not thrash documents.
+    if (!isDraggingRef?.current) {
+      flushCurrentTab();
+    }
     const result: Record<string, GraphDocument> = {};
     documentsRef.current.forEach((doc, tabId) => {
       result[tabId] = cloneDocument(doc);
     });
     return result;
-  }, [flushCurrentTab]);
+  }, [flushCurrentTab, isDraggingRef]);
 
   const loadAllDocuments = useCallback(
     (documents: Record<string, GraphDocument>, activeTab: string) => {
@@ -231,7 +247,11 @@ export function useGraphTabSync({
         window.clearTimeout(metadataSyncTimerRef.current);
         metadataSyncTimerRef.current = null;
       }
-      const run = () => notifyMetadata();
+      const run = () => {
+        if (isDraggingRef?.current) return;
+        flushCurrentTab();
+        notifyMetadata();
+      };
       if (immediate) {
         run();
         return;
@@ -239,7 +259,7 @@ export function useGraphTabSync({
       if (isDraggingRef?.current) return;
       metadataSyncTimerRef.current = window.setTimeout(run, 120);
     },
-    [notifyMetadata, isDraggingRef]
+    [flushCurrentTab, notifyMetadata, isDraggingRef]
   );
 
   useEffect(() => {
@@ -370,5 +390,6 @@ export function useGraphTabSync({
     subscribeMetadata,
     importGraphTab,
     scheduleMetadataSync,
+    flushAndNotify,
   };
 }

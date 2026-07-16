@@ -1,4 +1,4 @@
-// ===== firstgraph.cs =====
+// ===== src/FirstGraph.cs =====
 public class FirstGraph {
     public string VisitorName = "";
     // (x) Declare SayHello

@@ -232,6 +232,8 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - **Unlocked (default):** soft `commentMemberIds`; no RF `parentId`; members move freely; comment follows member AABB; optional `commentFollowOffset` after manual drag; **Snap** clears offset.
 - **Locked:** RF parent so **moving the comment moves members**; members stay independently draggable; lock **recaptures** nodes overlapping the comment rect into membership.
 - **U79 comment order:** attached comments emit before the **topmost member** (absolute canvas Y); orphan comments sort by comment box Y. Member-chain topo still owns member↔member order — comments do not invent a parallel Y-only member order.
+- **U79 canvas Y → code order (locked):** **Primary** = connected execution chain (nest/emit order). **Secondary** = vertical height for **unconnected chain heads** (and Event Declare peers). Intentional that a messy layout can “look wrong” vs top-to-bottom reading — emit does not auto-fix; **warnings** in the Compiler Log teach chain-vs-height fundamentals (`CHAIN_ORDER_Y_MISMATCH`, `EVENT_PEER_Y_ORDER`). Do not reorder on Y for connected non-event members.
+- **U79 On → Declare Y sync (locked):** Authors rearrange visible **On** handlers (`event_define`). Emit still orders from **Event Declare** Y (`event_member_define`). On drag-end of an On handler, mirror that On’s Y onto its matching Declare (`syncEventDeclareYFromOnHandlers`) so Code panel order follows the handlers users actually move.
 
 **Implements / expands:** roadmap `node-effectiveness` · unified model Phase C · `docs/language_profiles.md`.
 

@@ -29,7 +29,7 @@ Never inject hidden structural code (stdlib includes, async wrappers, class `abs
 
 **Fixture:** `coverageLabUsabilityTest.ts` · **docs:** `fidelity_streamline.md`
 
-1. Canvas chain order = source order (`appendIrMembersInOrder`).
+1. Canvas chain order = source order (`appendIrMembersInOrder`). **Y is secondary** for unconnected heads (+ event peers). Do not auto-reorder connected members by height — teaching warnings only (`CHAIN_ORDER_Y_MISMATCH`, `EVENT_PEER_Y_ORDER`).
 2. **One graph → one file (locked):** all `class_define` chains on a container graph emit into **one** module in canvas order. Want two files → two graphs. **No** class-per-file invent and **no** split-classes profile.
 3. Import Module: `modulePath` / `importStyle` / `importNames` / `targetLanguages` — place **once at file top** (wire into the first class chain); emit at chain position. Flow Import Module inside branches for conditional imports (e.g. Python `if …: import json`). `ownerClassId` optional when scoping is needed.
 4. Enum: `VariableSymbol.enumType` + switch `enumType`; pack `EnumMemberAccess`; node `expr_enum_member`.
