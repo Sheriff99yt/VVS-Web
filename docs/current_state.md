@@ -308,7 +308,7 @@ cd apps/web && bun test src/lib
 cd server && go test ./...
 ```
 
-CI (`.github/workflows/ci.yml`): **packages** job runs syntax-packs / transpiler / graph-types / language-profiles / syntax-registry suites + `validate:parse --strict`; **web** job runs lint / build + `src/lib` tests; **server** job runs `go build` + `go test`. Pages deploy: `.github/workflows/pages.yml`. Versioned zip releases: `.github/workflows/release.yml` on `v*` tags (see [setup.md](setup.md) § GitHub Releases).
+CI (`.github/workflows/ci.yml`): **packages** job runs syntax-packs / transpiler / graph-types / language-profiles / syntax-registry suites + `validate:parse --strict`; **web** job runs lint / build + `src/lib` tests; **server** job runs `go build` + `go test`. Pages deploy: `.github/workflows/pages.yml` (also refreshes floating **Current preview** pre-release with Pages link + zip). SemVer zip releases: `.github/workflows/release.yml` on `v*` tags (see [setup.md](setup.md) § GitHub Releases).
 
 ---
 

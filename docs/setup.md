@@ -129,18 +129,25 @@ After the first push, enable Pages or the deploy workflow will fail with **404 N
 
 Preview URL: **https://sheriff99yt.github.io/VVS-Web/** (deployed by `.github/workflows/pages.yml` on each push to `main`).
 
+After each **successful** Pages deploy, the same workflow updates a floating GitHub **pre-release** whose title includes the showcase URL (**https://sheriff99yt.github.io/VVS-Web/**) plus `vvs-web-pre-release.zip`. That is the fast try-it path (same as Deployments → github-pages), without digging through nested deployment history.
+
 ### GitHub Releases (versioned static zip)
 
-CI runs on every push/PR (`.github/workflows/ci.yml`). **Releases** are separate: push a `v*` tag after `main` is green.
+CI runs on every push/PR (`.github/workflows/ci.yml`). **Stable** versioned downloads are separate: push a `v*` tag after `main` is green.
 
 ```powershell
 git tag v0.2.0
 git push origin v0.2.0
 ```
 
-That runs `.github/workflows/release.yml`: full verify suite → Pages-compatible static build → GitHub Release with `vvs-web-v0.2.0.zip` (contents of `apps/web/out`). You can also run **Actions → Release → Run workflow** and pass an existing tag.
+That runs `.github/workflows/release.yml`: full verify suite → Pages-compatible static build → **full** (non-pre) GitHub Release with `vvs-web-v0.2.0.zip`. You can also run **Actions → Release → Run workflow** and pass an existing tag.
 
-Live preview stays on Pages; Releases are versioned downloads only — no npm package required.
+| Channel | Tag | Kind | What it is |
+|---------|-----|------|------------|
+| Current preview | `pre-release` | Pre-release | Last successful Pages deploy + link + zip |
+| Stable | `v0.1.0`, … | Full release | Frozen SemVer download |
+
+No npm package required.
 
 ---
 

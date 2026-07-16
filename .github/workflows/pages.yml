@@ -1,5 +1,9 @@
 name: Deploy GitHub Pages
 
+# Live preview on every push to main.
+# After a successful deploy, updates the floating GitHub pre-release `pre-release`
+# so the repo Releases sidebar shows a direct Pages link (and a downloadable zip).
+
 on:
   push:
     branches: [main]
@@ -34,15 +38,29 @@ jobs:
           GITHUB_PAGES: "true"
         run: bun run build
 
+      - name: Zip static site for pre-release
+        run: |
+          cd apps/web/out
+          zip -r "$GITHUB_WORKSPACE/vvs-web-pre-release.zip" .
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/out
 
+      - name: Upload pre-release zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-release-zip
+          path: vvs-web-pre-release.zip
+          if-no-files-found: error
+
   deploy:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -50,3 +68,50 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+  pre_release:
+    name: Update Current pre-release
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download pre-release zip
+        uses: actions/download-artifact@v4
+        with:
+          name: pre-release-zip
+
+      - name: Point pre-release tag at this commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f pre-release "${{ github.sha }}"
+          git push -f origin refs/tags/pre-release
+
+      - name: Publish / update Current pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pre-release
+          name: "Try it — https://sheriff99yt.github.io/VVS-Web/"
+          prerelease: true
+          make_latest: false
+          target_commitish: ${{ github.sha }}
+          body: |
+            ## Showcase (live)
+
+            **https://sheriff99yt.github.io/VVS-Web/**
+
+            Same URL as the latest successful GitHub Pages deployment — open it to try the editor immediately (no install).
+
+            Deploy URL from this run: ${{ needs.deploy.outputs.page_url }}
+
+            - Commit: `${{ github.sha }}`
+            - Offline copy: `vvs-web-pre-release.zip` (same static build)
+
+            SemVer tags (`v0.1.0`, …) are frozen stable downloads via the Release workflow.
+          files: vvs-web-pre-release.zip
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
