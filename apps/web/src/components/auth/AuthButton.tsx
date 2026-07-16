@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { Loader2, LogIn, LogOut, UserRound } from 'lucide-react';
 import { useAuthSession } from '@/hooks/useAuthSession';
 import { isAuthConfigured, isGitHubOAuthConfigured } from '@/lib/auth/session';
+import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 
 export function AuthButton() {
-  const configured = isAuthConfigured();
+  const configured = isAuthConfigured() && isHostedFeaturesEnabled();
   const { user, loading, signIn, signUp, signOut, signInWithGitHub } = useAuthSession();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');

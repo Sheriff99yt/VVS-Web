@@ -8,22 +8,22 @@
 // (x) Import Collections.Generic
 pub struct Machine {
 
-        Power: f32,
-        pub Serial: f32,
-        pub MaxPower: f32,
-        pub Ready: bool,
+    Power: f32,
+    pub Serial: f32,
+    pub MaxPower: f32,
+    pub Ready: bool,
 }
 impl Machine {
 
+    // (x) Declare Boot
     pub fn Boot(&mut self) {
-        // Boot
         self.Ready = true;
         println!("{}", "Booted");
         Sensor::new().on_tick();
     }
     // abstract Diagnose
+    // (x) Declare Shutdown
     pub async fn Shutdown(&mut self) {
-        // Shutdown
         self.Ready = false;
         println!("{}", "Shutdown");
     }
@@ -55,20 +55,20 @@ pub enum SensorStatus {
 pub struct Sensor {
     base: Machine,
 
-        pub Readings: Vec<f32>,
-        pub Status: SensorStatus,
-        pub Host: Machine,
-        pub Tags: HashMap<String, String>,
+    pub Readings: Vec<f32>,
+    pub Status: SensorStatus,
+    pub Host: Machine,
+    pub Tags: HashMap<String, String>,
 }
 impl Sensor {
 
+    // (x) Declare Sample
     pub async fn Sample(&mut self) {
-        // Sample
         self.Readings.push(self.Power);
         println!("{}", "Sampled");
     }
+    // (x) Declare Report
     pub fn Report(&mut self) {
-        // Report
         println!("{}", "--- Readings ---");
         for val in self.Readings.iter() {
             println!("{}", val.to_string());

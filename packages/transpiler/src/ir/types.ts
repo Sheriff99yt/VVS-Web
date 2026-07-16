@@ -325,6 +325,12 @@ export type IrMemberDecl =
   | {
       kind: 'FunctionDecl';
       sourceGraphNodeId: string;
+      /** Canvas `function_define` (Declare) — maps to prototype or U66 `(x)` only. */
+      declareSourceGraphNodeId?: string;
+      /** Canvas `function_implement` (Define) — method/`def` header + body (U81). */
+      implementSourceGraphNodeId?: string;
+      /** When false, Declare only — never invent a stub body. */
+      emitBody: boolean;
       symbol: FunctionSymbol;
       properties?: Record<string, unknown>;
     }

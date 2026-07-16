@@ -54,6 +54,8 @@ const OPTIONAL_SHELL_BY_FAMILY: Record<
     'EventHandlerClose',
     'FunctionTabClose',
     'FunctionDeclPrototype',
+    'FunctionDefOutOfLineOpen',
+    'FunctionOutOfLineClose',
   ],
   gdscript: ['SwitchSelectBind'],
   verse: [],

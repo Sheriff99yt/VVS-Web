@@ -16,6 +16,7 @@ import { dispatchResetCompilerLogLayout } from '@/lib/uiPreferences';
 import { paneMenuPosition } from '@/lib/paneMenuPosition';
 import { shortcutKeys } from '@/lib/graphShortcuts';
 import { GraphBreadcrumb } from './GraphBreadcrumb';
+import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 
 function apiModeShort(
   apiMode: ReturnType<typeof useApiHealth>['apiMode'],
@@ -53,6 +54,7 @@ export function StatusBar() {
   const { isCanvasActive } = useEditorView();
   const { apiMode, healthState, serviceName, storeMode, authMode, userId } = useApiHealth();
   const folderPickerReady = useFolderPickerSupported();
+  const hosted = isHostedFeaturesEnabled();
   const [logMenu, setLogMenu] = useState<{ x: number; y: number } | null>(null);
   const logMenuRef = useRef<HTMLDivElement>(null);
 
@@ -100,14 +102,25 @@ export function StatusBar() {
   return (
     <div className="h-6 shrink-0 bg-zinc-950 border-t border-zinc-800 flex items-center justify-between px-2 text-[10px] font-medium text-zinc-500 relative z-50">
       <div className="flex items-center gap-2 shrink-0 min-w-0 max-w-[42%]">
-        <div className="flex items-center gap-1 px-1.5 text-zinc-600" title="MCP disconnected">
-          <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
-          <span>MCP</span>
-        </div>
-        <span className={`flex items-center gap-1 ${api.className ?? ''}`} title={api.title ?? api.label}>
-          {apiMode === 'mock' ? <WifiOff size={10} /> : null}
-          {api.label}
-        </span>
+        {hosted ? (
+          <>
+            <div className="flex items-center gap-1 px-1.5 text-zinc-600" title="MCP connection (Connect AI)">
+              <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+              <span>MCP</span>
+            </div>
+            <span className={`flex items-center gap-1 ${api.className ?? ''}`} title={api.title ?? api.label}>
+              {apiMode === 'mock' ? <WifiOff size={10} /> : null}
+              {api.label}
+            </span>
+          </>
+        ) : (
+          <span
+            className="flex items-center gap-1 px-1.5 text-zinc-600"
+            title="Client-first — edit and Generate offline; Connect AI for local MCP paste config"
+          >
+            Local
+          </span>
+        )}
         {isCoaAuthoringActive(crossOverMode) ? (
           <span
             className="px-1.5 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 text-indigo-300"

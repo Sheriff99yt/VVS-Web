@@ -37,7 +37,9 @@ The UX borrows **canvas patterns** from node editors (wires, typed ports, flow) 
 
 | Vocabulary | Meaning |
 |------------|---------|
-| **Declare** | Place a member node on the member chain (`var_define`, `function_define`, `event_member_define`, `class_define`) — emits the declaration in generated code |
+| **Declare** | Place a member-existence node on the member chain — variables, **functions** (signature / “exists”), class, event slot — emits that construct |
+| **Define** (functions) | Place the function **body** into generated code at this position (release-menu Define). Body authored in **Edit function body** tab |
+| **Edit function body** | Open the function graph tab to author the body (not a second file; U80 same-file emit) |
 | **Handler (On …)** | Place an event handler entry on the class graph (`event_define`) — wires the handler body |
 | **Call** | Invoke a function at a call site (`vvs.project.call_function`) |
 | **Dispatch** | Invoke an event handler at a call site (`event_dispatch`) |
@@ -45,6 +47,8 @@ The UX borrows **canvas patterns** from node editors (wires, typed ports, flow) 
 | **Project panel row** | Index + CRUD shortcut — dual-writes the canvas correlate; **not** a second source of truth for codegen |
 
 UI copy must not imply that adding a row in the Project tree alone puts a declaration in generated code. If it is not on the canvas, it is not in the export. Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Canvas is the source of truth.
+
+**Functions (locked):** release menu = **Call** / **Declare** / **Define** — parallel to variables **Get** / **Set** / **Declare**. Declare ≠ Define. Not about `.h`/`.cpp` splits (see [language_neutral_vocabulary.md](design/language_neutral_vocabulary.md)). Implementation split tracked as **U81**.
 
 ---
 
@@ -66,8 +70,10 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Per-frame hook | **On Update** | Event Tick, Tick | Optional; name for loop/frame |
 | User-defined entry | **Custom event** | — | |
 | Local state | **Variable** | — | Standard CS term |
-| Reusable subgraph | **Function** | Macro, Blueprint Macro | Opens as graph tab; **Declare** on chain + **Call** in flow |
-| Function member on chain | **Declare** `{name}` | Define Function | `function_define` — `kindId` unchanged |
+| Reusable subgraph | **Function** | Macro, Blueprint Macro | **Declare** + **Define** (body place) + **Edit function body** + **Call** |
+| Function exists (member) | **Declare** `{name}` | Define (for existence) | Signature / “there is a function” — like variable Declare |
+| Function body placement | **Define** `{name}` | Declare (for body) | Insert/place body in code at this position |
+| Function body tab | **Edit function body** | Define (for the tab) | Author body only; not a separate export file (U80) |
 | Event member on chain | **Declare** `{name}` | Define Event | `event_member_define` — `kindId` unchanged |
 | Event handler entry | **On** `{name}` / **Handler** | — | `event_define` — flow entry, not the member declare |
 | Function invoke | **Call** `{name}` | — | `vvs.project.call_function` |

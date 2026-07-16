@@ -11,14 +11,14 @@ class_name Machine
     static var Serial = 0
     var MaxPower = 100
     var Ready = false
+    # (x) Declare Boot
     func Boot() -> void:
-        # Boot
         self.Ready = true
         print("Booted")
         Sensor.new().on_tick()
     # abstract Diagnose
+    # (x) Declare Shutdown
     func Shutdown() -> void:
-        # Shutdown
         self.Ready = false
         print("Shutdown")
     func on_pulse() -> void:
@@ -38,13 +38,13 @@ extends Machine
     var Readings = []
     var Status = SensorStatus.OK
     var Host = null
-    var Tags = 0
+    var Tags = {}
+    # (x) Declare Sample
     func Sample() -> void:
-        # Sample
         self.Readings.append(self.Power)
         print("Sampled")
+    # (x) Declare Report
     func Report() -> void:
-        # Report
         print("--- Readings ---")
         for val in self.Readings:
             print(str(val))

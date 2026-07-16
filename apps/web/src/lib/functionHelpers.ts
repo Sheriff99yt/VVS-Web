@@ -76,6 +76,50 @@ export function functionEntryOutputs(
   ];
 }
 
+export function applyFunctionImplementBinding(
+  data: VVSNodeData,
+  func: FunctionSymbol,
+  overloadId?: string
+): VVSNodeData {
+  const overload = resolveOverloadForCall(func, overloadId ?? data.graphBinding?.overloadId);
+  return {
+    ...data,
+    label: `Define ${func.name}`,
+    category: 'Project',
+    kindId: 'function_implement',
+    linkKind: 'call_function',
+    linkedGraphId: func.id,
+    graphBinding: {
+      kind: 'call_function',
+      symbolId: func.id,
+      overloadId: overload.id,
+    },
+    properties: {
+      ...data.properties,
+      symbolId: func.id,
+      name: func.name,
+      graphTabId: overload.graphTabId ?? func.id,
+    },
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+  };
+}
+
+export function buildFunctionImplementData(func: FunctionSymbol, overloadId?: string): VVSNodeData {
+  return applyFunctionImplementBinding(
+    {
+      label: `Define ${func.name}`,
+      category: 'Project',
+      kindId: 'function_implement',
+      inputs: [EXEC_IN],
+      outputs: [EXEC_OUT],
+      inlineValues: {},
+    },
+    func,
+    overloadId
+  );
+}
+
 export function applyFunctionCallBinding(
   data: VVSNodeData,
   func: FunctionSymbol,

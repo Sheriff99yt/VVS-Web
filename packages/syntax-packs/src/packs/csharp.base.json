@@ -113,7 +113,7 @@
       "quasi": "false"
     },
     "VarDefine": {
-      "quasi": "    {visibility}{staticKw}{constKw}{type} {name} = {default};"
+      "quasi": "{visibility}{staticKw}{constKw}{type} {name} = {default};"
     },
     "DeclareLocal": {
       "quasi": "{type} {name};"
@@ -140,10 +140,10 @@
       "quasi": "    }"
     },
     "FunctionDefOpen": {
-      "quasi": "    {visibility}{staticKw}{abstractKw}{virtualKw}{overrideKw}{asyncKw}void {name}({paramList}) {"
+      "quasi": "    {visibility}{staticKw}{abstractKw}{virtualKw}{overrideKw}{asyncKw}{returnType} {name}({paramList}) {"
     },
     "FunctionDeclPrototype": {
-      "quasi": "    {visibility}{staticKw}{abstractKw}{virtualKw}{overrideKw}{asyncKw}void {name}({paramList});"
+      "quasi": "    {visibility}{staticKw}{abstractKw}{virtualKw}{overrideKw}{asyncKw}{returnType} {name}({paramList});"
     },
     "FunctionTabClose": {
       "quasi": "    }"

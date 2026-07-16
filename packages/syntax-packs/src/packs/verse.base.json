@@ -85,7 +85,7 @@
       "quasi": "true"
     },
     "VarDefine": {
-      "quasi": "    var {name}{visibility} : {type} = {default}"
+      "quasi": "var {name}{visibility} : {type} = {default}"
     },
     "DeclareLocal": {
       "quasi": "var {name} : {type} = false"

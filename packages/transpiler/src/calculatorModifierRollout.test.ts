@@ -41,6 +41,16 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     expect(code).not.toContain('protected abstract void Diagnose() {');
   });
 
+  test('C++ — Declare prototype + out-of-line Define (U82)', () => {
+    const code = transpileMachine('cpp');
+    expect(code).toContain('virtual void Boot();');
+    expect(code).toContain('void Machine::Boot() {');
+    expect(code).toContain('virtual void Diagnose() = 0');
+    expect(code).toContain('void Shutdown();');
+    expect(code).toContain('void Machine::Shutdown() {');
+    expect(code).not.toContain('virtual void Boot() {');
+  });
+
   test('Python — async Shutdown; abstract as comment (no invented body/keywords)', () => {
     const code = transpileMachine('python');
     expect(code).toContain('async def Shutdown(self):');
@@ -49,8 +59,8 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     expect(code).not.toContain('def Diagnose(self):');
     expect(code).not.toContain('virtual');
     expect(code).not.toContain('protected');
-    // Enum import is owned by Sensor — not Machine
-    expect(code).not.toContain('from enum import Enum');
+    // Shared imports (incl. enum) live on the Machine chain at file top in Coverage Lab.
+    expect(code).toContain('from enum import Enum');
   });
 
   test('JavaScript — static Serial and async Shutdown; abstract comment', () => {

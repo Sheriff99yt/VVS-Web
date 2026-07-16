@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { CheckCircle2, Circle, CircleDashed, ExternalLink } from 'lucide-react';
 import {
   FUTURE_FEATURE_SECTIONS,
@@ -10,7 +10,7 @@ import {
   type RoadmapSection,
 } from '@/lib/developmentRoadmap';
 
-type RoadmapTab = 'features' | 'future';
+type RoadmapTab = 'open' | 'done';
 
 const STATUS_META: Record<
   RoadmapItemStatus,
@@ -133,15 +133,26 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6 polish</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        U64 temps + TypeRef + Test Project goldens (U65) shipped. Open: cross-class event dispatch. Primary
-        golden: Coverage Lab — verify via Code | Files goldens.
+        Just shipped: Function Declare ≠ Define (U81/U82) across all seven languages, plus U66/U67{' '}
+        <span className="text-zinc-400">(x)</span> comments and canvas dim. Open next: comments [C]
+        (U68–U69), highlight rethink (U71), chain auto-layout (U75), Go pack (U77), pack versions
+        (U78), Y-order audit (U79).
       </p>
     </div>
   );
 }
 
 export function RoadmapView() {
-  const [tab, setTab] = useState<RoadmapTab>('future');
+  const [tab, setTab] = useState<RoadmapTab>('open');
+
+  const openCount = useMemo(
+    () => FUTURE_FEATURE_SECTIONS.reduce((n, s) => n + s.items.length, 0),
+    []
+  );
+  const doneCount = useMemo(
+    () => SHIPPED_FEATURE_SECTIONS.reduce((n, s) => n + s.items.length, 0),
+    []
+  );
 
   return (
     <div className="h-full overflow-y-auto bg-zinc-950">
@@ -149,7 +160,7 @@ export function RoadmapView() {
         <header className="space-y-2">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            Phases 1–2 closed. Phase 6 active — fidelity deepen. Library, collab, and UE6 are planned.{' '}
+            Phase 6 active — fidelity polish. Library, session collab, and UE6 are planned later.{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"
@@ -167,35 +178,35 @@ export function RoadmapView() {
         <div className="flex gap-1 p-0.5 bg-zinc-900 border border-zinc-800 rounded-md w-fit">
           <button
             type="button"
-            onClick={() => setTab('future')}
+            onClick={() => setTab('open')}
             className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
-              tab === 'future'
+              tab === 'open'
                 ? 'bg-zinc-800 text-zinc-100'
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            Open tracks
+            Open ({openCount})
           </button>
           <button
             type="button"
-            onClick={() => setTab('features')}
+            onClick={() => setTab('done')}
             className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
-              tab === 'features'
+              tab === 'done'
                 ? 'bg-zinc-800 text-zinc-100'
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            Done
+            Done ({doneCount})
           </button>
         </div>
 
         <div className="space-y-4">
-          {(tab === 'features' ? SHIPPED_FEATURE_SECTIONS : FUTURE_FEATURE_SECTIONS).map((section) => (
+          {(tab === 'done' ? SHIPPED_FEATURE_SECTIONS : FUTURE_FEATURE_SECTIONS).map((section) => (
             <RoadmapSectionBlock
               key={section.id}
               section={section}
-              showStatus={tab === 'future'}
-              defaultStatus={tab === 'features' ? 'done' : 'planned'}
+              showStatus={tab === 'open'}
+              defaultStatus={tab === 'done' ? 'done' : 'planned'}
             />
           ))}
         </div>

@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-16  
-**Depth-first:** Sections **1–12** complete (U66/U67 shipped). **§13–§14 open** (U68–U79).  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **0 / 10** · §14 **0 / 2** · Cross-class dispatch + TypeRef + U64–U67 shipped
+**Depth-first:** Sections **1–12** complete (U66/U67 shipped). **§13–§14** — U70 done (stub); U71 partial (reverse select); U72–U74/U76 done; U68–U69/U75/U77–U79 open.  
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **5.5 / 10** · §14 **0 / 2** · Cross-class dispatch + TypeRef + U64–U67 shipped
 
 ## Status legend
 
@@ -221,8 +221,8 @@ Canonical: [`docs/design/multi_class_symbols.md`](../../docs/design/multi_class_
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U66 | `(x)` unsupported comment lines in codegen | **Done** | `nodeEffectiveness` + `appendHoistedImports`; pack `commentPrefix` + `(x)` + label; `sourceMap` tagged; toggle **left of Code panel language selector** (`showUnsupportedComments`, default on) |
-| U67 | Canvas dim unsupported nodes for current language | **Done** | `VVSNode` `.nodeUnsupported`; graph language via `useActiveGraphCodegenSettings`; toggle **top bar left of Autosave** (`dimUnsupportedNodes`, default on) |
+| U66 | `(x)` unsupported comment lines in codegen | **Done** | Import Module gates + non-abstract Function Declare (non-C++); pack `commentPrefix` + `(x)` + label; `sourceMap` tagged; toggle **left of Code panel language selector** (`showUnsupportedComments`, default on) |
+| U67 | Canvas dim unsupported nodes for current language | **Done** | Same `nodeEffectiveness` resolver (imports + Function Declare); `VVSNode` `.nodeUnsupported`; toggle **top bar left of Autosave** (`dimUnsupportedNodes`, default on) |
 
 ---
 
@@ -234,13 +234,13 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 |---|------|--------|------|
 | U68 | Comment **[C]** on selection; emit by canvas **Y**; **lock toggle** (default off = free move/resize; on = group lock as today) | **Open** | Extend comment nodes; codegen inserts comment lines ordered by `position.y`; lock = current parent/group behavior |
 | U69 | Code panel toggle for **user-added comments** (separate from `(x)` unsupported) | **Open** | Pref next to Code language / unsupported toggle |
-| U70 | AI / MCP panel — paste IDE/CLI config; **local MCP** on device; dangerous-tools consent | **Open** | No VVS account; user runs local server/CLI when needed |
-| U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Open** | Prefer maintainable `sourceMap` that does not need per-node-kind hand updates; bidirectional selection |
-| U72 | Unify **TopNav right** button cluster styles | **Open** | Visual consistency of right-side controls |
-| U73 | Revise **Code panel top bar** usage / UI / UX | **Open** | Header density, toggles, language/Files affordances |
-| U74 | Rethink left panel **Output** view usefulness | **Open** | Logs, jump-to-node, progressive disclosure |
+| U70 | AI / MCP panel — paste IDE/CLI config; **local MCP** on device; dangerous-tools consent | **Done** (stub) | Paste Cursor/Claude + CLI hint; `mcpAllowDangerousTools` pref; hosted probe gated |
+| U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Partial** | Reverse select via `sourceMapReverse` + CodeMirror dblclick; full sourceMap rethink still open |
+| U72 | Unify **TopNav right** button cluster styles | **Done** | Shared zinc border icon buttons (Bot / Settings) |
+| U73 | Revise **Code panel top bar** usage / UI / UX | **Done** (light) | Action cluster + Format JSON affordance |
+| U74 | Rethink left panel **Output** view usefulness | **Done** (light) | Empty state + Generated files label; log empty hint |
 | U75 | Node chain **auto-layout** (select head + button → layout + select connected chain) | **Open** | Exec-connected organize; leave selection for drag |
-| U76 | **Format JSON** when selected in Code panel | **Open** | Pretty-print JSON preview/selection |
+| U76 | **Format JSON** when selected in Code panel | **Done** | Pretty-print on demand in Code panel |
 | U77 | Add **Go** as target language | **Open** | Pack + lower/emit + Coverage Lab / Rosetta slice |
 
 ---
@@ -255,6 +255,9 @@ Top-level **views** beyond canvas (Pack versions is the first named; more TBD).
 |---|------|--------|------|
 | U78 | **Pack versions** manager view | **Open** | Pack releases **accumulate** (never overwrite). List installed versions; user sets **active**. GitHub check prompts to **add** a version. First of multiple new views (Library git catalog, etc.) |
 | U79 | **Investigate / rethink canvas Y → code order** | **Open** | Audit emit order vs `position.y` (member topo+Y, event peers, comments U68). Rethink system when exec chain and vertical height disagree for authors |
+| U80 | **Same-file function emit** — stop per-function output files; function tabs = **Edit function body** only | **Done** | `transpileProject` no longer emits function-tab files; fixtures rev 2; goldens refreshed |
+| U81 | **Function Declare ≠ Define** — `function_define` (Declare, chain) + `function_implement` (Define, chain placement); no stub without Define; no legacy fold | **Done** | Emit/order/sourceMap; tree badges; release menu; Test Project fixtures on chain |
+| U82 | **C++ honest Declare/Define emit** — non-abstract Declare → prototype; Define out-of-line / dual-graph `.h`+`.cpp` (no auto-split) | **Done** | Lowering + `FunctionDefOutOfLineOpen`; two-phase C++ emit; impl-only graphs; Coverage Lab / First Graph C++ goldens; two-graph test |
 
 ---
 

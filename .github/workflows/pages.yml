@@ -26,7 +26,6 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        working-directory: apps/web
         run: bun install --frozen-lockfile
 
       - name: Static export for GitHub Pages

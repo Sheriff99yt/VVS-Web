@@ -11,32 +11,32 @@ class Machine {
     static Serial = 0;
     MaxPower = 100;
     Ready = false;
-  Boot() {
-    // Boot
-    this.Ready = true;
-    console.log("Booted");
-    new Sensor().on_tick();
-  }
+    // (x) Declare Boot
+    Boot() {
+        this.Ready = true;
+        console.log("Booted");
+        new Sensor().on_tick();
+    }
     // abstract Diagnose
-  async Shutdown() {
-    // Shutdown
-    this.Ready = false;
-    console.log("Shutdown");
-  }
-  on_pulse() {
-      console.log(("Power=" + String(this.Power)));
-  }
-  on_start() {
-      const _vvs_input_lab_get_input = (prompt("Operator name?") ?? "");
-      console.log(_vvs_input_lab_get_input);
-      this.Boot();
-      if (this.Ready) {
-          this.on_pulse();
-      } else {
-          // (x) Import json
-          console.log("Not ready");
-      };
-  }
+    // (x) Declare Shutdown
+    async Shutdown() {
+        this.Ready = false;
+        console.log("Shutdown");
+    }
+    on_pulse() {
+        console.log(("Power=" + String(this.Power)));
+    }
+    on_start() {
+        const _vvs_input_lab_get_input = (prompt("Operator name?") ?? "");
+        console.log(_vvs_input_lab_get_input);
+        this.Boot();
+        if (this.Ready) {
+            this.on_pulse();
+        } else {
+            // (x) Import json
+            console.log("Not ready");
+        };
+    }
 }
 const SensorStatus = Object.freeze({
   OK: 1,
@@ -47,36 +47,36 @@ class Sensor extends Machine {
     Readings = [];
     Status = SensorStatus.OK;
     Host = null;
-    Tags = 0;
-  async Sample() {
-    // Sample
-    this.Readings.push(this.Power);
-    console.log("Sampled");
-  }
-  Report() {
-    // Report
-    console.log("--- Readings ---");
-    for (const val of this.Readings) {
-        console.log(String(val));
-    };
-  }
-  on_tick() {
-      console.log("Tick");
-  }
-  on_start() {
-      switch (this.Status) {
-        case SensorStatus.OK:
-          this.Sample();
-          this.Report();
-              break;
-        case SensorStatus.WARN:
-          console.log("Warn");
-          this.Report();
-              break;
-        case SensorStatus.FAIL:
-          console.log("Fail");
-          this.Report();
-              break;
-      };
-  }
+    Tags = new Map();
+    // (x) Declare Sample
+    async Sample() {
+        this.Readings.push(this.Power);
+        console.log("Sampled");
+    }
+    // (x) Declare Report
+    Report() {
+        console.log("--- Readings ---");
+        for (const val of this.Readings) {
+            console.log(String(val));
+        };
+    }
+    on_tick() {
+        console.log("Tick");
+    }
+    on_start() {
+        switch (this.Status) {
+          case SensorStatus.OK:
+            this.Sample();
+            this.Report();
+                break;
+          case SensorStatus.WARN:
+            console.log("Warn");
+            this.Report();
+                break;
+          case SensorStatus.FAIL:
+            console.log("Fail");
+            this.Report();
+                break;
+        };
+    }
 }

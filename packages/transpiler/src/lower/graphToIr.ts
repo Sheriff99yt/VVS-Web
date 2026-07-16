@@ -428,9 +428,12 @@ function lowerStatement(
     kindId === 'env.event_handler' ||
     kindId === 'class_define' ||
     kindId === 'function_define' ||
+    kindId === 'function_implement' ||
+    kindId === 'function_entry' ||
     kindId === 'enum_define' ||
     kindId === 'event_member_define'
   ) {
+    // function_entry is a body-tab anchor only — never emit `// Name` noise (U81 / C++ skill).
     return null;
   }
 

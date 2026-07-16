@@ -11,14 +11,14 @@ class Machine:
     Serial = 0
     MaxPower = 100
     Ready = False
+    # (x) Declare Boot
     def Boot(self):
-        # Boot
         self.Ready = True
         print("Booted")
         Sensor().on_tick()
     # abstract Diagnose
+    # (x) Declare Shutdown
     async def Shutdown(self):
-        # Shutdown
         self.Ready = False
         print("Shutdown")
     def on_pulse(self):
@@ -40,13 +40,13 @@ class Sensor(Machine):
     Readings = []
     Status = SensorStatus.OK
     Host = None
-    Tags = 0
+    Tags = {}
+    # (x) Declare Sample
     async def Sample(self):
-        # Sample
         self.Readings.append(self.Power)
         print("Sampled")
+    # (x) Declare Report
     def Report(self):
-        # Report
         print("--- Readings ---")
         for val in self.Readings:
             print(str(val))

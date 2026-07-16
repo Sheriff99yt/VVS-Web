@@ -1,5 +1,5 @@
-      for (let _vvs_i_for_loop = 0; _vvs_i_for_loop <= 2; _vvs_i_for_loop++) {
-          console.log(String(_vvs_i_for_loop));
-      };
-  }
+        for (let _vvs_i_for_loop = 0; _vvs_i_for_loop <= 2; _vvs_i_for_loop++) {
+            console.log(String(_vvs_i_for_loop));
+        };
+    }
 }

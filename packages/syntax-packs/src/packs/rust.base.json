@@ -107,7 +107,7 @@
       "quasi": "false"
     },
     "VarDefine": {
-      "quasi": "    {visibility}{name}: {type},"
+      "quasi": "{visibility}{name}: {type},"
     },
     "DeclareLocal": {
       "quasi": "let mut {name}: {type};"

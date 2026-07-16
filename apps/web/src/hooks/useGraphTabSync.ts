@@ -27,6 +27,24 @@ function isPinnedDocumentTab(tabId: string, graphContainerIds: ReadonlySet<strin
   return tabId === 'main' || tabId === MAIN_GRAPH_CONTAINER_ID || graphContainerIds.has(tabId);
 }
 
+/**
+ * Documents outlive open tabs. Closing a function tab must not wipe its body —
+ * retain while the function symbol exists (or the tab is still open / pinned).
+ */
+export function shouldRetainGraphDocument(
+  tabId: string,
+  options: {
+    openTabIds: ReadonlySet<string>;
+    graphContainerIds: ReadonlySet<string>;
+    functionIds: ReadonlySet<string>;
+  }
+): boolean {
+  if (isPinnedDocumentTab(tabId, options.graphContainerIds)) return true;
+  if (options.functionIds.has(tabId)) return true;
+  if (options.openTabIds.has(tabId)) return true;
+  return false;
+}
+
 function cloneDocument(doc: GraphDocument): GraphDocument {
   return {
     nodes: structuredClone(doc.nodes),
@@ -39,6 +57,8 @@ interface UseGraphTabSyncOptions {
   activeGraphTab: string;
   openTabs: GraphTab[];
   graphContainerIds: string[];
+  /** Function symbol ids whose body graphs must survive tab close. */
+  functionIds?: string[];
   nodes: VVSNode[];
   edges: VVSEdge[];
   setNodes: React.Dispatch<React.SetStateAction<VVSNode[]>>;
@@ -55,6 +75,7 @@ export function useGraphTabSync({
   activeGraphTab,
   openTabs,
   graphContainerIds,
+  functionIds = [],
   nodes,
   edges,
   setNodes,
@@ -229,19 +250,28 @@ export function useGraphTabSync({
     };
   }, [nodes, edges, scheduleMetadataSync]);
 
+  const functionIdsRef = useLatestRef(functionIds);
+
   useEffect(() => {
     const openIds = new Set(openTabs.map((tab) => tab.id));
     const containers = containerIdSet();
+    const retainedFunctions = new Set(functionIdsRef.current);
     let changed = false;
     documentsRef.current.forEach((_, tabId) => {
-      if (isPinnedDocumentTab(tabId, containers)) return;
-      if (!openIds.has(tabId)) {
-        documentsRef.current.delete(tabId);
-        changed = true;
+      if (
+        shouldRetainGraphDocument(tabId, {
+          openTabIds: openIds,
+          graphContainerIds: containers,
+          functionIds: retainedFunctions,
+        })
+      ) {
+        return;
       }
+      documentsRef.current.delete(tabId);
+      changed = true;
     });
     if (changed) notifyMetadata();
-  }, [openTabs, notifyMetadata, containerIdSet]);
+  }, [openTabs, functionIds, notifyMetadata, containerIdSet, functionIdsRef]);
 
   useEffect(() => {
     if (prevTabRef.current === activeGraphTab) return;

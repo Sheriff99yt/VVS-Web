@@ -110,7 +110,7 @@
       "quasi": "false"
     },
     "VarDefine": {
-      "quasi": "    {staticKw}{constKw}{type} {name} = {default};"
+      "quasi": "{staticKw}{constKw}{type} {name} = {default};"
     },
     "DeclareLocal": {
       "quasi": "{type} {name};"
@@ -137,13 +137,19 @@
       "quasi": "    }"
     },
     "FunctionDefOpen": {
-      "quasi": "    {staticKw}{virtualKw}void {name}({paramList}) {"
+      "quasi": "    {staticKw}{virtualKw}{returnType} {name}({paramList}){overrideKw} {"
+    },
+    "FunctionDefOutOfLineOpen": {
+      "quasi": "{returnType} {className}::{name}({paramList}) {"
     },
     "FunctionDeclPrototype": {
-      "quasi": "    {staticKw}{virtualKw}void {name}({paramList}){suffix};"
+      "quasi": "    {staticKw}{virtualKw}{returnType} {name}({paramList}){overrideKw}{suffix};"
     },
     "FunctionTabClose": {
       "quasi": "    }"
+    },
+    "FunctionOutOfLineClose": {
+      "quasi": "}"
     },
     "ClassPublicSection": {
       "quasi": "public:"

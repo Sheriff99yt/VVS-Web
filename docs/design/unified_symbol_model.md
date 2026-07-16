@@ -22,32 +22,33 @@ Cross Over Architecture (COA) — multi-target authoring with effectiveness indi
 | **Implement** | Body / handler logic | Method body or initializer |
 | **Invoke** | Use at a call site | Statement in flow |
 
-### UI label: **Declare** (member chain)
+### UI labels: **Declare** / **Define** / **Call** (functions)
 
-All member-slot nodes on the member chain use **Declare** in user-facing copy — `kindId`s unchanged:
+Member-slot **existence** uses **Declare** — including functions. Function **body placement** uses **Define**. Invoke uses **Call**.
 
-| Symbol kind | UI label (canvas / spawn) | `kindId` | Codegen role |
-|-------------|---------------------------|----------|--------------|
+| Symbol kind | UI label (canvas / spawn) | `kindId` (today) | Codegen role |
+|-------------|---------------------------|------------------|--------------|
 | **Variable** | **Declare** `{name}` | `var_define` | member initializer / field |
-| **Function** | **Declare** `{name}` | `function_define` | method signature + tab body |
+| **Function (exists)** | **Declare** `{name}` | `function_define` *(declare role; U81 may split kinds)* | signature / “there is a function” |
+| **Function (body place)** | **Define** `{name}` | *(implement role — today folded into `function_define`; U81)* | insert body at this position |
 | **Event (member)** | **Declare** `{name}` | `event_member_define` | handler signature slot in member order |
 | **Class** | **Declare** `{name}` / **Declare Class** | `class_define` | class declaration slot |
 | **Event (handler)** | **On** `{name}` (Handler) | `event_define` | handler body on class graph |
 | **Function (invoke)** | **Call** `{name}` | `vvs.project.call_function` | call statement |
 | **Event (invoke)** | **Dispatch** `{name}` | `event_dispatch` | direct handler call |
 
-**Declare** covers all member-chain slots (C++-style `int x;` for variables). **On …** for handler flow entry; **Call** / **Dispatch** for invoke sites.
+Release menus: variables **Get** / **Set** / **Declare**; functions **Call** / **Declare** / **Define**. Not about header/impl file splits.
 
 ### Per symbol kind
 
-| Kind | Member chain (canvas) | Implement | Invoke (canvas) |
-|------|----------------------|-----------|-----------------|
+| Kind | Declare (member chain) | Define / Implement | Invoke (canvas) |
+|------|------------------------|--------------------|-----------------|
 | **Class** | `class_define` | — | — |
-| **Variable** | `var_define` (**Declare**) | defaults on define node | `variable_get` / `variable_set` |
-| **Function** | `function_define` (**Declare**) | linked function tab graph | `call_function` (**Call**) |
+| **Variable** | `var_define` (**Declare**) | defaults on declare node | `variable_get` / `variable_set` |
+| **Function** | **Declare** (existence) | **Define** (body place) + **Edit function body** tab | `call_function` (**Call**) |
 | **Event** | `event_member_define` (**Declare**) | `event_define` (**On** / handler) | `event_dispatch` (**Dispatch**) |
 
-Events split **declare** and **implement** because the handler body wires on the main graph (like an entry point). Functions fold implement into the declare node + function tab.
+Events already split declare and implement. Functions must match that split (**U81**). Until then emit may still fold signature + body into one `function_define` node.
 
 Program entry uses `events[]` with `role: 'entry'` and the same event pattern; codegen emits `on_start` only from canvas.
 

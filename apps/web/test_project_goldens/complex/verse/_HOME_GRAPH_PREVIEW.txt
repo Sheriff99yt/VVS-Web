@@ -7,18 +7,18 @@
 # (x) Import unordered_map
 # (x) Import Collections.Generic
 <public>Machine := class:
-        var Power : float = 0
-        var Serial<public> : float = 0
-        var MaxPower<public> : float = 100
-        var Ready<public> : logic = false
+    var Power : float = 0
+    var Serial<public> : float = 0
+    var MaxPower<public> : float = 100
+    var Ready<public> : logic = false
+    # (x) Declare Boot
     Boot<public>() : void =
-        # Boot
         set Ready = true
         Print("Booted")
         Sensor.on_tick()
     # abstract Diagnose
+    # (x) Declare Shutdown
     Shutdown<public>() : void =
-        # Shutdown
         set Ready = false
         Print("Shutdown")
     on_pulse() : void =
@@ -38,16 +38,16 @@ SensorStatus := enum:
     WARN
     FAIL
 <public>Sensor(Machine) := class:
-        var Readings<public> : []float = array{}
-        var Status<public> : SensorStatus = SensorStatus.OK
-        var Host<public> : Machine = false
-        var Tags<public> : [string]string = 0
+    var Readings<public> : []float = array{}
+    var Status<public> : SensorStatus = SensorStatus.OK
+    var Host<public> : Machine = false
+    var Tags<public> : [string]string = map{}
+    # (x) Declare Sample
     Sample<public>() : void =
-        # Sample
         set Readings += array{Power}
         Print("Sampled")
+    # (x) Declare Report
     Report<public><override>() : void =
-        # Report
         Print("--- Readings ---")
         for (float val : Readings) {
             Print(ToString(val))

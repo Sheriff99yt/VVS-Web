@@ -133,11 +133,14 @@ export function CodeMirrorGeneratedCodeView({
   highlightRanges,
   readOnly = true,
   className,
+  onReverseSelectLine,
 }: GeneratedCodeViewProps) {
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const highlightRangesRef = useRef(highlightRanges);
+  const onReverseSelectLineRef = useRef(onReverseSelectLine);
   React.useLayoutEffect(() => {
     highlightRangesRef.current = highlightRanges;
+    onReverseSelectLineRef.current = onReverseSelectLine;
   });
 
   const extensions = useMemo(
@@ -145,6 +148,18 @@ export function CodeMirrorGeneratedCodeView({
       ...getCodeMirrorExtensions(language, readOnly),
       ...vvsCodeMirrorTheme(),
       highlightField,
+      EditorView.domEventHandlers({
+        dblclick(event, view) {
+          const handler = onReverseSelectLineRef.current;
+          if (!handler) return false;
+          const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+          if (pos == null) return false;
+          const line = view.state.doc.lineAt(pos);
+          const col = pos - line.from + 1;
+          handler(line.number, col);
+          return true;
+        },
+      }),
     ],
     [language, readOnly]
   );

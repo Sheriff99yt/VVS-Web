@@ -30,6 +30,8 @@ export interface UiPreferences {
   showUnsupportedComments: boolean;
   /** U67: dim language-ineffective nodes on the canvas (default on). */
   dimUnsupportedNodes: boolean;
+  /** U70: allow MCP tools that can mutate/delete graphs (default off). */
+  mcpAllowDangerousTools: boolean;
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -50,6 +52,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   detailsPanelOffsetTop: 10,
   showUnsupportedComments: true,
   dimUnsupportedNodes: true,
+  mcpAllowDangerousTools: false,
 };
 
 export const DETAILS_PANEL_HEIGHT = {

@@ -47,11 +47,13 @@ import { paneMenuPosition } from '@/lib/paneMenuPosition';
 
 export const SPAWN_EVENT_NODE_EVENT = 'vvs:spawn-event-node';
 export const SPAWN_EVENT_DECLARE_MEMBER_EVENT = 'vvs:spawn-event-declare-member';
+export const SPAWN_FUNCTION_IMPLEMENT_EVENT = 'vvs:spawn-function-implement';
 
 /** Delay before hover expands details — avoids flash while dragging. */
 const HOVER_EXPAND_MS = 180;
 const ROLE_CHIP_CLASS: Record<string, string> = {
   Declare: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+  Define: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
   Handler: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
   Call: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
   Dispatch: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
@@ -59,10 +61,11 @@ const ROLE_CHIP_CLASS: Record<string, string> = {
 
 function resolveNodeRoleChip(kindId: string | null): string | null {
   if (!kindId) return null;
+  if (kindId === 'function_define') return 'Declare';
+  if (kindId === 'function_implement') return 'Define';
   if (
     kindId === 'var_define' ||
     kindId === 'class_define' ||
-    kindId === 'function_define' ||
     kindId === 'event_member_define'
   ) {
     return 'Declare';

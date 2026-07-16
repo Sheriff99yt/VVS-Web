@@ -1,6 +1,6 @@
 # Language-neutral vocabulary (revision proposal)
 
-**Status:** Proposal (July 2026) — **plan before system rework**. No mass renames in this pass.  
+**Status:** Locked glossary (July 2026) — **function Declare ≠ Define** locked; implementation split = **U81**. No mass `kindId` renames in this pass.  
 **Goal:** Lock user-facing terms that map cleanly to C++, Java, C#, TypeScript, Python, Go, and Rust via syntax packs, while keeping stable internal identifiers (`kindId`, diagnostic codes, file names).
 
 **Companion:** [naming_and_product_direction.md](../naming_and_product_direction.md) · [unified_symbol_model.md](unified_symbol_model.md) · [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [node_system.md](../node_system.md) · [language_capability_catalog.md](language_capability_catalog.md)
@@ -33,8 +33,10 @@ Recent decisions unified member-chain UI copy around **Declare**, handler entry 
 
 | Concept | UI term | Avoid | kindId / internal | Maps to (examples) |
 |---------|---------|-------|-------------------|-------------------|
-| Member exists in scope (ordered slot) | **Declare** `{name}` | Define, Create symbol, Add to class | `var_define`, `function_define`, `event_member_define`, `class_define`; `symbolRole: declare` | See per-kind table below |
-| Handler / body entry | **On** `{name}` | Handler only (as node title), Define Event, Event Begin | `event_define`, `event_on_update`; `symbolRole: implement` | `def on_x` (Py), `void onX()` (C++), `onX()` (TS), `func onX` (Go) |
+| Member exists in scope (ordered slot) — variables, **functions**, class, event slot | **Declare** `{name}` | Define (for existence-only slots) | `var_define`, `function_define` (declare role), `event_member_define`, `class_define`; `symbolRole: declare` | Field / function signature / class shell / event slot |
+| Place function body in generated code (at this chain / drop position) | **Define** `{name}` | Declare (for body placement), “open tab” as the primary label | Function release **Define** → body insert site; `symbolRole: implement` | Body block inserted where Define is placed; authored in **Edit function body** tab |
+| Function body authoring surface | **Edit function body** | Define (for the tab itself) | function graph tab | Authors the body graph; does not emit a second file (U80) |
+| Handler / body entry (events) | **On** `{name}` | Handler only (as node title), Define Event, Event Begin | `event_define`, `event_on_update`; `symbolRole: implement` | `def on_x` (Py), `void onX()` (C++), `onX()` (TS), `func onX` (Go) |
 | Function use at call site | **Call** `{name}` | Invoke, Execute, Run | `vvs.project.call_function`; `symbolRole: invoke` | `foo()`, `self.foo()`, `obj.foo()` |
 | Event/handler use at call site | **Dispatch** `{name}` | Call (events), Emit, Trigger, Broadcast | `event_dispatch`; `symbolRole: invoke` | Direct handler call line (not hidden pub/sub) |
 | Read variable | **Get** `{name}` | Load, Fetch | `variable_get` | `x`, `self.x`, `this.x` |
@@ -43,18 +45,33 @@ Recent decisions unified member-chain UI copy around **Declare**, handler entry 
 | Per-frame hook | **On Update** | Tick, Event Tick | `event_on_update` (lifecycle) | `on_update(dt)`, `Update()` |
 | User-named signal | **Custom event** (panel) + **Declare** / **On** / **Dispatch** (canvas) | Event Dispatcher, Delegate (as primary UI) | `events[]` `role: 'custom'` | Language-specific handler + invoke (see node_system §12) |
 
-### Per-kind Declare mapping (member chain)
+### Function release menu (locked — parallel to variables)
 
-| Symbol kind | UI (canvas / catalog) | kindId | Python | Java / C# | C++ | TypeScript | Go | Rust |
-|-------------|----------------------|--------|--------|-----------|-----|------------|-----|------|
-| Variable | Declare `{name}` | `var_define` | `self.x: int = 0` | `int x;` / field | `int x;` | `x: number` | field on struct | `x: i32` field |
-| Function | Declare `{name}` | `function_define` | `def foo(self):` | `void foo()` | `void foo();` + body | `foo(): void` | `func (r *T) Foo()` | `fn foo(&mut self)` |
-| Event (member slot) | Declare `{name}` | `event_member_define` | handler signature slot | event/delegate decl | method decl slot | method signature | method on type | fn slot in `impl` |
-| Class / module shell | Declare Class `{name}` | `class_define` | `class Foo:` | `class Foo` | `class Foo` | `class Foo` | `type Foo struct` | `struct Foo` |
-| Nested graph reference | Graph Reference | `graph_ref` | import / use module | import | `#include` / namespace | `import` | `import` | `mod` / `use` |
+Variables: **Get** / **Set** / **Declare**. Functions: **Call** / **Declare** / **Define**.
 
-Handler bodies and function tab graphs are **Implement** (not separate Declare labels): function body = function tab; event body = **On** node flow.
+| Menu action | Meaning | Code effect |
+|-------------|---------|-------------|
+| **Declare** | “There is a function” | Existence / signature only — same role as **Declare** for a variable |
+| **Define** | Place the body here | Connect the function so its body is inserted at this position in the code |
+| **Call** | Use it | Call site |
 
+**Not** about `.h` / `.cpp` file splits — about **roles on one (or more) text-shaped graphs**. Header-style multi-file layout is out of scope for this lock.
+
+**Implementation (U81 — shipped):** `function_define` = Declare (existence / abstract signature only). `function_implement` = Define (body placement on the member chain). No legacy fold; no invented stub body without Define. Call unchanged.
+
+**U82 / U66 (all seven targets):** Only **cpp** emits a real non-abstract Declare prototype (`FUNCTION_DECLARE_PROTOTYPE_LANGS`). Elsewhere non-abstract Declare is ineffective → U66 `(x) Declare Name` + canvas dim (never silent skip). Abstract still emits (`# abstract` / `= 0` / C# `abstract` prototype). **sourceMap:** Declare maps only to its own emit; Define maps to method/`def` header + body. See [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) § Function Declare / Define per language.
+
+### Per-kind member / implement mapping
+
+| Symbol kind | Declare (member chain) | Define / Implement | Invoke |
+|-------------|------------------------|--------------------|--------|
+| Variable | Declare `{name}` (`var_define`) — e.g. `int x;` | defaults on declare node | Get / Set |
+| Function | Declare `{name}` — signature / “exists” | **Define** `{name}` — body insert site + **Edit function body** tab | **Call** `{name}` |
+| Event (member slot) | Declare `{name}` (`event_member_define`) | **On** `{name}` (`event_define`) | **Dispatch** `{name}` |
+| Class / module shell | Declare Class `{name}` (`class_define`) | — | — |
+| Nested graph reference | Graph Reference (`graph_ref`) | — | — |
+
+Function graph tabs are **Edit function body** only (author the body). **Define** on the host graph is where that body is **placed** in generated code (same file per U80). **Declare** does not place the body.
 ### Workspace & graph chrome
 
 | Concept | UI term | Avoid | Internal | Notes |
@@ -62,7 +79,7 @@ Handler bodies and function tab graphs are **Implement** (not separate Declare l
 | Visual program | **Graph** | Blueprint, Asset | `GraphDocument` | One tab’s nodes + edges |
 | Workspace | **Project** | Level, Asset | `ProjectSnapshot` | Container for graphs + symbols |
 | Left tree | **Project** panel | My Blueprint | — | Index + CRUD; dual-writes canvas |
-| Sub-canvas tab | **Graph tab** | Blueprint tab | `graphTabId` | Main, function bodies, etc. |
+| Sub-canvas tab | **Graph tab** / **Edit function body** | Blueprint tab | `graphTabId` | Function tabs author body only |
 | Connection point | **Port** (beginner copy); **pin** OK in dev docs | — | `Pin`, `execution` type | Prefer **flow** for execution ports in UI |
 | Execution wire | **Flow** connection | Exec wire | `pinType: execution` | Linear chain semantics (node_system §5) |
 | Data wire | **Data** connection | — | typed pins | |
@@ -90,7 +107,8 @@ Handler bodies and function tab graphs are **Implement** (not separate Declare l
 
 | Term | Status | Replacement |
 |------|--------|-------------|
-| Define (member UI) | **Deprecated** in user copy | **Declare** |
+| Define-only for functions (collapse Declare+body) | **Superseded** July 2026 | **Declare** (exists) + **Define** (place body) + **Call** |
+| Define (for variables / class / event slot) | **Deprecated** in user copy | **Declare** |
 | Emit Event / Subscribe Event | Blocked | **Dispatch** + visible handler; future subscribe must emit one line per node |
 | Macro (codegen) | Deprecated | **Function** + **Call** |
 | Blueprint, BeginPlay, BP_* | Forbidden in UI | Graph, On Start, module name |
@@ -217,12 +235,13 @@ Handler bodies and function tab graphs are **Implement** (not separate Declare l
 
 ## Agent checklist (after lock)
 
-- [ ] New UI strings use glossary — no **Define** for member slots
+- [ ] New UI strings use glossary — **Declare** for member existence (including functions)
+- [ ] Function release menu: **Call** / **Declare** / **Define** (body placement ≠ existence)
 - [ ] No Blueprint / BeginPlay / BP_ in user copy
 - [ ] Functions → **Call**; events → **Dispatch** (not Call)
 - [ ] Docs distinguish **symbol** (index) vs **member** (canvas chain)
 - [ ] `kindId` renames require explicit RFC — not vocabulary alignment
-
+- [ ] Do **not** frame this as “we need header files” — roles on text-shaped graphs
 ---
 
 ## Related documents

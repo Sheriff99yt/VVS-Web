@@ -12,6 +12,8 @@ import {
   hasDefineNodeForFunction,
   hasDefineNodeForVariable,
   hasHandlerNodeForEvent,
+  hasImplementNodeForFunction,
+  findImplementNodeForFunction,
   insertClassDefineNode,
   insertDefineNodeForEvent,
   insertDefineNodeForFunction,
@@ -19,7 +21,7 @@ import {
 } from '@/lib/defineNodeSync';
 import { classGraphTabId, classHomeGraphId, symbolClassId } from '@/lib/classScope';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
-import { SPAWN_EVENT_NODE_EVENT } from '@/components/layout/GraphFloatingDetails';
+import { SPAWN_EVENT_NODE_EVENT, SPAWN_FUNCTION_IMPLEMENT_EVENT } from '@/components/layout/GraphFloatingDetails';
 import { CanvasStatusBadge } from '@/components/layout/project-tree/CanvasStatusBadge';
 import type { useEditorFocus } from '@/hooks/useEditorFocus';
 
@@ -246,18 +248,58 @@ export function useCanvasDeclareBadges(input: {
     const cls = classes.find((c) => c.id === symbolClassId(func));
     if (!cls) return null;
     const declared = hasDefineNodeForFunction(documents, cls, func.id);
-    if (onlyErrors && declared) return null;
-    if (onlySuccess && !declared) return null;
+    const hasDefine = hasImplementNodeForFunction(documents, func.id);
+
+    if (onlyErrors && declared && hasDefine) return null;
+    if (onlySuccess && !declared && !hasDefine) return null;
+
     return (
-      <CanvasStatusBadge
-        label="Declare"
-        ok={declared}
-        emphasize={rowSelected && !declared}
-        variant={variant}
-        onClick={(e) => focusOrInsertFunctionDeclare(func, e)}
-      />
+      <div className="flex items-center gap-0.5 shrink-0">
+        {(!onlyErrors || !declared) && (!onlySuccess || declared) ? (
+          <CanvasStatusBadge
+            label="Declare"
+            ok={declared}
+            emphasize={rowSelected && !declared}
+            variant={variant}
+            onClick={(e) => focusOrInsertFunctionDeclare(func, e)}
+          />
+        ) : null}
+        {(!onlyErrors || !hasDefine) && (!onlySuccess || hasDefine) ? (
+          <CanvasStatusBadge
+            label="Define"
+            ok={hasDefine}
+            emphasize={rowSelected && !hasDefine}
+            variant={variant}
+            onClick={(e) => focusOrInsertFunctionDefine(func, e)}
+          />
+        ) : null}
+      </div>
     );
   };
+
+  const focusOrInsertFunctionDefine = useCallback(
+    (func: FunctionSymbol, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      if (!documents || isReferenceMode) return;
+      const cls = classes.find((c) => c.id === symbolClassId(func));
+      if (!cls) return;
+
+      editorFocus.focusTreeSymbolOnClass(cls, { type: 'function', id: func.id });
+
+      if (hasImplementNodeForFunction(documents, func.id)) {
+        const target = findImplementNodeForFunction(documents, func.id);
+        if (target) dispatchNavigateToNode(target.tabId, target.nodeId);
+        return;
+      }
+
+      window.dispatchEvent(
+        new CustomEvent(SPAWN_FUNCTION_IMPLEMENT_EVENT, {
+          detail: { functionId: func.id },
+        })
+      );
+    },
+    [documents, isReferenceMode, classes, editorFocus]
+  );
 
   const renderEventCanvasStatus = (
     eventId: string,
@@ -308,6 +350,7 @@ export function useCanvasDeclareBadges(input: {
     focusOrInsertClassDeclare,
     focusOrInsertVariableDeclare,
     focusOrInsertFunctionDeclare,
+    focusOrInsertFunctionDefine,
     focusOrInsertEventDeclare,
     focusOrInsertEventHandler,
   };

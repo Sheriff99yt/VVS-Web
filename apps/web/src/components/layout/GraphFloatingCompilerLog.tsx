@@ -384,7 +384,9 @@ export function GraphFloatingCompilerLog() {
         {effectiveExpanded ? (
           <div className="font-mono text-[10px] leading-relaxed space-y-0.5">
             {logs.length === 0 ? (
-              <p className="text-zinc-600 italic">Empty</p>
+              <p className="text-zinc-600 py-1">
+                No messages yet. Generate or fix graph errors — click a line to jump to the node.
+              </p>
             ) : (
               logs.map((log) => <LogLine key={log.id} log={log} onNavigate={handleLogClick} />)
             )}

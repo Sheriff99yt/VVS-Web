@@ -11,6 +11,7 @@ import {
   overloadParamNames,
   renderFunctionDeclPrototype,
   renderFunctionDefHeader,
+  renderFunctionDefOutOfLineHeader,
 } from './shell';
 import { appendIrStatements } from './sinkStatements';
 
@@ -39,6 +40,23 @@ export function formatFunctionDefHeader(
   properties?: Record<string, unknown>
 ): string {
   return renderFunctionDefHeader(func, targetLanguage, isAsync, properties);
+}
+
+/** C++ out-of-line `void Class::Name(...) {` — requires FunctionDefOutOfLineOpen pack slot. */
+export function formatFunctionDefOutOfLineHeader(
+  func: FunctionSymbol,
+  className: string,
+  targetLanguage: TargetLanguage,
+  isAsync = false,
+  properties?: Record<string, unknown>
+): string {
+  return renderFunctionDefOutOfLineHeader(
+    func,
+    className,
+    targetLanguage,
+    isAsync,
+    properties
+  );
 }
 
 /** C++-style declaration prototype (`void foo();`) — null when the target has no separate declare form. */
@@ -138,16 +156,27 @@ export function appendFunctionBody(
   ir: IrModule,
   funcId: string,
   emptyLine: string,
-  environmentManifest?: ProjectEnvironmentManifest
+  environmentManifest?: ProjectEnvironmentManifest,
+  sourceGraphNodeId?: string,
+  /** Override pack bodyIndent (e.g. C++ out-of-line uses 4 spaces). */
+  indentOverride?: string
 ): void {
   const body = ir.functionBodies[funcId];
+  const bodyStartLine = sink.lineCount + 1;
   if (!body || body.length === 0) {
     sink.appendRaw(emptyLine);
+    if (sourceGraphNodeId) {
+      sink.tagRange(sourceGraphNodeId, bodyStartLine, bodyStartLine);
+    }
     return;
   }
   const family = ir.codegenTarget?.family ?? 'python';
-  const ctx = printContextForIr(ir, bodyIndent(family), environmentManifest);
+  const indent = indentOverride ?? bodyIndent(family);
+  const ctx = printContextForIr(ir, indent, environmentManifest);
   appendIrStatements(sink, body, ctx);
+  if (sourceGraphNodeId) {
+    sink.tagRange(sourceGraphNodeId, bodyStartLine, sink.lineCount);
+  }
 }
 
 export type StartHandlerAppender = (

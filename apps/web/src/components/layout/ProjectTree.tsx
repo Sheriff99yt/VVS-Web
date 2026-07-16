@@ -1505,16 +1505,13 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                      }
                      hint={
                        canReorderSymbols
-                         ? 'Drag grip to reorder · drag name to call · double-click to focus Declare · open icon for body'
-                         : 'Drag row to call · click to select · double-click to focus Declare · open icon for body'
+                         ? 'Drag grip to reorder · drag name to call · double-click to Edit function body · Define badge places definition on host graph'
+                         : 'Drag row to call · click to select · double-click to Edit function body · Define badge places definition on host graph'
                      }
                      onSelect={(e) => selectFunction(f, e)}
-                     onOpen={() =>
-                       isReferenceMode
-                         ? openGraph(f.id, 'function')
-                         : focusOrInsertFunctionDeclare(f)
-                     }
+                     onOpen={() => openGraph(f.id, 'function')}
                      onOpenAffordance={() => openGraph(f.id, 'function')}
+                     openAffordanceTitle="Edit function body"
                      onContextMenu={(e) => openSymbolContextMenu(e, { kind: 'function', id: f.id })}
                      showOpenAffordance
                      canvasDrag={
@@ -2119,7 +2116,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
         {panelTab === 'output' ? (
           <CategorySection
-            title="Project files"
+            title="Generated files"
             count={filteredProjectFileCount}
             icon={<FolderOutput size={12} className="text-zinc-500 shrink-0" />}
             expanded

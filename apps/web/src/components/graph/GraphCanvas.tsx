@@ -22,7 +22,7 @@ import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, nestedGraphIdForNode } from '@/lib/linkedGraphNodes';
 import { GraphNodeSearch } from './GraphNodeSearch';
 import { GraphSelectionToolbar } from './GraphSelectionToolbar';
-import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT } from '@/components/layout/GraphFloatingDetails';
+import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT, SPAWN_FUNCTION_IMPLEMENT_EVENT } from '@/components/layout/GraphFloatingDetails';
 import { GraphFloatingCompilerLog } from '@/components/layout/GraphFloatingCompilerLog';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import {
@@ -41,6 +41,7 @@ import {
 import { getLinkedEnvironmentManifest } from '@/lib/environmentContext';
 import {
   applyFunctionCallBinding,
+  buildFunctionImplementData,
   FUNCTION_RENAMED_EVENT,
   FUNCTION_OVERLOAD_DRAG_MIME,
   resolveOverloadForCall,
@@ -93,6 +94,9 @@ import {
   findMemberDeclareNodeForSymbol,
   findHandlerNodeForEvent,
   hasHandlerNodeForEvent,
+  hasImplementNodeForFunction,
+  findImplementNodeForFunction,
+  insertImplementNodeForFunction,
 } from '@/lib/defineNodeSync';
 import type { FunctionSymbol, GraphVariable, ClassSymbol, ProjectEventDefinition } from '@/types/graph';
 import { CLASS_DRAG_MIME, parseClassDragPayload } from '@/lib/classHelpers';
@@ -555,7 +559,7 @@ function GraphCanvasInner() {
       const kindDef = resolveKind(template.type, template.kindVersion);
       const inputs = template.inputs || kindDef?.inputs || [];
       const outputs = template.outputs || kindDef?.outputs || [];
-      const defaultProps = kindDef?.propertySchema
+      const defaultProps = Array.isArray(kindDef?.propertySchema)
         ? defaultPropertiesFromSchema(kindDef.propertySchema)
         : {};
 
@@ -1081,15 +1085,62 @@ function GraphCanvasInner() {
   );
 
   const handleDefineFunction = useCallback(
-    (func: FunctionSymbol, overloadId: string) => {
+    (func: FunctionSymbol, overloadId: string, flowPosition?: { x: number; y: number }) => {
       const overload = resolveOverloadForCall(func, overloadId);
       const tabId = overload.graphTabId ?? func.id;
+      const documents = getDocuments() ?? {};
+      const cls = activeClass(classes, activeClassId);
+      const existing = findImplementNodeForFunction(documents, func.id);
+
+      if (existing) {
+        focusFunction(func, tabId);
+        dispatchNavigateToNode(existing.tabId, existing.nodeId);
+        setFunctionMenu(null);
+        return;
+      }
+
+      if (cls) {
+        // Always place Define on the member chain (1:1 placement order) — drop position is visual only.
+        const next = insertImplementNodeForFunction(documents, cls, func, activeGraphTab);
+        patchAllDocuments(() => next);
+        const placed = findImplementNodeForFunction(next, func.id);
+        if (placed) {
+          markTabDirty(placed.tabId);
+          setCompileState('dirty');
+          setSelection({ type: 'node', id: placed.nodeId });
+          setSelectedNodeIds([placed.nodeId]);
+        }
+      } else if (flowPosition) {
+        const nodeId = `node-${Date.now()}`;
+        const newNode: VVSNodeType = {
+          id: nodeId,
+          type: 'vvs_standard_node',
+          position: flowPosition,
+          data: normalizeNodeData(buildFunctionImplementData(func, overloadId)),
+        };
+        setNodesWithHistory((nds) => [...nds, newNode]);
+        setSelection({ type: 'node', id: nodeId });
+        setSelectedNodeIds([nodeId]);
+      }
+
       focusFunction(func, tabId);
       const entryId = findGraphEntryNodeId(getDocuments() ?? {}, tabId);
       if (entryId) dispatchNavigateToNode(tabId, entryId);
       setFunctionMenu(null);
     },
-    [focusFunction, getDocuments]
+    [
+      focusFunction,
+      getDocuments,
+      patchAllDocuments,
+      setNodesWithHistory,
+      setSelection,
+      setSelectedNodeIds,
+      markTabDirty,
+      setCompileState,
+      activeGraphTab,
+      classes,
+      activeClassId,
+    ]
   );
 
   const handleDefineEvent = useCallback(
@@ -1491,6 +1542,19 @@ function GraphCanvasInner() {
   }, [events, handleDeclareEvent]);
 
   React.useEffect(() => {
+    const onSpawnFunctionImplement = (event: Event) => {
+      const detail = (event as CustomEvent<{ functionId: string }>).detail;
+      const func = functions.find((f) => f.id === detail.functionId);
+      if (!func) return;
+      const overload = resolveOverloadForCall(func);
+      handleDefineFunction(func, overload.id);
+    };
+
+    window.addEventListener(SPAWN_FUNCTION_IMPLEMENT_EVENT, onSpawnFunctionImplement);
+    return () => window.removeEventListener(SPAWN_FUNCTION_IMPLEMENT_EVENT, onSpawnFunctionImplement);
+  }, [functions, handleDefineFunction]);
+
+  React.useEffect(() => {
     const onSpawnEnvNode = (event: Event) => {
       const detail = (event as CustomEvent<{ action: EnvironmentSpawnAction; symbolId: string }>)
         .detail;
@@ -1688,9 +1752,13 @@ function GraphCanvasInner() {
             {
               id: 'define-function',
               label: `Define ${functionMenu.func.name}`,
-              title: 'Open function body graph',
+              title: 'Place function body in generated code at this position',
               onClick: () =>
-                handleDefineFunction(functionMenu.func, functionMenu.overloadId),
+                handleDefineFunction(
+                  functionMenu.func,
+                  functionMenu.overloadId,
+                  functionMenu.flowPosition
+                ),
             },
           ]}
         />

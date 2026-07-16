@@ -85,6 +85,16 @@ export function buildFolderGraphManifest(snapshot: ProjectSnapshot): VvsProjectG
       functions[tab.id] = functionGraphRelativePath(tab);
     }
   }
+  // U80: keep function body documents on disk even when Edit-body tabs are closed.
+  for (const fn of snapshot.functions ?? []) {
+    const tabId = fn.overloads[0]?.graphTabId ?? fn.id;
+    if (functions[tabId] || !snapshot.documents[tabId]) continue;
+    functions[tabId] = functionGraphRelativePath({
+      id: tabId,
+      type: 'function',
+      name: fn.name.startsWith('Function:') ? fn.name : `Function: ${fn.name}`,
+    });
+  }
 
   // Legacy class home graphs not represented as graphContainers entries.
   for (const cls of snapshot.classes) {

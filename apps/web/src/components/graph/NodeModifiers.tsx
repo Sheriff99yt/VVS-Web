@@ -45,7 +45,7 @@ export function NodeModifiers({ id, data }: NodeModifiersProps) {
 
   const kindId = resolveNodeKindId(data);
   const def = getNodeKindDefinition(kindId);
-  const schema = def?.propertySchema || [];
+  const schema = Array.isArray(def?.propertySchema) ? def.propertySchema : [];
 
   const hasModifier = (key: string) => schema.some((f) => f.key === key);
 

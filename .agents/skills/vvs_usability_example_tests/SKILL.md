@@ -20,6 +20,25 @@ Graph fixtures under `apps/web/src/lib/usabilityExampleTests/` exist to **discov
 
 **Do not trust unit dumps that bypass the Code panel path.** Agents and contributors must validate codegen against **what StartScreen Test Projects show in the Code | Files panel**.
 
+### Validation cycle (folder-backed — preferred)
+
+Clear → seed from fixtures → emit → compare to goldens:
+
+```bash
+bun apps/web/scripts/validate_test_projects_folder.ts
+# optional: also refresh goldens
+bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
+```
+
+| Step | What |
+|------|------|
+| **1. Clear** | Delete repo-root `Test Projects/` (gitignored) |
+| **2. Seed** | Write First Graph + Coverage Lab as on-disk `.vvs/` projects |
+| **3. Emit** | Code-panel path (`emitProjectLikeCodePanel`) into each folder |
+| **4. Compare** | Home-graph preview vs `apps/web/test_project_goldens/` |
+
+### Extract-only (CI / quick)
+
 | Source of truth | Path |
 |-----------------|------|
 | **UI emit** | `useProjectTranspileResult` — key `` `${tabId}:${classId}` `` + `withProjectCodegenTarget` |

@@ -18,6 +18,7 @@ export type ClassMemberDeclKind =
   | 'class'
   | 'variable'
   | 'function'
+  | 'function_implement'
   | 'event'
   | 'enum'
   | 'import_module'
@@ -62,6 +63,8 @@ function memberKindFromNode(node: GraphNode): ClassMemberDeclKind | undefined {
       return 'variable';
     case 'function_define':
       return 'function';
+    case 'function_implement':
+      return 'function_implement';
     case 'event_member_define':
       return 'event';
     case 'enum_define':

@@ -23,4 +23,9 @@ export interface GeneratedCodeViewProps {
   highlightRanges?: CodeHighlightRange[];
   readOnly?: boolean;
   className?: string;
+  /**
+   * U71: double-click a line → reverse-select the representing canvas node.
+   * Receives 1-based line and column from the click position.
+   */
+  onReverseSelectLine?: (line: number, col: number) => void;
 }

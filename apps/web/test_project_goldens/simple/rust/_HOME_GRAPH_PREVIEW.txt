@@ -1,12 +1,12 @@
 // ===== firstgraph.rs =====
 pub struct FirstGraph {
 
-        pub VisitorName: String,
+    pub VisitorName: String,
 }
 impl FirstGraph {
 
+    // (x) Declare SayHello
     pub fn SayHello(&mut self) {
-        // SayHello
         println!("{}", "Hello from SayHello!");
     }
     pub fn on_start(&mut self) {

@@ -23,7 +23,7 @@ Choices agents must not undo without explicit user approval.
 
 - **Product promise:** The canvas is the source of truth for generated code — every export line maps to a canvas node via `sourceGraphNodeId` / `sourceMap`
 - **Symbol tables:** `variables[]`, `functions[]`, `events[]` are **indexes and CRUD shortcuts** — they never emit declarations on their own
-- **Declare vs use:** Member-chain nodes (`class_define`, `var_define`, `function_define`, `event_member_define`) emit declarations; Get/Set/Call/Dispatch emit usage. UI: **Declare** on member chain for all symbol kinds (see vocabulary doc)
+- **Declare vs use:** Member-chain nodes emit into the host file. UI: **Declare** for existence (variables, **functions**, class, event slots); **Define** for function **body placement**; Get/Set/Call/Dispatch for usage. See vocabulary doc
 - **No sidebar preamble:** `appendLegacyPreamble` and `useLegacyPreamble` are **removed** — transpiler uses `appendIrMembers` / `ir.members` only
 - **Dual-write required:** Panel create paths must spawn define nodes (`defineNodeSync`, `useSymbolLifecycle`) — no symbol-only creates
 - **Strict analyzer errors (block Generate):** `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE`
@@ -35,7 +35,7 @@ Choices agents must not undo without explicit user approval.
 
 **Canonical spec:** `docs/design/unified_symbol_model.md`
 
-- **Declare → implement → invoke** — variables (2 nodes), functions (define + tab + call), events (member define + handler define + dispatch)
+- **Declare → implement → invoke** — variables (Declare + Get/Set), functions (Declare + Define + Call; body tab), events (Declare + On + Dispatch)
 - **Canvas only** for codegen; panel rows are indexes with dual-write
 - **COA deferred** — `COA_SHIPPED = false`; single-target portability warnings shipped; full COA requires node effectiveness UI + multi-emit first
 - **Future subscribe/emit** — only if each node emits one visible line (no hidden runtime)
@@ -46,11 +46,20 @@ Choices agents must not undo without explicit user approval.
 
 - **Plan first** — lock glossary and internal vs user-facing boundary **before** Phase D/E system rework (catalog, diagnostics, registry sync); execute phases V0–V4 per terms_refactor_plan.md
 - **No mass renames in vocabulary pass** — `kindId`s, diagnostic codes (`DEFINE_NODE_*`), and `defineNodeSync` module names stay stable until dedicated refactor phases
-- **User-facing member slots** — **Declare** `{name}` (not Define) for `var_define`, `function_define`, `event_member_define`, `class_define`
+- **Functions (locked July 2026):** Release menu **Call** / **Declare** / **Define** — parallel to variables Get / Set / Declare. **Declare** = “there is a function” (existence / signature only). **Define** = place the body in code at this position. **Call** = invoke. **Edit function body** = tab to author the body (not a second file). Roles are **not** an automatic `.h`/`.cpp` invent — file layout is author-driven (one graph → one file; want header+source → two graphs + extensions + Import Module)
+- **Other member slots** — **Declare** `{name}` for `var_define`, `event_member_define`, `class_define` (fields / event slots / class shell)
 - **Handler / On …** — event handler flow entry (`event_define`)
-- **Call** — function invoke (`vvs.project.call_function`)
 - **Dispatch** — event invoke (`event_dispatch`); not “Call” for events in UI copy
-- **Known drift** — Go `core-pack.json` titles and some diagnostic strings still say “define”; fix in V1 copy-alignment, not ad hoc
+- **Do not** use “Define” for the inside of the function tab, or collapse Declare+Define into one user-facing concept
+- **Known drift** — Go `core-pack.json` / some diagnostics may lag
+- **U81 done:** Function Declare ≠ Define — `function_define` (existence / abstract only) + `function_implement` on member chain (body placement); no stub invent; no legacy fold
+- **C++ Declare/Define reference (skill):** **U82 shipped** — non-abstract Declare → `void Boot();` inside class; Define → out-of-line `void Machine::Boot() { … }` after `};` (or on a separate `.cpp` graph). Abstract Declare → `virtual … = 0;`. Never auto-split one graph into `.h`+`.cpp`. Spec: `vvs_cross_language_mapping/SKILL.md`
+
+## Same-file function emit (U80 done)
+
+- Function graph tabs are **body editors only** — do **not** emit as separate per-function files
+- **U80 done:** `transpileProject` no longer emits function-tab files; bodies inline via `function_define` → `FunctionDecl` / `functionBodies`
+- Body **placement** remains a Define-role concern (U81 separates it from Declare)
 
 ## Syntax pack milestones (codegen platform)
 
@@ -204,8 +213,12 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 
 1. **Unsupported comment lines (codegen)** — Emit a **comment** for that node whose text starts with `(x)` (after the language comment prefix), e.g. `# (x) Import iostream` / `// (x) Import iostream`. The line still maps via `sourceMap` to the canvas node. Prefer pack `commentPrefix` + node display label.
 2. **Unsupported comments toggle** — Button **to the left of the Code panel language selector**. When off, omit `(x)` comment lines from preview/Generate; when on (**default**), show them. Preference: `showUnsupportedComments` in uiPreferences.
-3. **Node dimming (canvas)** — On language change, nodes unsupported for that target are **dimmed / grey**. Selecting a language where the node is supported restores normal chrome. Dimming uses `nodeEffectiveness` (Import `targetLanguages` v1) — same resolver as emit.
+3. **Node dimming (canvas)** — On language change, nodes unsupported for that target are **dimmed / grey**. Selecting a language where the node is supported restores normal chrome. Dimming uses `nodeEffectiveness` (Import `targetLanguages` + non-abstract Function Declare outside C++) — same resolver as emit.
 4. **Node dimming toggle** — Control in the **top bar, immediately left of Autosave**. When off, canvas does not grey unsupported nodes (codegen comments still follow the Code-panel toggle independently). Preference: `dimUnsupportedNodes` (default on).
+
+**Function Declare (U82 + U66):** Non-abstract `function_define` is effective only for **cpp** (prototype). Elsewhere emit `# (x) Declare Name` (or omit when comments off) and dim the node. Abstract Declare stays effective (`# abstract` / `= 0` / C# real `abstract` prototype). **sourceMap lock:** Declare maps only to its own emit; Define maps to method/`def` header + body — never dual-tag.
+
+- **All seven targets follow the same Declare/Define table** — C++ = prototypes + out-of-line Define; Python / JS / C# / Rust / GDScript / Verse = U66 `(x)` for non-abstract Declare + in-class Define; no silent skip; no expanding `FUNCTION_DECLARE_PROTOTYPE_LANGS` beyond `cpp`; no out-of-line invent for C#/Rust. Spec: `docs/visual_to_text_fidelity.md` · skill `vvs_cross_language_mapping`.
 
 **Do not:** invent real emit for unsupported constructs; hide unsupported nodes from the catalog; couple the two toggles (comments ≠ dimming).
 

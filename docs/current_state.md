@@ -71,7 +71,7 @@ When **Canvas** is active, the full editor chrome is visible:
 │ Symbols  │ + floating compiler log (br)  │                   │
 │ API tabs │                               │                   │
 ├──────────┴───────────────────────────────┴───────────────────┤
-│ StatusBar: offline · Log toggle · target language · compile  │
+│ StatusBar: Local (client-first) or MCP+API when hosted · Log · compile │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -115,7 +115,7 @@ ProjectProvider
 └── GraphWorkspaceProvider          ← document bridge API
     └── GraphWorkspaceHost          ← ALWAYS mounted; no React Flow
         ├── useGraphState           ← live nodes/edges for active edit tab
-        ├── useGraphTabSync         ← Map<tabId, GraphDocument>
+        ├── useGraphTabSync         ← Map<tabId, GraphDocument>; function bodies retained when tab closes
         ├── registerWorkspace()     ← getDocuments, subscribeMetadata, …
         └── GraphEditContext        ← consumed by GraphCanvas when mounted
 
@@ -128,6 +128,7 @@ References view (mounted only when active):
   └── ReferenceGraphCanvas (read-only layout)
 ```
 
+**Tab vs document:** Closing a function tab removes it from `openTabs` only. Function/overload body documents stay until the function symbol is deleted. Tree **double-click** / open icon = **Edit function body**; **Define** badge places/focuses the host-graph definition node.
 | Layer | File | Role |
 |-------|------|------|
 | Document host | `components/graph/GraphWorkspaceHost.tsx` | Tab documents, undo, compile dirty, workspace registration |
@@ -175,12 +176,12 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Control | Location | Notes |
 |---------|----------|-------|
 | **Auto Generate** toggle | TopNav | When on, debounced validate & transpile on graph dirty; when off, use **Generate** or Ctrl+G |
-| **Auto Save** toggle | TopNav | When on, debounced persist **ProjectSnapshot v3** (local + cloud when signed in); when off, use **Save** or Ctrl+S |
+| **Auto Save** toggle | TopNav | When on, debounced persist **ProjectSnapshot v3** (local; cloud only when hosted features + signed in); when off, use **Save** or Ctrl+S |
 | **Save** / **Generate** | TopNav (action segment) | Manual save project / manual generate — same as File → Save project and Edit → Generate |
 | Sync code preview | Edit menu (Ctrl+Shift+S) | Refresh code preview from graph without full validation pipeline |
 | Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
 | Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
-| Connect AI | TopNav modal | MCP URL copy + **Test connection**; MCP stays disconnected in mock mode |
+| Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; dangerous-tools consent pref; URL + **Test connection** only when hosted |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
 
 **Floating panels** (canvas overlay, shared `FloatingPanelShell`):
@@ -209,7 +210,7 @@ Graph-level and project settings → TopNav **Settings** (gear, right of Connect
 
 **Codegen model:** `documents[tabId].metadata.targetLanguage` and `targetFileExtension` override project-level `targetLanguage` / `targetFileExtensions` for that graph. Unset fields inherit project defaults at emit time (`resolveGraphCodegenSettings` in `@vvs/graph-types`). New graphs seed metadata from project defaults when first opened (`useGraphTabSync`).
 
-Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/codegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**.
+Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/codegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**. **Function Declare/Define:** all seven targets share the same canvas table — C++ prototypes + out-of-line Define; others U66 `(x) Declare` + in-class Define (never silent omit). Spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Function Declare / Define per language.
 
 ### Graph editor features
 
@@ -253,7 +254,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
-| Code preview | Done — CodeMirror 6; **Code** tab shows active/preview graph emit; language + `.{ext}` in header edit **that graph**; **Files** tab shows full project folder tree; canvas/tree selection highlight via `sourceMap` (`symbolCodegenLink`); live analysis errors in sync indicator + badge (`useLiveProjectValidation`); **preview-only** banner when class Declare missing (`DEFINE_NODE_MISSING` for previewed class); portability warning badge |
+| Code preview | Done — CodeMirror 6; graph language + `.{ext}`; Format JSON; **double-click line → canvas node** (`sourceMapReverse`); selection highlight via `sourceMap`; live analysis sync |
 | Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
@@ -307,7 +308,7 @@ cd apps/web && bun test src/lib
 cd server && go test ./...
 ```
 
-CI (`.github/workflows/ci.yml`): **packages** job runs the syntax-packs/transpiler/graph-types suites + `validate:parse --strict`; **web** job runs lint/build + `src/lib` tests; **server** job runs `go build` + `go test`.
+CI (`.github/workflows/ci.yml`): **packages** job runs syntax-packs / transpiler / graph-types / language-profiles / syntax-registry suites + `validate:parse --strict`; **web** job runs lint / build + `src/lib` tests; **server** job runs `go build` + `go test`. Pages deploy: `.github/workflows/pages.yml`. Versioned zip releases: `.github/workflows/release.yml` on `v*` tags (see [setup.md](setup.md) § GitHub Releases).
 
 ---
 
@@ -363,7 +364,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U68–U77** (comments [C], reverse code↔node select, chrome/Output rethink, chain auto-layout, JSON format, Go language). See [roadmap.md](roadmap.md) § Next.
+**Active next (July 2026):** Phase 6 — **U68–U69, U71, U75, U77–U79** (comments [C], reverse highlight rethink, chain auto-layout, Go language, pack versions, Y-order). U64–U67, U70/U72–U74/U76, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
 

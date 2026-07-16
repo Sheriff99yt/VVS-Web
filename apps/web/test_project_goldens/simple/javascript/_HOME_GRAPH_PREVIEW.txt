@@ -1,14 +1,14 @@
 // ===== firstgraph.js =====
 class FirstGraph {
     VisitorName = "";
-  SayHello() {
-    // SayHello
-    console.log("Hello from SayHello!");
-  }
-  on_start() {
-      const _vvs_input_fg_get_input = (prompt("What is your name?") ?? "");
-      console.log(_vvs_input_fg_get_input);
-      this.SayHello();
-      console.log("Done.");
-  }
+    // (x) Declare SayHello
+    SayHello() {
+        console.log("Hello from SayHello!");
+    }
+    on_start() {
+        const _vvs_input_fg_get_input = (prompt("What is your name?") ?? "");
+        console.log(_vvs_input_fg_get_input);
+        this.SayHello();
+        console.log("Done.");
+    }
 }

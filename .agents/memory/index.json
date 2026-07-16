@@ -3,6 +3,7 @@
   "lastUpdated": "2026-07-16",
   "productDirection": "text-shaped-graphs",
   "canonicalDoc": "docs/visual_to_text_fidelity.md",
+  "vocabularyDoc": "docs/design/language_neutral_vocabulary.md",
   "userTypesDoc": "docs/design/user_types.md",
   "fidelitySkill": ".agents/skills/vvs_visual_code_fidelity/SKILL.md",
   "usabilitySkill": ".agents/skills/vvs_usability_example_tests/SKILL.md",
@@ -10,16 +11,17 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "dualClassLabUsabilityTest",
+  "nextFunctionWork": "U78 Pack versions / U79 Y-order",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
-    "totalItems": 67,
-    "done": 67,
-    "open": 0,
+    "totalItems": 69,
+    "done": 68,
+    "open": 2,
     "partial": [],
-    "depthFirstSection": 12,
+    "depthFirstSection": 14,
     "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    "sectionsPartial": [],
-    "openItems": []
+    "sectionsPartial": [14],
+    "openItems": ["U78", "U79"]
   },
   "files": {
     "README.md": { "role": "hub", "mutable": false },
@@ -27,7 +29,7 @@
       "role": "ui-backlog",
       "refreshAfter": "each UI loop iteration or audit",
       "itemPrefix": "U",
-      "openCount": 0
+      "openCount": 2
     },
     "decisions.md": { "role": "locked-product-rules", "mutable": "append-or-revise-with-care" },
     "workspace-facts.md": { "role": "canonical-paths-and-facts", "mutable": true }

@@ -7,19 +7,19 @@ using System;
 // (x) Import unordered_map
 using System.Collections.Generic;
 public class Machine {
-        protected float Power = 0;
-        public static float Serial = 0;
-        public readonly float MaxPower = 100;
-        public bool Ready = false;
+    protected float Power = 0;
+    public static float Serial = 0;
+    public readonly float MaxPower = 100;
+    public bool Ready = false;
+    // (x) Declare Boot
     public virtual void Boot() {
-        // Boot
         this.Ready = true;
         Console.WriteLine("Booted");
         new Sensor().on_tick();
     }
     protected abstract void Diagnose();
+    // (x) Declare Shutdown
     public async void Shutdown() {
-        // Shutdown
         this.Ready = false;
         Console.WriteLine("Shutdown");
     }
@@ -45,17 +45,17 @@ public enum SensorStatus {
     FAIL
 }
 public class Sensor : Machine {
-        public List<float> Readings = new List<float>();
-        public SensorStatus Status = SensorStatus.OK;
-        public Machine Host = null;
-        public Dictionary<string, string> Tags = 0;
+    public List<float> Readings = new List<float>();
+    public SensorStatus Status = SensorStatus.OK;
+    public Machine Host = null;
+    public Dictionary<string, string> Tags = new Dictionary<string, string>();
+    // (x) Declare Sample
     public async void Sample() {
-        // Sample
         this.Readings.Add(this.Power);
         Console.WriteLine("Sampled");
     }
+    // (x) Declare Report
     public override void Report() {
-        // Report
         Console.WriteLine("--- Readings ---");
         foreach (var val in this.Readings) {
             Console.WriteLine(val.ToString());

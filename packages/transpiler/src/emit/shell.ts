@@ -18,7 +18,7 @@ import { createPrintContext, type PrintContext } from '../print';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { emptyHandlerBodyLine } from './layout';
 import { appendIrStatements } from './sinkStatements';
-import { typedParamFragment } from './emitTypes';
+import { typedParamFragment, typeNameForPin } from './emitTypes';
 
 export function overloadParamNames(func: FunctionSymbol): string[] {
   return func.overloads[0]?.parameters.map((p) => parameterCodegenName(p)) ?? [];
@@ -294,6 +294,24 @@ function functionParamList(
   return params.join(', ');
 }
 
+/** Return type token for C++ / C# prototypes and defs — from Declare props or overload. */
+export function functionReturnTypeName(
+  func: FunctionSymbol,
+  lang: TargetLanguage,
+  properties?: Record<string, unknown>
+): string {
+  const fromProps = properties?.returnType;
+  const raw =
+    (typeof fromProps === 'string' && fromProps.trim() ? fromProps.trim() : undefined) ||
+    func.overloads[0]?.returnType ||
+    'void';
+  if (raw === 'void') return 'void';
+  if (lang === 'cpp' || lang === 'csharp') {
+    return typeNameForPin(raw as PinType, lang);
+  }
+  return raw;
+}
+
 export function resolveModifierSlots(
   lang: TargetLanguage,
   properties?: Record<string, unknown>,
@@ -342,6 +360,8 @@ export function resolveModifierSlots(
     visibility = '';
     if (binding === 'static') staticKw = 'inline static ';
     if (isVirtual || isAbstract) virtualKw = 'virtual ';
+    // C++ override is a postfix specifier (matches skill AdvancedClass / Coverage Lab).
+    if (isOverride) overrideKw = ' override';
     if (isConst) constKw = 'const ';
   } else if (lang === 'javascript' || lang === 'python' || lang === 'gdscript') {
     if (isAsync && lang !== 'gdscript') asyncKw = 'async ';
@@ -384,6 +404,33 @@ export function renderFunctionDefHeader(
     asyncKw: actualAsyncKw || (wantAsync ? mods.asyncKw : ''),
     staticDecorator: mods.staticKw,
     prefix: Object.values(mods).join(''),
+    returnType: functionReturnTypeName(func, lang, properties),
+    name: func.name,
+    paramList: functionParamList(func, lang, properties),
+  });
+}
+
+/** C++ out-of-line method definition header: `void Class::Name(...) {`
+ *  Omits virtual/static/override — those belong on the in-class Declare prototype only.
+ */
+export function renderFunctionDefOutOfLineHeader(
+  func: FunctionSymbol,
+  className: string,
+  lang: TargetLanguage,
+  _isAsync = false,
+  properties?: Record<string, unknown>
+): string {
+  return renderShell(lang, 'FunctionDefOutOfLineOpen', {
+    visibility: '',
+    staticKw: '',
+    abstractKw: '',
+    virtualKw: '',
+    overrideKw: '',
+    asyncKw: '',
+    staticDecorator: '',
+    prefix: '',
+    className,
+    returnType: functionReturnTypeName(func, lang, properties),
     name: func.name,
     paramList: functionParamList(func, lang, properties),
   });
@@ -401,9 +448,8 @@ export function renderFunctionDeclPrototype(
     .join(', ');
 
   const mods = resolveModifierSlots(lang, properties, func.visibility);
-  const isOverride = Boolean(properties?.isOverride ?? false);
   const isAbstract = Boolean(properties?.isAbstract ?? false);
-  const overrideSuffix = lang === 'cpp' && isOverride ? ' override' : '';
+  // overrideKw comes from resolveModifierSlots (C++ postfix); suffix is pure-virtual only.
   const pureSuffix = lang === 'cpp' && isAbstract ? ' = 0' : '';
 
   return renderShell(lang, 'FunctionDeclPrototype', {
@@ -414,12 +460,17 @@ export function renderFunctionDeclPrototype(
     overrideKw: mods.overrideKw,
     asyncKw: '',
     prefix: Object.values(mods).join(''),
+    returnType: functionReturnTypeName(func, lang, properties),
     name: func.name,
     paramList: params,
-    suffix: overrideSuffix + pureSuffix,
+    suffix: pureSuffix,
   });
 }
 
 export function renderFunctionTabClose(lang: TargetLanguage): string | null {
   return optionalShell(lang, 'FunctionTabClose');
+}
+
+export function renderFunctionOutOfLineClose(lang: TargetLanguage): string {
+  return optionalShell(lang, 'FunctionOutOfLineClose') ?? '}';
 }

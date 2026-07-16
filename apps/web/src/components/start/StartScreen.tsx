@@ -25,7 +25,7 @@ import {
 import {
   createProjectId,
   loadProjectFromStore,
-  removeFromRecentList,
+  removeProjectDraft,
   removeProjectFromStore,
   saveProjectToStore,
   upsertRecentProject,
@@ -45,6 +45,7 @@ import {
   getFolderHandle,
   loadProjectFromFolder,
   pickProjectFolder,
+  removeFolderHandle,
   storeFolderHandle,
   verifyHandlePermission,
   resolveProjectFolderHandle,
@@ -207,9 +208,24 @@ export function StartScreen() {
     openLocalInEditor(router, entry.id, snapshot, 'recent');
   };
 
-  const handleRemoveRecent = (e: React.MouseEvent, entry: RecentProjectEntry) => {
+  const handleDeleteProject = (e: React.MouseEvent, entry: RecentProjectEntry) => {
     e.stopPropagation();
-    removeFromRecentList(entry.id);
+    const name = entry.moduleName || 'this project';
+    const isFolder = isFolderRecentEntry(entry);
+    const confirmed = window.confirm(
+      isFolder
+        ? `Delete "${name}" from VVS?\n\nThis removes it from your recent list and clears saved folder access. Files on disk are not deleted.`
+        : `Delete "${name}"?\n\nThis permanently removes the project from browser storage and cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    if (isFolder) {
+      void removeFolderHandle(entry.id);
+      removeProjectFromStore(entry.id);
+    } else {
+      removeProjectFromStore(entry.id);
+      removeProjectDraft(entry.id);
+    }
     refreshRecent();
   };
 
@@ -505,12 +521,12 @@ export function StartScreen() {
                     <span
                       role="button"
                       tabIndex={0}
-                      onClick={(e) => handleRemoveRecent(e, entry)}
+                      onClick={(e) => handleDeleteProject(e, entry)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleRemoveRecent(e as unknown as React.MouseEvent, entry);
+                        if (e.key === 'Enter') handleDeleteProject(e as unknown as React.MouseEvent, entry);
                       }}
                       className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-red-400 rounded transition-all"
-                      title="Remove from recent"
+                      title="Delete project"
                     >
                       <Trash2 size={14} />
                     </span>

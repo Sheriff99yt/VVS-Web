@@ -5,8 +5,19 @@ export type NodeEffectiveness = 'effective' | 'ineffective';
 
 const IMPORT_KIND_IDS = new Set(['vvs.project.import_module', 'import_module']);
 
+/** Languages that emit a real non-abstract Function Declare prototype (U82). */
+const FUNCTION_DECLARE_PROTOTYPE_LANGS = new Set<string>(['cpp']);
+
 function isImportKind(kindId: string): boolean {
   return IMPORT_KIND_IDS.has(kindId) || kindId.startsWith('import_module_');
+}
+
+function isFunctionDeclareKind(kindId: string): boolean {
+  return kindId === 'function_define';
+}
+
+function isAbstractDeclare(properties: Record<string, unknown> | undefined | null): boolean {
+  return Boolean(properties?.isAbstract);
 }
 
 /** Normalize Import Module `targetLanguages` (comma string or string[]). */
@@ -29,20 +40,39 @@ export function parseNodeTargetLanguages(
 }
 
 /**
- * v1: Import Module with a non-empty `targetLanguages` gate is ineffective when
- * the current language is not in that list. All other kinds are effective
- * (registry portabilityFeatures can extend this later without changing call sites).
+ * Whether a node affects generated text for `targetLanguage`.
+ *
+ * - Import Module: optional `targetLanguages` gate (U66/U67).
+ * - Function Declare (`function_define`): non-abstract is effective only where a
+ *   prototype is emitted (C++ / U82). Abstract remains effective (comment or `= 0`).
+ * - Explicit `targetLanguages` on any of the above still gates when non-empty.
  */
 export function nodeEffectiveness(
   kindId: string,
   properties: Record<string, unknown> | undefined | null,
   targetLanguage: string
 ): NodeEffectiveness {
-  if (!isImportKind(kindId)) return 'effective';
-  const gates = parseNodeTargetLanguages(properties);
-  if (gates.length === 0) return 'effective';
   const lang = targetLanguage.trim().toLowerCase();
-  return gates.some((g) => g === lang) ? 'effective' : 'ineffective';
+  const gates = parseNodeTargetLanguages(properties);
+
+  if (isImportKind(kindId)) {
+    if (gates.length === 0) return 'effective';
+    return gates.some((g) => g === lang) ? 'effective' : 'ineffective';
+  }
+
+  if (isFunctionDeclareKind(kindId)) {
+    // Abstract Declare still emits (`# abstract` / `= 0`) on every target.
+    if (isAbstractDeclare(properties)) {
+      if (gates.length === 0) return 'effective';
+      return gates.some((g) => g === lang) ? 'effective' : 'ineffective';
+    }
+    // Non-abstract Declare → prototype only on C++ (U82); elsewhere (x) + dim.
+    if (!FUNCTION_DECLARE_PROTOTYPE_LANGS.has(lang)) return 'ineffective';
+    if (gates.length === 0) return 'effective';
+    return gates.some((g) => g === lang) ? 'effective' : 'ineffective';
+  }
+
+  return 'effective';
 }
 
 export function isNodeEffectiveForLanguage(
@@ -63,6 +93,9 @@ export function nodeIneffectiveTooltip(
   const lang = (targetLanguage.trim() || 'this language') as TargetLanguage | string;
   if (gates.length > 0) {
     return `Not emitted for ${lang} — gated to ${gates.join(', ')}`;
+  }
+  if (isFunctionDeclareKind(kindId)) {
+    return `Declare is not emitted for ${lang} — no separate prototype (body is on Define)`;
   }
   return `Not used in ${lang} output`;
 }

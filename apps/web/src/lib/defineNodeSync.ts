@@ -22,7 +22,7 @@ import { resolve as resolveKind } from '@/lib/nodeRegistry';
 import { classHomeGraphId, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
-import { resolveOverloadForCall } from '@/lib/functionHelpers';
+import { resolveOverloadForCall, buildFunctionImplementData } from '@/lib/functionHelpers';
 import { applyEventDefineBinding } from '@/lib/eventHelpers';
 
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
@@ -239,6 +239,30 @@ export function hasDefineNodeForFunction(
   );
 }
 
+export function hasImplementNodeForFunction(
+  documents: Record<string, GraphDocument>,
+  functionId: string
+): boolean {
+  return findImplementNodeForFunction(documents, functionId) != null;
+}
+
+export function findImplementNodeForFunction(
+  documents: Record<string, GraphDocument>,
+  functionId: string
+): { tabId: string; nodeId: string } | undefined {
+  for (const [tabId, doc] of Object.entries(documents)) {
+    const node = doc.nodes.find(
+      (n) =>
+        n.type === 'vvs_standard_node' &&
+        n.data.kindId === 'function_implement' &&
+        (n.data.properties?.symbolId === functionId ||
+          n.data.graphBinding?.symbolId === functionId)
+    );
+    if (node) return { tabId, nodeId: node.id };
+  }
+  return undefined;
+}
+
 export function hasDefineNodeForEvent(
   documents: Record<string, GraphDocument>,
   cls: ClassSymbol,
@@ -309,7 +333,7 @@ export function findMemberDeclareNodeForSymbol(
   kind: 'variable' | 'function' | 'event',
   symbolId: string
 ): { tabId: string; nodeId: string } | undefined {
-  // Prefer the class home graph so tree double-click never jumps into a function tab.
+  // Prefer the class home graph so Declare focus stays on the class canvas.
   const homeTab = classHomeGraphId(cls);
   const homeDoc = documents[homeTab];
   if (homeDoc) {
@@ -369,9 +393,53 @@ export function insertDefineNodeForFunction(
     isMemberDefineKind(n.data.kindId ?? '')
   ).length;
 
+  const data = buildFunctionDefineData(func);
+  const node: VVSNode = {
+    id: `define-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type: 'vvs_standard_node',
+    position: { x: 80, y: 40 + defineCount * 72 },
+    data: {
+      ...data,
+      resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
+    },
+  };
   return {
     ...documents,
-    [tabId]: spawnDefineNode(doc, buildFunctionDefineData(func), defineCount * 72),
+    [tabId]: insertNodeOnMemberChain(doc, node),
+  };
+}
+
+/** Place function Define (`function_implement`) on the member chain — body placement (U81). */
+export function insertImplementNodeForFunction(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol,
+  func: FunctionSymbol,
+  activeGraphTab?: string
+): Record<string, GraphDocument> {
+  if (hasImplementNodeForFunction(documents, func.id)) return documents;
+
+  const classNodeLoc = findClassDefineNode(documents, cls);
+  const tabId = classNodeLoc?.tabId ?? activeGraphTab ?? classHomeGraphId(cls);
+  const doc = documents[tabId] ?? { nodes: [], edges: [] };
+  const chainCount = doc.nodes.filter((n) =>
+    n.data.kindId === 'function_define' ||
+    n.data.kindId === 'function_implement' ||
+    isMemberDefineKind(n.data.kindId ?? '')
+  ).length;
+
+  const data = buildFunctionImplementData(func);
+  const node: VVSNode = {
+    id: `impl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type: 'vvs_standard_node',
+    position: { x: 80, y: 40 + chainCount * 72 },
+    data: {
+      ...data,
+      resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
+    },
+  };
+  return {
+    ...documents,
+    [tabId]: insertNodeOnMemberChain(doc, node),
   };
 }
 

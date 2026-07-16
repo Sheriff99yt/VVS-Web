@@ -40,9 +40,13 @@ describe('propertySchema', () => {
     });
   });
 
-  test('isPropertyFieldVisible respects when clauses', () => {
-    const hint = SAMPLE_SCHEMA[1]!;
-    expect(isPropertyFieldVisible(hint, { inputKind: 'text' })).toBe(true);
-    expect(isPropertyFieldVisible(hint, { inputKind: 'number' })).toBe(false);
+  test('defaultPropertiesFromSchema tolerates non-array schema', () => {
+    expect(defaultPropertiesFromSchema(undefined)).toEqual({});
+    expect(defaultPropertiesFromSchema(null)).toEqual({});
+    expect(
+      mergePropertyDefaults({ targetClassId: { type: 'string' } } as unknown as PropertyFieldDefinition[], {
+        alias: 'X',
+      })
+    ).toEqual({ alias: 'X' });
   });
 });

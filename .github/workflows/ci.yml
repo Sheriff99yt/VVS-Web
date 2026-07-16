@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, master]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   packages:
     name: Monorepo package tests
@@ -30,6 +34,14 @@ jobs:
 
       - name: Graph types tests
         working-directory: packages/graph-types
+        run: bun test
+
+      - name: Language profiles tests
+        working-directory: packages/language-profiles
+        run: bun test
+
+      - name: Syntax registry tests
+        working-directory: packages/syntax-registry
         run: bun test
 
       - name: Tree-sitter parse validation (strict)

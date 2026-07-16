@@ -93,13 +93,21 @@ export function planSymbolDelete(
   if (kind === 'variable') {
     nextSymbols.variables = nextSymbols.variables.filter((v) => v.id !== symbolId);
   } else if (kind === 'function' || kind === 'macro') {
+    const deleted =
+      kind === 'function' ? symbols.functions.find((f) => f.id === symbolId) : undefined;
     if (kind === 'function') {
       nextSymbols.functions = nextSymbols.functions.filter((f) => f.id !== symbolId);
     }
-    if (mode === 'symbol_and_refs') {
-      closeTabIds.push(symbolId);
-      nextSymbols.openTabs = nextSymbols.openTabs.filter((t) => t.id !== symbolId);
+    // Function / overload body graphs live in documents[tabId] — drop with the symbol.
+    const bodyTabIds = new Set<string>([symbolId]);
+    for (const overload of deleted?.overloads ?? []) {
+      if (overload.graphTabId?.trim()) bodyTabIds.add(overload.graphTabId);
     }
+    for (const tabId of bodyTabIds) {
+      closeTabIds.push(tabId);
+      delete nextDocuments[tabId];
+    }
+    nextSymbols.openTabs = nextSymbols.openTabs.filter((t) => !bodyTabIds.has(t.id));
   } else if (kind === 'event') {
     nextSymbols.events = nextSymbols.events.filter((e) => e.id !== symbolId);
   }
@@ -108,10 +116,6 @@ export function planSymbolDelete(
     nextDocuments = fromCoreDocuments(
       removeSymbolReferencesFromDocuments(asCoreDocuments(nextDocuments), kind, symbolId)
     );
-    if (kind === 'function' || kind === 'macro') {
-      const { [symbolId]: _fnDoc, ...rest } = nextDocuments;
-      nextDocuments = rest;
-    }
   }
 
   if (kind === 'variable' || kind === 'function' || kind === 'event') {

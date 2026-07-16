@@ -8,6 +8,7 @@ import {
   Loader2,
   Circle,
   AlertTriangle,
+  AlignLeft,
 } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
@@ -28,6 +29,8 @@ import { useUiPreference } from '@/hooks/useUiPreference';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { TARGET_FILE_EXTENSIONS, formatTargetFileExtension } from '@vvs/graph-types';
 import type { TargetLanguage } from '@/contexts/ProjectContext';
+import { findNodeIdAtSourceLocation } from '@/lib/sourceMapReverse';
+import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 
 const LANGUAGE_OPTIONS: { value: TargetLanguage; label: string }[] = [
   { value: 'python', label: 'Python' },
@@ -111,6 +114,8 @@ export function CodePreviewPanel({
   const [lastCleanResult, setLastCleanResult] = useState<TranspileResult | null>(null);
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [jsonFormatOverride, setJsonFormatOverride] = useState<string | null>(null);
+  const [jsonFormatError, setJsonFormatError] = useState(false);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightNavKeyRef = useRef<string | null>(null);
@@ -196,9 +201,9 @@ export function CodePreviewPanel({
     const isModuleGraph = homeClass != null || previewTabId === 'main';
     const isFunctionTab = functions.some((f) => f.id === previewTabId);
 
-    // Container / class-home graphs: always show project emit (one graph → one file).
-    // Function tabs keep a focused single-graph transpile.
-    if (!isFunctionTab && isModuleGraph) {
+    // Container / class-home graphs: show project emit (one graph → one file),
+    // except JSON — always dump via transpileGraph so the panel matches the lang picker.
+    if (!isFunctionTab && isModuleGraph && targetLanguage !== 'json') {
       const ownedFiles = projectResult.files.filter((file) => fileOwners[file.path] === previewTabId);
       if (ownedFiles.length > 0) {
         return {
@@ -364,9 +369,12 @@ export function CodePreviewPanel({
   const generatedCode = activeFile?.content ?? '';
   const filePath = activeFile?.path ?? 'output';
   const copyablePath = filePath;
+  const isJsonPreview =
+    targetLanguage === 'json' || /\.json$/i.test(filePath);
+  const displayCode = jsonFormatOverride ?? generatedCode;
   const sourceMap = displayResultForView.sourceMap;
   const mappedNodeCount = countMappedNodes(displayResultForView);
-  const lines = lineCount(generatedCode);
+  const lines = lineCount(displayCode);
 
   const previewNodes = useMemo(
     () => (previewDocument?.nodes ?? []) as VVSNode[],
@@ -450,22 +458,58 @@ export function CodePreviewPanel({
         : 'text-emerald-500';
 
   const handleCopy = useCallback(async () => {
-    if (!generatedCode) return;
+    if (!displayCode) return;
     try {
-      await navigator.clipboard.writeText(generatedCode);
+      await navigator.clipboard.writeText(displayCode);
       setCopied(true);
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
       copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
     } catch {
       setCopied(false);
     }
+  }, [displayCode]);
+
+  const handleFormatJson = useCallback(() => {
+    try {
+      setJsonFormatOverride(JSON.stringify(JSON.parse(generatedCode), null, 2));
+      setJsonFormatError(false);
+    } catch {
+      setJsonFormatOverride(null);
+      setJsonFormatError(true);
+      window.setTimeout(() => setJsonFormatError(false), 1600);
+    }
   }, [generatedCode]);
 
-  const isEmpty = !generatedCode.trim();
+  const handleReverseSelectLine = useCallback(
+    (line: number, col: number) => {
+      const nodeId = findNodeIdAtSourceLocation(sourceMap, {
+        filePath,
+        line,
+        col,
+      });
+      if (!nodeId) return;
+      const ownerTab =
+        fileOwners[filePath] ??
+        (selectedFilePath ? fileOwners[selectedFilePath] : undefined) ??
+        previewTabId;
+      dispatchNavigateToNode(ownerTab, nodeId);
+    },
+    [sourceMap, filePath, fileOwners, selectedFilePath, previewTabId]
+  );
+
+  useEffect(() => {
+    setJsonFormatOverride(null);
+    setJsonFormatError(false);
+  }, [generatedCode, filePath]);
+
+  const isEmpty = !displayCode.trim();
+
+  const toolbarBtnClass =
+    'p-0.5 text-zinc-500 hover:text-zinc-200 disabled:opacity-40 disabled:pointer-events-none rounded hover:bg-zinc-800 transition-colors';
 
   return (
     <div className="w-full h-full bg-zinc-950 flex flex-col min-h-0 min-w-0 relative overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 bg-zinc-950 px-2 h-7 shrink-0">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 bg-zinc-950/95 px-2 h-7 shrink-0">
         <div className="flex items-center gap-1 min-w-0 flex-1">
           <FileCode2 size={11} className="text-zinc-600 shrink-0" />
           <span
@@ -480,7 +524,7 @@ export function CodePreviewPanel({
           />
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <div className="flex items-center gap-1">
             {validationErrors.length > 0 ? (
               <span
@@ -563,22 +607,41 @@ export function CodePreviewPanel({
             {lines}L
           </span>
 
-          <button
-            type="button"
-            onClick={() => void handleCopy()}
-            disabled={isEmpty}
-            className="p-0.5 text-zinc-500 hover:text-zinc-200 disabled:opacity-40 disabled:pointer-events-none rounded hover:bg-zinc-800 transition-colors"
-            title={copied ? 'Copied' : 'Copy code'}
-          >
-            {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
-          </button>
+          <div className="flex items-center gap-0.5 border-l border-zinc-800 pl-1.5">
+            {isJsonPreview ? (
+              <button
+                type="button"
+                onClick={handleFormatJson}
+                disabled={isEmpty}
+                className={`${toolbarBtnClass} ${jsonFormatError ? 'text-red-400' : jsonFormatOverride ? 'text-emerald-400' : ''}`}
+                title={
+                  jsonFormatError
+                    ? 'Invalid JSON'
+                    : jsonFormatOverride
+                      ? 'JSON formatted'
+                      : 'Format JSON'
+                }
+              >
+                <AlignLeft size={11} />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void handleCopy()}
+              disabled={isEmpty}
+              className={toolbarBtnClass}
+              title={copied ? 'Copied' : 'Copy code'}
+            >
+              {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Editor surface */}
       <div className="flex-1 min-h-0 relative">
         {isCompiling && !autoCompile ? (
-          <div className="absolute inset-x-0 top-0 z-10 h-px bg-indigo-500/60" />
+          <div className="absolute inset-x-0 top-0 z-10 h-px bg-zinc-600/80" />
         ) : null}
 
         {isEmpty ? (
@@ -595,11 +658,15 @@ export function CodePreviewPanel({
         ) : null}
 
         {!isEmpty ? (
-          <div className={`h-full transition-opacity duration-150 ${isStale ? 'opacity-55' : 'opacity-100'}`}>
+          <div
+            className={`h-full transition-opacity duration-150 ${isStale ? 'opacity-55' : 'opacity-100'}`}
+            title={isJsonPreview ? undefined : 'Double-click a line to select the canvas node'}
+          >
             <GeneratedCodeView
-              value={generatedCode}
-              language={targetLanguage}
+              value={displayCode}
+              language={isJsonPreview ? 'json' : targetLanguage}
               highlightRanges={hasSelectionLink ? highlightRanges : undefined}
+              onReverseSelectLine={isJsonPreview ? undefined : handleReverseSelectLine}
               readOnly
               className="h-full"
             />

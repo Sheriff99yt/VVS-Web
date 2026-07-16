@@ -532,6 +532,29 @@ export function functionDefineNode(
   });
 }
 
+export function functionImplementNode(
+  id: string,
+  position: { x: number; y: number },
+  func: FunctionSymbol
+): VVSNode {
+  const overload = func.overloads[0];
+  return usabilityTestNode(id, position, {
+    label: `Define ${func.name}`,
+    category: 'Project',
+    kindId: 'function_implement',
+    inputs: [EXEC_IN],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
+    linkedGraphId: func.id,
+    graphBinding: { kind: 'call_function', symbolId: func.id, overloadId: overload?.id },
+    properties: {
+      symbolId: func.id,
+      name: func.name,
+      graphTabId: overload?.graphTabId ?? func.id,
+    },
+  });
+}
+
 export function eventMemberDefineNode(
   id: string,
   position: { x: number; y: number },

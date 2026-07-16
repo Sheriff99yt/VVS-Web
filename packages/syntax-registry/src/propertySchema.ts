@@ -30,9 +30,10 @@ export function isPropertyFieldVisible(
 }
 
 export function defaultPropertiesFromSchema(
-  fields: PropertyFieldDefinition[]
+  fields: PropertyFieldDefinition[] | undefined | null
 ): Record<string, unknown> {
   const props: Record<string, unknown> = {};
+  if (!Array.isArray(fields)) return props;
   for (const field of fields) {
     if (field.default !== undefined) {
       props[field.key] = field.default;
@@ -53,7 +54,7 @@ export function mergePropertyDefaults(
   fields: PropertyFieldDefinition[] | undefined,
   existing: Record<string, unknown> | undefined
 ): Record<string, unknown> {
-  if (!fields?.length) return { ...(existing ?? {}) };
+  if (!Array.isArray(fields) || fields.length === 0) return { ...(existing ?? {}) };
   const defaults = defaultPropertiesFromSchema(fields);
   return { ...defaults, ...(existing ?? {}) };
 }

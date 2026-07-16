@@ -46,6 +46,7 @@ export function GraphWorkspaceHost({
     setActiveGraphTab,
     setOpenTabs,
     setFunctions,
+    functions,
     markTabDirty,
     classes,
     activeClassId,
@@ -107,6 +108,12 @@ export function GraphWorkspaceHost({
     activeGraphTab,
     openTabs,
     graphContainerIds: graphContainers.map((container) => container.id),
+    functionIds: functions.flatMap((fn) => [
+      fn.id,
+      ...fn.overloads
+        .map((o) => o.graphTabId)
+        .filter((id): id is string => Boolean(id && id.trim())),
+    ]),
     nodes,
     edges,
     setNodes,

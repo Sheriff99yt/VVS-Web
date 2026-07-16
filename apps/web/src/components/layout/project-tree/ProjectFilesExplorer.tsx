@@ -240,6 +240,15 @@ export function ProjectFilesExplorer({
 
   return (
     <div className={viewMode === 'grid' ? 'contents' : 'pb-1'}>
+      {vvsEntries.length === 0 && orphans.length === 0 && !q ? (
+        <div
+          className={`${INDENT.l1} text-[10px] text-zinc-600 py-2 pr-2 space-y-1 ${viewMode === 'grid' ? 'col-span-full' : ''}`}
+        >
+          <p>No generated files yet.</p>
+          <p className="text-zinc-700">Generate from the canvas to list outputs here. Click a path to open it in Code.</p>
+        </div>
+      ) : null}
+
       {vvsEntries.length > 0 ? (
         viewMode === 'grid' ? (
           vvsEntries.map((entry) => (

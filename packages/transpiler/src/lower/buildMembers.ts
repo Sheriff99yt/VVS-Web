@@ -9,6 +9,7 @@ import type {
 import {
   classGraphHasDefineNodes,
   classHomeGraphId,
+  collectMemberDefineNodeIds,
   eventCodegenHandlerName,
   MAIN_CLASS_ID,
   resolveNodeKindId,
@@ -65,6 +66,36 @@ function extendsFromNode(node: GraphNode, fallback: string): string {
   return fallback;
 }
 
+function findFunctionDeclareNode(
+  documents: Record<string, GraphDocument> | undefined,
+  graphNodes: GraphNode[],
+  funcId: string
+): GraphNode | undefined {
+  const seen = new Set<string>();
+  const candidates: GraphNode[] = [];
+  for (const node of graphNodes) {
+    if (!seen.has(node.id)) {
+      seen.add(node.id);
+      candidates.push(node);
+    }
+  }
+  for (const doc of Object.values(documents ?? {})) {
+    for (const node of doc.nodes) {
+      if (!seen.has(node.id)) {
+        seen.add(node.id);
+        candidates.push(node);
+      }
+    }
+  }
+  return candidates.find((node) => {
+    if (resolveNodeKindId(node.data) !== 'function_define') return false;
+    const symbolId =
+      (typeof node.data.properties?.symbolId === 'string' && node.data.properties.symbolId) ||
+      node.data.graphBinding?.symbolId;
+    return symbolId === funcId;
+  });
+}
+
 function findEventHandlerNode(
   graphNodes: GraphNode[],
   event: ProjectEventDefinition
@@ -118,7 +149,8 @@ function memberDeclFromEntry(
   events: ProjectEventDefinition[],
   graphNodes: GraphNode[],
   edges: GraphEdge[],
-  lowerCtx: BuildMembersContext
+  lowerCtx: BuildMembersContext,
+  documents?: Record<string, GraphDocument>
 ): IrMemberDecl | undefined {
   switch (entry.kind) {
     case 'class':
@@ -140,13 +172,35 @@ function memberDeclFromEntry(
       };
     }
     case 'function': {
+      // Declare — existence / signature (U81). Body waits for Define.
+      // C++ emit prints a prototype; other langs emit U66 `(x)` when comments on.
       const symbol = functions.find((f) => f.id === entry.symbolId);
       if (!symbol) return undefined;
       return {
         kind: 'FunctionDecl',
         sourceGraphNodeId: entry.nodeId,
+        declareSourceGraphNodeId: entry.nodeId,
+        emitBody: false,
         symbol,
         properties: node.data.properties,
+      };
+    }
+    case 'function_implement': {
+      // Define — body placement (U81). C++ emits out-of-line after class close.
+      const symbol = functions.find((f) => f.id === entry.symbolId);
+      if (!symbol) return undefined;
+      const declareNode = findFunctionDeclareNode(documents, graphNodes, symbol.id);
+      return {
+        kind: 'FunctionDecl',
+        sourceGraphNodeId: entry.nodeId,
+        declareSourceGraphNodeId: declareNode?.id,
+        implementSourceGraphNodeId: entry.nodeId,
+        emitBody: true,
+        symbol,
+        properties: {
+          ...(declareNode?.data.properties ?? {}),
+          ...node.data.properties,
+        },
       };
     }
     case 'event': {
@@ -257,6 +311,104 @@ export interface BuildMembersResult {
   memberEventIds: Set<string>;
 }
 
+function documentHasFunctionImplement(doc: GraphDocument): boolean {
+  return doc.nodes.some(
+    (n) => n.type === 'vvs_standard_node' && resolveNodeKindId(n.data) === 'function_implement'
+  );
+}
+
+function entriesFromOrderedIds(
+  orderedIds: string[],
+  nodeById: Map<string, GraphNode>
+): ClassMemberEntry[] {
+  const members: ClassMemberEntry[] = [];
+  for (const nodeId of orderedIds) {
+    const node = nodeById.get(nodeId);
+    if (!node) continue;
+    const kindId = resolveNodeKindId(node.data);
+    if (kindId === 'function_implement') {
+      const symbolId =
+        (typeof node.data.properties?.symbolId === 'string' && node.data.properties.symbolId) ||
+        node.data.graphBinding?.symbolId;
+      members.push({
+        kind: 'function_implement',
+        nodeId,
+        symbolId: typeof symbolId === 'string' ? symbolId : undefined,
+      });
+      continue;
+    }
+    if (
+      kindId === 'vvs.project.import_module' ||
+      kindId.startsWith('import_module_') ||
+      node.data.linkKind === 'import_module'
+    ) {
+      members.push({ kind: 'import_module', nodeId });
+      continue;
+    }
+    if (kindId === 'import_class') {
+      members.push({ kind: 'import_class', nodeId });
+    }
+  }
+  return members;
+}
+
+/** Impl-only graph: Import Module + function_implement chain, no ClassDecl (C++ .cpp companion). */
+function buildIrMembersImplOnly(
+  ctx: CodegenContext,
+  graphNodes: GraphNode[],
+  edges: GraphEdge[],
+  lowerCtx: BuildMembersContext
+): BuildMembersResult {
+  const analysisDoc: GraphDocument = { nodes: graphNodes, edges };
+  const orderedIds = collectMemberDefineNodeIds(
+    analysisDoc,
+    undefined,
+    ctx.variables,
+    ctx.functions,
+    ctx.projectEvents ?? []
+  );
+  const nodeById = new Map(graphNodes.map((n) => [n.id, n]));
+  const entries = entriesFromOrderedIds(orderedIds, nodeById);
+  if (entries.length === 0) {
+    return { members: [], memberEventIds: new Set() };
+  }
+
+  const firstFn = entries.find((e) => e.kind === 'function_implement' && e.symbolId);
+  const owner =
+    (firstFn?.symbolId
+      ? ctx.functions.find((f) => f.id === firstFn.symbolId)
+      : undefined) ?? undefined;
+  const cls =
+    (owner?.classId
+      ? ctx.classes?.find((c) => c.id === owner.classId)
+      : undefined) ?? resolveActiveClass(ctx);
+
+  const classVariables = symbolsForClass(ctx.variables, cls.id);
+  const classFunctions = symbolsForClass(ctx.functions, cls.id);
+  const classEvents = symbolsForClass(ctx.projectEvents ?? [], cls.id);
+
+  const members: IrMemberDecl[] = [];
+  for (const entry of entries) {
+    const node = nodeById.get(entry.nodeId);
+    if (!node) continue;
+    const decl = memberDeclFromEntry(
+      entry,
+      node,
+      cls,
+      classVariables,
+      classFunctions,
+      classEvents,
+      graphNodes,
+      edges,
+      lowerCtx,
+      ctx.documents
+    );
+    if (decl) members.push(decl);
+  }
+
+  return { members, memberEventIds: new Set() };
+}
+
 export function buildIrMembers(
   ctx: CodegenContext,
   graphNodes: GraphNode[],
@@ -268,6 +420,9 @@ export function buildIrMembers(
   const analysisDoc: GraphDocument = { nodes: graphNodes, edges };
 
   if (!classGraphHasDefineNodes(analysisDoc)) {
+    if (documentHasFunctionImplement(analysisDoc)) {
+      return buildIrMembersImplOnly(ctx, graphNodes, edges, lowerCtx);
+    }
     return {
       members: [],
       memberEventIds: new Set(),
@@ -310,7 +465,8 @@ export function buildIrMembers(
       classEvents,
       graphNodes,
       edges,
-      lowerCtx
+      lowerCtx,
+      ctx.documents
     );
     if (!decl) continue;
     members.push(decl);
@@ -325,4 +481,4 @@ export function buildIrMembers(
   };
 }
 
-export { resolveActiveClass };
+export { resolveActiveClass, documentHasFunctionImplement };

@@ -21,9 +21,10 @@ This is a **major strategic choice**. It diverges from Unreal Engine Blueprint s
 
 | Concept | Role |
 |---------|------|
-| **Declare** | Define nodes on the class graph: `class_define`, `var_define`, `function_define`, `event_member_define` |
+| **Declare** | Member-existence nodes: `class_define`, `var_define`, function declare, `event_member_define` |
+| **Define** (functions) | Body placement — inserts the function body at that canvas position (distinct from Declare) |
 | **Use** | Usage nodes where logic runs: Get/Set, Call Function, event dispatch, flow nodes |
-| **Panel row** | Metadata + navigation; dual-writes a define node when creating or renaming a symbol |
+| **Panel row** | Metadata + navigation; dual-writes a declare/define correlate when creating or renaming a symbol |
 | **Generated line** | Must map to a canvas node via `sourceGraphNodeId` / `sourceMap` |
 
 ### Panel action → required canvas correlate
@@ -31,10 +32,11 @@ This is a **major strategic choice**. It diverges from Unreal Engine Blueprint s
 | Panel / tree action | Required on canvas |
 |---------------------|-------------------|
 | + New variable | `var_define` on class home graph (exec chain) |
-| + New function | `function_define` on class home graph |
+| + New function | Function **Declare** on class home graph (existence); **Define** where body should appear (**U81** split) |
 | + New event | `event_member_define` on class home graph |
-| Declare from drop menu | Matching define node at drop position |
-| Get / Set / Call in flow | Usage nodes only — symbol must already have a define node |
+| Declare from drop menu | Matching declare node at drop position |
+| Define from function drop menu | Body placement correlate at drop position |
+| Get / Set / Call in flow | Usage nodes only — symbol must already have a declare node |
 | Class formation | `class_define` on container graph — required when the home graph has any member define chain |
 
 **Preview vs export:** The code preview may show member-chain body text without a `class Name:` shell when `class_define` was deleted (so authors still see handler order). **Generate** remains blocked with `DEFINE_NODE_MISSING` until Declare is restored on canvas.
@@ -129,6 +131,22 @@ This ensures VVS acts as an **educational tool**. Users learn exactly what is re
 **Modifiers and keywords:** Visibility, `static`, `virtual`, `override`, `abstract` / pure, `const`, and `async` appear in generated text **only** when set on the corresponding Declare node’s `properties`. The transpiler must not infer class-level keywords from members, invent trait/`Default` impls, or force `override`/`public` defaults that the canvas did not set.
 
 **Language-aware UI:** When the current codegen language does not use a modifier in emit, the editor **disables** that chip (still visible) rather than letting users change a no-op. Inventory and Dual Class Lab pilot: [design/language_capability_catalog.md](design/language_capability_catalog.md) § C++ / Dual Class Lab pilot · § Modifier effectiveness.
+
+### Function Declare / Define per language (U81 / U82 / U66)
+
+All seven targets follow the same canvas roles. Only **C++** is in `FUNCTION_DECLARE_PROTOTYPE_LANGS`. Non-abstract Declare elsewhere is **ineffective** → U66 `(x) Declare Name` (never silent skip). C# abstract keeps a real prototype; C# / Rust never invent out-of-line definitions.
+
+| Target | Declare (non-abstract) | Declare (`isAbstract`) | Define |
+|--------|------------------------|------------------------|--------|
+| **C++** | in-class prototype | `virtual … = 0;` | out-of-line `Class::Method` after `};` |
+| **Python** | `# (x) Declare Name` | `# abstract Name` | in-class `def` + body |
+| **JavaScript** | `// (x) Declare Name` | `// abstract Name` | in-class method + body |
+| **C#** | `// (x) Declare Name` | real `abstract void Name();` | in-class method + body |
+| **Rust** | `// (x) Declare Name` | `// abstract Name` | in-`impl` method + body |
+| **GDScript** | `# (x) Declare Name` | `# abstract Name` | in-class `func` + body |
+| **Verse** | `# (x) Declare Name` | `# abstract Name` | in-class method + body |
+
+**sourceMap:** Declare maps only to its own emit (prototype, `(x)`, or abstract line); Define maps to the method/`def` header + body — never dual-tag the Define line onto Declare.
 
 ---
 

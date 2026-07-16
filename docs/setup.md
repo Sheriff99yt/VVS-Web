@@ -129,6 +129,19 @@ After the first push, enable Pages or the deploy workflow will fail with **404 N
 
 Preview URL: **https://sheriff99yt.github.io/VVS-Web/** (deployed by `.github/workflows/pages.yml` on each push to `main`).
 
+### GitHub Releases (versioned static zip)
+
+CI runs on every push/PR (`.github/workflows/ci.yml`). **Releases** are separate: push a `v*` tag after `main` is green.
+
+```powershell
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+That runs `.github/workflows/release.yml`: full verify suite → Pages-compatible static build → GitHub Release with `vvs-web-v0.2.0.zip` (contents of `apps/web/out`). You can also run **Actions → Release → Run workflow** and pass an existing tag.
+
+Live preview stays on Pages; Releases are versioned downloads only — no npm package required.
+
 ---
 
 ## Verify installation

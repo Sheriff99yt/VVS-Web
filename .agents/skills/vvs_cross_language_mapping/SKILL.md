@@ -24,11 +24,12 @@ When designing the transpiler, we must distinguish between *structural elements*
 
 ### Distinct Nodes (Structural Elements)
 These elements represent the core scaffolding of the program. The user must drag these onto the canvas to define existence.
-* **`Class Define` Node:** Creates the class shell.
-* **`Function Define` Node:** Creates an execution block for logic.
-* **`Event Define` Node:** Creates a listener execution block.
-* **`Variable Define` Node:** Declares a property/variable.
-* **`Enum Define` Node:** Declares a fixed set of constants.
+* **`Class Declare` Node** (`class_define`): Creates the class shell.
+* **`Function Declare` Node** (`function_define`): Existence / signature only (modifiers live here). Does **not** invent a body.
+* **`Function Define` Node** (`function_implement`): Places the method body at this member-chain position (U81). Body authored in the Edit function body tab.
+* **`Event Declare` Node** (`event_member_define`): Event slot on the class; **On** handler + **Dispatch** for use.
+* **`Variable Declare` Node** (`var_define`): Declares a property/variable.
+* **`Enum Declare` Node** (`enum_define`): Declares a fixed set of constants.
 * **`Import Module` Node:** Emits language import / include / from-import (`import_module`).
 * **`Get Enum Member` Node:** Reads an enum case (`expr_enum_member`).
 * **`Interface Define` Node:** Declares a structural contract.
@@ -37,15 +38,15 @@ These elements represent the core scaffolding of the program. The user must drag
 
 ### Settings / Options (Modifiers)
 These elements modify how a Distinct Node is generated. They are found in the Node Inspector/Settings panel or determined by Pin connections.
-* **`Extends` & `Implements`:** Settings on the `Class Define` node (or handled via connecting class nodes to a parent pin).
-* **`Visibility` (Public/Private/Protected):** A dropdown setting on `Variable Define` and `Function Define` nodes.
+* **`Extends` & `Implements`:** Settings on the `Class Declare` node (or handled via connecting class nodes to a parent pin).
+* **`Visibility` (Public/Private/Protected):** A dropdown setting on `Variable Declare` and **Function Declare** nodes (Define inherits signature modifiers).
 * **`Is Static`:** A toggle setting on `Variable` and `Function` nodes.
-* **`Is Constant`:** A toggle setting on `Variable Define` nodes.
-* **`Is Virtual`:** A toggle setting on `Function Define` nodes.
+* **`Is Constant`:** A toggle setting on `Variable Declare` nodes.
+* **`Is Virtual` / `Is Abstract` / `Is Override`:** Toggles on **Function Declare** (C++ maps these to `virtual` / `= 0` / `override`).
 * **`Enum Type` (`enumType`):** On variable / switch — names the enum type; cases use **member names** (`OK`), not `Enum::OK`. Pack slot `EnumMemberAccess` (`.` vs `::`).
 * **Import Module props:** `modulePath`, `importStyle` (`module` / `from` / `include_system`), `importNames`, **`targetLanguages`**. Place shared imports **once at file top**; flow Import Module inside branches for conditional imports (Python `import json`). Optional **`ownerClassId`** when an import must scope to one class on a multi-class graph.
-* **`Data Type` (Float, Array, Map, Callable):** Driven by the type of the Data Pin on `Variable Define` or function argument pins.
-* **`Generic Type Parameters` (<T>):** Driven by adding a "Wildcard" pin to a `Function Define` node.
+* **`Data Type` (Float, Array, Map, Callable):** Driven by the type of the Data Pin on `Variable Declare` or function argument pins.
+* **`Generic Type Parameters` (<T>):** Driven by adding a "Wildcard" pin to a `Function Declare` node.
 * **`Is Free/Module Function`:** A toggle indicating the function doesn't belong to a class.
 
 ---
@@ -67,7 +68,9 @@ The following table demonstrates how each Node and Setting combinations transpil
 | **Static Var** | `Variable` Option: **Static** | `OpCount = 0` | `static float OpCount` | `static OpCount = 0` | `public static float` | `thread_local! static` | `static var OpCount` | *(Module var)* |
 | **Array** | `Variable` Pin Type: **Array** | `[]` | `std::vector<T>` | `[]` | `List<T>` | `Vec<T>` | `Array` | `[]type` |
 | **Map/Dictionary**| `Variable` Pin Type: **Map** | `Dict[K, V]` | `std::unordered_map`| `new Map()` | `Dictionary<K, V>` | `HashMap<K, V>` | `Dictionary` | `[type]type` |
-| **Function** | `Function Define` Node | `def Func(self):` | `void Func()` | `Func()` | `public void Func()` | `pub fn Func(&mut self)`| `func Func():` | `Func() : void =` |
+| **Function** | `Function Declare` + `Function Define` | `# (x) Declare` + `def Func(self):` | prototype + `Class::Func` (U82) | `// (x) Declare` + `Func()` | `// (x) Declare` + `void Func()` | `// (x) Declare` + `fn Func` | `# (x) Declare` + `func Func():` | `# (x) Declare` + `Func() : void =` |
+| **Abstract Func** | Declare `isAbstract` (no Define body) | `# abstract Func` | `virtual void Func() = 0;` | `// abstract Func` | `public abstract void Func();` | `// abstract Func` | `# abstract Func` | `# abstract Func` |
+| **Virtual / Override** | Declare `isVirtual` / `isOverride` | *Implicit* | `virtual` / `override` postfix | *Implicit* | `virtual` / `override` | *Implicit* | *Implicit* | `<override>` |
 | **Free Function** | `Function` Option: **Not in Class**| `def Func():` | `void Func()` | `export function Func()`| `static void Func()` | `pub fn Func()` | `func Func():` | `Func() : void =` |
 | **Static Function** | `Function` Option: **Static** | `@staticmethod` | `static void Func()` | `static Func()` | `public static void Func` | `pub fn Func()` *(no self)* | `static func Func():` | *(Module function)* |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* | `virtual void Func()` | *Implicit* | `public virtual void Func`| *Implicit* | *Implicit* | `Func<override>()` |
@@ -111,7 +114,102 @@ To demonstrate exactly how the VVS Transpiler handles **Modifiers**, **Setups**,
 12. **Error Handling & Lambdas:** `try/catch/finally` blocks and passing callbacks.
 13. **Events:** Handler functions triggered via dispatch.
 
-*Note: Following the **Visual Code Fidelity** mandate, languages that do not require forward declarations (Python, JavaScript) emit `// Declare` placeholders so the canvas "Define" node can highlight a valid line. Languages with strict structures (C++) omit the comments and map directly to the implementation header.*
+*Note: **U81 Function Declare ≠ Define.** Canvas **Declare** owns existence/signature; **Define** (`function_implement`) places the body. **C++ is the reference language** for this split (U82: real prototypes / out-of-line). On languages without a separate prototype (Python, JS, C#, Rust, GDScript, Verse), non-abstract Declare is **ineffective**: U66 `# (x) Declare Name` / `// (x) Declare Name` + U67 canvas dim — never invent a forward-decl and never silent-skip. Abstract still emits (`# abstract` / `// abstract` / C++ `= 0` / C# real `abstract` prototype). Do **not** emit stub `# Declare` / `// Declare` placeholders without `(x)`. **sourceMap:** Declare maps only to what it emits (prototype or `(x)`); Define maps to the method/`def` header + body — never dual-tag the Define line onto Declare.*
+
+**File boundaries (locked — no magic):** one container graph → one file. Want `.h` + `.cpp` → **two graphs** + user-picked extensions + explicit **Import Module**. Never auto-split one graph into header/source.
+
+### C++ Declare / Define (U82 — shipped)
+
+**One rule (no dual path):**
+
+| Canvas | C++ emit |
+|--------|----------|
+| **Declare** `Boot` (non-abstract) | `virtual void Boot();` prototype inside the class |
+| **Declare** `Diagnose` (`isAbstract`) | `virtual void Diagnose() = 0;` |
+| **Define** `Boot` | `void Machine::Boot() { … }` **after** `};` (same graph) **or** on a separate `.cpp` graph |
+| **Call** `Boot` | `Boot();` at the use site only |
+
+Out-of-line definitions omit `virtual` / `static` / `override` — those belong on the Declare prototype only.
+Return type comes from Declare / overload (`void`, `float`, …) — not hardcoded.
+
+#### Teaching example — one file (out-of-line, no magic)
+
+```cpp
+#include <iostream>
+
+class Machine {
+public:
+    void Boot();              // Declare Boot
+    int Add(int a, int b);    // Declare Add
+};
+
+void Machine::Boot() {        // Define Boot
+    std::cout << "booting" << std::endl;
+}
+
+int Machine::Add(int a, int b) {  // Define Add
+    return a + b;
+}
+
+void Machine::on_start() {
+    Boot();                   // Call Boot
+    int sum = Add(2, 3);      // Call Add
+    std::cout << sum << std::endl;
+}
+```
+
+#### Teaching example — two files (user-authored graphs only)
+
+**Graph A** — extension `.h` (Declares + fields only; **no** Define nodes):
+
+```cpp
+#pragma once
+
+class Machine {
+public:
+    void Boot();
+    int Add(int a, int b);
+};
+```
+
+**Graph B** — extension `.cpp` (Import Module + Defines):
+
+```cpp
+#include "Machine.h"          // Import Module — user placed
+#include <iostream>
+
+void Machine::Boot() {        // Define Boot
+    std::cout << "booting" << std::endl;
+}
+
+int Machine::Add(int a, int b) {  // Define Add
+    return a + b;
+}
+```
+
+**Forbidden:** auto-generate `.h` from `.cpp`; invent `#include` / `#pragma once`; fold Declare into Define; emit stub body without Define.
+
+**Other languages:** non-abstract Declare is **ineffective** → U66 `(x) Declare Name` + U67 dim (toggleable); method body remains at Define (no out-of-line split). Abstract still emits (`# abstract` / language abstract form).
+
+**Coverage Lab C++ golden** proves Machine+Sensor one-file shape: prototypes inside each class, `Class::Method` bodies after each `};`.
+
+### Python Declare / Define (U66 — shipped)
+
+| Canvas | Python emit |
+|--------|-------------|
+| **Declare** `Boot` (non-abstract) | `# (x) Declare Boot` + dim (ineffective — no forward-decl invent) |
+| **Declare** `Diagnose` (`isAbstract`) | `# abstract Diagnose` |
+| **Define** `Boot` | in-class `def Boot(self):` + body |
+
+```python
+class Machine:
+    # (x) Declare Boot
+    def Boot(self):
+        print("Booted")
+    # abstract Diagnose
+```
+
+**sourceMap:** Declare → `(x)` / abstract line only; Define → `def` header + body.
 
 ---
 
@@ -277,6 +375,24 @@ private:
 ---
 
 ### JavaScript
+#### Declare / Define (same table as Python)
+
+| Canvas | JavaScript emit |
+|--------|-----------------|
+| **Declare** `Boot` (non-abstract) | `// (x) Declare Boot` + dim |
+| **Declare** `Diagnose` (`isAbstract`) | `// abstract Diagnose` |
+| **Define** `Boot` | in-class `Boot() { … }` |
+
+```javascript
+class Machine {
+    // (x) Declare Boot
+    Boot() {
+        console.log("Booted");
+    }
+    // abstract Diagnose
+}
+```
+
 ```javascript
 // --- Enum (Emulated via Object freeze) ---
 const Color = Object.freeze({ RED: 1, GREEN: 2, BLUE: 3 });
@@ -339,6 +455,24 @@ class AdvancedClass extends BaseClass {
 ---
 
 ### C# (C-Sharp)
+#### Declare / Define
+
+| Canvas | C# emit |
+|--------|---------|
+| **Declare** `Boot` (non-abstract) | `// (x) Declare Boot` + dim — **not** a real prototype |
+| **Declare** `Diagnose` (`isAbstract`) | real `protected abstract void Diagnose();` (via `FunctionDeclPrototype`) |
+| **Define** `Boot` | in-class `public virtual void Boot() { … }` — **no** out-of-line emit |
+
+```csharp
+public class Machine {
+    // (x) Declare Boot
+    public virtual void Boot() {
+        Console.WriteLine("Booted");
+    }
+    protected abstract void Diagnose();
+}
+```
+
 ```csharp
 using System;
 using System.Collections.Generic;
@@ -404,6 +538,24 @@ public class AdvancedClass : BaseClass, IDamageable {
 ---
 
 ### Rust
+#### Declare / Define
+
+| Canvas | Rust emit |
+|--------|-----------|
+| **Declare** `Boot` (non-abstract) | `// (x) Declare Boot` + dim |
+| **Declare** `Diagnose` (`isAbstract`) | `// abstract Diagnose` |
+| **Define** `Boot` | in-`impl` `pub fn Boot(&mut self) { … }` — **no** out-of-line invent |
+
+```rust
+impl Machine {
+    // (x) Declare Boot
+    pub fn Boot(&mut self) {
+        println!("{}", "Booted");
+    }
+    // abstract Diagnose
+}
+```
+
 ```rust
 // --- Enum ---
 pub enum Color { Red, Green, Blue }
@@ -479,6 +631,22 @@ impl AdvancedClass {
 ---
 
 ### GDScript
+#### Declare / Define
+
+| Canvas | GDScript emit |
+|--------|---------------|
+| **Declare** `Boot` (non-abstract) | `# (x) Declare Boot` + dim |
+| **Declare** `Diagnose` (`isAbstract`) | `# abstract Diagnose` |
+| **Define** `Boot` | in-class `func Boot() -> void:` + body |
+
+```gdscript
+class_name Machine
+    # (x) Declare Boot
+    func Boot() -> void:
+        print("Booted")
+    # abstract Diagnose
+```
+
 ```gdscript
 # --- Enum ---
 enum Color { RED, GREEN, BLUE }
@@ -537,6 +705,22 @@ func on_calculate() -> void:
 ---
 
 ### Verse (UEFN)
+#### Declare / Define
+
+| Canvas | Verse emit |
+|--------|------------|
+| **Declare** `Boot` (non-abstract) | `# (x) Declare Boot` + dim |
+| **Declare** `Diagnose` (`isAbstract`) | `# abstract Diagnose` |
+| **Define** `Boot` | in-class `Boot<public>() : void =` + body |
+
+```verse
+Machine := class:
+    # (x) Declare Boot
+    Boot<public>() : void =
+        Print("Booted")
+    # abstract Diagnose
+```
+
 ```verse
 # --- Enum ---
 Color := enum:
@@ -1165,7 +1349,8 @@ The progressive multi-stage confirmation process ensures full fidelity across th
 | Class | Node (`class_define`), Symbols Panel (ProjectTree) | ✅ Yes | `ClassDecl` IR member, generates `class X { }` shell |
 | Inheritance | Node Setting (`class_define` → `extendsType` property) | ✅ Yes | Generates `: public BaseClass` |
 | Variable | Node (`var_define`), Symbols Panel (ProjectTree) | ✅ Yes | `VariableDecl` IR member, generates typed declarations |
-| Function | Node (`function_define`), Symbols Panel (ProjectTree) | ✅ Yes | `FunctionDecl` IR member, generates function signatures + bodies |
+| Function **Declare** | Node (`function_define`), Symbols Panel | ✅ Yes | Signature / abstract only — modifiers on Declare |
+| Function **Define** | Node (`function_implement`) on member chain | ✅ Yes | Body placement; inherits Declare modifiers (virtual / override) |
 | Event (Custom) | Node (`event_member_define`), Symbols Panel (ProjectTree) | ✅ Yes | `EventDecl` IR member, generates handler functions |
 | Enum Define | ❌ Not in registry | ❌ None | No `enum_define` node exists anywhere |
 | Interface Define | ❌ Not in registry | ❌ None | No `interface_define` node exists |

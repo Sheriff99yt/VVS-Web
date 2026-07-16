@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "bun run --filter web dev",
     "build": "bun run --filter web build",
-    "test": "bun test packages/syntax-packs packages/transpiler packages/graph-types && bun run --filter web test",
+    "test": "bun test packages/syntax-packs packages/transpiler packages/graph-types packages/language-profiles packages/syntax-registry && bun run --filter web test",
+    "lint": "bun run --filter web lint",
+    "ci": "bun install --frozen-lockfile && bun test packages/syntax-packs packages/transpiler packages/graph-types packages/language-profiles packages/syntax-registry && bun run --filter web lint && bun run --filter web build && bun run --filter web test",
     "env:import": "bun run --filter @vvs/environment-templates import:env"
   }
 }

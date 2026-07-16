@@ -28,9 +28,12 @@ export type NodeSemantics =
   | 'variable.define'
   | 'class.define'
   | 'function.define'
+  | 'function.declare'
+  | 'function.implement'
   | 'event.member.define'
   | 'project.call'
   | 'project.import'
+  | 'project.import_class'
   | 'env.call_native'
   | 'env.event_handler';
 
@@ -137,9 +140,11 @@ const DECLARATION_KIND_IDS = new Set([
   'event_member_define',
 ]);
 
-const HANDLER_KIND_IDS = new Set(['event_define', 'event_on_update']);
+const HANDLER_KIND_IDS = new Set(['event_define', 'event_on_update', 'function_implement']);
 
 function spawnCatalogCategory(kind: NodeKindDefinition): string {
+  if (kind.kindId === 'function_define') return 'Declare';
+  if (kind.kindId === 'function_implement') return 'Define';
   if (kind.symbolRole === 'declare') return 'Declare';
   if (kind.symbolRole === 'implement') return 'Handlers';
   if (kind.symbolRole === 'invoke') return kind.category;
@@ -150,7 +155,8 @@ function spawnCatalogCategory(kind: NodeKindDefinition): string {
 
 function catalogCategoryOrder(name: string): number {
   if (name === 'Declare') return 0;
-  if (name === 'Handlers') return 1;
+  if (name === 'Define') return 1;
+  if (name === 'Handlers') return 2;
   if (name === 'Call') return 900;
   if (name === 'Dispatch') return 901;
   return 100;
@@ -255,8 +261,16 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
 
   const missingDeclares = expandMissingDeclareRows(options);
   if (missingDeclares.length > 0) {
-    const existing = coreByCategory.get('Declare') ?? [];
-    coreByCategory.set('Declare', [...missingDeclares, ...existing]);
+    const missingDefines = missingDeclares.filter((i) => i.kindId === 'function_define');
+    const missingOther = missingDeclares.filter((i) => i.kindId !== 'function_define');
+    if (missingDefines.length > 0) {
+      const existing = coreByCategory.get('Declare') ?? [];
+      coreByCategory.set('Declare', [...missingDefines, ...existing]);
+    }
+    if (missingOther.length > 0) {
+      const existing = coreByCategory.get('Declare') ?? [];
+      coreByCategory.set('Declare', [...missingOther, ...existing]);
+    }
   }
 
   const coreCategories: LibraryCategory[] = [...coreByCategory.entries()].map(([name, items]) => ({
@@ -313,13 +327,14 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label.startsWith('Declare Event')) return 'event_member_define';
   if (label.startsWith('Declare ') && category === 'Events') return 'event_member_define';
   if (label.startsWith('Declare ') && category === 'Variables') return 'var_define';
-  if (label.startsWith('Declare ')) return 'function_define';
+  if (label.startsWith('Declare ')) return 'function_define'; // legacy labels
   if (label.startsWith('Define Class')) return 'class_define';
   if (label.startsWith('Define Variable')) return 'var_define';
-  if (label.startsWith('Define Function')) return 'function_define';
+  if (label.startsWith('Define Function')) return 'function_implement';
   if (label.startsWith('Define Event')) return 'event_member_define';
   if (label.startsWith('Define ') && category === 'Events') return 'event_member_define';
-  if (label.startsWith('Define ') && category === 'Project') return 'function_define';
+  if (label.startsWith('Define ') && category === 'Variables') return 'var_define';
+  if (label.startsWith('Define ') && category === 'Project') return 'function_implement';
   if (label.startsWith('Get ')) return 'variable_get';
   if (label.startsWith('Set ')) return 'variable_set';
   if (label.startsWith('Call ')) return 'vvs.project.call_function';

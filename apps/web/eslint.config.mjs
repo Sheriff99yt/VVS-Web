@@ -12,7 +12,21 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated / fixture outputs — not app source
+    "test_project_outputs/**",
+    "test_project_goldens/**",
   ]),
+  {
+    rules: {
+      // Empty alias interfaces are intentional for branded context types.
+      "@typescript-eslint/no-empty-object-type": "off",
+      // React Compiler lint rules (eslint-config-next) — warn until effects/refs
+      // are migrated; do not block CI on pre-existing patterns.
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;

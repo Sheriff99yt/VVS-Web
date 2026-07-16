@@ -30,10 +30,75 @@ import { loadEnvironmentManifest, renderHostFileTemplate } from '@vvs/environmen
 import { generatedFileName } from './graphTabs';
 import type { GraphTab } from '@vvs/graph-types';
 import { graphToIr } from './lower/graphToIr';
+import { documentHasFunctionImplement } from './lower/buildMembers';
 import { emitIrModule, emitClassModule } from './emit';
 import { CodeSink } from './codeSink';
 import type { IrModule } from './ir/types';
 import { resolveNodeKindId } from '@vvs/graph-types';
+
+/** Dump graph + IR summaries as pretty JSON (Code panel / Files when target is json). */
+function emitGraphJsonFile(args: {
+  filePath: string;
+  moduleName: string;
+  extendsType?: string;
+  tabLabel?: string;
+  tabId?: string;
+  variables: VariableSymbol[];
+  functions: FunctionSymbol[];
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  executionOrder?: string[];
+  eventHandlers?: IrModule['handlerNodeLabels'];
+  classes?: Array<{
+    id?: string;
+    name: string;
+    extendsType?: string;
+    executionOrder?: string[];
+    eventHandlers?: IrModule['handlerNodeLabels'];
+  }>;
+}): TranspileResult {
+  const content = JSON.stringify(
+    {
+      metadata: {
+        moduleName: args.moduleName,
+        extendsType: args.extendsType ?? '',
+        tab: args.tabLabel,
+        tabId: args.tabId,
+        ...(args.classes?.length
+          ? {
+              classes: args.classes.map((c) => ({
+                id: c.id,
+                name: c.name,
+                extendsType: c.extendsType ?? '',
+              })),
+            }
+          : {}),
+      },
+      variables: args.variables,
+      functions: args.functions,
+      ...(args.classes?.length
+        ? {
+            classes: args.classes.map((c) => ({
+              name: c.name,
+              executionOrder: c.executionOrder ?? [],
+              eventHandlers: c.eventHandlers ?? {},
+            })),
+          }
+        : {
+            executionOrder: args.executionOrder ?? [],
+            eventHandlers: args.eventHandlers ?? {},
+          }),
+      graph: { nodes: args.nodes, edges: args.edges },
+    },
+    null,
+    2
+  );
+  return {
+    language: 'json',
+    files: [{ path: args.filePath, content }],
+    sourceMap: {},
+  };
+}
 
 export interface CodegenContext {
   moduleName: string;
@@ -61,8 +126,8 @@ export interface CodegenContext {
   /** Container folder prefix for emitted files (from graph folder placement). */
   emitSubdir?: string;
   /**
-   * When true (default), language-gated imports that do not match the target
-   * emit pack-prefixed `(x)` comment lines instead of being silently omitted.
+   * When true (default), ineffective nodes (gated imports, non-C++ Function Declare)
+   * emit pack-prefixed `(x)` comment lines instead of being omitted.
    */
   emitUnsupportedComments?: boolean;
 }
@@ -231,23 +296,19 @@ export function transpileGraph(ctx: CodegenContext): TranspileResult {
 
   if (targetLanguage === 'json') {
     const ir = graphToIr(codegenCtx, filePath);
-    const content = JSON.stringify(
-      {
-        metadata: { moduleName, extendsType, tab: tabLabel, tabId },
-        variables,
-        functions,
-        executionOrder: ir.execOrder,
-        eventHandlers: ir.handlerNodeLabels,
-        graph: { nodes, edges },
-      },
-      null,
-      2
-    );
-    return {
-      language: targetLanguage,
-      files: [{ path: filePath, content }],
-      sourceMap: {},
-    };
+    return emitGraphJsonFile({
+      filePath,
+      moduleName,
+      extendsType,
+      tabLabel,
+      tabId,
+      variables,
+      functions,
+      nodes,
+      edges,
+      executionOrder: ir.execOrder,
+      eventHandlers: ir.handlerNodeLabels,
+    });
   }
 
   const ir = graphToIr(codegenCtx, filePath);
@@ -278,8 +339,8 @@ export interface ProjectTranspileInput {
   integration?: ProjectIntegrationConfig;
   codegenTarget?: CodegenTarget;
   /**
-   * When true (default), language-gated imports that do not match the target
-   * emit pack-prefixed `(x)` comment lines instead of being silently omitted.
+   * When true (default), ineffective nodes (gated imports, non-C++ Function Declare)
+   * emit pack-prefixed `(x)` comment lines instead of being omitted.
    */
   emitUnsupportedComments?: boolean;
 }
@@ -327,11 +388,10 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
   };
 }
 
-/** Emit one module file per container graph (all classes on that graph) and per function tab. */
+/** Emit one module file per container graph (all classes on that graph). Function bodies inline via Define. */
 export function transpileProject(input: ProjectTranspileInput): TranspileResult {
   const results: TranspileResult[] = [];
   const emittedHomes = new Set<string>();
-  const emittedFunctions = new Set<string>();
 
   const projectDefaults = {
     targetLanguage: input.targetLanguage,
@@ -440,6 +500,29 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
       );
     });
 
+    if (codegen.targetLanguage === 'json') {
+      results.push(
+        emitGraphJsonFile({
+          filePath,
+          moduleName: projectModuleName,
+          tabLabel: tab?.name ?? projectModuleName,
+          tabId: homeId,
+          variables: input.variables,
+          functions: input.functions,
+          nodes: doc.nodes,
+          edges: doc.edges,
+          classes: sorted.map((cls, i) => ({
+            id: cls.id,
+            name: cls.name,
+            extendsType: cls.extendsType ?? '',
+            executionOrder: classIrs[i]?.execOrder,
+            eventHandlers: classIrs[i]?.handlerNodeLabels,
+          })),
+        })
+      );
+      continue;
+    }
+
     let homeResult = emitMergedHomeGraphModules(filePath, classIrs);
     const manifest =
       input.environmentManifest ??
@@ -450,13 +533,33 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
     results.push(homeResult);
   }
 
-  for (const func of input.functions) {
-    if (emittedFunctions.has(func.id)) continue;
-    emittedFunctions.add(func.id);
-    const doc = input.documents[func.id];
-    if (!doc) continue;
-    const tab = input.openTabs?.find((t) => t.id === func.id);
+  // C++ / multi-file: companion graphs with function_implement but no class_define
+  // (user-authored .cpp beside a .h home). Never invent includes or class shells.
+  for (const [docId, doc] of Object.entries(input.documents)) {
+    if (emittedHomes.has(docId)) continue;
+    if (!documentHasFunctionImplement(doc)) continue;
+
     const codegen = resolveGraphCodegenSettings(doc.metadata, projectDefaults);
+    if (codegen.targetLanguage !== 'cpp') continue;
+
+    const firstImpl = doc.nodes.find(
+      (n) =>
+        n.type === 'vvs_standard_node' && resolveNodeKindId(n.data) === 'function_implement'
+    );
+    const symbolId =
+      (typeof firstImpl?.data.properties?.symbolId === 'string' &&
+        firstImpl.data.properties.symbolId) ||
+      firstImpl?.data.graphBinding?.symbolId;
+    const ownerFn =
+      typeof symbolId === 'string'
+        ? input.functions.find((f) => f.id === symbolId)
+        : undefined;
+    const ownerClass =
+      (ownerFn?.classId
+        ? input.classes?.find((c) => c.id === ownerFn.classId)
+        : undefined) ?? input.classes?.[0];
+    if (!ownerClass) continue;
+
     const codegenTarget =
       resolveCodegenTarget(codegen.targetLanguage, {
         capabilities: input.codegenTarget
@@ -468,20 +571,56 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
       }) ??
       input.codegenTarget ??
       undefined;
-    results.push(
-      transpileGraph({
-        ...baseCtx,
-        targetLanguage: codegen.targetLanguage,
-        targetFileExtensions: codegen.targetFileExtensions,
-        codegenTarget,
-        nodes: doc.nodes,
-        edges: doc.edges,
-        tabId: func.id,
-        tabLabel: tab?.name ?? `Function: ${func.name}`,
-        activeClassId: func.classId ?? input.activeClassId,
-      })
+
+    const tab = input.openTabs?.find((t) => t.id === docId);
+    const moduleName = ownerClass.name;
+    const filePath = resolveModuleEmitPath(input.integration, codegen.targetLanguage, {
+      tabKind: 'main',
+      moduleName,
+      fallbackFileName: generatedFileName(
+        { id: docId, type: 'main', name: tab?.name ?? moduleName },
+        moduleName,
+        codegen.targetLanguage,
+        codegen.targetFileExtensions,
+        moduleName
+      ),
+      targetFileExtensions: codegen.targetFileExtensions,
+      preferFallbackOverModuleFile: false,
+    });
+
+    const ctx: CodegenContext = {
+      ...baseCtx,
+      targetLanguage: codegen.targetLanguage,
+      targetFileExtensions: codegen.targetFileExtensions,
+      codegenTarget,
+      nodes: doc.nodes,
+      edges: doc.edges,
+      tabId: docId,
+      tabLabel: tab?.name ?? moduleName,
+      moduleName,
+      extendsType: ownerClass.extendsType ?? '',
+      activeClassId: ownerClass.id,
+    };
+    const manifest =
+      ctx.environmentManifest ??
+      (ctx.environmentId ? loadEnvironmentManifest(ctx.environmentId) : undefined);
+    const ir = graphToIr(
+      {
+        ...ctx,
+        environmentManifest: manifest,
+        codegenTarget:
+          ctx.codegenTarget ??
+          resolveCodegenTarget(codegen.targetLanguage) ??
+          undefined,
+      },
+      filePath
     );
+    results.push(emitIrModule(ir));
+    emittedHomes.add(docId);
   }
+
+  // Function graph tabs are body editors only (Define on host chain pastes the
+  // full definition into the class/module file). Do not emit separate files.
 
   return mergeTranspileResults(results);
 }

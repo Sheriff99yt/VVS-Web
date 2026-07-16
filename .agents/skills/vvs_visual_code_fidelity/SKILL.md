@@ -11,11 +11,15 @@ description: >-
 **Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · **Streamline:** `docs/design/fidelity_streamline.md`
 
 - **Canvas nodes emit code** — `variables[]`, `functions[]`, `events[]` are indexes and CRUD shortcuts only
-- **Declare** = `class_define`, `var_define`, `function_define`, `event_member_define` (+ `enum_define`) on class home graph
+- **Declare** = member existence: `class_define`, `var_define`, function declare, `event_member_define` (+ `enum_define`) on class home graph
+- **Define** (functions) = body **placement** in generated code (distinct from Declare) — see U81 / `language_neutral_vocabulary.md`
 - **Use** = Get/Set, Call Function, dispatch, flow nodes where logic runs
 - Transpiler: `appendIrMembersInOrder` / `ir.members` only — **no** sidebar preamble
-- Panel creates must **dual-write** define nodes
+- Panel creates must **dual-write** declare/define nodes
 - Strict errors block Generate: `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`
+- Function release menu (locked): **Call** / **Declare** / **Define** — not header-file focus
+- **C++ (U82):** Declare → in-class prototype; Define → out-of-line `Class::Method` after `};` (or separate `.cpp` graph). Never auto-split one graph into `.h`+`.cpp`.
+- **Other langs:** non-abstract Function Declare is ineffective → U66 `(x) Declare Name` + U67 dim (same as gated imports). Abstract still emits (`#`/`// abstract`, or C# real `abstract` prototype). Body stays on Define. **sourceMap:** Declare↔own emit only; Define↔header+body.
 
 ## Core Philosophy: No Hidden Magic
 
@@ -29,7 +33,7 @@ Never inject hidden structural code (stdlib includes, async wrappers, class `abs
 2. **One graph → one file (locked):** all `class_define` chains on a container graph emit into **one** module in canvas order. Want two files → two graphs. **No** class-per-file invent and **no** split-classes profile.
 3. Import Module: `modulePath` / `importStyle` / `importNames` / `targetLanguages` — place **once at file top** (wire into the first class chain); emit at chain position. Flow Import Module inside branches for conditional imports (e.g. Python `if …: import json`). `ownerClassId` optional when scoping is needed.
 4. Enum: `VariableSymbol.enumType` + switch `enumType`; pack `EnumMemberAccess`; node `expr_enum_member`.
-5. Abstract (ineffective langs): `# abstract Name` / `// abstract Name` — no invented body.
+5. Abstract: `# abstract Name` / `// abstract Name` / C# `abstract` prototype / C++ `= 0` — no invented body.
 6. Rust inheritance: composition field `base: Parent` from ClassDecl `extendsType`.
 7. Class shell opens **only** on `ClassDecl`.
 

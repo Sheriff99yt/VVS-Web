@@ -23,9 +23,12 @@ export interface UsabilityExampleTestDefinition {
 /** @deprecated Use `UsabilityExampleTestDefinition` */
 export type ExampleProjectDefinition = UsabilityExampleTestDefinition;
 
+export const USABILITY_TEST_FIXTURE_REVISION = 5;
+
 /**
  * Curated graph fixtures for usability regression — not tutorial demos.
  * See `docs/design/language_capability_catalog.md` · U65 Test Project rethink.
+ * Rev 3: Declare ≠ Define vocabulary (U81) — Call / Declare / Define; same-file bodies (U80).
  */
 export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
   {
@@ -35,8 +38,8 @@ export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
     title: 'First Graph',
     moduleName: 'FirstGraph',
     description:
-      'Newcomer path: Declare → Get User Input → Print → Call → Print on one class.',
-    highlights: ['Declare chain', 'Get User Input', 'Call · Function tab'],
+      'Newcomer path: Declare (var/class/function) → Get User Input → Print → Call → Print. Body via Edit function body (same file).',
+    highlights: ['Declare · Call · Define roles', 'Edit function body', 'Get User Input'],
     create: createFirstGraphUsabilityTestSnapshot,
   },
   {
@@ -46,12 +49,12 @@ export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
     title: 'Coverage Lab',
     moduleName: 'CoverageLab',
     description:
-      'Machine + Sensor on one graph → one file. TypeRef enum / class / array / map, modifiers, switch, for, imports, Get User Input.',
+      'Machine + Sensor on one graph → one file. Declare functions · Call at use; TypeRef enum / class / array / map, modifiers, switch, for, imports, Get User Input.',
     highlights: [
       'Two classes / one graph',
+      'Declare · Call (Define = U81)',
       'TypeRef (enum·class·array·map)',
       '1:1 member order',
-      'Modifiers + switch + loops',
     ],
     create: createCoverageLabUsabilityTestSnapshot,
   },

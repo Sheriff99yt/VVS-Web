@@ -8,12 +8,12 @@
     "commentPrefix": "// ",
     "instanceReceiver": "this",
     "statementSuffix": ";",
-    "bodyIndent": "    ",
-    "handlerBodyIndent": "      ",
-    "memberChainIndent": "  ",
+    "bodyIndent": "        ",
+    "handlerBodyIndent": "        ",
+    "memberChainIndent": "    ",
     "varDeclIndent": "    ",
-    "emptyHandlerBody": "    // empty",
-    "emptyFunctionBody": "    // empty",
+    "emptyHandlerBody": "        // empty",
+    "emptyFunctionBody": "        // empty",
     "importTemplate": {
       "quasi": "import * as {mod} from './{mod}';"
     }
@@ -122,16 +122,16 @@
       "quasi": "}"
     },
     "EventHandlerOpen": {
-      "quasi": "{linePrefix}  on_{handler}({paramList}) {"
+      "quasi": "{linePrefix}    on_{handler}({paramList}) {"
     },
     "EventHandlerClose": {
-      "quasi": "  }"
+      "quasi": "    }"
     },
     "FunctionDefOpen": {
-      "quasi": "  {staticKw}{asyncKw}{name}({paramList}) {"
+      "quasi": "    {staticKw}{asyncKw}{name}({paramList}) {"
     },
     "FunctionTabClose": {
-      "quasi": "  }"
+      "quasi": "    }"
     },
     "BoolLiteralFalse": {
       "quasi": "false"

@@ -12,6 +12,17 @@ export const MEMBER_DEFINE_KINDS = [
 
 export type MemberDefineKind = (typeof MEMBER_DEFINE_KINDS)[number];
 
+/**
+ * Ordered member-chain kinds — includes function **Define** (`function_implement`)
+ * so body placement participates in canvas → source order (U81).
+ */
+export const MEMBER_CHAIN_KINDS = [
+  ...MEMBER_DEFINE_KINDS,
+  'function_implement',
+] as const;
+
+export type MemberChainKind = (typeof MEMBER_CHAIN_KINDS)[number];
+
 export function resolveNodeKindId(data: VVSNodeData): string {
   if (typeof data.kindId === 'string' && data.kindId) return data.kindId;
   if (data.label.startsWith('Dispatch ')) return 'event_dispatch';
@@ -26,13 +37,22 @@ export function isMemberDefineKind(kindId: string): kindId is MemberDefineKind {
   return (MEMBER_DEFINE_KINDS as readonly string[]).includes(kindId);
 }
 
+export function isMemberChainKind(kindId: string): kindId is MemberChainKind {
+  return (MEMBER_CHAIN_KINDS as readonly string[]).includes(kindId);
+}
+
 export function isMemberDefineNode(node: GraphNode): boolean {
   if (node.type !== 'vvs_standard_node') return false;
   return isMemberDefineKind(resolveNodeKindId(node.data));
 }
 
+export function isMemberChainNode(node: GraphNode): boolean {
+  if (node.type !== 'vvs_standard_node') return false;
+  return isMemberChainKind(resolveNodeKindId(node.data));
+}
+
 export function defineNodeSymbolId(node: GraphNode): string | undefined {
-  if (!isMemberDefineNode(node)) return undefined;
+  if (!isMemberChainNode(node)) return undefined;
   const data = node.data;
   const fromBinding = data.graphBinding?.symbolId;
   if (typeof fromBinding === 'string' && fromBinding) return fromBinding;
@@ -138,27 +158,27 @@ function execTargetsFrom(
 
 /** Head of the member define chain (no exec_in from another graph node). */
 export function findMemberChainHead(doc: GraphDocument): GraphNode | undefined {
-  const defineNodes = doc.nodes.filter(isMemberDefineNode);
+  const chainNodes = doc.nodes.filter(isMemberChainNode);
   return (
-    defineNodes.find((node) => !hasIncomingExecution(doc.edges, node.id, 'exec_in')) ??
-    defineNodes.find((n) => resolveNodeKindId(n.data) === 'class_define')
+    chainNodes.find((node) => !hasIncomingExecution(doc.edges, node.id, 'exec_in')) ??
+    chainNodes.find((n) => resolveNodeKindId(n.data) === 'class_define')
   );
 }
 
 /** Tail of the member define chain (exec_out does not reach another define node). */
 export function findMemberChainTail(doc: GraphDocument): GraphNode | undefined {
-  const defineNodes = doc.nodes.filter(isMemberDefineNode);
-  if (defineNodes.length === 0) return undefined;
+  const chainNodes = doc.nodes.filter(isMemberChainNode);
+  if (chainNodes.length === 0) return undefined;
 
-  for (const node of defineNodes) {
+  for (const node of chainNodes) {
     const targets = execTargetsFrom(doc.edges, node.id, 'exec_out');
     const reachesDefine = targets.some((targetId) =>
-      defineNodes.some((n) => n.id === targetId)
+      chainNodes.some((n) => n.id === targetId)
     );
     if (!reachesDefine) return node;
   }
 
-  return defineNodes[defineNodes.length - 1];
+  return chainNodes[chainNodes.length - 1];
 }
 
 export function collectMemberDefineNodeIds(
@@ -170,7 +190,7 @@ export function collectMemberDefineNodeIds(
 ): string[] {
   // 1. Gather member define nodes belonging to the class (enums attached in step 1b).
   const classNodes = doc.nodes.filter((node) => {
-    if (!isMemberDefineNode(node)) return false;
+    if (!isMemberChainNode(node)) return false;
 
     const symbolId = defineNodeSymbolId(node);
     const kindId = resolveNodeKindId(node.data);

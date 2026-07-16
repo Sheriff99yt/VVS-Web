@@ -8,8 +8,8 @@ describe('emit layout empty body lines', () => {
   });
 
   test('javascript uses pack empty lines', () => {
-    expect(emptyHandlerBodyLine('javascript')).toBe('    // empty');
-    expect(emptyFunctionBodyLine('javascript')).toBe('    // empty');
+    expect(emptyHandlerBodyLine('javascript')).toBe('        // empty');
+    expect(emptyFunctionBodyLine('javascript')).toBe('        // empty');
   });
 
   test('cpp and verse use pack empty lines', () => {

@@ -14,8 +14,8 @@ Stable facts agents should assume without re-exploring the tree.
 - Start screen: `apps/web/src/components/start/StartScreen.tsx` — examples, explore, recents, `AuthButton`
 - Graph edit canvas: `apps/web/src/components/graph/GraphCanvas.tsx` — includes `GraphSelectionToolbar`
 - Floating inspector: `apps/web/src/components/layout/GraphFloatingDetails.tsx` — includes `CallNodeOverloadPanel`
-- Auth UI: `components/auth/AuthButton.tsx`, `hooks/useAuthSession.ts`, `lib/auth/session.ts`, `lib/auth/supabaseClient.ts`
-- Graph settings: `GraphSettingsModal.tsx` — codegen target, portability summary, COA (planned), syntax pack lock, environment link
+- Project tree: function **double-click / open icon = Edit function body**; badges **Declare** (exists) / **Define** (body place) per locked vocab; docs survive tab close (`shouldRetainGraphDocument`); same-file emit = U80; Declare≠Define split = **U81**
+- Vocabulary: `docs/design/language_neutral_vocabulary.md` — functions **Call** / **Declare** / **Define** (not header-file focus)- Graph settings: `GraphSettingsModal.tsx` — codegen target, portability summary, COA (planned), syntax pack lock, environment link
 - Unified symbol architecture: `docs/design/unified_symbol_model.md` — declare/implement/invoke; COA deferred (`apps/web/src/lib/coaPolicy.ts`)
 - Project state: `apps/web/src/contexts/ProjectContext.tsx` — includes `syntaxPackLock`
 - API facade: `apps/web/src/lib/api/` — mock + HTTP via `NEXT_PUBLIC_API_MODE`
@@ -87,7 +87,7 @@ Stable facts agents should assume without re-exploring the tree.
 
 **Active pilot (July 2026):** Coverage Lab (Machine+Sensor). **Verify as Code panel shows.** **Locked:** one graph → one file (all classes; no split-class profile — want two files → two graphs). Modifier chips disable when ineffective. Single-pass `appendIrMembersInOrder`. Imports: once at file top + conditional flow Import (`targetLanguages`; optional `ownerClassId`). Event defines: Y-ordered peers. Next: U68–U77. Do not invent keywords / includes / Default / file layout.
 
-**U66/U67 (shipped):** `packages/language-profiles/src/nodeEffectiveness.ts` — gated Import Module → `(x)` comments (Code panel toggle left of language) + canvas dim (TopNav Dim left of Autosave). Prefs `showUnsupportedComments` / `dimUnsupportedNodes` default on.
+**U66/U67 (shipped):** `packages/language-profiles/src/nodeEffectiveness.ts` — gated Import Module **and** non-abstract Function Declare (non-C++) → `(x)` comments (Code panel toggle) + canvas dim (TopNav Dim). Prefs `showUnsupportedComments` / `dimUnsupportedNodes` default on.
 
 ## Agent assets
 

@@ -8,25 +8,16 @@
 // (x) Import Collections.Generic
 class Machine {
 protected:
-        float Power = 0;
+    float Power = 0;
 public:
-        inline static float Serial = 0;
-        const float MaxPower = 100;
-        bool Ready = false;
-    virtual void Boot() {
-        // Boot
-        Ready = true;
-        std::cout << "Booted" << std::endl;
-        Sensor().on_tick();
-    }
+    inline static float Serial = 0;
+    const float MaxPower = 100;
+    bool Ready = false;
+    virtual void Boot();
 protected:
     virtual void Diagnose() = 0;
 public:
-    void Shutdown() {
-        // Shutdown
-        Ready = false;
-        std::cout << "Shutdown" << std::endl;
-    }
+    void Shutdown();
     void on_pulse() {
         std::cout << ("Power=" + std::to_string(Power)) << std::endl;
     }
@@ -44,6 +35,15 @@ public:
         }
     }
 };
+void Machine::Boot() {
+    Ready = true;
+    std::cout << "Booted" << std::endl;
+    Sensor().on_tick();
+}
+void Machine::Shutdown() {
+    Ready = false;
+    std::cout << "Shutdown" << std::endl;
+}
 enum class SensorStatus {
     OK,
     WARN,
@@ -51,22 +51,12 @@ enum class SensorStatus {
 };
 class Sensor : public Machine {
 public:
-        std::vector<float> Readings = {};
-        SensorStatus Status = SensorStatus::OK;
-        Machine Host = {};
-        std::unordered_map<std::string, std::string> Tags = 0;
-    void Sample() {
-        // Sample
-        Readings.push_back(Power);
-        std::cout << "Sampled" << std::endl;
-    }
-    void Report() {
-        // Report
-        std::cout << "--- Readings ---" << std::endl;
-        for (float val : Readings) {
-            std::cout << std::to_string(val) << std::endl;
-        }
-    }
+    std::vector<float> Readings = {};
+    SensorStatus Status = SensorStatus::OK;
+    Machine Host = {};
+    std::unordered_map<std::string, std::string> Tags = {};
+    void Sample();
+    void Report() override;
     void on_tick() {
         std::cout << "Tick" << std::endl;
     }
@@ -87,3 +77,13 @@ public:
         }
     }
 };
+void Sensor::Sample() {
+    Readings.push_back(Power);
+    std::cout << "Sampled" << std::endl;
+}
+void Sensor::Report() {
+    std::cout << "--- Readings ---" << std::endl;
+    for (float val : Readings) {
+        std::cout << std::to_string(val) << std::endl;
+    }
+}

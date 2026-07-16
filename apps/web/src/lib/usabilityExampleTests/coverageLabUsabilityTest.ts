@@ -2,6 +2,8 @@
  * Coverage Lab - both classes declared and programmed on **one** home graph.
  * Exercises 1:1 canvas-to-text order plus modifiers, enum, array, switch, for, branch,
  * convert, dispatch, call, inheritance, async/static/virtual/abstract/override/const.
+ * Functions: **Declare** on host chain (exists); **Call** at use sites; body via
+ * Edit function body tabs (same file, U80). Declare ≠ Define split = U81.
  */
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import {
@@ -33,6 +35,7 @@ import {
   forEachNode,
   functionDefineNode,
   functionEntryNode,
+  functionImplementNode,
   getUserInputNode,
   printStringNode,
   stringConcatNode,
@@ -41,6 +44,9 @@ import {
   varDefineNode,
   importModuleNode,
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
+
+/** Bump when fixture graph/semantics change so Test Project seeds refresh. */
+export const COVERAGE_LAB_FIXTURE_REVISION = 5;
 
 /** Primary class - Machine (entry / modifiers / abstract). */
 export const MACHINE_CLASS = createClassSymbol('Machine', {
@@ -234,11 +240,13 @@ const MACHINE_MEMBER_NODES: VVSNode[] = [
   varDefineNode('lab-var-max', { x: 2040, y: -200 }, VAR_MAX),
   varDefineNode('lab-var-ready', { x: 2240, y: -200 }, VAR_READY),
   functionDefineNode('lab-fn-boot', { x: 2440, y: -200 }, FN_BOOT),
+  functionImplementNode('lab-fn-boot-impl', { x: 2540, y: -200 }, FN_BOOT),
   functionDefineNode('lab-fn-diagnose', { x: 2640, y: -200 }, FN_DIAGNOSE),
   functionDefineNode('lab-fn-shutdown', { x: 2840, y: -200 }, FN_SHUTDOWN),
+  functionImplementNode('lab-fn-shutdown-impl', { x: 2940, y: -200 }, FN_SHUTDOWN),
   // Event peers: Y wins emit order (pulse higher => on_pulse before on_start).
-  eventMemberDefineNode('lab-evt-start-mem', { x: 3040, y: -120 }, EVT_MACHINE_START),
-  eventMemberDefineNode('lab-evt-pulse-mem', { x: 3240, y: -280 }, EVT_PULSE),
+  eventMemberDefineNode('lab-evt-start-mem', { x: 3140, y: -120 }, EVT_MACHINE_START),
+  eventMemberDefineNode('lab-evt-pulse-mem', { x: 3340, y: -280 }, EVT_PULSE),
 ];
 
 const MACHINE_MEMBER_EDGES: VVSEdge[] = [
@@ -254,9 +262,11 @@ const MACHINE_MEMBER_EDGES: VVSEdge[] = [
   execEdge('lab-mm-2', 'lab-var-serial', 'lab-var-max'),
   execEdge('lab-mm-3', 'lab-var-max', 'lab-var-ready'),
   execEdge('lab-mm-4', 'lab-var-ready', 'lab-fn-boot'),
-  execEdge('lab-mm-5', 'lab-fn-boot', 'lab-fn-diagnose'),
+  execEdge('lab-mm-4b', 'lab-fn-boot', 'lab-fn-boot-impl'),
+  execEdge('lab-mm-5', 'lab-fn-boot-impl', 'lab-fn-diagnose'),
   execEdge('lab-mm-6', 'lab-fn-diagnose', 'lab-fn-shutdown'),
-  execEdge('lab-mm-7', 'lab-fn-shutdown', 'lab-evt-start-mem'),
+  execEdge('lab-mm-6b', 'lab-fn-shutdown', 'lab-fn-shutdown-impl'),
+  execEdge('lab-mm-7', 'lab-fn-shutdown-impl', 'lab-evt-start-mem'),
   execEdge('lab-mm-8', 'lab-evt-start-mem', 'lab-evt-pulse-mem'),
 ];
 
@@ -269,10 +279,12 @@ const SENSOR_MEMBER_NODES: VVSNode[] = [
   varDefineNode('lab-var-host', { x: 840, y: 400 }, VAR_HOST),
   varDefineNode('lab-var-tags', { x: 1040, y: 400 }, VAR_TAGS),
   functionDefineNode('lab-fn-sample', { x: 1240, y: 400 }, FN_SAMPLE),
+  functionImplementNode('lab-fn-sample-impl', { x: 1340, y: 400 }, FN_SAMPLE),
   functionDefineNode('lab-fn-report', { x: 1440, y: 400 }, FN_REPORT),
+  functionImplementNode('lab-fn-report-impl', { x: 1540, y: 400 }, FN_REPORT),
   // Event peers: tick higher on canvas => on_tick before on_start.
-  eventMemberDefineNode('lab-sensor-start-mem', { x: 1640, y: 480 }, EVT_SENSOR_START),
-  eventMemberDefineNode('lab-evt-tick-mem', { x: 1840, y: 320 }, EVT_TICK),
+  eventMemberDefineNode('lab-sensor-start-mem', { x: 1740, y: 480 }, EVT_SENSOR_START),
+  eventMemberDefineNode('lab-evt-tick-mem', { x: 1940, y: 320 }, EVT_TICK),
 ];
 
 const SENSOR_MEMBER_EDGES: VVSEdge[] = [
@@ -282,8 +294,10 @@ const SENSOR_MEMBER_EDGES: VVSEdge[] = [
   execEdge('lab-sm-2b', 'lab-var-status', 'lab-var-host'),
   execEdge('lab-sm-2c', 'lab-var-host', 'lab-var-tags'),
   execEdge('lab-sm-3', 'lab-var-tags', 'lab-fn-sample'),
-  execEdge('lab-sm-4', 'lab-fn-sample', 'lab-fn-report'),
-  execEdge('lab-sm-5', 'lab-fn-report', 'lab-sensor-start-mem'),
+  execEdge('lab-sm-3b', 'lab-fn-sample', 'lab-fn-sample-impl'),
+  execEdge('lab-sm-4', 'lab-fn-sample-impl', 'lab-fn-report'),
+  execEdge('lab-sm-4b', 'lab-fn-report', 'lab-fn-report-impl'),
+  execEdge('lab-sm-5', 'lab-fn-report-impl', 'lab-sensor-start-mem'),
   execEdge('lab-sm-6', 'lab-sensor-start-mem', 'lab-evt-tick-mem'),
 ];
 
@@ -461,8 +475,7 @@ export function createCoverageLabUsabilityTestSnapshot(): ProjectSnapshot {
     projectDetails: {
       moduleName: 'CoverageLab',
       extendsType: '',
-      description:
-        'Coverage Lab - Machine + Sensor on one graph -> one file. Shared imports once at file top, conditional Import json in a branch (Python), TypeRef enum/class/array/map, modifiers, switch, for, Get User Input.',
+      description: `Coverage Lab (rev ${COVERAGE_LAB_FIXTURE_REVISION}) - Machine + Sensor on one graph -> one file. Declare functions on host chain; Call at use sites; bodies via Edit function body (U80). Declare ≠ Define (U81). Shared imports, TypeRef enum/class/array/map, modifiers, switch, for, Get User Input.`,
     },
     classes: [MACHINE_CLASS, SENSOR_CLASS],
     activeClassId: MAIN_CLASS_ID,
@@ -481,10 +494,6 @@ export function createCoverageLabUsabilityTestSnapshot(): ProjectSnapshot {
     functions: [FN_BOOT, FN_DIAGNOSE, FN_SHUTDOWN, FN_SAMPLE, FN_REPORT],
     openTabs: [
       { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: PROJECT_MAP_CONTAINER_NAME },
-      { id: 'fn-boot', type: 'function', name: 'Function: Boot' },
-      { id: 'fn-shutdown', type: 'function', name: 'Function: Shutdown' },
-      { id: 'fn-sample', type: 'function', name: 'Function: Sample' },
-      { id: 'fn-report', type: 'function', name: 'Function: Report' },
     ],
     activeGraphTab: MAIN_GRAPH_CONTAINER_ID,
     targetLanguage: 'python',

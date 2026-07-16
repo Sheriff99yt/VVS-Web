@@ -49,9 +49,33 @@ describe('nodeEffectiveness', () => {
     ).toBe(true);
   });
 
-  test('non-import kinds stay effective', () => {
+  test('unrelated kinds stay effective even with targetLanguages', () => {
+    expect(
+      nodeEffectiveness('print', { targetLanguages: 'cpp' }, 'python')
+    ).toBe('effective');
+  });
+
+  test('Function Declare: non-abstract effective only on C++', () => {
+    expect(nodeEffectiveness('function_define', {}, 'cpp')).toBe('effective');
+    expect(nodeEffectiveness('function_define', {}, 'python')).toBe('ineffective');
+    expect(nodeEffectiveness('function_define', {}, 'javascript')).toBe('ineffective');
     expect(
       nodeEffectiveness('function_define', { targetLanguages: 'cpp' }, 'python')
+    ).toBe('ineffective');
+    expect(
+      nodeEffectiveness('function_define', { targetLanguages: 'python' }, 'python')
+    ).toBe('ineffective');
+    expect(
+      nodeEffectiveness('function_define', { targetLanguages: 'cpp' }, 'cpp')
+    ).toBe('effective');
+  });
+
+  test('Function Declare: abstract stays effective', () => {
+    expect(
+      nodeEffectiveness('function_define', { isAbstract: true }, 'python')
+    ).toBe('effective');
+    expect(
+      nodeEffectiveness('function_define', { isAbstract: true }, 'cpp')
     ).toBe('effective');
   });
 
@@ -64,7 +88,7 @@ describe('nodeEffectiveness', () => {
     expect(parseNodeTargetLanguages(undefined)).toEqual([]);
   });
 
-  test('tooltip explains gated imports', () => {
+  test('tooltip explains gated imports and Declare', () => {
     const tip = nodeIneffectiveTooltip(
       'vvs.project.import_module',
       { targetLanguages: 'cpp' },
@@ -75,5 +99,10 @@ describe('nodeEffectiveness', () => {
     expect(
       nodeIneffectiveTooltip('vvs.project.import_module', { targetLanguages: 'cpp' }, 'cpp')
     ).toBe('');
+    const declareTip = nodeIneffectiveTooltip('function_define', {}, 'python');
+    expect(declareTip).toContain('Declare');
+    expect(declareTip).toContain('python');
+    expect(declareTip).toContain('prototype');
+    expect(nodeIneffectiveTooltip('function_define', {}, 'cpp')).toBe('');
   });
 });

@@ -7,18 +7,19 @@ Directional phases — not schedule commitments.
 
 ## Now (July 2026)
 
-**Active:** Phase 6 polish — Test Project goldens locked (U65); Coverage Lab primary.  
-**Next:** Editor UX + fidelity (U68–U77) · pack versions / new views (U78+) · client-first MCP.
+**Active:** Phase 6 polish — comments [C], highlight rethink, chain layout, Go pack, pack versions, Y-order.  
+**Just shipped:** U81/U82 Function Declare ≠ Define (all seven languages) · U66/U67 `(x)` + dim · U64–U65 · U70–U74/U76 · U80.
 
 | Focus | Status |
 |-------|--------|
 | Multi-class / graph = file / Generate honesty (U54–U58) | **Done** |
 | User types (TypeRef: enum / class / Array / Map) | **Done** — [design/user_types.md](design/user_types.md) |
-| Deeper fidelity (U64) | **Done** — switch + GetInput line temps pack-driven |
-| Test Project rethink + expected compare (U65) | **Done** — stable localStorage seeds + `test_project_goldens/` |
-| Verify as the user sees | **Locked** — Code panel emit vs goldens (`usabilityExampleGoldens.test.ts`) |
-| Comment / chrome / highlight / Go (U68–U77) | **Planned** — see Next |
-| Pack versions + new app views (U78+) | **Planned** — see Next |
+| Deeper fidelity (U64) + Test Project goldens (U65) | **Done** |
+| Unsupported nodes (U66/U67) | **Done** — `(x)` comments + canvas dim |
+| Function Declare ≠ Define (U81) + C++ prototypes (U82) | **Done** — [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § per language |
+| Same-file function emit (U80) | **Done** |
+| Editor chrome (U70 stub, U72–U74, U76) | **Done** |
+| Comment / highlight / layout / Go / packs / Y-order (U68–U69, U71, U75, U77–U79) | **Open** — see Next |
 | Canvas Y → code order rethink (U79) | **Planned** — investigate & redesign |
 
 Not current focus: hosted cloud auth / Postgres as product default (prefer client + git).
@@ -35,22 +36,31 @@ CLOSED                     ACTIVE                         PLANNED
 
 ## Next (planned — Phase 6+)
 
-Agent IDs **U68–U79** in `.agents/memory/incomplete-ui.md` §13–§14. In-app: Development roadmap → Open.
+Agent IDs in `.agents/memory/incomplete-ui.md` §13–§14. In-app: Development roadmap → **Open**.
 
 | # | Item | Notes |
 |---|------|--------|
 | **U68** | Comment **[C]** for selected nodes | Comment emits into generated code ordered by **canvas Y** (higher first). **Lock toggle** (default **off**): off = free move/resize of nodes inside; on = grouped lock (current behavior). |
 | **U69** | Code panel — **user comments** toggle | Separate from language-gated `(x)` unsupported comments; shows/hides author comment lines in the preview. |
-| **U70** | AI / MCP panel | Paste-ready IDE/CLI config; user runs **local MCP** on **desktop** when needed; consent toggle for dangerous tools. **No AI on mobile for now.** No VVS account. |
-| **U71** | Code ↔ graph highlight rethink | Maintainable mapping that does not need hand updates per new node kind; **reverse select** — double-click text in Code panel selects the representing canvas node. |
-| **U72** | Top bar right button collection | Unify style of the right-side TopNav control cluster. |
-| **U73** | Code panel top bar UX | Revise usage, layout, and controls of the Code \| Files header. |
-| **U74** | Left panel **Output** view | Rethink how Output is useful (logs, navigation, density). |
+| **U71** | Code ↔ graph highlight rethink | **Partial** — reverse select (double-click Code → canvas node); full sourceMap rethink still open |
 | **U75** | Node chain **auto-layout** | User selects first node + button → organize entire connected exec chain and keep it selected for move. |
-| **U76** | Format **JSON** in Code panel | When a JSON file/selection is active, pretty-format on demand. |
 | **U77** | **Go** language pack | Eighth target language (pack + emit + Test Project coverage). |
-| **U78** | **Pack versions** manager view | Downloaded pack releases **accumulate** (never overwrite). User lists versions, activates one. First of **multiple new top-level views** (with Library, etc.). GitHub update check prompts to add a version, not replace. |
-| **U79** | **Investigate / rethink canvas Y → code order** | Audit member/event/flow emit ordering vs `position.y` (topo + Y tie-break, event peers, comments). Document intended model; redesign if chain wires and height still conflict for authors. |
+| **U78** | **Pack versions** manager view | Downloaded pack releases **accumulate** (never overwrite). User lists versions, activates one. First of **multiple new top-level views**. |
+| **U79** | **Investigate / rethink canvas Y → code order** | Audit member/event/flow emit ordering vs `position.y`. Document intended model; redesign if chain wires and height still conflict. |
+
+### Recently completed (Phase 6)
+
+| # | Item | Notes |
+|---|------|--------|
+| **U64** | Deeper fidelity temps | Pack + expressionSpans for switch / GetInput |
+| **U65** | Test Project goldens | `test_project_goldens/` + Code panel extract path |
+| **U66** | `(x)` unsupported comments | Imports + non-C++ Function Declare; Code panel toggle |
+| **U67** | Canvas dim unsupported nodes | Same `nodeEffectiveness` resolver; TopNav Dim toggle |
+| **U70** | AI / MCP paste config | Stub — local paste + dangerous-tools consent |
+| **U72–U74, U76** | Chrome polish | TopNav buttons, Code top bar, Output view, Format JSON |
+| **U80** | Same-file function emit | Function tabs = Edit function body only |
+| **U81** | Function Declare ≠ Define | `function_define` + `function_implement`; Call / Declare / Define menu |
+| **U82** | C++ Declare / Define emit | Prototypes + out-of-line; other langs `(x)` + in-class Define |
 
 ---
 
@@ -60,7 +70,7 @@ Agent IDs **U68–U79** in `.agents/memory/incomplete-ui.md` §13–§14. In-app
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirecting** | Client-first: local/folder save; local MCP paste config; pack updates via GitHub; no accounts required |
-| **6** Fidelity & polish | **Active** | U64–U67 done; **next U68–U79** (comments, reverse highlight, chrome, Go, pack versions, Y-order rethink) |
+| **6** Fidelity & polish | **Active** | U64–U67, U80–U82 done; **next U68–U69, U71, U75, U77–U79** |
 | **3** Community library | Planned | Separate **library git repo**; public links only; PR/submit workflow — not hosted blob storage |
 | **4** Collaboration | Planned | **Session client/host** (game-lobby style), not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph model → Verse; not Blueprint VM |

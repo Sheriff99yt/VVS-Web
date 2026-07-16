@@ -107,7 +107,8 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 |------------|------------|-----------------|----------|----------|-------|
 | Class / module shell | Declare Class `{name}` | `class_define` | all | shipped | `extendsType` on class + define node |
 | Variable field | Declare `{name}` | `var_define` | all | shipped | **TypeRef** (builtin / enum / class / array / map); legacy `enumType` migrates |
-| Function member | Declare `{name}` | `function_define` | all | shipped | links to function tab graph |
+| Function member | Declare `{name}` | existence / signature / abstract | all | **shipped (U81)** | `function_define` — no method without Define (except abstract) |
+| Function body place | Define `{name}` | body insert at chain position | all | **shipped (U81)** | `function_implement` on member chain + Edit function body tab |
 | Event member slot | Declare `{name}` | `event_member_define` | all | shipped | paired with On handler in flow |
 | **Enum declaration** | Declare Enum | `enum_define` | all | shipped | members on node; Dual Class Lab |
 | **Enum-typed field** | Type picker → enum | `VariableSymbol.typeRef` `{ kind: 'enum' }` | all | **shipped** | Default = member name (`OK`); emit via pack `EnumMemberAccess` |

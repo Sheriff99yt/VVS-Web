@@ -22,11 +22,21 @@ import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { getAccessToken } from '@/lib/auth/session';
+import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
+import {
+  buildClaudeDesktopMcpConfig,
+  buildCursorMcpConfig,
+  buildLocalMcpCliHint,
+  defaultLocalMcpUrl,
+} from '@/lib/mcpPasteConfig';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
 import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { readUiPreference } from '@/lib/uiPreferences';
+
+const TOPNAV_ICON_BTN =
+  'p-1.5 rounded text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900 transition-colors';
 
 import type { EditorViewTab } from '@/types/editorNavigation';
 
@@ -40,9 +50,21 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [showMCPModal, setShowMCPModal] = useState(false);
   const [mcpProbeState, setMcpProbeState] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const [mcpProbeMessage, setMcpProbeMessage] = useState<string | null>(null);
-  const mcpUrl =
-    process.env.NEXT_PUBLIC_MCP_URL?.trim() ||
-    `${process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:8080'}/mcp`;
+  const [mcpCopiedKey, setMcpCopiedKey] = useState<string | null>(null);
+  const [mcpAllowDangerousTools, setMcpAllowDangerousTools] = useUiPreference('mcpAllowDangerousTools');
+  const mcpUrl = defaultLocalMcpUrl();
+  const cursorMcpConfig = buildCursorMcpConfig(mcpUrl);
+  const claudeMcpConfig = buildClaudeDesktopMcpConfig(mcpUrl);
+  const mcpCliHint = buildLocalMcpCliHint();
+  const copyMcpText = useCallback(async (key: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setMcpCopiedKey(key);
+      window.setTimeout(() => setMcpCopiedKey((prev) => (prev === key ? null : prev)), 1600);
+    } catch {
+      setMcpCopiedKey(null);
+    }
+  }, []);
   const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | null>(null);
   const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
   const [saveOnDiskPromptMode, setSaveOnDiskPromptMode] = useState<'close' | 'manual'>('close');
@@ -503,8 +525,11 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     }
   };
 
+  const hosted = isHostedFeaturesEnabled();
   const autoSaveTitle = autoSave
-    ? 'Auto save on — debounced project snapshot to local storage and cloud when signed in'
+    ? hosted
+      ? 'Auto save on — debounced project snapshot to local storage and cloud when signed in'
+      : 'Auto save on — debounced project snapshot to local storage'
     : `Auto save off — click Save or use ${shortcutKeys('save-project')}`;
   const autoGenerateTitle = autoCompile
     ? 'Auto generate on — debounced validate and transpile on graph changes'
@@ -750,8 +775,9 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           )}
 
           <button
+            type="button"
             onClick={openMcpModal}
-            className="p-1.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
+            className={TOPNAV_ICON_BTN}
             title="Connect AI (MCP)"
           >
             <Bot size={14} />
@@ -759,7 +785,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           <button
             type="button"
             onClick={() => dispatchOpenSettings('project')}
-            className="p-1.5 rounded text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900 transition-colors"
+            className={TOPNAV_ICON_BTN}
             title="Settings"
           >
             <Settings size={14} />
@@ -770,87 +796,141 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
       {showMCPModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-lg w-[480px] overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-lg w-[min(520px,calc(100%-2rem))] max-h-[min(90vh,640px)] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
               <h3 className="text-zinc-100 font-semibold text-sm">Connect AI (MCP)</h3>
-              <button onClick={() => setShowMCPModal(false)} className="text-zinc-500 hover:text-zinc-300">✕</button>
-            </div>
-            <div className="p-6 space-y-4">
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Connect your IDE (Cursor, Claude Desktop, or Windsurf) to this VVS session so AI can read and write node graphs via MCP.
-              </p>
-              <p className="text-[11px] text-zinc-500 leading-relaxed">
-                <span className="text-zinc-400">Local dev:</span> run the Go server with{' '}
-                <span className="font-mono text-zinc-400">NEXT_PUBLIC_API_MODE=http</span> — no auth token required when{' '}
-                <span className="font-mono text-zinc-400">AUTH_REQUIRED=false</span>.
-              </p>
-              <p className="text-[11px] text-zinc-500 leading-relaxed">
-                <span className="text-zinc-400">Production:</span> use your HTTPS API host, e.g.{' '}
-                <span className="font-mono text-zinc-400">https://api.your-domain/mcp</span>. Set{' '}
-                <span className="font-mono text-zinc-400">NEXT_PUBLIC_MCP_URL</span> in{' '}
-                <span className="font-mono text-zinc-400">.env.local</span>. When signed in, Test connection sends your Bearer token; add the same header in your IDE MCP config when{' '}
-                <span className="font-mono text-zinc-400">AUTH_REQUIRED=true</span>.
-              </p>
-              {getAccessToken() ? (
-                <p className="text-[11px] text-emerald-400/90">
-                  Signed in — MCP probe includes your access token.
-                </p>
-              ) : null}
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">MCP Server URL</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    readOnly
-                    value={mcpUrl}
-                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => navigator.clipboard.writeText(mcpUrl)}
-                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-4 py-2 rounded font-medium transition-colors"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => void handleMcpProbe()}
-                disabled={mcpProbeState === 'testing'}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs px-4 py-2 rounded font-medium transition-colors"
-              >
-                {mcpProbeState === 'testing' ? (
-                  <>
-                    <Loader2 size={12} className="animate-spin" />
-                    Testing connection…
-                  </>
-                ) : (
-                  'Test connection'
-                )}
+              <button type="button" onClick={() => setShowMCPModal(false)} className="text-zinc-500 hover:text-zinc-300">
+                ✕
               </button>
-              <div className="flex items-start gap-2 pt-4 border-t border-zinc-800 text-xs">
-                <div
-                  className={`w-2 h-2 rounded-full mt-0.5 shrink-0 ${
-                    mcpProbeState === 'ok'
-                      ? 'bg-emerald-500'
-                      : mcpProbeState === 'fail'
-                        ? 'bg-red-500'
-                        : 'bg-zinc-500'
-                  }`}
-                />
-                <div className="space-y-1">
-                  <span className="text-zinc-400 block">
-                    {mcpProbeState === 'idle'
-                      ? getApiMode() === 'mock'
-                        ? 'Offline mode — set NEXT_PUBLIC_API_MODE=http and start the Go server for local MCP.'
-                        : 'Not connected — start the Go server and use Test connection.'
-                      : mcpProbeMessage}
-                  </span>
-                  {mcpProbeState === 'fail' && getApiMode() === 'mock' ? (
-                    <span className="text-zinc-600 block">Local graph editing and save/load still work.</span>
-                  ) : null}
-                </div>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto">
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Paste a config into your IDE (Cursor, Claude Desktop, Windsurf). Run the local Go MCP on{' '}
+                <span className="font-medium text-zinc-300">desktop</span> — no VVS account. Mobile AI is not supported yet.
+              </p>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Start local MCP</label>
+                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-400 font-mono whitespace-pre-wrap leading-relaxed">
+                  {mcpCliHint}
+                </pre>
+                <button
+                  type="button"
+                  onClick={() => void copyMcpText('cli', mcpCliHint)}
+                  className="text-[11px] text-zinc-400 hover:text-zinc-200"
+                >
+                  {mcpCopiedKey === 'cli' ? 'Copied' : 'Copy hint'}
+                </button>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Cursor mcp.json</label>
+                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
+                  {cursorMcpConfig}
+                </pre>
+                <button
+                  type="button"
+                  onClick={() => void copyMcpText('cursor', cursorMcpConfig)}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
+                >
+                  {mcpCopiedKey === 'cursor' ? 'Copied' : 'Copy Cursor config'}
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Claude Desktop</label>
+                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
+                  {claudeMcpConfig}
+                </pre>
+                <button
+                  type="button"
+                  onClick={() => void copyMcpText('claude', claudeMcpConfig)}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
+                >
+                  {mcpCopiedKey === 'claude' ? 'Copied' : 'Copy Claude config'}
+                </button>
+              </div>
+
+              <label className="flex items-start gap-2 text-[11px] text-zinc-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 rounded border-zinc-700 bg-zinc-900"
+                  checked={mcpAllowDangerousTools}
+                  onChange={(e) => setMcpAllowDangerousTools(e.target.checked)}
+                />
+                <span>
+                  Allow dangerous MCP tools (mutate / delete graph). Off by default — consent only; enforcement lands with the local MCP agent.
+                </span>
+              </label>
+
+              {!hosted ? (
+                <div className="flex items-start gap-2 pt-2 border-t border-zinc-800 text-xs">
+                  <div className="w-2 h-2 rounded-full mt-0.5 shrink-0 bg-zinc-500" />
+                  <span className="text-zinc-400">
+                    Hosted probe inactive — use local MCP above. Enable{' '}
+                    <span className="font-mono text-zinc-500">NEXT_PUBLIC_API_MODE=http</span> for remote Test connection.
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div className="pt-2 border-t border-zinc-800 space-y-3">
+                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                      Hosted mode — optional probe against the URL below (Bearer token when signed in).
+                    </p>
+                    {getAccessToken() ? (
+                      <p className="text-[11px] text-emerald-400/90">Signed in — MCP probe includes your access token.</p>
+                    ) : null}
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">MCP Server URL</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={mcpUrl}
+                          className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void copyMcpText('url', mcpUrl)}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-4 py-2 rounded font-medium transition-colors"
+                        >
+                          {mcpCopiedKey === 'url' ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleMcpProbe()}
+                      disabled={mcpProbeState === 'testing'}
+                      className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-60 disabled:cursor-not-allowed text-zinc-100 text-xs px-4 py-2 rounded font-medium border border-zinc-700 transition-colors"
+                    >
+                      {mcpProbeState === 'testing' ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin" />
+                          Testing connection…
+                        </>
+                      ) : (
+                        'Test connection'
+                      )}
+                    </button>
+                    <div className="flex items-start gap-2 text-xs">
+                      <div
+                        className={`w-2 h-2 rounded-full mt-0.5 shrink-0 ${
+                          mcpProbeState === 'ok'
+                            ? 'bg-emerald-500'
+                            : mcpProbeState === 'fail'
+                              ? 'bg-red-500'
+                              : 'bg-zinc-500'
+                        }`}
+                      />
+                      <span className="text-zinc-400">
+                        {mcpProbeState === 'idle'
+                          ? 'Not connected — start the Go server and use Test connection.'
+                          : mcpProbeMessage}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

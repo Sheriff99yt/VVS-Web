@@ -1,8 +1,8 @@
 // ===== firstgraph.cs =====
 public class FirstGraph {
-        public string VisitorName = "";
+    public string VisitorName = "";
+    // (x) Declare SayHello
     public void SayHello() {
-        // SayHello
         Console.WriteLine("Hello from SayHello!");
     }
     public void on_start() {

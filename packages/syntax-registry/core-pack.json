@@ -788,7 +788,7 @@
       "category": "Project",
       "title": "Declare Function",
       "symbolRole": "declare",
-      "semantics": "function.define",
+      "semantics": "function.declare",
       "inputs": [
         {
           "id": "exec_in",
@@ -861,6 +861,48 @@
           "label": "Async",
           "type": "boolean",
           "default": false
+        },
+        {
+          "key": "graphTabId",
+          "label": "Body graph tab",
+          "type": "string",
+          "default": ""
+        }
+      ]
+    },
+    {
+      "kindId": "function_implement",
+      "kindVersion": 1,
+      "category": "Project",
+      "title": "Define Function",
+      "symbolRole": "implement",
+      "semantics": "function.implement",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "symbolId",
+          "label": "Symbol id",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "key": "name",
+          "label": "Name",
+          "type": "string",
+          "default": "Function"
         },
         {
           "key": "graphTabId",
@@ -1073,16 +1115,20 @@
           "type": "execution"
         }
       ],
-      "propertySchema": {
-        "targetClassId": {
+      "propertySchema": [
+        {
+          "key": "targetClassId",
+          "label": "Target class",
           "type": "string",
-          "title": "Target class"
+          "default": ""
         },
-        "alias": {
+        {
+          "key": "alias",
+          "label": "Alias",
           "type": "string",
-          "title": "Alias"
+          "default": ""
         }
-      }
+      ]
     },
     {
       "kindId": "env.call_native",

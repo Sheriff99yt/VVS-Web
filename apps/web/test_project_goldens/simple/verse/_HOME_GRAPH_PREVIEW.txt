@@ -1,8 +1,8 @@
 // ===== firstgraph.verse =====
 <public>FirstGraph := class:
-        var VisitorName<public> : string = ""
+    var VisitorName<public> : string = ""
+    # (x) Declare SayHello
     SayHello<public>() : void =
-        # SayHello
         Print("Hello from SayHello!")
     on_start() : void =
         Print("What is your name?")

@@ -1,0 +1,114 @@
+name: Release
+
+# Versioned GitHub Release of the static web editor (same artifact as Pages).
+# Trigger: push a tag matching v* (e.g. v0.2.0).
+#
+#   git tag v0.2.0
+#   git push origin v0.2.0
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v0.2.0). Leave empty to use the current ref."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify (CI suite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Package tests
+        run: |
+          bun test packages/syntax-packs
+          bun test packages/transpiler
+          bun test packages/graph-types
+          bun test packages/language-profiles
+          bun test packages/syntax-registry
+
+      - name: Tree-sitter parse validation (strict)
+        working-directory: packages/syntax-packs
+        run: bun run validate:parse -- --strict
+
+      - name: Web lint + unit tests
+        working-directory: apps/web
+        run: |
+          bun run lint
+          bun test src/lib
+
+      - name: Go build + test
+        working-directory: server
+        run: |
+          go build ./...
+          go test ./...
+
+  publish:
+    name: Build & publish release
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Resolve version
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "zip=vvs-web-${TAG}.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Static export (Pages-compatible)
+        working-directory: apps/web
+        env:
+          GITHUB_PAGES: "true"
+        run: bun run build
+
+      - name: Zip static site
+        run: |
+          cd apps/web/out
+          zip -r "../../../${{ steps.meta.outputs.zip }}" .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          generate_release_notes: true
+          files: ${{ steps.meta.outputs.zip }}
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

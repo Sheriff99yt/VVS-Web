@@ -45,8 +45,10 @@ Class homes: **target** is one file per container graph (all classes). Do **not*
 | Kind | Meaning | Examples |
 |------|---------|----------|
 | **Wrongful magic** | Infer keywords, invent includes/types/defaults, reorder to “fix” author order, dual emit paths, silent class shells | Hardcoded param types; `functionNeedsAsync` body inference; `fallbackVisibility: 'public'`; `appendMemberImplementations` two-phase path; auto-`openClassShell` without `ClassDecl` |
-| **Allowed layout** | Language-required structure that still traces to canvas nodes | Rust `struct` then `impl` when methods appear (`ensureRustImpl`); empty-body `pass` when a handler exists but has no statements; access-section separators from pack slots when visibility is set on the node |
+| **Allowed layout** | Language-required structure that still traces to canvas nodes | Rust `struct` then `impl` when methods appear (`ensureRustImpl`); C++ Declare → in-class prototype + Define → out-of-line `Class::Method` after `};` (U82); empty-body `pass` when a handler exists but has no statements; access-section separators from pack slots when visibility is set on the node |
 | **Require canvas node** | Semantic requirement must appear as a define/use/Import node | `class_define` for a class shell; Import Declare for `#include` / `import`; `isAsync` on `function_define` for async keywords; pin/symbol type for typed params |
+
+**Non-C++ Function Declare:** ineffective non-abstract Declare uses U66 `(x) Declare Name` — **not** silent skip. Abstract still emits a comment (or C# real `abstract` prototype). Only `cpp` stays in `FUNCTION_DECLARE_PROTOTYPE_LANGS`.
 
 ---
 

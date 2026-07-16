@@ -43,6 +43,11 @@ export function getNodeDisplayTitle(data: VVSNodeData): string {
     if (typeof fn === 'string' && fn) return `Declare ${fn}`;
     return def?.title ?? data.label;
   }
+  if (kindId === 'function_implement') {
+    const fn = data.properties?.name;
+    if (typeof fn === 'string' && fn) return `Define ${fn}`;
+    return def?.title ?? data.label;
+  }
   if (kindId === 'class_define') {
     const cls = data.properties?.name;
     if (typeof cls === 'string' && cls) return `Declare ${cls}`;

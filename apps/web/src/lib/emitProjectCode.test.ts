@@ -26,9 +26,12 @@ describe('emitProjectLikeCodePanel (U56)', () => {
     expect(home).toContain('class Sensor(Machine)');
   });
 
-  test('function tabs remain separate files', () => {
+  test('function bodies inline in home file — no separate function files (U80)', () => {
     const snapshot = createCoverageLabUsabilityTestSnapshot();
     const result = emitProjectLikeCodePanel(snapshot, { targetLanguage: 'python' });
-    expect(result.files.some((f) => f.path.includes('Boot'))).toBe(true);
+    expect(result.files.some((f) => f.path.includes('Boot'))).toBe(false);
+    expect(result.files.some((f) => f.path === 'src/CoverageLab.py')).toBe(true);
+    const home = result.files.find((f) => f.path === 'src/CoverageLab.py')!.content;
+    expect(home).toContain('def Boot(');
   });
 });

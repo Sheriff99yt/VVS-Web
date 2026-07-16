@@ -3,12 +3,13 @@ import type { IrMemberDecl, IrModule } from '../ir/types';
 import {
   appendFunctionBody,
   appendHoistedImports,
-  appendImportStatement,
   formatFunctionDefHeader,
   functionNeedsAsync,
+  printContextForIr,
 } from './helpers';
 import { emptyFunctionBodyLine } from './layout';
 import {
+  appendCppOutOfLineFunction,
   appendIrMembersInOrder,
   tagClassDeclLine,
   tagClassStructuralLine,
@@ -21,11 +22,21 @@ import {
   renderClassImplOpen,
   renderFunctionTabClose,
 } from './shell';
+import { appendIrStatements } from './sinkStatements';
+
+function resolveCppClassName(ir: IrModule): string {
+  const classDecl = ir.members.find(
+    (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
+  );
+  if (classDecl?.name?.trim()) return classDecl.name.trim();
+  if (ir.activeClass?.name?.trim()) return ir.activeClass.name.trim();
+  return ir.moduleName;
+}
 
 /**
  * Emit a class module with **canvas member-chain order = source order** (1:1).
- * No declare-then-implement two-phase: each define node emits its full construct
- * when encountered on the chain.
+ * C++: Declare → in-class prototype; Define → out-of-line after `};` (U82).
+ * Other langs: Define emits full method at chain position; non-abstract Declare is silent.
  */
 export function emitClassModule(
   sink: CodeSink,
@@ -83,11 +94,18 @@ export function emitClassModule(
     state.rustImplOpened = true;
   };
 
+  const cppOutOfLine: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>[] = [];
+
   appendIrMembersInOrder(sink, ir, state, {
     onClassDecl: openClassShell,
     // Rust layout only — never invent a class shell from fields/methods without ClassDecl.
     onBeforeMethod: () => {
       ensureRustImpl();
+    },
+    deferCppOutOfLineMethod: (member) => {
+      if (lang !== 'cpp') return false;
+      cppOutOfLine.push(member);
+      return true;
     },
   });
 
@@ -105,8 +123,6 @@ export function emitClassModule(
 
   // Script body when there is no class shell (no class_define).
   if (!classDecl && ir.onStartBody.length > 0) {
-    const { printContextForIr } = require('./shell');
-    const { appendIrStatements } = require('./sinkStatements');
     const ctx = printContextForIr(ir, '');
     appendIrStatements(sink, ir.onStartBody, ctx);
   }
@@ -118,6 +134,14 @@ export function emitClassModule(
       const closeLine = sink.lineCount + 1;
       sink.appendRaw(classClose);
       if (lang === 'cpp') tagClassStructuralLine(sink, ir, closeLine);
+    }
+  }
+
+  // C++ U82: out-of-line definitions after class close (or alone on an impl-only graph).
+  if (lang === 'cpp' && cppOutOfLine.length > 0) {
+    const className = resolveCppClassName(ir);
+    for (const member of cppOutOfLine) {
+      appendCppOutOfLineFunction(sink, ir, member, className);
     }
   }
 }

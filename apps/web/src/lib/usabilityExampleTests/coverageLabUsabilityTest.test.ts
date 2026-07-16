@@ -52,7 +52,8 @@ describe('coverage lab usability example', () => {
     // pulse Declare is visually higher on canvas → emits before start
     expect(onPulse).toBeGreaterThan(boot);
     expect(onStart).toBeGreaterThan(onPulse);
-    expect(code).not.toContain('# Declare');
+    expect(code).toContain('# (x) Declare Boot');
+    expect(code).toContain('# abstract Diagnose');
   });
 
   test('Python boolean literals use True/False', () => {
@@ -95,8 +96,10 @@ describe('coverage lab usability example', () => {
     expect(paths).toContain('src/CoverageLab.py');
     expect(paths).not.toContain('machine.py');
     expect(paths).not.toContain('sensor.py');
-    expect(paths).toContain('src/Boot.py');
+    expect(paths).not.toContain('src/Boot.py');
+    expect(paths).toEqual(['src/CoverageLab.py']);
     const home = result.files.find((f) => f.path === 'src/CoverageLab.py')!.content;
+    expect(home).toContain('def Boot(');
     expect(home).toContain('from enum import Enum');
     expect(home).toContain('class Machine:');
     expect(home).toContain('class SensorStatus(Enum):');
@@ -131,7 +134,9 @@ describe('coverage lab usability example', () => {
     expect(home).toContain('SensorStatus Status = SensorStatus::OK');
     expect(home).toContain('Machine Host = {}');
     expect(home).toContain('std::vector<float> Readings');
-    expect(home).toContain('std::unordered_map<std::string, std::string> Tags');
+    expect(home).toContain('std::unordered_map<std::string, std::string> Tags = {}');
+    // Declare isOverride on Report → Define emits postfix override (skill AdvancedClass style).
+    expect(home).toContain('void Report() override');
   });
 
   test('C++ Machine golden — modifiers and 1:1 order', () => {
@@ -161,6 +166,9 @@ describe('coverage lab usability example', () => {
     expect(code).toContain('virtual void Boot(');
     expect(code).toContain('virtual void Diagnose() = 0');
     expect(code).toContain('void Shutdown(');
+    // Declare+Define: body starts with statements — no function_entry `// Boot` noise.
+    expect(code).not.toContain('// Boot');
+    expect(code).not.toContain('// Declare');
     expect(code.indexOf('Power')).toBeLessThan(code.indexOf('void Boot'));
     expect(code.indexOf('void Boot')).toBeLessThan(code.indexOf('void on_pulse'));
     expect(code.indexOf('void on_pulse')).toBeLessThan(code.indexOf('void on_start'));

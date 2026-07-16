@@ -1,4 +1,5 @@
 import { type VariableSymbol, parseTypeRef, resolveTypeRef, targetLanguageToFamily } from '@vvs/graph-types';
+import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrMemberDecl, IrModule } from '../ir/types';
@@ -7,13 +8,20 @@ import {
   appendImportStatement,
   formatFunctionDeclPrototype,
   formatFunctionDefHeader,
+  formatFunctionDefOutOfLineHeader,
   functionNeedsAsync,
+  printContextForIr,
 } from './helpers';
 import { emptyFunctionBodyLine } from './layout';
-import { appendEventHandlerDefinition,
-  resolveModifierSlots } from './shell';
+import {
+  appendEventHandlerDefinition,
+  renderFunctionOutOfLineClose,
+  renderFunctionTabClose,
+  resolveModifierSlots,
+} from './shell';
 import { typeNameForTypeRef } from './emitTypes';
 import { formatEnumMemberAccess, parseLegacyEnumMember } from './enumAccess';
+import { commentPrefixFromPack, memberChainIndentFor } from '../print/template';
 
 export interface MemberState {
   cppVisibility: string;
@@ -30,6 +38,13 @@ export interface MemberEmitHooks {
   onBeforeField?: () => void;
   /** Before emitting a method body (FunctionDecl / EventDecl with handler). */
   onBeforeMethod?: () => void;
+  /**
+   * C++: queue FunctionDecl with emitBody for out-of-line emit after class close.
+   * Return true when deferred (caller must not emit in-class).
+   */
+  deferCppOutOfLineMethod?: (
+    member: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>
+  ) => boolean;
 }
 
 export function ensureCppVisibility(
@@ -59,7 +74,9 @@ function formatVariableDefault(
     (typeof enumType === 'string' && enumType.trim() ? enumType.trim() : undefined) ||
     enumNameFromVariable(variable);
 
-  if (variable.type === 'data_array') {
+  const typeRef = resolveTypeRef(variable);
+
+  if (variable.type === 'data_array' || typeRef.kind === 'array') {
     if (targetLanguage === 'cpp') return '{}';
     if (targetLanguage === 'python') return '[]';
     if (targetLanguage === 'javascript') return '[]';
@@ -68,6 +85,17 @@ function formatVariableDefault(
     if (targetLanguage === 'gdscript') return '[]';
     if (targetLanguage === 'verse') return 'array{}';
     return '[]';
+  }
+
+  if (typeRef.kind === 'map') {
+    if (targetLanguage === 'cpp') return '{}';
+    if (targetLanguage === 'python') return '{}';
+    if (targetLanguage === 'javascript') return 'new Map()';
+    if (targetLanguage === 'csharp') return 'new Dictionary<string, string>()';
+    if (targetLanguage === 'rust') return 'HashMap::new()';
+    if (targetLanguage === 'gdscript') return '{}';
+    if (targetLanguage === 'verse') return 'map{}';
+    return '{}';
   }
 
   if (resolvedEnum && typeof val === 'string' && /^[A-Za-z_][\w]*$/.test(val)) {
@@ -81,7 +109,6 @@ function formatVariableDefault(
     }
   }
 
-  const typeRef = resolveTypeRef(variable);
   if (typeRef.kind === 'class' && (val === null || val === undefined || val === '')) {
     if (targetLanguage === 'python') return 'None';
     if (targetLanguage === 'cpp') return '{}';
@@ -200,6 +227,64 @@ function appendEventDefinition(
   });
 }
 
+function appendFunctionDeclare(
+  sink: CodeSink,
+  ir: IrModule,
+  member: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>,
+  isAbstract: boolean
+): void {
+  const { symbol } = member;
+  const nodeId = member.declareSourceGraphNodeId ?? member.sourceGraphNodeId;
+  const label =
+    (typeof member.properties?.name === 'string' && member.properties.name.trim()) ||
+    symbol.name;
+  const effective = isNodeEffectiveForLanguage(
+    'function_define',
+    member.properties,
+    ir.targetLanguage
+  );
+
+  const emitXComment = () => {
+    if (ir.emitUnsupportedComments === false) return;
+    const ctx = printContextForIr(ir, '', ir.environmentManifest);
+    const indent = memberChainIndentFor(ctx);
+    const prefix = commentPrefixFromPack(ctx);
+    sink.appendTagged({
+      nodeId,
+      text: `${indent}${prefix}(x) Declare ${label}`,
+    });
+  };
+
+  // Ineffective (non-C++ non-abstract, or gated away) → U66 (x) or omit.
+  if (!effective) {
+    emitXComment();
+    return;
+  }
+
+  const proto = formatFunctionDeclPrototype(symbol, ir.targetLanguage, member.properties);
+  if (proto) {
+    const headerStartLine = sink.lineCount + 1;
+    sink.appendRaw(proto);
+    sink.tagRange(nodeId, headerStartLine, headerStartLine, symbol.name);
+    return;
+  }
+
+  // Effective abstract with no prototype form (Python, etc.) → honest comment.
+  if (isAbstract) {
+    const ctx = printContextForIr(ir, '', ir.environmentManifest);
+    const indent = memberChainIndentFor(ctx);
+    const prefix = commentPrefixFromPack(ctx);
+    sink.appendTagged({
+      nodeId,
+      text: `${indent}${prefix}abstract ${label}`,
+    });
+    return;
+  }
+
+  // Effective but no prototype template — never silent-skip.
+  emitXComment();
+}
+
 function appendFunctionDefinition(
   sink: CodeSink,
   ir: IrModule,
@@ -210,25 +295,13 @@ function appendFunctionDefinition(
 
   if (sink.lineCount > 0) sink.appendRaw('');
 
-  const isAbstract = member.properties?.isAbstract || member.symbol.flags?.abstract;
-  if (isAbstract) {
-    const proto = formatFunctionDeclPrototype(symbol, ir.targetLanguage, member.properties);
-    if (proto) {
-      const headerStartLine = sink.lineCount + 1;
-      sink.appendRaw(proto);
-      if (ir.targetLanguage === 'cpp' || ir.targetLanguage === 'csharp') {
-        sink.tagRange(member.sourceGraphNodeId, headerStartLine, headerStartLine, symbol.name);
-      }
-    } else {
-      // Abstract is ineffective for this language — emit a tagged comment, do not invent a body.
-      const headerStartLine = sink.lineCount + 1;
-      const comment =
-        ir.targetLanguage === 'python' || ir.targetLanguage === 'gdscript' || ir.targetLanguage === 'verse'
-          ? `    # abstract ${symbol.name}`
-          : `    // abstract ${symbol.name}`;
-      sink.appendRaw(comment);
-      sink.tagRange(member.sourceGraphNodeId, headerStartLine, headerStartLine, symbol.name);
-    }
+  const isAbstract = !!(
+    member.properties?.isAbstract || member.symbol.flags?.abstract
+  );
+
+  // Declare-only (no body): prototype, abstract comment, or U66 (x).
+  if (!member.emitBody) {
+    appendFunctionDeclare(sink, ir, member, isAbstract);
     return;
   }
 
@@ -238,19 +311,64 @@ function appendFunctionDefinition(
     functionNeedsAsync(ir, symbol.id),
     member.properties
   );
-  
+
   const headerStartLine = sink.lineCount + 1;
   sink.appendRaw(header);
-  
-  sink.tagRange(member.sourceGraphNodeId, headerStartLine, headerStartLine, symbol.name);
-  
-  appendFunctionBody(sink, ir, symbol.id, emptyLine, ir.environmentManifest);
 
-  const { renderFunctionTabClose } = require('./shell');
+  // Define owns the emitted header + body. Declare only maps to its own emit
+  // (C++ prototype or U66 `(x) Declare`), never the Define `def` / method line.
+  const defineNodeId =
+    member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
+  sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
+
+  appendFunctionBody(sink, ir, symbol.id, emptyLine, ir.environmentManifest, defineNodeId);
+
   const tabClose = renderFunctionTabClose(ir.targetLanguage);
   if (tabClose) {
     sink.appendRaw(tabClose);
   }
+}
+
+/**
+ * C++ out-of-line method after class close: `void Class::Name() { … }`
+ * Body indent is file-scope (4 spaces), not in-class (8 spaces).
+ */
+export function appendCppOutOfLineFunction(
+  sink: CodeSink,
+  ir: IrModule,
+  member: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>,
+  className: string
+): void {
+  const { symbol } = member;
+  if (sink.lineCount > 0) sink.appendRaw('');
+
+  const header = formatFunctionDefOutOfLineHeader(
+    symbol,
+    className,
+    'cpp',
+    functionNeedsAsync(ir, symbol.id),
+    member.properties
+  );
+  const headerStartLine = sink.lineCount + 1;
+  sink.appendRaw(header);
+
+  // Out-of-line header + body → Define only (Declare already tagged the prototype).
+  const defineNodeId =
+    member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
+  sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
+
+  appendFunctionBody(
+    sink,
+    ir,
+    symbol.id,
+    '    // empty',
+    ir.environmentManifest,
+    defineNodeId,
+    '    '
+  );
+
+  sink.appendRaw(renderFunctionOutOfLineClose('cpp'));
+  sink.tagRange(defineNodeId, headerStartLine, sink.lineCount, symbol.name);
 }
 
 export function appendEnumDecl(
@@ -284,8 +402,8 @@ export function appendEnumDecl(
 
 /**
  * Emit members in canvas define-chain order (1:1 visual → text).
- * Each FunctionDecl / EventDecl emits its full definition at its chain position —
- * no declare-stub phase and no deferred implementation pass.
+ * C++ Defers FunctionDecl with emitBody to after class close (out-of-line).
+ * Non-C++ non-abstract Declare → U66 `(x) Declare …` (or omit when comments off).
  */
 export function appendIrMembersInOrder(
   sink: CodeSink,
@@ -312,6 +430,14 @@ export function appendIrMembersInOrder(
         appendVariableDecl(sink, ir, member, state);
         break;
       case 'FunctionDecl': {
+        // C++: queue bodies for out-of-line after class close.
+        if (
+          ir.targetLanguage === 'cpp' &&
+          member.emitBody &&
+          hooks.deferCppOutOfLineMethod?.(member)
+        ) {
+          break;
+        }
         hooks.onBeforeMethod?.();
         if (ir.targetLanguage === 'cpp') {
           const vis = String(
@@ -319,7 +445,21 @@ export function appendIrMembersInOrder(
               (member.symbol as { visibility?: string }).visibility ??
               ''
           );
-          ensureCppVisibility(sink, ir, state, vis);
+          // Visibility sections only for in-class prototypes / events — skip for (x) comments.
+          const isAbstract = !!(
+            member.properties?.isAbstract || member.symbol.flags?.abstract
+          );
+          const needsVis =
+            member.emitBody ||
+            isAbstract ||
+            isNodeEffectiveForLanguage(
+              'function_define',
+              member.properties,
+              ir.targetLanguage
+            );
+          if (needsVis) {
+            ensureCppVisibility(sink, ir, state, vis);
+          }
         }
         appendFunctionDefinition(sink, ir, member);
         break;

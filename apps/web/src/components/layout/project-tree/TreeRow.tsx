@@ -30,13 +30,15 @@ export interface TreeRowProps {
   suffix?: React.ReactNode;
   hoverActions?: React.ReactNode;
   onSelect?: (e: React.MouseEvent) => void;
-  /** Double-click: typically focus/select Declare on canvas. */
+  /** Double-click: open the related graph (function body, class home, etc.). */
   onOpen?: () => void;
   /**
    * External-link button. Defaults to `onOpen` when omitted.
-   * Use to open a different target (e.g. function body) than double-click.
+   * Functions: use **Edit function body** title; Define badge handles host-graph Define.
    */
   onOpenAffordance?: () => void;
+  /** Tooltip for the open-affordance control (default: Open graph). */
+  openAffordanceTitle?: string;
   onContextMenu?: (e: React.MouseEvent) => void;
   hint?: string;
   className?: string;
@@ -74,6 +76,7 @@ export function TreeRow({
   onSelect,
   onOpen,
   onOpenAffordance,
+  openAffordanceTitle,
   onContextMenu,
   hint,
   suffix,
@@ -237,7 +240,7 @@ export function TreeRow({
         <button
           type="button"
           className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-500 hover:text-zinc-200 shrink-0"
-          title="Open graph"
+          title={openAffordanceTitle ?? 'Open graph'}
           onClick={(e) => {
             e.stopPropagation();
             openAffordance();
