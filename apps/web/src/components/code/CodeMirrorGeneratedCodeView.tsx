@@ -3,13 +3,63 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
-import { StateField, StateEffect, RangeSetBuilder } from '@codemirror/state';
+import { StateField, StateEffect, RangeSetBuilder, type SelectionRange } from '@codemirror/state';
 import type { SourceRange } from '@/types/transpile';
 import type { CodeHighlightRange, GeneratedCodeViewProps } from './types';
 import { getCodeMirrorExtensions } from '@/lib/codeEditorLanguages';
 import { vvsCodeMirrorTheme } from './codeMirrorTheme';
 
 const setHighlightEffect = StateEffect.define<DecorationSet>();
+
+type ScrollStrategy = 'nearest' | 'start' | 'end' | 'center';
+
+/**
+ * Replace CodeMirror's instant scrollIntoView jump with smooth scrolling.
+ * Returns true so the default jump path is skipped.
+ */
+function smoothScrollIntoView(
+  view: EditorView,
+  range: SelectionRange,
+  options: { x: ScrollStrategy; y: ScrollStrategy; xMargin: number; yMargin: number }
+): boolean {
+  const scroller = view.scrollDOM;
+  const block = view.lineBlockAt(range.head);
+  const viewHeight = scroller.clientHeight;
+  const maxTop = Math.max(0, scroller.scrollHeight - viewHeight);
+  let targetTop = scroller.scrollTop;
+
+  if (options.y === 'center') {
+    targetTop = block.top + block.height / 2 - viewHeight / 2;
+  } else if (options.y === 'start') {
+    targetTop = block.top - options.yMargin;
+  } else if (options.y === 'end') {
+    targetTop = block.bottom - viewHeight + options.yMargin;
+  } else {
+    const visibleTop = scroller.scrollTop;
+    const visibleBottom = visibleTop + viewHeight;
+    if (block.top < visibleTop + options.yMargin) {
+      targetTop = block.top - options.yMargin;
+    } else if (block.bottom > visibleBottom - options.yMargin) {
+      targetTop = block.bottom - viewHeight + options.yMargin;
+    } else {
+      return true;
+    }
+  }
+
+  targetTop = Math.max(0, Math.min(targetTop, maxTop));
+  if (Math.abs(targetTop - scroller.scrollTop) < 1) return true;
+
+  const preferReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  scroller.scrollTo({
+    top: targetTop,
+    behavior: preferReducedMotion ? 'auto' : 'smooth',
+  });
+  return true;
+}
+
+const smoothScrollHandler = EditorView.scrollHandler.of(smoothScrollIntoView);
 
 const highlightField = StateField.define<DecorationSet>({
   create() {
@@ -148,6 +198,7 @@ export function CodeMirrorGeneratedCodeView({
       ...getCodeMirrorExtensions(language, readOnly),
       ...vvsCodeMirrorTheme(),
       highlightField,
+      smoothScrollHandler,
       EditorView.domEventHandlers({
         dblclick(event, view) {
           const handler = onReverseSelectLineRef.current;

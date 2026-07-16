@@ -7,8 +7,8 @@ Directional phases — not schedule commitments.
 
 ## Now (July 2026)
 
-**Active:** Phase 6 polish — highlight rethink, chain layout, Go pack, pack versions, Y-order.  
-**Just shipped:** U68/U69 author Comment [C] + user-comments toggle · U81/U82 Function Declare ≠ Define · U66/U67 `(x)` + dim · U64–U65 · U70–U74/U76 · U80.
+**Active:** Phase 6 polish — highlight rethink (partial), chain layout, Go pack, pack versions, Y-order.  
+**Just shipped:** U71a Switch case-body `sourceMap` + Code panel smooth highlight scroll · U68/U69 author Comment [C] · U81/U82 Declare ≠ Define · U66/U67 `(x)` + dim · U64–U65 · U70–U74/U76 · U80.
 
 | Focus | Status |
 |-------|--------|
@@ -41,7 +41,7 @@ Agent IDs in `.agents/memory/incomplete-ui.md` §13–§14. In-app: Development 
 
 | # | Item | Notes |
 |---|------|--------|
-| **U71** | Code ↔ graph highlight rethink | **Partial** — reverse select (double-click Code → canvas node); full sourceMap rethink still open |
+| **U71** | Code ↔ graph highlight rethink | **Partial** — reverse select; Switch case-body `sourceMap` (structured sink); smooth Code panel auto-scroll; no per-kindId highlight UI. Still open: audit remaining nest-as-text emit gaps |
 | **U75** | Node chain **auto-layout** | User selects first node + button → organize entire connected exec chain and keep it selected for move. |
 | **U77** | **Go** language pack | Eighth target language (pack + emit + Test Project coverage). |
 | **U78** | **Pack versions** manager view | Downloaded pack releases **accumulate** (never overwrite). User lists versions, activates one. First of **multiple new top-level views**. |

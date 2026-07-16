@@ -74,7 +74,7 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 | One call node → one call site | **Call Function** → `self.Add()` |
 | One dispatch → one visible line | **Dispatch calculate** → `self.on_calculate()` |
 | One handler → one method body | **On calculate** → `def on_calculate(self):` |
-| Selection → code highlight | `sourceMap` / `expressionSpans` — no re-transpile on select |
+| Selection → code highlight | `sourceMap` / `expressionSpans` — no re-transpile on select; **no per-kindId highlight UI** (Code panel looks up ranges only). Nested control-flow bodies must emit via `appendIrStatements` so each statement tags itself (Switch fixed U71a; If/For already did). Auto-scroll to highlight is **smooth** |
 
 **Anti-patterns (forbidden in transpiler):**
 

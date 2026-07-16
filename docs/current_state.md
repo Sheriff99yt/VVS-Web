@@ -254,7 +254,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
-| Code preview | Done — CodeMirror 6; graph language + `.{ext}`; Format JSON; **double-click line → canvas node** (`sourceMapReverse`); selection highlight via `sourceMap`; live analysis sync |
+| Code preview | Done — CodeMirror 6; graph language + `.{ext}`; Format JSON; **double-click line → canvas node** (`sourceMapReverse`); selection highlight via `sourceMap`; **smooth auto-scroll** to highlight (`EditorView.scrollHandler`); live analysis sync |
 | Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
@@ -330,7 +330,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Print adapter | `packages/transpiler/src/print/template.ts` | Done — `printFromTemplate`, pack `layout` helpers (`bodyIndent`, `blockPlaceholder`, `emptyHandlerBody`, …) |
 | Unified block emit | `packages/transpiler/src/print/blocks.ts` | Done — `buildIfBranch` / `buildForLoop` / … for string print path (`stmt.ts`) |
 | Block close helpers | `packages/transpiler/src/print/blockHelpers.ts` | Done — `condSpanOffset`, `blockCloseLine`, `ifElseLine` shared with `emit/sinkStatements.ts` (span-aware nested emit) |
-| Nested emit sink | `packages/transpiler/src/emit/sinkStatements.ts` | Done — writes IR to `CodeSink` with `sourceMap`; headers/closes via `blockHelpers` + pack templates |
+| Nested emit sink | `packages/transpiler/src/emit/sinkStatements.ts` | Done — writes IR to `CodeSink` with `sourceMap`; headers/closes via `blockHelpers` + pack templates; **Switch** case bodies via nested `appendIrStatements` (U71a — not string-join leaf) |
 | Pack render engine | `packages/syntax-packs/src/render.ts` | Done — `renderQuasi`, `renderLego`, `renderTemplate`; pack `layout` (indent, placeholders, comment prefix) |
 | Module emit | `packages/transpiler/src/emit/classModule.ts` | Done — unified class module + function tab emitter; **pack shell templates** for class open/close, handlers, function headers |
 | Module shell renderer | `packages/transpiler/src/emit/shell.ts` | Done — `ClassModuleOpen`, `EventHandlerOpen`, `FunctionDefOpen`, etc. from pack JSON |
@@ -360,11 +360,11 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Compile gate** | `analyzeProject` errors block Generate in TopNav when `!analysis.ok`; code preview syncs live analysis via `useLiveProjectValidation` (signature-guarded, no render loops) |
 | **Event model** | **Dispatch** supported (direct call); **Emit** / **Subscribe** blocked — no hidden `_emit` / `_subscribe` runtime; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` |
 | **Strict diagnostics** | `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`, `PROGRAM_ENTRY_MISSING`, `PROGRAM_ENTRY_NOT_ON_CANVAS`, `LIFECYCLE_NODE_DEPRECATED`, `HIDDEN_EVENT_RUNTIME_UNSUPPORTED`, `MULTICAST_REQUIRES_SUBSCRIBE` |
-| **sourceMap** | Every emitted declaration and statement maps to a canvas `nodeId` for code-panel highlight |
+| **sourceMap** | Every emitted declaration and statement maps to a canvas `nodeId` for code-panel highlight. Nested control-flow bodies (If/For/While/Sequence/**Switch**) tag each statement via `appendIrStatements` — no per-`kindId` highlight UI |
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U71, U75, U77–U79** (highlight rethink, chain auto-layout, Go language, pack versions, Y-order). U64–U70, U72–U74/U76, U68–U69, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
+**Active next (July 2026):** Phase 6 — **U71** (partial: reverse select + Switch sourceMap + smooth scroll; nest-as-text audit remains), **U75, U77–U79**. U64–U70, U72–U74/U76, U68–U69, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
 

@@ -222,6 +222,12 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 
 **Do not:** invent real emit for unsupported constructs; hide unsupported nodes from the catalog; couple the two toggles (comments ≠ dimming). **Author Comment [C] (U68/U69)** is a third channel — `showUserComments` / `emitUserComments` — never emit as `(x)` and never gate with `emitUnsupportedComments`.
 
+**Highlight / sourceMap (U71 — locked contract):**
+- Code panel highlight is **generic** — `sourceMap[nodeId]` lookup only; **never** add per-`kindId` highlight UI.
+- New nodes get highlight by tagging emit (`appendTagged` / `tagRange` / `expressionSpans`), not by writing CodeMirror code.
+- Nested control-flow bodies must go through `appendIrStatements` (If/For/While/Sequence/Switch). Do not string-join nested statements into a single parent-tagged leaf.
+- Code panel **auto-scroll** to selection highlight must be **smooth** (`EditorView.scrollHandler` → `scrollTo({ behavior: 'smooth' })`); respect `prefers-reduced-motion`.
+
 **Comment lock semantics (July 2026 — locked):**
 - **Unlocked (default):** soft `commentMemberIds`; no RF `parentId`; members move freely; comment follows member AABB; optional `commentFollowOffset` after manual drag; **Snap** clears offset.
 - **Locked:** RF parent so **moving the comment moves members**; members stay independently draggable; lock **recaptures** nodes overlapping the comment rect into membership.

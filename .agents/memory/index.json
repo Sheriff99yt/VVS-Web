@@ -1,6 +1,6 @@
 ﻿{
   "version": 1,
-  "lastUpdated": "2026-07-16",
+  "lastUpdated": "2026-07-17",
   "productDirection": "text-shaped-graphs",
   "canonicalDoc": "docs/visual_to_text_fidelity.md",
   "vocabularyDoc": "docs/design/language_neutral_vocabulary.md",
@@ -11,7 +11,7 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "dualClassLabUsabilityTest",
-  "nextFunctionWork": "U71 highlight / U75 layout / U77 Go / U78 packs / U79 Y-order remainder",
+  "nextFunctionWork": "U71 nest-as-text audit / U75 layout / U77 Go / U78 packs / U79 Y-order remainder",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
     "totalItems": 69,

@@ -171,6 +171,45 @@ describe('transpileGraphCode', () => {
     expect(content).not.toContain('def run(self):');
   });
 
+  test('U71 — Switch case-body nodes have their own sourceMap entries', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
+    const result = transpileGraph({
+      moduleName: 'Sensor',
+      extendsType: 'Machine',
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      nodes: home.nodes,
+      edges: home.edges,
+      tabId: MAIN_GRAPH_CONTAINER_ID,
+      documents: snapshot.documents,
+      classes: snapshot.classes,
+      activeClassId: SENSOR_CLASS.id,
+    });
+    const content = result.files[0]!.content;
+    const lines = content.split('\n');
+
+    // Nested case statements must be tagged — not only the Switch block.
+    for (const nodeId of ['lab-print-warn', 'lab-print-fail', 'lab-call-sample'] as const) {
+      expect(result.sourceMap[nodeId]?.length, nodeId).toBeGreaterThan(0);
+    }
+
+    const warnLine = lines.findIndex((l) => l.includes('print("Warn")')) + 1;
+    const failLine = lines.findIndex((l) => l.includes('print("Fail")')) + 1;
+    const sampleLine = lines.findIndex((l) => /self\.Sample\(/.test(l)) + 1;
+    expect(warnLine).toBeGreaterThan(0);
+    expect(failLine).toBeGreaterThan(0);
+    expect(sampleLine).toBeGreaterThan(0);
+    expect(result.sourceMap['lab-print-warn']!.some((r) => r.startLine === warnLine)).toBe(true);
+    expect(result.sourceMap['lab-print-fail']!.some((r) => r.startLine === failLine)).toBe(true);
+    expect(result.sourceMap['lab-call-sample']!.some((r) => r.startLine === sampleLine)).toBe(true);
+
+    // Switch still maps (outer construct), without exclusive ownership of body lines.
+    expect(result.sourceMap['lab-switch-status']?.length).toBeGreaterThan(0);
+  });
+
   test('function tab emits Boot body with cross-class Sensor tick dispatch', () => {
     const snapshot = createCoverageLabUsabilityTestSnapshot();
     const bootTab = snapshot.documents!['fn-boot']!;

@@ -902,7 +902,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'highlight-reverse-u71',
         title: 'Codeâ†”graph highlight rethink (U71)',
         description:
-          'Reverse select shipped (double-click Code â†’ canvas node). Still open: maintainable sourceMap that does not need hand updates per new node kind.',
+          'Reverse select shipped. Highlight UI is generic (sourceMap lookup) — no per-kindId highlight code. Switch case bodies tagged via structured sink emit. Smooth auto-scroll to highlight. Still open: audit remaining nest-as-text gaps.',
         status: 'partial',
       },
       {
