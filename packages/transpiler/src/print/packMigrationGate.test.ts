@@ -43,6 +43,41 @@ describe('pack migration CI gate', () => {
     expect(source.includes('blockCloseLine')).toBe(true);
     expect(source.includes('ifElseLine')).toBe(true);
     expect(source.includes('condSpanOffset')).toBe(true);
-    expect(source.includes('${ctx.indent}}')).toBe(false);
+    // If / For / While brace closes use pack helpers (Switch/Rust may still emit indent+}).
+    for (const name of ['appendIfBranch', 'appendForLoop', 'appendWhileLoop'] as const) {
+      const fn = source.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n\\}\\n\\nfunction `))?.[0];
+      expect(fn, name).toBeTruthy();
+      if (fn!.includes("['javascript', 'cpp', 'csharp', 'rust']")) {
+        expect(fn!.includes('blockCloseLine'), name).toBe(true);
+      }
+    }
+  });
+
+  test('U71 — sink owns nested control-flow (no nest-as-text leaf emit)', () => {
+    const source = readFileSync(join(import.meta.dir, '..', 'emit', 'sinkStatements.ts'), 'utf8');
+    // Structured helpers must stay on the live CodeSink path.
+    for (const name of [
+      'function appendIfBranch',
+      'function appendForLoop',
+      'function appendForEach',
+      'function appendWhileLoop',
+      'function appendSwitch',
+      'function appendSequence',
+      'appendBodyOrPlaceholder',
+      'appendIrStatements',
+    ]) {
+      expect(source.includes(name), name).toBe(true);
+    }
+    // Never string-join nested printed bodies on the sink path (Switch regression class).
+    expect(source.includes(".map((p) => p.text).join")).toBe(false);
+    expect(source.includes('printStatements(')).toBe(false);
+    // Switch helper must route bodies through appendSwitchBody / appendBodyOrPlaceholder.
+    expect(source.includes('appendSwitchBody')).toBe(true);
+    const switchFn = source.match(
+      /function appendSwitch\([\s\S]*?\n\}\n\nfunction appendSequence/
+    )?.[0];
+    expect(switchFn).toBeTruthy();
+    expect(switchFn!.includes('appendLeafStatement')).toBe(false);
+    expect(switchFn!.includes('appendSwitchBody')).toBe(true);
   });
 });

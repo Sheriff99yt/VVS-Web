@@ -210,6 +210,33 @@ describe('transpileGraphCode', () => {
     expect(result.sourceMap['lab-switch-status']?.length).toBeGreaterThan(0);
   });
 
+  test('U71 — Coverage Lab home graph: every behavioral node has sourceMap', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
+    const result = transpileProject({
+      projectDetails: snapshot.projectDetails,
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      documents: snapshot.documents!,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+      openTabs: snapshot.openTabs,
+      integration: snapshot.integration,
+    });
+
+    const missing: string[] = [];
+    for (const node of home.nodes) {
+      if (node.type === 'vvs_comment_node') continue;
+      if (!node.data?.kindId) continue;
+      if (!result.sourceMap[node.id]?.length) {
+        missing.push(`${node.id} (${String(node.data.kindId)})`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
   test('function tab emits Boot body with cross-class Sensor tick dispatch', () => {
     const snapshot = createCoverageLabUsabilityTestSnapshot();
     const bootTab = snapshot.documents!['fn-boot']!;

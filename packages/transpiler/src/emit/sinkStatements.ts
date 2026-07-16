@@ -438,6 +438,36 @@ function appendSwitch(
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'switch');
 }
 
+function appendSequence(
+  sink: CodeSink,
+  stmt: IrSequence,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
+  const inner = innerIndentCtx(ctx);
+  const startLine = sink.lineCount + 1;
+  const steps = stmt.steps.filter((step) => step.length > 0);
+
+  if (isPackDrivenFamily(ctx.family)) {
+    if (ctx.family === 'python' || ctx.family === 'verse' || ctx.family === 'gdscript') {
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceHeader', {}).text);
+      for (const step of steps) {
+        appendIrStatements(sink, step, inner, options);
+      }
+    } else {
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceHeader', {}).text);
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceComment', {}).text);
+      for (const step of steps) {
+        appendIrStatements(sink, step, inner, options);
+      }
+      sink.appendRaw(printFromTemplate(ctx, 'SequenceClose', {}).text);
+    }
+  } else {
+    sink.appendRaw(`${ctx.indent}// sequence`);
+  }
+  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'sequence');
+}
+
 function appendIrStatement(
   sink: CodeSink,
   stmt: IrStatement,

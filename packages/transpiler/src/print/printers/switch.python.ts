@@ -4,6 +4,10 @@ import { formatSwitchCaseLabel } from '../blocks';
 import type { PrintContext, PrintedStmt, StmtPrinter } from '../types';
 import { printSwitchSelectBind, SWITCH_SEL_TEMP } from './switchSelectBind';
 
+/**
+ * Print-path Switch renderer (string join). Live codegen uses structured
+ * `appendSwitch` in emit/sinkStatements.ts so case bodies keep sourceMap tags (U71).
+ */
 export function createPythonSwitchPrinter(
   printStatements: (stmts: IrStatement[], ctx: PrintContext) => PrintedStmt[]
 ): StmtPrinter {

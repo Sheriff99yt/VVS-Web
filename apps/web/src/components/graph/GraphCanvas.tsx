@@ -1727,7 +1727,7 @@ function GraphCanvasInner() {
         elevateNodesOnSelect
         fitView
         onlyRenderVisibleElements
-        selectNodesOnDrag={false}
+        selectNodesOnDrag
         selectionOnDrag={false}
         selectionKeyCode={['Control', 'Meta']}
         multiSelectionKeyCode={['Control', 'Meta']}

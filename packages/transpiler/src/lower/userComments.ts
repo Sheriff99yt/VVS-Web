@@ -45,7 +45,7 @@ function resolveMembers(
   if (children.length > 0) return children;
   return softMemberIds(comment)
     .map((id) => byId.get(id))
-    .filter((n): n is GraphNode => Boolean(n) && n.type !== 'vvs_comment_node');
+    .filter((n): n is GraphNode => n != null && n.type !== 'vvs_comment_node');
 }
 
 function pickAttachTarget(members: GraphNode[], byId: Map<string, GraphNode>): GraphNode {
