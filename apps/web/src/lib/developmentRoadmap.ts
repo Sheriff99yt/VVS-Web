@@ -886,32 +886,32 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           'showUserComments / emitUserComments — independent of (x) unsupported comments.',
         status: 'done',
       },
-    ],
-  },
-];
-
-/** Open / partial only â€” shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
-export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
-  {
-    id: 'phase-6-open',
-    title: 'Phase 6 â€” Open polish',
-    phase: 6,
-    emphasis: 'active',
-    items: [
       {
         id: 'highlight-reverse-u71',
-        title: 'Codeâ†”graph highlight rethink (U71)',
+        title: 'Code↔graph highlight rethink (U71)',
         description:
-          'Reverse select shipped. Highlight UI is generic (sourceMap lookup) — no per-kindId highlight code. Switch case bodies tagged via structured sink emit. Smooth auto-scroll to highlight. Still open: audit remaining nest-as-text gaps.',
-        status: 'partial',
+          'Reverse select (dblclick Code → node); generic sourceMap UI; Switch structured sink; smooth auto-scroll; Coverage Lab completeness + sink nest-as-text CI gate.',
+        status: 'done',
       },
       {
         id: 'chain-auto-layout-u75',
         title: 'Node chain auto-layout (U75)',
         description:
-          'Select first node + button: organize the connected exec chain and keep it selected so the user can move the group.',
-        status: 'planned',
+          'S = forward exec + data attrs/children; A = full undirected chain + attrs; S S = lane-topo layout (above / below / below-extended stair with spine buffer). Head-anchored; multi-chain vertical separation; absolute layout through locked comments. Settings: chainAttributeDirection. Comments create locked by default (U68).',
+        status: 'done',
       },
+    ],
+  },
+];
+
+/** Open / partial only — shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
+export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
+  {
+    id: 'phase-6-open',
+    title: 'Phase 6 — Open polish',
+    phase: 6,
+    emphasis: 'active',
+    items: [
       {
         id: 'go-language-u77',
         title: 'Go language pack (U77)',

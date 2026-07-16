@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { dispatchGraphAction } from '@/lib/graphActions';
+import { CHAIN_LAYOUT_DOUBLE_TAP_MS } from '@/lib/graphChainLayout';
 import { isTypingTarget } from '@/lib/graphShortcuts';
 import {
   dispatchFocusGraphNodeSearch,
@@ -36,6 +37,8 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
     suppressCanvasShortcuts = false,
   } = handlers;
 
+  const lastChainSelectSAt = useRef(0);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isHelpOpen && e.key === 'Escape') {
@@ -55,6 +58,28 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
       if (e.key === '?' && !mod && !e.altKey) {
         e.preventDefault();
         onToggleHelp();
+        return;
+      }
+
+      // U75: bare A expands to full undirected exec chain (Ctrl+A remains select-all).
+      if (key === 'a' && !mod && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        dispatchGraphAction('select-chain-full');
+        return;
+      }
+
+      // U75: S = select downstream from selection; S S (double-tap) = S then layout (atomic).
+      // Double-tap window: CHAIN_LAYOUT_DOUBLE_TAP_MS in graphChainLayout.ts
+      if (key === 's' && !mod && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        const now = performance.now();
+        const isDoubleTap = now - lastChainSelectSAt.current <= CHAIN_LAYOUT_DOUBLE_TAP_MS;
+        lastChainSelectSAt.current = isDoubleTap ? 0 : now;
+        if (isDoubleTap) {
+          dispatchGraphAction('layout-selected-chains');
+        } else {
+          dispatchGraphAction('select-chain-downstream');
+        }
         return;
       }
 

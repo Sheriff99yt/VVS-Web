@@ -183,6 +183,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
 | Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; dangerous-tools consent pref; URL + **Test connection** only when hosted |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
+| Chain select / layout (U75) | Canvas shortcuts | **S** = forward exec + data attrs; **A** = full undirected chain; **S S** = layout (`lane-topo-v1`). Attribute direction in Settings (above / below / below-extended). Head-anchored; multi-chain Y-separate; works inside locked comments |
 
 **Floating panels** (canvas overlay, shared `FloatingPanelShell`):
 
@@ -364,7 +365,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U71** (partial: reverse select + Switch sourceMap + smooth scroll; nest-as-text audit remains), **U75, U77–U79**. U64–U70, U72–U74/U76, U68–U69, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
+**Active next (July 2026):** Phase 6 — **U77–U79** (Go language, pack versions, Y-order). U64–U75/U76, U68–U71, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
 

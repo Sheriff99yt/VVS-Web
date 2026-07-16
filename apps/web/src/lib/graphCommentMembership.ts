@@ -344,7 +344,7 @@ export function unlockCommentMembers(nodes: VVSNode[], commentId: string): VVSNo
   return normalizeParenting(next);
 }
 
-/** Wrap selection as an unlocked comment with soft membership (no parentId yet). */
+/** Wrap selection as a comment and lock members by default (move-comment-moves-members). */
 export function wrapSelectionAsComment(nodes: VVSNode[], selectedIds: string[]): VVSNode[] {
   const selected = nodes.filter(
     (n) => selectedIds.includes(n.id) && n.type !== 'vvs_comment_node'
@@ -387,7 +387,8 @@ export function wrapSelectionAsComment(nodes: VVSNode[], selectedIds: string[]):
     return { ...detachFromParent(n), position: abs };
   });
 
-  return normalizeParenting([comment, ...detached]);
+  const withComment = normalizeParenting([comment, ...detached]);
+  return lockCommentMembers(withComment, commentId);
 }
 
 export function pruneCommentMembership(nodes: VVSNode[]): VVSNode[] {

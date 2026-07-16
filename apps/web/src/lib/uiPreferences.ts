@@ -32,6 +32,11 @@ export interface UiPreferences {
   showUserComments: boolean;
   /** U67: dim language-ineffective nodes on the canvas (default on). */
   dimUnsupportedNodes: boolean;
+  /**
+   * U75: where S S places data-attribute trees relative to the exec spine.
+   * `above` = canopy over the consumer; `below` = vertical hang; `below-extended` = flat staircase.
+   */
+  chainAttributeDirection: 'above' | 'below' | 'below-extended';
   /** U70: allow MCP tools that can mutate/delete graphs (default off). */
   mcpAllowDangerousTools: boolean;
 }
@@ -55,6 +60,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   showUnsupportedComments: true,
   showUserComments: true,
   dimUnsupportedNodes: true,
+  chainAttributeDirection: 'above',
   mcpAllowDangerousTools: false,
 };
 
@@ -224,6 +230,11 @@ export function readUiPreferences(): UiPreferences {
         typeof rest.detailsPanelPinned === 'boolean'
           ? rest.detailsPanelPinned
           : Boolean(detailsPanelExpanded),
+      chainAttributeDirection:
+        rest.chainAttributeDirection === 'below' ||
+        rest.chainAttributeDirection === 'below-extended'
+          ? rest.chainAttributeDirection
+          : 'above',
     };
     return migrateLegacyDetailsPref(merged);
   } catch {

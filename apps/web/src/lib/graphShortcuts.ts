@@ -21,6 +21,9 @@ export type GraphShortcutId =
   | 'extract-function'
   | 'select-all'
   | 'select-similar'
+  | 'select-chain-downstream'
+  | 'select-chain-full'
+  | 'layout-selected-chains'
   | 'save-project'
   | 'compile'
   | 'sync-preview'
@@ -46,6 +49,27 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
     label: 'Select similar nodes',
     keysWin: 'Ctrl+Shift+A',
     keysMac: '⌘⇧A',
+    section: 'canvas',
+  },
+  {
+    id: 'select-chain-downstream',
+    label: 'Select exec chain downstream (+ data attrs)',
+    keysWin: 'S',
+    keysMac: 'S',
+    section: 'canvas',
+  },
+  {
+    id: 'select-chain-full',
+    label: 'Select full exec chain',
+    keysWin: 'A',
+    keysMac: 'A',
+    section: 'canvas',
+  },
+  {
+    id: 'layout-selected-chains',
+    label: 'Layout exec chain (double-tap S)',
+    keysWin: 'S S',
+    keysMac: 'S S',
     section: 'canvas',
   },
   { id: 'group-comment', label: 'Comment selection', keysWin: 'C', keysMac: 'C', section: 'canvas' },

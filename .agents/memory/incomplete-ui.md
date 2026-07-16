@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U70/U72–U74/U76 done; U71/U79 partial; U75/U77–U78 open.
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **7.5 / 10** · §14 **0.5 / 2** · Cross-class dispatch + TypeRef + U64–U69 shipped
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 done; U79 partial; U77–U78 open.
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **9 / 10** · §14 **0.5 / 2** · Cross-class dispatch + TypeRef + U64–U75 shipped
 
 ## Status legend
 
@@ -148,7 +148,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13–§14 open (U71, U75, U77–U79):** reverse highlight → chain layout → Go → Pack versions → **Y-order rethink** (comment slice done). Prefer U71/U79 remainder early. U68/U69 shipped complete.
+**§13–§14 open (U77–U79):** Go → Pack versions → **Y-order rethink**. U68–U71 / U75 shipped.
 
 ---
 
@@ -232,14 +232,14 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U68 | Comment **[C]** on selection; soft `memberIds`; **lock** = move-comment-moves-members (+ overlap recapture); **unlock** = free peers + AABB follow + snap; dashed vs solid | **Done** | `graphCommentMembership.ts`, `VVSCommentNode`; pack prefix; never `(x)` |
+| U68 | Comment **[C]** on selection; soft `memberIds`; **create locks by default**; **lock** = move-comment-moves-members (+ overlap recapture); **unlock** = free peers + AABB follow + snap; dashed vs solid | **Done** | `graphCommentMembership.ts`, `VVSCommentNode`; pack prefix; never `(x)` |
 | U69 | Code panel toggle for **user-added comments** (separate from `(x)` unsupported) | **Done** | `showUserComments` / `emitUserComments` next to `(x)` |
 | U70 | AI / MCP panel — paste IDE/CLI config; **local MCP** on device; dangerous-tools consent | **Done** (stub) | Paste Cursor/Claude + CLI hint; `mcpAllowDangerousTools` pref; hosted probe gated |
-| U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Partial** | Reverse select shipped. **No per-kindId highlight UI** — contract is emit `sourceMap`/`expressionSpans`. **Switch fixed (U71a):** case bodies via `appendIrStatements`. **Smooth auto-scroll** to highlight (`scrollHandler`). Still open: audit other nest-as-text gaps |
+| U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Done** | Reverse select; generic `sourceMap` UI (no per-kindId highlight); Switch structured sink (U71a); smooth auto-scroll; CI gate + Coverage Lab completeness test. Print-path switch printers remain string-join (not live emit) |
 | U72 | Unify **TopNav right** button cluster styles | **Done** | Shared zinc border icon buttons (Bot / Settings) |
 | U73 | Revise **Code panel top bar** usage / UI / UX | **Done** (light) | Action cluster + Format JSON affordance |
 | U74 | Rethink left panel **Output** view usefulness | **Done** (light) | Empty state + Generated files label; log empty hint |
-| U75 | Node chain **auto-layout** (select head + button → layout + select connected chain) | **Open** | Exec-connected organize; leave selection for drag |
+| U75 | Node chain **auto-layout** (S / A / S S) | **Done** | Forward+attrs / full chain; `lane-topo-v1` with above·below·below-extended (stair + spine buffer); head-anchored; multi-chain Y-separate; absolute layout through locked comments; Settings `chainAttributeDirection` |
 | U76 | **Format JSON** when selected in Code panel | **Done** | Pretty-print on demand in Code panel |
 | U77 | Add **Go** as target language | **Open** | Pack + lower/emit + Coverage Lab / Rosetta slice |
 

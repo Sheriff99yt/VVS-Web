@@ -17,6 +17,11 @@ import { useProject } from '@/contexts/ProjectContext';
 import { VVSCommentNode } from './VVSCommentNode';
 import { VVSRerouteNode } from './VVSRerouteNode';
 import { GraphAction } from '@/lib/graphActions';
+import {
+  expandToFullChains,
+  selectDownstreamFromSelection,
+} from '@/lib/graphExecChains';
+import { layoutSelectedExecChains, applyLayoutPositionsToNodes } from '@/lib/graphChainLayout';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, nestedGraphIdForNode } from '@/lib/linkedGraphNodes';
@@ -90,7 +95,7 @@ import { useSyncProjectSelection } from '@/hooks/useSyncProjectSelection';
 import { useEditorFocus } from '@/hooks/useEditorFocus';
 import { useGraphKeyboardShortcuts } from '@/hooks/useGraphKeyboardShortcuts';
 import { GraphShortcutsHelp } from './GraphShortcutsHelp';
-import { OPEN_SHORTCUTS_HELP_EVENT } from '@/lib/uiPreferences';
+import { OPEN_SHORTCUTS_HELP_EVENT, readUiPreference } from '@/lib/uiPreferences';
 import { activeClass, classGraphTabId, classScopedSymbols, isOnClassHomeGraph } from '@/lib/classScope';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
 import {
@@ -1454,6 +1459,45 @@ function GraphCanvasInner() {
     setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
   }, [nodes, setNodes, setEdges]);
 
+  /** U75 S — select selection + forward exec reachability (not upstream). */
+  const handleSelectChainDownstream = useCallback(() => {
+    const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
+    if (selectedIds.size === 0) return;
+    const { nodeIds } = selectDownstreamFromSelection(selectedIds, nodes, edges);
+    if (nodeIds.size === 0) return;
+    setNodes((nds) => nds.map((n) => ({ ...n, selected: nodeIds.has(n.id) })));
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+  }, [nodes, edges, setNodes, setEdges]);
+
+  /** U75 A — expand to full undirected exec chains. */
+  const handleSelectChainFull = useCallback(() => {
+    const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
+    if (selectedIds.size === 0) return;
+    const { nodeIds } = expandToFullChains(selectedIds, nodes, edges);
+    if (nodeIds.size === 0) return;
+    setNodes((nds) => nds.map((n) => ({ ...n, selected: nodeIds.has(n.id) })));
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+  }, [nodes, edges, setNodes, setEdges]);
+
+  /**
+   * U75 S S — resolve downstream from selection (S), then lane-topo layout; leave selected.
+   * Undoable via setNodesWithHistory.
+   */
+  const handleLayoutSelectedChains = useCallback(() => {
+    const seedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
+    if (seedIds.size === 0) return;
+    const { nodeIds } = selectDownstreamFromSelection(seedIds, nodes, edges);
+    if (nodeIds.size === 0) return;
+    const positions = layoutSelectedExecChains({
+      nodes,
+      edges,
+      selectedIds: nodeIds,
+      attributeDirection: readUiPreference('chainAttributeDirection'),
+    });
+    setNodesWithHistory((nds) => applyLayoutPositionsToNodes(nds, positions, nodeIds));
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+  }, [nodes, edges, setNodesWithHistory, setEdges]);
+
   const openSpawnMenu = useCallback(() => {
     const x = window.innerWidth / 2;
     const y = window.innerHeight / 2;
@@ -1507,6 +1551,9 @@ function GraphCanvasInner() {
       if (action === 'extract-function') handleExtractToFunction();
       if (action === 'select-all') handleSelectAll();
       if (action === 'select-similar') handleSelectSimilar();
+      if (action === 'select-chain-downstream') handleSelectChainDownstream();
+      if (action === 'select-chain-full') handleSelectChainFull();
+      if (action === 'layout-selected-chains') handleLayoutSelectedChains();
     };
     window.addEventListener('vvs:graph-action', handleGraphAction);
     return () => window.removeEventListener('vvs:graph-action', handleGraphAction);
@@ -1521,6 +1568,9 @@ function GraphCanvasInner() {
     handleFocusSelection,
     handleSelectAll,
     handleSelectSimilar,
+    handleSelectChainDownstream,
+    handleSelectChainFull,
+    handleLayoutSelectedChains,
     fitView,
     setNodesWithHistory,
     handleExtractToFunction,

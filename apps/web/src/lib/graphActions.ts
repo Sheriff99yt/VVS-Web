@@ -13,7 +13,10 @@ export type GraphAction =
   | 'snap-comment-members'
   | 'extract-function'
   | 'select-all'
-  | 'select-similar';
+  | 'select-similar'
+  | 'select-chain-downstream'
+  | 'select-chain-full'
+  | 'layout-selected-chains';
 
 export function dispatchGraphAction(action: GraphAction) {
   window.dispatchEvent(new CustomEvent('vvs:graph-action', { detail: { action } }));

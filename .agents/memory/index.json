@@ -11,17 +11,17 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "dualClassLabUsabilityTest",
-  "nextFunctionWork": "U71 nest-as-text audit / U75 layout / U77 Go / U78 packs / U79 Y-order remainder",
+  "nextFunctionWork": "U77 Go / U78 packs / U79 Y-order remainder",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
     "totalItems": 69,
-    "done": 67,
-    "open": 1,
-    "partial": ["U71", "U79"],
+    "done": 69,
+    "open": 2,
+    "partial": ["U79"],
     "depthFirstSection": 14,
     "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "sectionsPartial": [13, 14],
-    "openItems": ["U75", "U77", "U78"]
+    "openItems": ["U77", "U78"]
   },
   "files": {
     "README.md": { "role": "hub", "mutable": false },
@@ -29,7 +29,7 @@
       "role": "ui-backlog",
       "refreshAfter": "each UI loop iteration or audit",
       "itemPrefix": "U",
-      "openCount": 3
+      "openCount": 2
     },
     "decisions.md": { "role": "locked-product-rules", "mutable": "append-or-revise-with-care" },
     "workspace-facts.md": { "role": "canonical-paths-and-facts", "mutable": true }

@@ -21,6 +21,9 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
     'showUnsupportedComments'
   );
   const [showUserComments, setShowUserComments] = useUiPreference('showUserComments');
+  const [chainAttributeDirection, setChainAttributeDirection] = useUiPreference(
+    'chainAttributeDirection'
+  );
   const {
     codeOpen,
     graphNavOpen,
@@ -60,6 +63,17 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
           description="Emit Comment [C] box text in the code panel (separate from (x))"
           checked={showUserComments}
           onChange={setShowUserComments}
+        />
+        <ChoiceRow
+          label="Chain attribute direction (S S)"
+          description="Where expression trees hang on S S layout — extended uses a flat horizontal stair under the spine"
+          value={chainAttributeDirection}
+          options={[
+            { value: 'above', label: 'Above' },
+            { value: 'below', label: 'Below' },
+            { value: 'below-extended', label: 'Below extended' },
+          ]}
+          onChange={setChainAttributeDirection}
         />
       </section>
 
@@ -163,5 +177,47 @@ function ToggleRow({
         <span className="block text-[10px] text-zinc-500 leading-relaxed mt-0.5">{description}</span>
       </span>
     </label>
+  );
+}
+
+function ChoiceRow<T extends string>({
+  label,
+  description,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (next: T) => void;
+}) {
+  return (
+    <div className="rounded border border-zinc-800/80 bg-zinc-900/30 px-2.5 py-2 space-y-2">
+      <div>
+        <p className="text-[11px] text-zinc-200 font-medium">{label}</p>
+        <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{description}</p>
+      </div>
+      <div className="flex gap-1">
+        {options.map((opt) => {
+          const active = opt.value === value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange(opt.value)}
+              className={`flex-1 px-2 py-1 rounded text-[11px] border transition-colors ${
+                active
+                  ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-200'
+                  : 'border-zinc-700/80 bg-zinc-950/40 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

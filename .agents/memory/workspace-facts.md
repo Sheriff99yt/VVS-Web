@@ -26,6 +26,8 @@ Stable facts agents should assume without re-exploring the tree.
 |------|------|
 | `nodeCatalog.ts` | Spawn categories from `@vvs/syntax-registry` |
 | `graphWiring.ts` | Pin compatibility (imports `@vvs/graph-types`), wire apply |
+| `graphExecChains.ts` | Exec-chain queries (S/A): downstream-from-selection, full undirected expand |
+| `graphChainLayout.ts` | Selected-chain layout (`lane-topo-v1`); double-tap window constant |
 | `mockCodegen.ts` | Facade to `@vvs/transpiler` |
 | `nodeKind.ts` | `normalizeNodeData`, display titles, binding-first kindId |
 | `functionHelpers.ts` | Call binding, overload sync, `applyFunctionCallBinding` |

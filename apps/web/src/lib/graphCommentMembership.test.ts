@@ -30,21 +30,20 @@ function std(id: string, x: number, y: number, extra: Partial<VVSNode> = {}): VV
 }
 
 describe('graphCommentMembership', () => {
-  test('wrap creates unlocked soft membership without parentId', () => {
+  test('wrap creates locked comment with parented members', () => {
     const nodes = [std('a', 100, 100), std('b', 300, 200)];
     const next = wrapSelectionAsComment(nodes, ['a', 'b']);
     const comment = next.find((n) => n.type === 'vvs_comment_node')!;
-    expect(isCommentLocked(comment)).toBe(false);
+    expect(isCommentLocked(comment)).toBe(true);
     expect(getCommentMemberIds(comment).sort()).toEqual(['a', 'b']);
-    expect(next.find((n) => n.id === 'a')!.parentId).toBeUndefined();
-    expect(next.find((n) => n.id === 'b')!.parentId).toBeUndefined();
+    expect(next.find((n) => n.id === 'a')!.parentId).toBe(comment.id);
+    expect(next.find((n) => n.id === 'b')!.parentId).toBe(comment.id);
     expect(comment.position.y).toBeLessThan(100);
   });
 
   test('lock parents members; unlock restores absolute peers', () => {
     let nodes = wrapSelectionAsComment([std('a', 100, 100), std('b', 300, 200)], ['a', 'b']);
     const commentId = nodes.find((n) => n.type === 'vvs_comment_node')!.id;
-    nodes = lockCommentMembers(nodes, commentId);
     expect(isCommentLocked(nodes.find((n) => n.id === commentId)!)).toBe(true);
     expect(nodes.find((n) => n.id === 'a')!.parentId).toBe(commentId);
     expect(nodes.find((n) => n.id === 'a')!.draggable).toBeUndefined();
@@ -57,8 +56,9 @@ describe('graphCommentMembership', () => {
   });
 
   test('unlocked follow moves position only — does not auto-resize', () => {
-    const nodes = wrapSelectionAsComment([std('a', 100, 100)], ['a']);
+    let nodes = wrapSelectionAsComment([std('a', 100, 100)], ['a']);
     const commentId = nodes.find((n) => n.type === 'vvs_comment_node')!.id;
+    nodes = unlockCommentMembers(nodes, commentId);
     const before = nodes.find((n) => n.id === commentId)!;
     const beforeW = before.width;
     const beforeH = before.height;
@@ -111,6 +111,7 @@ describe('graphCommentMembership', () => {
   test('lock captures nodes inside body and drops soft members that left', () => {
     let nodes = wrapSelectionAsComment([std('a', 100, 100)], ['a']);
     const comment = nodes.find((n) => n.type === 'vvs_comment_node')!;
+    nodes = unlockCommentMembers(nodes, comment.id);
     // Soft member a is still listed, but move it far outside the comment body.
     nodes = nodes.map((n) =>
       n.id === 'a' ? { ...n, position: { x: 2000, y: 2000 } } : n
