@@ -10,7 +10,7 @@ export function formatEnumMemberAccess(
   member: string,
   targetLanguage: TargetLanguage
 ): string {
-  const family = targetLanguageToFamily(targetLanguage);
+  const family = targetLanguageToFamily(targetLanguage) ?? 'python';
   const profile = resolvePrintProfile(family);
   const row = requireTemplate(profile, 'EnumMemberAccess', family);
   return renderTemplate(

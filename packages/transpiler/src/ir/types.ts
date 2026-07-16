@@ -30,7 +30,8 @@ export type IrStmtKind =
   | 'SubscribeEvent'
   | 'EmitEvent'
   | 'CallNative'
-  | 'ArrayPush';
+  | 'ArrayPush'
+  | 'CommentFallback';
 
 export interface IrBase {
   kind: IrStmtKind;
@@ -261,7 +262,9 @@ export interface IrCallNative extends IrBase {
 }
 
 export interface IrCommentFallback extends IrBase {
-  kind: IrStmtKind;
+  kind: 'CommentFallback';
+  /** Original intended statement kind (diagnostics / fallback labeling). */
+  intendedKind: IrStmtKind;
   comment: string;
 }
 

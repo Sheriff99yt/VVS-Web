@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-16  
-**Depth-first:** Sections **1–12** complete (U66/U67 shipped). **§13 open** (U68–U77).  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **0 / 10** · Cross-class dispatch + TypeRef + U64–U67 shipped
+**Depth-first:** Sections **1–12** complete (U66/U67 shipped). **§13–§14 open** (U68–U79).  
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **0 / 10** · §14 **0 / 2** · Cross-class dispatch + TypeRef + U64–U67 shipped
 
 ## Status legend
 
@@ -148,7 +148,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13 open (U68–U77):** comments → reverse highlight → chrome/Output → chain layout → JSON format → Go language. Prefer U68/U71 early (fidelity-adjacent). Older UI rows (§1–12) complete.
+**§13–§14 open (U68–U79):** comments → reverse highlight → chrome/Output → chain layout → JSON → Go → Pack versions → **Y-order rethink**. Prefer U68/U71/U79 early (fidelity-adjacent). Older UI rows (§1–12) complete.
 
 ---
 
@@ -234,7 +234,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 |---|------|--------|------|
 | U68 | Comment **[C]** on selection; emit by canvas **Y**; **lock toggle** (default off = free move/resize; on = group lock as today) | **Open** | Extend comment nodes; codegen inserts comment lines ordered by `position.y`; lock = current parent/group behavior |
 | U69 | Code panel toggle for **user-added comments** (separate from `(x)` unsupported) | **Open** | Pref next to Code language / unsupported toggle |
-| U70 | AI / MCP capabilities revision + **dangerous capabilities** consent toggle | **Open** | Connect AI / MCP tool surface; opt-in for higher-risk tools |
+| U70 | AI / MCP panel — paste IDE/CLI config; **local MCP** on device; dangerous-tools consent | **Open** | No VVS account; user runs local server/CLI when needed |
 | U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Open** | Prefer maintainable `sourceMap` that does not need per-node-kind hand updates; bidirectional selection |
 | U72 | Unify **TopNav right** button cluster styles | **Open** | Visual consistency of right-side controls |
 | U73 | Revise **Code panel top bar** usage / UI / UX | **Open** | Header density, toggles, language/Files affordances |
@@ -242,6 +242,19 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 | U75 | Node chain **auto-layout** (select head + button → layout + select connected chain) | **Open** | Exec-connected organize; leave selection for drag |
 | U76 | **Format JSON** when selected in Code panel | **Open** | Pretty-print JSON preview/selection |
 | U77 | Add **Go** as target language | **Open** | Pack + lower/emit + Coverage Lab / Rosetta slice |
+
+---
+
+## 14. New app views & client-first updates (July 2026) — **Open**
+
+Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `new-views-client`.
+
+Top-level **views** beyond canvas (Pack versions is the first named; more TBD).
+
+| # | Item | Status | Spec |
+|---|------|--------|------|
+| U78 | **Pack versions** manager view | **Open** | Pack releases **accumulate** (never overwrite). List installed versions; user sets **active**. GitHub check prompts to **add** a version. First of multiple new views (Library git catalog, etc.) |
+| U79 | **Investigate / rethink canvas Y → code order** | **Open** | Audit emit order vs `position.y` (member topo+Y, event peers, comments U68). Rethink system when exec chain and vertical height disagree for authors |
 
 ---
 

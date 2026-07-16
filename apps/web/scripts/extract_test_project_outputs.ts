@@ -9,7 +9,8 @@
  * Goldens: apps/web/test_project_goldens/<fixture>/<lang>/_HOME_GRAPH_PREVIEW.txt (with --update-goldens)
  */
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import {
   emitProjectLikeCodePanel,
@@ -29,8 +30,9 @@ const LANGS: TargetLanguage[] = [
   'verse',
 ];
 
-const OUT_ROOT = join(import.meta.dir, '..', 'test_project_outputs');
-const GOLDEN_ROOT = join(import.meta.dir, '..', 'test_project_goldens');
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const OUT_ROOT = join(SCRIPT_DIR, '..', 'test_project_outputs');
+const GOLDEN_ROOT = join(SCRIPT_DIR, '..', 'test_project_goldens');
 const UPDATE_GOLDENS = process.argv.includes('--update-goldens');
 
 function homeGraphPreviewFiles(

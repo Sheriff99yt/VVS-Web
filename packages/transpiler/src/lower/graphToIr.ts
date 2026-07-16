@@ -388,7 +388,7 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
 }
 
 function commentFallback(nodeId: string, kind: IrStmtKind, comment: string): IrStructuredStatement {
-  return { kind, sourceGraphNodeId: nodeId, comment };
+  return { kind: 'CommentFallback', intendedKind: kind, sourceGraphNodeId: nodeId, comment };
 }
 
 function lowerStatement(

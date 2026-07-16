@@ -44,6 +44,8 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     autoCompile,
     autoSave,
     workspaceFiles,
+    graphContainers,
+    installedLibrary,
   } = useProject();
   const documents = useGraphDocuments();
   const [showUnsupportedComments] = useUiPreference('showUnsupportedComments');
@@ -75,6 +77,8 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
       syntaxPackLock,
       codegenCapabilities,
       workspaceFiles,
+      graphContainers,
+      installedLibrary,
     };
 
     const result = emitProjectLikeCodePanel(snapshot, {
@@ -101,6 +105,8 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     syntaxPackLock,
     codegenCapabilities,
     workspaceFiles,
+    graphContainers,
+    installedLibrary,
     showUnsupportedComments,
   ]);
 }

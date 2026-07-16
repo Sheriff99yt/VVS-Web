@@ -173,19 +173,30 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - Go MCP tools: thin wrappers over pure functions in `internal/core/services/`
 - Cross-domain communication via typed contracts only (`graph-types`, OpenAPI, `VvsApi`)
 
-## Deployment & persistence (July 2026 — locked)
+## Client-first product default (July 2026 — locked intent)
 
-**Canonical spec:** `docs/deployment.md`
+**Canonical:** `docs/roadmap.md` § Client-first direction
+
+- **Default experience:** no VVS accounts, no required server; browser edit + Generate; local/folder save; GitHub for pack/library data
+- **Do not remove** Auth, cloud save, HTTP API mode, hosted MCP probe, Library backend hooks, `server/` — keep code; **disable / hide / inactive** in the default client build until re-enabled (env or settings)
+- **AI / MCP:** desktop local MCP + paste config; **mobile: no AI for now**
+- **Library:** separate public git repo + links; private repos denied
+- **Collab (later):** session client/host, not account cloud as default
+- Deployment stack in `docs/deployment.md` remains valid for **optional self-host** — not the required path for normal users
+
+## Deployment & persistence (optional self-host — still in repo)
+
+**Canonical spec:** `docs/deployment.md` (ops / self-host; not product default)
 
 - **Self-hosted Supabase** on VPS — **Postgres + GoTrue (Auth) + Studio**; dev VPS + live VPS (shared hosting = static web only, not Supabase Docker)
-- **Go is the only product API** — Next.js and MCP call `server/` REST + `/mcp`; **not** PostgREST for project/graph CRUD
+- **Go is the only product API** when HTTP mode is on — Next.js and MCP call `server/` REST + `/mcp`; **not** PostgREST for project/graph CRUD
 - **Go ↔ Postgres via `pgx` pool** — `PostgresStore` replaces `MemoryStore`; same service interfaces
 - **Auth:** GoTrue issues JWT; **Go middleware** verifies JWKS and scopes `user_id` on HTTP + MCP (production)
 - **Storage:** `projects` table with **JSONB `ProjectSnapshot v2`**; tab-level document rows later for large graphs / collab
 - **Browser transpiler stays primary** for editor preview; Go compile/MCP uses existing CLI bridge
 - **No Redis v1** — Postgres + in-process cache until horizontal scale requires it
-- **Phase 4 collab:** Go WebSockets + op log — not Supabase Realtime for product paths
-- **`.vvs/` folders** remain first-class alongside cloud sync
+- **Phase 4 collab (hosted path):** Go WebSockets + op log — not Supabase Realtime; product default collab is session client/host
+- **`.vvs/` folders** remain first-class alongside any future cloud sync
 
 ## Unsupported nodes per language (July 2026 — locked UX)
 

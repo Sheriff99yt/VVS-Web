@@ -820,9 +820,9 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'mcp-capabilities-u70',
-        title: 'AI / MCP capabilities revision (U70)',
+        title: 'AI / MCP panel — local paste config (U70)',
         description:
-          'Revise MCP tool surface; consent toggle to enable more dangerous capabilities under user opt-in.',
+          'AI panel shows copy-paste IDE/CLI MCP config; user runs local MCP on device when needed; consent for dangerous tools. No VVS account.',
         status: 'planned',
       },
       {
@@ -867,6 +867,28 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'go-language-u77',
         title: 'Go language pack (U77)',
         description: 'Eighth target language — syntax pack, emit, and Test Project / Rosetta coverage.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
+    id: 'new-views-client',
+    title: 'New views & client-first (U78+)',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'pack-versions-u78',
+        title: 'Pack versions manager view (U78)',
+        description:
+          'Downloaded pack releases accumulate (never overwrite). List versions, set active. GitHub update adds a version. First of multiple new top-level views.',
+        status: 'planned',
+      },
+      {
+        id: 'y-order-rethink-u79',
+        title: 'Investigate canvas Y → code order (U79)',
+        description:
+          'Audit member/event/flow emit vs position.y (topo + Y tie-break, event peers, comments). Rethink when chain wires and vertical height conflict for authors.',
         status: 'planned',
       },
     ],
