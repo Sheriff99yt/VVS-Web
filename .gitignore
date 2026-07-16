@@ -38,6 +38,14 @@ server/bin/
 *.local.md
 AGENTS.local.md
 
+# Local codegen / extract dumps (goldens stay tracked under test_project_goldens/)
+Test Projects/
+actual_output.cpp
+apps/web/test_project_outputs/
+apps/web/input_settings_outputs/
+apps/web/modifier_tests/
+apps/web/test_modifiers.ts
+
 # OS
 .DS_Store
 Thumbs.db
