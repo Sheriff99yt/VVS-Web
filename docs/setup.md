@@ -120,16 +120,31 @@ Or with GitHub CLI:
 gh repo create Sheriff99yt/VVS-Web --public --source=. --remote=origin --push
 ```
 
-### GitHub Pages preview (one-time)
+### Release channels (locked)
 
-After the first push, enable Pages or the deploy workflow will fail with **404 Not Found**:
+| Channel | How it updates | Artifact |
+|---------|----------------|----------|
+| **Live Pages** | Every green `main` push → `.github/workflows/pages.yml` | https://sheriff99yt.github.io/VVS-Web/ |
+| **Current preview** | Same workflow, after deploy → floating tag `pre-release` | Showcase link in Releases + `vvs-web-pre-release.zip` |
+| **Stable** | Push `v*` tag → `.github/workflows/release.yml` | Full GitHub Release + `vvs-web-vX.Y.Z.zip` |
+
+**Cycle on every `main` push:** install (Bun **1.3.1** pinned) → `GITHUB_PAGES=true` static export → upload Pages artifact → deploy → force-move `pre-release` tag → create/edit the floating pre-release (CLI + retries; GitHub API 503s must not leave the sidebar stale forever).
+
+**One-time Pages setup** (or deploy fails with **404 Not Found**):
 
 1. **Settings → Pages → Build and deployment → Source:** **GitHub Actions**
 2. Or via CLI: `gh api -X POST repos/Sheriff99yt/VVS-Web/pages -f build_type=workflow`
 
-Preview URL: **https://sheriff99yt.github.io/VVS-Web/** (deployed by `.github/workflows/pages.yml` on each push to `main`).
+### Verify Pages build locally (before push)
 
-After each **successful** Pages deploy, the same workflow updates a floating GitHub **pre-release** whose title includes the showcase URL (**https://sheriff99yt.github.io/VVS-Web/**) plus `vvs-web-pre-release.zip`. That is the fast try-it path (same as Deployments → github-pages), without digging through nested deployment history.
+Local `next build` can pass while CI fails when a package is only a **transitive** dependency (Turbopack resolves differently). Catch that before push:
+
+```powershell
+# From repository root — mirrors pages.yml build + dep lint
+bun run pages:verify
+```
+
+That runs frozen install → web lint (`import/no-extraneous-dependencies`) → `GITHUB_PAGES=true` static export. Prefer a clean `node_modules` if you suspect hoisting hid a miss.
 
 ### GitHub Releases (versioned static zip)
 
@@ -141,11 +156,6 @@ git push origin v0.2.0
 ```
 
 That runs `.github/workflows/release.yml`: full verify suite → Pages-compatible static build → **full** (non-pre) GitHub Release with `vvs-web-v0.2.0.zip`. You can also run **Actions → Release → Run workflow** and pass an existing tag.
-
-| Channel | Tag | Kind | What it is |
-|---------|-----|------|------------|
-| Current preview | `pre-release` | Pre-release | Last successful Pages deploy + link + zip |
-| Stable | `v0.1.0`, … | Full release | Frozen SemVer download |
 
 No npm package required.
 

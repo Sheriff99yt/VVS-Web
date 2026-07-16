@@ -11,6 +11,7 @@
     "test": "bun test packages/syntax-packs packages/transpiler packages/graph-types packages/language-profiles packages/syntax-registry && bun run --filter web test",
     "lint": "bun run --filter web lint",
     "ci": "bun install --frozen-lockfile && bun test packages/syntax-packs packages/transpiler packages/graph-types packages/language-profiles packages/syntax-registry && bun run --filter web lint && bun run --filter web build && bun run --filter web test",
+    "pages:verify": "bun install --frozen-lockfile && bun run --filter web lint && bun run --filter web pages:build",
     "env:import": "bun run --filter @vvs/environment-templates import:env"
   }
 }

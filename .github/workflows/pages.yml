@@ -87,33 +87,68 @@ jobs:
 
       - name: Point pre-release tag at this commit
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f pre-release "${{ github.sha }}"
-          git push -f origin refs/tags/pre-release
+          for attempt in 1 2 3 4 5; do
+            if git tag -f pre-release "${{ github.sha }}" && git push -f origin refs/tags/pre-release; then
+              exit 0
+            fi
+            echo "Tag push failed (attempt $attempt); retrying in 20s…"
+            sleep 20
+          done
+          echo "Failed to update pre-release tag after retries"
+          exit 1
 
       - name: Publish / update Current pre-release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: pre-release
-          name: "Try it — https://sheriff99yt.github.io/VVS-Web/"
-          prerelease: true
-          make_latest: false
-          target_commitish: ${{ github.sha }}
-          body: |
-            ## Showcase (live)
-
-            **https://sheriff99yt.github.io/VVS-Web/**
-
-            Same URL as the latest successful GitHub Pages deployment — open it to try the editor immediately (no install).
-
-            Deploy URL from this run: ${{ needs.deploy.outputs.page_url }}
-
-            - Commit: `${{ github.sha }}`
-            - Offline copy: `vvs-web-pre-release.zip` (same static build)
-
-            SemVer tags (`v0.1.0`, …) are frozen stable downloads via the Release workflow.
-          files: vvs-web-pre-release.zip
-          fail_on_unmatched_files: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          NOTES_FILE="$RUNNER_TEMP/pre-release-notes.md"
+          cat > "$NOTES_FILE" <<EOF
+          ## Showcase (live)
+
+          **https://sheriff99yt.github.io/VVS-Web/**
+
+          Same URL as the latest successful GitHub Pages deployment — open it to try the editor immediately (no install).
+
+          Deploy URL from this run: ${PAGE_URL}
+
+          - Commit: \`${SHA}\`
+          - Offline copy: \`vvs-web-pre-release.zip\` (same static build)
+
+          SemVer tags (\`v0.1.0\`, …) are frozen stable downloads via the Release workflow.
+          EOF
+          # Drop the 2-space indent from the YAML block above
+          sed -i 's/^  //' "$NOTES_FILE"
+
+          for attempt in 1 2 3 4 5 6; do
+            if gh release view pre-release >/dev/null 2>&1; then
+              if gh release edit pre-release \
+                --title "Try it — https://sheriff99yt.github.io/VVS-Web/" \
+                --prerelease \
+                --target "$SHA" \
+                --notes-file "$NOTES_FILE" \
+                && gh release upload pre-release vvs-web-pre-release.zip --clobber; then
+                echo "Updated pre-release"
+                exit 0
+              fi
+            else
+              if gh release create pre-release \
+                vvs-web-pre-release.zip \
+                --prerelease \
+                --target "$SHA" \
+                --title "Try it — https://sheriff99yt.github.io/VVS-Web/" \
+                --notes-file "$NOTES_FILE"; then
+                echo "Created pre-release"
+                exit 0
+              fi
+            fi
+            echo "GitHub Releases API flaky (attempt $attempt); retrying in 25s…"
+            sleep 25
+          done
+          echo "Failed to publish pre-release after retries"
+          exit 1

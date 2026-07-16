@@ -25,6 +25,23 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/refs": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
+      // Catch CI-only Turbopack misses: direct imports must be declared deps
+      // (e.g. @lezer/highlight via CodeMirror transitive alone is not enough).
+      "import/no-extraneous-dependencies": [
+        "error",
+        {
+          devDependencies: [
+            "**/*.test.ts",
+            "**/*.test.tsx",
+            "**/scripts/**",
+            "eslint.config.*",
+            "next.config.*",
+            "postcss.config.*",
+          ],
+          optionalDependencies: false,
+          peerDependencies: true,
+        },
+      ],
     },
   },
 ]);

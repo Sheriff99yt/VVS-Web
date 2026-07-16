@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "bun test src/lib"
+    "test": "bun test src/lib",
+    "pages:build": "GITHUB_PAGES=true next build"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",

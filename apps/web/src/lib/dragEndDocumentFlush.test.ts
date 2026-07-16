@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { applyNodeChanges, type NodeChange } from '@xyflow/react';
 import { collectMemberDefineNodeIds } from '@vvs/graph-types';
-import type { GraphDocument } from '@vvs/graph-types';
+import type { GraphDocument, ProjectEventDefinition } from '@vvs/graph-types';
 
 /**
  * Browser bug regression: Code panel reads documents, not live RF nodes.
@@ -75,9 +75,9 @@ describe('drag-end document flush → event Y order (U79 browser path)', () => {
       },
     ];
 
-    const events = [
-      { id: 'evt-start', name: 'start', classId: 'main-class' } as any,
-      { id: 'evt-pulse', name: 'pulse', classId: 'main-class' } as any,
+    const events: ProjectEventDefinition[] = [
+      { id: 'evt-start', name: 'start', classId: 'main-class', parameters: [] },
+      { id: 'evt-pulse', name: 'pulse', classId: 'main-class', parameters: [] },
     ];
 
     const before: GraphDocument = { nodes: [classNode, start, pulse], edges };
