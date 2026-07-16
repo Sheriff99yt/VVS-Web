@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { analyzeProject } from './analyze';
 import { validateCanvasOrderYHints } from './canvasOrderY';
-import type { GraphDocument } from './nodes';
+import type { GraphDocument } from './symbols';
 
 function execEdge(id: string, source: string, target: string) {
   return {

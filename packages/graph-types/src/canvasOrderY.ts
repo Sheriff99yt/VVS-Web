@@ -1,5 +1,6 @@
 import type { Diagnostic } from './diagnostic';
-import type { GraphDocument, GraphNode } from './nodes';
+import type { GraphNode } from './nodes';
+import type { GraphDocument } from './symbols';
 import { isMemberDefineKind, resolveNodeKindId } from './defineNodes';
 
 /**
