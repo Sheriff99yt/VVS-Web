@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   useNodesState,
   useEdgesState,
@@ -10,7 +10,9 @@ import { useLatestRef } from '@/hooks/useLatestRef';
 import {
   cloneGraphSnapshot,
   metaFromSnapshot,
+  revealFromSnapshot,
   type GraphHistoryEntryMeta,
+  type GraphHistoryReveal,
   type GraphHistorySnapshot,
   type ProjectHistorySlice,
 } from '@/lib/graphHistory';
@@ -18,6 +20,18 @@ import {
   shouldCaptureProjectOnJump,
   shouldCaptureProjectOnOpposite,
 } from '@/lib/graphHistoryPolicy';
+import {
+  beginApplyingHistory,
+  endApplyingHistory,
+  isApplyingHistory,
+  registerHistoryDiscardClearer,
+  registerHistoryJumpToLatest,
+  requestHistoryEditGate,
+  resetHistoryDiscardGate,
+  setHistoryBrowsePreview,
+} from '@/lib/historyDiscardGate';
+import { dispatchRevealEditHistory } from '@/lib/editHistoryReveal';
+import { markNavGraphEdit } from '@/lib/navActivityFlags';
 
 export interface UseGraphStateOptions {
   getActiveGraphTab?: () => string;
@@ -103,34 +117,101 @@ export function useGraphState(
     [setNodes, setEdges]
   );
 
-  /** Canvas edits — lean snapshot (nodes/edges/tab only). */
-  const saveSnapshot = useCallback(
-    (label = 'Edit graph') => {
+  useEffect(() => {
+    return registerHistoryDiscardClearer(() => {
+      futureRef.current = [];
+      syncHistoryFlags();
+    });
+  }, [syncHistoryFlags]);
+
+  const pushLeanSnapshot = useCallback(
+    (label: string) => {
       pastRef.current.push(captureSnapshot(label, { includeProject: false }));
       if (pastRef.current.length > 50) pastRef.current.shift();
       futureRef.current = [];
+      setHistoryBrowsePreview(false);
       syncHistoryFlags();
+      markNavGraphEdit();
     },
     [captureSnapshot, syncHistoryFlags]
   );
 
-  /** Symbol / class mutations — full project slice. */
-  const saveProjectSnapshot = useCallback(
-    (label: string) => {
+  const pushProjectSnapshot = useCallback(
+    (label: string): boolean => {
       const snap = captureSnapshot(label, { includeProject: true });
-      // Workspace not ready — skip so we never record a fake "project" undo.
-      if (!snap.project) return;
+      if (!snap.project) return false;
       pastRef.current.push(snap);
       if (pastRef.current.length > 50) pastRef.current.shift();
       futureRef.current = [];
+      setHistoryBrowsePreview(false);
       syncHistoryFlags();
+      markNavGraphEdit();
+      return true;
     },
     [captureSnapshot, syncHistoryFlags]
+  );
+
+  /**
+   * Record history then run `proceed`. If newer states exist, opens the discard
+   * dialog and runs both after Discard (one click). Undo/redo apply skips this.
+   */
+  const commitEdit = useCallback(
+    (label: string, proceed: () => void, kind: 'lean' | 'project' = 'lean') => {
+      if (isApplyingHistory()) {
+        proceed();
+        return;
+      }
+      const run = () => {
+        if (kind === 'project') {
+          if (!pushProjectSnapshot(label)) return;
+        } else {
+          pushLeanSnapshot(label);
+        }
+        proceed();
+      };
+      const newer = futureRef.current.length;
+      if (newer > 0) {
+        requestHistoryEditGate(newer, run);
+        return;
+      }
+      run();
+    },
+    [pushLeanSnapshot, pushProjectSnapshot]
+  );
+
+  /** @deprecated Prefer commitEdit — boolean API for legacy call sites. */
+  const saveSnapshot = useCallback(
+    (label = 'Edit graph'): boolean => {
+      if (isApplyingHistory()) return true;
+      if (futureRef.current.length > 0) {
+        requestHistoryEditGate(futureRef.current.length, () => pushLeanSnapshot(label));
+        return false;
+      }
+      pushLeanSnapshot(label);
+      return true;
+    },
+    [pushLeanSnapshot]
+  );
+
+  const saveProjectSnapshot = useCallback(
+    (label: string): boolean => {
+      if (isApplyingHistory()) return true;
+      if (futureRef.current.length > 0) {
+        requestHistoryEditGate(futureRef.current.length, () => {
+          pushProjectSnapshot(label);
+        });
+        return false;
+      }
+      return pushProjectSnapshot(label);
+    },
+    [pushProjectSnapshot]
   );
 
   const clearHistory = useCallback(() => {
     pastRef.current = [];
     futureRef.current = [];
+    setHistoryBrowsePreview(false);
+    resetHistoryDiscardGate();
     syncHistoryFlags();
   }, [syncHistoryFlags]);
 
@@ -138,6 +219,11 @@ export function useGraphState(
 
   const onNodesChange = useCallback(
     (changes: NodeChange<VVSNode>[]) => {
+      if (isApplyingHistory()) {
+        onNodesChangeReactFlow(changes);
+        return;
+      }
+
       const isStructural = changes.some(
         (c) => c.type === 'add' || c.type === 'remove' || c.type === 'replace'
       );
@@ -148,99 +234,208 @@ export function useGraphState(
         (c) => c.type === 'position' && c.dragging === false
       );
 
-      // Capture pre-drag positions on first move frame (nodesRef still has start pose).
-      // Saving on drag-end would push the already-moved state and make undo a no-op.
       if (isDragMove && !nodeDragHistoryArmedRef.current) {
-        saveSnapshot('Move nodes');
-        nodeDragHistoryArmedRef.current = true;
+        commitEdit('Move nodes', () => {
+          nodeDragHistoryArmedRef.current = true;
+          onNodesChangeReactFlow(changes);
+        });
+        return;
       }
       if (isDragEnd) {
         nodeDragHistoryArmedRef.current = false;
       }
 
-      onNodesChangeReactFlow(changes);
-
-      // After apply, nodesRef is still pre-change until re-render — correct undo baseline.
       if (isStructural) {
-        saveSnapshot(
-          changes.some((c) => c.type === 'remove') ? 'Remove nodes' : 'Edit nodes'
-        );
+        const label = changes.some((c) => c.type === 'remove')
+          ? 'Remove nodes'
+          : 'Edit nodes';
+        commitEdit(label, () => onNodesChangeReactFlow(changes));
+        return;
       }
+
+      onNodesChangeReactFlow(changes);
     },
-    [onNodesChangeReactFlow, saveSnapshot]
+    [onNodesChangeReactFlow, commitEdit]
   );
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange<VVSEdge>[]) => {
+      if (isApplyingHistory()) {
+        onEdgesChangeReactFlow(changes);
+        return;
+      }
       const isSignificant = changes.some((c) => c.type === 'add' || c.type === 'remove');
-      if (isSignificant) saveSnapshot('Edit wires');
+      if (isSignificant) {
+        commitEdit('Edit wires', () => onEdgesChangeReactFlow(changes));
+        return;
+      }
       onEdgesChangeReactFlow(changes);
     },
-    [onEdgesChangeReactFlow, saveSnapshot]
+    [onEdgesChangeReactFlow, commitEdit]
   );
 
-  const undo = useCallback((): string | null => {
+  const undo = useCallback((): GraphHistoryReveal | null => {
     if (pastRef.current.length === 0) return null;
-    const prev = pastRef.current[pastRef.current.length - 1]!;
-    const currentTab = getActiveGraphTabRef.current?.() ?? 'main';
-    futureRef.current.push(
-      captureSnapshot('Current', {
-        includeProject: shouldCaptureProjectOnOpposite(
-          Boolean(prev.project),
-          prev.activeGraphTab,
-          currentTab
-        ),
-      })
-    );
-    pastRef.current.pop();
-    applySnapshot(prev);
-    syncHistoryFlags();
-    return prev.project?.activeGraphTab ?? prev.activeGraphTab;
-  }, [captureSnapshot, applySnapshot, syncHistoryFlags]);
-
-  const redo = useCallback((): string | null => {
-    if (futureRef.current.length === 0) return null;
-    const next = futureRef.current[futureRef.current.length - 1]!;
-    const currentTab = getActiveGraphTabRef.current?.() ?? 'main';
-    pastRef.current.push(
-      captureSnapshot('Current', {
-        includeProject: shouldCaptureProjectOnOpposite(
-          Boolean(next.project),
-          next.activeGraphTab,
-          currentTab
-        ),
-      })
-    );
-    futureRef.current.pop();
-    applySnapshot(next);
-    syncHistoryFlags();
-    return next.project?.activeGraphTab ?? next.activeGraphTab;
-  }, [captureSnapshot, applySnapshot, syncHistoryFlags]);
-
-  const jumpToPastEntry = useCallback(
-    (entryId: string): string | null => {
-      const idx = pastRef.current.findIndex((e) => e.id === entryId);
-      if (idx < 0) return null;
-      const target = pastRef.current[idx]!;
-      const tail = pastRef.current.slice(idx + 1);
+    beginApplyingHistory();
+    try {
+      // Undo is a committed step — not History-list browse preview.
+      setHistoryBrowsePreview(false);
+      const prev = pastRef.current[pastRef.current.length - 1]!;
       const currentTab = getActiveGraphTabRef.current?.() ?? 'main';
-      const current = captureSnapshot('Current', {
-        includeProject:
-          shouldCaptureProjectOnJump(
-            Boolean(target.project),
-            tail.some((e) => Boolean(e.project))
-          ) ||
-          shouldCaptureProjectOnOpposite(
-            Boolean(target.project),
-            target.activeGraphTab,
+      futureRef.current.push(
+        captureSnapshot('Current', {
+          includeProject: shouldCaptureProjectOnOpposite(
+            Boolean(prev.project),
+            prev.activeGraphTab,
             currentTab
           ),
-      });
-      futureRef.current = [...tail.reverse(), current, ...futureRef.current];
-      pastRef.current = pastRef.current.slice(0, idx);
-      applySnapshot(target);
+        })
+      );
+      pastRef.current.pop();
+      applySnapshot(prev);
       syncHistoryFlags();
-      return target.project?.activeGraphTab ?? target.activeGraphTab;
+      const reveal = revealFromSnapshot(prev);
+      dispatchRevealEditHistory(reveal);
+      return reveal;
+    } finally {
+      endApplyingHistory();
+    }
+  }, [captureSnapshot, applySnapshot, syncHistoryFlags]);
+
+  const redo = useCallback((): GraphHistoryReveal | null => {
+    if (futureRef.current.length === 0) return null;
+    beginApplyingHistory();
+    try {
+      setHistoryBrowsePreview(false);
+      const next = futureRef.current[futureRef.current.length - 1]!;
+      const currentTab = getActiveGraphTabRef.current?.() ?? 'main';
+      pastRef.current.push(
+        captureSnapshot('Current', {
+          includeProject: shouldCaptureProjectOnOpposite(
+            Boolean(next.project),
+            next.activeGraphTab,
+            currentTab
+          ),
+        })
+      );
+      futureRef.current.pop();
+      applySnapshot(next);
+      syncHistoryFlags();
+      const reveal = revealFromSnapshot(next);
+      dispatchRevealEditHistory(reveal);
+      return reveal;
+    } finally {
+      endApplyingHistory();
+    }
+  }, [captureSnapshot, applySnapshot, syncHistoryFlags]);
+
+  const jumpToLatest = useCallback((): GraphHistoryReveal | null => {
+    if (futureRef.current.length === 0) return null;
+    beginApplyingHistory();
+    try {
+      setHistoryBrowsePreview(false);
+      let lastReveal: GraphHistoryReveal | null = null;
+      while (futureRef.current.length > 0) {
+        const next = futureRef.current[futureRef.current.length - 1]!;
+        const currentTab = getActiveGraphTabRef.current?.() ?? 'main';
+        pastRef.current.push(
+          captureSnapshot('Current', {
+            includeProject: shouldCaptureProjectOnOpposite(
+              Boolean(next.project),
+              next.activeGraphTab,
+              currentTab
+            ),
+          })
+        );
+        futureRef.current.pop();
+        applySnapshot(next);
+        lastReveal = revealFromSnapshot(next);
+      }
+      syncHistoryFlags();
+      if (lastReveal) dispatchRevealEditHistory(lastReveal);
+      return lastReveal;
+    } finally {
+      endApplyingHistory();
+    }
+  }, [captureSnapshot, applySnapshot, syncHistoryFlags]);
+
+  useEffect(() => {
+    return registerHistoryJumpToLatest(() => {
+      jumpToLatest();
+    });
+  }, [jumpToLatest]);
+
+  const jumpToPastEntry = useCallback(
+    (entryId: string): GraphHistoryReveal | null => {
+      beginApplyingHistory();
+      try {
+        // History list click = browse preview (next divergent edit may confirm discard).
+        setHistoryBrowsePreview(true);
+        const pastIdx = pastRef.current.findIndex((e) => e.id === entryId);
+        if (pastIdx >= 0) {
+          const target = pastRef.current[pastIdx]!;
+          const tail = pastRef.current.slice(pastIdx + 1);
+          const currentTab = getActiveGraphTabRef.current?.() ?? 'main';
+          const current = captureSnapshot('Current', {
+            includeProject:
+              shouldCaptureProjectOnJump(
+                Boolean(target.project),
+                tail.some((e) => Boolean(e.project))
+              ) ||
+              shouldCaptureProjectOnOpposite(
+                Boolean(target.project),
+                target.activeGraphTab,
+                currentTab
+              ),
+          });
+          // Redo tip = first step after target: walk tail oldest→newest, then live current.
+          futureRef.current = [
+            ...futureRef.current,
+            current,
+            ...tail.slice().reverse(),
+          ];
+          pastRef.current = pastRef.current.slice(0, pastIdx);
+          applySnapshot(target);
+          syncHistoryFlags();
+          const reveal = revealFromSnapshot(target);
+          dispatchRevealEditHistory(reveal);
+          return reveal;
+        }
+
+        const futureIdx = futureRef.current.findIndex((e) => e.id === entryId);
+        if (futureIdx < 0) {
+          setHistoryBrowsePreview(false);
+          return null;
+        }
+        let lastReveal: GraphHistoryReveal | null = null;
+        const redosNeeded = futureRef.current.length - futureIdx;
+        for (let i = 0; i < redosNeeded; i++) {
+          if (futureRef.current.length === 0) break;
+          const next = futureRef.current[futureRef.current.length - 1]!;
+          const currentTab = getActiveGraphTabRef.current?.() ?? 'main';
+          pastRef.current.push(
+            captureSnapshot('Current', {
+              includeProject: shouldCaptureProjectOnOpposite(
+                Boolean(next.project),
+                next.activeGraphTab,
+                currentTab
+              ),
+            })
+          );
+          futureRef.current.pop();
+          applySnapshot(next);
+          lastReveal = revealFromSnapshot(next);
+        }
+        // Jumping to a "newer" row is still browse until the tip is live-committed.
+        if (futureRef.current.length === 0) {
+          setHistoryBrowsePreview(false);
+        }
+        syncHistoryFlags();
+        if (lastReveal) dispatchRevealEditHistory(lastReveal);
+        return lastReveal;
+      } finally {
+        endApplyingHistory();
+      }
     },
     [captureSnapshot, applySnapshot, syncHistoryFlags]
   );
@@ -249,22 +444,25 @@ export function useGraphState(
     return pastRef.current.map(metaFromSnapshot).reverse();
   }, []);
 
+  /** Newer states after undo / jump-back (tip / next-redo first in the UI list). */
+  const getFutureHistory = useCallback((): GraphHistoryEntryMeta[] => {
+    return futureRef.current.map(metaFromSnapshot).reverse();
+  }, []);
+
   const getFutureCount = useCallback((): number => futureRef.current.length, []);
 
   const setNodesWithHistory = useCallback(
     (updater: React.SetStateAction<VVSNode[]>, label = 'Edit graph') => {
-      saveSnapshot(label);
-      setNodes(updater);
+      commitEdit(label, () => setNodes(updater));
     },
-    [saveSnapshot, setNodes]
+    [commitEdit, setNodes]
   );
 
   const setEdgesWithHistory = useCallback(
     (updater: React.SetStateAction<VVSEdge[]>, label = 'Edit wires') => {
-      saveSnapshot(label);
-      setEdges(updater);
+      commitEdit(label, () => setEdges(updater));
     },
-    [saveSnapshot, setEdges]
+    [commitEdit, setEdges]
   );
 
   return {
@@ -281,7 +479,9 @@ export function useGraphState(
     undo,
     redo,
     jumpToPastEntry,
+    jumpToLatest,
     getPastHistory,
+    getFutureHistory,
     getFutureCount,
     historyVersion,
     clearHistory,

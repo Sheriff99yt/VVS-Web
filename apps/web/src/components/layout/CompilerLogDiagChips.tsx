@@ -3,6 +3,8 @@
 import React from 'react';
 import { AlertCircle, CheckCircle2, CircleDashed, Loader2, Terminal } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { CompactActionHistory } from '@/components/layout/CompactActionHistory';
+import { useUiPreference } from '@/hooks/useUiPreference';
 
 /** Status-bar-matched chip styles for validation counts on the compiler log. */
 export const LOG_CHIP =
@@ -62,6 +64,7 @@ export function CompilerLogCompactStrip({
   isCompiling,
   isDirty,
   onOpen,
+  onOpenActivity,
   onJumpErrors,
   onJumpWarnings,
 }: {
@@ -70,52 +73,63 @@ export function CompilerLogCompactStrip({
   isCompiling: boolean;
   isDirty: boolean;
   onOpen: () => void;
+  onOpenActivity: () => void;
   onJumpErrors: () => void;
   onJumpWarnings: () => void;
 }) {
+  const [showCompactActions] = useUiPreference('compactActionHistory');
   const hasDiag = errorCount > 0 || warningCount > 0;
 
   return (
     <div
-      className="absolute bottom-2.5 right-2.5 z-30 flex items-center gap-1 pointer-events-auto"
+      className="absolute bottom-2.5 right-2.5 z-30 pointer-events-none"
       data-vvs-log-compact=""
     >
-      <CompilerLogDiagChips
-        errorCount={errorCount}
-        warningCount={warningCount}
-        onJumpErrors={onJumpErrors}
-        onJumpWarnings={onJumpWarnings}
-      />
-      {!hasDiag ? (
-        <Tooltip
-          content={isCompiling ? 'Generating…' : isDirty ? 'Graph changed' : 'No errors — open log'}
-          placement="top"
-        >
-          <button
-            type="button"
-            onClick={onOpen}
-            className={isCompiling ? LOG_CHIP_BUSY : isDirty ? LOG_CHIP_DIRTY : LOG_CHIP_OK}
-          >
-            {isCompiling ? (
-              <Loader2 size={10} className="animate-spin" />
-            ) : isDirty ? (
-              <CircleDashed size={10} />
-            ) : (
-              <CheckCircle2 size={10} />
-            )}
-          </button>
-        </Tooltip>
-      ) : null}
-      <Tooltip content="Open compiler log (`)" placement="top">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80 transition-colors"
-          aria-label="Open compiler log"
-        >
-          <Terminal size={11} />
-        </button>
-      </Tooltip>
+      <div className="pointer-events-auto flex flex-row items-end gap-1.5 rounded-md border border-zinc-800 bg-zinc-950 pl-1.5 pr-1 py-1 shadow-sm shadow-black/40">
+        {showCompactActions ? (
+          <CompactActionHistory onOpenActivity={onOpenActivity} />
+        ) : null}
+        <div className="flex items-center gap-1 shrink-0 self-end pb-px">
+          <CompilerLogDiagChips
+            errorCount={errorCount}
+            warningCount={warningCount}
+            onJumpErrors={onJumpErrors}
+            onJumpWarnings={onJumpWarnings}
+          />
+          {!hasDiag ? (
+            <Tooltip
+              content={
+                isCompiling ? 'Generating…' : isDirty ? 'Graph changed' : 'No errors — open log'
+              }
+              placement="top"
+            >
+              <button
+                type="button"
+                onClick={onOpen}
+                className={isCompiling ? LOG_CHIP_BUSY : isDirty ? LOG_CHIP_DIRTY : LOG_CHIP_OK}
+              >
+                {isCompiling ? (
+                  <Loader2 size={10} className="animate-spin" />
+                ) : isDirty ? (
+                  <CircleDashed size={10} />
+                ) : (
+                  <CheckCircle2 size={10} />
+                )}
+              </button>
+            </Tooltip>
+          ) : null}
+          <Tooltip content="Open Output panel (`)" placement="top">
+            <button
+              type="button"
+              onClick={onOpen}
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80 transition-colors"
+              aria-label="Open Output panel"
+            >
+              <Terminal size={11} />
+            </button>
+          </Tooltip>
+        </div>
+      </div>
     </div>
   );
 }

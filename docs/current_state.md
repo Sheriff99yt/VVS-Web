@@ -102,7 +102,7 @@ Library sections:
 - **Discover** — browse/install community scripts (mock cards)
 - **Installed** — empty state placeholder
 
-Local spawnable nodes are **not** listed in Library. They come from `nodeCatalog.ts` via the canvas **context menu** only.
+Local spawnable nodes are **not** listed in Library. They come from `nodeCatalog.ts` via the canvas **spawn catalog** (empty-pane right-click, keyboard spawn, dangling wire, or Node Actions → Add node…).
 
 ---
 
@@ -188,7 +188,8 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Chain select / layout (U75) | Canvas shortcuts | **S** = forward exec + data attrs; **A** = full undirected chain; **S S** = layout (`lane-topo-v1`). Attribute direction in Settings (above / below / below-extended). Head-anchored; multi-chain Y-separate; works inside locked comments |
 | Node search (U84/U85) | Canvas overlay + shortcuts | **Ctrl+F** = find in this graph; **Ctrl+Shift+F** = find in all graphs (Layers forced on; prefill from tree symbol). **F** with a tree symbol selected = find in this graph only; otherwise frame selection. Space / Ctrl+K open search respecting Layers. Symbol context menu: Find in this graph / Find in all graphs. Outside click / canvas drag clears tree-symbol focus |
 | Tooltips (U94) | Editor chrome | App-default `Tooltip` (`components/ui/Tooltip.tsx`) — portal tips with Esc dismiss + viewport clamp; native `title=` replaced on left panel, TopNav, status, toolbars, panels, nodes, start screen (section/popover heading `title` props remain) |
-| Selection / modifiers chrome | Hover node | Actions toolbar (when selected) stacks **above** the card. Modifier chips + import target-language sit in a **hover** overlay above the card (pinned while a chip menu is open). Linked graph/module subtitle stays in-header. U102: Open Graph removed from symbol tree/Details; symbol context menu shows shortcuts (F2 / F / Ctrl+D / Delete) |
+| Selection / modifiers chrome | Hover + select | **Quick Actions** strip above selection (disconnect / duplicate / comment / delete + ⋯ More). Full **Node Actions** on node right-click (S / S S / A, wires, clipboard, extract, Add node…). Spawn catalog on empty-pane right-click. Modifier chips on hover overlay. U102: Open Graph removed from symbol tree/Details |
+| Mouse Back / Forward | Editor navigation | Restores tab / view / selection / **camera viewport** (dwell ~2s after pan/zoom; coalesced unless a graph edit or node-options change intervened). **Not** graph undo — that is Ctrl+Z and Log → History |
 
 **Floating panels** (canvas overlay, shared `FloatingPanelShell`):
 
@@ -197,7 +198,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Details | top-right | One-line summary | Full property forms |
 | Compiler log | bottom-right | Last 3 log lines | Full log with sources |
 
-StatusBar **Log** toggles the floating compiler log (auto-opens on compile/validation errors).
+StatusBar **Output** cycles the floating Output panel (` · Log → History → Activity → off).
 
 **Removed:** mock Play/Pause simulation controls. **Locked:** VVS does **not** execute code (no interpreter, runner, or run-from-editor path). In-app work is edit + Generate + **logical checks / warnings**; execution is third-party after export. `GraphToolbar` and bottom-docked output console also removed.
 
@@ -260,7 +261,8 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
-| Code preview | Done — CodeMirror 6; graph language + `.{ext}`; Format JSON; **hover → yellow node/tab outline** (`codeHoverHighlightStore`); **double-click line → canvas node** (`sourceMapReverse`); selection highlight via `sourceMap`; **smooth auto-scroll**; live analysis sync; error/warning toggles. Full UX: [code_panel.md](code_panel.md) |
+| Code preview | Done — CodeMirror 6; graph language + `.{ext}`; Format JSON; **hover → yellow node/tab outline**; **double-click line → canvas node**; selection highlight via `sourceMap`; live analysis. Full UX: [code_panel.md](code_panel.md) |
+| Graph History | Done — **Output panel → History / Activity**; `` ` `` cycles tabs; undo/redo restores edits **and** jumps to that location (not mouse nav); mouse Back/Forward = navigation history only; edit while newer exist → in-app confirm |
 | Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |

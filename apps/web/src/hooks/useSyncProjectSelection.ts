@@ -2,6 +2,11 @@ import { useCallback, startTransition } from 'react';
 import { useOnSelectionChange, type OnSelectionChangeParams } from '@xyflow/react';
 import type { SelectionState, TreeSymbolSelectionKey } from '@/contexts/ProjectContext';
 import { selectionFromCanvasNodes } from '@/lib/projectSelection';
+import {
+  ACTIVITY_GROUP,
+  logActivity,
+  selectionActivityLabel,
+} from '@/lib/actionActivityLog';
 
 interface UseSyncProjectSelectionOptions {
   isCanvasActive: boolean;
@@ -43,6 +48,11 @@ export function useSyncProjectSelection({
             return selectionFromCanvasNodes(prev, ids);
           });
           if (ids.length > 0) setSelectedTreeSymbols?.([]);
+          if (!unchanged) {
+            logActivity('select', selectionActivityLabel(ids.length), {
+              group: ACTIVITY_GROUP.selection,
+            });
+          }
           return unchanged ? prevIds : ids;
         });
       });

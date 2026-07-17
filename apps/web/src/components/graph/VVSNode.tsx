@@ -18,7 +18,7 @@ import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
 import { hoverChromeSetHoveredNode } from '@/lib/nodeHoverChromeStore';
 import {
-  getCodeHoverHighlightNodeId,
+  isCodeHoverNode,
   subscribeCodeHoverHighlight,
 } from '@/lib/codeHoverHighlightStore';
 import { NodePinRow } from './NodePinRow';
@@ -77,12 +77,11 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
     .filter(Boolean)
     .join(' · ');
   const showStateIcon = Boolean(stateTip);
-  const codeHoverNodeId = useSyncExternalStore(
+  const isCodeHover = useSyncExternalStore(
     subscribeCodeHoverHighlight,
-    getCodeHoverHighlightNodeId,
-    () => null
+    () => isCodeHoverNode(id),
+    () => false
   );
-  const isCodeHover = codeHoverNodeId === id;
 
   const handleInlineChange = useCallback(
     (pinId: string, value: string | number | boolean) => {

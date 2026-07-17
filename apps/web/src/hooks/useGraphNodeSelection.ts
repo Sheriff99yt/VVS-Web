@@ -111,20 +111,39 @@ export function useGraphNodeSelection(
   }, [nodes, getAbsolutePosition]);
 }
 
-/** Subscribe only to selected nodes — avoids re-renders when unrelated nodes move. */
+/** Subscribe only to selection-relevant nodes — avoids re-renders when unrelated nodes move. */
 export function useGraphNodeSelectionFromStore(
   getAbsolutePosition?: (nodeId: string) => { x: number; y: number } | undefined
 ): GraphNodeSelection {
-  const selectSelectedNodes = useCallback(
-    (state: { nodes: readonly { id: string; selected?: boolean; position: { x: number; y: number }; type?: string; parentId?: string }[] }) =>
-      state.nodes.filter((node) => node.selected) as VVSNode[],
-    []
-  );
+  const selectSelectionBundle = useCallback((state: { nodes: readonly unknown[] }) => {
+    const all = state.nodes as VVSNode[];
+    const selectedNodes = all.filter((node) => node.selected);
+    // Comments needed so soft-member ungroup enables without parentId.
+    const comments = all.filter((node) => node.type === 'vvs_comment_node');
+    return { selectedNodes, contextNodes: [...selectedNodes, ...comments] };
+  }, []);
 
-  const selectedNodes = useStore(selectSelectedNodes, selectedNodesEqual);
+  const bundleEqual = (
+    a: { selectedNodes: VVSNode[]; contextNodes: VVSNode[] },
+    b: { selectedNodes: VVSNode[]; contextNodes: VVSNode[] }
+  ) => {
+    if (!selectedNodesEqual(a.selectedNodes, b.selectedNodes)) return false;
+    if (a.contextNodes.length !== b.contextNodes.length) return false;
+    for (let i = 0; i < a.contextNodes.length; i++) {
+      const x = a.contextNodes[i]!;
+      const y = b.contextNodes[i]!;
+      if (x.id !== y.id || x.parentId !== y.parentId) return false;
+      const xm = commentMemberIds(x).join(',');
+      const ym = commentMemberIds(y).join(',');
+      if (xm !== ym) return false;
+    }
+    return true;
+  };
+
+  const { selectedNodes, contextNodes } = useStore(selectSelectionBundle, bundleEqual);
 
   return useMemo(
-    () => buildGraphNodeSelection(selectedNodes, getAbsolutePosition),
-    [selectedNodes, getAbsolutePosition]
+    () => buildGraphNodeSelection(selectedNodes, getAbsolutePosition, contextNodes),
+    [selectedNodes, getAbsolutePosition, contextNodes]
   );
 }

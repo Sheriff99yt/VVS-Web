@@ -8,6 +8,12 @@ import { LibraryNodeTemplate } from '@/types/ui';
 import type { FunctionSymbol, GraphTab, TargetLanguage, ProjectEventDefinition } from '@/types/graph';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 
+/**
+ * Spawn / search catalog for adding nodes.
+ * Pane right-click / keyboard / dangling wire / Node Actions → Add node….
+ * Edit ops (S, A, disconnect, …) are NodeActionsMenu + Quick Actions.
+ */
+
 interface NodeContextMenuProps {
   x: number;
   y: number;
@@ -158,7 +164,7 @@ export function NodeContextMenu({
   return (
     <div 
       ref={menuRef}
-      className="fixed z-50 w-64 bg-zinc-950 border border-zinc-800 rounded shadow-2xl flex flex-col overflow-hidden"
+      className="fixed z-[1100] w-64 bg-zinc-950 border border-zinc-800 rounded shadow-2xl flex flex-col overflow-hidden"
       style={{ 
         left: x, 
         top: y,

@@ -15,6 +15,12 @@ export interface GraphHistoryEntryMeta {
   at: number;
 }
 
+/** Where to show the user after undo / redo / History jump (not mouse navigation). */
+export interface GraphHistoryReveal {
+  tabId: string;
+  focusNodeIds: string[];
+}
+
 export interface ProjectDetailsSlice {
   moduleName: string;
   extendsType: string;
@@ -70,4 +76,12 @@ export function cloneGraphSnapshot(
 
 export function metaFromSnapshot(s: GraphHistorySnapshot): GraphHistoryEntryMeta {
   return { id: s.id, label: s.label, at: s.at };
+}
+
+/** Tab + selected nodes from a restored snapshot — used to reveal the undo site. */
+export function revealFromSnapshot(snap: GraphHistorySnapshot): GraphHistoryReveal {
+  return {
+    tabId: snap.project?.activeGraphTab ?? snap.activeGraphTab,
+    focusNodeIds: snap.nodes.filter((n) => n.selected).map((n) => n.id),
+  };
 }

@@ -965,19 +965,19 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'action-history-u108',
         title: 'Action history window (U108)',
         description:
-          'Floating panel — graph undo stack with restore + project activity log (save, generate, import/export, delete, wire).',
+          'Output panel tabs: Log · History · Activity (` cycles). Newer History states kept until edit confirms discard. Edit → History…; per-tab enable in Settings / Output context menu.',
         status: 'done',
       },
       {
         id: 'topnav-menus-u109',
         title: 'Top bar menus (U109)',
-        description: 'File · Edit · View · Help — complete items, shortcuts, action history entry.',
+        description: 'File · Edit · View · Help — complete items, shortcuts, History entry.',
         status: 'done',
       },
       {
         id: 'settings-redesign-u110',
         title: 'Settings redesign (U110)',
-        description: 'Sidebar shell — Project · Editor · Shortcuts · Audio · About.',
+        description: 'Sidebar shell — Project · Editor · Shortcuts · Audio · About; Output panel tab toggles.',
         status: 'done',
       },
       {
@@ -1075,6 +1075,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Code panel hover → graph (U71 follow-on)',
         description:
           'Hover generated code: yellow outline on the matching node (current tab) and owning graph tab (current or other open). Double-click still selects/navigates. Docs: docs/code_panel.md.',
+        status: 'done',
+      },
+      {
+        id: 'browser-nav-vs-graph-history',
+        title: 'Browser Back/Forward = navigation only',
+        description:
+          'Mouse/browser Back·Forward restore editor navigation frames (tab, view, selection, focus) — not graph undo. Graph History lives in Log → History.',
         status: 'done',
       },
     ],

@@ -35,6 +35,10 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
   const [stepAnimateChainLayoutSpeed, setStepAnimateChainLayoutSpeed] = useUiPreference(
     'stepAnimateChainLayoutSpeed'
   );
+  const [showLogTab, setShowLogTab] = useUiPreference('logPanelTabLog');
+  const [showHistoryTab, setShowHistoryTab] = useUiPreference('logPanelTabHistory');
+  const [showActivityTab, setShowActivityTab] = useUiPreference('logPanelTabActivity');
+  const [compactActionHistory, setCompactActionHistory] = useUiPreference('compactActionHistory');
   const {
     codeOpen,
     graphNavOpen,
@@ -147,6 +151,40 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
             { value: 'hidden', label: 'Hidden' },
           ]}
           onChange={setGraphChromeMode}
+        />
+      </section>
+
+      <section className="space-y-2 border-t border-zinc-800/80 pt-4">
+        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+          Output panel tabs
+        </p>
+        <p className="text-[10px] text-zinc-600 leading-relaxed">
+          Show or hide tabs in the floating Output window (Log · History · Activity). Right-click the
+          panel for the same toggles. Cycle with <kbd className="text-zinc-400">`</kbd>.
+        </p>
+        <ToggleRow
+          label="Log"
+          description="Compiler and validator messages"
+          checked={showLogTab}
+          onChange={setShowLogTab}
+        />
+        <ToggleRow
+          label="History"
+          description="Graph undo / redo timeline"
+          checked={showHistoryTab}
+          onChange={setShowHistoryTab}
+        />
+        <ToggleRow
+          label="Activity"
+          description="Save, generate, and other project events"
+          checked={showActivityTab}
+          onChange={setShowActivityTab}
+        />
+        <ToggleRow
+          label="Compact action lines"
+          description="When Output is closed, show three live action lines in the bottom-right (on by default)"
+          checked={compactActionHistory}
+          onChange={setCompactActionHistory}
         />
       </section>
 

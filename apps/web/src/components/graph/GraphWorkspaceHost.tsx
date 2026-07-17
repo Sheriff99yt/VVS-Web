@@ -15,10 +15,11 @@ import {
   dualWriteLibraryImportDefines,
   type LibraryImportPayload,
 } from '@/lib/libraryImport';
-import { logActivity } from '@/lib/actionActivityLog';
+import { logActivity, ACTIVITY_GROUP } from '@/lib/actionActivityLog';
 import { playAudioCue } from '@/lib/audioFeedback';
 import type { ProjectHistorySlice } from '@/lib/graphHistory';
 import { useLatestRef } from '@/hooks/useLatestRef';
+import { REVEAL_EDIT_HISTORY_EVENT } from '@/lib/editHistoryReveal';
 
 interface GraphWorkspaceHostProps {
   initialNodes?: VVSNode[];
@@ -95,7 +96,8 @@ export function GraphWorkspaceHost({
   const activeGraphTabRef = useLatestRef(activeGraphTab);
 
   const markHistoryTabDirty = useCallback(
-    (tabId: string | null) => {
+    (reveal: { tabId: string } | string | null) => {
+      const tabId = typeof reveal === 'string' ? reveal : reveal?.tabId;
       markTabDirty(tabId ?? activeGraphTabRef.current);
       setCompileState('dirty');
     },
@@ -205,6 +207,7 @@ export function GraphWorkspaceHost({
     saveProjectSnapshot,
     jumpToPastEntry,
     getPastHistory,
+    getFutureHistory,
     getFutureCount,
     historyVersion,
   } = useGraphState(initialNodes, initialEdges, {
@@ -459,21 +462,31 @@ export function GraphWorkspaceHost({
 
   useEffect(() => {
     if (undoTrigger > 0) {
-      const tabId = undo();
-      markHistoryTabDirty(tabId);
-      logActivity('undo', 'Undo');
+      const reveal = undo();
+      markHistoryTabDirty(reveal);
+      logActivity('undo', 'Undo', { group: ACTIVITY_GROUP.undo });
       playAudioCue('undo');
     }
   }, [undoTrigger, undo, markHistoryTabDirty]);
 
   useEffect(() => {
     if (redoTrigger > 0) {
-      const tabId = redo();
-      markHistoryTabDirty(tabId);
-      logActivity('redo', 'Redo');
+      const reveal = redo();
+      markHistoryTabDirty(reveal);
+      logActivity('redo', 'Redo', { group: ACTIVITY_GROUP.redo });
       playAudioCue('redo');
     }
   }, [redoTrigger, redo, markHistoryTabDirty]);
+
+  // Jump-to-latest (discard dialog) and other reveal navigations mark dirty.
+  useEffect(() => {
+    const onReveal = (event: Event) => {
+      const detail = (event as CustomEvent<{ tabId?: string } | null>).detail;
+      markHistoryTabDirty(detail?.tabId ?? null);
+    };
+    window.addEventListener(REVEAL_EDIT_HISTORY_EVENT, onReveal);
+    return () => window.removeEventListener(REVEAL_EDIT_HISTORY_EVENT, onReveal);
+  }, [markHistoryTabDirty]);
 
   const editValue = React.useMemo(
     () => ({
@@ -491,6 +504,7 @@ export function GraphWorkspaceHost({
       canRedo,
       jumpToPastEntry,
       getPastHistory,
+      getFutureHistory,
       getFutureCount,
       historyVersion,
       importGraphTab,
@@ -510,6 +524,7 @@ export function GraphWorkspaceHost({
       canRedo,
       jumpToPastEntry,
       getPastHistory,
+      getFutureHistory,
       getFutureCount,
       historyVersion,
       importGraphTab,

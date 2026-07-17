@@ -16,6 +16,7 @@ import {
 } from '@vvs/language-profiles';
 import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import styles from './VVSNode.module.css';
 
 interface NodeModifiersProps {
@@ -252,6 +253,7 @@ export function NodeModifiers({
   const props = { ...defaults, ...(data.properties || {}) };
 
   const handleUpdate = (key: string, value: unknown) => {
+    markNavNodeOptions();
     updateNodeData(id, {
       properties: {
         ...props,

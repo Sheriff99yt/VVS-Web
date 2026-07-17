@@ -24,6 +24,7 @@ import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { resolveOverloadForCall, buildFunctionImplementData } from '@/lib/functionHelpers';
 import { applyEventDefineBinding } from '@/lib/eventHelpers';
+import { getLastGraphFlowPosition } from '@/lib/graphPointerPlacement';
 
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
 const EXEC_OUT = { id: 'exec_out', label: '', type: 'execution' as const };
@@ -201,12 +202,13 @@ function insertNodeOnMemberChain(
 function spawnDefineNode(
   doc: GraphDocument,
   data: VVSNodeData,
-  yOffset: number
+  yOffset: number,
+  at?: { x: number; y: number } | null
 ): GraphDocument {
   const node: VVSNode = {
     id: `define-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: 'vvs_standard_node',
-    position: { x: 80, y: 40 + yOffset },
+    position: at ?? { x: 80, y: 40 + yOffset },
     data: {
       ...data,
       resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
@@ -371,7 +373,12 @@ export function insertDefineNodeForVariable(
 
   return {
     ...documents,
-    [tabId]: spawnDefineNode(doc, buildVarDefineData(variable), defineCount * 72),
+    [tabId]: spawnDefineNode(
+      doc,
+      buildVarDefineData(variable),
+      defineCount * 72,
+      getLastGraphFlowPosition()
+    ),
   };
 }
 
@@ -394,10 +401,11 @@ export function insertDefineNodeForFunction(
   ).length;
 
   const data = buildFunctionDefineData(func);
+  const at = getLastGraphFlowPosition();
   const node: VVSNode = {
     id: `define-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: 'vvs_standard_node',
-    position: { x: 80, y: 40 + defineCount * 72 },
+    position: at ?? { x: 80, y: 40 + defineCount * 72 },
     data: {
       ...data,
       resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
@@ -428,10 +436,11 @@ export function insertImplementNodeForFunction(
   ).length;
 
   const data = buildFunctionImplementData(func);
+  const at = getLastGraphFlowPosition();
   const node: VVSNode = {
     id: `impl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: 'vvs_standard_node',
-    position: { x: 80, y: 40 + chainCount * 72 },
+    position: at ?? { x: 80, y: 40 + chainCount * 72 },
     data: {
       ...data,
       resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
@@ -464,7 +473,12 @@ export function insertDefineNodeForEvent(
 
   return {
     ...documents,
-    [tabId]: spawnDefineNode(doc, buildEventDefineData(event), defineCount * 72),
+    [tabId]: spawnDefineNode(
+      doc,
+      buildEventDefineData(event),
+      defineCount * 72,
+      getLastGraphFlowPosition()
+    ),
   };
 }
 

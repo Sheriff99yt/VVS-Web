@@ -17,7 +17,6 @@ export type GraphShortcutId =
   | 'redo'
   | 'redo-alternate'
   | 'focus-selection'
-  | 'node-search-from-symbol'
   | 'zoom-fit'
   | 'disconnect'
   | 'spawn-menu'
@@ -218,7 +217,7 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
     keysWin: 'F',
     section: 'canvas',
     group: 'selection',
-    hint: 'With a tree symbol selected, F finds in this graph instead',
+    hint: 'Frame selected nodes on the canvas. Ctrl+F finds by name.',
   },
   {
     id: 'zoom-fit',
@@ -282,14 +281,6 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
     group: 'find',
   },
   {
-    id: 'node-search-from-symbol',
-    label: 'Find selected symbol in this graph',
-    keysWin: 'F',
-    section: 'project',
-    group: 'find',
-    hint: 'When a Project-tree symbol is focused',
-  },
-  {
     id: 'focus-node-search',
     label: 'Open node search',
     keysWin: 'Space',
@@ -316,10 +307,11 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
   // —— View ——
   {
     id: 'toggle-log-pin',
-    label: 'Toggle compiler log',
+    label: 'Cycle Output panel',
     keysWin: '`',
     section: 'canvas',
     group: 'view',
+    hint: 'Log → History → Activity → off',
   },
   {
     id: 'toggle-minimap',

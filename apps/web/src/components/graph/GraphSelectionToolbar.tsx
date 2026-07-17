@@ -1,17 +1,30 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { Copy, Trash2, MessageSquarePlus, Ungroup, Cable, Unplug } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { useReactFlow, useStore, ViewportPortal } from '@xyflow/react';
-import { dispatchGraphAction } from '@/lib/graphActions';
+import { dispatchGraphAction, type GraphAction } from '@/lib/graphActions';
 import { shortcutTitle } from '@/lib/graphShortcuts';
 import { useGraphNodeSelectionFromStore } from '@/hooks/useGraphNodeSelection';
 import { findBestAutoConnect } from '@/lib/graphAutoConnect';
+import {
+  buildNodeActionContext,
+  quickActionDescriptors,
+} from '@/lib/nodeActionRegistry';
 import type { VVSEdge, VVSNode } from '@/types/graph';
 import { Tooltip } from '@/components/ui/Tooltip';
 import styles from './GraphSelectionToolbar.module.css';
 
-export function GraphSelectionToolbar() {
+/**
+ * Compact Quick Actions strip above the selection.
+ * Full ops live in Node Actions via ⋯ More (owned by GraphCanvas) or node right-click.
+ */
+export function GraphSelectionToolbar({
+  onOpenMoreActions,
+}: {
+  /** Opens the shared Node Actions menu at screen coords. */
+  onOpenMoreActions?: (screen: { x: number; y: number }) => void;
+} = {}) {
   const { getInternalNode, getNodes, getEdges } = useReactFlow();
 
   const getAbsolutePosition = useCallback(
@@ -37,11 +50,22 @@ export function GraphSelectionToolbar() {
     return findBestAutoConnect(selected[0]!, selected[1]!, edges, nodes) != null;
   }, [selection.count, selection.selectedNodes, getNodes, getEdges]);
 
-  const canDisconnect =
-    edgeSelectionCount > 0 ||
-    selection.selectedNodes.some((n) =>
-      (getEdges() as VVSEdge[]).some((e) => e.source === n.id || e.target === n.id)
-    );
+  const ctx = useMemo(() => {
+    const edges = getEdges() as VVSEdge[];
+    const base = buildNodeActionContext({
+      selectedNodes: selection.selectedNodes,
+      allEdges: edges,
+      canGroup: selection.canGroup,
+      canUngroup: selection.canUngroup,
+      canAutoConnect,
+    });
+    if (edgeSelectionCount > 0 && !base.canDisconnect) {
+      return { ...base, canDisconnect: true };
+    }
+    return base;
+  }, [selection, getEdges, canAutoConnect, edgeSelectionCount]);
+
+  const quickItems = useMemo(() => quickActionDescriptors(ctx), [ctx]);
 
   if (!selection.isVisible || !selection.anchorFlowPoint) return null;
 
@@ -53,84 +77,58 @@ export function GraphSelectionToolbar() {
         className={`${styles.toolbar} nodrag nopan nowheel`}
         style={{ left: x, top: y }}
         role="toolbar"
-        aria-label="Node selection actions"
+        aria-label="Quick actions"
       >
         {selection.count > 1 ? (
           <>
-            <span className={styles.count}>{selection.count} selected</span>
+            <span className={styles.count}>{selection.count}</span>
             <div className={styles.divider} />
           </>
         ) : null}
-        {canAutoConnect ? (
-          <Tooltip content="Auto-connect compatible pins" placement="bottom">
-            <button
-              type="button"
-              className={styles.button}
-              aria-label="Auto-connect selected nodes"
-              onClick={() => dispatchGraphAction('auto-connect-selection')}
-            >
-              <Cable size={14} />
-            </button>
-          </Tooltip>
+        {quickItems.map((item, index) => {
+          const Icon = item.icon;
+          if (!Icon) return null;
+          const prev = quickItems[index - 1];
+          const showDivider = Boolean(prev && prev.section !== item.section);
+          const tip = item.shortcutId
+            ? shortcutTitle(item.shortcutId)
+            : item.shortcutHint
+              ? `${item.label} (${item.shortcutHint})`
+              : item.label;
+          return (
+            <React.Fragment key={item.id}>
+              {showDivider ? <div className={styles.divider} /> : null}
+              <Tooltip content={tip} placement="bottom">
+                <button
+                  type="button"
+                  className={`${styles.button} ${item.danger ? styles.buttonDanger : ''}`}
+                  aria-label={item.label}
+                  onClick={() => dispatchGraphAction(item.id as GraphAction)}
+                >
+                  <Icon size={14} />
+                </button>
+              </Tooltip>
+            </React.Fragment>
+          );
+        })}
+        {onOpenMoreActions ? (
+          <>
+            <div className={styles.divider} />
+            <Tooltip content="More node actions" placement="bottom">
+              <button
+                type="button"
+                className={styles.button}
+                aria-label="More node actions"
+                onClick={(e) => {
+                  const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                  onOpenMoreActions({ x: rect.left, y: rect.bottom + 4 });
+                }}
+              >
+                <MoreHorizontal size={14} />
+              </button>
+            </Tooltip>
+          </>
         ) : null}
-        {canDisconnect ? (
-          <Tooltip content={shortcutTitle('disconnect')} placement="bottom">
-            <button
-              type="button"
-              className={styles.button}
-              aria-label="Disconnect selection"
-              onClick={() => dispatchGraphAction('disconnect-selection')}
-            >
-              <Unplug size={14} />
-            </button>
-          </Tooltip>
-        ) : null}
-        {(canAutoConnect || canDisconnect) && <div className={styles.divider} />}
-        <Tooltip content={shortcutTitle('duplicate')} placement="bottom">
-          <button
-            type="button"
-            className={styles.button}
-            aria-label="Duplicate selection"
-            onClick={() => dispatchGraphAction('duplicate')}
-          >
-            <Copy size={14} />
-          </button>
-        </Tooltip>
-        {selection.canGroup ? (
-          <Tooltip content={shortcutTitle('group-comment')} placement="bottom">
-            <button
-              type="button"
-              className={styles.button}
-              aria-label="Comment selection"
-              onClick={() => dispatchGraphAction('group-comment')}
-            >
-              <MessageSquarePlus size={14} />
-            </button>
-          </Tooltip>
-        ) : null}
-        {selection.canUngroup ? (
-          <Tooltip content={shortcutTitle('ungroup-comment')} placement="bottom">
-            <button
-              type="button"
-              className={styles.button}
-              aria-label="Release from comment"
-              onClick={() => dispatchGraphAction('ungroup-comment')}
-            >
-              <Ungroup size={14} />
-            </button>
-          </Tooltip>
-        ) : null}
-        <div className={styles.divider} />
-        <Tooltip content={shortcutTitle('delete')} placement="bottom">
-          <button
-            type="button"
-            className={`${styles.button} ${styles.buttonDanger}`}
-            aria-label="Delete selection"
-            onClick={() => dispatchGraphAction('delete-selection')}
-          >
-            <Trash2 size={14} />
-          </button>
-        </Tooltip>
       </div>
     </ViewportPortal>
   );

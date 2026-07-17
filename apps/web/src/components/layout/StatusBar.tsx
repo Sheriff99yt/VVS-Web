@@ -215,7 +215,7 @@ export function StatusBar() {
           </>
         ) : null}
         <Tooltip
-          content={`Compiler log (${shortcutKeys('toggle-log-pin')}) · right-click to reset layout`}
+          content={`Output (${shortcutKeys('toggle-log-pin')}) · Log → History → Activity · right-click to reset layout`}
           placement="top"
         >
           <button
@@ -228,6 +228,7 @@ export function StatusBar() {
             className={`p-1 rounded transition-colors ${
               consoleOpen ? 'text-zinc-200 bg-zinc-800' : 'text-zinc-600 hover:text-zinc-400'
             }`}
+            aria-label="Cycle Output panel"
           >
             <Terminal size={11} />
           </button>

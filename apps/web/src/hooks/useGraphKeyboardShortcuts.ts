@@ -22,9 +22,9 @@ export interface GraphKeyboardHandlers {
   /** When true, canvas shortcuts are suppressed (e.g. node search expanded). */
   suppressCanvasShortcuts?: boolean;
   /**
-   * Prefill Find from Project-tree symbol(s) and/or selected canvas nodes.
+   * Prefill Find (Ctrl+F / Ctrl+Shift+F) from Project-tree symbol(s) and/or selected canvas nodes.
    * One name → single query; several → match-any (multi results).
-   * Ctrl+F → this graph; Ctrl+Shift+F → all graphs; F with tree symbol → this graph.
+   * Bare F frames the canvas selection — it does not search.
    */
   nodeSearchQueryFromSelection?: () => string | string[] | undefined;
 }
@@ -205,19 +205,9 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
         return;
       }
 
-      if (
-        matchesGraphShortcut(e, 'focus-selection') ||
-        matchesGraphShortcut(e, 'node-search-from-symbol')
-      ) {
+      if (matchesGraphShortcut(e, 'focus-selection')) {
         e.preventDefault();
-        const symbolQuery = nodeSearchQueryFromSelection?.();
-        if (symbolQuery) {
-          dispatchFocusGraphNodeSearch(symbolQuery, { searchAllGraphs: false });
-          return;
-        }
-        if (matchesGraphShortcut(e, 'focus-selection')) {
-          dispatchGraphAction('focus-selection');
-        }
+        dispatchGraphAction('focus-selection');
         return;
       }
 

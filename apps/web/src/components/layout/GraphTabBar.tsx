@@ -69,7 +69,9 @@ export function GraphTabBar() {
         {
           graphTab: tabId,
           editorView: 'canvas',
-          selection: selectionForGraphTab(tabId),
+          // Match canvas tab-switch selection wipe (graph id null) so sync does not double-push.
+          selection: { type: 'graph', id: null },
+          referenceGraphId: tabId,
         },
         { history: 'push' }
       );

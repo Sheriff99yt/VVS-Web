@@ -19,7 +19,22 @@ export type GraphAction =
   | 'layout-selected-chains'
   | 'auto-connect-selection';
 
-export function dispatchGraphAction(action: GraphAction) {
-  window.dispatchEvent(new CustomEvent('vvs:graph-action', { detail: { action } }));
-}
+export type GraphActionDetail = {
+  action: GraphAction;
+  /**
+   * When false, select-chain-downstream only expands selection (no S→layout arm).
+   * Menus should pass false; keyboard S leaves this undefined (arm enabled).
+   */
+  allowLayoutArm?: boolean;
+};
 
+export function dispatchGraphAction(
+  action: GraphAction,
+  options?: { allowLayoutArm?: boolean }
+) {
+  window.dispatchEvent(
+    new CustomEvent('vvs:graph-action', {
+      detail: { action, allowLayoutArm: options?.allowLayoutArm } satisfies GraphActionDetail,
+    })
+  );
+}

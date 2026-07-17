@@ -96,7 +96,10 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleCompilerLog = useCallback(() => {
-    setCompilerLogOpen((open) => !open);
+    // Smart Log tab + open/close lives in GraphFloatingCompilerLog (TOGGLE event).
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(TOGGLE_COMPILER_LOG_PIN_EVENT));
+    }
   }, []);
 
   const setGraphChromeMode = useCallback((mode: GraphChromeMode) => {
@@ -110,10 +113,8 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
   // Stable refs so window listeners don't need callback identities in effect deps
   // (avoids HMR "deps changed size" and unnecessary re-subscribe).
   const expandGraphNavRef = useRef(expandGraphNav);
-  const toggleCompilerLogRef = useRef(toggleCompilerLog);
   const toggleGraphChromeRef = useRef(toggleGraphChrome);
   expandGraphNavRef.current = expandGraphNav;
-  toggleCompilerLogRef.current = toggleCompilerLog;
   toggleGraphChromeRef.current = toggleGraphChrome;
 
   useEffect(() => {
@@ -152,15 +153,12 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
     if (!panelsReady) return;
 
     const onFocusProjectTreeFilter = () => expandGraphNavRef.current();
-    const onToggleCompilerLog = () => toggleCompilerLogRef.current();
     const onToggleGraphChrome = () => toggleGraphChromeRef.current();
 
     window.addEventListener(FOCUS_PROJECT_TREE_FILTER_EVENT, onFocusProjectTreeFilter);
-    window.addEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onToggleCompilerLog);
     window.addEventListener(TOGGLE_GRAPH_CHROME_EVENT, onToggleGraphChrome);
     return () => {
       window.removeEventListener(FOCUS_PROJECT_TREE_FILTER_EVENT, onFocusProjectTreeFilter);
-      window.removeEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onToggleCompilerLog);
       window.removeEventListener(TOGGLE_GRAPH_CHROME_EVENT, onToggleGraphChrome);
     };
   }, [panelsReady]);

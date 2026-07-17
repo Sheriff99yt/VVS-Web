@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Languages, Trash2, XCircle, Terminal } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Languages, Trash2, XCircle, Terminal, History, List } from 'lucide-react';
 import { FloatingPanelShell } from './FloatingPanelShell';
 import { CompilerLogCompactStrip, CompilerLogDiagChips } from './CompilerLogDiagChips';
+import { LogActivityTab, LogHistoryTab } from './LogHistoryTab';
 import { useCompilerLogs, type LogEntry, type LogType } from '@/hooks/useCompilerLogs';
 import {
   dispatchNavigateToNode,
@@ -21,10 +22,17 @@ import {
   defaultCompilerLogLayout,
   dispatchRequestGenerate,
   dispatchResetCompilerLogLayout,
+  OPEN_ACTION_HISTORY_EVENT,
   readUiPreference,
   RESET_COMPILER_LOG_LAYOUT_EVENT,
+  TOGGLE_COMPILER_LOG_PIN_EVENT,
   writeUiPreferences,
 } from '@/lib/uiPreferences';
+import { shortcutKeys } from '@/lib/graphShortcuts';
+import {
+  HIGHLIGHT_LOG_HISTORY_EVENT,
+  OPEN_LOG_HISTORY_TAB_EVENT,
+} from '@/lib/historyDiscardGate';
 import { paneMenuPosition } from '@/lib/paneMenuPosition';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
@@ -32,6 +40,8 @@ import {
   buildUnscopedLogView,
   countValidatorLogEntries,
 } from '@/lib/compilerLogLanguageScope';
+
+type LogPanelTab = 'log' | 'history' | 'activity';
 
 const LANG_SHORT: Record<string, string> = {
   python: 'Python',
@@ -100,10 +110,10 @@ function LogLine({ log, onNavigate }: { log: LogEntry; onNavigate: (log: LogEntr
 }
 
 /**
- * Compiler log — two states only:
+ * Output panel (Log · History · Activity):
  * - closed → compact strip (chips + terminal)
  * - open → full floating panel
- * Tilde / `` ` `` toggles open ↔ closed (no header-only middle state).
+ * `` ` `` cycles enabled tabs then closes.
  */
 export function GraphFloatingCompilerLog() {
   const { compilerLogOpen, setCompilerLogOpen } = useEditorPanels();
@@ -113,6 +123,96 @@ export function GraphFloatingCompilerLog() {
   const { targetLanguage: graphLanguage } = useActiveGraphCodegenSettings();
   const scopeLanguage = graphLanguage || projectLanguage;
   const [languageScoped, setLanguageScoped] = useUiPreference('compilerLogLanguageScoped');
+  const [showLogTab, setShowLogTab] = useUiPreference('logPanelTabLog');
+  const [showHistoryTab, setShowHistoryTab] = useUiPreference('logPanelTabHistory');
+  const [showActivityTab, setShowActivityTab] = useUiPreference('logPanelTabActivity');
+  const [panelTab, setPanelTab] = useState<LogPanelTab>('log');
+  const [historyHighlight, setHistoryHighlight] = useState(false);
+  const historyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enabledTabs = useMemo(() => {
+    const tabs: LogPanelTab[] = [];
+    if (showLogTab) tabs.push('log');
+    if (showHistoryTab) tabs.push('history');
+    if (showActivityTab) tabs.push('activity');
+    return tabs.length > 0 ? tabs : (['log'] as LogPanelTab[]);
+  }, [showLogTab, showHistoryTab, showActivityTab]);
+
+  useEffect(() => {
+    if (!enabledTabs.includes(panelTab)) {
+      setPanelTab(enabledTabs[0]!);
+    }
+  }, [enabledTabs, panelTab]);
+
+  const openHistoryTab = useCallback(() => {
+    if (!showHistoryTab) setShowHistoryTab(true);
+    setCompilerLogOpen(true);
+    setPanelTab('history');
+  }, [setCompilerLogOpen, setShowHistoryTab, showHistoryTab]);
+
+  const openActivityTab = useCallback(() => {
+    if (!showActivityTab) setShowActivityTab(true);
+    setCompilerLogOpen(true);
+    setPanelTab('activity');
+  }, [setCompilerLogOpen, setShowActivityTab, showActivityTab]);
+
+  /** ` : cycle Output tabs Log → History → Activity → off. */
+  const cycleOutputPanel = useCallback(() => {
+    const tabs = enabledTabs;
+    if (tabs.length === 0) return;
+
+    if (!compilerLogOpen) {
+      setPanelTab(tabs[0]!);
+      setCompilerLogOpen(true);
+      return;
+    }
+
+    const idx = tabs.indexOf(panelTab);
+    if (idx < 0) {
+      setPanelTab(tabs[0]!);
+      return;
+    }
+    const next = tabs[idx + 1];
+    if (next) {
+      setPanelTab(next);
+      return;
+    }
+    setCompilerLogOpen(false);
+  }, [compilerLogOpen, enabledTabs, panelTab, setCompilerLogOpen]);
+
+  useEffect(() => {
+    const onOpenHistory = () => openHistoryTab();
+    window.addEventListener(OPEN_LOG_HISTORY_TAB_EVENT, onOpenHistory);
+    window.addEventListener(OPEN_ACTION_HISTORY_EVENT, onOpenHistory);
+    return () => {
+      window.removeEventListener(OPEN_LOG_HISTORY_TAB_EVENT, onOpenHistory);
+      window.removeEventListener(OPEN_ACTION_HISTORY_EVENT, onOpenHistory);
+    };
+  }, [openHistoryTab]);
+
+  useEffect(() => {
+    const onCycle = () => cycleOutputPanel();
+    window.addEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onCycle);
+    return () => window.removeEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onCycle);
+  }, [cycleOutputPanel]);
+
+  useEffect(() => {
+    const onHighlight = (event: Event) => {
+      const ms = (event as CustomEvent<{ ms?: number }>).detail?.ms ?? 4500;
+      openHistoryTab();
+      setHistoryHighlight(true);
+      if (historyFlashTimerRef.current) clearTimeout(historyFlashTimerRef.current);
+      historyFlashTimerRef.current = setTimeout(() => {
+        setHistoryHighlight(false);
+        historyFlashTimerRef.current = null;
+      }, ms);
+    };
+    window.addEventListener(HIGHLIGHT_LOG_HISTORY_EVENT, onHighlight);
+    return () => {
+      window.removeEventListener(HIGHLIGHT_LOG_HISTORY_EVENT, onHighlight);
+      if (historyFlashTimerRef.current) clearTimeout(historyFlashTimerRef.current);
+    };
+  }, [openHistoryTab]);
+
   const visibleLogs = useMemo(() => {
     const build = languageScoped ? buildLanguageScopedLogView : buildUnscopedLogView;
     return build(logs, scopeLanguage, validationErrors, validationWarnings);
@@ -275,6 +375,7 @@ export function GraphFloatingCompilerLog() {
         isCompiling={isCompiling}
         isDirty={isDirty}
         onOpen={() => setCompilerLogOpen(true)}
+        onOpenActivity={openActivityTab}
         onJumpErrors={jumpErrors}
         onJumpWarnings={jumpWarnings}
       />
@@ -290,8 +391,16 @@ export function GraphFloatingCompilerLog() {
           50% { border-color: rgb(248 113 113); box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.7), 0 0 20px rgba(239, 68, 68, 0.35); }
           75% { border-color: rgb(239 68 68); box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.55), 0 0 16px rgba(239, 68, 68, 0.25); }
         }
+        @keyframes vvs-log-history-flash {
+          0%, 100% { border-color: rgb(39 39 42); box-shadow: 0 0 0 0 transparent; }
+          30% { border-color: rgb(234 179 8); box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.55), 0 0 18px rgba(234, 179, 8, 0.28); }
+          60% { border-color: rgb(250 204 21); box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.65), 0 0 22px rgba(234, 179, 8, 0.35); }
+        }
         .vvsLogErrorFlash {
           animation: vvs-log-error-flash 0.9s ease-out 1;
+        }
+        .vvsLogHistoryFlash {
+          animation: vvs-log-history-flash 1.1s ease-out 3;
         }
       `}</style>
       <FloatingPanelShell
@@ -301,8 +410,8 @@ export function GraphFloatingCompilerLog() {
         expanded
         onClose={() => setCompilerLogOpen(false)}
         onContextMenu={handleContextMenu}
-        widthClass="w-[min(260px,calc(100%-20px))]"
-        maxHeightClass="max-h-[min(300px,50vh)]"
+        widthClass="w-[min(280px,calc(100%-20px))]"
+        maxHeightClass="max-h-[min(340px,55vh)]"
         heightPx={expandedHeight}
         onHeightChange={handleHeightChange}
         widthPx={expandedWidth}
@@ -310,82 +419,171 @@ export function GraphFloatingCompilerLog() {
         offsetRight={offsetRight}
         offsetBottom={offsetBottom}
         onOffsetChange={handleOffsetChange}
-        shellClassName={errorFlash ? 'vvsLogErrorFlash' : undefined}
+        shellClassName={
+          historyHighlight ? 'vvsLogHistoryFlash' : errorFlash ? 'vvsLogErrorFlash' : undefined
+        }
+        headerTitle={
+          <div
+            className="flex items-center gap-0.5 min-w-0"
+            role="tablist"
+            aria-label="Output panel"
+          >
+            {enabledTabs.includes('log') ? (
+              <Tooltip
+                content={`Log (${shortcutKeys('toggle-log-pin')})`}
+                placement="bottom"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={panelTab === 'log'}
+                  onClick={() => setPanelTab('log')}
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${
+                    panelTab === 'log'
+                      ? 'bg-zinc-800 text-zinc-100'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  <Terminal size={10} />
+                  Log
+                </button>
+              </Tooltip>
+            ) : null}
+            {enabledTabs.includes('history') ? (
+              <Tooltip
+                content={`History (${shortcutKeys('toggle-log-pin')})`}
+                placement="bottom"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={panelTab === 'history'}
+                  onClick={() => setPanelTab('history')}
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${
+                    panelTab === 'history'
+                      ? historyHighlight
+                        ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/50'
+                        : 'bg-zinc-800 text-zinc-100'
+                      : historyHighlight
+                        ? 'text-amber-300/90 ring-1 ring-amber-400/40'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  <History size={10} />
+                  History
+                </button>
+              </Tooltip>
+            ) : null}
+            {enabledTabs.includes('activity') ? (
+              <Tooltip
+                content={`Activity (${shortcutKeys('toggle-log-pin')})`}
+                placement="bottom"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={panelTab === 'activity'}
+                  onClick={() => setPanelTab('activity')}
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${
+                    panelTab === 'activity'
+                      ? 'bg-zinc-800 text-zinc-100'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  <List size={10} />
+                  Activity
+                </button>
+              </Tooltip>
+            ) : null}
+          </div>
+        }
         headerExtra={
           <div className="flex items-center gap-1">
-            <CompilerLogDiagChips
-              errorCount={errorCount}
-              warningCount={warningCount}
-              onJumpErrors={jumpErrors}
-              onJumpWarnings={jumpWarnings}
-              compact
-            />
-            <Tooltip
-              content={
-                languageScoped
-                  ? `Live ${languageLabel(scopeLanguage)} only — click for full history (runs Generate)`
-                  : `Full history — click to scope to ${languageLabel(scopeLanguage)} (runs Generate)`
-              }
-              placement="bottom"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setLanguageScoped(!languageScoped);
-                  dispatchRequestGenerate();
-                }}
-                className={`p-0.5 rounded hover:bg-zinc-800/80 ${
-                  languageScoped
-                    ? 'text-sky-400 hover:text-sky-300'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-                aria-pressed={languageScoped}
-                data-testid="compiler-log-language-scope"
-                aria-label={
-                  languageScoped
-                    ? `Language scoped to ${languageLabel(scopeLanguage)}`
-                    : 'Show all languages'
-                }
-              >
-                <Languages size={11} />
-              </button>
-            </Tooltip>
-            <Tooltip content="Clear log" placement="bottom">
-              <button
-                type="button"
-                onClick={clearLogs}
-                className="p-0.5 rounded text-zinc-500 hover:text-red-400 hover:bg-zinc-800/80"
-              >
-                <Trash2 size={11} />
-              </button>
-            </Tooltip>
+            {panelTab === 'log' ? (
+              <>
+                <CompilerLogDiagChips
+                  errorCount={errorCount}
+                  warningCount={warningCount}
+                  onJumpErrors={jumpErrors}
+                  onJumpWarnings={jumpWarnings}
+                  compact
+                />
+                <Tooltip
+                  content={
+                    languageScoped
+                      ? `Live ${languageLabel(scopeLanguage)} only — click for full history (runs Generate)`
+                      : `Full history — click to scope to ${languageLabel(scopeLanguage)} (runs Generate)`
+                  }
+                  placement="bottom"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguageScoped(!languageScoped);
+                      dispatchRequestGenerate();
+                    }}
+                    className={`p-0.5 rounded hover:bg-zinc-800/80 ${
+                      languageScoped
+                        ? 'text-sky-400 hover:text-sky-300'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                    aria-pressed={languageScoped}
+                    data-testid="compiler-log-language-scope"
+                    aria-label={
+                      languageScoped
+                        ? `Language scoped to ${languageLabel(scopeLanguage)}`
+                        : 'Show all languages'
+                    }
+                  >
+                    <Languages size={11} />
+                  </button>
+                </Tooltip>
+                <Tooltip content="Clear log" placement="bottom">
+                  <button
+                    type="button"
+                    onClick={clearLogs}
+                    className="p-0.5 rounded text-zinc-500 hover:text-red-400 hover:bg-zinc-800/80"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </Tooltip>
+              </>
+            ) : null}
           </div>
         }
       >
-        <div className="font-mono text-[10px] leading-relaxed space-y-0.5">
-          {languageScoped ? (
-            <p className="text-zinc-600 py-0.5 text-[9px]">
-              Scoped to {languageLabel(scopeLanguage)} (live)
-              {hiddenValidatorCount > 0
-                ? ` · ${hiddenValidatorCount} historical Validator line${hiddenValidatorCount === 1 ? '' : 's'} hidden`
-                : ''}
-            </p>
+        <div className="font-mono text-[10px] leading-relaxed min-h-0">
+          {panelTab === 'log' ? (
+            <div className="space-y-0.5">
+              {languageScoped ? (
+                <p className="text-zinc-600 py-0.5 text-[9px]">
+                  Scoped to {languageLabel(scopeLanguage)} (live)
+                  {hiddenValidatorCount > 0
+                    ? ` · ${hiddenValidatorCount} historical Validator line${hiddenValidatorCount === 1 ? '' : 's'} hidden`
+                    : ''}
+                </p>
+              ) : null}
+              {visibleLogs.length === 0 ? (
+                <p className="text-zinc-600 py-1">
+                  {languageScoped
+                    ? `No ${languageLabel(scopeLanguage)} issues. Toggle language scope to browse Generate history for all languages.`
+                    : 'No messages yet. Generate or fix graph errors — click a line to jump to the node.'}
+                </p>
+              ) : (
+                visibleLogs.map((log) => (
+                  <LogLine key={log.id} log={log} onNavigate={handleLogClick} />
+                ))
+              )}
+            </div>
           ) : null}
-          {visibleLogs.length === 0 ? (
-            <p className="text-zinc-600 py-1">
-              {languageScoped
-                ? `No ${languageLabel(scopeLanguage)} issues. Toggle language scope to browse Generate history for all languages.`
-                : 'No messages yet. Generate or fix graph errors — click a line to jump to the node.'}
-            </p>
-          ) : (
-            visibleLogs.map((log) => <LogLine key={log.id} log={log} onNavigate={handleLogClick} />)
-          )}
+          {panelTab === 'history' ? <LogHistoryTab /> : null}
+          {panelTab === 'activity' ? <LogActivityTab /> : null}
         </div>
       </FloatingPanelShell>
       {contextMenu ? (
         <div
           ref={contextMenuRef}
-          className="fixed z-[80] min-w-[168px] py-0.5 rounded-md border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/40"
+          className="fixed z-[80] min-w-[188px] py-0.5 rounded-md border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/40"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           role="menu"
         >
@@ -397,6 +595,31 @@ export function GraphFloatingCompilerLog() {
           >
             Reset size & position
           </button>
+          <div className="h-px bg-zinc-800 my-0.5" />
+          <p className="px-2.5 py-1 text-[9px] uppercase tracking-wide text-zinc-600">Tabs</p>
+          {(
+            [
+              ['log', 'Log', showLogTab, setShowLogTab],
+              ['history', 'History', showHistoryTab, setShowHistoryTab],
+              ['activity', 'Activity', showActivityTab, setShowActivityTab],
+            ] as const
+          ).map(([id, label, on, setOn]) => (
+            <button
+              key={id}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={on}
+              className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800 flex items-center justify-between gap-2"
+              onClick={() => {
+                const next = !on;
+                if (!next && enabledTabs.length <= 1 && enabledTabs[0] === id) return;
+                setOn(next);
+              }}
+            >
+              <span>{label}</span>
+              <span className={on ? 'text-emerald-400' : 'text-zinc-600'}>{on ? 'On' : 'Off'}</span>
+            </button>
+          ))}
         </div>
       ) : null}
     </>

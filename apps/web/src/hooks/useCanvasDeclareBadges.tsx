@@ -21,6 +21,7 @@ import {
 } from '@/lib/defineNodeSync';
 import { classGraphTabId, classHomeGraphId, symbolClassId } from '@/lib/classScope';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
+import { flashPlacementHighlight } from '@/lib/codeHoverHighlightStore';
 import { SPAWN_EVENT_NODE_EVENT, SPAWN_FUNCTION_IMPLEMENT_EVENT } from '@/components/layout/GraphFloatingDetails';
 import { CanvasStatusBadge } from '@/components/layout/project-tree/CanvasStatusBadge';
 import type { useEditorFocus } from '@/hooks/useEditorFocus';
@@ -106,6 +107,7 @@ export function useCanvasDeclareBadges(input: {
       if (target) {
         markTabDirty(target.tabId);
         setCompileState('dirty');
+        flashPlacementHighlight([target.nodeId], target.tabId);
         dispatchNavigateToNode(target.tabId, target.nodeId);
       }
     },
@@ -134,6 +136,7 @@ export function useCanvasDeclareBadges(input: {
       if (target) {
         markTabDirty(target.tabId);
         setCompileState('dirty');
+        flashPlacementHighlight([target.nodeId], target.tabId);
         dispatchNavigateToNode(target.tabId, target.nodeId);
       }
     },
@@ -162,6 +165,7 @@ export function useCanvasDeclareBadges(input: {
       if (target) {
         markTabDirty(target.tabId);
         setCompileState('dirty');
+        flashPlacementHighlight([target.nodeId], target.tabId);
         dispatchNavigateToNode(target.tabId, target.nodeId);
       }
     },

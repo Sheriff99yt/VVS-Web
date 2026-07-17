@@ -43,6 +43,11 @@ interface FloatingPanelShellProps {
   /** Max height when expanded (ignored when heightPx is set) */
   maxHeightClass?: string;
   headerExtra?: React.ReactNode;
+  /**
+   * Replaces the default title icon + title text (e.g. Output panel tab strip).
+   * Close / pin / headerExtra still render to the right.
+   */
+  headerTitle?: React.ReactNode;
   heightPx?: number;
   onHeightChange?: (height: number) => void;
   /** Expanded width in px — enables 2D resize from the free corner. */
@@ -84,6 +89,7 @@ export function FloatingPanelShell({
   widthClass = 'w-[min(232px,calc(100%-20px))]',
   maxHeightClass = 'max-h-[min(360px,58vh)]',
   headerExtra,
+  headerTitle,
   heightPx,
   onHeightChange,
   widthPx,
@@ -345,17 +351,25 @@ export function FloatingPanelShell({
         </Tooltip>
       ) : null}
       <div
-        className={`relative flex items-center gap-1 px-2 py-1.5 shrink-0 min-h-[28px] ${
+        className={`relative flex items-center gap-1 px-2 py-1 shrink-0 min-h-[28px] ${
           showBody ? 'border-b border-zinc-800/80' : ''
         }`}
       >
-        {titleIcon ? <span className="text-zinc-500 shrink-0">{titleIcon}</span> : null}
-        <div className="min-w-0 flex-1 flex flex-col gap-0.5">
-          <span className="text-[10px] font-medium text-zinc-300 truncate leading-tight">{title}</span>
-          {!expanded && subtitle ? (
-            <span className="text-[9px] text-zinc-500 truncate leading-tight">{subtitle}</span>
-          ) : null}
-        </div>
+        {headerTitle ? (
+          <div className="min-w-0 flex-1 flex items-center gap-1">{headerTitle}</div>
+        ) : (
+          <>
+            {titleIcon ? <span className="text-zinc-500 shrink-0">{titleIcon}</span> : null}
+            <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+              <span className="text-[10px] font-medium text-zinc-300 truncate leading-tight">
+                {title}
+              </span>
+              {!expanded && subtitle ? (
+                <span className="text-[9px] text-zinc-500 truncate leading-tight">{subtitle}</span>
+              ) : null}
+            </div>
+          </>
+        )}
         {headerExtra}
         {usePin ? (
           <Tooltip

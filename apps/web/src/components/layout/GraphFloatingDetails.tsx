@@ -28,6 +28,7 @@ import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel'
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
 import { EventNodeBindingPanel } from './RightSidebar/EventNodeBindingPanel';
 import { NodePinsPanel } from './RightSidebar/NodePinsPanel';
+import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import { PropertySchemaPanel } from './RightSidebar/PropertySchemaPanel';
 import { ImportGraphTargetPanel } from './RightSidebar/ImportGraphTargetPanel';
 import { FunctionPropertiesPanel } from './RightSidebar/FunctionPropertiesPanel';
@@ -310,6 +311,7 @@ function GraphFloatingDetailsPanel() {
 
   const handleNodeInputChange = (key: string, value: string | number | boolean) => {
     if (!selectedNodeId || !nodeData) return;
+    markNavNodeOptions();
     updateNodeData(selectedNodeId, {
       inlineValues: {
         ...(nodeData.data.inlineValues || {}),
@@ -320,6 +322,7 @@ function GraphFloatingDetailsPanel() {
 
   const handleNodePropertyChange = (key: string, value: string | number | boolean) => {
     if (!selectedNodeId || !nodeData) return;
+    markNavNodeOptions();
     const patch = normalizeNodeData({
       ...nodeData.data,
       properties: {

@@ -86,6 +86,18 @@ export interface UiPreferences {
   compilerLogLanguageScoped: boolean;
   /** Per-shortcut chord overrides (Win/Linux display form). */
   shortcutOverrides: ShortcutOverrideMap;
+  /**
+   * Output panel tabs (compiler Log / graph History / Activity).
+   * Disabled tabs stay hidden; at least one should remain enabled.
+   */
+  logPanelTabLog: boolean;
+  logPanelTabHistory: boolean;
+  logPanelTabActivity: boolean;
+  /**
+   * When Output is closed: three animated action lines in the bottom-right.
+   * On by default; turn off in Settings.
+   */
+  compactActionHistory: boolean;
   /** Subtle UI sounds for save, generate, undo, etc. */
   audioFeedbackEnabled: boolean;
   audioFeedbackVolume: number;
@@ -124,6 +136,10 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   mcpAllowDangerousTools: false,
   nodeSearchAllGraphs: false,
   compilerLogLanguageScoped: true,
+  logPanelTabLog: true,
+  logPanelTabHistory: true,
+  logPanelTabActivity: true,
+  compactActionHistory: true,
   shortcutOverrides: {},
   audioFeedbackEnabled: false,
   audioFeedbackVolume: 0.35,
@@ -198,6 +214,8 @@ export function clampFloatingPanelTopOffsets(
 export const RESET_COMPILER_LOG_LAYOUT_EVENT = 'vvs:reset-compiler-log-layout';
 export const RESET_DETAILS_PANEL_LAYOUT_EVENT = 'vvs:reset-details-panel-layout';
 export const TOGGLE_COMPILER_LOG_PIN_EVENT = 'vvs:toggle-compiler-log-pin';
+/** @deprecated Prefer TOGGLE_COMPILER_LOG_PIN_EVENT — `` ` `` cycles all Output tabs. */
+export const CYCLE_LOG_HISTORY_EVENT = 'vvs:cycle-log-history';
 export const TOGGLE_GRAPH_CHROME_EVENT = 'vvs:toggle-graph-chrome';
 export const FOCUS_GRAPH_NODE_SEARCH_EVENT = 'vvs:focus-graph-node-search';
 /** Ask TopNav to run Generate (validate + emit) — used by log language-scope toggle. */
@@ -290,6 +308,11 @@ export function dispatchToggleCompilerLogPin(): void {
   }
 }
 
+/** @deprecated Use dispatchToggleCompilerLogPin — `` ` `` cycles Log → History → Activity → off. */
+export function dispatchCycleLogHistory(): void {
+  dispatchToggleCompilerLogPin();
+}
+
 export function dispatchToggleGraphChrome(): void {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(TOGGLE_GRAPH_CHROME_EVENT));
@@ -303,11 +326,13 @@ export function dispatchFocusProjectTreeFilter(): void {
 }
 
 export const OPEN_SHORTCUTS_HELP_EVENT = 'vvs:open-shortcuts-help';
+/** Opens Log panel on the History tab (and legacy listeners). */
 export const OPEN_ACTION_HISTORY_EVENT = 'vvs:open-action-history';
 
 export function dispatchOpenActionHistory(): void {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(OPEN_ACTION_HISTORY_EVENT));
+    window.dispatchEvent(new CustomEvent('vvs:open-log-history-tab'));
   }
 }
 

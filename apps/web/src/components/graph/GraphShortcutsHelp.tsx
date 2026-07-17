@@ -58,7 +58,7 @@ const ESSENTIALS: VisualAction[] = [
   { id: 'group-comment', icon: MessageSquare, label: 'Comment' },
   { id: 'compile', icon: Code2, label: 'Generate' },
   { id: 'save-project', icon: Save, label: 'Save' },
-  { id: 'toggle-log-pin', icon: Terminal, label: 'Log' },
+  { id: 'toggle-log-pin', icon: Terminal, label: 'Output' },
 ];
 
 const PAGE_META = [

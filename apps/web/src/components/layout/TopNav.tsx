@@ -741,7 +741,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
-                    tip="Action history — undo stack and activity"
+                    tip="History — graph undo states in the Output panel"
                     onClick={() => {
                       dispatchOpenActionHistory();
                       setOpenMenu(null);
@@ -749,7 +749,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
                     <History size={12} className="shrink-0 opacity-70" />
-                    Action history…
+                    History…
                   </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip

@@ -11,6 +11,7 @@ import { VVSNode } from './VVSNode';
 import { VVSEdge } from './VVSEdge';
 import { VVSNode as VVSNodeType, VVSEdge as VVSEdgeType, PinType } from '@/types/graph';
 import { NodeContextMenu } from './NodeContextMenu';
+import { NodeActionsMenu } from './NodeActionsMenu';
 import { CanvasDropMenu } from './CanvasDropMenu';
 import {
   buildClassDropActions,
@@ -51,10 +52,16 @@ import { GraphSelectionToolbar } from './GraphSelectionToolbar';
 import { NodeHoverChrome } from './NodeHoverChrome';
 import { GRAPH_ONLY_RENDER_VISIBLE } from '@/lib/graphVirtualization';
 import { fitAllGraphNodes, focusGraphNodes, openGraphCamera, GRAPH_ZOOM } from '@/lib/graphCamera';
-import { ActionHistoryPanel } from '@/components/layout/ActionHistoryPanel';
 import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT, SPAWN_FUNCTION_IMPLEMENT_EVENT, SPAWN_FUNCTION_CALL_EVENT } from '@/components/layout/GraphFloatingDetails';
 import { GraphFloatingCompilerLog } from '@/components/layout/GraphFloatingCompilerLog';
-import { logActivity } from '@/lib/actionActivityLog';
+import { HistoryDiscardDialog } from '@/components/layout/HistoryDiscardDialog';
+import { logActivity, ACTIVITY_GROUP } from '@/lib/actionActivityLog';
+import { flashPlacementHighlight } from '@/lib/codeHoverHighlightStore';
+import {
+  offsetNodesToTarget,
+  reportGraphPointer,
+  resolvePlacementFlowPosition,
+} from '@/lib/graphPointerPlacement';
 import { playAudioCue } from '@/lib/audioFeedback';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import {
@@ -298,7 +305,8 @@ function GraphCanvasInner() {
     redoTrigger,
   } = useProject();
 
-  const { pendingCanvasFocus, clearPendingCanvasFocus } = useEditorNavigation();
+  const { pendingCanvasFocus, clearPendingCanvasFocus, pendingCanvasViewport, clearPendingCanvasViewport, recordCameraDwell } =
+    useEditorNavigation();
   const { focusGraphRef, focusFunction, focusClass } = useEditorFocus();
   const { graphChromeMode } = useEditorPanels();
 
@@ -322,7 +330,38 @@ function GraphCanvasInner() {
     [activeClassId, functions, events]
   );
 
-  const { screenToFlowPosition, getNode, fitView } = useReactFlow();
+  const { screenToFlowPosition, getNode, fitView, getViewport, setViewport } = useReactFlow();
+
+  const getViewportCenterFlow = useCallback(() => {
+    const pane =
+      typeof document !== 'undefined'
+        ? (document.querySelector('.react-flow__renderer') as HTMLElement | null) ??
+          (document.querySelector('.react-flow') as HTMLElement | null)
+        : null;
+    if (!pane) return { x: 0, y: 0 };
+    const r = pane.getBoundingClientRect();
+    return screenToFlowPosition({
+      x: r.left + r.width / 2,
+      y: r.top + r.height / 2,
+    });
+  }, [screenToFlowPosition]);
+
+  const getPlacementFlowPosition = useCallback(
+    () => resolvePlacementFlowPosition(getViewportCenterFlow()),
+    [getViewportCenterFlow]
+  );
+
+  const onGraphPointerMove = useCallback(
+    (event: React.PointerEvent) => {
+      const flow = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      reportGraphPointer(flow, true);
+    },
+    [screenToFlowPosition]
+  );
+
+  const onGraphPointerLeave = useCallback(() => {
+    reportGraphPointer(null, false);
+  }, []);
 
   useSyncProjectSelection({
     isCanvasActive,
@@ -364,6 +403,13 @@ function GraphCanvasInner() {
     flowPosition: { x: number; y: number };
     filter?: { pinType: string; lookingFor: 'input' | 'output' };
     pendingConnection?: { nodeId: string; handleId: string; handleType: 'source' | 'target' };
+  } | null>(null);
+
+  /** Node edit actions (right-click). Spawn catalog stays in `menu` / NodeContextMenu. */
+  const [actionsMenu, setActionsMenu] = useState<{
+    x: number;
+    y: number;
+    flowPosition: { x: number; y: number };
   } | null>(null);
 
   const [variableMenu, setVariableMenu] = useState<{
@@ -453,19 +499,21 @@ function GraphCanvasInner() {
   } | null>(null);
 
   const focusGraphNode = useCallback(
-    (nodeId: string) => {
+    (nodeId: string, nodeIds?: string[]) => {
+      const ids = nodeIds && nodeIds.length > 0 ? nodeIds : [nodeId];
+      const idSet = new Set(ids);
       setNodes((nds) =>
         nds.map((n) => ({
           ...n,
-          selected: n.id === nodeId,
+          selected: idSet.has(n.id),
         }))
       );
       setSelection({ type: 'node', id: nodeId });
-      setSelectedNodeIds([nodeId]);
+      setSelectedNodeIds(ids);
       // Defer one frame so selection/layout settle before the camera moves (reduces stutter).
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          focusGraphNodes(fitView, [nodeId]);
+          focusGraphNodes(fitView, ids);
         });
       });
     },
@@ -538,13 +586,57 @@ function GraphCanvasInner() {
     }
     if (processedFocusRequestRef.current === pendingCanvasFocus.requestId) return;
 
-    const nodeExists = nodes.some((n) => n.id === pendingCanvasFocus.nodeId);
-    if (!nodeExists) return;
+    const focusIds =
+      pendingCanvasFocus.nodeIds?.length > 0
+        ? pendingCanvasFocus.nodeIds
+        : [pendingCanvasFocus.nodeId];
+    const anyExists = focusIds.some((id) => nodes.some((n) => n.id === id));
+    if (!anyExists) return;
 
     processedFocusRequestRef.current = pendingCanvasFocus.requestId;
-    focusGraphNode(pendingCanvasFocus.nodeId);
+    focusGraphNode(pendingCanvasFocus.nodeId, focusIds);
     clearPendingCanvasFocus();
   }, [pendingCanvasFocus, activeGraphTab, nodes, focusGraphNode, clearPendingCanvasFocus]);
+
+  const processedViewportRequestRef = React.useRef<number | null>(null);
+  const cameraDwellTimerRef = React.useRef<number | null>(null);
+  const userCameraGestureRef = React.useRef(false);
+  const CAMERA_DWELL_MS = 2000;
+
+  React.useEffect(() => {
+    if (!pendingCanvasViewport || pendingCanvasViewport.graphTab !== activeGraphTab) {
+      return;
+    }
+    if (processedViewportRequestRef.current === pendingCanvasViewport.requestId) return;
+    processedViewportRequestRef.current = pendingCanvasViewport.requestId;
+    const { x, y, zoom } = pendingCanvasViewport.viewport;
+    void setViewport({ x, y, zoom }, { duration: 280 });
+    clearPendingCanvasViewport();
+  }, [
+    pendingCanvasViewport,
+    activeGraphTab,
+    setViewport,
+    clearPendingCanvasViewport,
+  ]);
+
+  const scheduleCameraDwell = useCallback(() => {
+    if (cameraDwellTimerRef.current != null) {
+      window.clearTimeout(cameraDwellTimerRef.current);
+    }
+    cameraDwellTimerRef.current = window.setTimeout(() => {
+      cameraDwellTimerRef.current = null;
+      const vp = getViewport();
+      recordCameraDwell({ x: vp.x, y: vp.y, zoom: vp.zoom });
+    }, CAMERA_DWELL_MS);
+  }, [getViewport, recordCameraDwell]);
+
+  React.useEffect(() => {
+    return () => {
+      if (cameraDwellTimerRef.current != null) {
+        window.clearTimeout(cameraDwellTimerRef.current);
+      }
+    };
+  }, []);
 
   const nodeTypes = useMemo(
     () => ({
@@ -572,7 +664,7 @@ function GraphCanvasInner() {
       }
       setEdgesWithHistory(result.edges);
       playAudioCue('wire');
-      logActivity('other', 'Connected wire');
+      logActivity('other', 'Connected wire', { group: ACTIVITY_GROUP.wire });
     },
     [nodes, edges, setEdgesWithHistory]
   );
@@ -653,18 +745,75 @@ function GraphCanvasInner() {
 
   const onPaneContextMenu = useCallback(
     (event: React.MouseEvent | MouseEvent) => {
+      setActionsMenu(null);
       openSpawnMenuAt(event);
     },
     [openSpawnMenuAt]
   );
 
-  /** Same spawn menu when right-clicking a node (empty graph chrome still uses pane handler). */
+  /**
+   * Node right-click — Node Actions (S / A / wires / clipboard…).
+   * Ensures the clicked node is selected; spawn stays on pane / Add node….
+   */
   const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent | MouseEvent) => {
-      openSpawnMenuAt(event);
+    (event: React.MouseEvent, node: VVSNodeType) => {
+      event.preventDefault();
+      const start = rightPanStartRef.current;
+      rightPanStartRef.current = null;
+      if (suppressPaneContextMenuRef.current) {
+        suppressPaneContextMenuRef.current = false;
+        return;
+      }
+      if (start) {
+        const dx = event.clientX - start.x;
+        const dy = event.clientY - start.y;
+        if (dx * dx + dy * dy >= RIGHT_PAN_SLOP_PX * RIGHT_PAN_SLOP_PX) {
+          return;
+        }
+      }
+      setMenu(null);
+      setEdgeMenu(null);
+      setVariableMenu(null);
+      setFunctionMenu(null);
+      setEventMenu(null);
+      setClassMenu(null);
+      setContainerMenu(null);
+      if (!node.selected) {
+        setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === node.id })));
+        setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+        setSelectedNodeIds([node.id]);
+        setSelection({ type: 'node', id: node.id });
+      }
+      const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      setActionsMenu({ x: event.clientX, y: event.clientY, flowPosition });
     },
-    [openSpawnMenuAt]
+    [screenToFlowPosition, setNodes, setEdges, setSelectedNodeIds, setSelection]
   );
+
+  const openSpawnAtScreen = useCallback(
+    (screen: { x: number; y: number }) => {
+      const flowPosition = screenToFlowPosition(screen);
+      setActionsMenu(null);
+      setEdgeMenu(null);
+      setMenu({ x: screen.x, y: screen.y, flowPosition });
+    },
+    [screenToFlowPosition]
+  );
+
+  const openActionsAtScreen = useCallback((screen: { x: number; y: number }) => {
+    setMenu(null);
+    setEdgeMenu(null);
+    setVariableMenu(null);
+    setFunctionMenu(null);
+    setEventMenu(null);
+    setClassMenu(null);
+    setContainerMenu(null);
+    setActionsMenu({
+      x: screen.x,
+      y: screen.y,
+      flowPosition: screenToFlowPosition(screen),
+    });
+  }, [screenToFlowPosition]);
 
   const clearTreeSymbolFocus = useCallback(() => {
     if (!isTreeSymbolSelection(selection.type)) return;
@@ -679,6 +828,7 @@ function GraphCanvasInner() {
     }
     selectionAnchorRef.current = null;
     if (menu) setMenu(null);
+    if (actionsMenu) setActionsMenu(null);
     if (variableMenu) setVariableMenu(null);
     if (functionMenu) setFunctionMenu(null);
     if (eventMenu) setEventMenu(null);
@@ -689,6 +839,7 @@ function GraphCanvasInner() {
     clearTreeSymbolFocus();
   }, [
     menu,
+    actionsMenu,
     variableMenu,
     functionMenu,
     eventMenu,
@@ -796,6 +947,7 @@ function GraphCanvasInner() {
     (event: React.MouseEvent, edge: Edge) => {
       event.preventDefault();
       const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      setActionsMenu(null);
       setEdgeMenu({
         x: event.clientX,
         y: event.clientY,
@@ -1542,16 +1694,16 @@ function GraphCanvasInner() {
 
   const pastePayload = useCallback(
     (payload: GraphClipboardPayload) => {
-      const offset = 50;
-      const newNodes = payload.nodes.map((n) => ({
+      const target = getPlacementFlowPosition();
+      const placed = offsetNodesToTarget(payload.nodes, target);
+      const newNodes = placed.map((n) => ({
         ...n,
         id: `${n.type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        position: { x: n.position.x + offset, y: n.position.y + offset },
         selected: true,
         parentId: undefined,
         expandParent: undefined,
       }));
-      const idMap = new Map(payload.nodes.map((n, i) => [n.id, newNodes[i].id]));
+      const idMap = new Map(payload.nodes.map((n, i) => [n.id, newNodes[i]!.id]));
       const newEdges = payload.edges.map((e, i) => ({
         ...e,
         id: createUniqueEdgeId(
@@ -1565,8 +1717,12 @@ function GraphCanvasInner() {
       }));
       setNodesWithHistory((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
       setEdgesWithHistory((eds) => [...eds.map((e) => ({ ...e, selected: false })), ...newEdges]);
+      flashPlacementHighlight(
+        newNodes.map((n) => n.id),
+        activeGraphTab
+      );
     },
-    [setNodesWithHistory, setEdgesWithHistory]
+    [setNodesWithHistory, setEdgesWithHistory, getPlacementFlowPosition, activeGraphTab]
   );
 
   const handleCopy = useCallback((options?: { log?: boolean }) => {
@@ -1581,7 +1737,9 @@ function GraphCanvasInner() {
     setClipboard(payload);
     void writeSystemGraphClipboard(selectedNodes, selectedEdges);
     if (options?.log !== false) {
-      logActivity('other', `Copied ${selectedNodes.length} node(s)`);
+      logActivity('other', `Copied ${selectedNodes.length} node(s)`, {
+        group: ACTIVITY_GROUP.clipboard,
+      });
     }
   }, [nodes, edges]);
 
@@ -1590,12 +1748,16 @@ function GraphCanvasInner() {
     if (systemPayload) {
       setClipboard(systemPayload);
       pastePayload(systemPayload);
-      logActivity('other', `Pasted ${systemPayload.nodes.length} node(s)`);
+      logActivity('other', `Pasted ${systemPayload.nodes.length} node(s)`, {
+        group: ACTIVITY_GROUP.clipboard,
+      });
       return;
     }
     if (clipboard) {
       pastePayload(clipboard);
-      logActivity('other', `Pasted ${clipboard.nodes.length} node(s)`);
+      logActivity('other', `Pasted ${clipboard.nodes.length} node(s)`, {
+        group: ACTIVITY_GROUP.clipboard,
+      });
     }
   }, [clipboard, pastePayload]);
 
@@ -1607,16 +1769,16 @@ function GraphCanvasInner() {
         selectedNodes.some((n) => n.id === e.source) &&
         selectedNodes.some((n) => n.id === e.target)
     );
-    const offset = 50;
-    const newNodes = selectedNodes.map((n) => ({
+    const target = getPlacementFlowPosition();
+    const placed = offsetNodesToTarget(selectedNodes, target);
+    const newNodes = placed.map((n) => ({
       ...n,
       id: `${n.type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      position: { x: n.position.x + offset, y: n.position.y + offset },
       selected: true,
       parentId: undefined,
       expandParent: undefined,
     }));
-    const idMap = new Map(selectedNodes.map((n, i) => [n.id, newNodes[i].id]));
+    const idMap = new Map(selectedNodes.map((n, i) => [n.id, newNodes[i]!.id]));
     const newEdges = selectedEdges.map((e, i) => ({
       ...e,
       id: createUniqueEdgeId(idMap.get(e.source)!, idMap.get(e.target)!, { index: i }),
@@ -1626,8 +1788,21 @@ function GraphCanvasInner() {
     }));
     setNodesWithHistory((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
     setEdgesWithHistory((eds) => [...eds, ...newEdges]);
-    logActivity('other', `Duplicated ${selectedNodes.length} node(s)`);
-  }, [nodes, edges, setNodesWithHistory, setEdgesWithHistory]);
+    flashPlacementHighlight(
+      newNodes.map((n) => n.id),
+      activeGraphTab
+    );
+    logActivity('other', `Duplicated ${selectedNodes.length} node(s)`, {
+      group: ACTIVITY_GROUP.clipboard,
+    });
+  }, [
+    nodes,
+    edges,
+    setNodesWithHistory,
+    setEdgesWithHistory,
+    getPlacementFlowPosition,
+    activeGraphTab,
+  ]);
 
   const handleCut = useCallback(() => {
     const cutCount = nodes.filter((n) => n.selected).length;
@@ -1638,7 +1813,9 @@ function GraphCanvasInner() {
     setEdgesWithHistory((eds) =>
       eds.filter((edge) => !nodes.find((n) => n.selected && (n.id === edge.source || n.id === edge.target)))
     );
-    if (cutCount > 0) logActivity('other', `Cut ${cutCount} node(s)`);
+    if (cutCount > 0) {
+      logActivity('other', `Cut ${cutCount} node(s)`, { group: ACTIVITY_GROUP.clipboard });
+    }
   }, [handleCopy, nodes, setNodesWithHistory, setEdgesWithHistory]);
 
   React.useEffect(() => {
@@ -1670,7 +1847,7 @@ function GraphCanvasInner() {
     const parts: string[] = [];
     if (selectedNodeIds.size) parts.push(`${selectedNodeIds.size} node${selectedNodeIds.size === 1 ? '' : 's'}`);
     if (selectedEdgeIds.size) parts.push(`${selectedEdgeIds.size} wire${selectedEdgeIds.size === 1 ? '' : 's'}`);
-    logActivity('other', `Deleted ${parts.join(' · ')}`);
+    logActivity('other', `Deleted ${parts.join(' · ')}`, { group: ACTIVITY_GROUP.clipboard });
   }, [nodes, edges, setNodesWithHistory, setEdgesWithHistory]);
 
   const handleDisconnectSelection = useCallback(() => {
@@ -1826,31 +2003,38 @@ function GraphCanvasInner() {
   /**
    * U75 S — select selection + forward exec reachability (not upstream).
    * Second S within CHAIN_LAYOUT_SECOND_S_MS (while armed) runs layout instead.
+   * Menus pass allowLayoutArm: false so they only expand selection.
    */
-  const handleSelectChainDownstream = useCallback(() => {
-    const now = performance.now();
-    const armed =
-      chainSArmAtRef.current > 0 && now - chainSArmAtRef.current <= CHAIN_LAYOUT_SECOND_S_MS;
-    if (armed) {
-      handleLayoutSelectedChainsRef.current();
-      return;
-    }
+  const handleSelectChainDownstream = useCallback(
+    (opts?: { allowLayoutArm?: boolean }) => {
+      const allowLayoutArm = opts?.allowLayoutArm !== false;
+      const now = performance.now();
+      const armed =
+        allowLayoutArm &&
+        chainSArmAtRef.current > 0 &&
+        now - chainSArmAtRef.current <= CHAIN_LAYOUT_SECOND_S_MS;
+      if (armed) {
+        handleLayoutSelectedChainsRef.current();
+        return;
+      }
 
-    const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
-    if (selectedIds.size === 0) return;
-    const { nodeIds } = selectDownstreamFromSelection(selectedIds, nodes, edges);
-    if (nodeIds.size === 0) return;
-    chainSArmAtRef.current = now;
-    const selectionChanges =
-      selectedIds.size !== nodeIds.size || [...selectedIds].some((id) => !nodeIds.has(id));
-    if (selectionChanges) chainSIgnoreSelectionClearRef.current = true;
-    const gen = chainSGenRef.current;
-    setNodes((nds) => {
-      if (gen !== chainSGenRef.current) return nds;
-      return nds.map((n) => ({ ...n, selected: nodeIds.has(n.id) }));
-    });
-    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
-  }, [nodes, edges, setNodes, setEdges, handleLayoutSelectedChainsRef]);
+      const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
+      if (selectedIds.size === 0) return;
+      const { nodeIds } = selectDownstreamFromSelection(selectedIds, nodes, edges);
+      if (nodeIds.size === 0) return;
+      chainSArmAtRef.current = allowLayoutArm ? now : 0;
+      const selectionChanges =
+        selectedIds.size !== nodeIds.size || [...selectedIds].some((id) => !nodeIds.has(id));
+      if (selectionChanges) chainSIgnoreSelectionClearRef.current = true;
+      const gen = chainSGenRef.current;
+      setNodes((nds) => {
+        if (gen !== chainSGenRef.current) return nds;
+        return nds.map((n) => ({ ...n, selected: nodeIds.has(n.id) }));
+      });
+      setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+    },
+    [nodes, edges, setNodes, setEdges, handleLayoutSelectedChainsRef]
+  );
 
   /** U75 A — expand to full undirected exec chains. */
   const handleSelectChainFull = useCallback(() => {
@@ -1921,7 +2105,9 @@ function GraphCanvasInner() {
   // Stable listener — avoid unsubscribing between rapid S S while `nodes` churns.
   React.useEffect(() => {
     const handleGraphAction = (event: Event) => {
-      const action = (event as CustomEvent<{ action: GraphAction }>).detail.action;
+      const detail = (event as CustomEvent<{ action: GraphAction; allowLayoutArm?: boolean }>)
+        .detail;
+      const action = detail?.action;
       const h = graphActionHandlersRef.current;
       if (action === 'copy') h.handleCopy();
       if (action === 'paste') void h.handlePaste();
@@ -1939,7 +2125,9 @@ function GraphCanvasInner() {
       if (action === 'extract-function') h.handleExtractToFunction();
       if (action === 'select-all') h.handleSelectAll();
       if (action === 'select-similar') h.handleSelectSimilar();
-      if (action === 'select-chain-downstream') h.handleSelectChainDownstream();
+      if (action === 'select-chain-downstream') {
+        h.handleSelectChainDownstream({ allowLayoutArm: detail?.allowLayoutArm });
+      }
       if (action === 'select-chain-full') h.handleSelectChainFull();
       if (action === 'layout-selected-chains') h.handleLayoutSelectedChains();
     };
@@ -2162,7 +2350,7 @@ function GraphCanvasInner() {
       ) : null}
       <GraphFloatingDetails />
       <GraphFloatingCompilerLog />
-      <ActionHistoryPanel />
+      <HistoryDiscardDialog />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -2171,6 +2359,8 @@ function GraphCanvasInner() {
         onConnect={onConnect}
         onConnectEnd={onConnectEnd}
         isValidConnection={isValidConnection}
+        onPointerMove={onGraphPointerMove}
+        onPointerLeave={onGraphPointerLeave}
         onPaneContextMenu={onPaneContextMenu}
         onNodeContextMenu={onNodeContextMenu}
         onPaneClick={onPaneClick}
@@ -2180,6 +2370,7 @@ function GraphCanvasInner() {
         onMoveStart={(event) => {
           // User pan/zoom gesture (null = programmatic camera).
           if (event != null) {
+            userCameraGestureRef.current = true;
             onGraphInteractionDragStart();
             if (
               typeof event === 'object' &&
@@ -2190,6 +2381,8 @@ function GraphCanvasInner() {
               rightPanStartRef.current = { x: e.clientX, y: e.clientY };
               suppressPaneContextMenuRef.current = false;
             }
+          } else {
+            userCameraGestureRef.current = false;
           }
         }}
         onMove={(event) => {
@@ -2202,6 +2395,11 @@ function GraphCanvasInner() {
           if (dx * dx + dy * dy >= RIGHT_PAN_SLOP_PX * RIGHT_PAN_SLOP_PX) {
             suppressPaneContextMenuRef.current = true;
           }
+        }}
+        onMoveEnd={() => {
+          if (!userCameraGestureRef.current) return;
+          userCameraGestureRef.current = false;
+          scheduleCameraDwell();
         }}
         onEdgeClick={onEdgeClick}
         onEdgeDoubleClick={onEdgeDoubleClick}
@@ -2247,7 +2445,7 @@ function GraphCanvasInner() {
           />
         ) : null}
         {graphChromeMode === 'map-controls' ? <Controls position="bottom-right" /> : null}
-        <GraphSelectionToolbar />
+        <GraphSelectionToolbar onOpenMoreActions={openActionsAtScreen} />
         <NodeHoverChrome />
         {menu && (
           <NodeContextMenu
@@ -2270,6 +2468,14 @@ function GraphCanvasInner() {
           />
         )}
       </ReactFlow>
+      {actionsMenu && (
+        <NodeActionsMenu
+          x={actionsMenu.x}
+          y={actionsMenu.y}
+          onClose={() => setActionsMenu(null)}
+          onAddNode={() => openSpawnAtScreen(actionsMenu)}
+        />
+      )}
       {variableMenu && (() => {
         const { items, dividersBefore } = toCanvasDropMenuItems(
           buildVariableDropActions({
