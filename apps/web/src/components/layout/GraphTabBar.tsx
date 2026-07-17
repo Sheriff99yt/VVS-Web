@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
@@ -11,6 +11,10 @@ import {
   reorderOpenTabs,
   selectionForGraphTab,
 } from '@/lib/graphTabs';
+import {
+  getCodeHoverHighlightTabId,
+  subscribeCodeHoverHighlight,
+} from '@/lib/codeHoverHighlightStore';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 export function GraphTabBar() {
@@ -25,6 +29,11 @@ export function GraphTabBar() {
   } = useProject();
   const { navigate } = useEditorNavigation();
   const { addFunctionWithDefine } = useSymbolLifecycle();
+  const codeHoverTabId = useSyncExternalStore(
+    subscribeCodeHoverHighlight,
+    getCodeHoverHighlightTabId,
+    () => null
+  );
   const [showMenu, setShowMenu] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
@@ -178,6 +187,7 @@ export function GraphTabBar() {
         {openTabs.map((tab) => {
           const active = activeGraphTab === tab.id;
           const dirty = isTabDirty(tab.id);
+          const codeHover = codeHoverTabId === tab.id;
           return (
             <div
               key={tab.id}
@@ -204,7 +214,9 @@ export function GraphTabBar() {
                   : 'bg-zinc-950/50 hover:bg-zinc-900 border-zinc-800/50 hover:border-zinc-800'
               } ${draggingTabId === tab.id ? 'opacity-50' : ''} ${
                 dropTabId === tab.id ? 'ring-1 ring-inset ring-indigo-500/50' : ''
-              } ${dirty && !active ? 'border-amber-800/40' : ''}`}
+              } ${dirty && !active ? 'border-amber-800/40' : ''} ${
+                codeHover ? 'outline outline-2 outline-yellow-400 outline-offset-[-1px] z-10' : ''
+              }`}
             >
               <div
                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -279,6 +291,7 @@ export function GraphTabBar() {
             {openTabs.map((tab) => {
               const active = activeGraphTab === tab.id;
               const dirty = isTabDirty(tab.id);
+              const codeHover = codeHoverTabId === tab.id;
               return (
                 <button
                   key={tab.id}
@@ -291,7 +304,7 @@ export function GraphTabBar() {
                     active
                       ? 'bg-zinc-800 text-zinc-100'
                       : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
-                  }`}
+                  } ${codeHover ? 'outline outline-2 outline-yellow-400 outline-offset-[-2px]' : ''}`}
                 >
                   <div
                     className={`w-1.5 h-1.5 rounded-full shrink-0 ${

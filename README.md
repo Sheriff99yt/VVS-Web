@@ -168,8 +168,9 @@ Contributor rules: **[CONTRIBUTING.md](CONTRIBUTING.md)** · **[.agents/AGENTS.m
 | **[setup.md](docs/setup.md)** | Install, Pages preview, pre-release + SemVer releases |
 | **[history.md](docs/history.md)** | Origin story — graduation project → VVS Web, open systems & AI era |
 | **[vision.md](docs/vision.md)** | Product philosophy, UE6/Verse direction, logic/syntax model |
-| **[roadmap.md](docs/roadmap.md)** | Public phased roadmap |
+| **[roadmap.md](docs/roadmap.md)** | Public roadmap (Active / Next / shipped waves) |
 | **[current_state.md](docs/current_state.md)** | What is implemented in this repo |
+| **[code_panel.md](docs/code_panel.md)** | Code panel usability — selection highlight, hover, double-click → node, Files pin |
 | **[naming_and_product_direction.md](docs/naming_and_product_direction.md)** | UI vocabulary (web stays engine-neutral) |
 | **[project_requirements.md](docs/project_requirements.md)** | Full requirements spec |
 | **[vvs_2_0_tech_stack.md](docs/vvs_2_0_tech_stack.md)** | Technology choices |

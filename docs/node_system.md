@@ -463,7 +463,10 @@ interface SourceRange {
 | Dirty graph | Show “out of date”; highlight stale map or dim |
 | Pure expression nodes (Get) | `fragments` or “used on line N” in inspector |
 | Branch | Highlight full `if` block |
-| Later | Click line → select node (reverse `sourceMap`) |
+| Hover line | Yellow node **outline** on current tab (stacks with blue selection); yellow **tab** outline for current or other **open** tab — see [code_panel.md](code_panel.md) |
+| Double-click line | Select node + switch to owning graph tab (`sourceMapReverse`) |
+
+Full feature list: **[code_panel.md](code_panel.md)**.
 
 ```mermaid
 flowchart LR

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search } from 'lucide-react';
+import { spawnItemMatchesQuery } from '@vvs/syntax-registry';
 import { buildCoreCategories, spawnMenuItemKey } from '@/lib/nodeCatalog';
 import { LibraryNodeTemplate } from '@/types/ui';
 import type { FunctionSymbol, GraphTab, TargetLanguage, ProjectEventDefinition } from '@/types/graph';
@@ -108,9 +109,7 @@ export function NodeContextMenu({
     .map((category) => ({
       ...category,
       items: category.items.filter((item) => {
-        const matchesSearch =
-          item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.type.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = spawnItemMatchesQuery(item, searchQuery, category.name);
 
         let matchesFilter = true;
         if (filter) {

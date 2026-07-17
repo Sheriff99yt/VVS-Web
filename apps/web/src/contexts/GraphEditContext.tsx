@@ -5,6 +5,8 @@ import type { VVSNode, VVSEdge } from '@/types/graph';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { GraphTab } from '@/contexts/ProjectContext';
 
+import type { GraphHistoryEntryMeta } from '@/lib/graphHistory';
+
 export interface GraphEditContextValue {
   nodes: VVSNode[];
   edges: VVSEdge[];
@@ -14,10 +16,14 @@ export interface GraphEditContextValue {
   setEdges: React.Dispatch<React.SetStateAction<VVSEdge[]>>;
   setNodesWithHistory: React.Dispatch<React.SetStateAction<VVSNode[]>>;
   setEdgesWithHistory: React.Dispatch<React.SetStateAction<VVSEdge[]>>;
-  undo: () => void;
-  redo: () => void;
+  undo: () => string | null;
+  redo: () => string | null;
   canUndo: boolean;
   canRedo: boolean;
+  jumpToPastEntry: (entryId: string) => string | null;
+  getPastHistory: () => GraphHistoryEntryMeta[];
+  getFutureCount: () => number;
+  historyVersion: number;
   importGraphTab: (tab: GraphTab, document: GraphDocument) => void;
 }
 

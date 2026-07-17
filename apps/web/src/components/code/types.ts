@@ -28,4 +28,10 @@ export interface GeneratedCodeViewProps {
    * Receives 1-based line and column from the click position.
    */
   onReverseSelectLine?: (line: number, col: number) => void;
+  /**
+   * Hover a line → highlight the matching node on the current graph only
+   * (no selection / camera). `null` when leaving the editor or no mapping.
+   */
+  onHoverSourceLocation?: (line: number, col: number) => void;
+  onHoverSourceLeave?: () => void;
 }

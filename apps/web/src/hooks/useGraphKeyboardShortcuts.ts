@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { dispatchGraphAction } from '@/lib/graphActions';
-import { isTypingTarget } from '@/lib/graphShortcuts';
+import { isTypingTarget, matchesGraphShortcut } from '@/lib/graphShortcuts';
 import {
   dispatchFocusGraphNodeSearch,
   dispatchFocusProjectTreeFilter,
@@ -22,10 +22,11 @@ export interface GraphKeyboardHandlers {
   /** When true, canvas shortcuts are suppressed (e.g. node search expanded). */
   suppressCanvasShortcuts?: boolean;
   /**
-   * Name of the selected Project-tree symbol (if any) for Find shortcuts.
-   * F → find in this graph; Ctrl+F → find in all graphs.
+   * Prefill Find from Project-tree symbol(s) and/or selected canvas nodes.
+   * One name → single query; several → match-any (multi results).
+   * Ctrl+F → this graph; Ctrl+Shift+F → all graphs; F with tree symbol → this graph.
    */
-  nodeSearchQueryFromSelection?: () => string | undefined;
+  nodeSearchQueryFromSelection?: () => string | string[] | undefined;
 }
 
 /**
@@ -54,28 +55,28 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
 
       if (isHelpOpen) return;
 
-      // Ctrl+Space — left panel filter (works even while typing / node search is open).
-      // Prefer ctrl over meta (⌘Space is Spotlight on macOS).
-      if (e.code === 'Space' && e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Panel filter — works even while typing / node search is open.
+      if (matchesGraphShortcut(e, 'panel-filter')) {
         e.preventDefault();
         dispatchFocusProjectTreeFilter();
         return;
       }
 
-      const mod = e.ctrlKey || e.metaKey;
-      const key = e.key.toLowerCase();
-
-      // Ctrl/Cmd+F — graph node search (all graphs). Allow from plain inputs (incl. node search);
-      // leave TEXTAREA / contenteditable to code-editor find.
-      if (mod && key === 'f' && !e.shiftKey && !e.altKey) {
+      // Find — allow from plain inputs; leave TEXTAREA / contenteditable alone.
+      // Check all-graphs first (Ctrl+Shift+F) before this-graph (Ctrl+F).
+      if (
+        matchesGraphShortcut(e, 'node-search-all') ||
+        matchesGraphShortcut(e, 'node-search')
+      ) {
         const el = document.activeElement as HTMLElement | null;
         const tag = el?.tagName;
         if (tag === 'TEXTAREA' || el?.isContentEditable) {
           return;
         }
         e.preventDefault();
-        dispatchFocusGraphNodeSearch(nodeSearchQueryFromSelection?.(), {
-          searchAllGraphs: true,
+        const query = nodeSearchQueryFromSelection?.();
+        dispatchFocusGraphNodeSearch(query, {
+          searchAllGraphs: matchesGraphShortcut(e, 'node-search-all'),
         });
         return;
       }
@@ -83,13 +84,16 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
       if (isTypingTarget()) return;
       if (suppressCanvasShortcuts) return;
 
-      if (e.key === '?' && !mod && !e.altKey) {
+      if (matchesGraphShortcut(e, 'help')) {
         e.preventDefault();
         onToggleHelp();
         return;
       }
 
       // U75: bare A expands to full undirected exec chain (Ctrl+A remains select-all).
+      // Keep hardcoded until select-chain gets its own rebindable shortcut id.
+      const mod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
       if (key === 'a' && !mod && !e.shiftKey && !e.altKey) {
         if (e.repeat) return;
         e.preventDefault();
@@ -98,7 +102,6 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
       }
 
       // U75: S = select downstream; second S (armed in GraphCanvas) = layout.
-      // Ignore key-repeat so holding S cannot fake S S.
       if (key === 's' && !mod && !e.shiftKey && !e.altKey) {
         if (e.repeat) return;
         e.preventDefault();
@@ -106,136 +109,128 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
         return;
       }
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (matchesGraphShortcut(e, 'delete')) {
         e.preventDefault();
         dispatchGraphAction('delete-selection');
         return;
       }
 
-      if (mod && key === 'z' && !e.shiftKey) {
+      if (matchesGraphShortcut(e, 'undo')) {
         e.preventDefault();
         if (canUndo) onUndo();
         return;
       }
 
-      if (mod && ((key === 'z' && e.shiftKey) || key === 'y')) {
+      if (matchesGraphShortcut(e, 'redo')) {
         e.preventDefault();
         if (canRedo) onRedo();
         return;
       }
 
-      if (mod && key === 'c') {
+      if (matchesGraphShortcut(e, 'copy')) {
         e.preventDefault();
         dispatchGraphAction('copy');
         return;
       }
 
-      if (mod && key === 'v') {
+      if (matchesGraphShortcut(e, 'paste')) {
         e.preventDefault();
         dispatchGraphAction('paste');
         return;
       }
 
-      if (mod && key === 'x') {
+      if (matchesGraphShortcut(e, 'cut')) {
         e.preventDefault();
         dispatchGraphAction('cut');
         return;
       }
 
-      if (mod && e.shiftKey && key === 'a') {
-        e.preventDefault();
-        dispatchGraphAction('select-similar');
-        return;
-      }
-
-      if (mod && key === 'a' && !e.shiftKey && !e.altKey) {
-        e.preventDefault();
-        dispatchGraphAction('select-all');
-        return;
-      }
-
-      if (mod && key === 'd' && !e.shiftKey && !e.altKey) {
+      if (matchesGraphShortcut(e, 'duplicate')) {
         e.preventDefault();
         dispatchGraphAction('duplicate');
         return;
       }
 
-      if (e.altKey && key === 'd' && !mod) {
+      if (matchesGraphShortcut(e, 'select-all')) {
+        e.preventDefault();
+        dispatchGraphAction('select-all');
+        return;
+      }
+
+      if (matchesGraphShortcut(e, 'select-similar')) {
+        e.preventDefault();
+        dispatchGraphAction('select-similar');
+        return;
+      }
+
+      if (matchesGraphShortcut(e, 'disconnect')) {
         e.preventDefault();
         dispatchGraphAction('disconnect-selection');
         return;
       }
 
-      if (mod && e.shiftKey && key === 'g') {
+      if (matchesGraphShortcut(e, 'group-comment')) {
         e.preventDefault();
         dispatchGraphAction('group-comment');
         return;
       }
 
-      // U68: plain C comments the selection (Ctrl/Cmd+C remains copy).
-      if (key === 'c' && !mod && !e.shiftKey && !e.altKey) {
-        e.preventDefault();
-        dispatchGraphAction('group-comment');
-        return;
-      }
-
-      if (mod && e.shiftKey && key === 'u') {
+      if (matchesGraphShortcut(e, 'ungroup-comment')) {
         e.preventDefault();
         dispatchGraphAction('ungroup-comment');
         return;
       }
 
-      if (key === 'l' && !mod && !e.shiftKey && !e.altKey) {
+      if (matchesGraphShortcut(e, 'toggle-comment-lock')) {
         e.preventDefault();
         dispatchGraphAction('toggle-comment-lock');
         return;
       }
 
-      if (mod && e.shiftKey && key === 'm') {
+      if (matchesGraphShortcut(e, 'snap-comment-members')) {
         e.preventDefault();
         dispatchGraphAction('snap-comment-members');
         return;
       }
 
-      if (key === 'm' && !mod && !e.shiftKey && !e.altKey) {
+      if (matchesGraphShortcut(e, 'toggle-minimap')) {
         e.preventDefault();
         dispatchToggleGraphChrome();
         return;
       }
 
-      if (mod && e.shiftKey && key === 'e') {
+      if (matchesGraphShortcut(e, 'extract-function')) {
         e.preventDefault();
         dispatchGraphAction('extract-function');
         return;
       }
 
-      if (key === 'f' && !mod && !e.shiftKey && !e.altKey) {
+      if (
+        matchesGraphShortcut(e, 'focus-selection') ||
+        matchesGraphShortcut(e, 'node-search-from-symbol')
+      ) {
         e.preventDefault();
         const symbolQuery = nodeSearchQueryFromSelection?.();
         if (symbolQuery) {
-          // Find selected symbol in the current graph only.
           dispatchFocusGraphNodeSearch(symbolQuery, { searchAllGraphs: false });
           return;
         }
-        dispatchGraphAction('focus-selection');
+        if (matchesGraphShortcut(e, 'focus-selection')) {
+          dispatchGraphAction('focus-selection');
+        }
         return;
       }
 
-      // Backtick / tilde — toggle compiler log open/closed.
-      if ((e.key === '`' || e.key === '~') && !mod && !e.altKey) {
+      if (matchesGraphShortcut(e, 'toggle-log-pin')) {
         e.preventDefault();
         dispatchToggleCompilerLogPin();
         return;
       }
 
-      // Space / Ctrl+K — open search; respect current all-graphs toggle (Ctrl+F forces on).
-      if (e.code === 'Space' && !mod) {
-        e.preventDefault();
-        dispatchFocusGraphNodeSearch();
-        return;
-      }
-
-      if (mod && key === 'k' && !e.shiftKey && !e.altKey) {
+      if (
+        matchesGraphShortcut(e, 'focus-node-search') ||
+        matchesGraphShortcut(e, 'focus-node-search-palette')
+      ) {
         e.preventDefault();
         dispatchFocusGraphNodeSearch();
         return;

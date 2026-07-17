@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { NodeProps, useReactFlow } from '@xyflow/react';
-import { AlertTriangle, FolderOpen } from 'lucide-react';
+import { CircleHelp, FolderOpen } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
   isNodeEffectiveForLanguage,
@@ -16,8 +16,12 @@ import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { hasHandlerNodeForEvent } from '@/lib/defineNodeSync';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
+import { hoverChromeSetHoveredNode } from '@/lib/nodeHoverChromeStore';
+import {
+  getCodeHoverHighlightNodeId,
+  subscribeCodeHoverHighlight,
+} from '@/lib/codeHoverHighlightStore';
 import { NodePinRow } from './NodePinRow';
-import { NodeModifiers, nodeHasModifierChrome } from './NodeModifiers';
 import styles from './VVSNode.module.css';
 
 interface VVSNodeBodyProps {
@@ -32,6 +36,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const documents = useGraphDocuments();
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const [dimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
+  const [stripOnSelect] = useUiPreference('nodeOptionsStripOnSelect');
   const kindId = resolveNodeKindId(data);
   const eventId =
     kindId === 'event_member_define'
@@ -66,14 +71,18 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const linkedTargetLabel = linkedGraphTargetLabel(data);
   const isGraphRef = kindId === 'graph_ref' || data.linkKind === 'graph_ref';
   const isImportNode = data.linkKind === 'import_module';
-  const importLangGate =
-    isImportNode && typeof data.properties?.targetLanguages === 'string'
-      ? data.properties.targetLanguages.trim()
-      : '';
   const hasPins = data.inputs.length > 0 || data.outputs.length > 0;
   const title = getNodeDisplayTitle(data);
-  const [modifiersPinned, setModifiersPinned] = useState(false);
-  const showHeaderOverlay = Boolean(importLangGate) || nodeHasModifierChrome(data);
+  const stateTip = [unsupportedTitle, hasBrokenRef ? 'Unresolved symbol reference' : '']
+    .filter(Boolean)
+    .join(' · ');
+  const showStateIcon = Boolean(stateTip);
+  const codeHoverNodeId = useSyncExternalStore(
+    subscribeCodeHoverHighlight,
+    getCodeHoverHighlightNodeId,
+    () => null
+  );
+  const isCodeHover = codeHoverNodeId === id;
 
   const handleInlineChange = useCallback(
     (pinId: string, value: string | number | boolean) => {
@@ -88,25 +97,29 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   );
 
   return (
-    <>
-      <Tooltip content={unsupportedTitle || undefined} placement="top" disabled={!unsupportedTitle} className="block w-full min-w-0">
-        <div
-          className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''} ${isUnsupported ? styles.nodeUnsupported : ''}`}
-          data-category={data.category}
-        >
-        {showHeaderOverlay ? (
-          <div
-            className={`${styles.headerOverlay} ${modifiersPinned ? styles.headerOverlayPinned : ''}`}
-          >
-            {importLangGate ? (
-              <Tooltip content="Emits only for these target languages" placement="top">
-                <span className={styles.headerOverlayMeta}>{importLangGate}</span>
-              </Tooltip>
-            ) : null}
-            <NodeModifiers id={id} data={data} onInteractionChange={setModifiersPinned} />
-          </div>
-        ) : null}
+    <div
+      className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${isCodeHover ? styles.nodeCodeHover : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''}`}
+      data-category={data.category}
+      onMouseEnter={() => {
+        if (!stripOnSelect) hoverChromeSetHoveredNode(id);
+      }}
+      onMouseLeave={() => {
+        if (!stripOnSelect) hoverChromeSetHoveredNode(null);
+      }}
+    >
+      {showStateIcon ? (
+        <div className={styles.stateIcons}>
+          <Tooltip content={stateTip} placement="right">
+            <span className={styles.stateIcon} role="img" aria-label={stateTip}>
+              <CircleHelp size={12} strokeWidth={2} />
+            </span>
+          </Tooltip>
+        </div>
+      ) : null}
 
+      <div
+        className={`${isUnsupported ? styles.nodeDimmedContent : ''} ${isUnsupported && selected ? styles.nodeDimmedContentSelected : ''}`}
+      >
         <div className={styles.header}>
           <div className={styles.titleBlock}>
             <div className="flex items-center gap-1.5 min-w-0">
@@ -114,13 +127,6 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 <FolderOpen size={12} className="text-emerald-400/90 shrink-0" aria-hidden />
               ) : null}
               <span className={`${styles.title} truncate`}>{title}</span>
-              {hasBrokenRef ? (
-                <Tooltip content="Unresolved symbol reference" placement="top">
-                  <span>
-                    <AlertTriangle size={12} className="text-amber-400 shrink-0" aria-hidden />
-                  </span>
-                </Tooltip>
-              ) : null}
             </div>
             {linkedTargetLabel && (
               <Tooltip
@@ -164,9 +170,8 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
             ))}
           </div>
         </div>
-        </div>
-      </Tooltip>
-    </>
+      </div>
+    </div>
   );
 }
 

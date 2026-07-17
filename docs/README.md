@@ -11,8 +11,9 @@ Index for the public Vision Visual Scripting documentation set.
 | **[../SECURITY.md](../SECURITY.md)** | Security researchers | Vulnerability reporting |
 | **[history.md](history.md)** | Everyone | Origin story — graduation project, VVS 1 → VVS Web, why we started this repo |
 | **[vision.md](vision.md)** | Everyone | Why VVS exists, open visual scripting for all workflows, UE6 + Verse direction |
-| **[roadmap.md](roadmap.md)** | Everyone | Phased public roadmap (web → MCP → UE6 plugin) |
+| **[roadmap.md](roadmap.md)** | Everyone | Public roadmap — Active / Next / Recently completed (mirrors in-app Open · Done) |
 | **[current_state.md](current_state.md)** | Contributors | What is implemented in this repository **today** |
+| **[code_panel.md](code_panel.md)** | Contributors / users | Generated code panel navigation, highlight, Files pin |
 
 ## Product & requirements
 

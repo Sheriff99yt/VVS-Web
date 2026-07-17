@@ -8,12 +8,14 @@ export interface GraphWorkspaceApi {
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
   patchAllDocuments: (
     updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-    options?: { affectedTabIds?: string[] }
+    options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
   ) => string[];
   importGraphDocument: (tab: import('@/contexts/ProjectContext').GraphTab, document: GraphDocument) => void;
   getActiveTabMetadata: () => GraphTabMetadata;
   updateActiveTabMetadata: (patch: Partial<GraphTabMetadata>) => void;
   subscribeMetadata: (listener: () => void) => () => void;
+  /** Push current workspace state onto the undo stack before a symbol mutation. */
+  pushHistory: (label: string) => void;
 }
 
 interface GraphWorkspaceContextValue {
@@ -22,12 +24,13 @@ interface GraphWorkspaceContextValue {
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
   patchAllDocuments: (
     updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-    options?: { affectedTabIds?: string[] }
+    options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
   ) => string[] | null;
   importGraphDocument: (tab: import('@/contexts/ProjectContext').GraphTab, document: GraphDocument) => void;
   getActiveTabMetadata: () => GraphTabMetadata | null;
   updateActiveTabMetadata: (patch: Partial<GraphTabMetadata>) => void;
   subscribeMetadata: (listener: () => void) => () => void;
+  pushHistory: (label: string) => void;
 }
 
 const GraphWorkspaceContext = createContext<GraphWorkspaceContextValue | undefined>(undefined);
@@ -68,7 +71,7 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
   const patchAllDocuments = useCallback(
     (
       updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-      options?: { affectedTabIds?: string[] }
+      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
     ) => apiRef.current?.patchAllDocuments(updater, options) ?? null,
     []
   );
@@ -96,6 +99,10 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const pushHistory = useCallback((label: string) => {
+    apiRef.current?.pushHistory(label);
+  }, []);
+
   return (
     <GraphWorkspaceContext.Provider
       value={{
@@ -107,6 +114,7 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
         getActiveTabMetadata,
         updateActiveTabMetadata,
         subscribeMetadata,
+        pushHistory,
       }}
     >
       {children}

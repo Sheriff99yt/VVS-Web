@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 1,
   "lastUpdated": "2026-07-17",
   "productDirection": "text-shaped-graphs",
@@ -11,14 +11,14 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "coverageLabUsabilityTest",
-  "nextFunctionWork": "U77 Go / U78 packs; U89–U92 remaining; U97–U101 / U103–U106 open (U102 hover modifiers · U107 gestures · U94 tooltip migration done); U93 long-term; CL plans; client-first",
+  "nextFunctionWork": "U77 Go / U78 packs / CL plans; U89–U92; U97–U101 / U103–U106 (U102 · U107–U117 + code-panel hover done); U93 long-term; client-first",
   "crossLanguageMapping": ".agents/skills/vvs_cross_language_mapping/SKILL.md",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
     "totalItems": 94,
     "done": 78,
     "open": 15,
-    "partial": ["U89", "U91", "U92"],
+    "partial": ["U89", "U91", "U92", "U97"],
     "depthFirstSection": 18,
     "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "sectionsPartial": [13, 14, 15, 16, 17, 18],
@@ -30,7 +30,6 @@
       "U91",
       "U92",
       "U93",
-      "U97",
       "U98",
       "U99",
       "U100",
@@ -47,7 +46,7 @@
       "role": "ui-backlog",
       "refreshAfter": "each UI loop iteration or audit",
       "itemPrefix": "U",
-      "openCount": 15
+      "openCount": 14
     },
     "decisions.md": { "role": "locked-product-rules", "mutable": "append-or-revise-with-care" },
     "workspace-facts.md": { "role": "canonical-paths-and-facts", "mutable": true }

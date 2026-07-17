@@ -48,10 +48,14 @@ import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, nestedGraphIdForNode } from '@/lib/linkedGraphNodes';
 import { GraphNodeSearch } from './GraphNodeSearch';
 import { GraphSelectionToolbar } from './GraphSelectionToolbar';
+import { NodeHoverChrome } from './NodeHoverChrome';
 import { GRAPH_ONLY_RENDER_VISIBLE } from '@/lib/graphVirtualization';
 import { fitAllGraphNodes, focusGraphNodes, openGraphCamera, GRAPH_ZOOM } from '@/lib/graphCamera';
+import { ActionHistoryPanel } from '@/components/layout/ActionHistoryPanel';
 import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT, SPAWN_FUNCTION_IMPLEMENT_EVENT, SPAWN_FUNCTION_CALL_EVENT } from '@/components/layout/GraphFloatingDetails';
 import { GraphFloatingCompilerLog } from '@/components/layout/GraphFloatingCompilerLog';
+import { logActivity } from '@/lib/actionActivityLog';
+import { playAudioCue } from '@/lib/audioFeedback';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import {
   buildEventNodeData,
@@ -268,6 +272,7 @@ function GraphCanvasInner() {
     setSelection,
     setSelectedNodeIds,
     setSelectedTreeSymbols,
+    selectedTreeSymbols,
     selection,
     activeGraphTab,
     openTabs,
@@ -566,6 +571,8 @@ function GraphCanvasInner() {
         );
       }
       setEdgesWithHistory(result.edges);
+      playAudioCue('wire');
+      logActivity('other', 'Connected wire');
     },
     [nodes, edges, setEdgesWithHistory]
   );
@@ -611,22 +618,52 @@ function GraphCanvasInner() {
     [nodes, edges]
   );
 
-  /** Right-button pan (U107) still fires contextmenu on mouseup — skip spawn menu after a pan. */
+  /**
+   * Right-button pan (U107) still fires contextmenu on mouseup — skip spawn menu only after a
+   * real pan. `onMoveStart` alone is too eager (fires on tiny jitter / press), which blocked
+   * right-click → nodes menu.
+   */
   const suppressPaneContextMenuRef = React.useRef(false);
+  const rightPanStartRef = React.useRef<{ x: number; y: number } | null>(null);
+  const RIGHT_PAN_SLOP_PX = 6;
   /** Anchor for Shift+click exec-chain range select. */
   const selectionAnchorRef = React.useRef<string | null>(null);
 
-  const onPaneContextMenu = useCallback(
+  const openSpawnMenuAt = useCallback(
     (event: React.MouseEvent | MouseEvent) => {
       event.preventDefault();
+      const start = rightPanStartRef.current;
+      rightPanStartRef.current = null;
       if (suppressPaneContextMenuRef.current) {
         suppressPaneContextMenuRef.current = false;
         return;
+      }
+      if (start) {
+        const dx = event.clientX - start.x;
+        const dy = event.clientY - start.y;
+        if (dx * dx + dy * dy >= RIGHT_PAN_SLOP_PX * RIGHT_PAN_SLOP_PX) {
+          return;
+        }
       }
       const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       setMenu({ x: event.clientX, y: event.clientY, flowPosition });
     },
     [screenToFlowPosition]
+  );
+
+  const onPaneContextMenu = useCallback(
+    (event: React.MouseEvent | MouseEvent) => {
+      openSpawnMenuAt(event);
+    },
+    [openSpawnMenuAt]
+  );
+
+  /** Same spawn menu when right-clicking a node (empty graph chrome still uses pane handler). */
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent | MouseEvent) => {
+      openSpawnMenuAt(event);
+    },
+    [openSpawnMenuAt]
   );
 
   const clearTreeSymbolFocus = useCallback(() => {
@@ -1532,7 +1569,7 @@ function GraphCanvasInner() {
     [setNodesWithHistory, setEdgesWithHistory]
   );
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = useCallback((options?: { log?: boolean }) => {
     const selectedNodes = nodes.filter((n) => n.selected);
     const selectedEdges = edges.filter(
       (e) =>
@@ -1543,6 +1580,9 @@ function GraphCanvasInner() {
     const payload: GraphClipboardPayload = { version: 1, nodes: selectedNodes, edges: selectedEdges };
     setClipboard(payload);
     void writeSystemGraphClipboard(selectedNodes, selectedEdges);
+    if (options?.log !== false) {
+      logActivity('other', `Copied ${selectedNodes.length} node(s)`);
+    }
   }, [nodes, edges]);
 
   const handlePaste = useCallback(async () => {
@@ -1550,9 +1590,13 @@ function GraphCanvasInner() {
     if (systemPayload) {
       setClipboard(systemPayload);
       pastePayload(systemPayload);
+      logActivity('other', `Pasted ${systemPayload.nodes.length} node(s)`);
       return;
     }
-    if (clipboard) pastePayload(clipboard);
+    if (clipboard) {
+      pastePayload(clipboard);
+      logActivity('other', `Pasted ${clipboard.nodes.length} node(s)`);
+    }
   }, [clipboard, pastePayload]);
 
   const handleDuplicate = useCallback(() => {
@@ -1582,16 +1626,19 @@ function GraphCanvasInner() {
     }));
     setNodesWithHistory((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
     setEdgesWithHistory((eds) => [...eds, ...newEdges]);
+    logActivity('other', `Duplicated ${selectedNodes.length} node(s)`);
   }, [nodes, edges, setNodesWithHistory, setEdgesWithHistory]);
 
   const handleCut = useCallback(() => {
-    handleCopy();
+    const cutCount = nodes.filter((n) => n.selected).length;
+    handleCopy({ log: false });
     setNodesWithHistory((nds) =>
       normalizeParenting(pruneCommentMembership(nds.filter((n) => !n.selected)))
     );
     setEdgesWithHistory((eds) =>
       eds.filter((edge) => !nodes.find((n) => n.selected && (n.id === edge.source || n.id === edge.target)))
     );
+    if (cutCount > 0) logActivity('other', `Cut ${cutCount} node(s)`);
   }, [handleCopy, nodes, setNodesWithHistory, setEdgesWithHistory]);
 
   React.useEffect(() => {
@@ -1619,6 +1666,11 @@ function GraphCanvasInner() {
     setNodesWithHistory((nds) =>
       normalizeParenting(pruneCommentMembership(nds.filter((node) => !node.selected)))
     );
+    playAudioCue('delete');
+    const parts: string[] = [];
+    if (selectedNodeIds.size) parts.push(`${selectedNodeIds.size} node${selectedNodeIds.size === 1 ? '' : 's'}`);
+    if (selectedEdgeIds.size) parts.push(`${selectedEdgeIds.size} wire${selectedEdgeIds.size === 1 ? '' : 's'}`);
+    logActivity('other', `Deleted ${parts.join(' · ')}`);
   }, [nodes, edges, setNodesWithHistory, setEdgesWithHistory]);
 
   const handleDisconnectSelection = useCallback(() => {
@@ -1904,20 +1956,63 @@ function GraphCanvasInner() {
     onToggleHelp: () => setShortcutsHelpOpen((open) => !open),
     isHelpOpen: shortcutsHelpOpen,
     nodeSearchQueryFromSelection: () => {
-      if (!isTreeSymbolSelection(selection.type) || !selection.id) return undefined;
-      if (selection.type === 'function') {
-        return functions.find((f) => f.id === selection.id)?.name;
+      // Project tree multi-select → match any symbol name.
+      if (selectedTreeSymbols.length > 0) {
+        const names: string[] = [];
+        for (const key of selectedTreeSymbols) {
+          if (key.kind === 'function') {
+            const n = functions.find((f) => f.id === key.id)?.name;
+            if (n) names.push(n);
+          } else if (key.kind === 'event') {
+            const n = events.find((e) => e.id === key.id)?.name;
+            if (n) names.push(n);
+          } else if (key.kind === 'variable') {
+            const n = variables.find((v) => v.id === key.id)?.name;
+            if (n) names.push(n);
+          } else if (key.kind === 'class') {
+            const n = classes.find((c) => c.id === key.id)?.name;
+            if (n) names.push(n);
+          } else if (key.kind === 'graph') {
+            const n = graphContainers.find((c) => c.id === key.id)?.name;
+            if (n) names.push(n);
+          }
+        }
+        if (names.length === 1) return names[0];
+        if (names.length > 1) return names;
       }
-      if (selection.type === 'event') {
-        return events.find((e) => e.id === selection.id)?.name;
+
+      if (isTreeSymbolSelection(selection.type) && selection.id) {
+        if (selection.type === 'function') {
+          return functions.find((f) => f.id === selection.id)?.name;
+        }
+        if (selection.type === 'event') {
+          return events.find((e) => e.id === selection.id)?.name;
+        }
+        if (selection.type === 'variable') {
+          return variables.find((v) => v.id === selection.id)?.name;
+        }
+        if (selection.type === 'class') {
+          return classes.find((c) => c.id === selection.id)?.name;
+        }
       }
-      if (selection.type === 'variable') {
-        return variables.find((v) => v.id === selection.id)?.name;
-      }
-      if (selection.type === 'class') {
-        return classes.find((c) => c.id === selection.id)?.name;
-      }
-      return undefined;
+
+      // Canvas multi-select → match any selected node label.
+      const selected = nodes.filter(
+        (n) =>
+          n.selected &&
+          (n.type === 'vvs_standard_node' || n.type === 'vvs_comment_node')
+      );
+      if (selected.length === 0) return undefined;
+      const labels = [
+        ...new Set(
+          selected
+            .map((n) => (n.data.label || '').trim())
+            .filter(Boolean)
+        ),
+      ];
+      if (labels.length === 0) return undefined;
+      if (labels.length === 1) return labels[0];
+      return labels;
     },
   });
 
@@ -2067,6 +2162,7 @@ function GraphCanvasInner() {
       ) : null}
       <GraphFloatingDetails />
       <GraphFloatingCompilerLog />
+      <ActionHistoryPanel />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -2076,6 +2172,7 @@ function GraphCanvasInner() {
         onConnectEnd={onConnectEnd}
         isValidConnection={isValidConnection}
         onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
         onPaneClick={onPaneClick}
         onNodeClick={onNodeClick}
         onNodeDoubleClick={onNodeDoubleClick}
@@ -2089,8 +2186,21 @@ function GraphCanvasInner() {
               'button' in event &&
               (event as MouseEvent).button === 2
             ) {
-              suppressPaneContextMenuRef.current = true;
+              const e = event as MouseEvent;
+              rightPanStartRef.current = { x: e.clientX, y: e.clientY };
+              suppressPaneContextMenuRef.current = false;
             }
+          }
+        }}
+        onMove={(event) => {
+          const start = rightPanStartRef.current;
+          if (!start || suppressPaneContextMenuRef.current) return;
+          if (typeof event !== 'object' || event == null || !('clientX' in event)) return;
+          const e = event as MouseEvent;
+          const dx = e.clientX - start.x;
+          const dy = e.clientY - start.y;
+          if (dx * dx + dy * dy >= RIGHT_PAN_SLOP_PX * RIGHT_PAN_SLOP_PX) {
+            suppressPaneContextMenuRef.current = true;
           }
         }}
         onEdgeClick={onEdgeClick}
@@ -2138,6 +2248,7 @@ function GraphCanvasInner() {
         ) : null}
         {graphChromeMode === 'map-controls' ? <Controls position="bottom-right" /> : null}
         <GraphSelectionToolbar />
+        <NodeHoverChrome />
         {menu && (
           <NodeContextMenu
             x={menu.x}

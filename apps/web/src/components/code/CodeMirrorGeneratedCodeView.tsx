@@ -184,14 +184,28 @@ export function CodeMirrorGeneratedCodeView({
   readOnly = true,
   className,
   onReverseSelectLine,
+  onHoverSourceLocation,
+  onHoverSourceLeave,
 }: GeneratedCodeViewProps) {
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const highlightRangesRef = useRef(highlightRanges);
   const onReverseSelectLineRef = useRef(onReverseSelectLine);
+  const onHoverSourceLocationRef = useRef(onHoverSourceLocation);
+  const onHoverSourceLeaveRef = useRef(onHoverSourceLeave);
+  const hoverRafRef = useRef<number | null>(null);
   React.useLayoutEffect(() => {
     highlightRangesRef.current = highlightRanges;
     onReverseSelectLineRef.current = onReverseSelectLine;
+    onHoverSourceLocationRef.current = onHoverSourceLocation;
+    onHoverSourceLeaveRef.current = onHoverSourceLeave;
   });
+
+  useEffect(() => {
+    return () => {
+      if (hoverRafRef.current != null) cancelAnimationFrame(hoverRafRef.current);
+      onHoverSourceLeaveRef.current?.();
+    };
+  }, []);
 
   const extensions = useMemo(
     () => [
@@ -209,6 +223,32 @@ export function CodeMirrorGeneratedCodeView({
           const col = pos - line.from + 1;
           handler(line.number, col);
           return true;
+        },
+        mousemove(event, view) {
+          const handler = onHoverSourceLocationRef.current;
+          if (!handler) return false;
+          if (hoverRafRef.current != null) cancelAnimationFrame(hoverRafRef.current);
+          const { clientX, clientY } = event;
+          hoverRafRef.current = requestAnimationFrame(() => {
+            hoverRafRef.current = null;
+            const pos = view.posAtCoords({ x: clientX, y: clientY });
+            if (pos == null) {
+              onHoverSourceLeaveRef.current?.();
+              return;
+            }
+            const line = view.state.doc.lineAt(pos);
+            const col = pos - line.from + 1;
+            handler(line.number, col);
+          });
+          return false;
+        },
+        mouseleave() {
+          if (hoverRafRef.current != null) {
+            cancelAnimationFrame(hoverRafRef.current);
+            hoverRafRef.current = null;
+          }
+          onHoverSourceLeaveRef.current?.();
+          return false;
         },
       }),
     ],

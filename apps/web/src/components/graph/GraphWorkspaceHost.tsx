@@ -15,6 +15,10 @@ import {
   dualWriteLibraryImportDefines,
   type LibraryImportPayload,
 } from '@/lib/libraryImport';
+import { logActivity } from '@/lib/actionActivityLog';
+import { playAudioCue } from '@/lib/audioFeedback';
+import type { ProjectHistorySlice } from '@/lib/graphHistory';
+import { useLatestRef } from '@/hooks/useLatestRef';
 
 interface GraphWorkspaceHostProps {
   initialNodes?: VVSNode[];
@@ -38,6 +42,7 @@ export function GraphWorkspaceHost({
     openTabs,
     graphContainers,
     projectDetails,
+    setProjectDetails,
     setSelection,
     undoTrigger,
     redoTrigger,
@@ -48,9 +53,15 @@ export function GraphWorkspaceHost({
     setOpenTabs,
     setFunctions,
     functions,
+    variables,
+    setVariables,
+    events,
+    setEvents,
     markTabDirty,
     classes,
+    setClasses,
     activeClassId,
+    setActiveClassId,
     targetLanguage,
     targetFileExtensions,
   } = useProject();
@@ -65,6 +76,117 @@ export function GraphWorkspaceHost({
   }, [markTabDirty, activeGraphTab, setCompileState]);
 
   const isDraggingRef = useRef(false);
+  const suppressHistoryClearRef = useRef(false);
+  const suppressReleaseTimerRef = useRef<number | null>(null);
+  const tabSyncApiRef = useRef<{
+    getAllDocuments: () => Record<string, GraphDocument>;
+    replaceDocumentsForHistory: (documents: Record<string, GraphDocument>, activeTab: string) => void;
+    prepareTabSwitchForHistory: (tabId: string) => void;
+    commitTabDocumentForHistory: (tabId: string, nodes: VVSNode[], edges: VVSEdge[]) => void;
+  } | null>(null);
+
+  const variablesRef = useLatestRef(variables);
+  const functionsRef = useLatestRef(functions);
+  const eventsRef = useLatestRef(events);
+  const classesRef = useLatestRef(classes);
+  const activeClassIdRef = useLatestRef(activeClassId);
+  const projectDetailsRef = useLatestRef(projectDetails);
+  const openTabsRef = useLatestRef(openTabs);
+  const activeGraphTabRef = useLatestRef(activeGraphTab);
+
+  const markHistoryTabDirty = useCallback(
+    (tabId: string | null) => {
+      markTabDirty(tabId ?? activeGraphTabRef.current);
+      setCompileState('dirty');
+    },
+    [markTabDirty, setCompileState, activeGraphTabRef]
+  );
+
+  /** Keep clearHistory suppressed until after React tab-switch effects (macrotask). */
+  const beginHistoryPreserve = useCallback(() => {
+    suppressHistoryClearRef.current = true;
+    if (suppressReleaseTimerRef.current !== null) {
+      window.clearTimeout(suppressReleaseTimerRef.current);
+    }
+    suppressReleaseTimerRef.current = window.setTimeout(() => {
+      suppressHistoryClearRef.current = false;
+      suppressReleaseTimerRef.current = null;
+    }, 0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (suppressReleaseTimerRef.current !== null) {
+        window.clearTimeout(suppressReleaseTimerRef.current);
+      }
+    };
+  }, []);
+
+  const getActiveGraphTab = useCallback(() => activeGraphTabRef.current, [activeGraphTabRef]);
+
+  const getProjectSlice = useCallback((): ProjectHistorySlice | null => {
+    const docs = tabSyncApiRef.current?.getAllDocuments();
+    if (!docs) return null;
+    return {
+      variables: variablesRef.current,
+      functions: functionsRef.current,
+      events: eventsRef.current,
+      classes: classesRef.current,
+      activeClassId: activeClassIdRef.current,
+      projectDetails: projectDetailsRef.current,
+      documents: docs,
+      openTabs: openTabsRef.current,
+      activeGraphTab: activeGraphTabRef.current,
+    };
+  }, [
+    variablesRef,
+    functionsRef,
+    eventsRef,
+    classesRef,
+    activeClassIdRef,
+    projectDetailsRef,
+    openTabsRef,
+    activeGraphTabRef,
+  ]);
+
+  const applyProjectSlice = useCallback(
+    (slice: ProjectHistorySlice) => {
+      beginHistoryPreserve();
+      setVariables(structuredClone(slice.variables));
+      setFunctions(structuredClone(slice.functions));
+      setEvents(structuredClone(slice.events));
+      setClasses(structuredClone(slice.classes));
+      setActiveClassId(slice.activeClassId);
+      setProjectDetails(structuredClone(slice.projectDetails));
+      setOpenTabs(structuredClone(slice.openTabs));
+      tabSyncApiRef.current?.replaceDocumentsForHistory(slice.documents, slice.activeGraphTab);
+      setActiveGraphTab(slice.activeGraphTab);
+    },
+    [
+      beginHistoryPreserve,
+      setVariables,
+      setFunctions,
+      setEvents,
+      setClasses,
+      setActiveClassId,
+      setProjectDetails,
+      setOpenTabs,
+      setActiveGraphTab,
+    ]
+  );
+
+  const ensureHistoryTab = useCallback(
+    (tabId: string) => {
+      beginHistoryPreserve();
+      tabSyncApiRef.current?.prepareTabSwitchForHistory(tabId);
+      setActiveGraphTab(tabId);
+    },
+    [beginHistoryPreserve, setActiveGraphTab]
+  );
+
+  const commitTabDocument = useCallback((tabId: string, nextNodes: VVSNode[], nextEdges: VVSEdge[]) => {
+    tabSyncApiRef.current?.commitTabDocumentForHistory(tabId, nextNodes, nextEdges);
+  }, []);
 
   const {
     nodes,
@@ -80,7 +202,18 @@ export function GraphWorkspaceHost({
     canUndo,
     canRedo,
     clearHistory,
-  } = useGraphState(initialNodes, initialEdges);
+    saveProjectSnapshot,
+    jumpToPastEntry,
+    getPastHistory,
+    getFutureCount,
+    historyVersion,
+  } = useGraphState(initialNodes, initialEdges, {
+    getActiveGraphTab,
+    getProjectSlice,
+    applyProjectSlice,
+    ensureHistoryTab,
+    commitTabDocument,
+  });
 
   const getProjectCodegenDefaults = useCallback(
     () => ({ targetLanguage, targetFileExtensions }),
@@ -100,6 +233,9 @@ export function GraphWorkspaceHost({
     getAllDocuments,
     loadAllDocuments,
     patchAllDocuments,
+    replaceDocumentsForHistory,
+    prepareTabSwitchForHistory,
+    commitTabDocumentForHistory,
     getActiveTabMetadata,
     updateActiveTabMetadata,
     subscribeMetadata,
@@ -124,7 +260,22 @@ export function GraphWorkspaceHost({
     getMainMetadata,
     getProjectCodegenDefaults,
     isDraggingRef,
+    suppressHistoryClearRef,
   });
+
+  React.useLayoutEffect(() => {
+    tabSyncApiRef.current = {
+      getAllDocuments,
+      replaceDocumentsForHistory,
+      prepareTabSwitchForHistory,
+      commitTabDocumentForHistory,
+    };
+  }, [
+    getAllDocuments,
+    replaceDocumentsForHistory,
+    prepareTabSwitchForHistory,
+    commitTabDocumentForHistory,
+  ]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange<VVSNode>[]) => {
@@ -209,16 +360,29 @@ export function GraphWorkspaceHost({
   const patchAllDocumentsWithDirty = useCallback(
     (
       updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-      options?: { affectedTabIds?: string[] }
+      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
     ) => {
       const affected = tabSyncRef.current.patchAllDocuments(updater, options);
       for (const tabId of affected) {
         markTabDirty(tabId);
       }
+      if (options?.viewTabId) {
+        markTabDirty(options.viewTabId);
+      }
       setCompileState('dirty');
       return affected;
     },
     [markTabDirty, setCompileState]
+  );
+
+  const pushHistory = useCallback(
+    (label: string) => {
+      // Keep tab-switch / patch from wiping this entry when callers also change
+      // activeGraphTab in the same event (e.g. open function body after create).
+      beginHistoryPreserve();
+      saveProjectSnapshot(label);
+    },
+    [beginHistoryPreserve, saveProjectSnapshot]
   );
 
   useEffect(() => {
@@ -233,9 +397,10 @@ export function GraphWorkspaceHost({
       updateActiveTabMetadata: (patch) =>
         tabSyncRef.current.updateActiveTabMetadata(patch),
       subscribeMetadata: (listener) => tabSyncRef.current.subscribeMetadata(listener),
+      pushHistory,
     });
     return () => registerWorkspace(null);
-  }, [registerWorkspace, patchAllDocumentsWithDirty]);
+  }, [registerWorkspace, patchAllDocumentsWithDirty, pushHistory]);
 
   const documentsHydratedRef = useRef(false);
   useEffect(() => {
@@ -294,17 +459,21 @@ export function GraphWorkspaceHost({
 
   useEffect(() => {
     if (undoTrigger > 0) {
-      undo();
-      markCurrentTabDirty();
+      const tabId = undo();
+      markHistoryTabDirty(tabId);
+      logActivity('undo', 'Undo');
+      playAudioCue('undo');
     }
-  }, [undoTrigger, undo, markCurrentTabDirty]);
+  }, [undoTrigger, undo, markHistoryTabDirty]);
 
   useEffect(() => {
     if (redoTrigger > 0) {
-      redo();
-      markCurrentTabDirty();
+      const tabId = redo();
+      markHistoryTabDirty(tabId);
+      logActivity('redo', 'Redo');
+      playAudioCue('redo');
     }
-  }, [redoTrigger, redo, markCurrentTabDirty]);
+  }, [redoTrigger, redo, markHistoryTabDirty]);
 
   const editValue = React.useMemo(
     () => ({
@@ -320,6 +489,10 @@ export function GraphWorkspaceHost({
       redo,
       canUndo,
       canRedo,
+      jumpToPastEntry,
+      getPastHistory,
+      getFutureCount,
+      historyVersion,
       importGraphTab,
     }),
     [
@@ -335,6 +508,10 @@ export function GraphWorkspaceHost({
       redo,
       canUndo,
       canRedo,
+      jumpToPastEntry,
+      getPastHistory,
+      getFutureCount,
+      historyVersion,
       importGraphTab,
     ]
   );

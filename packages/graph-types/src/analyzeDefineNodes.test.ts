@@ -206,6 +206,73 @@ describe('analyzeProject define node sync', () => {
     expect(result.ok).toBe(false);
   });
 
+  it('emits a single ORPHAN_DEFINE_NODE when multiple classes share one graph', () => {
+    const a = createClassSymbol('A', { id: 'cls-a', containerId: HOME_GRAPH });
+    const b = createClassSymbol('B', { id: 'cls-b', containerId: HOME_GRAPH });
+
+    const result = analyzeProject({
+      documents: {
+        [HOME_GRAPH]: {
+          nodes: [
+            {
+              id: 'class-a',
+              type: 'vvs_standard_node',
+              position: { x: 0, y: 0 },
+              data: {
+                label: 'Declare A',
+                category: 'Project',
+                kindId: 'class_define',
+                inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+                outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+                inlineValues: {},
+                properties: { symbolId: a.id, classId: a.id },
+              },
+            },
+            {
+              id: 'class-b',
+              type: 'vvs_standard_node',
+              position: { x: 0, y: 80 },
+              data: {
+                label: 'Declare B',
+                category: 'Project',
+                kindId: 'class_define',
+                inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+                outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+                inlineValues: {},
+                properties: { symbolId: b.id, classId: b.id },
+              },
+            },
+            {
+              id: 'vd-orphan',
+              type: 'vvs_standard_node',
+              position: { x: 0, y: 160 },
+              data: {
+                label: 'Define Ghost',
+                category: 'Variables',
+                kindId: 'var_define',
+                inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+                outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+                inlineValues: {},
+                properties: { symbolId: 'var-deleted' },
+              },
+            },
+          ],
+          edges: [],
+        },
+      },
+      functions: [],
+      events: [],
+      variables: [],
+      classes: [a, b],
+      projectDetails: { extendsType: '' },
+      targetLanguage: 'python',
+    });
+
+    const orphan = result.diagnostics.filter((d) => d.code === 'ORPHAN_DEFINE_NODE');
+    expect(orphan).toHaveLength(1);
+    expect(orphan[0]?.nodeId).toBe('vd-orphan');
+  });
+
   it('does not emit DECLARATION_NOT_ON_CANVAS for blank class with no symbols', () => {
     const cls = createClassSymbol('App', { id: 'main-class', containerId: HOME_GRAPH });
 

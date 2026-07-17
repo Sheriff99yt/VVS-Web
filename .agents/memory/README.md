@@ -1,6 +1,6 @@
 # Agentic Memory Directory
 
-Durable, agent-oriented context for VVS 2.0. This directory is **not** a substitute for canonical docs — it captures what agents need across sessions without re-scanning the whole repo.
+Durable, agent-oriented context for VVS Web. This directory is **not** a substitute for canonical docs — it captures what agents need across sessions without re-scanning the whole repo.
 
 ## Read order (start of session)
 

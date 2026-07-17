@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings } from 'lucide-react';
+import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings, HelpCircle, History, Search, FilePlus, Keyboard } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
+import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { VvsApi, getApiMode, ApiError } from '@/lib/api';
 import { dispatchGraphAction } from '@/lib/graphActions';
+import { matchesGraphShortcut } from '@/lib/graphShortcuts';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { ProjectSnapshot, isProjectSnapshot } from '@/types/projectSnapshot';
 import { applyProjectSnapshot } from '@/lib/applyProjectSnapshot';
@@ -35,7 +37,10 @@ import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowContro
 import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
 import { useUiPreference } from '@/hooks/useUiPreference';
-import { readUiPreference, REQUEST_GENERATE_EVENT } from '@/lib/uiPreferences';
+import { readUiPreference, REQUEST_GENERATE_EVENT, dispatchFocusGraphNodeSearch, dispatchOpenActionHistory, dispatchOpenShortcutsHelp } from '@/lib/uiPreferences';
+import { logActivity } from '@/lib/actionActivityLog';
+import { playAudioCue } from '@/lib/audioFeedback';
+import { PRODUCT_NAME } from '@/lib/productName';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 
@@ -89,7 +94,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setMcpCopiedKey(null);
     }
   }, []);
-  const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | null>(null);
+  const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | 'help' | null>(null);
   const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
   const [saveOnDiskPromptMode, setSaveOnDiskPromptMode] = useState<'close' | 'manual'>('close');
   const [saveOnDiskBusy, setSaveOnDiskBusy] = useState(false);
@@ -97,6 +102,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderPickerAvailable = useFolderPickerSupported();
   const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
+  const { codeOpen, graphNavOpen, toggleCode, toggleGraphNav } = useEditorPanels();
 
   const {
     canUndo, canRedo, triggerUndo, triggerRedo,
@@ -313,6 +319,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setLastSavedAt(savedAt);
       resetDirtyTabs();
       setOpenMenu(null);
+      logActivity('save', 'Saved project');
+      playAudioCue('save');
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'Could not save project.');
     } finally {
@@ -353,6 +361,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setValidationErrors(analysis.errors);
       setValidationWarnings(analysis.warnings);
       setCompileState('error');
+      logActivity('generate', 'Generate failed — validation errors');
+      playAudioCue('error');
       return;
     }
 
@@ -379,8 +389,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setValidationWarnings(analysis.warnings);
       markTabClean(activeGraphTab);
       setCompileState('success');
+      logActivity('generate', 'Generated code');
+      playAudioCue('generate');
     } catch (err) {
       setCompileState('error');
+      playAudioCue('error');
+      logActivity('generate', 'Generate failed');
       const message =
         err instanceof ApiError
           ? err.message
@@ -458,16 +472,17 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
-      if (e.key.toLowerCase() === 's' && !e.shiftKey) {
+      if (matchesGraphShortcut(e, 'save-project')) {
         e.preventDefault();
         void handleSaveRef.current();
+        return;
       }
-      if (e.key.toLowerCase() === 'g' && !e.shiftKey) {
+      if (matchesGraphShortcut(e, 'compile')) {
         e.preventDefault();
         void handleCompileRef.current();
+        return;
       }
-      if (e.key.toLowerCase() === 's' && e.shiftKey) {
+      if (matchesGraphShortcut(e, 'sync-preview')) {
         e.preventDefault();
         handleCommitPreviewRef.current();
       }
@@ -592,6 +607,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setLastSavedAt(parsed.savedAt ?? null);
       setCompileState('success');
       setOpenMenu(null);
+      logActivity('import', 'Imported project JSON');
+      playAudioCue('success');
     } catch {
       window.alert('Could not parse JSON file.');
     }
@@ -617,6 +634,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     a.download = `${projectDetails.moduleName || 'project'}.vvs.json`;
     a.click();
     setOpenMenu(null);
+    logActivity('export', 'Exported project JSON');
+    playAudioCue('success');
   };
 
   return (
@@ -638,7 +657,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               className="font-bold text-zinc-100 tracking-wide flex items-center gap-2 hover:text-zinc-300 transition-colors"
             >
               <div className="w-4 h-4 rounded bg-zinc-100" />
-              VVS 2.0
+              VVS Web
             </button>
           </Tooltip>
 
@@ -646,7 +665,18 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <div className="relative">
               <button onClick={() => setOpenMenu(openMenu === 'file' ? null : 'file')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'file' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>File</button>
               {openMenu === 'file' && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
+                <div className="absolute top-full left-0 mt-1 w-52 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
+                  <button
+                    onClick={() => {
+                      handleCloseProject();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <FilePlus size={12} className="shrink-0 opacity-70" />
+                    New project…
+                  </button>
+                  <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
                     tip={shortcutTitle('save-project')}
                     onClick={() => { void handleSave(); setOpenMenu(null); }}
@@ -708,6 +738,18 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     <RefreshCw size={12} className="shrink-0 opacity-70" />
                     Sync code preview
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('sync-preview')}</span>
+                  </MenuTip>
+                  <div className="h-px bg-zinc-800 my-1" />
+                  <MenuTip
+                    tip="Action history — undo stack and activity"
+                    onClick={() => {
+                      dispatchOpenActionHistory();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <History size={12} className="shrink-0 opacity-70" />
+                    Action history…
                   </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
@@ -774,7 +816,32 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <div className="relative">
               <button onClick={() => setOpenMenu(openMenu === 'view' ? null : 'view')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'view' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>View</button>
               {openMenu === 'view' && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
+                <div className="absolute top-full left-0 mt-1 w-52 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
+                  <MenuTip
+                    tip={shortcutTitle('node-search')}
+                    onClick={() => {
+                      dispatchFocusGraphNodeSearch(undefined, { searchAllGraphs: false });
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <Search size={12} className="shrink-0 opacity-70" />
+                    Find in this graph
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('node-search')}</span>
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('node-search-all')}
+                    onClick={() => {
+                      dispatchFocusGraphNodeSearch(undefined, { searchAllGraphs: true });
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <Search size={12} className="shrink-0 opacity-70" />
+                    Find in all graphs
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('node-search-all')}</span>
+                  </MenuTip>
+                  <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
                     tip="Frame selection — with nothing selected, fit all"
                     onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }}
@@ -844,22 +911,87 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <button
+                    type="button"
+                    onClick={() => {
+                      toggleCode();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <span className="w-3 text-center shrink-0">{codeOpen ? '✓' : ''}</span>
+                    Code preview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleGraphNav();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <span className="w-3 text-center shrink-0">{graphNavOpen ? '✓' : ''}</span>
+                    Project tree
+                  </button>
+                  <div className="h-px bg-zinc-800 my-1" />
+                  <button
                     onClick={() => {
                       dispatchOpenSettings('project');
                       setOpenMenu(null);
                     }}
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
-                    Project settings…
+                    <Settings size={12} className="shrink-0 opacity-70" />
+                    Settings…
                   </button>
-                  <button
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <button onClick={() => setOpenMenu(openMenu === 'help' ? null : 'help')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'help' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>Help</button>
+              {openMenu === 'help' && (
+                <div className="absolute top-full left-0 mt-1 w-52 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
+                  <MenuTip
+                    tip={shortcutTitle('help')}
                     onClick={() => {
-                      dispatchOpenSettings('app');
+                      dispatchOpenShortcutsHelp();
                       setOpenMenu(null);
                     }}
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
-                    App settings…
+                    <HelpCircle size={12} className="shrink-0 opacity-70" />
+                    Canvas shortcuts
+                    <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('help')}</span>
+                  </MenuTip>
+                  <button
+                    onClick={() => {
+                      dispatchOpenSettings('shortcuts');
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <Keyboard size={12} className="shrink-0 opacity-70" />
+                    Keyboard settings…
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate({ editorView: 'roadmap' });
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <Milestone size={12} className="shrink-0 opacity-70" />
+                    Development roadmap
+                  </button>
+                  <div className="h-px bg-zinc-800 my-1" />
+                  <button
+                    onClick={() => {
+                      dispatchOpenSettings('about');
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    About {PRODUCT_NAME}
                   </button>
                 </div>
               )}

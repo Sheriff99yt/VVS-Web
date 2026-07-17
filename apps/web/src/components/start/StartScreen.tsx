@@ -15,6 +15,7 @@ import {
   BookOpen,
   Map,
 } from 'lucide-react';
+import { PRODUCT_NAME } from '@/lib/productName';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
@@ -310,7 +311,7 @@ export function StartScreen() {
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded bg-zinc-100" />
           <div>
-            <h1 className="text-lg font-bold text-zinc-100 tracking-wide">VVS 2.0</h1>
+            <h1 className="text-lg font-bold text-zinc-100 tracking-wide">{PRODUCT_NAME}</h1>
             <p className="text-xs text-zinc-500">Visual graphs that generate real code</p>
           </div>
         </div>

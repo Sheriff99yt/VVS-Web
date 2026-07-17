@@ -47,7 +47,8 @@ const EXIT_MS = 200;
 
 const ESSENTIALS: VisualAction[] = [
   { id: 'spawn-menu', icon: MousePointerClick, label: 'Spawn' },
-  { id: 'node-search', icon: Search, label: 'Search' },
+  { id: 'node-search', icon: Search, label: 'Find' },
+  { id: 'node-search-all', icon: Search, label: 'Find all' },
   { id: 'focus-selection', icon: Focus, label: 'Frame' },
   { id: 'select-chain-downstream', icon: GitBranch, label: 'Chain' },
   { id: 'layout-selected-chains', icon: LayoutTemplate, label: 'Layout' },

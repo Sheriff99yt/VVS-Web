@@ -42,6 +42,9 @@ Stable facts agents should assume without re-exploring the tree.
 | `editorFocus.ts` | Tree/canvas focus frames; class home graph resolution |
 | `projectSelection.ts` | Tree symbol selection invariants |
 | `symbolCodegenLink.ts` | Selection → codegen tab + sourceMap node ids |
+| `codeHoverHighlightStore.ts` | Code hover → yellow node/tab outline (no select) |
+| `sourceMapReverse.ts` | Line/col → nodeId; owning tab for reverse-nav |
+| Docs: [code_panel.md](../../docs/code_panel.md) | Full Code panel UX |
 | `recentProjectsSubscribe.ts` | Deferred localStorage recents (`useSyncExternalStore`) |
 
 ## Key packages

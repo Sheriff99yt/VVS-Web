@@ -1,4 +1,4 @@
-# VVS 2.0 — Current Implementation State
+# VVS Web — Current Implementation State
 
 This document is the **canonical snapshot** of what exists in the repo today versus what is still planned. Update this file whenever the UI shell or integration boundaries change.
 
@@ -182,9 +182,11 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
 | Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
 | Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; dangerous-tools consent pref; URL + **Test connection** only when hosted |
+| Settings | TopNav gear + **Help** menu | Sidebar modal — **Project** · **Editor** · **Shortcuts** (rebind) · **Audio** · **About**. Replaces flat Project/App tabs |
+| Action history (U108 / U114–U117) | Edit menu · floating panel | Shared undo: graph + symbol/class CRUD; survives tab switch; lean canvas snapshots |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
 | Chain select / layout (U75) | Canvas shortcuts | **S** = forward exec + data attrs; **A** = full undirected chain; **S S** = layout (`lane-topo-v1`). Attribute direction in Settings (above / below / below-extended). Head-anchored; multi-chain Y-separate; works inside locked comments |
-| Node search (U84/U85) | Canvas overlay + shortcuts | **Ctrl+F** = find in all graphs (Layers forced on; prefill from tree symbol). **F** with a tree symbol selected = find in this graph only; otherwise frame selection. Space / Ctrl+K open search respecting Layers. Symbol context menu: Find in this graph / Find in all graphs. Outside click / canvas drag clears tree-symbol focus |
+| Node search (U84/U85) | Canvas overlay + shortcuts | **Ctrl+F** = find in this graph; **Ctrl+Shift+F** = find in all graphs (Layers forced on; prefill from tree symbol). **F** with a tree symbol selected = find in this graph only; otherwise frame selection. Space / Ctrl+K open search respecting Layers. Symbol context menu: Find in this graph / Find in all graphs. Outside click / canvas drag clears tree-symbol focus |
 | Tooltips (U94) | Editor chrome | App-default `Tooltip` (`components/ui/Tooltip.tsx`) — portal tips with Esc dismiss + viewport clamp; native `title=` replaced on left panel, TopNav, status, toolbars, panels, nodes, start screen (section/popover heading `title` props remain) |
 | Selection / modifiers chrome | Hover node | Actions toolbar (when selected) stacks **above** the card. Modifier chips + import target-language sit in a **hover** overlay above the card (pinned while a chip menu is open). Linked graph/module subtitle stays in-header. U102: Open Graph removed from symbol tree/Details; symbol context menu shows shortcuts (F2 / F / Ctrl+D / Delete) |
 
@@ -258,7 +260,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
 | Generate / validation pipeline | Done — `projectAnalysis.ts` + `@vvs/transpiler`; errors block compile |
-| Code preview | Done — CodeMirror 6; graph language + `.{ext}`; Format JSON; **double-click line → canvas node** (`sourceMapReverse`); selection highlight via `sourceMap`; **smooth auto-scroll** to highlight (`EditorView.scrollHandler`); live analysis sync |
+| Code preview | Done — CodeMirror 6; graph language + `.{ext}`; Format JSON; **hover → yellow node/tab outline** (`codeHoverHighlightStore`); **double-click line → canvas node** (`sourceMapReverse`); selection highlight via `sourceMap`; **smooth auto-scroll**; live analysis sync; error/warning toggles. Full UX: [code_panel.md](code_panel.md) |
 | Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
@@ -368,7 +370,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U77–U78**, **U89–U92**, queued **U97–U106** (catalog · functions · async · symbols · components · OOP). **U83 canvas virtualization** shipped. Client-first: **no dedicated server**, **no live code execution** (checks/warnings only). Emit plans: **CL-*** in [`.agents/skills/vvs_cross_language_mapping/SKILL.md`](../.agents/skills/vvs_cross_language_mapping/SKILL.md). See [roadmap.md](roadmap.md).
+**Active next (July 2026):** Phase 6 — **U77–U78** + CL emit plans, **U89–U92**, queued **U97–U106**. **U83** / **U102** / **U107–U117** + code-panel hover shipped. Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
@@ -426,7 +428,8 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 | **`docs/syntax_pack_architecture.md`** | Syntax packs, IR v2, Rosetta, agent workflow, Tree-sitter validator-only |
 | **`docs/language_profiles.md`** | Per-target native/emulated/unsupported features + warning semantics |
 | **`docs/vision.md`** | Product philosophy, UE6/Verse direction, logic/syntax model |
-| **`docs/roadmap.md`** | Public phased roadmap (including UE6 plugin) |
+| **`docs/roadmap.md`** | Public roadmap — Active / Next / Recently completed (mirrors in-app Open · Done) |
+| **`docs/code_panel.md`** | Code panel navigation, highlight, hover, Files pin |
 | **`docs/deployment.md`** | Legacy self-host notes — **not** product direction (client-first; no dedicated server) |
 | **`docs/current_state.md`** | What exists today; avoid re-introducing removed UI |
 | **`docs/ui_api_delivery_loop.md`** | Wiring UI to APIs — one slice per iteration |

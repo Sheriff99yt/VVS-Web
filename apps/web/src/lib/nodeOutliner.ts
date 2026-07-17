@@ -26,15 +26,26 @@ export function nodeCategoryColor(category?: string): string {
   }
 }
 
-export function filterOutlinerNodes(nodes: Node[], query: string): VVSNode[] {
-  const q = query.trim().toLowerCase();
+/** Split a typed or multi-select find query into OR terms (`a, b` → match any). */
+export function parseOutlinerSearchTerms(query: string | readonly string[]): string[] {
+  const parts = typeof query === 'string' ? query.split(/,/) : [...query];
+  return [...new Set(parts.map((q) => q.trim().toLowerCase()).filter(Boolean))];
+}
+
+export function filterOutlinerNodes(
+  nodes: Node[],
+  query: string | readonly string[]
+): VVSNode[] {
+  const terms = parseOutlinerSearchTerms(query);
+  if (terms.length === 0) return [];
   return nodes.filter((node): node is VVSNode => {
     if (!isOutlinerNode(node)) return false;
-    if (!q) return true;
     const label = nodeDisplayLabel(node).toLowerCase();
     const category = (node.data.category || '').toLowerCase();
     const id = node.id.toLowerCase();
-    return label.includes(q) || category.includes(q) || id.includes(q);
+    return terms.some(
+      (q) => label.includes(q) || category.includes(q) || id.includes(q)
+    );
   });
 }
 

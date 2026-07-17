@@ -1,6 +1,7 @@
 .toolbar {
   position: absolute;
-  z-index: 20;
+  /* Above option strip (1001) and elevateNodesOnSelect (1000). */
+  z-index: 1010;
   display: flex;
   align-items: center;
   gap: 2px;

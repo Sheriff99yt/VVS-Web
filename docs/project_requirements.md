@@ -1,4 +1,4 @@
-# VVS 2.0 — Project Requirements
+# VVS Web — Project Requirements
 
 This document captures functional and non-functional requirements for Vision Visual Scripting 2.0. For **phased delivery** see [roadmap.md](roadmap.md); for **what is built today** see [current_state.md](current_state.md).
 
@@ -8,7 +8,7 @@ This document captures functional and non-functional requirements for Vision Vis
 
 **VVS** is an open **visual programming** platform: compose logic on a graph, generate ordinary source code, and integrate with tools you already use. It strictly decouples **Logic** (the node graph) from **Syntax** (the generated code).
 
-**Origin:** The project [started as a university graduation prototype](https://github.com/Sheriff99yt/Vision_Visual_Scripting) — a Python desktop app where visual nodes translate into **any programming language the user selects**. That core idea persists in VVS 2.0 (VVS Web). See [history.md](history.md).
+**Origin:** The project [started as a university graduation prototype](https://github.com/Sheriff99yt/Vision_Visual_Scripting) — a Python desktop app where visual nodes translate into **any programming language the user selects**. That core idea persists in **VVS Web**. See [history.md](history.md).
 
 **Product direction:** VVS builds on traditional coding — it does not replace it. It is beginner-friendly, integration-first, and works with **your existing AI subscriptions** via MCP (no bundled LLM). The web editor uses common software terms (graph, project, variable), not engine jargon — see [naming_and_product_direction.md](naming_and_product_direction.md).
 

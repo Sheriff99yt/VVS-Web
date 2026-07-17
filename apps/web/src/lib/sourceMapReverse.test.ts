@@ -68,6 +68,17 @@ describe('findGraphTabContainingNodeId', () => {
     expect(findGraphTabContainingNodeId(documents, 'define-fn')).toBe('class-home');
   });
 
+  test('prefers preferredTabId when that document owns the node', () => {
+    const documents = {
+      'class-home': { nodes: [{ id: 'shared-id' }] },
+      'fn-boot': { nodes: [{ id: 'shared-id' }] },
+    };
+    expect(findGraphTabContainingNodeId(documents, 'shared-id', 'fn-boot')).toBe('fn-boot');
+    expect(findGraphTabContainingNodeId(documents, 'shared-id', 'class-home')).toBe(
+      'class-home'
+    );
+  });
+
   test('returns null when the node is missing', () => {
     expect(findGraphTabContainingNodeId({ a: { nodes: [] } }, 'missing')).toBeNull();
     expect(findGraphTabContainingNodeId(null, 'x')).toBeNull();

@@ -23,6 +23,12 @@
   box-shadow: 0 0 0 1px var(--vvs-node-border-selected) !important;
 }
 
+/** Code panel hover — yellow outline (stacks with blue selection border). */
+.nodeCodeHover {
+  outline: 2px solid #eab308;
+  outline-offset: 2px;
+}
+
 .nodeSimulating {
   border-color: #22c55e !important;
   box-shadow: 0 0 0 1px #22c55e !important;
@@ -33,15 +39,46 @@
   box-shadow: inset 3px 0 0 #f59e0b;
 }
 
-/** U67: language-ineffective node — dimmed but selection border stays readable. */
-.nodeUnsupported {
+/** U67: language-ineffective node — dim inner chrome; status icons stay full strength. */
+.nodeDimmedContent {
   opacity: 0.5;
   filter: grayscale(0.55);
 }
 
-.nodeUnsupported.nodeContainerSelected {
+.nodeDimmedContentSelected {
   opacity: 0.72;
   filter: grayscale(0.25);
+}
+
+/** Teaching badges — overlaid on the header; monochrome, no layout shift. */
+.stateIcons {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: auto;
+}
+
+.stateIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  color: #a1a1aa;
+  background: rgba(24, 24, 27, 0.85);
+  cursor: help;
+  opacity: 0.85;
+  transition: color 0.12s ease, opacity 0.12s ease;
+}
+
+.stateIcon:hover {
+  color: #e4e4e7;
+  opacity: 1;
 }
 
 .header {
@@ -68,29 +105,21 @@
   min-width: 0;
 }
 
-/** Hover chrome — just above the card; selection toolbar sits higher when selected. */
-.headerOverlay {
+/**
+ * Shared canvas option strip (NodeHoverChrome) — sits above the target node in flow space.
+ * Only one instance exists; nodes do not mount their own strips.
+ */
+.sharedHoverChrome {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  /* Padding bridges the visual gap so hover does not drop while moving onto chips. */
-  padding-bottom: 6px;
+  transform: translate(0, calc(-100% - 6px));
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  z-index: 5;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.12s ease, visibility 0.12s ease;
-}
-
-.nodeContainer:hover .headerOverlay,
-.headerOverlayPinned {
-  opacity: 1;
-  visibility: visible;
+  /* Above elevateNodesOnSelect (z=1000); below selection toolbar (1010). */
+  z-index: 1001;
+  /* Bridge so the pointer can move from node → strip without losing hover */
+  padding-bottom: 6px;
   pointer-events: auto;
 }
 

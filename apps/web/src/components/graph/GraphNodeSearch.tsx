@@ -127,12 +127,18 @@ export function GraphNodeSearch() {
   }, []);
 
   const openSearch = React.useCallback(
-    (initialQuery?: string, searchAllGraphsOverride?: boolean) => {
+    (initialQueries?: string | string[], searchAllGraphsOverride?: boolean) => {
       setExpanded(true);
       if (searchAllGraphsOverride === true) setSearchAllGraphs(true);
       else if (searchAllGraphsOverride === false) setSearchAllGraphs(false);
-      if (typeof initialQuery === 'string') {
-        setQuery(initialQuery);
+      if (initialQueries !== undefined) {
+        const terms = (
+          Array.isArray(initialQueries) ? initialQueries : [initialQueries]
+        )
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const unique = [...new Set(terms)];
+        setQuery(unique.join(', '));
         setActiveIndex(0);
       }
       requestAnimationFrame(() => inputRef.current?.focus());
@@ -143,7 +149,11 @@ export function GraphNodeSearch() {
   React.useEffect(() => {
     const onFocusSearch = (event: Event) => {
       const detail = (event as CustomEvent<FocusGraphNodeSearchDetail>).detail;
-      openSearch(detail?.query, detail?.searchAllGraphs);
+      const initial =
+        detail?.queries && detail.queries.length > 0
+          ? detail.queries
+          : detail?.query;
+      openSearch(initial, detail?.searchAllGraphs);
     };
     window.addEventListener(FOCUS_GRAPH_NODE_SEARCH_EVENT, onFocusSearch);
     return () => window.removeEventListener(FOCUS_GRAPH_NODE_SEARCH_EVENT, onFocusSearch);
@@ -213,7 +223,7 @@ export function GraphNodeSearch() {
         }`}
       >
         <Tooltip
-          content={`${shortcutTitle('node-search')} · with a symbol selected, ${shortcutKeys('node-search-from-symbol')} finds in this graph`}
+          content={`${shortcutTitle('node-search')} · ${shortcutTitle('node-search-all')}`}
           placement="bottom"
         >
           <button
@@ -242,7 +252,7 @@ export function GraphNodeSearch() {
             requestAnimationFrame(() => collapseIfEmpty());
           }}
           onKeyDown={handleInputKeyDown}
-          placeholder={`Search nodes… (${shortcutKeys('node-search')})`}
+          placeholder={`Search… (${shortcutKeys('node-search')}; comma = OR)`}
           className={`bg-transparent text-[11px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-[opacity,width,padding] duration-200 ease-out ${
             keepExpanded
               ? 'flex-1 min-w-0 opacity-100 pl-0 pr-14 py-1.5'

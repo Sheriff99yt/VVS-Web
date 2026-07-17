@@ -82,4 +82,30 @@ describe('compilerLogLanguageScope', () => {
     expect(view.map((l) => l.message)).toEqual(['done', 'old cpp', 'live py warn']);
     expect(countValidatorLogEntries(view)).toEqual({ errorCount: 0, warningCount: 2 });
   });
+
+  test('live ids stay unique when two diagnostics share code and nodeId', () => {
+    const view = buildLanguageScopedLogView(
+      [],
+      'python',
+      [
+        {
+          level: 'error',
+          message: 'orphan a',
+          code: 'ORPHAN_DEFINE_NODE',
+          nodeId: 'define-1',
+          tabId: 'main',
+        },
+        {
+          level: 'error',
+          message: 'orphan b',
+          code: 'ORPHAN_DEFINE_NODE',
+          nodeId: 'define-1',
+          tabId: 'main',
+        },
+      ],
+      []
+    );
+    const ids = view.map((l) => l.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
 });

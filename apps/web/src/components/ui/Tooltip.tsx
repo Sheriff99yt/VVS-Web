@@ -197,7 +197,7 @@ export function Tooltip({
               ref={tipRef}
               id={tipId}
               role="tooltip"
-              className="pointer-events-none fixed z-[100] max-w-[240px] rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-[10px] leading-snug text-zinc-200 shadow-lg shadow-black/40"
+              className="pointer-events-none fixed z-[1100] max-w-[240px] rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-[10px] leading-snug text-zinc-200 shadow-lg shadow-black/40"
               style={{ top: coords.top, left: coords.left, transform }}
             >
               {resolvedContent}

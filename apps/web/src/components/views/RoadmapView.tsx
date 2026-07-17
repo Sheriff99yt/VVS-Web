@@ -38,12 +38,16 @@ const STATUS_META: Record<
   },
 };
 
-function sectionHasActiveItems(section: RoadmapSection): boolean {
-  return section.items.some((item) => item.status !== 'cut');
+function isOpenStatus(status: RoadmapItemStatus | undefined): boolean {
+  return status === 'planned' || status === 'partial' || status == null;
 }
 
-function activeItems(section: RoadmapSection): RoadmapItem[] {
-  return section.items.filter((item) => item.status !== 'cut');
+function sectionHasOpenItems(section: RoadmapSection): boolean {
+  return section.items.some((item) => isOpenStatus(item.status));
+}
+
+function openItems(section: RoadmapSection): RoadmapItem[] {
+  return section.items.filter((item) => isOpenStatus(item.status));
 }
 
 function cutItems(section: RoadmapSection): RoadmapItem[] {
@@ -158,10 +162,11 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        <span className="text-zinc-300">Priority:</span> canvas virtualization (U83) for 500+ nodes at
-        60fps. Then Go pack (U77), pack versions (U78), and emit-fidelity plans (CL backlog). Just
-        shipped: U79 Y→code order, U75 chain layout, U71 highlight, U68/U69 Comment [C], U81/U82
-        Declare ≠ Define, U66/U67 <span className="text-zinc-400">(x)</span> + dim.
+        <span className="text-zinc-300">Priority:</span> Go pack (U77), pack versions (U78), and
+        emit-fidelity plans (CL backlog). Then References / Library (U89–U90), AI & examples
+        (U91–U92), and graph/OOP fidelity (U97–U106).{' '}
+        <span className="text-zinc-300">Just shipped:</span> U108–U117 (history · menus · settings ·
+        undo), code-panel hover nav, U83 virtualization, U102 / U107.
       </p>
     </div>
   );
@@ -173,8 +178,9 @@ function DirectionCallout() {
       <p className="text-[11px] font-medium text-zinc-300">Locked direction</p>
       <ul className="text-[11px] text-zinc-500 leading-relaxed list-disc pl-4 space-y-0.5">
         <li>
-          <span className="text-zinc-400">Client-first</span> — local / folder / <code className="text-zinc-500">.vvs/</code> / git;
-          static Pages OK; <span className="text-zinc-400">no dedicated app server</span>
+          <span className="text-zinc-400">Client-first</span> — local / folder /{' '}
+          <code className="text-zinc-500">.vvs/</code> / git; static Pages OK;{' '}
+          <span className="text-zinc-400">no dedicated app server</span>
         </li>
         <li>
           <span className="text-zinc-400">No live code execution</span> — logical checks and warnings
@@ -193,7 +199,7 @@ export function RoadmapView() {
   const [tab, setTab] = useState<RoadmapTab>('open');
 
   const openSections = useMemo(
-    () => FUTURE_FEATURE_SECTIONS.filter(sectionHasActiveItems),
+    () => FUTURE_FEATURE_SECTIONS.filter(sectionHasOpenItems),
     []
   );
   const cutFlat = useMemo(
@@ -205,7 +211,7 @@ export function RoadmapView() {
   );
 
   const openCount = useMemo(
-    () => openSections.reduce((n, s) => n + activeItems(s).length, 0),
+    () => openSections.reduce((n, s) => n + openItems(s).length, 0),
     [openSections]
   );
   const doneCount = useMemo(
@@ -219,8 +225,8 @@ export function RoadmapView() {
         <header className="space-y-2">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            Client-first editor roadmap. Active: canvas scale (U83) and Phase 6 polish. Full public
-            notes in{' '}
+            Client-first editor. Active: Go / pack versions / CL emit plans, then U89–U92 and
+            U97–U106. Full public notes in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"
@@ -278,7 +284,7 @@ export function RoadmapView() {
                   section={section}
                   showStatus
                   defaultStatus="planned"
-                  items={activeItems(section)}
+                  items={openItems(section)}
                 />
               ))}
 

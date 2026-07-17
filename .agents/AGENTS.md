@@ -1,4 +1,4 @@
-# VVS 2.0 Architecture Rules
+# VVS Web Architecture Rules
 
 When working on this project, strictly enforce the following architectural boundaries:
 

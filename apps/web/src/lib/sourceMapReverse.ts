@@ -57,13 +57,21 @@ export function findNodeIdAtSourceLocation(
 
 /**
  * Which graph document owns a node id (class home, function body, event handler, …).
- * Used by Code→graph reverse select so body hits open the function tab.
+ * Used by Code→graph reverse select / hover so body hits target the function tab.
+ * When `preferredTabId` contains the node, that tab wins (stable vs Object.entries order).
  */
 export function findGraphTabContainingNodeId(
   documents: Record<string, { nodes?: ReadonlyArray<{ id: string }> }> | null | undefined,
-  nodeId: string
+  nodeId: string,
+  preferredTabId?: string | null
 ): string | null {
   if (!documents) return null;
+  if (
+    preferredTabId &&
+    documents[preferredTabId]?.nodes?.some((n) => n.id === nodeId)
+  ) {
+    return preferredTabId;
+  }
   for (const [tabId, doc] of Object.entries(documents)) {
     if (doc?.nodes?.some((n) => n.id === nodeId)) return tabId;
   }

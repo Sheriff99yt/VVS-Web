@@ -70,6 +70,11 @@ interface UseGraphTabSyncOptions {
   getProjectCodegenDefaults: () => ProjectCodegenDefaults;
   /** When true, skip debounced document revision notifications (during node drag). */
   isDraggingRef?: React.RefObject<boolean>;
+  /**
+   * When true, tab switches / document loads must not wipe the undo stack
+   * (used while restoring a project history slice).
+   */
+  suppressHistoryClearRef?: React.RefObject<boolean>;
 }
 
 export function useGraphTabSync({
@@ -86,7 +91,12 @@ export function useGraphTabSync({
   getMainMetadata,
   getProjectCodegenDefaults,
   isDraggingRef,
+  suppressHistoryClearRef,
 }: UseGraphTabSyncOptions) {
+  const maybeClearHistory = useCallback(() => {
+    if (suppressHistoryClearRef?.current) return;
+    clearHistory();
+  }, [clearHistory, suppressHistoryClearRef]);
   const documentsRef = useRef<Map<string, GraphDocument>>(
     new Map([
       ['main', cloneDocument(withDefaultMetadata(initialMain, 'main', 'Main graph'))],
@@ -198,10 +208,10 @@ export function useGraphTabSync({
       const loaded = cloneDocument(doc);
       setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
       setEdges(clearEdgeSelectionFlags(loaded.edges));
-      clearHistory();
+      maybeClearHistory();
       notifyMetadata();
     },
-    [setNodes, setEdges, clearHistory, notifyMetadata]
+    [setNodes, setEdges, maybeClearHistory, notifyMetadata]
   );
 
   const getActiveTabMetadata = useCallback((): GraphTabMetadata => {
@@ -318,7 +328,7 @@ export function useGraphTabSync({
     const loaded = cloneDocument(nextDoc);
     setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
     setEdges(clearEdgeSelectionFlags(loaded.edges));
-    clearHistory();
+    // U116: keep undo stack across tab switches (snapshots carry activeGraphTab).
     prevTabRef.current = activeGraphTab;
     notifyMetadata();
   }, [
@@ -326,7 +336,6 @@ export function useGraphTabSync({
     openTabs,
     setNodes,
     setEdges,
-    clearHistory,
     flushCurrentTab,
     notifyMetadata,
     getProjectCodegenDefaults,
@@ -347,16 +356,16 @@ export function useGraphTabSync({
       setNodes(clearNodeSelectionFlags(normalizeParenting(doc.nodes)));
       setEdges(clearEdgeSelectionFlags(doc.edges));
       prevTabRef.current = tab.id;
-      clearHistory();
+      maybeClearHistory();
       notifyMetadata();
     },
-    [flushCurrentTab, setNodes, setEdges, clearHistory, notifyMetadata, getProjectCodegenDefaults]
+    [flushCurrentTab, setNodes, setEdges, maybeClearHistory, notifyMetadata, getProjectCodegenDefaults]
   );
 
   const patchAllDocuments = useCallback(
     (
       updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-      options?: { affectedTabIds?: string[] }
+      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
     ): string[] => {
       flushCurrentTab();
       const current: Record<string, GraphDocument> = {};
@@ -367,24 +376,81 @@ export function useGraphTabSync({
       documentsRef.current = new Map(
         Object.entries(next).map(([tabId, doc]) => [tabId, cloneDocument(doc)])
       );
-      const activeDoc = documentsRef.current.get(activeGraphTab) ?? { nodes: [], edges: [] };
+      const tabToShow = options?.viewTabId ?? activeGraphTab;
+      if (options?.viewTabId) {
+        prevTabRef.current = options.viewTabId;
+      }
+      const activeDoc = documentsRef.current.get(tabToShow) ?? { nodes: [], edges: [] };
       const loaded = cloneDocument(activeDoc);
       setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
       setEdges(clearEdgeSelectionFlags(loaded.edges));
-      clearHistory();
+      if (!options?.preserveHistory) {
+        maybeClearHistory();
+      }
       notifyMetadata();
       const affected =
         options?.affectedTabIds ??
-        Object.keys(next).filter((tabId) => tabId === activeGraphTab || current[tabId] !== next[tabId]);
+        Object.keys(next).filter((tabId) => tabId === tabToShow || current[tabId] !== next[tabId]);
       return affected;
     },
-    [activeGraphTab, flushCurrentTab, setNodes, setEdges, clearHistory, notifyMetadata]
+    [activeGraphTab, flushCurrentTab, setNodes, setEdges, maybeClearHistory, notifyMetadata]
+  );
+
+  /** Replace all documents and show `activeTab` without wiping undo (history restore). */
+  const replaceDocumentsForHistory = useCallback(
+    (documents: Record<string, GraphDocument>, activeTab: string) => {
+      documentsRef.current = new Map(
+        Object.entries(documents).map(([tabId, doc]) => [tabId, cloneDocument(doc)])
+      );
+      prevTabRef.current = activeTab;
+      const doc = documentsRef.current.get(activeTab) ?? { nodes: [], edges: [] };
+      const loaded = cloneDocument(doc);
+      setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
+      setEdges(clearEdgeSelectionFlags(loaded.edges));
+      notifyMetadata();
+    },
+    [setNodes, setEdges, notifyMetadata]
+  );
+
+  /**
+   * U116 lean undo: flush current tab, point prevTabRef at `tabId` so the
+   * activeGraphTab effect does not reload/clear — caller then setNodes from snapshot.
+   */
+  const prepareTabSwitchForHistory = useCallback((tabId: string) => {
+    flushCurrentTab();
+    prevTabRef.current = tabId;
+  }, [flushCurrentTab]);
+
+  /** Write nodes/edges into documentsRef for a tab (lean undo must not leave stale docs). */
+  const commitTabDocumentForHistory = useCallback(
+    (tabId: string, nextNodes: VVSNode[], nextEdges: VVSEdge[]) => {
+      const existing = documentsRef.current.get(tabId);
+      const tabMeta = openTabs.find((t) => t.id === tabId);
+      const codegenDefaults = getProjectCodegenDefaults();
+      const metadata =
+        existing?.metadata ??
+        defaultTabMetadata(
+          documentTabType(tabMeta?.type),
+          tabMeta?.name ?? 'Graph',
+          codegenDefaults
+        );
+      documentsRef.current.set(tabId, {
+        nodes: clearNodeSelectionFlags(structuredClone(nextNodes)),
+        edges: clearEdgeSelectionFlags(structuredClone(nextEdges)),
+        metadata,
+      });
+      notifyMetadata();
+    },
+    [openTabs, getProjectCodegenDefaults, notifyMetadata]
   );
 
   return {
     getAllDocuments,
     loadAllDocuments,
     patchAllDocuments,
+    replaceDocumentsForHistory,
+    prepareTabSwitchForHistory,
+    commitTabDocumentForHistory,
     getActiveTabMetadata,
     updateActiveTabMetadata,
     subscribeMetadata,

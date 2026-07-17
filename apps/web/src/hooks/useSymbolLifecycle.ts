@@ -56,7 +56,7 @@ export function useSymbolLifecycle() {
     graphContainers,
     setClasses,
   } = useProject();
-  const { getDocuments, patchAllDocuments } = useGraphWorkspace();
+  const { getDocuments, patchAllDocuments, pushHistory } = useGraphWorkspace();
 
   const getSymbolsState = useCallback(
     () => ({ variables, functions, events, openTabs, classes, activeClassId }),
@@ -64,10 +64,20 @@ export function useSymbolLifecycle() {
   );
 
   const applyDocuments = useCallback(
-    (nextDocuments: Record<string, GraphDocument>) => {
-      patchAllDocuments(() => nextDocuments);
+    (
+      nextDocuments: Record<string, GraphDocument>,
+      options?: { preserveHistory?: boolean; viewTabId?: string }
+    ) => {
+      patchAllDocuments(() => nextDocuments, options);
     },
     [patchAllDocuments]
+  );
+
+  const recordSymbolHistory = useCallback(
+    (label: string) => {
+      pushHistory(label);
+    },
+    [pushHistory]
   );
 
   const dualWriteDefineNode = useCallback(
@@ -105,30 +115,39 @@ export function useSymbolLifecycle() {
   );
 
   const addVariableWithDefine = useCallback(
-    (variable: VariableSymbol) => {
+    (variable: VariableSymbol, historyLabel?: string) => {
+      recordSymbolHistory(historyLabel ?? `Add variable ${variable.name}`);
       setVariables((list) => [...list, variable]);
       const documents = getDocuments() ?? { main: { nodes: [], edges: [] } };
-      applyDocuments(dualWriteDefineNode(documents, 'variable', variable));
+      applyDocuments(dualWriteDefineNode(documents, 'variable', variable), {
+        preserveHistory: true,
+      });
     },
-    [setVariables, getDocuments, applyDocuments, dualWriteDefineNode]
+    [setVariables, getDocuments, applyDocuments, dualWriteDefineNode, recordSymbolHistory]
   );
 
   const addFunctionWithDefine = useCallback(
-    (func: FunctionSymbol) => {
+    (func: FunctionSymbol, historyLabel?: string) => {
+      recordSymbolHistory(historyLabel ?? `Add function ${func.name}`);
       setFunctions((list) => [...list, func]);
       const documents = getDocuments() ?? { main: { nodes: [], edges: [] } };
-      applyDocuments(dualWriteDefineNode(documents, 'function', func));
+      applyDocuments(dualWriteDefineNode(documents, 'function', func), {
+        preserveHistory: true,
+      });
     },
-    [setFunctions, getDocuments, applyDocuments, dualWriteDefineNode]
+    [setFunctions, getDocuments, applyDocuments, dualWriteDefineNode, recordSymbolHistory]
   );
 
   const addEventWithDefine = useCallback(
-    (event: ProjectEventDefinition) => {
+    (event: ProjectEventDefinition, historyLabel?: string) => {
+      recordSymbolHistory(historyLabel ?? `Add event ${event.name}`);
       setEvents((list) => [...list, event]);
       const documents = getDocuments() ?? { main: { nodes: [], edges: [] } };
-      applyDocuments(dualWriteDefineNode(documents, 'event', event));
+      applyDocuments(dualWriteDefineNode(documents, 'event', event), {
+        preserveHistory: true,
+      });
     },
-    [setEvents, getDocuments, applyDocuments, dualWriteDefineNode]
+    [setEvents, getDocuments, applyDocuments, dualWriteDefineNode, recordSymbolHistory]
   );
 
   const addClassWithDefine = useCallback(
@@ -137,10 +156,13 @@ export function useSymbolLifecycle() {
       const cls = createClassSymbol(trimmed, { containerId });
       const entry = createProgramEntryEvent({ id: `evt-start-${cls.id}`, classId: cls.id });
 
+      recordSymbolHistory(`Add class ${cls.name}`);
       setClasses((list) => [...list, cls]);
       setEvents((list) => [...list, entry]);
       const documents = getDocuments() ?? {};
-      applyDocuments(bootstrapClassHomeDocuments(documents, cls, entry, activeGraphTab));
+      applyDocuments(bootstrapClassHomeDocuments(documents, cls, entry, activeGraphTab), {
+        preserveHistory: true,
+      });
 
       const container = graphContainers.find((c) => c.id === containerId);
       if (container) {
@@ -163,6 +185,7 @@ export function useSymbolLifecycle() {
       setActiveClassId,
       setSelection,
       activeGraphTab,
+      recordSymbolHistory,
     ]
   );
 
@@ -189,7 +212,8 @@ export function useSymbolLifecycle() {
         id: `var-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         name,
       };
-      addVariableWithDefine(copy);
+      // History is recorded inside addVariableWithDefine
+      addVariableWithDefine(copy, `Duplicate variable ${copy.name}`);
       setSelection({ type: 'variable', id: copy.id });
       return copy;
     },
@@ -222,7 +246,7 @@ export function useSymbolLifecycle() {
         name,
         overloads,
       };
-      addFunctionWithDefine(copy);
+      addFunctionWithDefine(copy, `Duplicate function ${copy.name}`);
       setSelection({ type: 'function', id: copy.id });
       return copy;
     },
@@ -244,7 +268,7 @@ export function useSymbolLifecycle() {
         role: source.role === 'entry' ? undefined : source.role,
         parameters: source.parameters.map((p) => ({ ...p })),
       };
-      addEventWithDefine(copy);
+      addEventWithDefine(copy, `Duplicate event ${copy.name}`);
       setSelection({ type: 'event', id: copy.id });
       return copy;
     },
@@ -253,16 +277,38 @@ export function useSymbolLifecycle() {
 
   const deleteSymbol = useCallback(
     (kind: SymbolRefKind, symbolId: string, mode: SymbolDeleteMode) => {
+      if (kind !== 'variable' && kind !== 'function' && kind !== 'event') return;
+
+      const existed =
+        kind === 'variable'
+          ? variables.some((v) => v.id === symbolId)
+          : kind === 'function'
+            ? functions.some((f) => f.id === symbolId)
+            : events.some((e) => e.id === symbolId);
+      if (!existed) return;
+
       const documents = getDocuments() ?? { main: { nodes: [], edges: [] } };
       const plan = planSymbolDelete(kind, symbolId, mode, getSymbolsState(), documents);
+
+      const name =
+        kind === 'variable'
+          ? variables.find((v) => v.id === symbolId)?.name
+          : kind === 'function'
+            ? functions.find((f) => f.id === symbolId)?.name
+            : events.find((e) => e.id === symbolId)?.name;
+      recordSymbolHistory(
+        `Delete ${kind}${name ? ` ${name}` : ''}${mode === 'symbol_and_refs' ? ' and refs' : ''}`
+      );
+
+      const nextViewTab = plan.closeTabIds.includes(activeGraphTab) ? 'main' : activeGraphTab;
 
       setVariables(plan.nextSymbols.variables);
       setFunctions(plan.nextSymbols.functions);
       setEvents(plan.nextSymbols.events);
       setOpenTabs(plan.nextSymbols.openTabs);
 
-      if (plan.closeTabIds.includes(activeGraphTab)) {
-        setActiveGraphTab('main');
+      if (nextViewTab !== activeGraphTab) {
+        setActiveGraphTab(nextViewTab);
       }
 
       if (
@@ -273,11 +319,17 @@ export function useSymbolLifecycle() {
         setSelection({ type: 'graph', id: null });
       }
 
-      applyDocuments(plan.nextDocuments);
+      applyDocuments(plan.nextDocuments, {
+        preserveHistory: true,
+        viewTabId: nextViewTab,
+      });
     },
     [
       getDocuments,
       getSymbolsState,
+      variables,
+      functions,
+      events,
       setVariables,
       setFunctions,
       setEvents,
@@ -287,6 +339,7 @@ export function useSymbolLifecycle() {
       selection,
       setSelection,
       applyDocuments,
+      recordSymbolHistory,
     ]
   );
 
@@ -300,36 +353,63 @@ export function useSymbolLifecycle() {
 
   const renameVariable = useCallback(
     (variable: VariableSymbol) => {
-      setVariables((list) => list.map((v) => (v.id === variable.id ? variable : v)));
+      const prev = variables.find((v) => v.id === variable.id);
+      if (!prev) return;
       const documents = getDocuments();
       if (!documents) return;
-      applyDocuments(applyVariableRenameToDocuments(documents, variable));
+      if (prev.name !== variable.name) {
+        recordSymbolHistory(`Rename variable ${prev.name} → ${variable.name}`);
+      } else {
+        recordSymbolHistory(`Update variable ${variable.name}`);
+      }
+      setVariables((list) => list.map((v) => (v.id === variable.id ? variable : v)));
+      applyDocuments(applyVariableRenameToDocuments(documents, variable), {
+        preserveHistory: true,
+      });
     },
-    [setVariables, getDocuments, applyDocuments]
+    [variables, setVariables, getDocuments, applyDocuments, recordSymbolHistory]
   );
 
   const renameFunction = useCallback(
     (func: FunctionSymbol) => {
+      const prev = functions.find((f) => f.id === func.id);
+      if (!prev) return;
+      const documents = getDocuments();
+      if (!documents) return;
+      if (prev.name !== func.name) {
+        recordSymbolHistory(`Rename function ${prev.name} → ${func.name}`);
+      } else {
+        recordSymbolHistory(`Update function ${func.name}`);
+      }
       setFunctions((list) => list.map((f) => (f.id === func.id ? func : f)));
       const tabName = formatFunctionTabName(func.name);
       setOpenTabs((tabs) =>
         tabs.map((tab) => (tab.id === func.id && tab.type === 'function' ? { ...tab, name: tabName } : tab))
       );
-      const documents = getDocuments();
-      if (!documents) return;
-      applyDocuments(applyFunctionUpdateToDocuments(documents, func));
+      applyDocuments(applyFunctionUpdateToDocuments(documents, func), {
+        preserveHistory: true,
+      });
     },
-    [setFunctions, setOpenTabs, getDocuments, applyDocuments]
+    [functions, setFunctions, setOpenTabs, getDocuments, applyDocuments, recordSymbolHistory]
   );
 
   const renameEvent = useCallback(
     (event: ProjectEventDefinition) => {
-      setEvents((list) => list.map((e) => (e.id === event.id ? event : e)));
+      const prev = events.find((e) => e.id === event.id);
+      if (!prev) return;
       const documents = getDocuments();
       if (!documents) return;
-      applyDocuments(applyEventUpdateToDocuments(documents, event));
+      if (prev.name !== event.name) {
+        recordSymbolHistory(`Rename event ${prev.name} → ${event.name}`);
+      } else {
+        recordSymbolHistory(`Update event ${event.name}`);
+      }
+      setEvents((list) => list.map((e) => (e.id === event.id ? event : e)));
+      applyDocuments(applyEventUpdateToDocuments(documents, event), {
+        preserveHistory: true,
+      });
     },
-    [setEvents, getDocuments, applyDocuments]
+    [events, setEvents, getDocuments, applyDocuments, recordSymbolHistory]
   );
 
   const deleteBrokenNode = useCallback(

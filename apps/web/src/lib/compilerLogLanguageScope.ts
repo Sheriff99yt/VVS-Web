@@ -31,7 +31,8 @@ export function liveValidationToLogEntries(
   const now = new Date().toLocaleTimeString();
   const pack = (msgs: ValidationMessage[], type: 'error' | 'warning') =>
     msgs.map((msg, index) => ({
-      id: `live-${language}-${type}-${msg.code ?? 'x'}-${msg.nodeId ?? msg.symbolId ?? index}`,
+      // Include tabId + index so duplicate analyzer codes never collide as React keys.
+      id: `live-${language}-${type}-${msg.code ?? 'x'}-${msg.tabId ?? ''}-${msg.nodeId ?? msg.symbolId ?? 'x'}-${index}`,
       timestamp: now,
       type,
       message: msg.tabId ? `[${msg.tabId}] ${msg.message}` : msg.message,

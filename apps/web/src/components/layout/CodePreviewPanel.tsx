@@ -26,6 +26,10 @@ import { useUiPreference } from '@/hooks/useUiPreference';
 import { isCodePreviewPaused } from '@/lib/codePreviewPause';
 import { findNodeIdAtSourceLocation, findGraphTabContainingNodeId } from '@/lib/sourceMapReverse';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
+import {
+  clearCodeHoverHighlight,
+  setCodeHoverHighlight,
+} from '@/lib/codeHoverHighlightStore';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import { LanguageExtensionMenu } from '@/components/ui/LanguageExtensionMenu';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -602,8 +606,12 @@ export function CodePreviewPanel({
       });
       if (!nodeId) return;
       // Prefer the graph document that actually contains the node (function body tab)
-      // over the module file owner (class home).
-      const containingTab = findGraphTabContainingNodeId(documents, nodeId);
+      // over the module file owner (class home). Prefer active tab when it owns the node.
+      const containingTab = findGraphTabContainingNodeId(
+        documents,
+        nodeId,
+        activeGraphTab
+      );
       const ownerTab =
         containingTab ??
         fileOwners[filePath] ??
@@ -611,8 +619,63 @@ export function CodePreviewPanel({
         previewTabId;
       dispatchNavigateToNode(ownerTab, nodeId);
     },
-    [sourceMap, filePath, fileOwners, selectedFilePath, previewTabId, documents]
+    [
+      sourceMap,
+      filePath,
+      fileOwners,
+      selectedFilePath,
+      previewTabId,
+      documents,
+      activeGraphTab,
+    ]
   );
+
+  const handleHoverSourceLocation = useCallback(
+    (line: number, col: number) => {
+      const nodeId = findNodeIdAtSourceLocation(sourceMap, {
+        filePath,
+        line,
+        col,
+      });
+      if (!nodeId) {
+        clearCodeHoverHighlight();
+        return;
+      }
+      const owningTab =
+        findGraphTabContainingNodeId(documents, nodeId, activeGraphTab) ??
+        fileOwners[filePath] ??
+        (selectedFilePath ? fileOwners[selectedFilePath] : undefined) ??
+        previewTabId;
+      const onCurrentGraph = owningTab === activeGraphTab;
+      // Outline current tab when local; other open tab when remote; never closed tabs.
+      const outlineTab = onCurrentGraph
+        ? activeGraphTab
+        : owningTab && openTabs.some((t) => t.id === owningTab)
+          ? owningTab
+          : null;
+      setCodeHoverHighlight({
+        nodeId: onCurrentGraph ? nodeId : null,
+        tabId: outlineTab,
+      });
+    },
+    [
+      sourceMap,
+      filePath,
+      documents,
+      activeGraphTab,
+      fileOwners,
+      selectedFilePath,
+      previewTabId,
+      openTabs,
+    ]
+  );
+
+  useEffect(() => () => clearCodeHoverHighlight(), []);
+
+  // Tab / file changes leave the cursor on old mapped text — drop stale rings.
+  useEffect(() => {
+    clearCodeHoverHighlight();
+  }, [activeGraphTab, filePath]);
 
   const isEmpty = !displayCode.trim();
 
@@ -735,7 +798,7 @@ export function CodePreviewPanel({
 
         {!isEmpty ? (
           <Tooltip
-            content="Double-click a line to select the canvas node"
+            content="Hover to highlight the node · Double-click to select it"
             placement="top"
             disabled={isJsonPreview}
             className="block h-full w-full min-w-0"
@@ -748,9 +811,11 @@ export function CodePreviewPanel({
                 language={isJsonPreview ? 'json' : targetLanguage}
                 highlightRanges={highlightRanges}
                 onReverseSelectLine={isJsonPreview ? undefined : handleReverseSelectLine}
-              readOnly
-              className="h-full"
-            />
+                onHoverSourceLocation={isJsonPreview ? undefined : handleHoverSourceLocation}
+                onHoverSourceLeave={isJsonPreview ? undefined : clearCodeHoverHighlight}
+                readOnly
+                className="h-full"
+              />
             </div>
           </Tooltip>
         ) : null}

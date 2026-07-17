@@ -1024,37 +1024,41 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     setSymbolMenu(null);
   }, [symbolMenuSingle, functions, focusOrInsertFunctionDefine, focusOrInsertEventHandler]);
 
-  const symbolMenuFindName = useMemo(() => {
-    if (!symbolMenuSingle) return undefined;
-    if (symbolMenuSingle.kind === 'function') {
-      return functions.find((f) => f.id === symbolMenuSingle.id)?.name;
+  const symbolMenuFindNames = useMemo(() => {
+    if (!symbolMenu || symbolMenu.targets.length === 0) return [] as string[];
+    const names: string[] = [];
+    for (const target of symbolMenu.targets) {
+      if (target.kind === 'function') {
+        const n = functions.find((f) => f.id === target.id)?.name;
+        if (n) names.push(n);
+      } else if (target.kind === 'event') {
+        const n = events.find((e) => e.id === target.id)?.name;
+        if (n) names.push(n);
+      } else if (target.kind === 'variable') {
+        const n = variables.find((v) => v.id === target.id)?.name;
+        if (n) names.push(n);
+      } else if (target.kind === 'class') {
+        const n = classes.find((c) => c.id === target.id)?.name;
+        if (n) names.push(n);
+      } else if (target.kind === 'graph') {
+        const n = graphContainers.find((c) => c.id === target.id)?.name;
+        if (n) names.push(n);
+      }
     }
-    if (symbolMenuSingle.kind === 'event') {
-      return events.find((e) => e.id === symbolMenuSingle.id)?.name;
-    }
-    if (symbolMenuSingle.kind === 'variable') {
-      return variables.find((v) => v.id === symbolMenuSingle.id)?.name;
-    }
-    if (symbolMenuSingle.kind === 'class') {
-      return classes.find((c) => c.id === symbolMenuSingle.id)?.name;
-    }
-    if (symbolMenuSingle.kind === 'graph') {
-      return graphContainers.find((c) => c.id === symbolMenuSingle.id)?.name;
-    }
-    return undefined;
-  }, [symbolMenuSingle, functions, events, variables, classes, graphContainers]);
+    return [...new Set(names)];
+  }, [symbolMenu, functions, events, variables, classes, graphContainers]);
 
   const handleSymbolMenuFindInGraph = useCallback(() => {
-    if (!symbolMenuFindName) return;
-    dispatchFocusGraphNodeSearch(symbolMenuFindName, { searchAllGraphs: false });
+    if (symbolMenuFindNames.length === 0) return;
+    dispatchFocusGraphNodeSearch(symbolMenuFindNames, { searchAllGraphs: false });
     setSymbolMenu(null);
-  }, [symbolMenuFindName]);
+  }, [symbolMenuFindNames]);
 
   const handleSymbolMenuFindInAllGraphs = useCallback(() => {
-    if (!symbolMenuFindName) return;
-    dispatchFocusGraphNodeSearch(symbolMenuFindName, { searchAllGraphs: true });
+    if (symbolMenuFindNames.length === 0) return;
+    dispatchFocusGraphNodeSearch(symbolMenuFindNames, { searchAllGraphs: true });
     setSymbolMenu(null);
-  }, [symbolMenuFindName]);
+  }, [symbolMenuFindNames]);
 
   const handleSymbolMenuOpen = useCallback(() => {
     if (!symbolMenuSingle) return;
@@ -2380,21 +2384,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               {symbolMenuSingle.kind === 'class' || symbolMenuSingle.kind === 'graph' ? (
                 <SymbolMenuItem label="Open" onClick={handleSymbolMenuOpen} />
               ) : null}
-              {symbolMenuFindName ? (
-                <>
-                  <div className="my-0.5 border-t border-zinc-800" role="separator" />
-                  <SymbolMenuItem
-                    label="Find in this graph"
-                    shortcut={shortcutKeys('node-search-from-symbol')}
-                    onClick={handleSymbolMenuFindInGraph}
-                  />
-                  <SymbolMenuItem
-                    label="Find in all graphs"
-                    shortcut={shortcutKeys('node-search')}
-                    onClick={handleSymbolMenuFindInAllGraphs}
-                  />
-                </>
-              ) : null}
               <div className="my-0.5 border-t border-zinc-800" role="separator" />
               {symbolMenuSingle.kind === 'graph'
                 ? (() => {
@@ -2417,6 +2406,29 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               {symbolMenuSingle.kind === 'function' ? (
                 <SymbolMenuItem label="Add overload" onClick={handleSymbolMenuAddOverload} />
               ) : null}
+            </>
+          ) : null}
+          {symbolMenuFindNames.length > 0 ? (
+            <>
+              <div className="my-0.5 border-t border-zinc-800" role="separator" />
+              <SymbolMenuItem
+                label={
+                  symbolMenuFindNames.length > 1
+                    ? `Find in this graph (${symbolMenuFindNames.length})`
+                    : 'Find in this graph'
+                }
+                shortcut={shortcutKeys('node-search')}
+                onClick={handleSymbolMenuFindInGraph}
+              />
+              <SymbolMenuItem
+                label={
+                  symbolMenuFindNames.length > 1
+                    ? `Find in all graphs (${symbolMenuFindNames.length})`
+                    : 'Find in all graphs'
+                }
+                shortcut={shortcutKeys('node-search-all')}
+                onClick={handleSymbolMenuFindInAllGraphs}
+              />
             </>
           ) : null}
           {symbolMenuDuplicatable.length > 0 ? (

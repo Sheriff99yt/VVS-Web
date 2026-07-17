@@ -4,8 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U102 · U107 done; U97–U101 / U103–U106 open.
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U102 / U107 done** · U89–U93 + U97–U101 / U103–U106 open
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U102 · U107 · U108–U117 done; U97–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U102 / U107 / U108–U117 done** · U89–U93 + U97–U101 / U103–U106 open
 
 ## Status legend
 
@@ -306,7 +307,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U102 · U107 done)
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U102 · U107 · U108–U117 done)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
 
@@ -314,7 +315,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U97 | **Add-node menu audit** (imports + all catalog nodes) | **Open** | “Import” search finds Import Class but not import nodes used in examples. Revise **all** menu/catalog entries so spawn search matches canvas kinds + fixtures. |
+| U97 | **Add-node menu audit** (imports + all catalog nodes) | **Partial** | **Import Module** back in spawn catalog (`SPAWNABLE_DYNAMIC_KINDS`); synonym search via `spawnSearch.ts`. Full catalog audit still open. |
 | U98 | **Function argument pins** | **Open** | Parameters as pins end-to-end (define · call · emit). |
 | U99 | **Function return with arguments** | **Open** | Return / multi-return as pins where targets support it — visual + emit. |
 | U100 | **Event listeners** | **Open** | Listen / subscribe visuals that map to text across languages (beyond entry/dispatch). |
@@ -325,6 +326,16 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U105 | **Overwriting (override)** study | **Open** | Decide if override needs custom visuals or is fully covered by current modifiers / defines. |
 | U106 | **Inheritance** design | **Open** | How inheritance is authored on canvas and lowered per language (pairs with CL-010). |
 | U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click selects one; Ctrl/⌘+click multi-selects; left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
+| U108 | **Action history window** | **Done** | Floating panel — graph undo restore + activity log (save/generate/import/export/delete/wire/copy/cut/paste/duplicate) |
+| U109 | **Top bar menus** | **Done** | File · Edit · View · Help — shortcuts, history, settings |
+| U110 | **Settings redesign** | **Done** | Sidebar: Project · Editor · Shortcuts · Audio · About |
+| U111 | **Shortcut reassignment** | **Done** | Settings → Shortcuts — record chords; conflict block; browser prefs |
+| U112 | **Audio feedback** | **Done** | Web Audio cues for save / generate / undo / delete / wire / errors (off by default) |
+| U113 | **VVS Web naming** | **Done** | User-facing rename from VVS 2.0 (UI + primary docs) |
+| U114 | **Symbol undo/redo** | **Done** | Create / delete / duplicate (var · fn · event) on shared Ctrl+Z stack — project slice restores symbols + all documents + tabs |
+| U115 | **Undo: rename + class CRUD** | **Done** | Rename + class create/rename/delete/move; slice includes classes / activeClassId / projectDetails |
+| U116 | **Undo: preserve across tab switch** | **Done** | Tab switch no longer clears history; snapshots carry activeGraphTab |
+| U117 | **Undo: lean canvas snapshots** | **Done** | Canvas edits = nodes+edges+tab; pushHistory = full project slice (true op-deltas deferred) |
 
 ---
 

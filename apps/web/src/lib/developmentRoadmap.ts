@@ -846,7 +846,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'languages-more',
         title: 'Pack-driven language families',
         description:
-          'Python, JS, C++, Verse, GDScript, Rust, C# — pack-first print + 14Ã—7 Rosetta goldens. Milestone 3 closed July 2026.',
+          'Python, JS, C++, Verse, GDScript, Rust, C# — pack-first print + 14×7 Rosetta goldens. Milestone 3 closed July 2026.',
         status: 'done',
       },
       {
@@ -937,7 +937,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'f-fills-node-search-u85',
         title: 'Ctrl+F / F find + symbol menu (U85)',
         description:
-          'Ctrl+F finds in all graphs (prefill from tree symbol). F with a tree symbol = find in this graph only; else frame. Symbol context menu: Find in this graph / Find in all graphs. Pane click + canvas drag clear tree-symbol focus. Space/Ctrl+K respect Layers.',
+          'Ctrl+F finds in this graph (prefill from selected canvas nodes or tree symbol; multi results). Ctrl+Shift+F finds in all graphs. F with a tree symbol = find in this graph; else frame. Symbol context menu both. Pane click + canvas drag clear tree-symbol focus.',
         status: 'done',
       },
       {
@@ -961,46 +961,73 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           'Modifier chips + import target-language sit in an absolute strip above the card on hover (pinned while a chip menu is open). Selection actions toolbar stacks above that strip when selected.',
         status: 'done',
       },
-    ],
-  },
-];
-
-/** Open / partial only — shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
-export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
-  {
-    id: 'phase-6-open',
-    title: 'Phase 6 — Open polish',
-    phase: 6,
-    emphasis: 'active',
-    items: [
       {
-        id: 'go-language-u77',
-        title: 'Go language pack (U77)',
-        description: 'Eighth target language — syntax pack, emit, and Test Project / Rosetta coverage.',
-        status: 'planned',
-      },
-      {
-        id: 'pack-versions-u78',
-        title: 'Pack versions manager view (U78)',
+        id: 'action-history-u108',
+        title: 'Action history window (U108)',
         description:
-          'Downloaded pack releases accumulate (never overwrite). List versions, set active. GitHub update adds a version. First of multiple new top-level views.',
-        status: 'planned',
+          'Floating panel — graph undo stack with restore + project activity log (save, generate, import/export, delete, wire).',
+        status: 'done',
       },
       {
-        id: 'emit-fidelity-cl-backlog',
-        title: 'Target-language emit fidelity (CL backlog)',
-        description:
-          'Plans first — then code. Open clusters from Coverage Lab golden sync: Rust inheritance (CL-010); Verse GetInput/for-loop (CL-014/015); C# async Task (CL-006); Rust static/imports (CL-008/009); GDScript temps/GetInput (CL-012/013); Verse defaults (CL-016). Canonical log: .agents/skills/vvs_cross_language_mapping/SKILL.md.',
-        status: 'planned',
+        id: 'topnav-menus-u109',
+        title: 'Top bar menus (U109)',
+        description: 'File · Edit · View · Help — complete items, shortcuts, action history entry.',
+        status: 'done',
       },
-    ],
-  },
-  {
-    id: 'editor-chrome-u84',
-    title: 'Editor chrome, wires & scale UX (U89–U90 remaining)',
-    phase: 6,
-    emphasis: 'active',
-    items: [
+      {
+        id: 'settings-redesign-u110',
+        title: 'Settings redesign (U110)',
+        description: 'Sidebar shell — Project · Editor · Shortcuts · Audio · About.',
+        status: 'done',
+      },
+      {
+        id: 'shortcut-rebind-u111',
+        title: 'Shortcut reassignment (U111)',
+        description:
+          'Settings → Shortcuts — record key chords with conflict blocking; stored in browser prefs.',
+        status: 'done',
+      },
+      {
+        id: 'audio-feedback-u112',
+        title: 'Audio feedback (U112)',
+        description:
+          'Optional subtle Web Audio cues for save, generate, undo, delete, wire, and errors.',
+        status: 'done',
+      },
+      {
+        id: 'product-name-u113',
+        title: 'VVS Web naming (U113)',
+        description: 'User-facing product name VVS Web (UI + primary docs).',
+        status: 'done',
+      },
+      {
+        id: 'symbol-undo-u114',
+        title: 'Symbol undo/redo (U114)',
+        description:
+          'Create / delete / duplicate for variables, functions, and events join the shared Ctrl+Z stack (project slice restores symbols + documents + tabs).',
+        status: 'done',
+      },
+      {
+        id: 'symbol-undo-rename-class-u115',
+        title: 'Undo: rename + class CRUD (U115)',
+        description:
+          'Symbol rename and class create/rename/delete/move on the shared stack; slice includes classes, activeClassId, projectDetails.',
+        status: 'done',
+      },
+      {
+        id: 'undo-across-tabs-u116',
+        title: 'Undo: preserve across tab switch (U116)',
+        description:
+          'Graph tab switch no longer clears the undo stack; snapshots carry activeGraphTab for cross-tab restore.',
+        status: 'done',
+      },
+      {
+        id: 'undo-lean-snapshots-u117',
+        title: 'Undo: lean canvas snapshots (U117)',
+        description:
+          'Canvas edits store nodes+edges+tab only; pushHistory stores the full project slice. True op-deltas remain deferred.',
+        status: 'done',
+      },
       {
         id: 'details-compact-rethink-u86',
         title: 'Details panel compact rethink (U86)',
@@ -1023,11 +1050,79 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'wire-connection-ux-u96',
+        title: 'Wire / connection UX (U96)',
+        description:
+          'Larger pin hit targets; edge Insert reroute + Disconnect; selection toolbar Auto-connect when exactly two compatible nodes are selected.',
+        status: 'done',
+      },
+      {
+        id: 'symbols-overlay-rethink-u102',
+        title: 'Symbols overlay rethink (U102)',
+        description:
+          'Open Graph removed from symbol tree/Details. Hover modifier strip (NodeHoverChrome); selection toolbar + right-click menus remain.',
+        status: 'done',
+      },
+      {
+        id: 'canvas-gestures-u107',
+        title: 'Canvas pan / select gestures (U107)',
+        description:
+          'Right-drag pans; left-click selects one node; Ctrl/Cmd+click multi-selects; left-drag box-selects; middle-drag pans; right-click without drag still opens spawn menu.',
+        status: 'done',
+      },
+      {
+        id: 'code-panel-hover-nav',
+        title: 'Code panel hover → graph (U71 follow-on)',
+        description:
+          'Hover generated code: yellow outline on the matching node (current tab) and owning graph tab (current or other open). Double-click still selects/navigates. Docs: docs/code_panel.md.',
+        status: 'done',
+      },
+    ],
+  },
+];
+
+/** Open / partial only — shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
+export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
+  {
+    id: 'phase-6-priority',
+    title: 'Priority — Go, packs & emit plans',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'go-language-u77',
+        title: 'Go language pack (U77)',
+        description: 'Eighth target language — syntax pack, emit, and Test Project / Rosetta coverage.',
+        status: 'planned',
+      },
+      {
+        id: 'pack-versions-u78',
+        title: 'Pack versions manager view (U78)',
+        description:
+          'Downloaded pack releases accumulate (never overwrite). List versions, set active. GitHub update adds a version. First of multiple new top-level views.',
+        status: 'planned',
+      },
+      {
+        id: 'emit-fidelity-cl-backlog',
+        title: 'Target-language emit fidelity (CL backlog)',
+        description:
+          'Plans first — then code. Open clusters: Rust inheritance (CL-010); Verse GetInput/for-loop (CL-014/015); C# async Task (CL-006); Rust static/imports (CL-008/009); GDScript temps/GetInput (CL-012/013); Verse defaults (CL-016). Canonical log: .agents/skills/vvs_cross_language_mapping/SKILL.md.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
+    id: 'editor-chrome-open',
+    title: 'Editor chrome — References & Library',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
         id: 'references-viewer-redesign-u89',
         title: 'References viewer redesign (U89)',
         description:
-          'Partial: Reference tree name filter shipped. Full huge-project redesign (navigation + scale; pairs with U83) still open.',
-        status: 'planned',
+          'Partial: Reference tree name filter shipped. Full huge-project redesign (navigation + scale) still open.',
+        status: 'partial',
       },
       {
         id: 'library-page-redesign-u90',
@@ -1036,18 +1131,11 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
           'Redesign the Library page after the client-first / git-catalog directional change (no hosted blob library).',
         status: 'planned',
       },
-      {
-        id: 'wire-connection-ux-u96',
-        title: 'Wire / connection UX (U96)',
-        description:
-          'Larger pin hit targets; edge Insert reroute + Disconnect; selection toolbar Auto-connect when exactly two compatible nodes are selected (+ Disconnect affordance).',
-        status: 'done',
-      },
     ],
   },
   {
     id: 'ai-examples-help-u91',
-    title: 'AI, examples & reverse import (U91–U93)',
+    title: 'AI, examples & reverse import',
     phase: 6,
     emphasis: 'active',
     items: [
@@ -1056,14 +1144,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'AI / MCP audit & agent autonomy (U91)',
         description:
           'Partial: Windsurf paste, tool list, clearer dangerous-tools consent. Full MCP autonomy audit (safe write paths) still open.',
-        status: 'planned',
+        status: 'partial',
       },
       {
         id: 'cross-and-lang-examples-u92',
         title: 'New cross-language & language-specific examples (U92)',
         description:
           'Partial: Branch Lab (Entry→Branch→True/False Print) + goldens. More cross-lang / language-specific examples still open.',
-        status: 'planned',
+        status: 'partial',
       },
       {
         id: 'code-to-visual-u93',
@@ -1076,7 +1164,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'graph-model-u97',
-    title: 'Catalog, functions, async & OOP (U97–U106)',
+    title: 'Catalog, functions, async & OOP',
     phase: 6,
     emphasis: 'active',
     items: [
@@ -1084,8 +1172,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'add-node-menu-audit-u97',
         title: 'Add-node menu audit (U97)',
         description:
-          'Import search finds Import Class but not import nodes used in examples. Revise all menu/catalog nodes so spawn search matches canvas kinds + fixtures.',
-        status: 'planned',
+          'Partial: Import Module spawn row restored; synonym search (module, declare, …). Full catalog vs fixture audit still open.',
+        status: 'partial',
       },
       {
         id: 'function-argument-pins-u98',
@@ -1116,13 +1204,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'planned',
       },
       {
-        id: 'symbols-overlay-rethink-u102',
-        title: 'Symbols overlay rethink (U102)',
-        description:
-          'Open Graph removed from symbol tree/Details. Hover modifier chip strip kept (NodeModifiers; pinned while menus open). Selection toolbar + right-click menus with shortcuts remain.',
-        status: 'done',
-      },
-      {
         id: 'components-visual-u103',
         title: 'Components visual + examples (U103)',
         description:
@@ -1149,13 +1230,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Design how inheritance is authored on the canvas and lowered per language (pairs with CL-010 Rust plan).',
         status: 'planned',
-      },
-      {
-        id: 'canvas-gestures-u107',
-        title: 'Canvas pan / select gestures (U107)',
-        description:
-          'Right-drag pans; left-click selects one node; Ctrl/Cmd+click multi-selects; left-drag box-selects; middle-drag pans; right-click without drag still opens spawn menu.',
-        status: 'done',
       },
     ],
   },
@@ -1345,7 +1419,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'verse-parity',
-        title: 'Web â†” engine round-trip',
+        title: 'Web ↔ engine round-trip',
         description: 'Import/export graphs between browser editor and in-engine sessions.',
         status: 'planned',
       },
@@ -1400,7 +1474,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'folder-os-path',
         title: 'Reveal in Explorer / Finder',
         description:
-          'Native â€œopen containing folderâ€ from the editor — blocked today by browser File System Access API (no absolute path exposure).',
+          'Native “open containing folder” from the editor — blocked today by browser File System Access API (no absolute path exposure).',
         status: 'planned',
       },
     ],

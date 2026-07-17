@@ -1,3 +1,5 @@
+import type { ShortcutOverrideMap } from '@/lib/shortcutOverrides';
+
 const UI_PREFERENCES_KEY = 'vvs:ui-preferences';
 const LEGACY_DETAILS_KEY = 'vvs:details-panel-expanded';
 
@@ -82,6 +84,17 @@ export interface UiPreferences {
    * graph/project target language (System/Compiler lines always shown).
    */
   compilerLogLanguageScoped: boolean;
+  /** Per-shortcut chord overrides (Win/Linux display form). */
+  shortcutOverrides: ShortcutOverrideMap;
+  /** Subtle UI sounds for save, generate, undo, etc. */
+  audioFeedbackEnabled: boolean;
+  audioFeedbackVolume: number;
+  /**
+   * Node options strip (modifiers / import gate).
+   * `false` (default): one shared strip follows hover (optimized).
+   * `true`: strip follows the single selected node instead.
+   */
+  nodeOptionsStripOnSelect: boolean;
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -109,8 +122,12 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   stepAnimateChainLayout: true,
   stepAnimateChainLayoutSpeed: 'normal',
   mcpAllowDangerousTools: false,
-  nodeSearchAllGraphs: true,
+  nodeSearchAllGraphs: false,
   compilerLogLanguageScoped: true,
+  shortcutOverrides: {},
+  audioFeedbackEnabled: false,
+  audioFeedbackVolume: 0.35,
+  nodeOptionsStripOnSelect: false,
 };
 
 export const DETAILS_PANEL_HEIGHT = {
@@ -187,7 +204,10 @@ export const FOCUS_GRAPH_NODE_SEARCH_EVENT = 'vvs:focus-graph-node-search';
 export const REQUEST_GENERATE_EVENT = 'vvs:request-generate';
 
 export type FocusGraphNodeSearchDetail = {
+  /** Single-term find (legacy / typing). Prefer `queries` for multi-select. */
   query?: string;
+  /** Match any of these terms (multi-selected symbols or canvas nodes). */
+  queries?: string[];
   /**
    * Force Layers scope for this open:
    * `true` = all graphs, `false` = this graph only, omit = keep preference.
@@ -196,19 +216,25 @@ export type FocusGraphNodeSearchDetail = {
 };
 
 export function dispatchFocusGraphNodeSearch(
-  query?: string,
+  query?: string | string[],
   options?: { searchAllGraphs?: boolean }
 ): void {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent(FOCUS_GRAPH_NODE_SEARCH_EVENT, {
-        detail: {
-          query,
-          searchAllGraphs: options?.searchAllGraphs,
-        } satisfies FocusGraphNodeSearchDetail,
-      })
-    );
-  }
+  if (typeof window === 'undefined') return;
+  const queries = (
+    Array.isArray(query) ? query : typeof query === 'string' ? [query] : []
+  )
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const unique = [...new Set(queries)];
+  window.dispatchEvent(
+    new CustomEvent(FOCUS_GRAPH_NODE_SEARCH_EVENT, {
+      detail: {
+        query: unique.length === 1 ? unique[0] : undefined,
+        queries: unique.length > 0 ? unique : undefined,
+        searchAllGraphs: options?.searchAllGraphs,
+      } satisfies FocusGraphNodeSearchDetail,
+    })
+  );
 }
 export const FOCUS_PROJECT_TREE_FILTER_EVENT = 'vvs:focus-project-tree-filter';
 
@@ -277,6 +303,13 @@ export function dispatchFocusProjectTreeFilter(): void {
 }
 
 export const OPEN_SHORTCUTS_HELP_EVENT = 'vvs:open-shortcuts-help';
+export const OPEN_ACTION_HISTORY_EVENT = 'vvs:open-action-history';
+
+export function dispatchOpenActionHistory(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(OPEN_ACTION_HISTORY_EVENT));
+  }
+}
 
 export function dispatchOpenShortcutsHelp(): void {
   if (typeof window !== 'undefined') {
@@ -348,6 +381,18 @@ export function readUiPreferences(): UiPreferences {
         rest.stepAnimateChainLayoutSpeed === 'fast'
           ? rest.stepAnimateChainLayoutSpeed
           : DEFAULT_UI_PREFERENCES.stepAnimateChainLayoutSpeed,
+      shortcutOverrides:
+        rest.shortcutOverrides && typeof rest.shortcutOverrides === 'object'
+          ? rest.shortcutOverrides
+          : DEFAULT_UI_PREFERENCES.shortcutOverrides,
+      audioFeedbackEnabled:
+        typeof rest.audioFeedbackEnabled === 'boolean'
+          ? rest.audioFeedbackEnabled
+          : DEFAULT_UI_PREFERENCES.audioFeedbackEnabled,
+      audioFeedbackVolume:
+        typeof rest.audioFeedbackVolume === 'number'
+          ? rest.audioFeedbackVolume
+          : DEFAULT_UI_PREFERENCES.audioFeedbackVolume,
     };
     return migrateLegacyDetailsPref(merged);
   } catch {

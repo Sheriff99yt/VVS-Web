@@ -94,9 +94,14 @@ export function resolve(kindId: string, _version?: number): NodeKindDefinition |
 
 const SPAWN_EXCLUDED_KINDS = new Set(['event_on_start', 'event_emit', 'event_subscribe']);
 
+/** Dynamic kinds that still need a generic spawn row (instances use prefixed kindIds). */
+const SPAWNABLE_DYNAMIC_KINDS = new Set(['vvs.project.import_module']);
+
 export function listCoreKinds(): NodeKindDefinition[] {
   return [...KIND_MAP.values()].filter(
-    (k) => !k.dynamic && !SPAWN_EXCLUDED_KINDS.has(k.kindId)
+    (k) =>
+      (!k.dynamic || SPAWNABLE_DYNAMIC_KINDS.has(k.kindId)) &&
+      !SPAWN_EXCLUDED_KINDS.has(k.kindId)
   );
 }
 

@@ -18,6 +18,9 @@ interface AppSettingsPanelProps {
 
 export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
   const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
+  const [nodeOptionsStripOnSelect, setNodeOptionsStripOnSelect] = useUiPreference(
+    'nodeOptionsStripOnSelect'
+  );
   const [showUnsupportedComments, setShowUnsupportedComments] = useUiPreference(
     'showUnsupportedComments'
   );
@@ -59,6 +62,12 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
           description="Fade nodes that do not emit for the current language"
           checked={dimUnsupportedNodes}
           onChange={setDimUnsupportedNodes}
+        />
+        <ToggleRow
+          label="Show node strip on select"
+          description="Off (default): one shared strip follows hover. On: a strip on each selected node that has options."
+          checked={nodeOptionsStripOnSelect}
+          onChange={setNodeOptionsStripOnSelect}
         />
         <ToggleRow
           label="Unsupported as (x) comments"

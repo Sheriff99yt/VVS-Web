@@ -600,22 +600,15 @@ function classHasSymbols(
 function validateOrphanDefineNodes(
   tabId: string,
   doc: GraphDocument,
-  cls: ClassSymbol,
   allClasses: ClassSymbol[],
   variables: VariableSymbol[],
   functions: FunctionSymbol[],
   events: ProjectEventDefinition[]
 ): Diagnostic[] {
   const messages: Diagnostic[] = [];
-  const variableIds = new Set(
-    variables.filter((v) => symbolClassId(v) === cls.id).map((v) => v.id)
-  );
-  const functionIds = new Set(
-    functions.filter((f) => symbolClassId(f) === cls.id).map((f) => f.id)
-  );
-  const eventIds = new Set(
-    events.filter((e) => symbolClassId(e) === cls.id).map((e) => e.id)
-  );
+  const variableIds = new Set(variables.map((v) => v.id));
+  const functionIds = new Set(functions.map((f) => f.id));
+  const eventIds = new Set(events.map((e) => e.id));
 
   for (const node of doc.nodes) {
     if (!isMemberDefineNode(node)) continue;
@@ -625,7 +618,7 @@ function validateOrphanDefineNodes(
       if (!matchesKnownClass) {
         messages.push({
           level: 'error',
-          message: `Define node references unknown class on class graph "${cls.name}".`,
+          message: `Define node references unknown class on graph "${tabId}".`,
           tabId,
           nodeId: node.id,
           source: 'semantic',
@@ -655,21 +648,12 @@ function validateOrphanDefineNodes(
           ? functionIds.has(symbolId)
           : eventIds.has(symbolId);
 
+    // Symbol exists for any class — not an orphan (may belong to a sibling on this graph).
     if (known) continue;
-
-    // Another class may share this home graph — its define nodes are not orphans for `cls`.
-    const ownedBySibling =
-      (kindId === 'var_define' &&
-        variables.some((v) => v.id === symbolId && symbolClassId(v) !== cls.id)) ||
-      (kindId === 'function_define' &&
-        functions.some((f) => f.id === symbolId && symbolClassId(f) !== cls.id)) ||
-      (kindId === 'event_member_define' &&
-        events.some((e) => e.id === symbolId && symbolClassId(e) !== cls.id));
-    if (ownedBySibling) continue;
 
     messages.push({
       level: 'error',
-      message: `Define node references unknown ${kindLabel} symbol "${symbolId}" on class graph "${cls.name}".`,
+      message: `Define node references unknown ${kindLabel} symbol "${symbolId}" on graph "${tabId}".`,
       tabId,
       nodeId: node.id,
       symbolId,
@@ -686,6 +670,9 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
   const variables = input.variables ?? [];
   const classes = input.classes ?? [];
   if (classes.length === 0) return messages;
+
+  /** Orphan scan is per graph document — not per class (avoids duplicate ORPHAN_DEFINE_NODE). */
+  const orphanTabsScanned = new Set<string>();
 
   for (const cls of classes) {
     let tabId = classHomeGraphId(cls);
@@ -754,17 +741,19 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
       });
     }
 
-    messages.push(
-      ...validateOrphanDefineNodes(
-        tabId,
-        doc,
-        cls,
-        classes,
-        variables,
-        input.functions,
-        input.events
-      )
-    );
+    if (!orphanTabsScanned.has(tabId)) {
+      orphanTabsScanned.add(tabId);
+      messages.push(
+        ...validateOrphanDefineNodes(
+          tabId,
+          doc,
+          classes,
+          variables,
+          input.functions,
+          input.events
+        )
+      );
+    }
   }
 
   return messages;

@@ -20,7 +20,7 @@ interface LogEntry {
 
 export function OutputConsolePanel() {
   const [logs, setLogs] = useState<LogEntry[]>([
-    { id: '1', timestamp: new Date().toLocaleTimeString(), type: 'info', message: 'VVS 2.0 Engine initialized. Waiting for AST.', source: 'System' },
+    { id: '1', timestamp: new Date().toLocaleTimeString(), type: 'info', message: 'VVS Web editor ready.', source: 'System' },
   ]);
   const navigableErrorsRef = useRef<LogEntry[]>([]);
 
