@@ -207,6 +207,90 @@ describe('analyzeProject event fidelity', () => {
     expect(warn[0]?.level).toBe('warning');
   });
 
+  it('does not warn CROSS_CLASS_DISPATCH when both classes share the same module graph', () => {
+    const machine = createClassSymbol('Machine', { id: 'main-class', containerId: HOME_GRAPH });
+    const sensor = createClassSymbol('Sensor', { id: 'cls-sensor', containerId: HOME_GRAPH });
+    const dispatch = {
+      id: 'dispatch-tick',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Dispatch tick',
+        category: 'Events',
+        kindId: 'event_dispatch',
+        inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+        inlineValues: {},
+        properties: { eventId: 'evt-tick', eventName: 'tick' },
+        graphBinding: { kind: 'dispatch_event' as const, symbolId: 'evt-tick' },
+      },
+    };
+
+    const result = analyzeProject(
+      baseInput({
+        classes: [machine, sensor],
+        events: [{ id: 'evt-tick', name: 'tick', parameters: [], classId: sensor.id }],
+        documents: {
+          [HOME_GRAPH]: { nodes: [dispatch], edges: [] },
+        },
+      })
+    );
+
+    expect(
+      result.diagnostics.some((d) => d.code === 'CROSS_CLASS_DISPATCH_WITHOUT_IMPORT')
+    ).toBe(false);
+  });
+
+  it('does not warn CROSS_CLASS_CALL from a function body on the same module graph', () => {
+    const machine = createClassSymbol('Machine', { id: 'main-class', containerId: HOME_GRAPH });
+    const sensor = createClassSymbol('Sensor', { id: 'cls-sensor', containerId: HOME_GRAPH });
+    const sensorFn = {
+      kind: 'function' as const,
+      id: 'fn-sense',
+      name: 'Sense',
+      binding: 'instance' as const,
+      visibility: 'public' as const,
+      classId: sensor.id,
+      overloads: [{ id: 'o1', parameters: [], returnType: 'void' as const, graphTabId: 'fn-boot' }],
+    };
+    const bootFn = {
+      kind: 'function' as const,
+      id: 'fn-boot',
+      name: 'Boot',
+      binding: 'instance' as const,
+      visibility: 'public' as const,
+      classId: machine.id,
+      overloads: [{ id: 'o1', parameters: [], returnType: 'void' as const, graphTabId: 'fn-boot' }],
+    };
+    const call = {
+      id: 'call-sense',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Call Sense',
+        category: 'Functions',
+        kindId: 'vvs.project.call_function',
+        inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+        inlineValues: {},
+        graphBinding: { kind: 'call_function' as const, symbolId: 'fn-sense' },
+      },
+    };
+
+    const result = analyzeProject({
+      ...baseInput({
+        classes: [machine, sensor],
+        documents: {
+          [HOME_GRAPH]: { nodes: [], edges: [] },
+          'fn-boot': { nodes: [call], edges: [] },
+        },
+      }),
+      functions: [bootFn, sensorFn],
+    });
+
+    expect(result.diagnostics.some((d) => d.code === 'CROSS_CLASS_CALL_WITHOUT_IMPORT')).toBe(false);
+  });
+
   it('promotes MULTICAST_REQUIRES_SUBSCRIBE to error for duplicate handlers', () => {
     const handler = (id: string) => ({
       id,

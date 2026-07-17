@@ -62,9 +62,14 @@ function EditorPageContent() {
 
     const timer = window.setTimeout(async () => {
       const entry = getRecentProjectEntry(projectId);
-      const storedHandle = await getFolderHandle(projectId!);
-      if (isFolderRecentEntry(entry ?? { id: projectId!, moduleName: '', savedAt: '', source: 'recent' }) || storedHandle) {
-        router.replace('/');
+      const preferFolder = isFolderRecentEntry(
+        entry ?? { id: projectId!, moduleName: '', savedAt: '', source: 'recent' }
+      );
+      if (preferFolder) {
+        const storedHandle = await getFolderHandle(projectId!);
+        if (!storedHandle && !loadProjectFromStore(projectId) && !loadProjectDraft(projectId)) {
+          router.replace('/');
+        }
         return;
       }
       if (!loadProjectFromStore(projectId) && !loadProjectDraft(projectId)) {

@@ -5,10 +5,7 @@ import {
   FileCode2,
   Copy,
   Check,
-  Loader2,
-  Circle,
   AlertTriangle,
-  AlignLeft,
 } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
@@ -18,7 +15,7 @@ import type { TranspileResult } from '@/types/transpile';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
 import { MAIN_GRAPH_CONTAINER_ID, classForHomeGraphId, classHomeGraphId } from '@/lib/classScope';
 import { GeneratedCodeView } from '@/components/code/GeneratedCodeView';
-import type { CodeHighlightRange } from '@/components/code/types';
+import type { CodeHighlightPalette, CodeHighlightRange } from '@/components/code/types';
 import { CopyPathButton } from '@/components/ui/CopyPathButton';
 import { nodeHighlightColor, DEFAULT_NODE_HIGHLIGHT } from '@/lib/nodeHighlightColor';
 import { resolveSymbolCodegenLink } from '@/lib/symbolCodegenLink';
@@ -26,38 +23,38 @@ import { resolveCodePreviewHighlightNodeIds } from '@/lib/projectSelection';
 import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import { useUiPreference } from '@/hooks/useUiPreference';
-import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { TARGET_FILE_EXTENSIONS, formatTargetFileExtension } from '@vvs/graph-types';
-import type { TargetLanguage } from '@/contexts/ProjectContext';
-import { findNodeIdAtSourceLocation } from '@/lib/sourceMapReverse';
+import { isCodePreviewPaused } from '@/lib/codePreviewPause';
+import { findNodeIdAtSourceLocation, findGraphTabContainingNodeId } from '@/lib/sourceMapReverse';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
+import type { ValidationMessage } from '@/lib/graphValidator';
+import { LanguageExtensionMenu } from '@/components/ui/LanguageExtensionMenu';
 
-const LANGUAGE_OPTIONS: { value: TargetLanguage; label: string }[] = [
-  { value: 'python', label: 'Python' },
-  { value: 'javascript', label: 'JS' },
-  { value: 'cpp', label: 'C++' },
-  { value: 'verse', label: 'Verse' },
-  { value: 'gdscript', label: 'GDScript' },
-  { value: 'rust', label: 'Rust' },
-  { value: 'csharp', label: 'C#' },
-  { value: 'json', label: 'JSON' },
-];
+const ERROR_DIAG_HIGHLIGHT: CodeHighlightPalette = {
+  accent: '#ef4444',
+  lineBg: 'rgba(239, 68, 68, 0.14)',
+  markBg: 'rgba(239, 68, 68, 0.32)',
+};
 
-function countMappedNodes(result: TranspileResult): number {
-  return Object.keys(result.sourceMap).length;
-}
+const WARNING_DIAG_HIGHLIGHT: CodeHighlightPalette = {
+  accent: '#f59e0b',
+  lineBg: 'rgba(245, 158, 11, 0.14)',
+  markBg: 'rgba(245, 158, 11, 0.32)',
+};
 
-function lineCount(content: string): number {
-  if (!content) return 0;
-  return content.split('\n').length;
-}
+/** Quiet zinc chrome — accent only when a toggle is pressed. */
+const BAR_BTN =
+  'inline-flex items-center justify-center gap-1 h-6 min-w-6 px-1.5 rounded text-[10px] font-medium transition-colors shrink-0 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/80';
+const BAR_BTN_ERR_ON =
+  'inline-flex items-center justify-center gap-1 h-6 min-w-6 px-1.5 rounded text-[10px] font-medium transition-colors shrink-0 bg-zinc-800 text-red-300';
+const BAR_BTN_WARN_ON =
+  'inline-flex items-center justify-center gap-1 h-6 min-w-6 px-1.5 rounded text-[10px] font-medium transition-colors shrink-0 bg-zinc-800 text-amber-300';
 
 function buildColoredHighlightRanges(
   selectedNodeIds: string[],
   sourceMap: TranspileResult['sourceMap'],
   filePath: string,
   nodesById: Map<string, VVSNode>
-): CodeHighlightRange[] | undefined {
+): CodeHighlightRange[] {
   const entries: CodeHighlightRange[] = [];
 
   for (const nodeId of selectedNodeIds) {
@@ -73,7 +70,55 @@ function buildColoredHighlightRanges(
     }
   }
 
-  return entries.length > 0 ? entries : undefined;
+  return entries;
+}
+
+function nodeIdsFromValidationMessages(messages: ValidationMessage[]): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const msg of messages) {
+    if (!msg.nodeId || seen.has(msg.nodeId)) continue;
+    seen.add(msg.nodeId);
+    ids.push(msg.nodeId);
+  }
+  return ids;
+}
+
+function buildDiagnosticHighlightRanges(
+  nodeIds: string[],
+  sourceMap: TranspileResult['sourceMap'],
+  filePath: string,
+  colors: CodeHighlightPalette
+): CodeHighlightRange[] {
+  const entries: CodeHighlightRange[] = [];
+  for (const nodeId of nodeIds) {
+    const ranges = sourceMap[nodeId];
+    if (!ranges?.length) continue;
+    for (const range of ranges) {
+      if (range.filePath !== filePath) continue;
+      entries.push({ ...range, colors });
+    }
+  }
+  return entries;
+}
+
+/** First generated file that contains a source-map hit for any of the node ids. */
+function firstMappedFileForNodes(
+  nodeIds: string[],
+  sourceMap: TranspileResult['sourceMap'],
+  preferredFilePath?: string
+): string | null {
+  if (preferredFilePath) {
+    for (const nodeId of nodeIds) {
+      const ranges = sourceMap[nodeId];
+      if (ranges?.some((r) => r.filePath === preferredFilePath)) return preferredFilePath;
+    }
+  }
+  for (const nodeId of nodeIds) {
+    const ranges = sourceMap[nodeId];
+    if (ranges?.length) return ranges[0]!.filePath;
+  }
+  return null;
 }
 
 interface CodePreviewPanelProps {
@@ -98,7 +143,9 @@ export function CodePreviewPanel({
     activeGraphTab,
     openTabs,
     selection,
+    setSelection,
     selectedNodeIds,
+    selectedTreeSymbols,
     validationWarnings,
     validationErrors,
     environmentId,
@@ -107,6 +154,7 @@ export function CodePreviewPanel({
     activeClassId,
     syntaxPackLock,
     codegenCapabilities,
+    dirtyTabIds,
   } = useProject();
   const documents = useGraphDocuments();
   const { result: projectResult, fileOwners } = useProjectTranspileResult();
@@ -114,9 +162,9 @@ export function CodePreviewPanel({
   const [lastCleanResult, setLastCleanResult] = useState<TranspileResult | null>(null);
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
   const [copied, setCopied] = useState(false);
-  const [jsonFormatOverride, setJsonFormatOverride] = useState<string | null>(null);
-  const [jsonFormatError, setJsonFormatError] = useState(false);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
+  const [highlightErrors, setHighlightErrors] = useState(false);
+  const [highlightWarnings, setHighlightWarnings] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightNavKeyRef = useRef<string | null>(null);
 
@@ -136,6 +184,7 @@ export function CodePreviewPanel({
         variables,
         activeGraphTab,
         selectedNodeIds,
+        selectedTreeSymbols,
       }),
     [
       selection,
@@ -146,6 +195,7 @@ export function CodePreviewPanel({
       variables,
       activeGraphTab,
       selectedNodeIds,
+      selectedTreeSymbols,
     ]
   );
 
@@ -157,23 +207,11 @@ export function CodePreviewPanel({
     targetLanguage,
     targetFileExtension,
     targetFileExtensions,
-    setGraphTargetLanguage,
-    setGraphTargetFileExtension,
+    setGraphLanguageWithExtension,
     isOrgGraph: previewOrgGraph,
   } = useActiveGraphCodegenSettings(codegenTabId);
-  const [showUnsupportedComments, setShowUnsupportedComments] = useUiPreference(
-    'showUnsupportedComments'
-  );
-  const [showUserComments, setShowUserComments] = useUiPreference('showUserComments');
-
-  const extensionOptions = useMemo(
-    () =>
-      TARGET_FILE_EXTENSIONS[targetLanguage].map((ext) => ({
-        value: ext,
-        label: formatTargetFileExtension(ext),
-      })),
-    [targetLanguage]
-  );
+  const [showUnsupportedComments] = useUiPreference('showUnsupportedComments');
+  const [showUserComments] = useUiPreference('showUserComments');
 
   const previewDocument =
     documents?.[previewTabId] ??
@@ -182,14 +220,31 @@ export function CodePreviewPanel({
 
   const activeTab = openTabs.find((t) => t.id === previewTabId);
   const isOrgGraph = previewOrgGraph || isOrgOnlyGraphTab(previewTabId, classes);
+  const previewPaused = isCodePreviewPaused(
+    autoCompile,
+    compileState,
+    Object.keys(dirtyTabIds).length > 0
+  );
+  const pausedLiveRef = useRef<TranspileResult | null>(null);
 
   const liveResult = useMemo(() => {
+    if (previewPaused) {
+      const emptyPaused: TranspileResult = {
+        language: targetLanguage,
+        files: [],
+        sourceMap: {},
+      };
+      return pausedLiveRef.current ?? emptyPaused;
+    }
+
     if (isOrgGraph) {
-      return {
+      const empty: TranspileResult = {
         language: projectTargetLanguage,
         files: [],
         sourceMap: {},
-      } satisfies TranspileResult;
+      };
+      pausedLiveRef.current = empty;
+      return empty;
     }
 
     const nodes = (previewDocument?.nodes ?? []) as VVSNode[];
@@ -204,14 +259,17 @@ export function CodePreviewPanel({
 
     // Container / class-home graphs: show project emit (one graph → one file),
     // except JSON — always dump via transpileGraph so the panel matches the lang picker.
+    let next: TranspileResult;
     if (!isFunctionTab && isModuleGraph && targetLanguage !== 'json') {
       const ownedFiles = projectResult.files.filter((file) => fileOwners[file.path] === previewTabId);
       if (ownedFiles.length > 0) {
-        return {
+        next = {
           language: projectResult.language,
           files: ownedFiles,
           sourceMap: projectResult.sourceMap,
-        } satisfies TranspileResult;
+        } as TranspileResult;
+        pausedLiveRef.current = next;
+        return next;
       }
     }
 
@@ -236,14 +294,17 @@ export function CodePreviewPanel({
       emitUserComments: showUserComments,
     };
 
-    return transpileGraph(
+    next = transpileGraph(
       withProjectCodegenTarget(codegenCtx, {
         targetLanguage,
         codegenCapabilities,
         syntaxPackLock,
       })
     );
+    pausedLiveRef.current = next;
+    return next;
   }, [
+    previewPaused,
     previewDocument,
     openTabs,
     previewTabId,
@@ -269,17 +330,16 @@ export function CodePreviewPanel({
     showUserComments,
   ]);
 
-  const [prevCompileState, setPrevCompileState] = useState(compileState);
-  if (prevCompileState !== compileState) {
-    setPrevCompileState(compileState);
-    if (compileState === 'success' || compileState === 'clean') {
+  useEffect(() => {
+    if (!previewPaused) {
       setLastCleanResult(liveResult);
     }
-  }
+  }, [liveResult, previewPaused]);
 
   useEffect(() => {
     const onCommitPreview = () => {
       setLastCleanResult(liveResult);
+      pausedLiveRef.current = liveResult;
     };
     window.addEventListener('vvs:commit-preview', onCommitPreview);
     return () => window.removeEventListener('vvs:commit-preview', onCommitPreview);
@@ -304,15 +364,14 @@ export function CodePreviewPanel({
     };
   }, []);
 
-  const isStale = compileState === 'dirty' && !autoCompile;
+  const isStale = previewPaused;
   const isCompiling = compileState === 'compiling';
-  const showLivePreview = autoCompile || !isStale;
   const displayResult =
     isCompiling && heldResult
       ? heldResult
-      : showLivePreview
-        ? liveResult
-        : lastCleanResult ?? liveResult;
+      : isStale
+        ? (lastCleanResult ?? liveResult)
+        : liveResult;
 
   const [prevPreviewTabId, setPrevPreviewTabId] = useState(previewTabId);
   if (prevPreviewTabId !== previewTabId) {
@@ -342,6 +401,7 @@ export function CodePreviewPanel({
     }
   }, [previewTabId, selectedFilePath, fileOwners, onClearPinnedFile]);
 
+  // projectResult is held by useProjectTranspileResult while paused — Files pin stays frozen too.
   const graphDisplayResult = displayResult;
   const displayResultForView =
     selectedFilePath && projectResult.files.some((file) => file.path === selectedFilePath)
@@ -376,10 +436,8 @@ export function CodePreviewPanel({
   const copyablePath = filePath;
   const isJsonPreview =
     targetLanguage === 'json' || /\.json$/i.test(filePath);
-  const displayCode = jsonFormatOverride ?? generatedCode;
+  const displayCode = generatedCode;
   const sourceMap = displayResultForView.sourceMap;
-  const mappedNodeCount = countMappedNodes(displayResultForView);
-  const lines = lineCount(displayCode);
 
   const previewNodes = useMemo(
     () => (previewDocument?.nodes ?? []) as VVSNode[],
@@ -403,14 +461,83 @@ export function CodePreviewPanel({
     [selection, selectedNodeIds, symbolLink?.highlightNodeIds]
   );
 
-  const highlightRanges = useMemo(
+  const errorNodeIds = useMemo(
+    () => nodeIdsFromValidationMessages(validationErrors),
+    [validationErrors]
+  );
+  const warningNodeIds = useMemo(
+    () => nodeIdsFromValidationMessages(validationWarnings),
+    [validationWarnings]
+  );
+
+  useEffect(() => {
+    if (validationErrors.length === 0) setHighlightErrors(false);
+  }, [validationErrors.length]);
+
+  useEffect(() => {
+    if (validationWarnings.length === 0) setHighlightWarnings(false);
+  }, [validationWarnings.length]);
+
+  const selectionHighlightRanges = useMemo(
     () =>
       highlightNodeIds.length > 0
         ? buildColoredHighlightRanges(highlightNodeIds, sourceMap, filePath, nodesById)
-        : undefined,
+        : [],
     [highlightNodeIds, sourceMap, filePath, nodesById]
   );
-  const hasSelectionLink = Boolean(highlightRanges?.length);
+
+  const errorHighlightRanges = useMemo(
+    () =>
+      highlightErrors
+        ? buildDiagnosticHighlightRanges(errorNodeIds, sourceMap, filePath, ERROR_DIAG_HIGHLIGHT)
+        : [],
+    [highlightErrors, errorNodeIds, sourceMap, filePath]
+  );
+
+  const warningHighlightRanges = useMemo(
+    () =>
+      highlightWarnings
+        ? buildDiagnosticHighlightRanges(
+            warningNodeIds,
+            sourceMap,
+            filePath,
+            WARNING_DIAG_HIGHLIGHT
+          )
+        : [],
+    [highlightWarnings, warningNodeIds, sourceMap, filePath]
+  );
+
+  const highlightRanges = useMemo(() => {
+    const merged = [
+      ...errorHighlightRanges,
+      ...warningHighlightRanges,
+      ...selectionHighlightRanges,
+    ];
+    return merged.length > 0 ? merged : undefined;
+  }, [errorHighlightRanges, warningHighlightRanges, selectionHighlightRanges]);
+
+  // When diagnostic toggles turn on, jump to a file that contains mapped ranges.
+  const diagNavKey = `${highlightErrors}:${highlightWarnings}:${errorNodeIds.join(',')}|${warningNodeIds.join(',')}`;
+  const [prevDiagNavKey, setPrevDiagNavKey] = useState(diagNavKey);
+  if (prevDiagNavKey !== diagNavKey) {
+    setPrevDiagNavKey(diagNavKey);
+    if (highlightErrors || highlightWarnings) {
+      const ids = [
+        ...(highlightErrors ? errorNodeIds : []),
+        ...(highlightWarnings ? warningNodeIds : []),
+      ];
+      const targetPath = firstMappedFileForNodes(ids, sourceMap, filePath);
+      if (targetPath) {
+        const fileIndex = displayResultForView.files.findIndex((file) => file.path === targetPath);
+        if (fileIndex >= 0 && fileIndex !== safeFileIndex) {
+          setActiveFileIndex(fileIndex);
+        }
+        if (targetPath !== selectedFilePath) {
+          setTimeout(() => onSelectedFilePathChange?.(targetPath), 0);
+        }
+      }
+    }
+  }
 
   const [prevHighlightNavKey, setPrevHighlightNavKey] = useState<string | null>(null);
   
@@ -441,26 +568,17 @@ export function CodePreviewPanel({
   }
 
 
-  const hasBlockingAnalysisErrors = validationErrors.length > 0;
-  const hasBlockingIssues = compileState === 'error' || hasBlockingAnalysisErrors;
+  const selectCodePreview = useCallback(() => {
+    setSelection((prev) =>
+      prev.type === 'code' && prev.id === filePath ? prev : { type: 'code', id: filePath }
+    );
+  }, [filePath, setSelection]);
 
-  const syncTitle = isCompiling
-    ? 'Generating…'
-    : isStale
-      ? 'Preview paused — generate or enable auto generate'
-      : hasBlockingIssues
-        ? hasBlockingAnalysisErrors
-          ? 'Analysis errors block export'
-          : 'Compile errors'
-        : 'In sync';
-
-  const syncTone = isCompiling
-    ? 'text-amber-400/90'
-    : isStale
-      ? 'text-amber-500'
-      : hasBlockingIssues
-        ? 'text-red-400'
-        : 'text-emerald-500';
+  useEffect(() => {
+    if (selection.type === 'code' && selection.id !== filePath) {
+      setSelection({ type: 'code', id: filePath });
+    }
+  }, [filePath, selection.type, selection.id, setSelection]);
 
   const handleCopy = useCallback(async () => {
     if (!displayCode) return;
@@ -474,17 +592,6 @@ export function CodePreviewPanel({
     }
   }, [displayCode]);
 
-  const handleFormatJson = useCallback(() => {
-    try {
-      setJsonFormatOverride(JSON.stringify(JSON.parse(generatedCode), null, 2));
-      setJsonFormatError(false);
-    } catch {
-      setJsonFormatOverride(null);
-      setJsonFormatError(true);
-      window.setTimeout(() => setJsonFormatError(false), 1600);
-    }
-  }, [generatedCode]);
-
   const handleReverseSelectLine = useCallback(
     (line: number, col: number) => {
       const nodeId = findNodeIdAtSourceLocation(sourceMap, {
@@ -493,32 +600,35 @@ export function CodePreviewPanel({
         col,
       });
       if (!nodeId) return;
+      // Prefer the graph document that actually contains the node (function body tab)
+      // over the module file owner (class home).
+      const containingTab = findGraphTabContainingNodeId(documents, nodeId);
       const ownerTab =
+        containingTab ??
         fileOwners[filePath] ??
         (selectedFilePath ? fileOwners[selectedFilePath] : undefined) ??
         previewTabId;
       dispatchNavigateToNode(ownerTab, nodeId);
     },
-    [sourceMap, filePath, fileOwners, selectedFilePath, previewTabId]
+    [sourceMap, filePath, fileOwners, selectedFilePath, previewTabId, documents]
   );
-
-  useEffect(() => {
-    setJsonFormatOverride(null);
-    setJsonFormatError(false);
-  }, [generatedCode, filePath]);
 
   const isEmpty = !displayCode.trim();
 
-  const toolbarBtnClass =
-    'p-0.5 text-zinc-500 hover:text-zinc-200 disabled:opacity-40 disabled:pointer-events-none rounded hover:bg-zinc-800 transition-colors';
+  const mappedErrorCount = errorNodeIds.filter((id) => Boolean(sourceMap[id]?.length)).length;
+  const mappedWarningCount = warningNodeIds.filter((id) => Boolean(sourceMap[id]?.length)).length;
 
   return (
-    <div className="w-full h-full bg-zinc-950 flex flex-col min-h-0 min-w-0 relative overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 bg-zinc-950/95 px-2 h-7 shrink-0">
-        <div className="flex items-center gap-1 min-w-0 flex-1">
-          <FileCode2 size={11} className="text-zinc-600 shrink-0" />
+    <div
+      onMouseDown={selectCodePreview}
+      className="w-full h-full bg-zinc-950 flex flex-col min-h-0 min-w-0 relative overflow-hidden"
+    >
+      {/* Match GraphTabBar height (h-9). Primary affordances only. */}
+      <div className="flex items-center gap-1 border-b border-zinc-800 bg-zinc-950 px-2 h-9 shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <FileCode2 size={12} className="text-zinc-600 shrink-0" />
           <span
-            className="text-[10px] text-zinc-400 font-mono truncate"
+            className="text-[11px] text-zinc-400 font-mono truncate min-w-0"
             title={copyablePath}
           >
             {filePath}
@@ -529,135 +639,76 @@ export function CodePreviewPanel({
           />
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <div className="flex items-center gap-1">
-            {validationErrors.length > 0 ? (
-              <span
-                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] text-red-400 bg-red-500/10 border border-red-500/20"
-                title={validationErrors.map((e) => e.message).join('\n')}
-              >
-                <AlertTriangle size={9} />
-                {validationErrors.length}
-              </span>
-            ) : null}
-            {validationWarnings.length > 0 ? (
-              <span
-                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] text-amber-400 bg-amber-500/10 border border-amber-500/20"
-                title={`${validationWarnings.length} portability warning(s)`}
-              >
-                <AlertTriangle size={9} />
-                {validationWarnings.length}
-              </span>
-            ) : null}
-            <span
-              className={`inline-flex items-center p-0.5 rounded ${syncTone}`}
-              title={syncTitle}
-            >
-              {isCompiling ? (
-                <Loader2 size={10} className="animate-spin" />
-              ) : isStale ? (
-                <AlertTriangle size={10} />
-              ) : compileState === 'error' ? (
-                <AlertTriangle size={10} />
-              ) : (
-                <Circle size={6} fill="currentColor" stroke="none" />
-              )}
-            </span>
-          </div>
-
+        <div className="flex items-center gap-0.5 shrink-0">
           {!isOrgGraph ? (
-            <div className="flex items-center gap-1 border-l border-zinc-800 pl-1.5">
-              <button
-                type="button"
-                onClick={() => setShowUserComments(!showUserComments)}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition-colors ${
-                  showUserComments
-                    ? 'border-sky-500/40 bg-sky-500/15 text-sky-300'
-                    : 'border-zinc-700 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
-                }`}
-                title="Show author Comment [C] lines"
-                aria-pressed={showUserComments}
-                aria-label="Show author Comment [C] lines"
-              >
-                {'//'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowUnsupportedComments(!showUnsupportedComments)}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition-colors ${
-                  showUnsupportedComments
-                    ? 'border-amber-500/40 bg-amber-500/15 text-amber-300'
-                    : 'border-zinc-700 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
-                }`}
-                title="Show unsupported as (x) comments"
-                aria-pressed={showUnsupportedComments}
-                aria-label="Show unsupported as (x) comments"
-              >
-                (x)
-              </button>
-              <SearchableSelect
-                variant="compact"
-                value={targetLanguage}
-                onChange={(value) => setGraphTargetLanguage(value as TargetLanguage)}
-                options={LANGUAGE_OPTIONS}
-                placeholder="Lang"
-                className="w-[4.75rem]"
-                menuClassName="min-w-[9rem]"
-                searchable={LANGUAGE_OPTIONS.length > 6}
-              />
-              <SearchableSelect
-                variant="compact"
-                value={targetFileExtension}
-                onChange={setGraphTargetFileExtension}
-                options={extensionOptions}
-                placeholder="ext"
-                className="w-[3.25rem]"
-                menuClassName="min-w-[6rem] right-0"
-                searchable={extensionOptions.length > 1}
-                searchMinOptions={1}
-              />
-            </div>
+            <LanguageExtensionMenu
+              language={targetLanguage}
+              extension={targetFileExtension}
+              onPick={(lang, ext) => {
+                selectCodePreview();
+                setGraphLanguageWithExtension(lang, ext);
+              }}
+            />
           ) : null}
-
-          <span
-            className="text-[9px] text-zinc-600 tabular-nums hidden sm:inline border-l border-zinc-800 pl-1.5"
-            title={`${lines} lines · ${mappedNodeCount} mapped nodes`}
-          >
-            {lines}L
-          </span>
-
-          <div className="flex items-center gap-0.5 border-l border-zinc-800 pl-1.5">
-            {isJsonPreview ? (
-              <button
-                type="button"
-                onClick={handleFormatJson}
-                disabled={isEmpty}
-                className={`${toolbarBtnClass} ${jsonFormatError ? 'text-red-400' : jsonFormatOverride ? 'text-emerald-400' : ''}`}
-                title={
-                  jsonFormatError
-                    ? 'Invalid JSON'
-                    : jsonFormatOverride
-                      ? 'JSON formatted'
-                      : 'Format JSON'
-                }
-              >
-                <AlignLeft size={11} />
-              </button>
-            ) : null}
+          {validationErrors.length > 0 ? (
             <button
               type="button"
-              onClick={() => void handleCopy()}
-              disabled={isEmpty}
-              className={toolbarBtnClass}
-              title={copied ? 'Copied' : 'Copy code'}
+              onClick={() => {
+                selectCodePreview();
+                setHighlightErrors((on) => !on);
+              }}
+              className={highlightErrors ? BAR_BTN_ERR_ON : BAR_BTN}
+              title={
+                highlightErrors
+                  ? `Hide error highlights in code\n${validationErrors.map((e) => e.message).join('\n')}`
+                  : `Highlight errors in code${
+                      mappedErrorCount === 0 ? ' (no mapped lines yet)' : ''
+                    }\n${validationErrors.map((e) => e.message).join('\n')}`
+              }
+              aria-pressed={highlightErrors}
+              aria-label="Toggle error highlights"
             >
-              {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+              <AlertTriangle size={11} />
+              {validationErrors.length}
             </button>
-          </div>
+          ) : null}
+          {validationWarnings.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                selectCodePreview();
+                setHighlightWarnings((on) => !on);
+              }}
+              className={highlightWarnings ? BAR_BTN_WARN_ON : BAR_BTN}
+              title={
+                highlightWarnings
+                  ? `Hide warning highlights in code\n${validationWarnings.map((w) => w.message).join('\n')}`
+                  : `Highlight warnings in code${
+                      mappedWarningCount === 0 ? ' (no mapped lines yet)' : ''
+                    }\n${validationWarnings.map((w) => w.message).join('\n')}`
+              }
+              aria-pressed={highlightWarnings}
+              aria-label="Toggle warning highlights"
+            >
+              <AlertTriangle size={11} />
+              {validationWarnings.length}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              selectCodePreview();
+              void handleCopy();
+            }}
+            disabled={isEmpty}
+            className={`${BAR_BTN} disabled:opacity-40 disabled:pointer-events-none`}
+            title={copied ? 'Copied' : 'Copy code'}
+          >
+            {copied ? <Check size={12} className="text-zinc-200" /> : <Copy size={12} />}
+          </button>
         </div>
       </div>
 
-      {/* Editor surface */}
       <div className="flex-1 min-h-0 relative">
         {isCompiling && !autoCompile ? (
           <div className="absolute inset-x-0 top-0 z-10 h-px bg-zinc-600/80" />
@@ -684,7 +735,7 @@ export function CodePreviewPanel({
             <GeneratedCodeView
               value={displayCode}
               language={isJsonPreview ? 'json' : targetLanguage}
-              highlightRanges={hasSelectionLink ? highlightRanges : undefined}
+              highlightRanges={highlightRanges}
               onReverseSelectLine={isJsonPreview ? undefined : handleReverseSelectLine}
               readOnly
               className="h-full"
@@ -694,7 +745,7 @@ export function CodePreviewPanel({
 
         {isStale && !isEmpty ? (
           <div className="absolute top-2 right-2 z-10 pointer-events-none" title="Preview paused">
-            <AlertTriangle size={12} className="text-amber-500/90" />
+            <AlertTriangle size={12} className="text-zinc-500" />
           </div>
         ) : null}
       </div>

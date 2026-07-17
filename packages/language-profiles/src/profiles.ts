@@ -208,18 +208,20 @@ export function isFeatureUnsupportedForLanguage(
 
 export function analyzePortability(
   features: PortabilityFeature[],
-  targetLanguage: TargetLanguage
+  targetLanguage: TargetLanguage,
+  options?: { includeEmulated?: boolean }
 ): Diagnostic[] {
   const profile = getLanguageProfile(targetLanguage);
   const diagnostics: Diagnostic[] = [];
+  const includeEmulated = options?.includeEmulated !== false;
 
   for (const feature of features) {
     if (profile.native.includes(feature) || profile.emulated.includes(feature)) {
-      if (profile.emulated.includes(feature)) {
+      if (includeEmulated && profile.emulated.includes(feature)) {
         diagnostics.push({
           level: 'warning',
           code: `PORTABILITY_${feature.toUpperCase().replace(/\./g, '_')}`,
-          message: `${WARNING_MESSAGES[feature]} (emulated for ${profile.displayName})`,
+          message: `Emulated emit (${profile.displayName}): ${WARNING_MESSAGES[feature]}`,
           source: 'portability',
         });
       }

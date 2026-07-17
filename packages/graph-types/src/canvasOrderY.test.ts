@@ -38,7 +38,7 @@ function memberNode(
 }
 
 describe('validateCanvasOrderYHints (U79)', () => {
-  it('warns CHAIN_ORDER_Y_MISMATCH when wired successor sits higher', () => {
+  it('does not emit vertical-height teaching warnings', () => {
     const doc: GraphDocument = {
       nodes: [
         memberNode('a', 'var_define', 100, 'Declare a', 'var-a'),
@@ -46,24 +46,10 @@ describe('validateCanvasOrderYHints (U79)', () => {
       ],
       edges: [execEdge('e1', 'a', 'b')],
     };
-    const hints = validateCanvasOrderYHints({ main: doc });
-    expect(hints.some((d) => d.code === 'CHAIN_ORDER_Y_MISMATCH')).toBe(true);
-    expect(hints[0]?.level).toBe('warning');
-    expect(hints[0]?.nodeId).toBe('b');
-  });
-
-  it('does not warn when chain and vertical height agree', () => {
-    const doc: GraphDocument = {
-      nodes: [
-        memberNode('a', 'var_define', 0, 'Declare a', 'var-a'),
-        memberNode('b', 'var_define', 100, 'Declare b', 'var-b'),
-      ],
-      edges: [execEdge('e1', 'a', 'b')],
-    };
     expect(validateCanvasOrderYHints({ main: doc })).toEqual([]);
   });
 
-  it('warns EVENT_PEER_Y_ORDER when event wire disagrees with Y peers', () => {
+  it('does not warn for event peer Y vs wire either', () => {
     const doc: GraphDocument = {
       nodes: [
         memberNode('start', 'event_member_define', 100, 'Declare start', 'evt-start'),
@@ -71,23 +57,10 @@ describe('validateCanvasOrderYHints (U79)', () => {
       ],
       edges: [execEdge('e1', 'start', 'pulse')],
     };
-    const hints = validateCanvasOrderYHints({ main: doc });
-    expect(hints.some((d) => d.code === 'EVENT_PEER_Y_ORDER')).toBe(true);
-    expect(hints.every((d) => d.code !== 'CHAIN_ORDER_Y_MISMATCH')).toBe(true);
-  });
-
-  it('does not warn for unconnected heads (Y is the supported secondary key)', () => {
-    const doc: GraphDocument = {
-      nodes: [
-        memberNode('a', 'var_define', 100, 'Declare a', 'var-a'),
-        memberNode('b', 'var_define', 0, 'Declare b', 'var-b'),
-      ],
-      edges: [],
-    };
     expect(validateCanvasOrderYHints({ main: doc })).toEqual([]);
   });
 
-  it('analyzeProject surfaces Y hints as warnings (does not fail ok for the hint alone)', () => {
+  it('analyzeProject does not surface Y-height mismatch warnings', () => {
     const result = analyzeProject({
       documents: {
         main: {
@@ -105,11 +78,7 @@ describe('validateCanvasOrderYHints (U79)', () => {
       projectDetails: { extendsType: '' },
       targetLanguage: 'python',
     });
-    const yHints = result.diagnostics.filter((d) => d.code === 'CHAIN_ORDER_Y_MISMATCH');
-    expect(yHints).toHaveLength(1);
-    expect(yHints[0]?.level).toBe('warning');
-    expect(result.diagnostics.some((d) => d.code === 'CHAIN_ORDER_Y_MISMATCH' && d.level === 'error')).toBe(
-      false
-    );
+    expect(result.diagnostics.some((d) => d.code === 'CHAIN_ORDER_Y_MISMATCH')).toBe(false);
+    expect(result.diagnostics.some((d) => d.code === 'EVENT_PEER_Y_ORDER')).toBe(false);
   });
 });

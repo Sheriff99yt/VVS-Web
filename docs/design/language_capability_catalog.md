@@ -126,8 +126,8 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Constructor** | Declare Constructor | `constructor_define` (planned) | cpp, cs, rs | planned | Separate from `on_start` entry |
 | **Destructor** | Declare Destructor | `destructor_define` (planned) | cpp | planned | |
 | **Interface / trait impl** | Declare Implements | `implements_define` (planned) | cs, rs | planned | |
-| **File extension per target** | Graph settings → **This graph** + **Project defaults** | `metadata.targetFileExtension` per graph; `targetFileExtensions` on snapshot for new graphs | all | **shipped** | User picks `.cpp`, `.hpp`, `.h`, etc.; code panel shows `.{ext}` beside language dropdown |
-| **Per-graph codegen language** | Graph settings → **This graph**; code panel header | `metadata.targetLanguage` per graph; snapshot `targetLanguage` = default for new graphs | all | **shipped** | Multi-language projects: Calculator in Python, helper fn in Rust, etc. |
+| **File extension per target** | Code panel **LanguageExtensionMenu** (hover submenu); graph settings defaults | `metadata.targetFileExtension` per graph; `targetFileExtensions` on snapshot for new graphs | all | **shipped** | Language-only click → first extension; hover submenu for `.cpp` / `.hpp` / etc. |
+| **Per-graph codegen language** | Code panel top bar + graph settings | `metadata.targetLanguage` per graph; snapshot `targetLanguage` = default for new graphs | all | **shipped** | Multi-language projects: Calculator in Python, helper fn in Rust, etc. |
 | **Generated files tree** | Output panel → **Files** tab | `useProjectTranspileResult` + `buildGeneratedFileTree` | all | **shipped** | Folder tree of all emitted paths; removed flat **Generated** list from project tree |
 
 ### B — Handlers & flow (On / Implement)
@@ -299,7 +299,7 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 4. **ModifierEffectiveness UI** — disable ineffective chips in `NodeModifiers.tsx`
 5. **Rollout** — C# → Python → JS → Rust → GDScript → Verse using the same table
 
-Agent skills: `vvs_cross_language_mapping`, `vvs_visual_code_fidelity`, `vvs_transpiler_development`, `vvs_usability_example_tests`.
+Agent skills: `vvs_cross_language_mapping` (parent + one `<lang>.md` per target), `vvs_visual_code_fidelity`, `vvs_transpiler_development`, `vvs_usability_example_tests`.
 
 ---
 
@@ -335,7 +335,7 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 | Capability tags | `packages/graph-types/src/codegenTarget.ts` |
 | Node modifier chips | `apps/web/src/components/graph/NodeModifiers.tsx` |
 | Agent skill | `.agents/skills/vvs_usability_example_tests/SKILL.md` |
-| Cross-language emit map | `.agents/skills/vvs_cross_language_mapping/SKILL.md` |
+| Cross-language emit map | `.agents/skills/vvs_cross_language_mapping/SKILL.md` (+ one of `cpp.md` / `python.md` / …) |
 
 ---
 

@@ -114,6 +114,17 @@ export function EventPropertiesPanel({
 
       {hasCanvasActions ? (
         <div className="flex flex-wrap gap-1.5 pt-1 border-t border-zinc-800/80">
+          {onSpawnDispatch ? (
+            <button
+              type="button"
+              onClick={onSpawnDispatch}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[10px] hover:bg-indigo-500/25"
+              title="Add Call node to canvas"
+            >
+              <Send size={10} />
+              Call
+            </button>
+          ) : null}
           {onSpawnDeclareMember ? (
             <button
               type="button"
@@ -130,21 +141,10 @@ export function EventPropertiesPanel({
               type="button"
               onClick={onSpawnHandler}
               className="flex items-center gap-1 px-2 py-1 rounded bg-violet-500/15 text-violet-300 border border-violet-500/30 text-[10px] hover:bg-violet-500/25"
-              title="Add On handler node to canvas"
+              title="Add Define (handler) node to canvas"
             >
               <Radio size={10} />
-              On
-            </button>
-          ) : null}
-          {onSpawnDispatch ? (
-            <button
-              type="button"
-              onClick={onSpawnDispatch}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] hover:bg-amber-500/25"
-              title="Add Dispatch node to canvas"
-            >
-              <Send size={10} />
-              Dispatch
+              Define
             </button>
           ) : null}
         </div>

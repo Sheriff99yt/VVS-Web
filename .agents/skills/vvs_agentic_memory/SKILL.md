@@ -13,7 +13,7 @@ description: Triggers when reading or updating agent memory, starting a delivery
 
 1. `docs/visual_to_text_fidelity.md` — **text-shaped graphs** + **canvas is the source of truth** (locked — read before codegen/features)
 2. `docs/current_state.md` — **canonical implementation truth** (UI shell, graph isolation, backend Phase 2, transpiler/syntax packs)
-3. `docs/deployment.md` — **Phase 2 persistence/auth** (Go+pgx, self-hosted Supabase, no PostgREST for app CRUD)
+3. `docs/deployment.md` — **legacy** self-host notes only; product is **client-first / no dedicated server** (`docs/roadmap.md`)
 4. `docs/node_system.md` — nodes, pins, conversion, property schema
 5. `.agents/memory/workspace-facts.md` — entry points, contexts, events, auth/API paths
 6. `.agents/memory/incomplete-ui.md` — **open UI work** (if doing UI slices; **48/48 done** July 2026)
@@ -35,7 +35,7 @@ When fidelity rules change, update `decisions.md` § Canvas source of truth and 
 | Syntax packs / Rosetta | `vvs_syntax_packs/SKILL.md` |
 | Transpiler pipeline | `vvs_transpiler_development/SKILL.md` |
 | Symbol/codegen fidelity | `vvs_visual_code_fidelity/SKILL.md` |
-| Cross-language modifiers / C++ pilot | `vvs_cross_language_mapping/SKILL.md` |
+| Cross-language emit / packs | `vvs_cross_language_mapping/SKILL.md` → exactly one of `cpp.md` / `python.md` / … |
 | Usability fixtures & language UI gaps | `vvs_usability_example_tests/SKILL.md` |
 
 ## When to write (end of task)

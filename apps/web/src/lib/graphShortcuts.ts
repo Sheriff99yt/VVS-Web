@@ -13,11 +13,14 @@ export type GraphShortcutId =
   | 'undo'
   | 'redo'
   | 'focus-selection'
+  | 'node-search-from-symbol'
   | 'zoom-fit'
   | 'disconnect'
   | 'spawn-menu'
   | 'node-search'
+  | 'panel-filter'
   | 'toggle-log-pin'
+  | 'toggle-minimap'
   | 'extract-function'
   | 'select-all'
   | 'select-similar'
@@ -67,7 +70,7 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
   },
   {
     id: 'layout-selected-chains',
-    label: 'Layout exec chain (double-tap S)',
+    label: 'Layout exec chain (second S)',
     keysWin: 'S S',
     keysMac: 'S S',
     section: 'canvas',
@@ -94,13 +97,33 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
   { id: 'paste', label: 'Paste', keysWin: 'Ctrl+V', keysMac: '⌘V', section: 'canvas' },
   { id: 'undo', label: 'Undo', keysWin: 'Ctrl+Z', keysMac: '⌘Z', section: 'canvas' },
   { id: 'redo', label: 'Redo', keysWin: 'Ctrl+Shift+Z', keysMac: '⌘⇧Z', section: 'canvas' },
-  { id: 'focus-selection', label: 'Frame selection / fit all', keysWin: 'F', section: 'canvas' },
+  { id: 'focus-selection', label: 'Frame selection', keysWin: 'F', section: 'canvas' },
+  {
+    id: 'node-search-from-symbol',
+    label: 'Find selected symbol in this graph',
+    keysWin: 'F',
+    section: 'project',
+  },
   { id: 'zoom-fit', label: 'Zoom to fit all', keysWin: '', section: 'canvas' },
   { id: 'spawn-menu', label: 'Spawn node menu', keysWin: 'Right-click', section: 'canvas' },
-  { id: 'node-search', label: 'Search nodes', keysWin: 'Space', keysMac: 'Space', section: 'canvas' },
-  { id: 'toggle-log-pin', label: 'Pin / unpin log', keysWin: '`', section: 'canvas' },
+  {
+    id: 'node-search',
+    label: 'Find in all graphs',
+    keysWin: 'Ctrl+F',
+    keysMac: '⌘F',
+    section: 'canvas',
+  },
+  {
+    id: 'panel-filter',
+    label: 'Filter project tree',
+    keysWin: 'Ctrl+Space',
+    keysMac: 'Ctrl+Space',
+    section: 'project',
+  },
+  { id: 'toggle-log-pin', label: 'Toggle compiler log', keysWin: '`', section: 'canvas' },
+  { id: 'toggle-minimap', label: 'Cycle minimap', keysWin: 'M', section: 'canvas' },
   { id: 'extract-function', label: 'Extract to function', keysWin: 'Ctrl+Shift+E', keysMac: '⌘⇧E', section: 'canvas' },
-  { id: 'help', label: 'Keyboard shortcuts', keysWin: '?', section: 'canvas' },
+  { id: 'help', label: 'Canvas help', keysWin: '?', section: 'canvas' },
   { id: 'save-project', label: 'Save project', keysWin: 'Ctrl+S', keysMac: '⌘S', section: 'project' },
   { id: 'compile', label: 'Generate', keysWin: 'Ctrl+G', keysMac: '⌘G', section: 'project' },
   { id: 'sync-preview', label: 'Sync code preview', keysWin: 'Ctrl+Shift+S', keysMac: '⌘⇧S', section: 'project' },
@@ -128,7 +151,7 @@ export function shortcutTitle(id: GraphShortcutId): string {
   return keys ? `${def.label} (${keys})` : def.label;
 }
 
-/** Append shortcut to a custom label, e.g. withShortcut('Pin log', 'toggle-log-pin'). */
+/** Append shortcut to a custom label, e.g. withShortcut('Toggle log', 'toggle-log-pin'). */
 export function withShortcut(label: string, id: GraphShortcutId): string {
   const keys = shortcutKeys(id);
   return keys ? `${label} (${keys})` : label;
@@ -136,6 +159,10 @@ export function withShortcut(label: string, id: GraphShortcutId): string {
 
 export function shortcutsForSection(section: GraphShortcutDef['section']): GraphShortcutDef[] {
   return GRAPH_SHORTCUTS.filter((s) => s.section === section && Boolean(s.keysWin));
+}
+
+export function getShortcutDef(id: GraphShortcutId): GraphShortcutDef | undefined {
+  return shortcutById.get(id);
 }
 
 export function isTypingTarget(): boolean {

@@ -10,18 +10,30 @@
   "codePanelVerification": "apps/web/scripts/extract_test_project_outputs.ts",
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
-  "primaryGolden": "dualClassLabUsabilityTest",
-  "nextFunctionWork": "U77 Go / U78 pack versions",
+  "primaryGolden": "coverageLabUsabilityTest",
+  "nextFunctionWork": "U77 Go / U78 pack versions; U86–U93 remaining chrome/AI/examples; U84/U85/U94/U95 + selected-node chrome overlay shipped; CL emit plans; client-first",
+  "crossLanguageMapping": ".agents/skills/vvs_cross_language_mapping/SKILL.md",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
-    "totalItems": 69,
-    "done": 67,
-    "open": 2,
+    "totalItems": 82,
+    "done": 72,
+    "open": 10,
     "partial": [],
-    "depthFirstSection": 14,
+    "depthFirstSection": 17,
     "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    "sectionsPartial": [13, 14],
-    "openItems": ["U77", "U78"]
+    "sectionsPartial": [13, 14, 15, 16, 17],
+    "openItems": [
+      "U77",
+      "U78",
+      "U86",
+      "U87",
+      "U88",
+      "U89",
+      "U90",
+      "U91",
+      "U92",
+      "U93"
+    ]
   },
   "files": {
     "README.md": { "role": "hub", "mutable": false },
@@ -29,7 +41,7 @@
       "role": "ui-backlog",
       "refreshAfter": "each UI loop iteration or audit",
       "itemPrefix": "U",
-      "openCount": 2
+      "openCount": 10
     },
     "decisions.md": { "role": "locked-product-rules", "mutable": "append-or-revise-with-care" },
     "workspace-facts.md": { "role": "canonical-paths-and-facts", "mutable": true }

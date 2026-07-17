@@ -8,9 +8,10 @@ import {
 } from '@vvs/graph-types';
 import type { ProjectEventDefinition } from '@/types/graph';
 import type { GraphDocument } from '@/lib/graphDefaults';
-import type { SelectionState } from '@/contexts/ProjectContext';
+import type { SelectionState, TreeSymbolSelectionKey } from '@/contexts/ProjectContext';
 import { symbolClassId } from '@/lib/classScope';
 import { resolveNodeKindId } from '@/lib/nodeKind';
+import { findClassDefineNode } from '@/lib/defineNodeSync';
 
 export interface SymbolCodegenLink {
   tabId: string;
@@ -113,31 +114,51 @@ function resolveFunctionHighlightNodes(
   return pickNodesByKindPriority(usages, documents, CALL_FUNCTION_KINDS);
 }
 
-export function resolveSymbolCodegenLink(input: {
-  selection: SelectionState;
-  documents: Record<string, GraphDocument> | null;
+function uniqueNodeIds(ids: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+type ResolveInput = {
+  documents: Record<string, GraphDocument>;
   classes: ClassSymbol[];
   functions: FunctionSymbol[];
   events: ProjectEventDefinition[];
   variables: VariableSymbol[];
   activeGraphTab: string;
-  selectedNodeIds: string[];
-}): SymbolCodegenLink | null {
-  const { selection, documents, classes, functions, events, variables, activeGraphTab, selectedNodeIds } =
-    input;
+};
 
-  if (!documents) return null;
+function resolveTreeSymbolLink(
+  key: TreeSymbolSelectionKey,
+  input: ResolveInput
+): SymbolCodegenLink | null {
+  const { documents, classes, functions, events, variables, activeGraphTab } = input;
 
-  if (selection.type === 'node' && selectedNodeIds.length > 0) {
+  if (key.kind === 'class') {
+    const cls = findClass(classes, key.id);
+    if (!cls) return null;
+    const loc = findClassDefineNode(documents, cls);
+    const tabId = loc?.tabId ?? classHomeGraphId(cls);
+    const highlightNodeIds = loc ? [loc.nodeId] : [];
     return {
-      tabId: activeGraphTab,
-      highlightNodeIds: selectedNodeIds,
-      primaryNodeId: selectedNodeIds[0],
+      tabId,
+      highlightNodeIds,
+      primaryNodeId: highlightNodeIds[0],
     };
   }
 
-  if (selection.type === 'event' && selection.id) {
-    const event = events.find((e) => e.id === selection.id);
+  if (key.kind === 'graph') {
+    return null;
+  }
+
+  if (key.kind === 'event') {
+    const event = events.find((e) => e.id === key.id);
     if (!event) return null;
 
     const tabId = resolveClassHomeTabId(symbolClassId(event), classes);
@@ -151,8 +172,8 @@ export function resolveSymbolCodegenLink(input: {
     };
   }
 
-  if (selection.type === 'variable' && selection.id) {
-    const variable = variables.find((v) => v.id === selection.id);
+  if (key.kind === 'variable') {
+    const variable = variables.find((v) => v.id === key.id);
     if (!variable) return null;
 
     const tabId = resolveClassHomeTabId(symbolClassId(variable), classes);
@@ -166,31 +187,114 @@ export function resolveSymbolCodegenLink(input: {
     };
   }
 
-  if (selection.type === 'function' && selection.id) {
-    const func = functions.find((f) => f.id === selection.id);
-    if (!func) return null;
+  const func = functions.find((f) => f.id === key.id);
+  if (!func) return null;
 
-    const classHomeTabId = resolveClassHomeTabId(symbolClassId(func), classes);
-    const overloadTabIds = new Set(
-      func.overloads.map((overload) => overload.graphTabId ?? func.id)
-    );
-    const tabId = overloadTabIds.has(activeGraphTab)
-      ? activeGraphTab
-      : resolveFunctionTabId(func, documents, classes);
-    const usages = collectSymbolUsages(documents, 'function', func.id);
-    const highlightNodeIds = resolveFunctionHighlightNodes(
-      usages,
-      documents,
-      tabId,
-      classHomeTabId
-    );
+  const classHomeTabId = resolveClassHomeTabId(symbolClassId(func), classes);
+  const overloadTabIds = new Set(func.overloads.map((overload) => overload.graphTabId ?? func.id));
+  const tabId = overloadTabIds.has(activeGraphTab)
+    ? activeGraphTab
+    : resolveFunctionTabId(func, documents, classes);
+  const usages = collectSymbolUsages(documents, 'function', func.id);
+  const highlightNodeIds = resolveFunctionHighlightNodes(
+    usages,
+    documents,
+    tabId,
+    classHomeTabId
+  );
 
+  return {
+    tabId,
+    highlightNodeIds,
+    primaryNodeId: highlightNodeIds[0],
+  };
+}
+
+function mergeSymbolLinks(
+  links: SymbolCodegenLink[],
+  activeGraphTab: string
+): SymbolCodegenLink | null {
+  if (links.length === 0) return null;
+  if (links.length === 1) return links[0]!;
+
+  const tabId =
+    links.find((link) => link.tabId === activeGraphTab)?.tabId ?? links[0]!.tabId;
+  const highlightNodeIds = uniqueNodeIds(links.flatMap((link) => link.highlightNodeIds));
+  return {
+    tabId,
+    highlightNodeIds,
+    primaryNodeId: links[0]!.primaryNodeId ?? highlightNodeIds[0],
+  };
+}
+
+function selectionToTreeKey(selection: SelectionState): TreeSymbolSelectionKey | null {
+  if (
+    (selection.type === 'variable' ||
+      selection.type === 'function' ||
+      selection.type === 'event' ||
+      selection.type === 'class') &&
+    selection.id
+  ) {
+    return { kind: selection.type, id: selection.id };
+  }
+  return null;
+}
+
+export function resolveSymbolCodegenLink(input: {
+  selection: SelectionState;
+  documents: Record<string, GraphDocument> | null;
+  classes: ClassSymbol[];
+  functions: FunctionSymbol[];
+  events: ProjectEventDefinition[];
+  variables: VariableSymbol[];
+  activeGraphTab: string;
+  selectedNodeIds: string[];
+  selectedTreeSymbols?: TreeSymbolSelectionKey[];
+}): SymbolCodegenLink | null {
+  const {
+    selection,
+    documents,
+    classes,
+    functions,
+    events,
+    variables,
+    activeGraphTab,
+    selectedNodeIds,
+    selectedTreeSymbols,
+  } = input;
+
+  if (!documents) return null;
+
+  if (selection.type === 'node' && selectedNodeIds.length > 0) {
     return {
-      tabId,
-      highlightNodeIds,
-      primaryNodeId: highlightNodeIds[0],
+      tabId: activeGraphTab,
+      highlightNodeIds: selectedNodeIds,
+      primaryNodeId: selectedNodeIds[0],
     };
   }
 
-  return null;
+  const resolveInput: ResolveInput = {
+    documents,
+    classes,
+    functions,
+    events,
+    variables,
+    activeGraphTab,
+  };
+
+  const keys =
+    selectedTreeSymbols && selectedTreeSymbols.length > 0
+      ? selectedTreeSymbols
+      : (() => {
+          const single = selectionToTreeKey(selection);
+          return single ? [single] : [];
+        })();
+
+  if (keys.length === 0) return null;
+
+  const links = keys
+    .map((key) => resolveTreeSymbolLink(key, resolveInput))
+    .filter((link): link is SymbolCodegenLink => link != null);
+
+  return mergeSymbolLinks(links, activeGraphTab);
 }

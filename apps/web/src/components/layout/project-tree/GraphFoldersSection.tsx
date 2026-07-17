@@ -42,6 +42,8 @@ export function GraphFoldersSection({
   onContainerDragLeave,
   onSelectGraph,
   onOpenGraph,
+  onContextMenu,
+  isRowSelected,
   canRename,
   canDelete,
   onDelete,
@@ -75,8 +77,10 @@ export function GraphFoldersSection({
   onContainerDragOver: (e: React.DragEvent, containerId: string) => void;
   onContainerDrop: (e: React.DragEvent, containerId: string) => void;
   onContainerDragLeave: (containerId: string) => void;
-  onSelectGraph: (graphId: string) => void;
+  onSelectGraph: (graphId: string, e?: React.MouseEvent) => void;
   onOpenGraph: (container: GraphContainer) => void;
+  onContextMenu?: (e: React.MouseEvent, containerId: string) => void;
+  isRowSelected?: (containerId: string) => boolean;
   canRename: (container: GraphContainer) => boolean;
   canDelete: (container: GraphContainer) => boolean;
   onDelete: (containerId: string) => void;
@@ -139,10 +143,12 @@ export function GraphFoldersSection({
               layout={viewMode}
               leading={
                 !isReferenceMode ? (
-                  <ReorderGrip
-                    onDragStart={(e) => onGraphContainerDragStart(e, container)}
-                    onDragEnd={onGraphContainerDragEnd}
-                  />
+                  <span className="inline-flex shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <ReorderGrip
+                      onDragStart={(e) => onGraphContainerDragStart(e, container)}
+                      onDragEnd={onGraphContainerDragEnd}
+                    />
+                  </span>
                 ) : (
                   <span className="w-5" />
                 )
@@ -168,13 +174,24 @@ export function GraphFoldersSection({
                 )
               }
               isRenaming={renamingId === container.id}
-              meta={renamingId === container.id ? undefined : graphContainerClassMeta(containerClasses.length)}
-              hint="Open graph · drag a class here to set its output graph"
-              active={activeGraphTab === container.id}
+              hint={[
+                renamingId === container.id
+                  ? undefined
+                  : graphContainerClassMeta(containerClasses.length),
+                'Open graph · drag a class here to set its output graph',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              active={
+                activeGraphTab === container.id || Boolean(isRowSelected?.(container.id))
+              }
               isDragging={draggingId === container.id}
               isDropTarget={dropContainerId === container.id || dropGraphContainerId === container.id}
-              onSelect={() => onSelectGraph(container.id)}
+              onSelect={(e) => onSelectGraph(container.id, e)}
               onOpen={() => onOpenGraph(container)}
+              onContextMenu={
+                onContextMenu ? (e) => onContextMenu(e, container.id) : undefined
+              }
               onDragOver={(e) => onContainerDragOver(e, container.id)}
               onDrop={(e) => onContainerDrop(e, container.id)}
               onDragLeave={() => onContainerDragLeave(container.id)}

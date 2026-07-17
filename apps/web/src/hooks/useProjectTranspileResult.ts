@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { useUiPreference } from '@/hooks/useUiPreference';
+import { isCodePreviewPaused } from '@/lib/codePreviewPause';
 import {
   emitProjectLikeCodePanel,
   fileOwnersForEmitResult,
@@ -43,6 +44,8 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     targetFileExtensions,
     autoCompile,
     autoSave,
+    compileState,
+    dirtyTabIds,
     workspaceFiles,
     graphContainers,
     installedLibrary,
@@ -50,10 +53,26 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
   const documents = useGraphDocuments();
   const [showUnsupportedComments] = useUiPreference('showUnsupportedComments');
   const [showUserComments] = useUiPreference('showUserComments');
+  /** Last live emit — returned while Auto generate is off and the graph is dirty. */
+  const liveBundleRef = useRef<ProjectTranspileBundle | null>(null);
+
+  const hasDirtyTabs = Object.keys(dirtyTabIds).length > 0;
+  const paused = isCodePreviewPaused(autoCompile, compileState, hasDirtyTabs);
 
   return useMemo(() => {
+    if (paused) {
+      return (
+        liveBundleRef.current ?? {
+          result: { ...EMPTY_RESULT, language: targetLanguage },
+          fileOwners: {},
+        }
+      );
+    }
+
     if (!documents) {
-      return { result: { ...EMPTY_RESULT, language: targetLanguage }, fileOwners: {} };
+      const empty = { result: { ...EMPTY_RESULT, language: targetLanguage }, fileOwners: {} };
+      liveBundleRef.current = empty;
+      return empty;
     }
 
     const snapshot: ProjectSnapshot = {
@@ -86,8 +105,11 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
       emitUnsupportedComments: showUnsupportedComments,
       emitUserComments: showUserComments,
     });
-    return { result, fileOwners: fileOwnersForEmitResult(snapshot, result) };
+    const bundle = { result, fileOwners: fileOwnersForEmitResult(snapshot, result) };
+    liveBundleRef.current = bundle;
+    return bundle;
   }, [
+    paused,
     documents,
     projectDetails,
     variables,

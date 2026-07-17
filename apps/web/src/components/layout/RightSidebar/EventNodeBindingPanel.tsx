@@ -29,7 +29,7 @@ export function EventNodeBindingPanel({
               ? `Subscribe ${ev.name}`
               : role === 'emit'
                 ? `Emit ${ev.name}`
-                : `Dispatch ${ev.name}`,
+                : `Call ${ev.name}`,
       })),
     [events, role]
   );
@@ -38,12 +38,12 @@ export function EventNodeBindingPanel({
     <div className="space-y-2">
       <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
         {role === 'define'
-          ? 'Handler event'
+          ? 'Define event'
           : role === 'subscribe'
             ? 'Subscribe event'
             : role === 'emit'
               ? 'Emit event'
-              : 'Dispatch event'}
+              : 'Call event'}
       </label>
       <SearchableSelect
         value={eventId ?? ''}

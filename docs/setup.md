@@ -288,4 +288,4 @@ Available tools: `list_available_nodes`, `list_syntax_packs`, `get_graph`, `add_
 ## Next
 
 → **[quickstart.md](quickstart.md)** — start the app and open your first graph  
-→ **[deployment.md](deployment.md)** — self-hosted Supabase + Go VPS architecture (locked)
+→ **[deployment.md](deployment.md)** — legacy self-host notes (not product direction; client-first / no dedicated server)

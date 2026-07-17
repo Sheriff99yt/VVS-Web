@@ -33,8 +33,22 @@ describe('analyzePortability', () => {
     expect(diags.filter((d) => d.level === 'warning')).toHaveLength(0);
   });
 
-  test('GDScript warns on overload', () => {
+  test('GDScript warns on unsupported overload', () => {
     const diags = analyzePortability(['function.overload'], 'gdscript');
+    expect(diags.some((d) => d.code?.includes('OVERLOAD'))).toBe(true);
+  });
+
+  test('Python static is emulated emit honesty warning', () => {
+    const diags = analyzePortability(['function.static'], 'python');
+    const staticWarn = diags.find((d) => d.code?.includes('STATIC'));
+    expect(staticWarn?.message.startsWith('Emulated emit (Python):')).toBe(true);
+  });
+
+  test('includeEmulated false keeps unsupported only', () => {
+    const diags = analyzePortability(['function.static', 'function.overload'], 'python', {
+      includeEmulated: false,
+    });
+    expect(diags.some((d) => d.code?.includes('STATIC'))).toBe(false);
     expect(diags.some((d) => d.code?.includes('OVERLOAD'))).toBe(true);
   });
 });

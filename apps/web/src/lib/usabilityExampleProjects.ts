@@ -1,7 +1,11 @@
 import { ProjectSnapshot } from '@/types/projectSnapshot';
 import { createFirstGraphUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/firstGraphUsabilityTest';
 import { createCoverageLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/coverageLabUsabilityTest';
-import { saveProjectToStore } from '@/lib/projectStore';
+import {
+  createProjectId,
+  loadProjectFromStore,
+  writeProjectPayload,
+} from '@/lib/projectStore';
 
 export type UsabilityTestLevel = 'simple' | 'complex';
 
@@ -10,7 +14,10 @@ export type ExampleLevel = UsabilityTestLevel;
 
 export interface UsabilityExampleTestDefinition {
   id: UsabilityTestLevel;
-  /** Stable localStorage project id — Test Projects re-seed from fixtures on open. */
+  /**
+   * Stable localStorage cache id for CI / golden extract scripts.
+   * StartScreen "Open" creates a **new** `proj-*` copy — it does not open this id.
+   */
   stableProjectId: string;
   level: UsabilityTestLevel;
   title: string;
@@ -74,22 +81,39 @@ export function createExampleSnapshot(level: UsabilityTestLevel): ProjectSnapsho
   return createUsabilityExampleTestSnapshot(level);
 }
 
-/** Write/refresh all StartScreen Test Projects into localStorage with stable ids (source: test). */
+/**
+ * Warm stable fixture cache slots for CI extract scripts.
+ * Never touches the recent list and never overwrites an existing payload
+ * (so browser edits / prior seeds are preserved).
+ */
 export function seedUsabilityTestProjectsToLocalStorage(): void {
   if (typeof window === 'undefined') return;
   for (const def of USABILITY_EXAMPLE_TESTS) {
-    saveProjectToStore(def.stableProjectId, def.create(), 'test');
+    if (loadProjectFromStore(def.stableProjectId)) continue;
+    writeProjectPayload(def.stableProjectId, def.create());
   }
 }
 
-/** Rebuild fixture snapshot into its stable localStorage slot (canonical Test Project open). */
+/**
+ * Create a **new** browser project from the usability fixture (fresh `proj-*` id).
+ * Each StartScreen open adds its own recent entry — does not reuse/wipe stable slots.
+ */
 export function openUsabilityTestProject(level: UsabilityTestLevel): {
   projectId: string;
   snapshot: ProjectSnapshot;
 } {
   const def = USABILITY_EXAMPLE_TESTS.find((e) => e.level === level);
   if (!def) throw new Error(`Unknown usability test level: ${level}`);
-  const snapshot = def.create();
-  saveProjectToStore(def.stableProjectId, snapshot, 'test');
-  return { projectId: def.stableProjectId, snapshot };
+  const projectId = createProjectId();
+  const fixture = def.create();
+  const snapshot: ProjectSnapshot = {
+    ...fixture,
+    projectId,
+    savedAt: new Date().toISOString(),
+    projectDetails: {
+      ...fixture.projectDetails,
+      moduleName: fixture.projectDetails.moduleName || def.moduleName,
+    },
+  };
+  return { projectId, snapshot };
 }

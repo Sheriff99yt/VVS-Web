@@ -11,9 +11,9 @@ import { ProjectSnapshot, isProjectSnapshot } from '@/types/projectSnapshot';
 import { applyProjectSnapshot } from '@/lib/applyProjectSnapshot';
 import { dispatchEditorNavigate } from '@/lib/editorNavigate';
 import { useRouter } from 'next/navigation';
-import { upsertRecentProject, isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
-import { persistProjectSnapshot } from '@/lib/cloudPersistence';
-import { saveProjectToFolder, writeGeneratedFilesToFolder } from '@/lib/projectFolder';
+import { isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
+import { persistEditorSnapshot, flushBrowserSnapshotSync } from '@/lib/projectPersistence';
+import { writeGeneratedFilesToFolder, saveProjectToFolder } from '@/lib/projectFolder';
 import { emitProjectLikeCodePanel } from '@/lib/emitProjectCode';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { promoteBrowserProjectToDisk, SAVE_ON_DISK_PROMPT_EVENT } from '@/lib/promoteProjectToDisk';
@@ -34,6 +34,7 @@ import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { readUiPreference } from '@/lib/uiPreferences';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const TOPNAV_ICON_BTN =
   'p-1.5 rounded text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900 transition-colors';
@@ -174,23 +175,17 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       snapshot: ProjectSnapshot,
       options?: { requireApiSave?: boolean }
     ): Promise<string> => {
-      if (isFolderProject && folderHandle) {
-        await saveProjectToFolder(folderHandle, snapshot);
-        upsertRecentProject({
-          id: projectId,
-          moduleName: snapshot.projectDetails.moduleName || 'Untitled',
-          savedAt: snapshot.savedAt,
-          source: projectSource,
-          storage: 'folder',
-          folderLabel: folderLabel ?? folderHandle.name,
-        });
-        if (getApiMode() === 'http') {
-          await persistProjectSnapshot(projectId, snapshot, projectSource, options);
-        }
-        return snapshot.savedAt;
-      }
-      const saved = await persistProjectSnapshot(projectId, snapshot, projectSource, options);
-      return saved.savedAt;
+      const { savedAt } = await persistEditorSnapshot({
+        projectId,
+        projectSource,
+        snapshot,
+        folder:
+          isFolderProject && folderHandle
+            ? { handle: folderHandle, label: folderLabel }
+            : null,
+        options,
+      });
+      return savedAt;
     },
     [isFolderProject, folderHandle, folderLabel, projectId, projectSource]
   );
@@ -284,16 +279,22 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
   const handleSave = useCallback(async () => {
     const snapshot = buildSnapshot();
-    if (!snapshot) return;
+    if (!snapshot) {
+      window.alert('Could not save — graph data is not ready yet.');
+      return;
+    }
     setSaveBusy(true);
     try {
       const savedAt = await persistSnapshot(snapshot);
       setLastSavedAt(savedAt);
+      resetDirtyTabs();
       setOpenMenu(null);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Could not save project.');
     } finally {
       setSaveBusy(false);
     }
-  }, [buildSnapshot, persistSnapshot, setLastSavedAt]);
+  }, [buildSnapshot, persistSnapshot, setLastSavedAt, resetDirtyTabs]);
 
   const handleCompile = useCallback(async () => {
     if (compileState === 'compiling') return;
@@ -337,10 +338,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       if (isFolderProject && folderHandle) {
         await writeGeneratedFilesToFolder(folderHandle, emitResult);
         await saveProjectToFolder(folderHandle, snapshot);
+        resetDirtyTabs();
       }
       if (getApiMode() === 'http') {
         const savedAt = await persistSnapshot(snapshot, { requireApiSave: true });
         setLastSavedAt(savedAt);
+        resetDirtyTabs();
       }
       await VvsApi.compileProject(projectId);
       setValidationErrors([]);
@@ -367,6 +370,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     functions,
     isFolderProject,
     markTabClean,
+    resetDirtyTabs,
     persistSnapshot,
     projectDetails,
     projectId,
@@ -436,34 +440,46 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
   const finishCloseProject = useCallback(async () => {
     const draftOnly = isProjectDraftOnly(projectId);
-    if (!draftOnly) {
+    if (draftOnly) {
+      // Dialog "Close without saving" for session drafts.
+      removeProjectDraft(projectId);
+    } else {
       const snapshot = buildSnapshot();
-      if (snapshot) {
+      if (!snapshot) {
+        window.alert('Could not save — graph data is not ready yet. Stay in the editor and try again.');
+        return;
+      }
+      try {
         const savedAt = await persistSnapshot(snapshot);
         setLastSavedAt(savedAt);
+        resetDirtyTabs();
+      } catch (err) {
+        window.alert(err instanceof Error ? err.message : 'Could not save project.');
+        return;
       }
-    } else {
-      removeProjectDraft(projectId);
     }
     setOpenMenu(null);
     setSaveOnDiskPromptOpen(false);
     router.push('/');
-  }, [buildSnapshot, persistSnapshot, projectId, router, setLastSavedAt]);
+  }, [buildSnapshot, persistSnapshot, projectId, router, setLastSavedAt, resetDirtyTabs]);
 
   const handleSaveOnDisk = useCallback(async () => {
     const snapshot = buildSnapshot();
     if (!snapshot) return;
     setSaveOnDiskBusy(true);
     try {
-      const handle = await promoteBrowserProjectToDisk(projectId, snapshot, projectSource);
-      if (!handle) return;
+      const promoted = await promoteBrowserProjectToDisk(projectId, snapshot, projectSource);
+      if (!promoted) return;
       setOpenMenu(null);
       setSaveOnDiskPromptOpen(false);
-      router.push('/');
+      resetDirtyTabs();
+      setLastSavedAt(snapshot.savedAt);
+      // Remount editor under the stable folder key (stay in editor as a folder project).
+      router.replace(`/editor?id=${encodeURIComponent(promoted.folderKey)}`);
     } finally {
       setSaveOnDiskBusy(false);
     }
-  }, [buildSnapshot, projectId, projectSource, router]);
+  }, [buildSnapshot, projectId, projectSource, router, resetDirtyTabs, setLastSavedAt]);
 
   const handleCloseProject = useCallback(() => {
     if (isFolderProject) {
@@ -481,6 +497,24 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     }
     setSaveOnDiskPromptOpen(false);
   }, [saveOnDiskPromptMode, finishCloseProject]);
+
+  // Flush browser projects sync on tab close; warn for unsaved folder work (async FS).
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (Object.keys(dirtyTabIds).length === 0) return;
+      if (!isFolderProject) {
+        const snapshot = buildSnapshot();
+        if (snapshot) {
+          flushBrowserSnapshotSync(projectId, snapshot, projectSource);
+          return;
+        }
+      }
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirtyTabIds, isFolderProject, buildSnapshot, projectId, projectSource]);
 
   useEffect(() => {
     const onPrompt = () => {
@@ -559,15 +593,16 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
       <header className="h-12 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between px-4 text-sm font-sans shrink-0 w-full z-50">
         <div className="flex items-center gap-6">
-          <button
-            type="button"
-            onClick={handleCloseProject}
-            className="font-bold text-zinc-100 tracking-wide flex items-center gap-2 hover:text-zinc-300 transition-colors"
-            title="Back to projects"
-          >
-            <div className="w-4 h-4 rounded bg-zinc-100" />
-            VVS 2.0
-          </button>
+          <Tooltip content="Back to projects" placement="bottom">
+            <button
+              type="button"
+              onClick={handleCloseProject}
+              className="font-bold text-zinc-100 tracking-wide flex items-center gap-2 hover:text-zinc-300 transition-colors"
+            >
+              <div className="w-4 h-4 rounded bg-zinc-100" />
+              VVS 2.0
+            </button>
+          </Tooltip>
 
           <div className="flex items-center gap-1 relative" onClick={(e) => e.stopPropagation()}>
             <div className="relative">
@@ -664,9 +699,9 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'view' ? null : 'view')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'view' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>View</button>
               {openMenu === 'view' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }} title={shortcutTitle('focus-selection')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <button onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }} title="Frame selection — with nothing selected, fit all" className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <ZoomIn size={12} className="shrink-0 opacity-70" />
-                    Frame selection / fit all
+                    Frame selection
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('focus-selection')}</span>
                   </button>
                   <button onClick={() => { dispatchGraphAction('zoom-fit'); setOpenMenu(null); }} title="Zoom to fit all" className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
@@ -726,34 +761,38 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           <div className="h-4 w-px bg-zinc-800 mx-2" />
 
           <div className="flex items-center bg-zinc-950 rounded border border-zinc-800 overflow-hidden">
-            <button
-              onClick={() => navigate({ editorView: 'canvas' })}
-              title="Canvas"
-              className={`px-2.5 py-1.5 transition-colors ${activeTab === 'canvas' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-            >
-              <PenLine size={14} />
-            </button>
-            <button
-              onClick={() => navigate({ editorView: 'references' })}
-              title="References"
-              className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'references' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-            >
-              <GitBranch size={14} />
-            </button>
-            <button
-              onClick={() => navigate({ editorView: 'library' })}
-              title="Library"
-              className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'library' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-            >
-              <Package size={14} />
-            </button>
-            <button
-              onClick={() => navigate({ editorView: 'roadmap' })}
-              title="Development roadmap"
-              className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'roadmap' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-            >
-              <Milestone size={14} />
-            </button>
+            <Tooltip content="Canvas" placement="bottom" className="flex">
+              <button
+                onClick={() => navigate({ editorView: 'canvas' })}
+                className={`px-2.5 py-1.5 transition-colors ${activeTab === 'canvas' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+              >
+                <PenLine size={14} />
+              </button>
+            </Tooltip>
+            <Tooltip content="References" placement="bottom" className="flex">
+              <button
+                onClick={() => navigate({ editorView: 'references' })}
+                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'references' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+              >
+                <GitBranch size={14} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Library" placement="bottom" className="flex">
+              <button
+                onClick={() => navigate({ editorView: 'library' })}
+                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'library' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+              >
+                <Package size={14} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Development roadmap" placement="bottom" className="flex">
+              <button
+                onClick={() => navigate({ editorView: 'roadmap' })}
+                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'roadmap' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+              >
+                <Milestone size={14} />
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -782,22 +821,20 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             />
           )}
 
-          <button
-            type="button"
-            onClick={openMcpModal}
-            className={TOPNAV_ICON_BTN}
-            title="Connect AI (MCP)"
-          >
-            <Bot size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => dispatchOpenSettings('project')}
-            className={TOPNAV_ICON_BTN}
-            title="Settings"
-          >
-            <Settings size={14} />
-          </button>
+          <Tooltip content="Connect AI (MCP)" placement="bottom">
+            <button type="button" onClick={openMcpModal} className={TOPNAV_ICON_BTN}>
+              <Bot size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip content="Settings" placement="bottom">
+            <button
+              type="button"
+              onClick={() => dispatchOpenSettings('project')}
+              className={TOPNAV_ICON_BTN}
+            >
+              <Settings size={14} />
+            </button>
+          </Tooltip>
           <AuthButton />
         </div>
       </header>
@@ -947,6 +984,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         open={saveOnDiskPromptOpen}
         projectName={projectDetails.moduleName || 'Untitled'}
         isDraft={isProjectDraftOnly(projectId)}
+        mode={saveOnDiskPromptMode}
         saving={saveOnDiskBusy}
         folderPickerAvailable={folderPickerAvailable}
         onSaveOnDisk={() => void handleSaveOnDisk()}

@@ -11,15 +11,29 @@ import React, {
   type RefObject,
 } from 'react';
 import type { PanelImperativeHandle } from 'react-resizable-panels';
-import { DEFAULT_UI_PREFERENCES, readUiPreferences, writeUiPreferences } from '@/lib/uiPreferences';
+import {
+  DEFAULT_UI_PREFERENCES,
+  FOCUS_PROJECT_TREE_FILTER_EVENT,
+  TOGGLE_COMPILER_LOG_PIN_EVENT,
+  TOGGLE_GRAPH_CHROME_EVENT,
+  nextGraphChromeMode,
+  readUiPreferences,
+  writeUiPreferences,
+  type GraphChromeMode,
+} from '@/lib/uiPreferences';
 
 interface EditorPanelContextValue {
   graphNavPanelRef: RefObject<PanelImperativeHandle | null>;
   graphNavOpen: boolean;
   toggleGraphNav: () => void;
   expandGraphNav: () => void;
+  /** Minimap / zoom-controls chrome mode (M cycles). */
+  graphChromeMode: GraphChromeMode;
+  /** True when minimap is visible (`map` or `map-controls`). */
   graphChromeOpen: boolean;
+  /** Cycle map → map-controls → hidden. */
   toggleGraphChrome: () => void;
+  setGraphChromeMode: (mode: GraphChromeMode) => void;
   codePanelRef: RefObject<PanelImperativeHandle | null>;
   codeOpen: boolean;
   toggleCode: () => void;
@@ -42,7 +56,9 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
   const graphNavPanelRef = useRef<PanelImperativeHandle>(null);
   const codePanelRef = useRef<PanelImperativeHandle>(null);
   const [graphNavOpen, setGraphNavOpen] = useState(DEFAULT_UI_PREFERENCES.graphNavOpen);
-  const [graphChromeOpen, setGraphChromeOpen] = useState(DEFAULT_UI_PREFERENCES.graphChromeOpen);
+  const [graphChromeMode, setGraphChromeModeState] = useState<GraphChromeMode>(
+    DEFAULT_UI_PREFERENCES.graphChromeMode
+  );
   const [codeOpen, setCodeOpen] = useState(DEFAULT_UI_PREFERENCES.codeOpen);
   const [compilerLogOpen, setCompilerLogOpen] = useState(DEFAULT_UI_PREFERENCES.compilerLogOpen);
   const [panelsReady, setPanelsReady] = useState(false);
@@ -83,9 +99,22 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
     setCompilerLogOpen((open) => !open);
   }, []);
 
-  const toggleGraphChrome = useCallback(() => {
-    setGraphChromeOpen((open) => !open);
+  const setGraphChromeMode = useCallback((mode: GraphChromeMode) => {
+    setGraphChromeModeState(mode);
   }, []);
+
+  const toggleGraphChrome = useCallback(() => {
+    setGraphChromeModeState((mode) => nextGraphChromeMode(mode));
+  }, []);
+
+  // Stable refs so window listeners don't need callback identities in effect deps
+  // (avoids HMR "deps changed size" and unnecessary re-subscribe).
+  const expandGraphNavRef = useRef(expandGraphNav);
+  const toggleCompilerLogRef = useRef(toggleCompilerLog);
+  const toggleGraphChromeRef = useRef(toggleGraphChrome);
+  expandGraphNavRef.current = expandGraphNav;
+  toggleCompilerLogRef.current = toggleCompilerLog;
+  toggleGraphChromeRef.current = toggleGraphChrome;
 
   useEffect(() => {
     const prefs = readUiPreferences();
@@ -102,7 +131,7 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
       }
       setGraphNavOpen(prefs.graphNavOpen);
       setCodeOpen(prefs.codeOpen);
-      setGraphChromeOpen(prefs.graphChromeOpen);
+      setGraphChromeModeState(prefs.graphChromeMode);
       setCompilerLogOpen(prefs.compilerLogOpen);
       setPanelsReady(true);
     });
@@ -113,31 +142,30 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
     if (!panelsReady) return;
     writeUiPreferences({
       graphNavOpen,
-      graphChromeOpen,
+      graphChromeMode,
       codeOpen,
       compilerLogOpen,
     });
-  }, [panelsReady, graphNavOpen, graphChromeOpen, codeOpen, compilerLogOpen]);
+  }, [panelsReady, graphNavOpen, graphChromeMode, codeOpen, compilerLogOpen]);
 
   useEffect(() => {
     if (!panelsReady) return;
 
-    const onCompileState = (event: Event) => {
-      const state = (event as CustomEvent<{ state: string }>).detail.state;
-      if (state === 'compiling' || state === 'error') {
-        expandCompilerLog();
-      }
-    };
+    const onFocusProjectTreeFilter = () => expandGraphNavRef.current();
+    const onToggleCompilerLog = () => toggleCompilerLogRef.current();
+    const onToggleGraphChrome = () => toggleGraphChromeRef.current();
 
-    const onValidation = () => expandCompilerLog();
-
-    window.addEventListener('vvs:compile-state', onCompileState);
-    window.addEventListener('vvs:validation-result', onValidation);
+    window.addEventListener(FOCUS_PROJECT_TREE_FILTER_EVENT, onFocusProjectTreeFilter);
+    window.addEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onToggleCompilerLog);
+    window.addEventListener(TOGGLE_GRAPH_CHROME_EVENT, onToggleGraphChrome);
     return () => {
-      window.removeEventListener('vvs:compile-state', onCompileState);
-      window.removeEventListener('vvs:validation-result', onValidation);
+      window.removeEventListener(FOCUS_PROJECT_TREE_FILTER_EVENT, onFocusProjectTreeFilter);
+      window.removeEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onToggleCompilerLog);
+      window.removeEventListener(TOGGLE_GRAPH_CHROME_EVENT, onToggleGraphChrome);
     };
-  }, [panelsReady, expandCompilerLog]);
+  }, [panelsReady]);
+
+  const graphChromeOpen = graphChromeMode !== 'hidden';
 
   return (
     <EditorPanelContext.Provider
@@ -146,8 +174,10 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
         graphNavOpen,
         toggleGraphNav,
         expandGraphNav,
+        graphChromeMode,
         graphChromeOpen,
         toggleGraphChrome,
+        setGraphChromeMode,
         codePanelRef,
         codeOpen,
         toggleCode,

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { EyeOff, Loader2, Save, Zap } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export interface TopNavWorkflowControlsProps {
   dimUnsupportedNodes: boolean;
@@ -60,28 +61,30 @@ function ControlGroup({
 }: ControlGroupProps) {
   return (
     <div className="flex items-stretch rounded border border-zinc-800 overflow-hidden shrink-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium border-r border-zinc-800 transition-colors ${toggleSegmentClass(toggleOn)}`}
-        title={toggleTitle}
-        aria-pressed={toggleOn}
-      >
-        <span className="hidden sm:inline">{toggleLabel}</span>
-        <span
-          className={`w-1.5 h-1.5 rounded-full shrink-0 ${toggleOn ? 'bg-indigo-400' : 'bg-zinc-600'}`}
-          aria-hidden
-        />
-      </button>
-      <button
-        type="button"
-        onClick={onAction}
-        disabled={actionDisabled || actionBusy}
-        className={`flex items-center justify-center px-2 py-1 transition-colors ${actionSegmentClass(actionDisabled || actionBusy)}`}
-        title={actionTitle}
-      >
-        {actionBusy ? <Loader2 size={14} className="animate-spin" /> : actionIcon}
-      </button>
+      <Tooltip content={toggleTitle} placement="bottom" className="flex items-stretch">
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium border-r border-zinc-800 transition-colors ${toggleSegmentClass(toggleOn)}`}
+          aria-pressed={toggleOn}
+        >
+          <span className="hidden sm:inline">{toggleLabel}</span>
+          <span
+            className={`w-1.5 h-1.5 rounded-full shrink-0 ${toggleOn ? 'bg-indigo-400' : 'bg-zinc-600'}`}
+            aria-hidden
+          />
+        </button>
+      </Tooltip>
+      <Tooltip content={actionTitle} placement="bottom" className="flex items-stretch">
+        <button
+          type="button"
+          onClick={onAction}
+          disabled={actionDisabled || actionBusy}
+          className={`flex items-center justify-center px-2 py-1 transition-colors ${actionSegmentClass(actionDisabled || actionBusy)}`}
+        >
+          {actionBusy ? <Loader2 size={14} className="animate-spin" /> : actionIcon}
+        </button>
+      </Tooltip>
     </div>
   );
 }
@@ -105,17 +108,18 @@ export function TopNavWorkflowControls({
 }: TopNavWorkflowControlsProps) {
   return (
     <div className="flex items-center gap-1.5">
-      <button
-        type="button"
-        onClick={onDimUnsupportedToggle}
-        className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border border-zinc-800 transition-colors shrink-0 ${toggleSegmentClass(dimUnsupportedNodes)}`}
-        title={dimUnsupportedTitle}
-        aria-pressed={dimUnsupportedNodes}
-        aria-label={dimUnsupportedTitle}
-      >
-        <EyeOff size={12} aria-hidden />
-        <span className="hidden sm:inline">Dim</span>
-      </button>
+      <Tooltip content={dimUnsupportedTitle} placement="bottom">
+        <button
+          type="button"
+          onClick={onDimUnsupportedToggle}
+          className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border border-zinc-800 transition-colors shrink-0 ${toggleSegmentClass(dimUnsupportedNodes)}`}
+          aria-pressed={dimUnsupportedNodes}
+          aria-label={dimUnsupportedTitle}
+        >
+          <EyeOff size={12} aria-hidden />
+          <span className="hidden sm:inline">Dim</span>
+        </button>
+      </Tooltip>
       <ControlGroup
         toggleLabel="Auto save"
         toggleOn={autoSave}

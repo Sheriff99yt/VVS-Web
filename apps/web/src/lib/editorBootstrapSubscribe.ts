@@ -84,10 +84,17 @@ export function useEditorBootstrap(
       const entry = getRecentProjectEntry(projectId);
       let resolved: EditorBootstrap | null = null;
 
-      const storedHandle = await getFolderHandle(projectId);
-      if (isFolderRecentEntry(entry ?? { id: projectId, moduleName: '', savedAt: '', source: 'recent' }) || storedHandle) {
+      // Only treat as folder when the recent entry (or id prefix) says so.
+      // Orphan IndexedDB handles under browser `proj-*` ids must not force a folder load.
+      const preferFolder = isFolderRecentEntry(
+        entry ?? { id: projectId, moduleName: '', savedAt: '', source: 'recent' }
+      );
+
+      if (preferFolder) {
         resolved = await resolveFolderBootstrap(projectId, view);
-      } else {
+      }
+      // Fall back to browser localStorage when folder access is missing/stale.
+      if (!resolved) {
         resolved = await resolveLocalBootstrapAsync(projectId, view);
       }
 

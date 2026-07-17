@@ -135,6 +135,19 @@ export function useActiveGraphCodegenSettings(tabId?: string | null) {
     [isOrgGraph, projectDefaults, applyMetadataPatch, markCodegenDirty]
   );
 
+  const setGraphLanguageWithExtension = useCallback(
+    (language: TargetLanguage, extension: string) => {
+      if (isOrgGraph) return;
+      applyMetadataPatch({
+        targetLanguage: language,
+        targetFileExtension: extension,
+      });
+      markCodegenDirty();
+      bump();
+    },
+    [isOrgGraph, applyMetadataPatch, markCodegenDirty]
+  );
+
   const setGraphTargetFileExtension = useCallback(
     (extension: string) => {
       if (isOrgGraph) return;
@@ -172,6 +185,7 @@ export function useActiveGraphCodegenSettings(tabId?: string | null) {
     usesProjectDefaults,
     setGraphTargetLanguage,
     setGraphTargetFileExtension,
+    setGraphLanguageWithExtension,
     resetGraphCodegenToProjectDefaults,
     projectDefaults,
   };

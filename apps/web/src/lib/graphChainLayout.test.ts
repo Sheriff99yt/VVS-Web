@@ -452,6 +452,7 @@ describe('graphChainLayout lane-topo-v1', () => {
       nodes,
       edges,
       selectedIds: resolved.nodeIds,
+      attributeDirection: 'above',
     });
     expect(positions.get('and')!.y).toBeLessThan(positions.get('br')!.y);
     expect(positions.get('cmp')!.y).toBeLessThan(positions.get('and')!.y);

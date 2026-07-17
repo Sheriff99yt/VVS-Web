@@ -76,12 +76,15 @@ export function useExplorerPanelState(input: {
     if (typeof window !== 'undefined') {
       try {
         const savedViews = localStorage.getItem('vvs_section_views');
-        if (savedViews) return JSON.parse(savedViews);
+        if (savedViews) {
+          const parsed = JSON.parse(savedViews) as Partial<Record<SectionViewKey, SectionViewMode>>;
+          return { ...DEFAULT_SECTION_VIEWS, ...parsed };
+        }
       } catch (e) {
         console.error('Failed to parse section views', e);
       }
     }
-    return DEFAULT_SECTION_VIEWS;
+    return { ...DEFAULT_SECTION_VIEWS };
   });
   const [expanded, setExpanded] = useState<Record<SymbolCategoryKey, boolean>>(() => {
     if (typeof window !== 'undefined') {

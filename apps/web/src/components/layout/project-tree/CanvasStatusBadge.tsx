@@ -24,7 +24,7 @@ export function CanvasStatusBadge({
         <button
           type="button"
           onClick={onClick}
-          className="shrink-0 w-3.5 h-3.5 inline-flex items-center justify-center rounded-sm text-emerald-400/90 hover:bg-emerald-500/15 transition-colors"
+          className="shrink-0 w-3.5 h-3.5 inline-flex items-center justify-center rounded-sm text-emerald-400/90 hover:bg-emerald-500/15 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
           title={`${label} on canvas — click to focus`}
           aria-label={`${label} on canvas`}
         >
@@ -36,7 +36,7 @@ export function CanvasStatusBadge({
       <button
         type="button"
         onClick={onClick}
-        className="shrink-0 w-4 h-4 inline-flex items-center justify-center rounded text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
+        className="shrink-0 w-4 h-4 inline-flex items-center justify-center rounded text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         title={`${label} on canvas — click to focus`}
         aria-label={`${label} on canvas`}
       >

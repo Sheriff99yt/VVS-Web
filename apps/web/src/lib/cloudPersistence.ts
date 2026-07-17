@@ -1,6 +1,7 @@
 'use client';
 
 import { ProjectSnapshot } from '@/types/projectSnapshot';
+import type { ProjectStorageKind } from '@/types/projectRegistry';
 import { VvsApi, getApiMode } from '@/lib/api';
 import {
   loadProjectDraft,
@@ -36,6 +37,12 @@ export async function loadProjectPreferred(
   return loadProjectFromStore(projectId) ?? loadProjectDraft(projectId);
 }
 
+export type PersistProjectSnapshotOptions = {
+  requireApiSave?: boolean;
+  storage?: ProjectStorageKind;
+  folderLabel?: string | null;
+};
+
 /**
  * Persist project snapshot. When authenticated, Go API is source of truth;
  * localStorage is always updated as offline cache.
@@ -44,14 +51,19 @@ export async function persistProjectSnapshot(
   projectId: string,
   snapshot: ProjectSnapshot,
   source?: Parameters<typeof saveProjectToStore>[2],
-  options?: { requireApiSave?: boolean }
+  options?: PersistProjectSnapshotOptions
 ): Promise<ProjectSnapshot> {
+  const storeOpts =
+    options?.storage !== undefined || options?.folderLabel !== undefined
+      ? { storage: options.storage, folderLabel: options.folderLabel }
+      : undefined;
+
   if (isCloudAuthenticated()) {
     await VvsApi.saveProject(snapshot, projectId);
-    return saveProjectToStore(projectId, snapshot, source);
+    return saveProjectToStore(projectId, snapshot, source, storeOpts);
   }
 
-  const saved = saveProjectToStore(projectId, snapshot, source);
+  const saved = saveProjectToStore(projectId, snapshot, source, storeOpts);
   if (getApiMode() === 'http') {
     try {
       await VvsApi.saveProject(snapshot, projectId);

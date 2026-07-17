@@ -18,7 +18,7 @@ export function EnvironmentApiSection({
   environmentVersion,
   environmentSurface,
   filterQuery,
-  viewMode,
+  viewMode = 'list',
   onViewModeChange,
   isReferenceMode,
 }: {
@@ -26,8 +26,8 @@ export function EnvironmentApiSection({
   environmentVersion: string | null | undefined;
   environmentSurface: ResolvedApiSurface;
   filterQuery: string;
-  viewMode: SectionViewMode;
-  onViewModeChange: (mode: SectionViewMode) => void;
+  viewMode?: SectionViewMode;
+  onViewModeChange?: (mode: SectionViewMode) => void;
   isReferenceMode: boolean;
 }) {
   const q = filterQuery.trim().toLowerCase();

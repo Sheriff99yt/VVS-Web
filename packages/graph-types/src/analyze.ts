@@ -97,24 +97,6 @@ function validateDocument(tabId: string, doc: GraphDocument): Diagnostic[] {
     }
   }
 
-  if (tabId === 'main') {
-    const standardNodes = nodes.filter((n) => n.type === 'vvs_standard_node');
-    const hasEntry = standardNodes.some(
-      (n) =>
-        n.data.kindId === 'event_on_start' ||
-        n.data.label === 'On Start' ||
-        n.data.category === 'Events'
-    );
-    if (standardNodes.length > 0 && !hasEntry) {
-      messages.push({
-        level: 'warning',
-        message: 'Main graph has no event entry node (On Start / Events)',
-        tabId: 'main',
-        source: 'structural',
-      });
-    }
-  }
-
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   for (const edge of edges) {
     const source = nodeById.get(edge.source);
@@ -123,6 +105,9 @@ function validateDocument(tabId: string, doc: GraphDocument): Diagnostic[] {
 
     const types = edgePinTypes(source, target, edge.sourceHandle, edge.targetHandle);
     if (!types) {
+      // Exec / legacy wires often lack resolvable pin metadata — not a user fidelity issue.
+      // Real type honesty is PIN_TYPE_MISMATCH when both sides resolve.
+      if (isLikelyExecutionEdge(edge)) continue;
       messages.push({
         level: 'warning',
         message: `Could not resolve pin types for wire ${edge.source} → ${edge.target}`,
@@ -148,6 +133,13 @@ function validateDocument(tabId: string, doc: GraphDocument): Diagnostic[] {
   }
 
   return messages;
+}
+
+function isLikelyExecutionEdge(edge: GraphDocument['edges'][number]): boolean {
+  if (edge.data?.pinType === 'execution') return true;
+  const src = edge.sourceHandle ?? '';
+  const tgt = edge.targetHandle ?? '';
+  return src.includes('exec') || tgt.includes('exec');
 }
 
 function validateSemantics(input: AnalyzeProjectInput): Diagnostic[] {
@@ -342,6 +334,12 @@ function functionIsAsync(func: FunctionSymbol, doc: GraphDocument): boolean {
   );
 }
 
+/**
+ * Sync Wait emits a real delay on most targets. On these languages the template is a
+ * comment/stub — warn so the graph→code promise stays honest.
+ */
+const BLOCKING_WAIT_STUB_TARGETS = new Set<TargetLanguage>(['javascript', 'verse', 'json']);
+
 function validateWaitAndAsyncNodes(input: AnalyzeProjectInput): Diagnostic[] {
   const messages: Diagnostic[] = [];
   const functionById = new Map(input.functions.map((f) => [f.id, f]));
@@ -356,22 +354,24 @@ function validateWaitAndAsyncNodes(input: AnalyzeProjectInput): Diagnostic[] {
       const kindId = resolveNodeKindId(node.data);
 
       if (kindId === 'action_wait') {
-        messages.push({
-          level: 'warning',
-          message: `Blocking wait may not behave correctly on target "${input.targetLanguage}"`,
-          tabId,
-          nodeId: node.id,
-          source: 'semantic',
-          code: 'BLOCKING_WAIT_ON_TARGET',
-        });
-        if (inFunctionContext && inAsyncFunction) {
+        if (BLOCKING_WAIT_STUB_TARGETS.has(input.targetLanguage)) {
           messages.push({
-            level: 'error',
-            message: 'Blocking wait cannot be used inside an async function',
+            level: 'warning',
+            message: `Blocking Wait does not emit a real delay for "${input.targetLanguage}" — use Await Wait in an async function`,
             tabId,
             nodeId: node.id,
             source: 'semantic',
-            code: 'WAIT_IN_SYNC_FUNCTION',
+            code: 'BLOCKING_WAIT_ON_TARGET',
+          });
+        }
+        if (inFunctionContext && inAsyncFunction) {
+          messages.push({
+            level: 'error',
+            message: 'Blocking Wait cannot be used inside an async function — use Await Wait',
+            tabId,
+            nodeId: node.id,
+            source: 'semantic',
+            code: 'WAIT_IN_ASYNC_FUNCTION',
           });
         }
       }
@@ -821,6 +821,44 @@ function collectDefinedAndImportedClassIds(
   return { definedClassIds, importedClassIds };
 }
 
+/** Module graph that owns a call/dispatch site (function body → owning class home). */
+function resolveCallSiteModuleGraphId(
+  tabId: string,
+  functions: FunctionSymbol[],
+  classes: ClassSymbol[]
+): string {
+  const func = functions.find((f) => f.id === tabId);
+  if (func) {
+    const owner = classes.find((c) => c.id === (func.classId ?? MAIN_CLASS_ID));
+    return owner ? classHomeGraphId(owner) : tabId;
+  }
+  return tabId;
+}
+
+function classIsInModuleScope(options: {
+  targetClassId: string;
+  callSiteTabId: string;
+  definedClassIds: Set<string>;
+  importedClassIds: Set<string>;
+  functions: FunctionSymbol[];
+  classes: ClassSymbol[];
+}): boolean {
+  const {
+    targetClassId,
+    callSiteTabId,
+    definedClassIds,
+    importedClassIds,
+    functions,
+    classes,
+  } = options;
+  if (definedClassIds.has(targetClassId)) return true;
+  if (importedClassIds.has(targetClassId)) return true;
+  const targetClass = classes.find((c) => c.id === targetClassId);
+  if (!targetClass) return false;
+  const callSiteModule = resolveCallSiteModuleGraphId(callSiteTabId, functions, classes);
+  return callSiteModule === classHomeGraphId(targetClass);
+}
+
 function validateCrossClassCalls(input: AnalyzeProjectInput): Diagnostic[] {
   const messages: Diagnostic[] = [];
   const classes = input.classes ?? [];
@@ -839,13 +877,22 @@ function validateCrossClassCalls(input: AnalyzeProjectInput): Diagnostic[] {
       if (!fn) continue;
       const fnClassId = fn.classId ?? MAIN_CLASS_ID;
 
-      // Same-graph class define counts as in-scope — no import required.
-      if (definedClassIds.has(fnClassId)) continue;
-      if (importedClassIds.has(fnClassId)) continue;
+      if (
+        classIsInModuleScope({
+          targetClassId: fnClassId,
+          callSiteTabId: tabId,
+          definedClassIds,
+          importedClassIds,
+          functions: input.functions,
+          classes,
+        })
+      ) {
+        continue;
+      }
       const targetClass = classes.find((c) => c.id === fnClassId);
       messages.push({
         level: 'warning',
-        message: `Cross-class call to ${targetClass?.name ?? fn.name} without import_class on this graph`,
+        message: `Cross-module call to ${targetClass?.name ?? fn.name} without import_class on this graph`,
         code: 'CROSS_CLASS_CALL_WITHOUT_IMPORT',
         tabId,
         nodeId: node.id,
@@ -879,12 +926,22 @@ function validateCrossClassDispatches(input: AnalyzeProjectInput): Diagnostic[] 
       if (!event) continue;
       const eventClassId = event.classId ?? MAIN_CLASS_ID;
 
-      if (definedClassIds.has(eventClassId)) continue;
-      if (importedClassIds.has(eventClassId)) continue;
+      if (
+        classIsInModuleScope({
+          targetClassId: eventClassId,
+          callSiteTabId: tabId,
+          definedClassIds,
+          importedClassIds,
+          functions: input.functions,
+          classes,
+        })
+      ) {
+        continue;
+      }
       const targetClass = classes.find((c) => c.id === eventClassId);
       messages.push({
         level: 'warning',
-        message: `Cross-class dispatch to ${targetClass?.name ?? event.name} without import_class on this graph`,
+        message: `Cross-module dispatch to ${targetClass?.name ?? event.name} without import_class on this graph`,
         code: 'CROSS_CLASS_DISPATCH_WITHOUT_IMPORT',
         tabId,
         nodeId: node.id,

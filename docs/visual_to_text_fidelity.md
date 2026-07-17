@@ -302,5 +302,5 @@ Before adding nodes, transpiler lowering, or UI copy:
 | [language_profiles.md](language_profiles.md) | Per-target portability |
 | [naming_and_product_direction.md](naming_and_product_direction.md) | Vocabulary — prefer **Function** over Macro |
 | [roadmap.md](roadmap.md) | Phases reframed around fidelity |
-| `.agents/skills/vvs_cross_language_mapping/SKILL.md` | AI Agent guide for node-to-code language mapping |
+| `.agents/skills/vvs_cross_language_mapping/SKILL.md` | Parent skill; **one doc per language** (`cpp.md`, `python.md`, …) |
 | `.agents/memory/decisions.md` | Locked decision record |

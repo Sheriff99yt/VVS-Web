@@ -34,7 +34,7 @@ export function CategorySection({
   return (
     <div className="border-b border-zinc-800/40 last:border-b-0">
       <div
-        className={`flex items-center gap-1 py-1.5 pr-2 cursor-pointer select-none group ${INDENT.root} hover:bg-zinc-900/50`}
+        className={`flex items-center gap-1.5 py-1.5 pr-2 cursor-pointer select-none group ${INDENT.root} hover:bg-zinc-900/50`}
         onClick={onToggle}
       >
         <span className="p-0.5 text-zinc-500 shrink-0">
@@ -46,32 +46,32 @@ export function CategorySection({
         </span>
         {!expanded && issueCount > 0 ? (
           <span
-            className="text-[8px] tabular-nums px-1 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/25"
+            className="text-[9px] tabular-nums px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/25"
             title={`${issueCount} missing on canvas`}
           >
             {issueCount}
           </span>
         ) : null}
-        <span className="text-[9px] text-zinc-600 tabular-nums shrink-0">{count}</span>
+        <span className="text-[10px] text-zinc-600 tabular-nums shrink-0">{count}</span>
         {expanded && onViewModeChange ? (
           <SectionViewToggle value={viewMode} onChange={onViewModeChange} />
         ) : onViewModeChange ? (
-          <span className="w-[42px] shrink-0" aria-hidden />
+          <span className="w-[52px] shrink-0" aria-hidden />
         ) : null}
         {onAdd ? (
           <button
             type="button"
-            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200 shrink-0"
+            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200 shrink-0"
             title={addLabel}
             onClick={(e) => {
               e.stopPropagation();
               onAdd();
             }}
           >
-            <Plus size={12} />
+            <Plus size={14} />
           </button>
         ) : (
-          <span className="w-5 shrink-0" />
+          <span className="w-6 shrink-0" />
         )}
       </div>
       {expanded ? (

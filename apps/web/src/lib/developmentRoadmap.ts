@@ -1,4 +1,4 @@
-export type RoadmapItemStatus = 'done' | 'partial' | 'planned';
+export type RoadmapItemStatus = 'done' | 'partial' | 'planned' | 'cut';
 
 export interface RoadmapItem {
   id: string;
@@ -11,7 +11,7 @@ export interface RoadmapSection {
   id: string;
   title: string;
   items: RoadmapItem[];
-  /** Public roadmap phase number (1â€“6), when applicable */
+  /** Public roadmap phase number (1–6), when applicable */
   phase?: number;
   /** Visual emphasis in the Roadmap view */
   emphasis?: 'active' | 'shipped';
@@ -21,29 +21,29 @@ export interface RoadmapSection {
 export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'phase-2-foundation',
-    title: 'Phase 2 foundation â€” cloud in repo',
+    title: 'Legacy server experiments (in repo)',
     phase: 2,
     emphasis: 'shipped',
     items: [
       {
         id: 'phase2-arch-locked',
-        title: 'Deployment architecture (locked)',
+        title: 'Self-host stack documented (legacy)',
         description:
-          'Self-hosted Supabase (Postgres + GoTrue) on VPS; Go is the only product API via pgx â€” PostgREST not used for editor or MCP paths.',
+          'Postgres + GoTrue + Go pgx notes remain in docs/deployment.md for reference. Product direction is client-first — no dedicated server hosting.',
         status: 'done',
       },
       {
         id: 'phase2-postgres-store',
         title: 'ProjectStore + PostgresStore (pgx)',
         description:
-          'ProjectStore interface with MemoryStore (default) and PostgresStore (DATABASE_URL); embedded migrations; docker-compose Postgres + GoTrue for local dev.',
+          'In-repo experiment: MemoryStore (default) + PostgresStore. Not a product hosting track.',
         status: 'done',
       },
       {
         id: 'phase2-auth-middleware',
         title: 'JWT auth middleware & dev user',
         description:
-          'Go JWT verification (SUPABASE_JWT_SECRET); AUTH_REQUIRED flag; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
+          'In-repo experiment. Default editor needs no accounts.',
         status: 'done',
       },
       {
@@ -57,7 +57,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'phase2-auth-button-ui',
         title: 'Minimal Supabase login UI',
         description:
-          'AuthButton in TopNav + StartScreen â€” email/password sign-in via Supabase client when NEXT_PUBLIC_SUPABASE_URL and ANON_KEY are set.',
+          'AuthButton in TopNav + StartScreen — email/password sign-in via Supabase client when NEXT_PUBLIC_SUPABASE_URL and ANON_KEY are set.',
         status: 'done',
       },
       {
@@ -69,16 +69,16 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'phase2-editor-cloud-sync',
-        title: 'Editor cloud source of truth',
+        title: 'Editor cloud source of truth (legacy path)',
         description:
-          'Authenticated sessions load/save via Go API first (cloudPersistence.ts); debounced cloud autosave; localStorage as offline cache.',
+          'HTTP/cloud save path exists when hosted features are enabled. Product default is local/folder/.vvs/.',
         status: 'done',
       },
       {
         id: 'phase2-mcp-prod',
-        title: 'Production MCP auth path',
+        title: 'MCP auth path (local / legacy)',
         description:
-          'MCP session auth propagation; Connect AI modal documents prod URL + Bearer token; probe sends auth when signed in.',
+          'Desktop local MCP paste config is the product path. Hosted MCP probe stays inactive by default.',
         status: 'done',
       },
     ],
@@ -96,7 +96,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen â€” new/open folder (.vvs/ overlay), recent projects, import JSON, First Graph & Coverage Lab Test Project cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
+          'Start screen — new/open folder (.vvs/ overlay), recent projects, import JSON, First Graph & Coverage Lab Test Project cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
       },
       {
         id: 'nav-history',
@@ -129,13 +129,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'auth-button',
         title: 'Sign in (Supabase GoTrue)',
         description:
-          'AuthButton in TopNav + StartScreen â€” email/password when NEXT_PUBLIC_SUPABASE_URL is set; GitHub OAuth optional via env flag.',
+          'AuthButton in TopNav + StartScreen — email/password when NEXT_PUBLIC_SUPABASE_URL is set; GitHub OAuth optional via env flag.',
       },
       {
         id: 'auto-workflow',
         title: 'Auto save & auto generate',
         description:
-          'TopNav split toggle + action buttons â€” [Auto save|Save] and [Auto generate|Generate]; debounced persist (local + cloud when signed in) and compile.',
+          'TopNav split toggle + action buttons — [Auto save|Save] and [Auto generate|Generate]; debounced persist (local + cloud when signed in) and compile.',
       },
     ],
   },
@@ -152,7 +152,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'selection-toolbar',
         title: 'Selection toolbar',
         description:
-          'Canvas-level GraphSelectionToolbar â€” copy, delete, comment, and ungroup actions when nodes are selected (selection-only overlay).',
+          'Canvas-level GraphSelectionToolbar — copy, delete, comment, and ungroup actions when nodes are selected (selection-only overlay).',
       },
       {
         id: 'graph-shortcuts',
@@ -176,14 +176,15 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'editor-focus',
         title: 'Editor focus coordinator',
         description:
-          'useEditorFocus â€” single navigation API from Project tree to canvas tab + selection; browser back/forward restores event/function/class picks; no stale navigate() wiping symbol selection.',
+          'useEditorFocus — single navigation API from Project tree to canvas tab + selection; browser back/forward restores event/function/class picks; no stale navigate() wiping symbol selection.',
         status: 'done',
       },
       {
         id: 'canvas-perf',
         title: 'Canvas interaction perf',
         description:
-          'Drag/click optimizations â€” reduced re-renders during node moves and selection changes on large graphs.',
+          'U83 companion: pin wired-boolean store selectors; node search gated subscribe; onlyRenderVisibleElements shared constant.',
+        status: 'done',
       },
       {
         id: 'spawn-menu-keys',
@@ -194,20 +195,21 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'tabs',
         title: 'Multi-graph tabs',
         description:
-          'Container graph tabs (Project map, module graphs), function graphs, per-tab documents; drag-reorder tabs; close any tab except pinned Project map â€” no per-class canvas tabs.',
+          'Container graph tabs (Project map, module graphs), function graphs, per-tab documents; drag-reorder tabs; close any tab except pinned Project map — no per-class canvas tabs.',
         status: 'done',
       },
       {
         id: 'tree',
         title: 'Project explorer',
         description:
-          'Structure | Symbols | API tabs; scope header with breadcrumb; folders â†’ classes; class-scoped Functions â†’ Events â†’ Variables; icon-expand filter; click select / double-click open; codegen suffix on class/function rows; Environment API on API tab; generated files on right panel Files tab.',
+          'Structure | Symbols | API → compact Symbols/Output cycle toggle + always-on filter; Ctrl+Space focuses filter; class scope in status bar / class list; folders → classes; class-scoped Functions → Events → Variables.',
         status: 'done',
       },
       {
         id: 'search',
         title: 'Node search',
-        description: 'Ctrl+K palette to find and spawn nodes from the registry catalog.',
+        description: 'Space / Ctrl+K focuses canvas node search (hover-expand).',
+        status: 'done',
       },
       {
         id: 'context-menu',
@@ -218,13 +220,21 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'refs',
         title: 'References view',
-        description: 'UE-style reference browser â€” focus graph, referencers, dependencies, read-only canvas.',
+        description: 'UE-style reference browser — focus graph, referencers, dependencies, read-only canvas.',
       },
       {
         id: 'inspector',
         title: 'Floating details panel',
         description:
-          'Context inspector for nodes, variables, events, and functions; vertical resize; state persists.',
+          'Context inspector for nodes, variables, events, functions, and code preview (selection type code); vertical resize; state persists.',
+        status: 'done',
+      },
+      {
+        id: 'code-panel-chrome',
+        title: 'Code panel chrome',
+        description:
+          'h-9 bar aligned with graph tabs; LanguageExtensionMenu (hover → extensions; language click → first ext); error/warning highlight toggles; secondary emit options in details panel.',
+        status: 'done',
       },
       {
         id: 'wiring',
@@ -239,7 +249,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'overload-picker',
         title: 'Call overload picker',
-        description: 'Dropdown on call nodes when a function has multiple overloads â€” syncs pins via graphBinding.overloadId.',
+        description: 'Dropdown on call nodes when a function has multiple overloads — syncs pins via graphBinding.overloadId.',
       },
       {
         id: 'syntax-pack-lock-ui',
@@ -250,12 +260,12 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'env-import-ui',
         title: 'OpenAPI / AsyncAPI import',
         description:
-          'EnvironmentImportModal â€” paste or upload specs, validate manifest, link to project; mock localStorage + optional HTTP POST.',
+          'EnvironmentImportModal — paste or upload specs, validate manifest, link to project; mock localStorage + optional HTTP POST.',
       },
       {
         id: 'folder-key',
         title: 'Stable folder reopen',
-        description: 'folderKeyFromHandleName() â€” same on-disk folder reopens under one recent entry.',
+        description: 'folderKeyFromHandleName() — same on-disk folder reopens under one recent entry.',
       },
       {
         id: 'http-api-ui',
@@ -266,7 +276,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'mcp-ui',
         title: 'Connect AI (Phase 1 MCP)',
-        description: 'TopNav modal â€” local MCP at localhost:8080/mcp; probe detects endpoint when server runs.',
+        description: 'TopNav modal — local MCP at localhost:8080/mcp; probe detects endpoint when server runs.',
       },
       {
         id: 'label-free',
@@ -283,7 +293,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-drag-spawn',
         title: 'Drag symbols to canvas',
         description:
-          'Variables: Get / Set / Declare. Functions: Call / Declare / Define. Events: Dispatch / Declare / On. Classes: Declare on the member chain. Declare inserts member-chain nodes on the class home graph; Define/On opens or spawns implementation.',
+          'Variables: Get / Set / Declare. Functions & events: Call / Declare / Define. Classes: Declare on the member chain. Declare inserts member-chain nodes; Define places body/handler; Call invokes.',
         status: 'done',
       },
       {
@@ -295,8 +305,10 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'sim',
-        title: 'Simulation stepping',
-        description: 'Mock play/pause/step with execution highlight on the graph (no real runtime yet).',
+        title: 'Graph Play / live execution (removed)',
+        description:
+          'Mock play/pause/step removed. Locked: VVS never executes code. In scope: logical checks and warnings only. Execution belongs to third-party tools after Generate.',
+        status: 'done',
       },
       {
         id: 'workspace-isolation',
@@ -317,21 +329,21 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'macros',
         title: 'Macros (removed)',
-        description: 'Deprecated â€” macro tabs and use_macro migrated to Function + Call on load.',
+        description: 'Deprecated — macro tabs and use_macro migrated to Function + Call on load.',
         status: 'done',
       },
       {
         id: 'text-shaped',
         title: 'Text-shaped graphs',
         description:
-          'Canvas is the codegen source of truth â€” IR pipeline, ordered define-chain emit, hoisted imports, Wait/Await Wait, event Dispatch (direct call); every behavioral node maps to visible export text with sourceMap. Emit/Subscribe hidden-runtime nodes blocked.',
+          'Canvas is the codegen source of truth — IR pipeline, ordered define-chain emit, hoisted imports, Wait/Await Wait, event Dispatch (direct call); every behavioral node maps to visible export text with sourceMap. Emit/Subscribe hidden-runtime nodes blocked.',
         status: 'done',
       },
       {
         id: 'environments',
         title: 'Project environments',
         description:
-          'VS Codeâ€“style templates: live manifest catalog (9+ packs, categories), linked manifest, Environment API browse/spawn, env.call_native, module + host multi-file codegen.',
+          'VS Code—style templates: live manifest catalog (9+ packs, categories), linked manifest, Environment API browse/spawn, env.call_native, module + host multi-file codegen.',
       },
       {
         id: 'symbol-declare-vocabulary',
@@ -365,14 +377,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'syntax-pack-migration-py-cpp',
-        title: 'Syntax pack migration â€” Python & C++',
+        title: 'Syntax pack migration — Python & C++',
         description:
           'Pack-first leaf + control-flow print for python/cpp: renderTemplate engine, expanded base JSON, unified blocks.ts, VarDefine via packs, get_input/switch TS printers, packMigrationGate CI.',
         status: 'done',
       },
       {
         id: 'syntax-pack-migration-js-verse-shipped',
-        title: 'Syntax pack migration â€” JavaScript & Verse',
+        title: 'Syntax pack migration — JavaScript & Verse',
         description:
           'Milestone 2: full javascript.base + verse.base packs; all v1 families pack-first; switch/get_input registered for all families; legacy stmt/blocks emitters removed.',
         status: 'done',
@@ -388,7 +400,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'syntax-pack-block-helpers-shipped',
         title: 'Shared block close helpers',
         description:
-          'blockHelpers.ts â€” condSpanOffset, blockCloseLine, ifElseLine shared by print/blocks.ts and emit/sinkStatements.ts; C++ ForLoopClose/WhileLoopClose pack keys.',
+          'blockHelpers.ts — condSpanOffset, blockCloseLine, ifElseLine shared by print/blocks.ts and emit/sinkStatements.ts; C++ ForLoopClose/WhileLoopClose pack keys.',
         status: 'done',
       },
       {
@@ -402,14 +414,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'transpile',
         title: 'Client transpiler',
         description:
-          'IR pipeline (analyze â†’ graphToIr â†’ print via syntax packs â†’ emit/classModule); Python, JS, C++, Verse, GDScript; control flow; example + Rosetta snapshot tests; 233+ package tests.',
+          'IR pipeline (analyze → graphToIr → print via syntax packs → emit/classModule); Python, JS, C++, Verse, GDScript; control flow; example + Rosetta snapshot tests; 233+ package tests.',
         status: 'done',
       },
       {
         id: 'syntax-packs',
         title: 'Syntax packs & Rosetta suite',
         description:
-          '@vvs/syntax-packs â€” base JSON (Rosetta + shell templates), capability overlays, 14 fixtures Ã— 5 families, packCoverage + fidelity linter + parse validation script.',
+          '@vvs/syntax-packs — base JSON (Rosetta + shell templates), capability overlays, 14 fixtures Ã— 5 families, packCoverage + fidelity linter + parse validation script.',
         status: 'done',
       },
       {
@@ -435,7 +447,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'milestone-3-language-platform',
-        title: 'Milestone 3 â€” language platform closed',
+        title: 'Milestone 3 — language platform closed',
         description:
           'Seven pack-driven codegen families (py/js/cpp/verse/gdscript/rust/csharp); 98 Rosetta goldens; Godot env pack. Next: usability/workflow standards (terms_refactor_plan).',
         status: 'done',
@@ -484,7 +496,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'graph-containers',
         title: 'Graph-as-canvas model',
         description:
-          'Each graphContainer is a real canvas (`documents[container.id]`). Project map (`main-graph`) is organizational â€” graph_ref navigation only, no codegen. Module graphs hold class_define chains plus runtime flow (Coverage Lab: Machine+Sensor on one graph). Classes are symbols nested under graphs, not separate tabs.',
+          'Each graphContainer is a real canvas (`documents[container.id]`). Project map (`main-graph`) is organizational — graph_ref navigation only, no codegen. Module graphs hold class_define chains plus runtime flow (Coverage Lab: Machine+Sensor on one graph). Classes are symbols nested under graphs, not separate tabs.',
         status: 'done',
       },
       {
@@ -526,7 +538,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'cpp-declare-define-u82',
         title: 'C++ Declare / Define emit (U82)',
         description:
-          'Non-abstract Declare â†’ in-class prototype; Define â†’ out-of-line Class::Method (or separate .cpp graph). No auto-split of one graph into .h+.cpp. Other langs: U66 (x) Declare + in-class Define.',
+          'Non-abstract Declare → in-class prototype; Define → out-of-line Class::Method (or separate .cpp graph). No auto-split of one graph into .h+.cpp. Other langs: U66 (x) Declare + in-class Define.',
         status: 'done',
       },
       {
@@ -559,23 +571,23 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'graph-equals-file',
-        title: 'One graph â†’ one file (U58)',
+        title: 'One graph → one file (U58)',
         description:
-          'All class_define chains on a container graph emit into one module (canvas order). Want two files â†’ two graphs. Coverage Lab â†’ src/CoverageLab.*',
+          'All class_define chains on a container graph emit into one module (canvas order). Want two files → two graphs. Coverage Lab → src/CoverageLab.*',
         status: 'done',
       },
       {
         id: 'generate-export-multiclass',
-        title: 'Generate = Code panel emit (U56â€“U57)',
+        title: 'Generate = Code panel emit (U56—U57)',
         description:
           'TopNav Generate / CLI / Code preview share emitProjectLikeCodePanel; folder write when on disk. Class-home tabs show the graphâ€™s module file.',
         status: 'done',
       },
       {
         id: 'fidelity-streamline-0-4',
-        title: 'Fidelity streamline Phases 0â€“4',
+        title: 'Fidelity streamline Phases 0—4',
         description:
-          'Single member emit path, propertyâ†’pack only, ClassDecl-only shell, Coverage Lab golden. docs/design/fidelity_streamline.md.',
+          'Single member emit path, property→pack only, ClassDecl-only shell, Coverage Lab golden. docs/design/fidelity_streamline.md.',
         status: 'done',
       },
       {
@@ -610,7 +622,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'cross-class-refs',
         title: 'Cross-class event dispatch',
         description:
-          'DispatchEventCrossClass pack + lower; CROSS_CLASS_DISPATCH_WITHOUT_IMPORT; Coverage Lab Bootâ†’Sensor.on_tick.',
+          'DispatchEventCrossClass pack + lower; CROSS_CLASS_DISPATCH_WITHOUT_IMPORT; Coverage Lab Boot→Sensor.on_tick.',
         status: 'done',
       },
       {
@@ -630,19 +642,19 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'save',
         title: 'Save & load',
         description:
-          'ProjectSnapshot v3 â€” browser localStorage for quick projects, or git-friendly `.vvs/` folder layout on disk (split graphs, symbols, integration.json). Import/export JSON.',
+          'ProjectSnapshot v3 — browser localStorage for quick projects, or git-friendly `.vvs/` folder layout on disk (split graphs, symbols, integration.json). Import/export JSON.',
       },
       {
         id: 'project-folder',
         title: 'On-disk project folders',
         description:
-          'File System Access API â€” new/open folder, IndexedDB handle storage, save writes `.vvs/project.json`, graphs, symbols, and integration config; `.gitignore` scaffold.',
+          'File System Access API — new/open folder, IndexedDB handle storage, save writes `.vvs/project.json`, graphs, symbols, and integration config; `.gitignore` scaffold.',
       },
       {
         id: 'integration-config',
         title: 'Codegen integration settings',
         description:
-          'Per-target emit paths (moduleDir, moduleFile, functionDir), host file skip/emit policies in integration.json; editable in Graph settings â†’ Code generation.',
+          'Per-target emit paths (moduleDir, moduleFile, functionDir), host file skip/emit policies in integration.json; editable in Graph settings → Code generation.',
       },
       {
         id: 'folder-browser',
@@ -660,7 +672,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'library-ui',
         title: 'Library UI',
         description:
-          'Templates (categorized environments) Â· Community Â· Installed; start project from template; install/link community assets (mock catalog).',
+          'Templates (categorized environments) · Community · Installed; start project from template; install/link community assets (mock catalog).',
       },
       {
         id: 'mcp-modal',
@@ -703,7 +715,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'api-facade',
         title: 'VvsApi facade',
         description:
-          'Mock (localStorage) and HTTP (Go) transports â€” save, load, list, compile, health, MCP probe; Bearer token on HTTP when session is set.',
+          'Mock (localStorage) and HTTP (Go) transports — save, load, list, compile, health, MCP probe; Bearer token on HTTP when session is set.',
       },
       {
         id: 'save-before-compile',
@@ -715,21 +727,21 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'codemirror',
         title: 'Code output panel',
         description:
-          'CodeMirror 6 â€” **Code** tab (per-graph transpile + sourceMap highlights aligned with displayed files; language and .{ext} in header); **Files** tab (project-wide folder tree from useProjectTranspileResult). Live validation badge + preview-only banner when class Declare missing; sync indicator reflects analysis errors. Project map tab skips codegen.',
+          'CodeMirror 6 — **Code** tab (per-graph transpile + sourceMap highlights aligned with displayed files; language and .{ext} in header); **Files** tab (project-wide folder tree from useProjectTranspileResult). Live validation badge + preview-only banner when class Declare missing; sync indicator reflects analysis errors. Project map tab skips codegen.',
         status: 'done',
       },
       {
         id: 'searchable-selects',
         title: 'Searchable dropdowns',
         description:
-          'SearchableSelect component â€” codegen language/extension, property enums, import graph/class/module pickers, environment import defaults.',
+          'SearchableSelect component — codegen language/extension, property enums, import graph/class/module pickers, environment import defaults.',
         status: 'done',
       },
       {
         id: 'import-graph-picker',
         title: 'Import graph pickers',
         description:
-          'ImportGraphTargetPanel + projectGraphCatalog â€” searchable picker for graph_ref, import_class, and import_module targets across all project graphs.',
+          'ImportGraphTargetPanel + projectGraphCatalog — searchable picker for graph_ref, import_class, and import_module targets across all project graphs.',
         status: 'done',
       },
       {
@@ -784,7 +796,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'transpiler-pkg',
         title: '@vvs/transpiler',
         description:
-          'Language-neutral lower/graphToIr â†’ print/ (PrinterRegistry + syntax packs) â†’ emit/; CallNative, multi-file emit, integration paths.',
+          'Language-neutral lower/graphToIr → print/ (PrinterRegistry + syntax packs) → emit/; CallNative, multi-file emit, integration paths.',
       },
       {
         id: 'syntax-packs-pkg',
@@ -802,19 +814,19 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'server-http',
         title: 'Go project HTTP API',
         description:
-          'ProjectStore port â€” MemoryStore (default) or PostgresStore (DATABASE_URL); GET/PUT /api/projects, list, POST â€¦/compile; CORS + Authorization header.',
+          'ProjectStore port — MemoryStore (default) or PostgresStore (DATABASE_URL); GET/PUT /api/projects, list, POST â€¦/compile; CORS + Authorization header.',
       },
       {
         id: 'server-auth',
         title: 'JWT auth middleware',
         description:
-          'Go middleware â€” AUTH_REQUIRED + SUPABASE_JWT_SECRET; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
+          'Go middleware — AUTH_REQUIRED + SUPABASE_JWT_SECRET; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
       },
       {
         id: 'server-mcp',
         title: 'MCP server (local + JWT)',
         description:
-          'SSE at /mcp â€” list_available_nodes, list_syntax_packs, list_classes, add_class, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; class_id scoping; session auth when Bearer set.',
+          'SSE at /mcp — list_available_nodes, list_syntax_packs, list_classes, add_class, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; class_id scoping; session auth when Bearer set.',
       },
       {
         id: 'dev-startup',
@@ -834,7 +846,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'languages-more',
         title: 'Pack-driven language families',
         description:
-          'Python, JS, C++, Verse, GDScript, Rust, C# â€” pack-first print + 14Ã—7 Rosetta goldens. Milestone 3 closed July 2026.',
+          'Python, JS, C++, Verse, GDScript, Rust, C# — pack-first print + 14Ã—7 Rosetta goldens. Milestone 3 closed July 2026.',
         status: 'done',
       },
       {
@@ -900,6 +912,55 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           'S = forward exec + data attrs/children; A = full undirected chain + attrs; S S = lane-topo layout (above / below / below-extended stair with spine buffer). Head-anchored; multi-chain vertical separation; absolute layout through locked comments. Settings: chainAttributeDirection. Comments create locked by default (U68).',
         status: 'done',
       },
+      {
+        id: 'y-order-rethink-u79',
+        title: 'Canvas Y → code order (U79)',
+        description:
+          'Connected exec chain = primary nest/emit order; vertical Y = secondary for unconnected heads (+ event peers). Teaching warnings CHAIN_ORDER_Y_MISMATCH / EVENT_PEER_Y_ORDER — no auto-reorder. Comment attach topmost Y.',
+        status: 'done',
+      },
+      {
+        id: 'canvas-virtualization-u83',
+        title: 'Canvas virtualization (U83)',
+        description:
+          'onlyRenderVisibleElements on edit + reference canvases; pure isPinWired + nodesForSearchSubscription helpers with unit tests (lib/graphVirtualization.ts).',
+        status: 'done',
+      },
+      {
+        id: 'node-search-all-graphs-u84',
+        title: 'Node search — all graphs toggle (U84)',
+        description:
+          'Layers toggle on node search (default on). Searches every graph; jumps tab + focuses node. Single clear X (type=text, no native clear).',
+        status: 'done',
+      },
+      {
+        id: 'f-fills-node-search-u85',
+        title: 'Ctrl+F / F find + symbol menu (U85)',
+        description:
+          'Ctrl+F finds in all graphs (prefill from tree symbol). F with a tree symbol = find in this graph only; else frame. Symbol context menu: Find in this graph / Find in all graphs. Pane click + canvas drag clear tree-symbol focus. Space/Ctrl+K respect Layers.',
+        status: 'done',
+      },
+      {
+        id: 'custom-tooltip-u94',
+        title: 'Custom tooltip widget (U94)',
+        description:
+          'App-default Tooltip (`components/ui/Tooltip.tsx`) — Esc dismiss, viewport clamp; wired on search, TopNav, status, toolbars, floating panels.',
+        status: 'done',
+      },
+      {
+        id: 'first-open-help-u95',
+        title: 'First graph open opens help (U95)',
+        description:
+          'Canvas welcome/help auto-opens until dismissed (`canvasWelcomeDismissed`).',
+        status: 'done',
+      },
+      {
+        id: 'selected-node-chrome-overlay',
+        title: 'Selected-only node chrome overlay',
+        description:
+          'Modifier chips + import target-language sit in an absolute strip above the card when selected (do not grow header). Selection actions toolbar stacks above that strip.',
+        status: 'done',
+      },
     ],
   },
 ];
@@ -915,7 +976,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'go-language-u77',
         title: 'Go language pack (U77)',
-        description: 'Eighth target language â€” syntax pack, emit, and Test Project / Rosetta coverage.',
+        description: 'Eighth target language — syntax pack, emit, and Test Project / Rosetta coverage.',
         status: 'planned',
       },
       {
@@ -926,11 +987,83 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'planned',
       },
       {
-        id: 'y-order-rethink-u79',
-        title: 'Investigate canvas Y → code order (U79)',
+        id: 'emit-fidelity-cl-backlog',
+        title: 'Target-language emit fidelity (CL backlog)',
         description:
-          'Locked: connected exec chain = primary nest/emit order; vertical Y = secondary for unconnected heads (+ event peers). Teaching warnings CHAIN_ORDER_Y_MISMATCH / EVENT_PEER_Y_ORDER — no auto-reorder. Comment attach topmost Y.',
-        status: 'done',
+          'Plans first — then code. Open clusters from Coverage Lab golden sync: Rust inheritance (CL-010); Verse GetInput/for-loop (CL-014/015); C# async Task (CL-006); Rust static/imports (CL-008/009); GDScript temps/GetInput (CL-012/013); Verse defaults (CL-016). Canonical log: .agents/skills/vvs_cross_language_mapping/SKILL.md.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
+    id: 'editor-chrome-u84',
+    title: 'Editor chrome & scale UX (U86–U90)',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'details-compact-rethink-u86',
+        title: 'Details panel compact rethink (U86)',
+        description:
+          'Rethink the compact / collapsed Details panel so it stays useful without clutter.',
+        status: 'planned',
+      },
+      {
+        id: 'compiler-log-language-scope-u87',
+        title: 'Compiler Log language-scoped mode (U87)',
+        description:
+          'Add a log mode that shows errors and warnings scoped to the current selected language only.',
+        status: 'planned',
+      },
+      {
+        id: 'graph-tabs-ux-u88',
+        title: 'Graph tabs UI/UX rethink (U88)',
+        description:
+          'Rethink graph tab bar layout, overflow, and dirty/active affordances for many open graphs.',
+        status: 'planned',
+      },
+      {
+        id: 'references-viewer-redesign-u89',
+        title: 'References viewer redesign (U89)',
+        description:
+          'Redesign the reference viewer to stay useful on huge projects (navigation + scale; pairs with U83 virtualization).',
+        status: 'planned',
+      },
+      {
+        id: 'library-page-redesign-u90',
+        title: 'Library page redesign (U90)',
+        description:
+          'Redesign the Library page after the client-first / git-catalog directional change (no hosted blob library).',
+        status: 'planned',
+      },
+    ],
+  },
+  {
+    id: 'ai-examples-help-u91',
+    title: 'AI, examples & reverse import (U91–U93)',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'mcp-agent-autonomy-u91',
+        title: 'AI / MCP audit & agent autonomy (U91)',
+        description:
+          'Audit and upgrade local MCP and what agents can do autonomously in-app — tool surface, consent, safe write paths. Builds on U70 paste-config stub.',
+        status: 'planned',
+      },
+      {
+        id: 'cross-and-lang-examples-u92',
+        title: 'New cross-language & language-specific examples (U92)',
+        description:
+          'New StartScreen / Test Project examples: shared cross-language fixtures and language-specific ones, with usability tests and goldens.',
+        status: 'planned',
+      },
+      {
+        id: 'code-to-visual-u93',
+        title: 'Long-term: code → visual (U93)',
+        description:
+          'Research track: read raw source and produce text-shaped graphs (reverse of Generate). Must preserve canvas source of truth and fidelity — not near-term polish.',
+        status: 'planned',
       },
     ],
   },
@@ -942,14 +1075,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-spawn-ux',
         title: 'Declare / implement / invoke spawn UX',
         description:
-          'Role chips in spawn catalog. Done: Project tree badges, Event panel Declare Â· On Â· Dispatch, Call/Declare/Define menus. Remaining: catalog role chips. Spec: unified_symbol_model.md Phase D.',
+          'Role chips in spawn catalog. Done: Project tree badges, Event panel Declare · On · Dispatch, Call/Declare/Define menus. Remaining: catalog role chips. Spec: unified_symbol_model.md Phase D.',
         status: 'partial',
       },
       {
         id: 'coa-deferred',
         title: 'Cross Over Architecture (COA)',
         description:
-          'Deferred â€” COA_SHIPPED false. Prerequisites: multi-target export, documented compile policy. Single-target portability warnings + U66/U67 available today.',
+          'Deferred — COA_SHIPPED false. Prerequisites: multi-target export, documented compile policy. Single-target portability warnings + U66/U67 available today.',
         status: 'planned',
       },
     ],
@@ -967,7 +1100,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'overrides',
         title: 'Function overrides (OOP)',
-        description: 'Subclass methods overriding a parent symbol â€” distinct from overloads; parent link + validation.',
+        description: 'Subclass methods overriding a parent symbol — distinct from overloads; parent link + validation.',
         status: 'planned',
       },
       {
@@ -990,7 +1123,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'env-typespec-emitter',
-        title: 'TypeSpec â†’ manifest emitter',
+        title: 'TypeSpec → manifest emitter',
         description:
           'Custom TypeSpec emitter producing ProjectEnvironmentManifest JSON as a single API authoring source.',
         status: 'planned',
@@ -999,7 +1132,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'env-backstage-compat',
         title: 'Backstage template compatibility',
         description:
-          'Import template.yaml + skeleton/ as hostFiles; Nunjucks â†’ {moduleName}; env-import CLI.',
+          'Import template.yaml + skeleton/ as hostFiles; Nunjucks → {moduleName}; env-import CLI.',
         status: 'partial',
       },
       {
@@ -1020,7 +1153,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'env-engine-packs',
         title: 'Engine environment packs',
         description:
-          'UE/Verse and other engine API manifests as installable Library environments â€” portability-gated natives.',
+          'UE/Verse and other engine API manifests as installable Library environments — portability-gated natives.',
         status: 'planned',
       },
       {
@@ -1034,64 +1167,47 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'phase-2-deploy',
-    title: 'Deployment & operations',
+    title: 'Dedicated server hosting (out of scope)',
     items: [
       {
         id: 'self-hosted-deploy',
         title: 'Full Supabase Docker on VPS',
         description:
-          'Dev VPS + live VPS Compose stacks (GoTrue, Kong, Studio); Caddy TLS; shared hosting limited to static web assets only.',
-        status: 'planned',
+          'Out of scope as product. No dedicated VPS / self-hosted Supabase track. Client-first: local/.vvs/git + static Pages. Legacy notes in docs/deployment.md only.',
+        status: 'cut',
       },
       {
         id: 'github-oauth',
-        title: 'GitHub OAuth + email auth',
+        title: 'GitHub OAuth + email auth (hosted)',
         description:
-          'GoTrue GitHub provider wired in docker-compose; AuthButton shows GitHub when NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=true. Email/password is v1 default.',
-        status: 'partial',
+          'Out of scope as product default. No VVS accounts required. Code may remain hidden/disabled for experiments.',
+        status: 'cut',
       },
       {
         id: 'ops-backups',
         title: 'VPS ops & backups',
-        description: 'Daily pg_dump or volume snapshots, pinned Supabase images, rate limits on MCP, health checks.',
-        status: 'planned',
+        description: 'Out of scope — no dedicated server product to operate.',
+        status: 'cut',
       },
       {
         id: 'pwa',
-        title: 'PWA offline sync',
-        description: 'Service worker + IndexedDB cached registry; sync to Postgres when connectivity returns.',
-        status: 'planned',
-      },
-    ],
-  },
-  {
-    id: 'runtime',
-    title: 'Simulation & execution',
-    items: [
-      {
-        id: 'real-runtime',
-        title: 'Real graph execution',
-        description: 'Replace mock simulation with an actual interpreter or target-language runner.',
-        status: 'planned',
-      },
-      {
-        id: 'canvas-virtualization',
-        title: 'Canvas virtualization',
-        description: '60fps editing with 500+ nodes via viewport culling / virtualized rendering.',
-        status: 'planned',
+        title: 'PWA offline sync to Postgres',
+        description:
+          'Out of scope as product. Prefer folder/.vvs + git; do not invent a VVS sync server.',
+        status: 'cut',
       },
     ],
   },
   {
     id: 'community',
     phase: 3,
-    title: 'Phase 3 â€” Community library',
+    title: 'Phase 3 — Community library',
     items: [
       {
         id: 'library-backend',
         title: 'Library backend',
         description:
-          'Separate library git repo; public links only; PR/submit workflow â€” not hosted blob storage. UI shell exists; catalog backend TBD.',
+          'Separate library git repo; public links only; PR/submit workflow — not hosted blob storage. UI shell exists; catalog backend TBD.',
         status: 'partial',
       },
       {
@@ -1106,13 +1222,13 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'collaboration',
     phase: 4,
-    title: 'Phase 4 â€” Session collaboration',
+    title: 'Phase 4 — Session collaboration',
     items: [
       {
         id: 'collab',
         title: 'Session client / host',
         description:
-          'Game-lobby style session sync â€” not account cloud multiplayer. Transport TBD (Go WS candidate).',
+          'Game-lobby style session sync — not account cloud multiplayer. Transport TBD (Go WS candidate).',
         status: 'planned',
       },
       {
@@ -1127,7 +1243,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'ue6',
     phase: 5,
-    title: 'Phase 5 â€” Unreal Engine 6 plugin',
+    title: 'Phase 5 — Unreal Engine 6 plugin',
     items: [
       {
         id: 'ue-plugin',
@@ -1159,7 +1275,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'polish',
     phase: 6,
-    title: 'Later â€” scale & platforms',
+    title: 'Later — scale & platforms',
     items: [
       {
         id: 'rust-console-env',
@@ -1177,8 +1293,9 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'enterprise',
         title: 'Enterprise deploy',
-        description: 'Self-hosted Supabase + Go on VPS (docs/deployment.md), moderation, audit logs for studio teams.',
-        status: 'planned',
+        description:
+          'Out of scope as product. No dedicated enterprise VPS. Client-first local/.vvs/git. Legacy self-host notes may remain in docs/deployment.md.',
+        status: 'cut',
       },
       {
         id: 'templates',
@@ -1191,7 +1308,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'folder-os-path',
         title: 'Reveal in Explorer / Finder',
         description:
-          'Native â€œopen containing folderâ€ from the editor â€” blocked today by browser File System Access API (no absolute path exposure).',
+          'Native â€œopen containing folderâ€ from the editor — blocked today by browser File System Access API (no absolute path exposure).',
         status: 'planned',
       },
     ],

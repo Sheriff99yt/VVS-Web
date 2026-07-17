@@ -127,15 +127,14 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 Whenever building or evaluating the UI panels, ensure the following professional Visual Scripting features and use-cases are accounted for:
 
 ### 1. Left Panel (Project)
-- **Tabbed explorer** (`ProjectTree` + `components/layout/project-tree/*`): **Structure** (folders → classes) · **Symbols** (functions, events, variables — class-scoped) · **API** (linked environment surface, when present). **Generated files** live in the right panel **Files** tab (not the project tree).
-- **Scope header** — project name + breadcrumb tail (`ProjectScopeHeader`); **Edit** / **Refs** badge from `mode`.
+- **Tabbed explorer** (`ProjectTree` + `components/layout/project-tree/*`): **Symbols** | **Output** | **API** (cycle). **Palette-first:** whole-row drag spawns Call/Declare/Get-Set; reorder grip on hover only; list **or** grid per section (header toggle; default list). Meta / `CodegenSuffix` / open affordance / OK canvas checks on hover or selection; **missing** Declare/Define badges always visible.
+- **Status bar scope** — compact project breadcrumb + **Edit** / **Refs** badge at the start of `StatusBar` (`GraphBreadcrumb` compact + `showModeBadge`).
 - **References** is a **top-level TopNav view**, not a left-panel category — `ProjectTree` uses `mode="references"`.
 - **Click model:** single-click **select** (inspector + code highlight); double-click **open** graph; no delayed single-click.
 - **Variable Lifecycle Management**: add via `SymbolCreatePopover`, edit in inspector, delete from tree.
 - **Function/Event Sub-graphs**: custom functions open in separate graph tabs.
-- **Drag-and-Drop Spawning**: drag variable / event / overload → spawn on canvas.
-- **Codegen hint:** read-only `CodegenSuffix` on class/function rows (`Py·.py`).
-- **Progressive disclosure:** symbol sections collapsed by default; auto-expand on selection; icon-expand filter.
+- **Drag-and-Drop Spawning**: drag variable / event / overload / function row → spawn on canvas.
+- **Progressive disclosure:** symbol sections collapsed by default; auto-expand on selection; filter always available; secondary row chrome on hover.
 
 ### 2. Floating inspector (canvas overlay)
 

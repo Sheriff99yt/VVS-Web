@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79 done; U77–U78 open.
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **9 / 10** (U77 open) · §14 **U78 open** · U64–U79 shipped
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84/U85 done; U86–U90 open. **§17** — U94/U95 done; U91–U93 open (AI / examples; U93 long-term). Selected-only node chrome overlay shipped (modifiers + import lang above card; actions toolbar above that).
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84/U85/U94/U95 done** · U86–U93 open
 
 ## Status legend
 
@@ -148,7 +148,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13–§14 open (U77–U78):** Go → Pack versions. U68–U71 / U75 / U79 shipped.
+**§13–§17 priority:** **U77 Go** → **U78 Pack versions** → **U86–U92** chrome & AI/examples → **U93** long-term code→visual. **U83** + **U84/U85/U94/U95** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 
@@ -157,7 +157,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 - React Flow canvas, custom nodes/edges, pin validation, reroute nodes
 - Per-tab `GraphDocument` + `ProjectSnapshot` save/load/export
 - Undo/redo, comment group/ungroup, in-app clipboard + Cut/Duplicate
-- Variable drag → Get/Set; simulation mock highlight + console logs
+- Variable drag → Get/Set; mock Play **removed** — **no live execution** in VVS (checks/warnings only; third parties run code)
 - Pin geometry: execution, boolean, number, object, **array**
 - Graph isolation: `GraphWorkspaceHost`, split React Flow providers, document bridge
 - References view: UE5 focus graph, referencers/dependencies layout, tree panel
@@ -258,6 +258,50 @@ Top-level **views** beyond canvas (Pack versions is the first named; more TBD).
 | U80 | **Same-file function emit** — stop per-function output files; function tabs = **Edit function body** only | **Done** | `transpileProject` no longer emits function-tab files; fixtures rev 2; goldens refreshed |
 | U81 | **Function Declare ≠ Define** — `function_define` (Declare, chain) + `function_implement` (Define, chain placement); no stub without Define; no legacy fold | **Done** | Emit/order/sourceMap; tree badges; release menu; Test Project fixtures on chain |
 | U82 | **C++ honest Declare/Define emit** — non-abstract Declare → prototype; Define out-of-line / dual-graph `.h`+`.cpp` (no auto-split) | **Done** | Lowering + `FunctionDefOutOfLineOpen`; two-phase C++ emit; impl-only graphs; Coverage Lab / First Graph C++ goldens; two-graph test |
+
+---
+
+## 15. Canvas scale (July 2026) — **Priority / Open**
+
+Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `canvas-virtualization-u83`.
+
+| # | Item | Status | Spec |
+|---|------|--------|------|
+| U83 | **Canvas virtualization** — viewport culling / virtualized rendering for 500+ nodes at 60fps | **Done** | `onlyRenderVisibleElements`; `isPinWired` / `nodesForSearchSubscription`; canvas source guard + unit tests in `lib/graphVirtualization.test.ts` |
+
+**Out of scope (do not backlog as product):** live code execution of any kind (Play, interpreter, runner, “run from VVS”). Leave execution to third parties. In scope: logical checks and user warnings ([decisions.md](decisions.md) § No live code execution).
+
+---
+
+## 16. Editor chrome & scale UX (July 2026) — **Partial** (U84/U85 done)
+
+Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `editor-chrome-u84`.
+
+Details, Compiler Log, tabs, References, and Library — polish for large projects and client-first Library direction.
+
+| # | Item | Status | Spec |
+|---|------|--------|------|
+| U84 | Node search — **all graphs** toggle + single clear | **Done** | Layers toggle (default on); `type="text"` removes native clear X; one custom clear |
+| U85 | **F** / **Ctrl+F** find + menu | **Done** | F = find symbol in this graph (else frame); Ctrl+F = all graphs; symbol menu both; pane click + drag clear tree focus |
+| U86 | Details panel **compact** rethink | **Open** | Redesign compact / collapsed Details so it stays useful without clutter. |
+| U87 | Compiler Log **language-scoped** mode | **Open** | Mode to display errors/warnings for the **current selected language only**. |
+| U88 | Graph **tabs** UI/UX rethink | **Open** | Rethink tab bar layout, overflow, dirty/active affordances when many graphs are open. |
+| U89 | **References** viewer redesign (huge projects) | **Open** | Redesign for scale — navigation and usefulness beyond toy graphs (pairs with U83). |
+| U90 | **Library** page redesign (post direction change) | **Open** | Redesign after client-first / git-catalog direction — no hosted blob library assumption. |
+
+---
+
+## 17. AI, examples, help & reverse import (July 2026) — **Partial** (U94/U95 done)
+
+Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `ai-examples-help-u91`.
+
+| # | Item | Status | Spec |
+|---|------|--------|------|
+| U91 | **AI / MCP audit & agent autonomy** | **Open** | Audit and upgrade local MCP + what agents can do autonomously in-app (tools, consent, safe write paths). Builds on U70 stub. |
+| U92 | **New examples** (cross-lang + lang-specific) | **Open** | New StartScreen / Test Project examples that work **across languages**, plus **language-specific** ones (usability tests + goldens). |
+| U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; TopNav / status / toolbars / panels / search |
+| U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |
+| U93 | **Long-term: code → visual** | **Open** (long-term) | System that reads raw source and builds text-shaped graphs (reverse of Generate). Must preserve canvas source of truth / fidelity — research track, not near-term polish. |
 
 ---
 

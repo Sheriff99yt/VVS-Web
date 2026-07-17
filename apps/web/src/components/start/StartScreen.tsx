@@ -30,6 +30,7 @@ import {
   saveProjectToStore,
   upsertRecentProject,
   saveProjectDraft,
+  pruneStableTestProjectsFromRecent,
 } from '@/lib/projectStore';
 import {
   initRecentProjects,
@@ -49,8 +50,8 @@ import {
   storeFolderHandle,
   verifyHandlePermission,
   resolveProjectFolderHandle,
-  linkLocalProjectToFolder,
 } from '@/lib/projectFolder';
+import { promoteBrowserProjectToDisk } from '@/lib/promoteProjectToDisk';
 import { ProjectFolderBrowserModal } from '@/components/start/ProjectFolderBrowserModal';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 
@@ -116,6 +117,8 @@ export function StartScreen() {
 
   useEffect(() => {
     initRecentProjects();
+    pruneStableTestProjectsFromRecent();
+    // Warm stable CI fixture slots only — does not touch recent or overwrite saves.
     seedUsabilityTestProjectsToLocalStorage();
   }, []);
 
@@ -249,14 +252,9 @@ export function StartScreen() {
         window.alert('Project data not found in browser storage.');
         return;
       }
-      handle = await linkLocalProjectToFolder(entry.id, snapshot);
-      if (handle) {
-        upsertRecentProject({
-          ...entry,
-          storage: 'folder',
-          folderLabel: handle.name,
-          savedAt: new Date().toISOString(),
-        });
+      const promoted = await promoteBrowserProjectToDisk(entry.id, snapshot, entry.source);
+      if (promoted) {
+        handle = promoted.handle;
         notifyRecentProjectsChanged();
       }
     }

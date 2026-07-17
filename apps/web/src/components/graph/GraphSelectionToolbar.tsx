@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { useReactFlow, ViewportPortal } from '@xyflow/react';
 import { Copy, Trash2, MessageSquarePlus, Ungroup } from 'lucide-react';
+import { useReactFlow, ViewportPortal } from '@xyflow/react';
 import { dispatchGraphAction } from '@/lib/graphActions';
 import { shortcutTitle } from '@/lib/graphShortcuts';
 import { useGraphNodeSelectionFromStore } from '@/hooks/useGraphNodeSelection';
+import { Tooltip } from '@/components/ui/Tooltip';
 import styles from './GraphSelectionToolbar.module.css';
 
 export function GraphSelectionToolbar() {
@@ -36,47 +37,51 @@ export function GraphSelectionToolbar() {
             <div className={styles.divider} />
           </>
         ) : null}
-        <button
-          type="button"
-          className={styles.button}
-          title={shortcutTitle('duplicate')}
-          aria-label="Duplicate selection"
-          onClick={() => dispatchGraphAction('duplicate')}
-        >
-          <Copy size={14} />
-        </button>
-        {selection.canGroup ? (
+        <Tooltip content={shortcutTitle('duplicate')} placement="bottom">
           <button
             type="button"
             className={styles.button}
-            title={shortcutTitle('group-comment')}
-            aria-label="Comment selection"
-            onClick={() => dispatchGraphAction('group-comment')}
+            aria-label="Duplicate selection"
+            onClick={() => dispatchGraphAction('duplicate')}
           >
-            <MessageSquarePlus size={14} />
+            <Copy size={14} />
           </button>
+        </Tooltip>
+        {selection.canGroup ? (
+          <Tooltip content={shortcutTitle('group-comment')} placement="bottom">
+            <button
+              type="button"
+              className={styles.button}
+              aria-label="Comment selection"
+              onClick={() => dispatchGraphAction('group-comment')}
+            >
+              <MessageSquarePlus size={14} />
+            </button>
+          </Tooltip>
         ) : null}
         {selection.canUngroup ? (
-          <button
-            type="button"
-            className={styles.button}
-            title={shortcutTitle('ungroup-comment')}
-            aria-label="Release from comment"
-            onClick={() => dispatchGraphAction('ungroup-comment')}
-          >
-            <Ungroup size={14} />
-          </button>
+          <Tooltip content={shortcutTitle('ungroup-comment')} placement="bottom">
+            <button
+              type="button"
+              className={styles.button}
+              aria-label="Release from comment"
+              onClick={() => dispatchGraphAction('ungroup-comment')}
+            >
+              <Ungroup size={14} />
+            </button>
+          </Tooltip>
         ) : null}
         <div className={styles.divider} />
-        <button
-          type="button"
-          className={`${styles.button} ${styles.buttonDanger}`}
-          title={shortcutTitle('delete')}
-          aria-label="Delete selection"
-          onClick={() => dispatchGraphAction('delete-selection')}
-        >
-          <Trash2 size={14} />
-        </button>
+        <Tooltip content={shortcutTitle('delete')} placement="bottom">
+          <button
+            type="button"
+            className={`${styles.button} ${styles.buttonDanger}`}
+            aria-label="Delete selection"
+            onClick={() => dispatchGraphAction('delete-selection')}
+          >
+            <Trash2 size={14} />
+          </button>
+        </Tooltip>
       </div>
     </ViewportPortal>
   );

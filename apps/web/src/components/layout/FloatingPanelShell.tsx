@@ -10,6 +10,7 @@ import {
   clampFloatingPanelTopOffsets,
   clampFloatingPanelWidth,
 } from '@/lib/uiPreferences';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export type FloatingPanelCorner = 'top-right' | 'bottom-right';
 
@@ -354,39 +355,45 @@ export function FloatingPanelShell({
         </div>
         {headerExtra}
         {usePin ? (
-          <button
-            type="button"
-            onClick={onTogglePinned}
-            className={`p-0.5 rounded hover:bg-zinc-800/80 ${
-              pinned ? 'text-indigo-300 hover:text-indigo-200' : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-            title={
+          <Tooltip
+            content={
               pinTitle ??
               (pinned ? 'Unpin — collapse when pointer leaves' : 'Pin — keep expanded')
             }
-            aria-pressed={pinned}
+            placement="bottom"
           >
-            {pinned ? <Pin size={12} /> : <PinOff size={12} />}
-          </button>
+            <button
+              type="button"
+              onClick={onTogglePinned}
+              className={`p-0.5 rounded hover:bg-zinc-800/80 ${
+                pinned ? 'text-indigo-300 hover:text-indigo-200' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+              aria-pressed={pinned}
+            >
+              {pinned ? <Pin size={12} /> : <PinOff size={12} />}
+            </button>
+          </Tooltip>
         ) : onToggleExpanded ? (
-          <button
-            type="button"
-            onClick={onToggleExpanded}
-            className="p-0.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
-            title={expanded ? 'Compact view' : 'Expanded view'}
-          >
-            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
+          <Tooltip content={expanded ? 'Compact view' : 'Expanded view'} placement="bottom">
+            <button
+              type="button"
+              onClick={onToggleExpanded}
+              className="p-0.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
+            >
+              {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </Tooltip>
         ) : null}
         {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-0.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
-            title="Close"
-          >
-            <X size={12} />
-          </button>
+          <Tooltip content="Close" placement="bottom">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-0.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
+            >
+              <X size={12} />
+            </button>
+          </Tooltip>
         )}
       </div>
       {showBody ? (

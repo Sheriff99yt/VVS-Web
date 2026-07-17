@@ -126,15 +126,17 @@ export function VariableRow({
         )
       }
       isRenaming={isRenaming}
-      meta={isGrid ? undefined : typeMeta}
-      hint={
+      hint={[
+        typeMeta,
         hint ??
-        (canReorder
-          ? 'Drag grip to reorder · drag name to graph · double-click to focus Declare'
-          : onOpen
-            ? 'Click to select · Double-click to focus Declare'
-            : 'Click to select')
-      }
+          (canReorder
+            ? 'Hover for reorder grip · drag row to graph · double-click to focus Declare'
+            : onOpen
+              ? 'Drag row to graph · click to select · double-click to focus Declare'
+              : 'Drag row to graph · click to select'),
+      ]
+        .filter(Boolean)
+        .join(' · ')}
       onSelect={onSelect}
       onOpen={onOpen}
       onContextMenu={onContextMenu}

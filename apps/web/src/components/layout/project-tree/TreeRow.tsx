@@ -26,6 +26,7 @@ export interface TreeRowProps {
   /** Extra leading content when not using built-in reorder (rare). */
   leading?: React.ReactNode;
   label: React.ReactNode;
+  /** Secondary text — shown on hover/selection; always in row title tooltip. */
   meta?: string;
   suffix?: React.ReactNode;
   hoverActions?: React.ReactNode;
@@ -43,8 +44,7 @@ export interface TreeRowProps {
   hint?: string;
   className?: string;
   /**
-   * Built-in list+grid reorder: grip + drop targets.
-   * When enabled, whole-row canvas drag is disabled; pass `canvasDrag` to drag from the label.
+   * Built-in reorder: grip is the reorder source; whole row stays canvas-draggable (palette-first).
    */
   reorder?: TreeRowReorderProps;
   /** @deprecated Prefer `reorder` — kept for drop-target-only rows. */
@@ -115,47 +115,48 @@ export function TreeRow({
     configureCanvasDrag(e, canvasDrag);
   };
 
-  // When reordering, never make the whole row the canvas drag source — grip owns DnD.
-  const rowDraggable = !isRenaming && !reorderEnabled && Boolean(canvasDrag || onDragStart);
-  const labelCanvasDrag = reorderEnabled && !isRenaming && Boolean(canvasDrag);
+  // Palette-first: whole row canvas-drags even when a reorder grip is present.
+  // Grip uses its own draggable + stopPropagation so it does not start canvas drag.
+  const rowDraggable = !isRenaming && Boolean(canvasDrag || onDragStart);
 
   const labelText = typeof label === 'string' ? label : undefined;
   const rowTitle = [labelText, hint, meta].filter(Boolean).join(' · ');
+  const secondaryVisible = Boolean(active);
 
   const grip = reorderEnabled ? (
-    <ReorderGrip
-      title={reorder!.title}
-      onDragStart={reorder!.onDragStart}
-      onDragEnd={() => {
-        reorder!.onDragEnd?.();
-        onDragEnd?.();
-      }}
-    />
+    <span
+      className={`inline-flex shrink-0 transition-opacity ${
+        dragging || dropTarget
+          ? 'opacity-100'
+          : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+      }`}
+    >
+      <ReorderGrip
+        title={reorder!.title}
+        onDragStart={reorder!.onDragStart}
+        onDragEnd={() => {
+          reorder!.onDragEnd?.();
+          onDragEnd?.();
+        }}
+      />
+    </span>
   ) : leading ? (
     <span className="inline-flex items-center shrink-0">{leading}</span>
   ) : null;
 
-  const labelNode =
-    typeof label === 'string' || labelCanvasDrag ? (
-      <span
-        className={`truncate font-medium min-w-0 flex-1 text-left ${
-          layout === 'grid' ? 'text-[10px] leading-none pr-0.5' : 'text-[11px]'
-        } ${labelCanvasDrag ? 'cursor-grab active:cursor-grabbing' : ''}`}
-        draggable={labelCanvasDrag}
-        onDragStart={labelCanvasDrag ? startCanvasDrag : undefined}
-        title={labelCanvasDrag ? 'Drag to graph' : undefined}
-      >
-        {label}
-      </span>
-    ) : (
-      <span
-        className={`truncate min-w-0 flex-1 ${
-          layout === 'grid' ? 'text-[10px] font-medium leading-none pr-0.5' : 'text-[11px]'
-        }`}
-      >
-        {label}
-      </span>
-    );
+  const labelNode = (
+    <span
+      className={`truncate font-medium min-w-0 flex-1 text-left ${
+        layout === 'grid' ? 'text-[10px] leading-none pr-0.5' : 'text-[11px]'
+      }`}
+    >
+      {label}
+    </span>
+  );
+
+  const secondaryClass = secondaryVisible
+    ? 'opacity-100'
+    : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100';
 
   if (layout === 'grid') {
     return (
@@ -219,9 +220,7 @@ export function TreeRow({
       {labelNode}
       {meta ? (
         <span
-          className={`text-[9px] text-zinc-600 truncate max-w-[32%] shrink-[3] transition-opacity ${
-            active || !hoverActions ? 'opacity-100' : 'opacity-100 group-hover:opacity-40'
-          }`}
+          className={`text-[9px] text-zinc-600 truncate max-w-[32%] shrink-[3] transition-opacity ${secondaryClass}`}
         >
           {meta}
         </span>
@@ -232,14 +231,16 @@ export function TreeRow({
         </div>
       ) : null}
       {hoverActions ? (
-        <div className="pointer-events-none [&_button]:pointer-events-auto shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+        <div
+          className={`pointer-events-none [&_button]:pointer-events-auto shrink-0 flex items-center gap-0.5 transition-opacity ${secondaryClass}`}
+        >
           {hoverActions}
         </div>
       ) : null}
       {showOpenAffordance && openAffordance ? (
         <button
           type="button"
-          className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-500 hover:text-zinc-200 shrink-0"
+          className={`p-0.5 rounded text-zinc-500 hover:text-zinc-200 shrink-0 transition-opacity ${secondaryClass}`}
           title={openAffordanceTitle ?? 'Open graph'}
           onClick={(e) => {
             e.stopPropagation();

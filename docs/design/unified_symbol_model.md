@@ -33,11 +33,11 @@ Member-slot **existence** uses **Declare** — including functions. Function **b
 | **Function (body place)** | **Define** `{name}` | *(implement role — today folded into `function_define`; U81)* | insert body at this position |
 | **Event (member)** | **Declare** `{name}` | `event_member_define` | handler signature slot in member order |
 | **Class** | **Declare** `{name}` / **Declare Class** | `class_define` | class declaration slot |
-| **Event (handler)** | **On** `{name}` (Handler) | `event_define` | handler body on class graph |
+| **Event (handler)** | **Define** `{name}` | `event_define` | handler body on class graph |
 | **Function (invoke)** | **Call** `{name}` | `vvs.project.call_function` | call statement |
-| **Event (invoke)** | **Dispatch** `{name}` | `event_dispatch` | direct handler call |
+| **Event (invoke)** | **Call** `{name}` | `event_dispatch` | direct handler call |
 
-Release menus: variables **Get** / **Set** / **Declare**; functions **Call** / **Declare** / **Define**. Not about header/impl file splits.
+Release menus: variables **Get** / **Set** / **Declare**; functions & events **Call** / **Declare** / **Define**. Not about header/impl file splits.
 
 ### Per symbol kind
 

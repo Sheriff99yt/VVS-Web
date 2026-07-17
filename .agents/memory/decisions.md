@@ -2,6 +2,21 @@
 
 Choices agents must not undo without explicit user approval.
 
+## Cross-language mapping skill layout (July 2026)
+
+- **One skill only:** `.agents/skills/vvs_cross_language_mapping/SKILL.md` (parent index + workflow).
+- **Exactly one doc per language** (siblings of the skill, not skills): `cpp.md`, `python.md`, `javascript.md`, `csharp.md`, `rust.md`, `gdscript.md`, `verse.md`.
+- **Shared cross-cutting only:** `shared/` (nodes-vs-settings, translation-matrix, declare-define-rules, feature-support).
+- **Agent habit:** open parent skill → open **one** `<lang>.md` for the target; do not open other language docs.
+
+## No live code execution (July 2026 — locked)
+
+- **VVS does not execute code** — no Play, no interpreter, no target-language runner, no “run in IDE/engine from VVS” product path
+- **In scope:** graph/codegen **logical checks** and **warnings** (analyzer, portability, `(x)` / dim, compiler log) so authors catch issues before export
+- **Execution:** left entirely to **third-party** tools the user already has (IDE, Godot, compilers, CI, local MCP). Generate ordinary source; do **not** reinvent a run wheel inside VVS
+- **Do not** revive mock Play/Pause simulation or backlog an in-app runner
+- **Canvas scale:** **U83 virtualization** shipped (`onlyRenderVisibleElements` + pin/search subscribe cuts) — see `docs/roadmap.md` · `lib/graphVirtualization.ts`
+
 ## Text-shaped graphs (July 2026 — major direction)
 
 **Canonical spec:** `docs/visual_to_text_fidelity.md`
@@ -53,7 +68,7 @@ Choices agents must not undo without explicit user approval.
 - **Do not** use “Define” for the inside of the function tab, or collapse Declare+Define into one user-facing concept
 - **Known drift** — Go `core-pack.json` / some diagnostics may lag
 - **U81 done:** Function Declare ≠ Define — `function_define` (existence / abstract only) + `function_implement` on member chain (body placement); no stub invent; no legacy fold
-- **C++ Declare/Define reference (skill):** **U82 shipped** — non-abstract Declare → `void Boot();` inside class; Define → out-of-line `void Machine::Boot() { … }` after `};` (or on a separate `.cpp` graph). Abstract Declare → `virtual … = 0;`. Never auto-split one graph into `.h`+`.cpp`. Spec: `vvs_cross_language_mapping/SKILL.md`
+- **C++ Declare/Define reference (skill):** **U82 shipped** — non-abstract Declare → `void Boot();` inside class; Define → out-of-line `void Machine::Boot() { … }` after `};` (or on a separate `.cpp` graph). Abstract Declare → `virtual … = 0;`. Never auto-split one graph into `.h`+`.cpp`. Spec: `vvs_cross_language_mapping/cpp.md`
 
 ## Same-file function emit (U80 done)
 
@@ -119,7 +134,7 @@ Done for daily editing UX (sections 1–3 of `incomplete-ui.md`):
 - `data_array` pin geometry; simulation mock highlight
 - Centralized wire validation in `graphWiring.ts` (single-wire-per-input, cycle guards)
 
-Still open: Library backend, **production VPS deploy** (PostgresStore + JWT middleware shipped locally) — see `docs/deployment.md` and `docs/ui_api_delivery_loop.md`.
+Still open: Library as **git catalog** (not blob hosting). **Not** product work: production VPS / dedicated-server deploy — see `docs/roadmap.md` § No dedicated server.
 
 ## Public repository & product direction
 
@@ -186,26 +201,19 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 
 **Canonical:** `docs/roadmap.md` § Client-first direction
 
-- **Default experience:** no VVS accounts, no required server; browser edit + Generate; local/folder save; GitHub for pack/library data
-- **Do not remove** Auth, cloud save, HTTP API mode, hosted MCP probe, Library backend hooks, `server/` — keep code; **disable / hide / inactive** in the default client build until re-enabled (env or settings)
-- **AI / MCP:** desktop local MCP + paste config; **mobile: no AI for now**
+- **Default experience:** no VVS accounts, **no dedicated server**, no required backend; browser edit + Generate; local/folder / `.vvs/` save; GitHub for pack/library / static Pages
+- **Do not remove** Auth, cloud save, HTTP API mode, hosted MCP probe, Library backend hooks, `server/` — keep code for reference/local experiments; **disable / hide / inactive** in the product default — **not** a roadmap to re-enable on a VPS
+- **AI / MCP:** desktop **local** MCP + paste config; **mobile: no AI for now**
 - **Library:** separate public git repo + links; private repos denied
-- **Collab (later):** session client/host, not account cloud as default
-- Deployment stack in `docs/deployment.md` remains valid for **optional self-host** — not the required path for normal users
+- **Collab (later):** session client/host (P2P / lobby), not account cloud as default
 
-## Deployment & persistence (optional self-host — still in repo)
+## No dedicated server hosting (July 2026 — locked)
 
-**Canonical spec:** `docs/deployment.md` (ops / self-host; not product default)
-
-- **Self-hosted Supabase** on VPS — **Postgres + GoTrue (Auth) + Studio**; dev VPS + live VPS (shared hosting = static web only, not Supabase Docker)
-- **Go is the only product API** when HTTP mode is on — Next.js and MCP call `server/` REST + `/mcp`; **not** PostgREST for project/graph CRUD
-- **Go ↔ Postgres via `pgx` pool** — `PostgresStore` replaces `MemoryStore`; same service interfaces
-- **Auth:** GoTrue issues JWT; **Go middleware** verifies JWKS and scopes `user_id` on HTTP + MCP (production)
-- **Storage:** `projects` table with **JSONB `ProjectSnapshot v2`**; tab-level document rows later for large graphs / collab
-- **Browser transpiler stays primary** for editor preview; Go compile/MCP uses existing CLI bridge
-- **No Redis v1** — Postgres + in-process cache until horizontal scale requires it
-- **Phase 4 collab (hosted path):** Go WebSockets + op log — not Supabase Realtime; product default collab is session client/host
-- **`.vvs/` folders** remain first-class alongside any future cloud sync
+- **Out of scope as product:** running VVS on a **dedicated VPS / self-hosted Supabase stack** as the official hosting model
+- **Ship the editor** as a **client** (static web / desktop-capable browser) + **local** project folders / git — not “sign into our server”
+- **`docs/deployment.md`** and `server/` Postgres/Auth paths are **legacy / optional experiment** docs and code — do **not** treat production VPS deploy, ops backups, or enterprise self-host as open product work
+- **Static hosting** (e.g. GitHub Pages for the showcase build) is fine — that is not a dedicated app server
+- **Local Go MCP** on the user’s machine remains allowed (desktop) — that is not “hosting VVS”
 
 ## Unsupported nodes per language (July 2026 — locked UX)
 
@@ -218,7 +226,7 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 
 **Function Declare (U82 + U66):** Non-abstract `function_define` is effective only for **cpp** (prototype). Elsewhere emit `# (x) Declare Name` (or omit when comments off) and dim the node. **Abstract** Declare effectiveness is **derived from** `modifierEffectiveness(lang, 'isAbstract')` — do not maintain a parallel allow-list. C++ (`= 0`) / C# (real prototype) only; other langs U66 `(x)` + U67 dim (Coverage Lab **Declare Diagnose** lock test). **sourceMap lock:** Declare maps only to its own emit; Define maps to method/`def` header + body — never dual-tag.
 
-- **All seven targets follow the same Declare/Define table** — C++ = prototypes + out-of-line Define; Python / JS / C# / Rust / GDScript / Verse = U66 `(x)` for non-abstract Declare + in-class Define; no silent skip; no expanding `FUNCTION_DECLARE_PROTOTYPE_LANGS` beyond `cpp`; no out-of-line invent for C#/Rust. Spec: `docs/visual_to_text_fidelity.md` · skill `vvs_cross_language_mapping`.
+- **All seven targets follow the same Declare/Define table** — C++ = prototypes + out-of-line Define; Python / JS / C# / Rust / GDScript / Verse = U66 `(x)` for non-abstract Declare + in-class Define; no silent skip; no expanding `FUNCTION_DECLARE_PROTOTYPE_LANGS` beyond `cpp`; no out-of-line invent for C#/Rust. Spec: `docs/visual_to_text_fidelity.md` · skill `vvs_cross_language_mapping` (one doc per language: `cpp.md`, `python.md`, …).
 
 **Do not:** invent real emit for unsupported constructs; hide unsupported nodes from the catalog; couple the two toggles (comments ≠ dimming). **Author Comment [C] (U68/U69)** is a third channel — `showUserComments` / `emitUserComments` — never emit as `(x)` and never gate with `emitUnsupportedComments`.
 
@@ -232,8 +240,10 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - **Unlocked (default):** soft `commentMemberIds`; no RF `parentId`; members move freely; comment follows member AABB; optional `commentFollowOffset` after manual drag; **Snap** clears offset.
 - **Locked:** RF parent so **moving the comment moves members**; members stay independently draggable; lock **recaptures** nodes overlapping the comment rect into membership.
 - **U79 comment order:** attached comments emit before the **topmost member** (absolute canvas Y); orphan comments sort by comment box Y. Member-chain topo still owns member↔member order — comments do not invent a parallel Y-only member order.
-- **U79 canvas Y → code order (locked):** **Primary** = connected execution chain (nest/emit order). **Secondary** = vertical height for **unconnected chain heads** (and Event Declare peers). Intentional that a messy layout can “look wrong” vs top-to-bottom reading — emit does not auto-fix; **warnings** in the Compiler Log teach chain-vs-height fundamentals (`CHAIN_ORDER_Y_MISMATCH`, `EVENT_PEER_Y_ORDER`). Do not reorder on Y for connected non-event members.
-- **U79 On → Declare Y sync (locked):** Authors rearrange visible **On** handlers (`event_define`). Emit still orders from **Event Declare** Y (`event_member_define`). On drag-end of an On handler, mirror that On’s Y onto its matching Declare (`syncEventDeclareYFromOnHandlers`) so Code panel order follows the handlers users actually move.
+- **U79 canvas Y → code order (locked):** **Primary** = connected execution chain (nest/emit order). **Secondary** = vertical height for **unconnected chain heads** (and Event Declare peers). Intentional that a messy layout can “look wrong” vs top-to-bottom reading — emit does not auto-fix. **Do not** emit Compiler Log warnings for chain-vs-height mismatch (`CHAIN_ORDER_Y_MISMATCH` / `EVENT_PEER_Y_ORDER` disabled — noise). Do not reorder on Y for connected non-event members.
+- **Compiler Log warnings (honesty):** Prefer warnings that match real emit. Dropped obsolete main-graph On Start entry warning. `BLOCKING_WAIT_ON_TARGET` only for stub targets (js/verse/json). Cross-class import warnings only across **different module graphs**. Emulated portability stays in the log as `Emulated emit (Lang): …`. Fidelity **errors** unchanged.
+- **U79 event order (locked):** Emit orders Event Declares (`event_member_define`) by canvas Y among peers. **On** handlers (`event_define`) are independent — dragging a handler must **not** teleport its Declare (or any Call). To change code order, rearrange the Declares on the member chain.
+- **Auto generate / Code panel (locked):** **On** = live Code preview (and debounced Generate). **Off** = Code panel **freezes** on last live emit while `compileState === 'dirty'` until Generate (`isCodePreviewPaused`); do not keep re-emitting into the panel. Files pin uses the same held `useProjectTranspileResult` bundle.
 
 **Implements / expands:** roadmap `node-effectiveness` · unified model Phase C · `docs/language_profiles.md`.
 
@@ -245,6 +255,7 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - **`CodePreviewPanel`** reads tab documents via `useGraphDocuments`, not React Flow `useStore`
 - **`referenceRootGraphId`** decoupled from `activeGraphTab` — only `focusReference()` updates it
 - **`ProjectTree` navigation modes** — `canvas`: single-click selects; `references`: single-click focuses reference graph; both: double-click opens in Canvas
+- **Explorer palette-first density (locked):** whole-row canvas drag (Call / Declare / Get-Set); reorder grip hover-only; list **or** grid per section (toggle in header; default list); meta / CodegenSuffix / open / OK badges on hover or selection; **missing** canvas badges always visible
 - **Cycle prevention** — wire cycles (`graphCycles.ts`) and cross-graph dependency cycles (`graphRelations.ts`) block connects and node label changes
 - **Centralized wiring** — `graphWiring.ts` owns pin compatibility, connection validation, single-wire-per-input, reroute split, and user-facing rejection messages; `GraphCanvas` delegates `onConnect`, `isValidConnection`, spawn-wire, and edge double-click through it
 - **Linear flow chains (intentional)** — unlike UE Blueprint wire splicing, rewiring exec into the middle of `A → B → C` drops `A → B`; one exec in/out per handle. Encourages functions/shared graphs over duplicated linear chains. Documented in `docs/node_system.md` §5; tested in `graphWiring.test.ts`

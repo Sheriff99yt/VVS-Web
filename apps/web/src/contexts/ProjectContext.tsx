@@ -13,12 +13,18 @@ import { createDefaultIntegration, normalizeProjectSnapshot, MAIN_GRAPH_CONTAINE
 import { readCrossOverMode } from '@/lib/crossOverPreferences';
 
 export type { TargetLanguage, GraphTab, FunctionSymbol, ClassSymbol, GraphContainer };
-export type SelectionType = 'node' | 'variable' | 'event' | 'function' | 'graph' | 'class';
+export type SelectionType = 'node' | 'variable' | 'event' | 'function' | 'graph' | 'class' | 'code';
 
 export interface SelectionState {
   type: SelectionType;
   id: string | null;
 }
+
+/** Multi-select keys for Project tree symbols (drives Code panel multi-highlight). */
+export type TreeSymbolSelectionKey = {
+  kind: 'variable' | 'function' | 'event' | 'class' | 'graph';
+  id: string;
+};
 
 interface ProjectFunction extends FunctionSymbol {}
 
@@ -43,6 +49,9 @@ interface ProjectContextValue {
   /** All selected graph node ids on the active canvas (primary first). */
   selectedNodeIds: string[];
   setSelectedNodeIds: React.Dispatch<React.SetStateAction<string[]>>;
+  /** Ctrl/Cmd multi-select from the Project tree (symbols + classes). */
+  selectedTreeSymbols: TreeSymbolSelectionKey[];
+  setSelectedTreeSymbols: React.Dispatch<React.SetStateAction<TreeSymbolSelectionKey[]>>;
   openTabs: GraphTab[];
   setOpenTabs: React.Dispatch<React.SetStateAction<GraphTab[]>>;
   activeGraphTab: string;
@@ -144,6 +153,7 @@ export function ProjectProvider({
   const [activeClassId, setActiveClassId] = useState<string>(snapshot.activeClassId);
   const [selection, setSelection] = useState<SelectionState>({ type: 'graph', id: null });
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [selectedTreeSymbols, setSelectedTreeSymbols] = useState<TreeSymbolSelectionKey[]>([]);
   const [openTabs, setOpenTabs] = useState<GraphTab[]>(
     snapshot.openTabs.length > 0
       ? snapshot.openTabs
@@ -301,6 +311,8 @@ export function ProjectProvider({
         setSelection,
         selectedNodeIds,
         setSelectedNodeIds,
+        selectedTreeSymbols,
+        setSelectedTreeSymbols,
         openTabs,
         setOpenTabs,
         activeGraphTab,

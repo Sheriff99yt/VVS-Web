@@ -16,6 +16,8 @@ import { buildReferenceFlowGraph } from '@/lib/referenceGraphLayout';
 import type { ReferenceGraphTypeFilter, ReferenceViewerDepths } from '@/lib/referenceTree';
 import { ReferenceGraphNode } from '@/components/graph/ReferenceGraphNode';
 import { ReferenceGraphEdge } from '@/components/graph/ReferenceGraphEdge';
+import { GRAPH_ONLY_RENDER_VISIBLE } from '@/lib/graphVirtualization';
+import { openGraphCamera } from '@/lib/graphCamera';
 
 const nodeTypes = { reference_graph_node: ReferenceGraphNode };
 const edgeTypes = { reference_graph_edge: ReferenceGraphEdge };
@@ -31,7 +33,7 @@ interface ReferenceGraphCanvasProps {
 function FitOnChange({ dep }: { dep: string }) {
   const { fitView } = useReactFlow();
   useEffect(() => {
-    const t = window.setTimeout(() => fitView({ padding: 0.25, duration: 200 }), 50);
+    const t = window.setTimeout(() => openGraphCamera(fitView), 50);
     return () => window.clearTimeout(t);
   }, [dep, fitView]);
   return null;
@@ -115,7 +117,7 @@ export function ReferenceGraphCanvas({
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable
-        fitView
+        onlyRenderVisibleElements={GRAPH_ONLY_RENDER_VISIBLE}
         minZoom={0.15}
         maxZoom={1.5}
         onNodeClick={handleNodeClick}
@@ -124,9 +126,15 @@ export function ReferenceGraphCanvas({
       >
         <FitOnChange dep={fitKey} />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#27272a" />
-        <Controls className="!bg-zinc-900 !border-zinc-800 !shadow-md [&>button]:!bg-zinc-900 [&>button]:!border-zinc-800 [&>button]:!text-zinc-400" />
+        <Controls
+          position="bottom-right"
+          className="!bg-zinc-900 !border-zinc-800 !shadow-md [&>button]:!bg-zinc-900 [&>button]:!border-zinc-800 [&>button]:!text-zinc-400"
+        />
         <MiniMap
-          className="!bg-zinc-900 !border-zinc-800"
+          position="bottom-left"
+          pannable
+          zoomable
+          className="!bg-zinc-900 !border-zinc-800 nowheel nopan"
           nodeColor={(n) => {
             if (n.data?.isRoot) return '#f59e0b';
             if (n.data?.side === 'referencers') return '#52525b';

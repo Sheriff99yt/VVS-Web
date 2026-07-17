@@ -92,9 +92,9 @@ export function getNodeDisplayTitle(data: VVSNodeData): string {
   if (kindId === 'event_dispatch') {
     const eventName = data.properties?.eventName;
     if (typeof eventName === 'string' && eventName.trim()) {
-      return `Dispatch ${eventName}`;
+      return `Call ${eventName}`;
     }
-    if (data.label.startsWith('Dispatch ')) return data.label;
+    if (data.label.startsWith('Call ') || data.label.startsWith('Dispatch ')) return data.label;
     return def?.title ?? data.label;
   }
   if (kindId === 'action_get_input') {
@@ -136,7 +136,7 @@ export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
   }
 
   if (kindId === 'event_dispatch') {
-    const match = core.label.match(/^Dispatch\s+(.+)$/i);
+    const match = core.label.match(/^(?:Call|Dispatch)\s+(.+)$/i);
     if (match?.[1] && !properties.eventName) properties.eventName = match[1];
   }
 

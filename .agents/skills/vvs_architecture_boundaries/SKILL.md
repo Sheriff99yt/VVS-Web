@@ -32,22 +32,17 @@ Web re-exports types from `@vvs/graph-types` — do not duplicate graph shapes i
 
 # Phase 2 persistence (locked)
 
-Canonical: [`docs/deployment.md`](../../../docs/deployment.md)
+# Persistence & hosting (client-first)
 
-```text
-Next.js  →  VvsApi (Bearer JWT)  →  Go REST/MCP
-Go       →  pgx pool             →  self-hosted Supabase Postgres (JSONB)
-Auth     →  GoTrue (client login) + Go JWT middleware (API scope)
-```
+**Product:** local / folder / `.vvs/` / git + static Pages. **No dedicated server** as product ([roadmap.md](../../../docs/roadmap.md) · [decisions.md](../../memory/decisions.md)).
 
-| Use | Do not use (app paths) |
-|-----|------------------------|
-| Go `ProjectStore` + `pgx` | PostgREST for project CRUD |
-| GoTrue JWT on HTTP/MCP | `supabase-js` `.from('projects')` for save/load |
-| Self-hosted Supabase Docker on VPS | Supabase Cloud as locked direction |
+Legacy `server/` + Postgres/Auth may remain for experiments. If touching that path:
+
+| Legacy experiment | Do not |
+|-------------------|--------|
+| Go `ProjectStore` + `pgx` (local only) | Treat VPS / Supabase Docker as open product work |
+| GoTrue JWT on experimental HTTP/MCP | Require accounts for the default editor |
 | Browser `@vvs/transpiler` for preview | Server round-trip for live codegen |
-
-PostgREST may run in the Supabase stack but **VVS app code never calls it** for projects/graphs/compile.
 
 # Interface-First System Boundaries
 

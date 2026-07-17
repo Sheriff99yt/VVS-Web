@@ -36,7 +36,8 @@ export function linkedGraphTargetLabel(data: VVSNodeData): string | null {
 
   switch (data.linkKind) {
     case 'call_function':
-      return data.label.replace(/^Call\s+/, '') || data.linkedGraphId;
+      // Declare Function / Call Function already show the name in the title — no subtitle.
+      return null;
     case 'import_module':
       return data.label.replace(/^Import\s+/, '') || data.linkedGraphId;
     case 'use_macro':

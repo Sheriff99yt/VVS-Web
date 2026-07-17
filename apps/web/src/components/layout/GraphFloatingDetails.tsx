@@ -32,6 +32,7 @@ import { PropertySchemaPanel } from './RightSidebar/PropertySchemaPanel';
 import { ImportGraphTargetPanel } from './RightSidebar/ImportGraphTargetPanel';
 import { FunctionPropertiesPanel } from './RightSidebar/FunctionPropertiesPanel';
 import { BrokenRefRepairPanel } from './RightSidebar/BrokenRefRepairPanel';
+import { CodePreviewPropertiesPanel } from './RightSidebar/CodePreviewPropertiesPanel';
 import { FloatingPanelShell } from './FloatingPanelShell';
 import { openFunctionGraphTab } from '@/lib/graphTabs';
 import type { FunctionSymbol } from '@/types/graph';
@@ -48,15 +49,15 @@ import { paneMenuPosition } from '@/lib/paneMenuPosition';
 export const SPAWN_EVENT_NODE_EVENT = 'vvs:spawn-event-node';
 export const SPAWN_EVENT_DECLARE_MEMBER_EVENT = 'vvs:spawn-event-declare-member';
 export const SPAWN_FUNCTION_IMPLEMENT_EVENT = 'vvs:spawn-function-implement';
+/** Spawn a Call Function node at viewport center (tree context menu). */
+export const SPAWN_FUNCTION_CALL_EVENT = 'vvs:spawn-function-call';
 
 /** Delay before hover expands details — avoids flash while dragging. */
 const HOVER_EXPAND_MS = 180;
 const ROLE_CHIP_CLASS: Record<string, string> = {
   Declare: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-  Define: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-  Handler: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
+  Define: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
   Call: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-  Dispatch: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
 };
 
 function resolveNodeRoleChip(kindId: string | null): string | null {
@@ -70,8 +71,8 @@ function resolveNodeRoleChip(kindId: string | null): string | null {
   ) {
     return 'Declare';
   }
-  if (kindId === 'event_define' || kindId === 'event_custom') return 'Handler';
-  if (kindId === 'event_dispatch') return 'Dispatch';
+  if (kindId === 'event_define' || kindId === 'event_custom') return 'Define';
+  if (kindId === 'event_dispatch') return 'Call';
   if (kindId === 'vvs.project.call_function' || kindId === 'call_function') return 'Call';
   return null;
 }
@@ -487,7 +488,8 @@ function GraphFloatingDetailsPanel() {
     (selection.type === 'node' && !isCommentNode && !isRerouteNode) ||
     selection.type === 'variable' ||
     selection.type === 'event' ||
-    selection.type === 'function';
+    selection.type === 'function' ||
+    selection.type === 'code';
 
   if (!visible) return null;
 
@@ -503,7 +505,9 @@ function GraphFloatingDetailsPanel() {
           ? eventDisplayName(selectedEvent?.name ?? 'Event')
           : selection.type === 'function'
             ? selectedFunction?.name ?? 'Function'
-            : 'Details';
+            : selection.type === 'code'
+              ? 'Code preview'
+              : 'Details';
 
   const title = isBrokenRefSelection ? `Broken reference — ${baseTitle}` : baseTitle;
 
@@ -590,6 +594,9 @@ function GraphFloatingDetailsPanel() {
         </CompactSummary>
       );
     }
+    if (selection.type === 'code') {
+      return <CompactSummary>Language · emit options · hover for details</CompactSummary>;
+    }
     return null;
   };
 
@@ -630,6 +637,10 @@ function GraphFloatingDetailsPanel() {
           {...eventCanvasActions}
         />
       )}
+
+      {selection.type === 'code' ? (
+        <CodePreviewPropertiesPanel filePath={selection.id} />
+      ) : null}
 
       {selection.type === 'node' && nodeData && selectedNodeId && (
         <>

@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs).
+Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs; **U84–U85 / U94–U95** search · find · tooltip · first-open help + selected-only modifier overlay shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -144,7 +144,7 @@ References view (mounted only when active):
 - Do **not** wrap edit + reference canvases in one top-level `ReactFlowProvider`.
 - `CodePreviewPanel` reads documents via `useGraphDocuments`, not React Flow `useStore`.
 - `referenceRootGraphId` updates via `focusReference()` only — not from `activeGraphTab`.
-- `GraphExplorer` / `ProjectTree` uses `mode: 'canvas' | 'references'`; **Structure | Symbols | API** tabs; single-click selects, double-click opens; scope header shows project + breadcrumb tail + Edit/Refs badge.
+- `GraphExplorer` / `ProjectTree` uses `mode: 'canvas' | 'references'`; **Symbols | Output** (cycle toggle) + optional API; single-click selects, double-click opens; filter always visible; **Ctrl+Space** / `/` focus filter.
 - `useGraphTabSync` debounces metadata notify on edits; prunes closed tabs from `documentsRef`.
 
 Orphan: `components/layout/ReferenceViewer.tsx` — superseded by `ReferencesView`; do not re-add to left panel.
@@ -184,6 +184,9 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; dangerous-tools consent pref; URL + **Test connection** only when hosted |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
 | Chain select / layout (U75) | Canvas shortcuts | **S** = forward exec + data attrs; **A** = full undirected chain; **S S** = layout (`lane-topo-v1`). Attribute direction in Settings (above / below / below-extended). Head-anchored; multi-chain Y-separate; works inside locked comments |
+| Node search (U84/U85) | Canvas overlay + shortcuts | **Ctrl+F** = find in all graphs (Layers forced on; prefill from tree symbol). **F** with a tree symbol selected = find in this graph only; otherwise frame selection. Space / Ctrl+K open search respecting Layers. Symbol context menu: Find in this graph / Find in all graphs. Outside click / canvas drag clears tree-symbol focus |
+| Tooltips (U94) | Editor chrome | App-default `Tooltip` (`components/ui/Tooltip.tsx`) — portal tips with Esc dismiss + viewport clamp; replaces native `title=` on TopNav, status, toolbars, panels, search |
+| Selection / modifiers chrome | Selected node | Actions toolbar (duplicate / comment / delete) stacks **above** modifiers. Modifier chips + import target-language sit in a selected-only absolute overlay **above the card** — they do not grow the node header. Linked graph/module subtitle stays in-header for navigation |
 
 **Floating panels** (canvas overlay, shared `FloatingPanelShell`):
 
@@ -194,7 +197,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 
 StatusBar **Log** toggles the floating compiler log (auto-opens on compile/validation errors).
 
-**Removed:** mock Play/Pause simulation controls (no real runtime yet). `GraphToolbar` and bottom-docked output console also removed.
+**Removed:** mock Play/Pause simulation controls. **Locked:** VVS does **not** execute code (no interpreter, runner, or run-from-editor path). In-app work is edit + Generate + **logical checks / warnings**; execution is third-party after export. `GraphToolbar` and bottom-docked output console also removed.
 
 ### Properties inspector (floating)
 
@@ -242,7 +245,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Searchable dropdowns | Done — `SearchableSelect` replaces native `<select>` in codegen, property panels, import pickers, environment import |
 | Import graph / class / module pickers | Done — `ImportGraphTargetPanel` + `projectGraphCatalog.ts`; searchable list of all project graphs |
 | Reference viewer (top-level view) | Done — `ReferencesView`, UE5 focus graph + tree |
-| Project breadcrumb | Done — `GraphBreadcrumb` above tab bar |
+| Project breadcrumb | Done — compact path + Edit/Refs at start of `StatusBar` (`GraphBreadcrumb`) |
 | Graph tabs (main / function / container) | Done — per-tab documents + `GraphTabMetadata` (module fields + optional `targetLanguage` / `targetFileExtension`); Project map (`main-graph`) pinned; legacy macro tabs migrate on load |
 | Undo/redo | Done |
 | Comment nodes + grouping | Done — color, ungroup, inspector label |
@@ -250,7 +253,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Drag event → spawn Dispatch | Done — tree → canvas drop |
 | Reroute pins | Done — `vvs_reroute_node` |
 | Copy/paste / Cut / Duplicate | Done — in-app + system clipboard (`graphClipboard.ts`) |
-| Simulation stepping | Done — mock highlight, pause, single-step |
+| Simulation / live execution | **Out of scope** — mock Play removed; logical checks + warnings only; third parties execute |
 | Pin geometry (distinct shapes) | Done — incl. `data_array`; inline pin widgets |
 | Mock project save/load | Done — `ProjectSnapshot` v3 persist; v1/v2 normalizer upgrades to implicit `main-class` |
 | Shared analysis pipeline | Done — `analyzeProject` + `analyzePortability` → compiler log / status / code badge |
@@ -365,7 +368,8 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U77–U79** (Go language, pack versions, Y-order). U64–U75/U76, U68–U71, U80–U82 shipped. See [roadmap.md](roadmap.md) § Next.
+**Active next (July 2026):** Phase 6 — **U77–U78**. **U83 canvas virtualization** shipped. Client-first: **no dedicated server**, **no live code execution** (checks/warnings only). Emit plans: **CL-*** in [`.agents/skills/vvs_cross_language_mapping/SKILL.md`](../.agents/skills/vvs_cross_language_mapping/SKILL.md). See [roadmap.md](roadmap.md).
+
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
 
@@ -382,7 +386,7 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 | GDScript language profile | `packages/language-profiles/src/profiles.ts` | Done — native static func, extends; overload unsupported |
 | Godot environment template | `env.gdscript.godot-game` | Done — Node extends, `_ready` / `_process`, `project.godot` stub |
 | `language-profiles/profiles/*.json` | packages | Profiles in TypeScript today; JSON packs optional |
-| Supabase auth / persistence | Go + **self-hosted Supabase** (`pgx`) | **Foundation shipped in repo (Phase 2a)** — PostgresStore, JWT middleware, GoTrue docker stack, cloud save/load when authenticated, MCP session auth; remaining Phase 2 tail = VPS/Caddy deploy, GitHub OAuth production config, backups, optional offline sync — [deployment.md](deployment.md) |
+| Supabase auth / persistence | Go + self-hosted Supabase (`pgx`) | **In repo / not product** — foundation exists for local experiments; **no dedicated server hosting** as product direction ([roadmap.md](roadmap.md)) |
 | MCP server transport | `server/` Go | **Done (local)** — SSE at `/mcp`; production JWT + HTTPS deploy TBD |
 | HTTP project REST | `server/` Go | **Done** — `GET/PUT /api/projects`, `POST …/compile`; memory or Postgres via `DATABASE_URL` |
 | WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
@@ -394,7 +398,7 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 
 ## Backend (`server/`) — API, registry, local MCP
 
-**Phase 2 foundation (shipped in repo):** Self-hosted Postgres via **`pgx`** + JWT auth middleware + GoTrue docker stack — see [deployment.md](deployment.md) and [setup.md](setup.md#phase-2--supabase-auth-gotrue-optional). Remaining active work is production deploy/ops.
+**Phase 2 (redirected):** Client-first local / folder / `.vvs/` is the product path. Self-hosted Postgres + GoTrue code remains in `server/` for reference — **not** an open VPS deploy track. See [roadmap.md](roadmap.md) § No dedicated server · [deployment.md](deployment.md) (legacy banner).
 
 - `internal/core/domain/graph.go` — nodes, `GraphBinding`, `FunctionSymbol`
 - `internal/core/domain/snapshot.go` — `ProjectSnapshot` v3 mirror (`classes[]`, `activeClassId`, symbol `classId`)
@@ -423,7 +427,7 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 | **`docs/language_profiles.md`** | Per-target native/emulated/unsupported features + warning semantics |
 | **`docs/vision.md`** | Product philosophy, UE6/Verse direction, logic/syntax model |
 | **`docs/roadmap.md`** | Public phased roadmap (including UE6 plugin) |
-| **`docs/deployment.md`** | Self-hosted Supabase + Go VPS architecture (locked) |
+| **`docs/deployment.md`** | Legacy self-host notes — **not** product direction (client-first; no dedicated server) |
 | **`docs/current_state.md`** | What exists today; avoid re-introducing removed UI |
 | **`docs/ui_api_delivery_loop.md`** | Wiring UI to APIs — one slice per iteration |
 | `docs/naming_and_product_direction.md` | Vocabulary, product principles, terms to avoid |
@@ -448,7 +452,9 @@ These were intentionally removed or relocated during the July 2026 UI revision:
 2. **Library local node browser** → context menu + `nodeCatalog.ts`
 3. **GraphToolbar** → compile/simulation in TopNav; save in File menu
 4. **Fake connected status** → honest offline/disconnected chrome
-5. **Target language in code panel** → moved to Graph Properties
+5. **Target language in code panel** → **LanguageExtensionMenu** in code top bar (hover → extension submenu; language-only click → first extension). Secondary emit options (`//`, `(x)`, sync) live in floating **details** when selection type is `code`.
 6. **Library view with side panels visible** → full-width Library mode
 7. **References in left project panel** → top-level **References** view; tree drives focus via `focusReference()`
 8. **Shared React Flow provider for edit + reference** → separate providers; `GraphWorkspaceHost` always mounted for documents
+9. **Explorer Symbols/Output tabs** → compact cycle toggle + always-on filter bar; **Ctrl+Space** focuses project filter; class scope row removed (status bar / class list)
+10. **Canvas virtualization (U83)** → `onlyRenderVisibleElements` on edit + reference canvases; see `lib/graphVirtualization.ts`

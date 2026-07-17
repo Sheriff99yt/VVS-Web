@@ -7,6 +7,8 @@ export interface SaveOnDiskPromptDialogProps {
   open: boolean;
   projectName: string;
   isDraft: boolean;
+  /** `close` = leaving the editor; `manual` = user asked to promote without closing. */
+  mode: 'close' | 'manual';
   saving: boolean;
   folderPickerAvailable: boolean;
   onSaveOnDisk: () => void;
@@ -17,6 +19,7 @@ export function SaveOnDiskPromptDialog({
   open,
   projectName,
   isDraft,
+  mode,
   saving,
   folderPickerAvailable,
   onSaveOnDisk,
@@ -30,7 +33,15 @@ export function SaveOnDiskPromptDialog({
 
   const description = isDraft
     ? `"${projectName}" exists only in this browser session. Save it to a folder on disk as a git-friendly .vvs/ project, or close without saving.`
-    : `"${projectName}" is stored in browser storage only. Save a copy to a folder on disk (.vvs/ overlay), or keep the browser copy and close.`;
+    : mode === 'close'
+      ? `"${projectName}" is stored in browser storage. Save a copy to a folder on disk (.vvs/ overlay), or keep the browser copy and leave the editor.`
+      : `"${projectName}" is stored in browser storage. Save a copy to a folder on disk (.vvs/ overlay) to keep working as a folder project.`;
+
+  const secondaryLabel = isDraft
+    ? 'Close without saving'
+    : mode === 'close'
+      ? 'Keep browser copy & close'
+      : 'Not now';
 
   return (
     <div
@@ -55,7 +66,7 @@ export function SaveOnDiskPromptDialog({
             <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">{description}</p>
             {!folderPickerAvailable ? (
               <p className="text-[11px] text-amber-400/90 mt-2">
-                Folder save requires Chrome or Edge. You can still close and keep the browser copy.
+                Folder save requires Chrome or Edge. You can still keep the browser copy.
               </p>
             ) : null}
           </div>
@@ -64,7 +75,7 @@ export function SaveOnDiskPromptDialog({
               type="button"
               onClick={onCancel}
               className="absolute top-3 right-3 p-1.5 text-zinc-500 hover:text-zinc-300 rounded"
-              title="Close without saving to disk"
+              title={secondaryLabel}
             >
               <X size={16} />
             </button>
@@ -78,7 +89,7 @@ export function SaveOnDiskPromptDialog({
             disabled={saving}
             className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 rounded border border-zinc-700 hover:border-zinc-600 transition-colors disabled:opacity-50"
           >
-            {isDraft ? 'Close without saving' : 'Cancel'}
+            {secondaryLabel}
           </button>
           {folderPickerAvailable ? (
             <button

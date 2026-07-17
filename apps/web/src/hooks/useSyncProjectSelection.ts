@@ -1,12 +1,13 @@
 import { useCallback, startTransition } from 'react';
 import { useOnSelectionChange, type OnSelectionChangeParams } from '@xyflow/react';
-import type { SelectionState } from '@/contexts/ProjectContext';
+import type { SelectionState, TreeSymbolSelectionKey } from '@/contexts/ProjectContext';
 import { selectionFromCanvasNodes } from '@/lib/projectSelection';
 
 interface UseSyncProjectSelectionOptions {
   isCanvasActive: boolean;
   setSelection: React.Dispatch<React.SetStateAction<SelectionState>>;
   setSelectedNodeIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setSelectedTreeSymbols?: React.Dispatch<React.SetStateAction<TreeSymbolSelectionKey[]>>;
 }
 
 function nodeIdsEqual(a: string[], b: string[]): boolean {
@@ -25,6 +26,7 @@ export function useSyncProjectSelection({
   isCanvasActive,
   setSelection,
   setSelectedNodeIds,
+  setSelectedTreeSymbols,
 }: UseSyncProjectSelectionOptions) {
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
@@ -33,11 +35,19 @@ export function useSyncProjectSelection({
       startTransition(() => {
         const ids = selectedNodes.map((node) => node.id);
 
-        setSelectedNodeIds((prev) => (nodeIdsEqual(prev, ids) ? prev : ids));
-        setSelection((prev) => selectionFromCanvasNodes(prev, ids));
+        setSelectedNodeIds((prevIds) => {
+          const unchanged = nodeIdsEqual(prevIds, ids);
+          setSelection((prev) => {
+            // Keep code-preview inspector when RF re-emits the same selection.
+            if (unchanged && prev.type === 'code') return prev;
+            return selectionFromCanvasNodes(prev, ids);
+          });
+          if (ids.length > 0) setSelectedTreeSymbols?.([]);
+          return unchanged ? prevIds : ids;
+        });
       });
     },
-    [isCanvasActive, setSelection, setSelectedNodeIds]
+    [isCanvasActive, setSelection, setSelectedNodeIds, setSelectedTreeSymbols]
   );
 
   useOnSelectionChange({ onChange: handleSelectionChange });

@@ -20,7 +20,7 @@ export interface SnapshotApplyTarget {
   setAutoCompile: (value: boolean) => void;
   setAutoSave: (value: boolean) => void;
   setSelection: (selection: {
-    type: 'node' | 'variable' | 'event' | 'function' | 'graph' | 'class';
+    type: 'node' | 'variable' | 'event' | 'function' | 'graph' | 'class' | 'code';
     id: string | null;
   }) => void;
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;

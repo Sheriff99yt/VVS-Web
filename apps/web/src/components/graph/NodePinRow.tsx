@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { Handle, Position, useStore, type Edge } from '@xyflow/react';
 import type { PinDefinition } from '@/types/graph';
+import { isPinWired } from '@/lib/graphVirtualization';
 import { NodePinInlineWidget } from './NodePinInlineWidget';
 import styles from './VVSNode.module.css';
 
@@ -14,19 +15,13 @@ interface NodePinRowProps {
   onInlineChange?: (pinId: string, value: string | number | boolean) => void;
 }
 
-const selectEdges = (state: { edges: Edge[] }) => state.edges;
-const edgesEqual = (a: Edge[], b: Edge[]) => a === b;
-
+/** Subscribe to a boolean only — avoid re-rendering every pin when any edge array identity changes (U83). */
 function usePinWired(nodeId: string, pinId: string, direction: 'input' | 'output'): boolean {
-  const edges = useStore(selectEdges, edgesEqual);
-  return useMemo(
-    () =>
-      edges.some((edge) =>
-        direction === 'input'
-          ? edge.target === nodeId && edge.targetHandle === pinId
-          : edge.source === nodeId && edge.sourceHandle === pinId
-      ),
-    [edges, nodeId, pinId, direction]
+  return useStore(
+    useCallback(
+      (state: { edges: Edge[] }) => isPinWired(state.edges, nodeId, pinId, direction),
+      [nodeId, pinId, direction]
+    )
   );
 }
 

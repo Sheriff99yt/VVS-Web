@@ -80,6 +80,33 @@ describe('resolveSymbolCodegenLink', () => {
     expect(link!.tabId).toBe(overloadTab);
   });
 
+  test('multi tree selection merges highlight node ids', () => {
+    const link = resolveSymbolCodegenLink({
+      ...baseInput,
+      selection: { type: 'variable', id: 'var-power' },
+      selectedTreeSymbols: [
+        { kind: 'variable', id: 'var-power' },
+        { kind: 'event', id: 'evt-pulse' },
+      ],
+    });
+
+    expect(link).not.toBeNull();
+    expect(link!.highlightNodeIds).toContain('lab-var-power');
+    expect(link!.highlightNodeIds).toContain('lab-evt-pulse-mem');
+  });
+
+  test('class selection highlights class_define', () => {
+    const cls = snapshot.classes![0]!;
+    const link = resolveSymbolCodegenLink({
+      ...baseInput,
+      selection: { type: 'class', id: cls.id },
+      selectedTreeSymbols: [{ kind: 'class', id: cls.id }],
+    });
+
+    expect(link).not.toBeNull();
+    expect(link!.highlightNodeIds.length).toBeGreaterThan(0);
+  });
+
   test('dispatch node canvas selection highlights dispatch not member define', () => {
     const eventLink = resolveSymbolCodegenLink({
       ...baseInput,

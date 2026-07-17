@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Trash2, XCircle, Terminal } from 'lucide-react';
 import { FloatingPanelShell } from './FloatingPanelShell';
+import { CompilerLogCompactStrip, CompilerLogDiagChips } from './CompilerLogDiagChips';
 import { useCompilerLogs, type LogEntry, type LogType } from '@/hooks/useCompilerLogs';
 import {
   dispatchNavigateToNode,
@@ -12,7 +13,6 @@ import {
 } from '@/lib/graphNavigation';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { useProject } from '@/contexts/ProjectContext';
-import { useUiPreference } from '@/hooks/useUiPreference';
 import {
   clampDetailsPanelHeight,
   clampFloatingPanelWidth,
@@ -20,13 +20,10 @@ import {
   dispatchResetCompilerLogLayout,
   readUiPreference,
   RESET_COMPILER_LOG_LAYOUT_EVENT,
-  TOGGLE_COMPILER_LOG_PIN_EVENT,
   writeUiPreferences,
 } from '@/lib/uiPreferences';
 import { paneMenuPosition } from '@/lib/paneMenuPosition';
-import { withShortcut } from '@/lib/graphShortcuts';
 
-const HOVER_EXPAND_MS = 180;
 const ERROR_FLASH_MS = 900;
 
 function logIcon(type: LogType) {
@@ -76,37 +73,16 @@ function LogLine({ log, onNavigate }: { log: LogEntry; onNavigate: (log: LogEntr
   );
 }
 
-function compactSubtitle(logs: LogEntry[], errorCount: number, warningCount: number): React.ReactNode {
-  if (logs.length === 0) return 'Empty';
-  if (errorCount > 0) {
-    const lastError = [...logs].reverse().find((l) => l.type === 'error');
-    const preview = lastError?.message.slice(0, 42) ?? '';
-    return (
-      <span className="text-red-400/90">
-        {errorCount} error{errorCount === 1 ? '' : 's'}
-        {preview ? ` · ${preview}${lastError && lastError.message.length > 42 ? '…' : ''}` : ''}
-      </span>
-    );
-  }
-  if (warningCount > 0) {
-    return (
-      <span className="text-amber-400/90">
-        {warningCount} warning{warningCount === 1 ? '' : 's'}
-      </span>
-    );
-  }
-  const last = logs[logs.length - 1];
-  if (last?.type === 'success') return <span className="text-emerald-400/80">OK</span>;
-  return `${logs.length} message${logs.length === 1 ? '' : 's'}`;
-}
-
+/**
+ * Compiler log — two states only:
+ * - closed → compact strip (chips + terminal)
+ * - open → full floating panel
+ * Tilde / `` ` `` toggles open ↔ closed (no header-only middle state).
+ */
 export function GraphFloatingCompilerLog() {
   const { compilerLogOpen, setCompilerLogOpen } = useEditorPanels();
   const { logs, clearLogs, navigableErrorsRef } = useCompilerLogs();
-  const { validationErrors, validationWarnings } = useProject();
-  const [pinned, setPinned] = useUiPreference('compilerLogPinned');
-  const [hoverExpanded, setHoverExpanded] = useState(false);
-  const [peekExpanded, setPeekExpanded] = useState(false);
+  const { validationErrors, validationWarnings, compileState } = useProject();
   const [errorFlash, setErrorFlash] = useState(false);
   const [expandedHeight, setExpandedHeight] = useState(() =>
     clampDetailsPanelHeight(readUiPreference('compilerLogExpandedHeight'))
@@ -117,18 +93,33 @@ export function GraphFloatingCompilerLog() {
   const [offsetRight, setOffsetRight] = useState(() => readUiPreference('compilerLogOffsetRight'));
   const [offsetBottom, setOffsetBottom] = useState(() => readUiPreference('compilerLogOffsetBottom'));
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gestureActiveRef = useRef(false);
-  const hoverInsideRef = useRef(false);
   const prevErrorCountRef = useRef(0);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const pinnedRef = useRef(pinned);
-  pinnedRef.current = pinned;
 
-  const errorCount = logs.filter((l) => l.type === 'error').length;
-  const warningCount = logs.filter((l) => l.type === 'warning').length;
-  const effectiveExpanded = pinned || hoverExpanded || peekExpanded;
+  const errorCount = validationErrors.length;
+  const warningCount = validationWarnings.length;
+  const isCompiling = compileState === 'compiling';
+  const isDirty = compileState === 'dirty';
+
+  const jumpErrors = useCallback(() => {
+    const target = firstNavigableValidationMessage(validationErrors, validationWarnings);
+    if (target && navigateToValidationMessage(target)) {
+      if (!compilerLogOpen) setCompilerLogOpen(true);
+      return;
+    }
+    setCompilerLogOpen(true);
+    dispatchFocusFirstValidationError();
+  }, [validationErrors, validationWarnings, compilerLogOpen, setCompilerLogOpen]);
+
+  const jumpWarnings = useCallback(() => {
+    const target = firstNavigableValidationMessage([], validationWarnings);
+    if (target && navigateToValidationMessage(target)) {
+      if (!compilerLogOpen) setCompilerLogOpen(true);
+      return;
+    }
+    setCompilerLogOpen(true);
+  }, [validationWarnings, compilerLogOpen, setCompilerLogOpen]);
 
   const triggerErrorFlash = useCallback(() => {
     setErrorFlash(true);
@@ -139,81 +130,20 @@ export function GraphFloatingCompilerLog() {
     }, ERROR_FLASH_MS);
   }, []);
 
-  // New errors → open panel, peek-expand (not pin), flash red.
+  // New errors → flash compact strip only (do not auto-open the full panel).
   useEffect(() => {
     const prev = prevErrorCountRef.current;
     prevErrorCountRef.current = errorCount;
     if (errorCount > prev) {
-      setCompilerLogOpen(true);
-      setPeekExpanded(true);
       triggerErrorFlash();
     }
-  }, [errorCount, setCompilerLogOpen, triggerErrorFlash]);
+  }, [errorCount, triggerErrorFlash]);
 
   useEffect(() => {
     return () => {
-      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     };
   }, []);
-
-  const handleHoverChange = useCallback(
-    (hovered: boolean) => {
-      hoverInsideRef.current = hovered;
-      if (gestureActiveRef.current) {
-        // Stay expanded for the whole move/resize; re-evaluate on release.
-        if (hovered) {
-          if (hoverTimerRef.current) {
-            clearTimeout(hoverTimerRef.current);
-            hoverTimerRef.current = null;
-          }
-          setHoverExpanded(true);
-        }
-        return;
-      }
-      if (hoverTimerRef.current) {
-        clearTimeout(hoverTimerRef.current);
-        hoverTimerRef.current = null;
-      }
-      if (hovered) {
-        hoverTimerRef.current = setTimeout(() => {
-          setHoverExpanded(true);
-          hoverTimerRef.current = null;
-        }, HOVER_EXPAND_MS);
-        return;
-      }
-      setHoverExpanded(false);
-      if (!pinned) {
-        setPeekExpanded(false);
-      }
-    },
-    [pinned]
-  );
-
-  const handleGestureChange = useCallback(
-    (active: boolean) => {
-      gestureActiveRef.current = active;
-      if (active) {
-        // Keep open for the gesture even if pointer leaves the panel.
-        if (hoverTimerRef.current) {
-          clearTimeout(hoverTimerRef.current);
-          hoverTimerRef.current = null;
-        }
-        setHoverExpanded(true);
-        return;
-      }
-      // Released — collapse only if pointer is outside and not pinned.
-      if (!hoverInsideRef.current && !pinned) {
-        setHoverExpanded(false);
-        setPeekExpanded(false);
-      }
-    },
-    [pinned]
-  );
-
-  const togglePinned = useCallback(() => {
-    setPinned(!pinned);
-  }, [pinned, setPinned]);
 
   const handleHeightChange = useCallback((height: number) => {
     const next = clampDetailsPanelHeight(height);
@@ -245,26 +175,6 @@ export function GraphFloatingCompilerLog() {
     window.addEventListener(RESET_COMPILER_LOG_LAYOUT_EVENT, onReset);
     return () => window.removeEventListener(RESET_COMPILER_LOG_LAYOUT_EVENT, onReset);
   }, [applyDefaultLayout]);
-
-  useEffect(() => {
-    const onTogglePin = () => {
-      setCompilerLogOpen(true);
-      const next = !pinnedRef.current;
-      setPinned(next);
-      if (next) {
-        setHoverExpanded(true);
-        setPeekExpanded(true);
-        return;
-      }
-      // Unpin via keyboard — collapse immediately if pointer is not over the panel.
-      if (!hoverInsideRef.current) {
-        setHoverExpanded(false);
-        setPeekExpanded(false);
-      }
-    };
-    window.addEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onTogglePin);
-    return () => window.removeEventListener(TOGGLE_COMPILER_LOG_PIN_EVENT, onTogglePin);
-  }, [setCompilerLogOpen, setPinned]);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -316,7 +226,19 @@ export function GraphFloatingCompilerLog() {
     return () => window.removeEventListener('vvs:focus-first-validation-error', onFocusFirst);
   }, [navigableErrorsRef, validationErrors, validationWarnings]);
 
-  if (!compilerLogOpen) return null;
+  if (!compilerLogOpen) {
+    return (
+      <CompilerLogCompactStrip
+        errorCount={errorCount}
+        warningCount={warningCount}
+        isCompiling={isCompiling}
+        isDirty={isDirty}
+        onOpen={() => setCompilerLogOpen(true)}
+        onJumpErrors={jumpErrors}
+        onJumpWarnings={jumpWarnings}
+      />
+    );
+  }
 
   return (
     <>
@@ -333,43 +255,30 @@ export function GraphFloatingCompilerLog() {
       `}</style>
       <FloatingPanelShell
         title="Log"
-        subtitle={effectiveExpanded ? undefined : compactSubtitle(logs, errorCount, warningCount)}
         titleIcon={<Terminal size={11} />}
         corner="bottom-right"
-        expanded={effectiveExpanded}
-        pinned={pinned}
-        onTogglePinned={togglePinned}
-        pinTitle={
-          pinned
-            ? withShortcut('Unpin — collapse when pointer leaves', 'toggle-log-pin')
-            : withShortcut('Pin — keep expanded', 'toggle-log-pin')
-        }
-        onHoverChange={handleHoverChange}
-        onGestureChange={handleGestureChange}
-        onContextMenu={handleContextMenu}
+        expanded
         onClose={() => setCompilerLogOpen(false)}
+        onContextMenu={handleContextMenu}
         widthClass="w-[min(260px,calc(100%-20px))]"
         maxHeightClass="max-h-[min(300px,50vh)]"
-        heightPx={effectiveExpanded ? expandedHeight : undefined}
-        onHeightChange={effectiveExpanded ? handleHeightChange : undefined}
+        heightPx={expandedHeight}
+        onHeightChange={handleHeightChange}
         widthPx={expandedWidth}
-        onWidthChange={effectiveExpanded ? handleWidthChange : undefined}
+        onWidthChange={handleWidthChange}
         offsetRight={offsetRight}
         offsetBottom={offsetBottom}
         onOffsetChange={handleOffsetChange}
         shellClassName={errorFlash ? 'vvsLogErrorFlash' : undefined}
         headerExtra={
           <div className="flex items-center gap-1">
-            {errorCount > 0 && (
-              <button
-                type="button"
-                onClick={() => dispatchFocusFirstValidationError()}
-                className="text-[9px] px-1 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/25"
-                title={`${errorCount} errors — jump to first`}
-              >
-                {errorCount}
-              </button>
-            )}
+            <CompilerLogDiagChips
+              errorCount={errorCount}
+              warningCount={warningCount}
+              onJumpErrors={jumpErrors}
+              onJumpWarnings={jumpWarnings}
+              compact
+            />
             <button
               type="button"
               onClick={clearLogs}
@@ -381,17 +290,15 @@ export function GraphFloatingCompilerLog() {
           </div>
         }
       >
-        {effectiveExpanded ? (
-          <div className="font-mono text-[10px] leading-relaxed space-y-0.5">
-            {logs.length === 0 ? (
-              <p className="text-zinc-600 py-1">
-                No messages yet. Generate or fix graph errors — click a line to jump to the node.
-              </p>
-            ) : (
-              logs.map((log) => <LogLine key={log.id} log={log} onNavigate={handleLogClick} />)
-            )}
-          </div>
-        ) : null}
+        <div className="font-mono text-[10px] leading-relaxed space-y-0.5">
+          {logs.length === 0 ? (
+            <p className="text-zinc-600 py-1">
+              No messages yet. Generate or fix graph errors — click a line to jump to the node.
+            </p>
+          ) : (
+            logs.map((log) => <LogLine key={log.id} log={log} onNavigate={handleLogClick} />)
+          )}
+        </div>
       </FloatingPanelShell>
       {contextMenu ? (
         <div

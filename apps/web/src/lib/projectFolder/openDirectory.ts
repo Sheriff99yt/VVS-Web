@@ -1,4 +1,4 @@
-import { getFolderHandle, storeFolderHandle } from './handleStore';
+import { getFolderHandle, storeFolderHandle, removeFolderHandle, folderKeyFromHandleName } from './handleStore';
 import { pickProjectFolder, verifyHandlePermission } from './fsAccess';
 import { createProjectInFolder } from './io';
 import type { ProjectSnapshot } from '@vvs/graph-types';
@@ -28,11 +28,19 @@ export async function resolveProjectFolderHandle(
   return handle;
 }
 
-/** Export a browser-stored project into a user-chosen folder and link the handle. */
+export type LinkedFolderProject = {
+  handle: FileSystemDirectoryHandle;
+  folderKey: string;
+};
+
+/**
+ * Export a browser-stored project into a user-chosen folder and link the handle
+ * under `folderKeyFromHandleName` (same scheme as New/Open folder).
+ */
 export async function linkLocalProjectToFolder(
-  projectId: string,
-  snapshot: ProjectSnapshot
-): Promise<FileSystemDirectoryHandle | null> {
+  snapshot: ProjectSnapshot,
+  options?: { previousBrowserProjectId?: string }
+): Promise<LinkedFolderProject | null> {
   const handle = await pickProjectFolder();
   if (!handle) return null;
   if (!(await verifyHandlePermission(handle))) {
@@ -40,15 +48,27 @@ export async function linkLocalProjectToFolder(
     return null;
   }
   try {
-    await createProjectInFolder(handle, snapshot, { adoptExisting: true });
+    const folderKey = folderKeyFromHandleName(handle.name);
+    const folderSnapshot: ProjectSnapshot = { ...snapshot, projectId: folderKey };
+    await createProjectInFolder(handle, folderSnapshot, { adoptExisting: true });
+    await storeFolderHandle(folderKey, handle);
+
+    const previousId = options?.previousBrowserProjectId;
+    if (previousId && previousId !== folderKey) {
+      try {
+        await removeFolderHandle(previousId);
+      } catch {
+        // Best-effort cleanup of legacy handle keyed by browser project id.
+      }
+    }
+
+    return { handle, folderKey };
   } catch (error) {
     window.alert(
       error instanceof Error ? error.message : 'Could not write project files to that folder.'
     );
     return null;
   }
-  await storeFolderHandle(projectId, handle);
-  return handle;
 }
 
 export async function hasStoredFolderHandle(folderKey: string): Promise<boolean> {

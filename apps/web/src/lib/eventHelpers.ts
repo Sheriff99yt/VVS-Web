@@ -96,7 +96,7 @@ export function inferEventNameFromNodeData(data: VVSNodeData): string | undefine
   const eventName = data.properties?.eventName;
   if (typeof eventName === 'string' && eventName.trim()) return eventName.trim();
 
-  const dispatchMatch = data.label.match(/^Dispatch\s+(.+)$/i);
+  const dispatchMatch = data.label.match(/^(?:Call|Dispatch)\s+(.+)$/i);
   if (dispatchMatch?.[1]) return dispatchMatch[1].trim();
 
   const onMatch = data.label.match(/^On\s+(.+)$/i);
@@ -194,7 +194,7 @@ export function applyEventDispatchBinding(
     ...data,
     kindId: 'event_dispatch',
     category: 'Events',
-    label: `Dispatch ${event.name}`,
+    label: `Call ${event.name}`,
     graphBinding: { kind: 'dispatch_event', symbolId: event.id },
     properties: { ...(data.properties ?? {}), eventId: event.id, eventName: event.name },
     inputs,
@@ -248,7 +248,7 @@ export function buildEventNodeData(
 ): VVSNodeData {
   const base: VVSNodeData = {
     label:
-      role === 'define' ? eventDisplayName(event.name) : `Dispatch ${event.name}`,
+      role === 'define' ? eventDisplayName(event.name) : `Call ${event.name}`,
     category: 'Events',
     kindId: role === 'define' ? 'event_define' : 'event_dispatch',
     properties: { eventId: event.id, eventName: event.name },

@@ -58,9 +58,11 @@ Before adding visible UI, answer:
 
 - Navigation section open (e.g. Graphs).
 - Everything else (Functions, Variables, Generated) **collapsed** until expanded.
-- Nested detail (export filename, cross-refs) only under an **expanded graph row**.
+- Nested detail (signatures, codegen suffix, OK canvas checks) only on **hover or selection** — not inline by default.
+- List **or** grid per section (header toggle; default list).
+- Missing Declare/Define badges stay visible (fidelity).
 
-**VVS:** `ProjectTree.tsx` — tabbed panel (Graphs / Variables / Browse); flat graph list; icon filter expands on demand.
+**VVS:** `ProjectTree.tsx` — Symbols | Output | API; palette-first whole-row canvas drag; reorder grip on hover.
 
 ### 4. Context-aware inspector
 

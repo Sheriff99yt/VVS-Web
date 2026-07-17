@@ -20,6 +20,12 @@ describe('projectSelection', () => {
     ).toEqual({ type: 'function', id: 'fn-add' });
   });
 
+  test('clearCanvasSelectionKeepTreeSymbol preserves code preview selection', () => {
+    expect(
+      clearCanvasSelectionKeepTreeSymbol({ type: 'code', id: 'src/Main.py' })
+    ).toEqual({ type: 'code', id: 'src/Main.py' });
+  });
+
   test('clearCanvasSelectionKeepTreeSymbol clears node and graph picks', () => {
     expect(clearCanvasSelectionKeepTreeSymbol({ type: 'node', id: 'n1' })).toEqual({
       type: 'graph',

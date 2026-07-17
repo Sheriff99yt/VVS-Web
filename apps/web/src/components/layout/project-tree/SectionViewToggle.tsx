@@ -21,26 +21,26 @@ export function SectionViewToggle({
         title="List view"
         aria-pressed={value === 'list'}
         onClick={() => onChange('list')}
-        className={`p-0.5 ${
+        className={`p-1 ${
           value === 'list'
             ? 'bg-zinc-800 text-zinc-200'
             : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900/60'
         }`}
       >
-        <List size={11} />
+        <List size={14} />
       </button>
       <button
         type="button"
         title="Grid view"
         aria-pressed={value === 'grid'}
         onClick={() => onChange('grid')}
-        className={`p-0.5 ${
+        className={`p-1 ${
           value === 'grid'
             ? 'bg-zinc-800 text-zinc-200'
             : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900/60'
         }`}
       >
-        <LayoutGrid size={11} />
+        <LayoutGrid size={14} />
       </button>
     </div>
   );

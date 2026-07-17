@@ -91,6 +91,20 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
         data-category={data.category}
         title={unsupportedTitle || undefined}
       >
+        {selected ? (
+          <div className={styles.headerOverlay}>
+            {importLangGate ? (
+              <span
+                className={styles.headerOverlayMeta}
+                title="Emits only for these target languages"
+              >
+                {importLangGate}
+              </span>
+            ) : null}
+            <NodeModifiers id={id} data={data} />
+          </div>
+        ) : null}
+
         <div className={styles.header}>
           <div className={styles.titleBlock}>
             <div className="flex items-center gap-1.5 min-w-0">
@@ -118,15 +132,6 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 {isImportNode ? `↳ ${linkedTargetLabel}` : `→ ${linkedTargetLabel}`}
               </span>
             )}
-            {!linkedTargetLabel && importLangGate ? (
-              <span
-                className={`${styles.linkedSubtitle} ${styles.linkedSubtitleImport}`}
-                title="Emits only for these target languages"
-              >
-                {importLangGate}
-              </span>
-            ) : null}
-            <NodeModifiers id={id} data={data} />
           </div>
         </div>
 

@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
-import { useNodes, useReactFlow } from '@xyflow/react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Search, X, Layers } from 'lucide-react';
+import { useReactFlow, useStore } from '@xyflow/react';
+import type { Node } from '@xyflow/react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useGraphDocuments } from '@/hooks/useGraphDocuments';
+import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
+import { useUiPreference } from '@/hooks/useUiPreference';
 import { VVSNode } from '@/types/graph';
 import {
   filterOutlinerNodes,
@@ -11,14 +15,25 @@ import {
   nodeDisplayLabel,
 } from '@/lib/nodeOutliner';
 import { shortcutKeys, shortcutTitle } from '@/lib/graphShortcuts';
-import { FOCUS_GRAPH_NODE_SEARCH_EVENT } from '@/lib/uiPreferences';
+import {
+  FOCUS_GRAPH_NODE_SEARCH_EVENT,
+  type FocusGraphNodeSearchDetail,
+} from '@/lib/uiPreferences';
+import { nodesForSearchSubscription } from '@/lib/graphVirtualization';
+import { focusGraphNodes } from '@/lib/graphCamera';
+import { graphDisplayName } from '@/lib/graphTabs';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const MAX_RESULTS = 12;
 
+type SearchHit = { node: VVSNode; tabId: string; tabLabel: string };
+
 export function GraphNodeSearch() {
-  const { selection, setSelection } = useProject();
-  const { setCenter, setNodes } = useReactFlow();
-  const nodes = useNodes();
+  const { selection, setSelection, activeGraphTab, openTabs } = useProject();
+  const documents = useGraphDocuments();
+  const { navigate } = useEditorNavigation();
+  const { fitView, setNodes } = useReactFlow();
+  const [searchAllGraphs, setSearchAllGraphs] = useUiPreference('nodeSearchAllGraphs');
   const inputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -26,24 +41,76 @@ export function GraphNodeSearch() {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const results = React.useMemo(() => {
+  // U83: do not subscribe to the full node list while search is collapsed.
+  const nodes = useStore(
+    useCallback(
+      (state: { nodes: Node[] }) =>
+        nodesForSearchSubscription(expanded, state.nodes) as VVSNode[],
+      [expanded]
+    )
+  );
+
+  const tabLabel = useCallback(
+    (tabId: string) => {
+      const tab = openTabs.find((t) => t.id === tabId);
+      return tab ? graphDisplayName(tab) : tabId;
+    },
+    [openTabs]
+  );
+
+  const results = useMemo((): SearchHit[] => {
     if (!query.trim()) return [];
-    return filterOutlinerNodes(nodes, query).slice(0, MAX_RESULTS);
-  }, [nodes, query]);
+
+    if (!searchAllGraphs) {
+      return filterOutlinerNodes(nodes, query)
+        .slice(0, MAX_RESULTS)
+        .map((node) => ({
+          node,
+          tabId: activeGraphTab,
+          tabLabel: tabLabel(activeGraphTab),
+        }));
+    }
+
+    const hits: SearchHit[] = [];
+    const docs = documents ?? {};
+    // Prefer active tab first so local matches rank higher.
+    const tabIds = [
+      activeGraphTab,
+      ...Object.keys(docs).filter((id) => id !== activeGraphTab),
+    ];
+    for (const tabId of tabIds) {
+      const docNodes = (docs[tabId]?.nodes ?? []) as Node[];
+      for (const node of filterOutlinerNodes(docNodes, query)) {
+        hits.push({ node, tabId, tabLabel: tabLabel(tabId) });
+        if (hits.length >= MAX_RESULTS) return hits;
+      }
+    }
+    return hits;
+  }, [activeGraphTab, documents, nodes, query, searchAllGraphs, tabLabel]);
 
   const showDropdown = expanded && query.trim().length > 0;
   const highlightedIndex =
     results.length === 0 ? 0 : Math.min(activeIndex, results.length - 1);
 
-  const focusNode = React.useCallback(
-    (node: VVSNode) => {
-      setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === node.id })));
-      setSelection({ type: 'node', id: node.id });
-      setCenter(node.position.x, node.position.y, { duration: 400, zoom: 1 });
-      // Keep query + expanded so the user can jump through matches.
+  const focusHit = React.useCallback(
+    (hit: SearchHit) => {
+      if (hit.tabId !== activeGraphTab) {
+        navigate({
+          graphTab: hit.tabId,
+          editorView: 'canvas',
+          selection: { type: 'node', id: hit.node.id },
+          focusedNodeId: hit.node.id,
+        });
+      } else {
+        setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === hit.node.id })));
+        setSelection({ type: 'node', id: hit.node.id });
+        requestAnimationFrame(() => {
+          focusGraphNodes(fitView, [hit.node.id]);
+        });
+      }
       inputRef.current?.focus();
     },
-    [setCenter, setNodes, setSelection]
+    [activeGraphTab, fitView, navigate, setNodes, setSelection]
   );
 
   const collapseIfEmpty = React.useCallback(() => {
@@ -59,13 +126,25 @@ export function GraphNodeSearch() {
     inputRef.current?.blur();
   }, []);
 
-  const openSearch = React.useCallback(() => {
-    setExpanded(true);
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, []);
+  const openSearch = React.useCallback(
+    (initialQuery?: string, searchAllGraphsOverride?: boolean) => {
+      setExpanded(true);
+      if (searchAllGraphsOverride === true) setSearchAllGraphs(true);
+      else if (searchAllGraphsOverride === false) setSearchAllGraphs(false);
+      if (typeof initialQuery === 'string') {
+        setQuery(initialQuery);
+        setActiveIndex(0);
+      }
+      requestAnimationFrame(() => inputRef.current?.focus());
+    },
+    [setSearchAllGraphs]
+  );
 
   React.useEffect(() => {
-    const onFocusSearch = () => openSearch();
+    const onFocusSearch = (event: Event) => {
+      const detail = (event as CustomEvent<FocusGraphNodeSearchDetail>).detail;
+      openSearch(detail?.query, detail?.searchAllGraphs);
+    };
     window.addEventListener(FOCUS_GRAPH_NODE_SEARCH_EVENT, onFocusSearch);
     return () => window.removeEventListener(FOCUS_GRAPH_NODE_SEARCH_EVENT, onFocusSearch);
   }, [openSearch]);
@@ -74,12 +153,13 @@ export function GraphNodeSearch() {
     if (!expanded) return;
     const onPointerDown = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as HTMLElement)) {
-        collapseIfEmpty();
+        // Clicking the canvas (or any outside chrome) fully closes search so F frames again.
+        clearAndCollapse();
       }
     };
     document.addEventListener('mousedown', onPointerDown);
     return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [expanded, collapseIfEmpty]);
+  }, [expanded, clearAndCollapse]);
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
@@ -101,111 +181,158 @@ export function GraphNodeSearch() {
       setActiveIndex((i) => (i - 1 + results.length) % results.length);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const node = results[highlightedIndex];
-      if (node) focusNode(node);
+      const hit = results[highlightedIndex];
+      if (hit) focusHit(hit);
     }
   };
 
   const keepExpanded = expanded || query.trim().length > 0;
 
+  const handleHoverOpen = React.useCallback(() => {
+    openSearch();
+  }, [openSearch]);
+
+  const handleHoverClose = React.useCallback(() => {
+    collapseIfEmpty();
+  }, [collapseIfEmpty]);
+
   return (
     <div
       ref={containerRef}
-      className="absolute top-3 left-3 z-20 pointer-events-none"
+      className={`pointer-events-auto flex flex-col transition-[width] duration-200 ease-out ${
+        keepExpanded ? 'w-72' : 'w-8'
+      }`}
+      onMouseEnter={handleHoverOpen}
+      onMouseLeave={handleHoverClose}
     >
       <div
-        className={`pointer-events-auto flex flex-col transition-[width] duration-200 ease-out ${
-          keepExpanded ? 'w-64' : 'w-8'
+        className={`relative flex items-center h-8 overflow-hidden border transition-colors duration-200 ${
+          keepExpanded
+            ? 'bg-zinc-950 border-zinc-800 rounded-md shadow-lg shadow-black/30'
+            : 'bg-zinc-950/90 border-zinc-800 rounded-md hover:border-zinc-700'
         }`}
       >
-        <div
-          className={`relative flex items-center h-8 overflow-hidden border transition-colors duration-200 ${
-            keepExpanded
-              ? 'bg-zinc-950 border-zinc-800 rounded-md shadow-lg shadow-black/30'
-              : 'bg-zinc-950/90 border-zinc-800 rounded-md hover:border-zinc-700'
-          }`}
+        <Tooltip
+          content={`${shortcutTitle('node-search')} · with a symbol selected, ${shortcutKeys('node-search-from-symbol')} finds in this graph`}
+          placement="bottom"
         >
           <button
             type="button"
-            onClick={openSearch}
+            onClick={() => openSearch()}
             className="shrink-0 w-8 h-8 inline-flex items-center justify-center text-zinc-500 hover:text-zinc-200 transition-colors"
-            title={shortcutTitle('node-search')}
             aria-label="Search nodes"
             aria-expanded={keepExpanded}
           >
             <Search size={13} />
           </button>
+        </Tooltip>
 
-          <input
-            ref={inputRef}
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActiveIndex(0);
-              if (!expanded) setExpanded(true);
-            }}
-            onFocus={() => setExpanded(true)}
-            onBlur={() => {
-              // Defer so result clicks still register; collapse only when empty.
-              requestAnimationFrame(() => collapseIfEmpty());
-            }}
-            onKeyDown={handleInputKeyDown}
-            placeholder={`Search nodes… (${shortcutKeys('node-search')})`}
-            className={`bg-transparent text-[11px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-[opacity,width,padding] duration-200 ease-out ${
-              keepExpanded
-                ? 'flex-1 min-w-0 opacity-100 pl-0 pr-7 py-1.5'
-                : 'w-0 opacity-0 p-0 pointer-events-none'
-            }`}
-            tabIndex={keepExpanded ? 0 : -1}
-          />
+        <input
+          ref={inputRef}
+          type="text"
+          role="searchbox"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setActiveIndex(0);
+            if (!expanded) setExpanded(true);
+          }}
+          onFocus={() => setExpanded(true)}
+          onBlur={() => {
+            requestAnimationFrame(() => collapseIfEmpty());
+          }}
+          onKeyDown={handleInputKeyDown}
+          placeholder={`Search nodes… (${shortcutKeys('node-search')})`}
+          className={`bg-transparent text-[11px] text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-[opacity,width,padding] duration-200 ease-out ${
+            keepExpanded
+              ? 'flex-1 min-w-0 opacity-100 pl-0 pr-14 py-1.5'
+              : 'w-0 opacity-0 p-0 pointer-events-none'
+          }`}
+          tabIndex={keepExpanded ? 0 : -1}
+        />
 
-          {keepExpanded && query ? (
-            <button
-              type="button"
-              onClick={clearAndCollapse}
-              className="absolute right-1.5 p-1 text-zinc-600 hover:text-zinc-300 rounded"
-              title="Clear"
+        {keepExpanded ? (
+          <div className="absolute right-1 flex items-center gap-0.5">
+            <Tooltip
+              content={
+                searchAllGraphs
+                  ? 'Searching all graphs (click for this graph only)'
+                  : 'Searching this graph only (click for all graphs)'
+              }
+              placement="bottom"
             >
-              <X size={11} />
-            </button>
-          ) : null}
-        </div>
-
-        {showDropdown ? (
-          <div className="mt-1 rounded-md border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/40 overflow-hidden max-h-56 overflow-y-auto">
-            {results.length === 0 ? (
-              <div className="px-2.5 py-2.5 text-[11px] text-zinc-500 text-center">No matching nodes</div>
-            ) : (
-              results.map((node, index) => {
-                const selected = selection.type === 'node' && selection.id === node.id;
-                const highlighted = index === highlightedIndex;
-                return (
-                  <button
-                    key={node.id}
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onClick={() => focusNode(node)}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors ${
-                      highlighted ? 'bg-zinc-900' : 'hover:bg-zinc-900/80'
-                    } ${selected ? 'border-l-2 border-indigo-500' : 'border-l-2 border-transparent'}`}
-                  >
-                    <div
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ backgroundColor: nodeCategoryColor(node.data.category) }}
-                    />
-                    <span className="text-[11px] text-zinc-200 truncate flex-1">
-                      {nodeDisplayLabel(node)}
-                    </span>
-                    <span className="text-[9px] text-zinc-600 shrink-0">{node.data.category}</span>
-                  </button>
-                );
-              })
-            )}
+              <button
+                type="button"
+                onClick={() => setSearchAllGraphs(!searchAllGraphs)}
+                className={`p-1 rounded ${
+                  searchAllGraphs
+                    ? 'text-indigo-300 hover:text-indigo-200'
+                    : 'text-zinc-600 hover:text-zinc-300'
+                }`}
+                aria-pressed={searchAllGraphs}
+                aria-label={searchAllGraphs ? 'Search all graphs' : 'Search this graph only'}
+              >
+                <Layers size={11} />
+              </button>
+            </Tooltip>
+            {query ? (
+              <Tooltip content="Clear" placement="bottom">
+                <button
+                  type="button"
+                  onClick={clearAndCollapse}
+                  className="p-1 text-zinc-600 hover:text-zinc-300 rounded"
+                  aria-label="Clear search"
+                >
+                  <X size={11} />
+                </button>
+              </Tooltip>
+            ) : null}
           </div>
         ) : null}
       </div>
+
+      {showDropdown ? (
+        <div className="mt-1 rounded-md border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/40 overflow-hidden max-h-56 overflow-y-auto">
+          {results.length === 0 ? (
+            <div className="px-2.5 py-2.5 text-[11px] text-zinc-500 text-center">No matching nodes</div>
+          ) : (
+            results.map((hit, index) => {
+              const selected =
+                selection.type === 'node' &&
+                selection.id === hit.node.id &&
+                hit.tabId === activeGraphTab;
+              const highlighted = index === highlightedIndex;
+              return (
+                <button
+                  key={`${hit.tabId}:${hit.node.id}`}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => focusHit(hit)}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors ${
+                    highlighted ? 'bg-zinc-900' : 'hover:bg-zinc-900/80'
+                  } ${selected ? 'border-l-2 border-indigo-500' : 'border-l-2 border-transparent'}`}
+                >
+                  <div
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: nodeCategoryColor(hit.node.data.category) }}
+                  />
+                  <span className="text-[11px] text-zinc-200 truncate flex-1">
+                    {nodeDisplayLabel(hit.node)}
+                  </span>
+                  {searchAllGraphs ? (
+                    <span className="text-[9px] text-zinc-500 shrink-0 truncate max-w-[72px]">
+                      {hit.tabLabel}
+                    </span>
+                  ) : (
+                    <span className="text-[9px] text-zinc-600 shrink-0">{hit.node.data.category}</span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

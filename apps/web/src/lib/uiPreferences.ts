@@ -1,9 +1,31 @@
 const UI_PREFERENCES_KEY = 'vvs:ui-preferences';
 const LEGACY_DETAILS_KEY = 'vvs:details-panel-expanded';
 
+/** Canvas map / zoom-controls chrome. M cycles: map → map-controls → hidden. */
+export type GraphChromeMode = 'map' | 'map-controls' | 'hidden';
+
+export const GRAPH_CHROME_CYCLE: readonly GraphChromeMode[] = [
+  'map',
+  'map-controls',
+  'hidden',
+] as const;
+
+export function nextGraphChromeMode(current: GraphChromeMode): GraphChromeMode {
+  const i = GRAPH_CHROME_CYCLE.indexOf(current);
+  return GRAPH_CHROME_CYCLE[(i < 0 ? 0 : i + 1) % GRAPH_CHROME_CYCLE.length]!;
+}
+
+export function isGraphChromeMode(value: unknown): value is GraphChromeMode {
+  return value === 'map' || value === 'map-controls' || value === 'hidden';
+}
+
 export interface UiPreferences {
   graphNavOpen: boolean;
-  graphChromeOpen: boolean;
+  /**
+   * Minimap / Controls chrome mode.
+   * Migrated from legacy `graphChromeOpen` boolean on read.
+   */
+  graphChromeMode: GraphChromeMode;
   codeOpen: boolean;
   compilerLogOpen: boolean;
   /** Log panel pin — stay expanded without hover. */
@@ -26,6 +48,11 @@ export interface UiPreferences {
   detailsPanelOffsetRight: number;
   /** Distance from canvas top edge (px). */
   detailsPanelOffsetTop: number;
+  /**
+   * After the user closes the canvas welcome/help once, stay collapsed until
+   * they open it again (? / help button).
+   */
+  canvasWelcomeDismissed: boolean;
   /** U66: emit `(x)` comment lines for language-ineffective nodes (default on). */
   showUnsupportedComments: boolean;
   /** U69: emit author Comment [C] lines in Code preview (default on). Separate from `(x)`. */
@@ -37,13 +64,24 @@ export interface UiPreferences {
    * `above` = canopy over the consumer; `below` = vertical hang; `below-extended` = flat staircase.
    */
   chainAttributeDirection: 'above' | 'below' | 'below-extended';
+  /** Animate S S (auto layout) node movement (default on). */
+  animateChainLayout: boolean;
+  /**
+   * When animate is on: move layout columns left→right in staggered steps (default on).
+   * Ignored when animateChainLayout is off.
+   */
+  stepAnimateChainLayout: boolean;
+  /** Pace of stepped column moves when step animate is on (default normal). */
+  stepAnimateChainLayoutSpeed: 'slow' | 'normal' | 'fast';
   /** U70: allow MCP tools that can mutate/delete graphs (default off). */
   mcpAllowDangerousTools: boolean;
+  /** U84: node search includes every graph document (default on). */
+  nodeSearchAllGraphs: boolean;
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   graphNavOpen: true,
-  graphChromeOpen: true,
+  graphChromeMode: 'map',
   codeOpen: true,
   compilerLogOpen: false,
   compilerLogPinned: false,
@@ -57,11 +95,16 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   detailsPanelCompactHeight: 148,
   detailsPanelOffsetRight: 10,
   detailsPanelOffsetTop: 10,
+  canvasWelcomeDismissed: false,
   showUnsupportedComments: true,
   showUserComments: true,
   dimUnsupportedNodes: true,
-  chainAttributeDirection: 'above',
+  chainAttributeDirection: 'below-extended',
+  animateChainLayout: true,
+  stepAnimateChainLayout: true,
+  stepAnimateChainLayoutSpeed: 'normal',
   mcpAllowDangerousTools: false,
+  nodeSearchAllGraphs: true,
 };
 
 export const DETAILS_PANEL_HEIGHT = {
@@ -132,7 +175,34 @@ export function clampFloatingPanelTopOffsets(
 export const RESET_COMPILER_LOG_LAYOUT_EVENT = 'vvs:reset-compiler-log-layout';
 export const RESET_DETAILS_PANEL_LAYOUT_EVENT = 'vvs:reset-details-panel-layout';
 export const TOGGLE_COMPILER_LOG_PIN_EVENT = 'vvs:toggle-compiler-log-pin';
+export const TOGGLE_GRAPH_CHROME_EVENT = 'vvs:toggle-graph-chrome';
 export const FOCUS_GRAPH_NODE_SEARCH_EVENT = 'vvs:focus-graph-node-search';
+
+export type FocusGraphNodeSearchDetail = {
+  query?: string;
+  /**
+   * Force Layers scope for this open:
+   * `true` = all graphs, `false` = this graph only, omit = keep preference.
+   */
+  searchAllGraphs?: boolean;
+};
+
+export function dispatchFocusGraphNodeSearch(
+  query?: string,
+  options?: { searchAllGraphs?: boolean }
+): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(FOCUS_GRAPH_NODE_SEARCH_EVENT, {
+        detail: {
+          query,
+          searchAllGraphs: options?.searchAllGraphs,
+        } satisfies FocusGraphNodeSearchDetail,
+      })
+    );
+  }
+}
+export const FOCUS_PROJECT_TREE_FILTER_EVENT = 'vvs:focus-project-tree-filter';
 
 export function defaultCompilerLogLayout() {
   return {
@@ -186,9 +256,15 @@ export function dispatchToggleCompilerLogPin(): void {
   }
 }
 
-export function dispatchFocusGraphNodeSearch(): void {
+export function dispatchToggleGraphChrome(): void {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(FOCUS_GRAPH_NODE_SEARCH_EVENT));
+    window.dispatchEvent(new CustomEvent(TOGGLE_GRAPH_CHROME_EVENT));
+  }
+}
+
+export function dispatchFocusProjectTreeFilter(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(FOCUS_PROJECT_TREE_FILTER_EVENT));
   }
 }
 
@@ -221,8 +297,9 @@ export function readUiPreferences(): UiPreferences {
     }
     const parsed = JSON.parse(raw) as Partial<UiPreferences> & {
       detailsPanelExpanded?: boolean;
+      graphChromeOpen?: boolean;
     };
-    const { detailsPanelExpanded, ...rest } = parsed;
+    const { detailsPanelExpanded, graphChromeOpen, ...rest } = parsed;
     const merged: UiPreferences = {
       ...DEFAULT_UI_PREFERENCES,
       ...rest,
@@ -230,11 +307,33 @@ export function readUiPreferences(): UiPreferences {
         typeof rest.detailsPanelPinned === 'boolean'
           ? rest.detailsPanelPinned
           : Boolean(detailsPanelExpanded),
+      graphChromeMode: isGraphChromeMode(rest.graphChromeMode)
+        ? rest.graphChromeMode
+        : graphChromeOpen === false
+          ? 'hidden'
+          : graphChromeOpen === true
+            ? 'map-controls'
+            : DEFAULT_UI_PREFERENCES.graphChromeMode,
       chainAttributeDirection:
+        rest.chainAttributeDirection === 'above' ||
         rest.chainAttributeDirection === 'below' ||
         rest.chainAttributeDirection === 'below-extended'
           ? rest.chainAttributeDirection
-          : 'above',
+          : DEFAULT_UI_PREFERENCES.chainAttributeDirection,
+      animateChainLayout:
+        typeof rest.animateChainLayout === 'boolean'
+          ? rest.animateChainLayout
+          : DEFAULT_UI_PREFERENCES.animateChainLayout,
+      stepAnimateChainLayout:
+        typeof rest.stepAnimateChainLayout === 'boolean'
+          ? rest.stepAnimateChainLayout
+          : DEFAULT_UI_PREFERENCES.stepAnimateChainLayout,
+      stepAnimateChainLayoutSpeed:
+        rest.stepAnimateChainLayoutSpeed === 'slow' ||
+        rest.stepAnimateChainLayoutSpeed === 'normal' ||
+        rest.stepAnimateChainLayoutSpeed === 'fast'
+          ? rest.stepAnimateChainLayoutSpeed
+          : DEFAULT_UI_PREFERENCES.stepAnimateChainLayoutSpeed,
     };
     return migrateLegacyDetailsPref(merged);
   } catch {

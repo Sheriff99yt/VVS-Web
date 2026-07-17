@@ -22,4 +22,5 @@ export {
   resolveProjectFolderHandle,
   linkLocalProjectToFolder,
   hasStoredFolderHandle,
+  type LinkedFolderProject,
 } from './openDirectory';

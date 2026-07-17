@@ -18,12 +18,13 @@ export function isTreeSymbolSelection(type: SelectionType): boolean {
  */
 export function clearCanvasSelectionKeepTreeSymbol(prev: SelectionState): SelectionState {
   if (isTreeSymbolSelection(prev.type)) return prev;
+  if (prev.type === 'code') return prev;
   if (prev.type === 'node') return { type: 'graph', id: null };
   if (prev.type === 'graph' && prev.id === null) return prev;
   return { type: 'graph', id: null };
 }
 
-/** Canvas node picks override tree symbol focus; deselect preserves tree symbols. */
+/** Canvas node picks override tree symbol focus; deselect preserves tree symbols and code preview. */
 export function selectionFromCanvasNodes(
   prev: SelectionState,
   selectedNodeIds: string[]

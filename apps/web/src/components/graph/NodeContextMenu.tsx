@@ -23,7 +23,8 @@ interface NodeContextMenuProps {
   environmentManifest?: ProjectEnvironmentManifest;
   targetLanguage?: TargetLanguage;
   canCreateEvent?: boolean;
-  onNewEventHere?: () => void;
+  /** Same create path as Symbols panel — receives trimmed event name (no leading `on`). */
+  onNewEventHere?: (name: string) => void;
 }
 
 export function NodeContextMenu({
@@ -45,7 +46,10 @@ export function NodeContextMenu({
   onNewEventHere,
 }: NodeContextMenuProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [creatingEvent, setCreatingEvent] = useState(false);
+  const [newEventName, setNewEventName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const eventNameRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const allCategories = useMemo(
@@ -82,10 +86,22 @@ export function NodeContextMenu({
     ]
   );
 
-  // Focus search input on mount
+  // Focus search input on mount (unless creating an event).
   useEffect(() => {
+    if (creatingEvent) {
+      eventNameRef.current?.focus();
+      return;
+    }
     inputRef.current?.focus();
-  }, []);
+  }, [creatingEvent]);
+
+  const submitNewEvent = () => {
+    if (!onNewEventHere) return;
+    const name = newEventName.trim().replace(/^on\s+/i, '');
+    if (!name) return;
+    onNewEventHere(name);
+    onClose();
+  };
 
   // Filter categories based on search and pin filter
   const filteredCategories = allCategories
@@ -168,17 +184,56 @@ export function NodeContextMenu({
       
       <div className="flex-1 overflow-y-auto max-h-64 p-2 space-y-4">
         {canCreateEvent && onNewEventHere ? (
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                onNewEventHere();
-                onClose();
-              }}
-              className="w-full text-left text-xs text-indigo-200 hover:bg-indigo-500/10 rounded px-2 py-1.5 transition-colors border border-indigo-500/20"
-            >
-              New event here…
-            </button>
+          <div className="space-y-1.5">
+            {creatingEvent ? (
+              <div className="rounded border border-indigo-500/25 bg-indigo-500/5 p-2 space-y-1.5">
+                <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">
+                  New event
+                </p>
+                <input
+                  ref={eventNameRef}
+                  type="text"
+                  placeholder="Event name"
+                  value={newEventName}
+                  onChange={(e) => setNewEventName(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-[11px] px-2 py-1 rounded focus:outline-none focus:border-zinc-600"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') submitNewEvent();
+                    if (e.key === 'Escape') {
+                      setCreatingEvent(false);
+                      setNewEventName('');
+                    }
+                  }}
+                />
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={submitNewEvent}
+                    className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 text-[11px] px-2 py-1 rounded border border-indigo-500/30"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreatingEvent(false);
+                      setNewEventName('');
+                    }}
+                    className="px-2 py-1 rounded text-[10px] text-zinc-500 border border-zinc-800 hover:text-zinc-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCreatingEvent(true)}
+                className="w-full text-left text-xs text-indigo-200 hover:bg-indigo-500/10 rounded px-2 py-1.5 transition-colors border border-indigo-500/20"
+              >
+                New event here…
+              </button>
+            )}
           </div>
         ) : null}
         {filteredCategories.map(category => (

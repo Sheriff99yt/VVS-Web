@@ -60,14 +60,13 @@ Stable facts agents should assume without re-exploring the tree.
 - **Member declare:** `VarDefine` template + pack `layout.varDeclIndent` for python/cpp variable declarations.
 - **Indent:** `bodyIndent` / `handlerBodyIndent` read from pack `layout` (with JS/Verse fallbacks in `graphToIr.ts`).
 
-## MCP & HTTP (Phase 1 local / Phase 2 VPS)
+## MCP & HTTP (local experiments — not product hosting)
 
-- MCP URL (Connect AI modal): `http://localhost:8080/mcp` — production: HTTPS + JWT ([deployment.md](../../docs/deployment.md))
-- API base: `NEXT_PUBLIC_API_URL` default `http://localhost:8080`
-- HTTP mode: `NEXT_PUBLIC_API_MODE=http` — `VvsApi.saveProject`, `loadProject`, `listProjects`, `compileProject`, `probeMcp`, `getHealth`
-- Auth env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — JWT in `sessionStorage` → Bearer on project APIs
-- Go env: `DATABASE_URL` (postgres), `AUTH_REQUIRED`, `SUPABASE_JWT_SECRET`
-- Persistence: Go **`pgx`** → self-hosted Postgres JSONB — **not** PostgREST
+- Product default: **client-only** editor; **no dedicated server**
+- Local MCP on the user’s machine (desktop) is allowed — paste config in Connect AI
+- `server/` Go + Postgres/Auth remain in-repo for experiments; hide HTTP/cloud chrome by default
+- Persistence product path: folder / `.vvs/` / git — **not** `pgx` on a VPS
+- Optional local experiment env (not product): `NEXT_PUBLIC_API_MODE=http`, `DATABASE_URL`, GoTrue — see legacy [deployment.md](../../docs/deployment.md)
 
 ## Codegen fidelity (strict)
 
@@ -87,14 +86,15 @@ Stable facts agents should assume without re-exploring the tree.
 - Panel dual-write: `defineNodeSync`, `useSymbolLifecycle`, `add*WithDefine` in `ProjectTree.tsx` / `GraphCanvas.tsx`
 - Compile gate: TopNav blocks Generate when `!analyzeProject(...).ok`
 
-**Active pilot (July 2026):** Coverage Lab (Machine+Sensor). **Verify as Code panel shows.** **Locked:** one graph → one file (all classes; no split-class profile — want two files → two graphs). Modifier chips disable when ineffective. Single-pass `appendIrMembersInOrder`. Imports: once at file top + conditional flow Import (`targetLanguages`; optional `ownerClassId`). Event defines: Y-ordered peers. **U79:** chain = primary order; Y = secondary for unconnected heads; teaching warnings only. Next: U77–U78. Do not invent keywords / includes / Default / file layout.
+**Active pilot (July 2026):** Coverage Lab (Machine+Sensor). **Verify as Code panel shows.** **Locked:** one graph → one file; **no live code execution** (logical checks/warnings only); **U83 canvas virtualization** shipped. Modifier chips disable when ineffective. Next: U77–U78. Do not invent keywords / includes / Default / file layout / Play runners.
+
 
 **U66/U67 (shipped):** `packages/language-profiles/src/nodeEffectiveness.ts` — gated Import Module **and** non-abstract Function Declare (non-C++) → `(x)` comments (Code panel toggle) + canvas dim (TopNav Dim). Prefs `showUnsupportedComments` / `dimUnsupportedNodes` default on.
 
 ## Agent assets
 
 - Rules: `.agents/AGENTS.md`
-- Skills: `.agents/skills/*/SKILL.md` — fidelity, usability (**panel-first**), transpiler, cross-language
+- Skills: `.agents/skills/*/SKILL.md` — fidelity, usability (**panel-first**), transpiler, cross-language (`vvs_cross_language_mapping/SKILL.md` → one of `cpp.md` / `python.md` / …)
 - Memory: `.agents/memory/` — `decisions.md`, `workspace-facts.md`, `incomplete-ui.md`
 - Canonical UI/codegen state: `docs/current_state.md`
 

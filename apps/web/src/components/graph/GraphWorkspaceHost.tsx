@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, startTransition } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { NodeChange, EdgeChange, applyNodeChanges } from '@xyflow/react';
 import { useGraphState } from '@/hooks/useGraphState';
 import { useGraphTabSync } from '@/hooks/useGraphTabSync';
@@ -11,12 +11,10 @@ import { useProject } from '@/contexts/ProjectContext';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { VVSNode, VVSEdge } from '@/types/graph';
 import { appendUnlockedCommentFollowChanges } from '@/lib/graphCommentMembership';
-import { syncEventDeclareYFromOnHandlers } from '@/lib/syncEventDeclareYFromOnHandlers';
 import {
   dualWriteLibraryImportDefines,
   type LibraryImportPayload,
 } from '@/lib/libraryImport';
-import { resolveNodeKindId } from '@vvs/graph-types';
 
 interface GraphWorkspaceHostProps {
   initialNodes?: VVSNode[];
@@ -148,39 +146,15 @@ export function GraphWorkspaceHost({
       );
       onNodesChangeBase(withFollow);
       if (isSignificant) {
-        startTransition(() => markCurrentTabDirty());
+        // Sync — must mark dirty before document flush so Auto-generate-off
+        // freezes the Code panel on the prior emit (not the new graph).
+        markCurrentTabDirty();
       }
       if (dragEnded) {
-        let nextNodes = applyNodeChanges(withFollow, nodes) as VVSNode[];
-        const movedIds = new Set(
-          withFollow.filter((c) => c.type === 'position').map((c) => c.id)
-        );
-        const movedOnHandler = nextNodes.some(
-          (n) => movedIds.has(n.id) && resolveNodeKindId(n.data) === 'event_define'
-        );
-        if (movedOnHandler) {
-          nextNodes = syncEventDeclareYFromOnHandlers(nextNodes);
-        }
-        flushAndNotify(nextNodes);
-        if (movedOnHandler) {
-          // Keep RF canvas Declares in sync with documents.
-          onNodesChangeBase(
-            nextNodes
-              .filter((n) => {
-                const prev = nodes.find((p) => p.id === n.id);
-                return (
-                  prev &&
-                  (prev.position.x !== n.position.x || prev.position.y !== n.position.y)
-                );
-              })
-              .map((n) => ({
-                type: 'position' as const,
-                id: n.id,
-                position: n.position,
-                dragging: false,
-              }))
-          );
-        }
+        // Flush final positions into documents. Do not teleport sibling nodes
+        // (e.g. Event Declare / Call) when an On handler is dragged — U79 order
+        // still comes from Event Declare Y; rearrange Declares to change order.
+        flushAndNotify(applyNodeChanges(withFollow, nodes) as VVSNode[]);
       }
     },
     [nodes, onNodesChangeBase, markCurrentTabDirty, flushAndNotify]

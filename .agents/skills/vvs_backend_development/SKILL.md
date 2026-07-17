@@ -24,7 +24,7 @@ description: Triggers when writing Go code, API handlers, or MCP tools in the se
 | MCP transport | `internal/transport/mcp/` — thin tool wrappers; pass `ctx` to services |
 | Entry | `cmd/vvs-server/main.go` — `OpenFromEnv`, auth middleware on all routes, health JSON |
 
-**Not started:** WebSocket collaboration, production VPS deploy, JWKS (HS256 via `SUPABASE_JWT_SECRET` today).
+**Not started / not product:** WebSocket collaboration as hosted service; **dedicated VPS deploy** (out of scope — client-first). Local JWT experiments may remain in `server/`.
 
 # Canvas source of truth (locked)
 

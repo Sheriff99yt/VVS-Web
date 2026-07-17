@@ -12,7 +12,13 @@ import {
   type ExecChainGraph,
 } from './graphExecChains';
 
-export const CHAIN_LAYOUT_DOUBLE_TAP_MS = 350;
+/**
+ * After an S that expands (or re-affirms) downstream selection, a second S within
+ * this window runs layout. Long enough for S → glance → S, not only a rapid double-tap.
+ */
+export const CHAIN_LAYOUT_SECOND_S_MS = 2000;
+/** Duration for animated S S layout moves when the preference is on. */
+export const CHAIN_LAYOUT_ANIM_MS = 280;
 
 export type ChainAttributeDirection = 'above' | 'below' | 'below-extended';
 
@@ -31,6 +37,119 @@ export type ChainLayoutPositions = Map<string, { x: number; y: number }>;
 export interface ChainLayoutStrategy {
   id: ChainLayoutStrategyId;
   layout: (input: ChainLayoutInput) => ChainLayoutPositions;
+}
+
+export function easeOutCubic(t: number): number {
+  const x = Math.min(1, Math.max(0, t));
+  return 1 - (1 - x) ** 3;
+}
+
+export type StepAnimateChainLayoutSpeed = 'slow' | 'normal' | 'fast';
+
+/** Map UI speed preset → per-column duration and stagger. */
+export function stepAnimateTiming(speed: StepAnimateChainLayoutSpeed): {
+  stepDurationMs: number;
+  staggerMs: number;
+} {
+  switch (speed) {
+    case 'slow':
+      return { stepDurationMs: 560, staggerMs: 110 };
+    case 'fast':
+      return { stepDurationMs: 160, staggerMs: 24 };
+    default:
+      // Former "slow" — now the default cadence.
+      return { stepDurationMs: 420, staggerMs: 80 };
+  }
+}
+
+/** Absolute positions for the given node ids (for layout animation start frames). */
+export function captureAbsolutePositions(
+  nodes: readonly VVSNode[],
+  ids: Iterable<string>
+): ChainLayoutPositions {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const out: ChainLayoutPositions = new Map();
+  for (const id of ids) {
+    const n = byId.get(id);
+    if (n) out.set(id, absolutePosition(n, byId));
+  }
+  return out;
+}
+
+/** Linear interpolate absolute layout targets (keys from `to`). */
+export function lerpChainLayoutPositions(
+  from: ChainLayoutPositions,
+  to: ChainLayoutPositions,
+  t: number
+): ChainLayoutPositions {
+  const out: ChainLayoutPositions = new Map();
+  for (const [id, target] of to) {
+    const start = from.get(id) ?? target;
+    out.set(id, {
+      x: start.x + (target.x - start.x) * t,
+      y: start.y + (target.y - start.y) * t,
+    });
+  }
+  return out;
+}
+
+const COLUMN_BUCKET_EPS = 24;
+
+/**
+ * Group target positions into left→right columns for staggered step animation.
+ * Nodes in the same column move together; columns start in sequence.
+ */
+export function orderLayoutStepsByColumn(to: ChainLayoutPositions): string[][] {
+  const entries = [...to.entries()].sort(
+    (a, b) => a[1].x - b[1].x || a[1].y - b[1].y || a[0].localeCompare(b[0])
+  );
+  const columns: string[][] = [];
+  for (const [id, pos] of entries) {
+    const last = columns[columns.length - 1];
+    if (!last) {
+      columns.push([id]);
+      continue;
+    }
+    const lastX = to.get(last[0]!)!.x;
+    if (Math.abs(pos.x - lastX) <= COLUMN_BUCKET_EPS) last.push(id);
+    else columns.push([id]);
+  }
+  return columns;
+}
+
+/**
+ * Staggered column lerp. `elapsedMs` is time since animation start.
+ * Columns that have not started yet stay at `from`.
+ */
+export function lerpChainLayoutPositionsStepped(
+  from: ChainLayoutPositions,
+  to: ChainLayoutPositions,
+  steps: readonly string[][],
+  elapsedMs: number,
+  stepDurationMs: number,
+  staggerMs: number
+): { positions: ChainLayoutPositions; done: boolean } {
+  const out: ChainLayoutPositions = new Map();
+  let done = true;
+  for (let si = 0; si < steps.length; si++) {
+    const local = Math.min(1, Math.max(0, (elapsedMs - si * staggerMs) / stepDurationMs));
+    if (local < 1) done = false;
+    const eased = easeOutCubic(local);
+    for (const id of steps[si]!) {
+      const target = to.get(id);
+      if (!target) continue;
+      const start = from.get(id) ?? target;
+      out.set(id, {
+        x: start.x + (target.x - start.x) * eased,
+        y: start.y + (target.y - start.y) * eased,
+      });
+    }
+  }
+  // Include any targets missing from steps (shouldn't happen) at full blend.
+  for (const [id, target] of to) {
+    if (!out.has(id)) out.set(id, target);
+  }
+  return { positions: out, done };
 }
 
 const DEFAULT_NODE_W = 180;
@@ -584,7 +703,7 @@ export function applyLayoutPositionsToNodes(
 
 /** Default strategy: topo columns left→right, parallel outs as vertical lanes. */
 export function layoutLaneTopoV1(input: ChainLayoutInput): ChainLayoutPositions {
-  const { nodes, edges, selectedIds, attributeDirection = 'above' } = input;
+  const { nodes, edges, selectedIds, attributeDirection = 'below-extended' } = input;
   const out: ChainLayoutPositions = new Map();
   if (selectedIds.size === 0) return out;
 

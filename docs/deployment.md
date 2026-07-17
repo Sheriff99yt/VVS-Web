@@ -1,8 +1,10 @@
 # Deployment & Persistence Architecture
 
-**Status:** Locked July 2026 — final production direction (not a placeholder stack).
+> **Product direction (July 2026):** VVS is **client-first** — **no dedicated server hosting** as the official product. Prefer local / folder / `.vvs/` / git and static Pages. This document describes a **legacy / experimental** self-host stack that remains in the repo for reference; do **not** treat VPS deploy as open roadmap work. See [roadmap.md](roadmap.md) § Client-first · `.agents/memory/decisions.md` § No dedicated server hosting.
 
-This document defines how VVS is hosted, how data is stored, and how auth integrates with the existing Go API and MCP server. See also [roadmap.md](roadmap.md) Phase 2, [vvs_2_0_tech_stack.md](vvs_2_0_tech_stack.md), and `.agents/memory/decisions.md`.
+**Status (historical):** Architecture notes below were locked for an optional self-host path — superseded as **product** direction by client-first (not deleted from the repo).
+
+This document defines how a self-hosted stack *could* work (Go API, Postgres, GoTrue). See also [roadmap.md](roadmap.md), [vvs_2_0_tech_stack.md](vvs_2_0_tech_stack.md), and `.agents/memory/decisions.md`.
 
 ---
 

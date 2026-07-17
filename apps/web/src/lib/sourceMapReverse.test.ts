@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { findNodeIdAtSourceLocation } from './sourceMapReverse';
+import { findNodeIdAtSourceLocation, findGraphTabContainingNodeId } from './sourceMapReverse';
 import type { SourceRange } from '@vvs/graph-types';
 
 describe('findNodeIdAtSourceLocation', () => {
@@ -55,5 +55,21 @@ describe('findNodeIdAtSourceLocation', () => {
     expect(
       findNodeIdAtSourceLocation(sourceMap, { filePath: 'other.py', line: 5 })
     ).toBe('other-file');
+  });
+});
+
+describe('findGraphTabContainingNodeId', () => {
+  test('returns the document tab that owns the node', () => {
+    const documents = {
+      'class-home': { nodes: [{ id: 'define-fn' }] },
+      'fn-boot': { nodes: [{ id: 'lab-boot-print' }, { id: 'entry' }] },
+    };
+    expect(findGraphTabContainingNodeId(documents, 'lab-boot-print')).toBe('fn-boot');
+    expect(findGraphTabContainingNodeId(documents, 'define-fn')).toBe('class-home');
+  });
+
+  test('returns null when the node is missing', () => {
+    expect(findGraphTabContainingNodeId({ a: { nodes: [] } }, 'missing')).toBeNull();
+    expect(findGraphTabContainingNodeId(null, 'x')).toBeNull();
   });
 });

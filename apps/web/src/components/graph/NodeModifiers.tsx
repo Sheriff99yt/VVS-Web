@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
@@ -22,24 +22,167 @@ interface NodeModifiersProps {
   data: VVSNodeData;
 }
 
-const MODIFIER_CHIP_CONFIG: Array<{
+type MenuOption = {
+  value: string;
+  label: string;
+};
+
+const BOOL_MODIFIERS: Array<{
   schemaKey: string;
   modifierKey: ModifierKey;
   title: string;
   icon: React.ReactNode;
   activeClass: string;
+  onLabel: string;
+  offLabel: string;
 }> = [
-  { schemaKey: 'isConst', modifierKey: 'isConst', title: 'Const', icon: <Lock size={11} strokeWidth={2.5} />, activeClass: styles.modifierChipActiveConst },
-  { schemaKey: 'isAbstract', modifierKey: 'isAbstract', title: 'Abstract', icon: <Puzzle size={11} strokeWidth={2.5} />, activeClass: styles.modifierChipActiveAmber },
-  { schemaKey: 'isVirtual', modifierKey: 'isVirtual', title: 'Virtual', icon: <Wand2 size={11} strokeWidth={2.5} />, activeClass: styles.modifierChipActivePurple },
-  { schemaKey: 'isOverride', modifierKey: 'isOverride', title: 'Override', icon: <RefreshCcw size={11} strokeWidth={2.5} />, activeClass: styles.modifierChipActiveEmerald },
-  { schemaKey: 'isAsync', modifierKey: 'isAsync', title: 'Async', icon: <Clock size={11} strokeWidth={2.5} />, activeClass: styles.modifierChipActiveIndigo },
+  {
+    schemaKey: 'isConst',
+    modifierKey: 'isConst',
+    title: 'Const',
+    icon: <Lock size={11} strokeWidth={2.5} />,
+    activeClass: styles.modifierChipActiveConst,
+    onLabel: 'Const',
+    offLabel: 'Mutable',
+  },
+  {
+    schemaKey: 'isAbstract',
+    modifierKey: 'isAbstract',
+    title: 'Abstract',
+    icon: <Puzzle size={11} strokeWidth={2.5} />,
+    activeClass: styles.modifierChipActiveAmber,
+    onLabel: 'Abstract',
+    offLabel: 'Concrete',
+  },
+  {
+    schemaKey: 'isVirtual',
+    modifierKey: 'isVirtual',
+    title: 'Virtual',
+    icon: <Wand2 size={11} strokeWidth={2.5} />,
+    activeClass: styles.modifierChipActivePurple,
+    onLabel: 'Virtual',
+    offLabel: 'Non-virtual',
+  },
+  {
+    schemaKey: 'isOverride',
+    modifierKey: 'isOverride',
+    title: 'Override',
+    icon: <RefreshCcw size={11} strokeWidth={2.5} />,
+    activeClass: styles.modifierChipActiveEmerald,
+    onLabel: 'Override',
+    offLabel: 'No override',
+  },
+  {
+    schemaKey: 'isAsync',
+    modifierKey: 'isAsync',
+    title: 'Async',
+    icon: <Clock size={11} strokeWidth={2.5} />,
+    activeClass: styles.modifierChipActiveIndigo,
+    onLabel: 'Async',
+    offLabel: 'Sync',
+  },
 ];
+
+function ModifierDropdown({
+  icon,
+  title,
+  value,
+  options,
+  enabled,
+  disabledTitle,
+  active,
+  activeClass,
+  onChange,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+  options: MenuOption[];
+  enabled: boolean;
+  disabledTitle: string;
+  active: boolean;
+  activeClass?: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  }, []);
+
+  const clearClose = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  const openMenu = () => {
+    clearClose();
+    if (enabled) setOpen(true);
+  };
+
+  const scheduleClose = () => {
+    clearClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 100);
+  };
+
+  const chipClass = [
+    styles.modifierChip,
+    active && enabled ? `${styles.modifierChipActive} ${activeClass ?? ''}` : '',
+    !enabled ? styles.modifierChipDisabled : '',
+    open && enabled ? styles.modifierChipOpen : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <div
+      className={chipClass}
+      title={enabled ? title : disabledTitle}
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+    >
+      {icon}
+      {open && enabled ? (
+        <div
+          className={styles.modifierMenu}
+          role="listbox"
+          aria-label={title}
+          onMouseEnter={openMenu}
+          onMouseLeave={scheduleClose}
+        >
+          {options.map((opt) => {
+            const selected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={`${styles.modifierMenuItem} ${selected ? styles.modifierMenuItemActive : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function NodeModifiers({ id, data }: NodeModifiersProps) {
   const { updateNodeData } = useReactFlow();
   const { variables, functions, events } = useProject();
-  /** Active graph language (falls back to project default) — chips re-evaluate when this changes. */
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const { renameVariable, renameFunction, renameEvent } = useSymbolLifecycle();
 
@@ -51,18 +194,15 @@ export function NodeModifiers({ id, data }: NodeModifiersProps) {
 
   const hasVisibility = hasModifier('visibility');
   const hasBinding = hasModifier('binding');
-  const hasConst = hasModifier('isConst');
-  const hasAbstract = hasModifier('isAbstract');
-  const hasVirtual = hasModifier('isVirtual');
-  const hasOverride = hasModifier('isOverride');
-  const hasAsync = hasModifier('isAsync');
   const bindingField = schema.find((f) => f.key === 'binding');
   const bindingChoices =
     bindingField?.type === 'enum' && bindingField.enumValues?.length
       ? bindingField.enumValues
       : ['instance', 'static'];
 
-  if (!hasVisibility && !hasBinding && !hasConst && !hasAbstract && !hasVirtual && !hasOverride && !hasAsync) {
+  const boolKeysPresent = BOOL_MODIFIERS.some(({ schemaKey }) => hasModifier(schemaKey));
+
+  if (!hasVisibility && !hasBinding && !boolKeysPresent) {
     return null;
   }
 
@@ -128,88 +268,71 @@ export function NodeModifiers({ id, data }: NodeModifiersProps) {
     }
   };
 
-  const chipClass = (active: boolean, enabled: boolean, activeTone?: string) =>
-    [
-      styles.modifierChip,
-      active && enabled ? `${styles.modifierChipActive} ${activeTone ?? ''}` : '',
-      !enabled ? styles.modifierChipDisabled : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
+  const visibilityValue = String(props.visibility ?? 'public');
+  const bindingValue = String(props.binding ?? 'instance');
+
+  const bindingOptions: MenuOption[] = [
+    { value: 'instance', label: 'Instance' },
+    { value: 'static', label: 'Static' },
+    ...(bindingChoices.includes('module') ? [{ value: 'module', label: 'Module' }] : []),
+  ];
 
   return (
     <div className={styles.modifierRow} onMouseDown={(e) => e.stopPropagation()}>
-      {hasVisibility && (
-        <div
-          className={chipClass(false, visibilityEffective)}
-          title={visibilityEffective ? 'Visibility' : modifierIneffectiveTooltip(targetLanguage, 'visibility')}
-        >
-          {getVisibilityIcon(String(props.visibility))}
-          <select
-            value={String(props.visibility)}
-            onChange={(e) => handleUpdate('visibility', e.target.value)}
-            disabled={!visibilityEffective}
-            className={styles.modifierSelect}
-            aria-label="Visibility"
-          >
-            <option value="public" className="bg-zinc-800 text-zinc-200">
-              Public
-            </option>
-            <option value="protected" className="bg-zinc-800 text-zinc-200">
-              Protected
-            </option>
-            <option value="private" className="bg-zinc-800 text-zinc-200">
-              Private
-            </option>
-          </select>
-        </div>
-      )}
+      {hasVisibility ? (
+        <ModifierDropdown
+          icon={getVisibilityIcon(visibilityValue)}
+          title="Visibility"
+          value={visibilityValue}
+          options={[
+            { value: 'public', label: 'Public' },
+            { value: 'protected', label: 'Protected' },
+            { value: 'private', label: 'Private' },
+          ]}
+          enabled={visibilityEffective}
+          disabledTitle={modifierIneffectiveTooltip(targetLanguage, 'visibility')}
+          active={false}
+          onChange={(v) => handleUpdate('visibility', v)}
+        />
+      ) : null}
 
-      {hasBinding && (
-        <div
-          className={chipClass(false, bindingEffective)}
-          title={bindingEffective ? 'Binding' : modifierIneffectiveTooltip(targetLanguage, 'binding')}
-        >
-          {getBindingIcon(String(props.binding))}
-          <select
-            value={String(props.binding)}
-            onChange={(e) => handleUpdate('binding', e.target.value)}
-            disabled={!bindingEffective}
-            className={styles.modifierSelect}
-            aria-label="Binding"
-          >
-            <option value="instance" className="bg-zinc-800 text-zinc-200">
-              Instance
-            </option>
-            <option value="static" className="bg-zinc-800 text-zinc-200">
-              Static
-            </option>
-            {bindingChoices.includes('module') ? (
-              <option value="module" className="bg-zinc-800 text-zinc-200">
-                Module
-              </option>
-            ) : null}
-          </select>
-        </div>
-      )}
+      {hasBinding ? (
+        <ModifierDropdown
+          icon={getBindingIcon(bindingValue)}
+          title="Binding"
+          value={bindingValue}
+          options={bindingOptions}
+          enabled={bindingEffective}
+          disabledTitle={modifierIneffectiveTooltip(targetLanguage, 'binding')}
+          active={false}
+          onChange={(v) => handleUpdate('binding', v)}
+        />
+      ) : null}
 
-      {MODIFIER_CHIP_CONFIG.map(({ schemaKey, modifierKey, title, icon, activeClass }) => {
-        if (!hasModifier(schemaKey)) return null;
-        const enabled = isModifierInteractive(targetLanguage, modifierKey);
-        const active = Boolean(props[schemaKey as keyof typeof props]);
-        return (
-          <button
-            key={`${schemaKey}-${targetLanguage}`}
-            type="button"
-            onClick={() => enabled && handleUpdate(schemaKey, !active)}
-            disabled={!enabled}
-            className={chipClass(active, enabled, activeClass)}
-            title={enabled ? title : modifierIneffectiveTooltip(targetLanguage, modifierKey)}
-          >
-            {icon}
-          </button>
-        );
-      })}
+      {BOOL_MODIFIERS.map(
+        ({ schemaKey, modifierKey, title, icon, activeClass, onLabel, offLabel }) => {
+          if (!hasModifier(schemaKey)) return null;
+          const enabled = isModifierInteractive(targetLanguage, modifierKey);
+          const active = Boolean(props[schemaKey as keyof typeof props]);
+          return (
+            <ModifierDropdown
+              key={`${schemaKey}-${targetLanguage}`}
+              icon={icon}
+              title={title}
+              value={active ? 'true' : 'false'}
+              options={[
+                { value: 'true', label: onLabel },
+                { value: 'false', label: offLabel },
+              ]}
+              enabled={enabled}
+              disabledTitle={modifierIneffectiveTooltip(targetLanguage, modifierKey)}
+              active={active}
+              activeClass={activeClass}
+              onChange={(v) => handleUpdate(schemaKey, v === 'true')}
+            />
+          );
+        }
+      )}
     </div>
   );
 }

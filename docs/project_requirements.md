@@ -65,7 +65,7 @@ This document captures functional and non-functional requirements for Vision Vis
 ### 3.1 Visual Graph Editor
 - [ ] Render a node-based graph canvas with draggable nodes and wire connections
 - [ ] Support **500+ nodes** in a single graph without frame drops (target: 60fps)
-- [ ] Only render nodes currently visible on screen (virtualization)
+- [x] Only render nodes currently visible on screen (virtualization)
 - [ ] Support sub-graphs / nested node groups
 - [ ] Provide a minimap for navigation on large graphs
 - [ ] Support zoom, pan, and fit-to-view controls
@@ -131,7 +131,7 @@ This document captures functional and non-functional requirements for Vision Vis
 ## 4. Non-Functional Requirements
 
 ### 4.1 Performance
-- [ ] Graph editor maintains **60fps** with 500+ nodes via virtualization
+- [x] Graph editor maintains **60fps** with 500+ nodes via virtualization
 - [ ] Code generation for a 500-node graph completes in **< 100ms** (client-side TypeScript transpiler)
 - [ ] Initial page load (Time to Interactive) under **3 seconds** on 4G mobile
 - [ ] Bundle size is a **mild concern** — acceptable to be slightly larger if it provides ecosystem and maturity benefits (confirmed trade-off)

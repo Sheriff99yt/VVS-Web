@@ -24,13 +24,20 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
   const [chainAttributeDirection, setChainAttributeDirection] = useUiPreference(
     'chainAttributeDirection'
   );
+  const [animateChainLayout, setAnimateChainLayout] = useUiPreference('animateChainLayout');
+  const [stepAnimateChainLayout, setStepAnimateChainLayout] = useUiPreference(
+    'stepAnimateChainLayout'
+  );
+  const [stepAnimateChainLayoutSpeed, setStepAnimateChainLayoutSpeed] = useUiPreference(
+    'stepAnimateChainLayoutSpeed'
+  );
   const {
     codeOpen,
     graphNavOpen,
-    graphChromeOpen,
+    graphChromeMode,
     toggleCode,
     toggleGraphNav,
-    toggleGraphChrome,
+    setGraphChromeMode,
   } = useEditorPanels();
 
   return (
@@ -75,6 +82,29 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
           ]}
           onChange={setChainAttributeDirection}
         />
+        <ToggleRow
+          label="Animate auto layout"
+          description="Smoothly move nodes when running S S chain layout"
+          checked={animateChainLayout}
+          onChange={setAnimateChainLayout}
+        />
+        <ToggleRow
+          label="Step animate layout"
+          description="When animation is on, move columns left-to-right in sequence instead of all at once"
+          checked={stepAnimateChainLayout}
+          onChange={setStepAnimateChainLayout}
+        />
+        <ChoiceRow
+          label="Step animation speed"
+          description="How quickly staggered columns move during S S layout"
+          value={stepAnimateChainLayoutSpeed}
+          options={[
+            { value: 'slow', label: 'Slow' },
+            { value: 'normal', label: 'Normal' },
+            { value: 'fast', label: 'Fast' },
+          ]}
+          onChange={setStepAnimateChainLayoutSpeed}
+        />
       </section>
 
       <section className="space-y-2 border-t border-zinc-800/80 pt-4">
@@ -97,13 +127,16 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
             if (next !== graphNavOpen) toggleGraphNav();
           }}
         />
-        <ToggleRow
-          label="Minimap & zoom chrome"
-          description="Show React Flow controls on the canvas"
-          checked={graphChromeOpen}
-          onChange={(next) => {
-            if (next !== graphChromeOpen) toggleGraphChrome();
-          }}
+        <ChoiceRow
+          label="Minimap"
+          description={`Canvas map chrome (${shortcutKeys('toggle-minimap')} cycles) — map, map + zoom controls, or hidden`}
+          value={graphChromeMode}
+          options={[
+            { value: 'map', label: 'Map' },
+            { value: 'map-controls', label: 'Map + controls' },
+            { value: 'hidden', label: 'Hidden' },
+          ]}
+          onChange={setGraphChromeMode}
         />
       </section>
 
@@ -142,10 +175,10 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
             dispatchOpenShortcutsHelp();
           }}
           className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
-          title={`Keyboard shortcuts (${shortcutKeys('help')})`}
+          title={`Canvas help (${shortcutKeys('help')})`}
         >
           <Keyboard size={12} className="text-zinc-500 shrink-0" />
-          <span className="flex-1">Keyboard shortcuts</span>
+          <span className="flex-1">Canvas help</span>
           <span className="text-[9px] text-zinc-600">{shortcutKeys('help')}</span>
         </button>
       </section>

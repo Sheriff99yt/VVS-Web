@@ -1,5 +1,9 @@
 import { normalizeProjectSnapshot, ProjectSnapshot } from '@/types/projectSnapshot';
-import { RecentProjectEntry, ProjectSource } from '@/types/projectRegistry';
+import {
+  RecentProjectEntry,
+  ProjectSource,
+  type ProjectStorageKind,
+} from '@/types/projectRegistry';
 import { notifyRecentProjectsChanged } from '@/lib/recentProjectsSubscribe';
 
 const RECENT_KEY = 'vvs_recent_projects';
@@ -44,7 +48,7 @@ export function removeProjectDraft(projectId: string): void {
 }
 
 export function createProjectId(): string {
-  return `proj-${Date.now()}`;
+  return `proj-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export function listRecentProjects(): RecentProjectEntry[] {
@@ -93,15 +97,18 @@ export function upsertRecentProject(entry: RecentProjectEntry): void {
   notifyRecentProjectsChanged();
 }
 
-export function saveProjectToStore(
+/**
+ * Write project JSON to localStorage only — does **not** touch the recent list.
+ * Use for fixture caches / dual-write mirrors that must not resurrect deleted recents.
+ */
+export function writeProjectPayload(
   projectId: string,
-  snapshot: ProjectSnapshot,
-  source?: ProjectSource
+  snapshot: ProjectSnapshot
 ): ProjectSnapshot {
   const saved: ProjectSnapshot = {
     ...snapshot,
     projectId,
-    savedAt: new Date().toISOString(),
+    savedAt: snapshot.savedAt || new Date().toISOString(),
   };
   try {
     localStorage.setItem(projectKey(projectId), JSON.stringify(saved));
@@ -111,18 +118,35 @@ export function saveProjectToStore(
     );
   }
   removeProjectDraft(projectId);
+  return saved;
+}
+
+export function saveProjectToStore(
+  projectId: string,
+  snapshot: ProjectSnapshot,
+  source?: ProjectSource,
+  options?: { storage?: ProjectStorageKind; folderLabel?: string | null }
+): ProjectSnapshot {
+  const saved = writeProjectPayload(projectId, {
+    ...snapshot,
+    savedAt: new Date().toISOString(),
+  });
   const existing = getRecentProjectEntry(projectId);
   upsertRecent({
     id: projectId,
     moduleName: snapshot.projectDetails.moduleName || 'Untitled',
     savedAt: saved.savedAt,
-    source: source ?? 'recent',
-    storage: existing?.storage,
-    folderLabel: existing?.folderLabel,
+    source: source ?? existing?.source ?? 'recent',
+    storage: options?.storage ?? existing?.storage ?? 'local',
+    folderLabel:
+      options?.folderLabel !== undefined
+        ? (options.folderLabel ?? undefined)
+        : existing?.folderLabel,
   });
   notifyRecentProjectsChanged();
   return saved;
 }
+
 
 export function loadProjectFromStore(projectId: string): ProjectSnapshot | null {
   if (typeof window === 'undefined') return null;
@@ -150,6 +174,20 @@ export function removeFromRecentList(projectId: string): void {
 export function removeProjectFromStore(projectId: string): void {
   localStorage.removeItem(projectKey(projectId));
   removeFromRecentList(projectId);
+  notifyRecentProjectsChanged();
+}
+
+/**
+ * Drop legacy stable Test Project ids from the recent list (they polluted recents
+ * when seed used saveProjectToStore). Payloads under those keys are left alone for CI.
+ */
+export function pruneStableTestProjectsFromRecent(): void {
+  if (typeof window === 'undefined') return;
+  const before = listRecentProjects();
+  const next = before.filter((e) => !e.id.startsWith('vvs-test-'));
+  if (next.length === before.length) return;
+  writeRecent(next);
+  notifyRecentProjectsChanged();
 }
 
 export function registerProjectIfNew(

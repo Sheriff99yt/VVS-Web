@@ -1,4 +1,5 @@
 .nodeContainer {
+  position: relative;
   background-color: #18181b; /* Modern Zinc-900 */
   border: 1px solid #27272a; /* Zinc-800 */
   border-radius: 12px;
@@ -6,7 +7,8 @@
   max-width: 260px;
   font-family: var(--font-sans);
   color: var(--vvs-text-primary);
-  overflow: hidden;
+  /* visible so modifier hover menus can extend past the card */
+  overflow: visible;
   transition: border-color 0.15s ease;
   
   /* No top border, color applied to header */
@@ -44,8 +46,7 @@
 
 .header {
   padding: 8px 12px;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  border-radius: 12px 12px 0 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -67,12 +68,49 @@
   min-width: 0;
 }
 
+/** Selected-only chrome — just above the card; selection toolbar sits higher. */
+.headerOverlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.headerOverlay > * {
+  pointer-events: auto;
+}
+
+.headerOverlayMeta {
+  max-width: 100%;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #3f3f46;
+  background: #18181b;
+  font-size: 9px;
+  line-height: 1.25;
+  color: #a1a1aa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .modifierRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 1px;
-  margin: 0 -2px;
+  margin: 0;
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid #3f3f46;
+  background: #18181b;
 }
 
 .modifierChip {
@@ -93,6 +131,12 @@
 .modifierChip:hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.1);
   color: #fafafa;
+}
+
+.modifierChipOpen {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fafafa;
+  z-index: 5;
 }
 
 .modifierChipActive {
@@ -136,17 +180,52 @@
   color: #a1a1aa;
 }
 
-.modifierSelect {
+.modifierMenu {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 92px;
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #18181b;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  z-index: 40;
 }
 
-.modifierSelect:disabled {
-  cursor: not-allowed;
+.modifierMenuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #d4d4d8;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.modifierMenuItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fafafa;
+}
+
+.modifierMenuItemActive {
+  background: rgba(99, 102, 241, 0.22);
+  color: #e0e7ff;
+}
+
+.modifierMenuItemActive:hover {
+  background: rgba(99, 102, 241, 0.3);
+  color: #eef2ff;
 }
 
 .linkedSubtitle {

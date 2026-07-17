@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { dispatchGraphAction } from '@/lib/graphActions';
-import { CHAIN_LAYOUT_DOUBLE_TAP_MS } from '@/lib/graphChainLayout';
 import { isTypingTarget } from '@/lib/graphShortcuts';
 import {
   dispatchFocusGraphNodeSearch,
+  dispatchFocusProjectTreeFilter,
   dispatchToggleCompilerLogPin,
+  dispatchToggleGraphChrome,
 } from '@/lib/uiPreferences';
 
 export interface GraphKeyboardHandlers {
@@ -20,6 +21,11 @@ export interface GraphKeyboardHandlers {
   isHelpOpen: boolean;
   /** When true, canvas shortcuts are suppressed (e.g. node search expanded). */
   suppressCanvasShortcuts?: boolean;
+  /**
+   * Name of the selected Project-tree symbol (if any) for Find shortcuts.
+   * F → find in this graph; Ctrl+F → find in all graphs.
+   */
+  nodeSearchQueryFromSelection?: () => string | undefined;
 }
 
 /**
@@ -35,9 +41,8 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
     onToggleHelp,
     isHelpOpen,
     suppressCanvasShortcuts = false,
+    nodeSearchQueryFromSelection,
   } = handlers;
-
-  const lastChainSelectSAt = useRef(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -49,11 +54,34 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
 
       if (isHelpOpen) return;
 
-      if (isTypingTarget()) return;
-      if (suppressCanvasShortcuts) return;
+      // Ctrl+Space — left panel filter (works even while typing / node search is open).
+      // Prefer ctrl over meta (⌘Space is Spotlight on macOS).
+      if (e.code === 'Space' && e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        dispatchFocusProjectTreeFilter();
+        return;
+      }
 
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
+
+      // Ctrl/Cmd+F — graph node search (all graphs). Allow from plain inputs (incl. node search);
+      // leave TEXTAREA / contenteditable to code-editor find.
+      if (mod && key === 'f' && !e.shiftKey && !e.altKey) {
+        const el = document.activeElement as HTMLElement | null;
+        const tag = el?.tagName;
+        if (tag === 'TEXTAREA' || el?.isContentEditable) {
+          return;
+        }
+        e.preventDefault();
+        dispatchFocusGraphNodeSearch(nodeSearchQueryFromSelection?.(), {
+          searchAllGraphs: true,
+        });
+        return;
+      }
+
+      if (isTypingTarget()) return;
+      if (suppressCanvasShortcuts) return;
 
       if (e.key === '?' && !mod && !e.altKey) {
         e.preventDefault();
@@ -63,23 +91,18 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
 
       // U75: bare A expands to full undirected exec chain (Ctrl+A remains select-all).
       if (key === 'a' && !mod && !e.shiftKey && !e.altKey) {
+        if (e.repeat) return;
         e.preventDefault();
         dispatchGraphAction('select-chain-full');
         return;
       }
 
-      // U75: S = select downstream from selection; S S (double-tap) = S then layout (atomic).
-      // Double-tap window: CHAIN_LAYOUT_DOUBLE_TAP_MS in graphChainLayout.ts
+      // U75: S = select downstream; second S (armed in GraphCanvas) = layout.
+      // Ignore key-repeat so holding S cannot fake S S.
       if (key === 's' && !mod && !e.shiftKey && !e.altKey) {
+        if (e.repeat) return;
         e.preventDefault();
-        const now = performance.now();
-        const isDoubleTap = now - lastChainSelectSAt.current <= CHAIN_LAYOUT_DOUBLE_TAP_MS;
-        lastChainSelectSAt.current = isDoubleTap ? 0 : now;
-        if (isDoubleTap) {
-          dispatchGraphAction('layout-selected-chains');
-        } else {
-          dispatchGraphAction('select-chain-downstream');
-        }
+        dispatchGraphAction('select-chain-downstream');
         return;
       }
 
@@ -174,6 +197,12 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
         return;
       }
 
+      if (key === 'm' && !mod && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        dispatchToggleGraphChrome();
+        return;
+      }
+
       if (mod && e.shiftKey && key === 'e') {
         e.preventDefault();
         dispatchGraphAction('extract-function');
@@ -182,24 +211,30 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
 
       if (key === 'f' && !mod && !e.shiftKey && !e.altKey) {
         e.preventDefault();
+        const symbolQuery = nodeSearchQueryFromSelection?.();
+        if (symbolQuery) {
+          // Find selected symbol in the current graph only.
+          dispatchFocusGraphNodeSearch(symbolQuery, { searchAllGraphs: false });
+          return;
+        }
         dispatchGraphAction('focus-selection');
         return;
       }
 
-      // Backtick / tilde — toggle compiler log pin.
+      // Backtick / tilde — toggle compiler log open/closed.
       if ((e.key === '`' || e.key === '~') && !mod && !e.altKey) {
         e.preventDefault();
         dispatchToggleCompilerLogPin();
         return;
       }
 
+      // Space / Ctrl+K — open search; respect current all-graphs toggle (Ctrl+F forces on).
       if (e.code === 'Space' && !mod) {
         e.preventDefault();
         dispatchFocusGraphNodeSearch();
         return;
       }
 
-      // Keep Ctrl/Cmd+K as alternate search focus.
       if (mod && key === 'k' && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         dispatchFocusGraphNodeSearch();
@@ -209,5 +244,14 @@ export function useGraphKeyboardShortcuts(handlers: GraphKeyboardHandlers) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onUndo, onRedo, canUndo, canRedo, onToggleHelp, isHelpOpen, suppressCanvasShortcuts]);
+  }, [
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo,
+    onToggleHelp,
+    isHelpOpen,
+    suppressCanvasShortcuts,
+    nodeSearchQueryFromSelection,
+  ]);
 }
