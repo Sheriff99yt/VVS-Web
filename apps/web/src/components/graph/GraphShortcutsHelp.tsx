@@ -464,21 +464,23 @@ export function GraphShortcutsHelp({ open, onOpenChange }: GraphShortcutsHelpPro
 
   return (
     <>
-      <Tooltip content={shortcutTitle('help')} placement="bottom">
-        <button
-          type="button"
-          onClick={toggle}
-          className={`absolute top-3 left-3 z-30 w-8 h-8 inline-flex items-center justify-center border rounded-md transition-colors ${
-            open
-              ? 'bg-zinc-800 border-zinc-700 text-zinc-100'
-              : 'bg-zinc-950/90 border-zinc-800 text-zinc-500 hover:text-zinc-200 hover:border-zinc-700'
-          }`}
-          aria-label="Canvas help"
-          aria-expanded={open}
-        >
-          <CircleHelp size={14} />
-        </button>
-      </Tooltip>
+      <div className="absolute top-3 left-3 z-30">
+        <Tooltip content={shortcutTitle('help')} placement="bottom">
+          <button
+            type="button"
+            onClick={toggle}
+            className={`w-8 h-8 inline-flex items-center justify-center border rounded-md transition-colors ${
+              open
+                ? 'bg-zinc-800 border-zinc-700 text-zinc-100'
+                : 'bg-zinc-950/90 border-zinc-800 text-zinc-500 hover:text-zinc-200 hover:border-zinc-700'
+            }`}
+            aria-label="Canvas help"
+            aria-expanded={open}
+          >
+            <CircleHelp size={14} />
+          </button>
+        </Tooltip>
+      </div>
       {overlay}
     </>
   );
