@@ -368,7 +368,7 @@ export function StartScreen() {
             <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
               <BookOpen size={14} /> Usability tests
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {USABILITY_EXAMPLE_TESTS.map((fixture) => (
                 <button
                   key={fixture.id}
@@ -381,10 +381,16 @@ export function StartScreen() {
                       className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded ${
                         fixture.level === 'simple'
                           ? 'text-emerald-400 bg-emerald-500/10'
-                          : 'text-indigo-400 bg-indigo-500/10'
+                          : fixture.level === 'branch'
+                            ? 'text-amber-400 bg-amber-500/10'
+                            : 'text-indigo-400 bg-indigo-500/10'
                       }`}
                     >
-                      {fixture.level === 'simple' ? 'Baseline' : 'Full coverage'}
+                      {fixture.level === 'simple'
+                        ? 'Baseline'
+                        : fixture.level === 'branch'
+                          ? 'Flow'
+                          : 'Full coverage'}
                     </span>
                     <span className="text-[11px] text-zinc-600 font-mono">{fixture.moduleName}</span>
                   </div>

@@ -17,6 +17,9 @@ export type GraphShortcutId =
   | 'zoom-fit'
   | 'disconnect'
   | 'spawn-menu'
+  | 'pan-viewport'
+  | 'additive-select'
+  | 'box-select'
   | 'node-search'
   | 'panel-filter'
   | 'toggle-log-pin'
@@ -106,6 +109,21 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
   },
   { id: 'zoom-fit', label: 'Zoom to fit all', keysWin: '', section: 'canvas' },
   { id: 'spawn-menu', label: 'Spawn node menu', keysWin: 'Right-click', section: 'canvas' },
+  { id: 'pan-viewport', label: 'Pan graph', keysWin: 'Right-drag', keysMac: 'Right-drag', section: 'canvas' },
+  {
+    id: 'additive-select',
+    label: 'Add/toggle node in selection',
+    keysWin: 'Left-click',
+    keysMac: 'Left-click',
+    section: 'canvas',
+  },
+  {
+    id: 'box-select',
+    label: 'Box-select nodes',
+    keysWin: 'Left-drag (empty)',
+    keysMac: 'Left-drag (empty)',
+    section: 'canvas',
+  },
   {
     id: 'node-search',
     label: 'Find in all graphs',

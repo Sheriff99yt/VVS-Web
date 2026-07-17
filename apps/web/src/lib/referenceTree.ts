@@ -40,6 +40,27 @@ export interface ReferenceTreeResult {
   referencersTree?: ReferenceTreeNode;
 }
 
+/**
+ * Keep nodes whose label matches `query`, plus ancestors needed for path context.
+ * Empty query returns the tree unchanged.
+ */
+export function filterReferenceTreeByName(
+  node: ReferenceTreeNode,
+  query: string,
+  labelFor: (graphId: string) => string
+): ReferenceTreeNode | null {
+  const q = query.trim().toLowerCase();
+  if (!q) return node;
+
+  const selfMatch = labelFor(node.graphId).toLowerCase().includes(q);
+  const filteredChildren = node.children
+    .map((child) => filterReferenceTreeByName(child, q, labelFor))
+    .filter((c): c is ReferenceTreeNode => c != null);
+
+  if (!selfMatch && filteredChildren.length === 0) return null;
+  return { ...node, children: filteredChildren };
+}
+
 function peerGraphId(ref: GraphReference, direction: 'dependencies' | 'referencers'): string {
   return direction === 'dependencies' ? ref.toGraphId : ref.fromGraphId;
 }

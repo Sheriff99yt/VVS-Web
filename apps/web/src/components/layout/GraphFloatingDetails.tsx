@@ -22,7 +22,7 @@ import {
   eventDisplayName,
   resolveEventForNode,
 } from '@/lib/eventHelpers';
-import type { ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
+import type { FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
 import { LOGICAL_DATA_TYPE_DESCRIPTORS, buildProjectSymbolIndex, isUnresolvedSymbolRef } from '@vvs/graph-types';
 import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel';
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
@@ -34,8 +34,6 @@ import { FunctionPropertiesPanel } from './RightSidebar/FunctionPropertiesPanel'
 import { BrokenRefRepairPanel } from './RightSidebar/BrokenRefRepairPanel';
 import { CodePreviewPropertiesPanel } from './RightSidebar/CodePreviewPropertiesPanel';
 import { FloatingPanelShell } from './FloatingPanelShell';
-import { openFunctionGraphTab } from '@/lib/graphTabs';
-import type { FunctionSymbol } from '@/types/graph';
 import { readUiPreference, writeUiPreferences, clampDetailsPanelHeight, clampFloatingPanelWidth, defaultDetailsPanelLayout, dispatchResetDetailsPanelLayout, RESET_DETAILS_PANEL_LAYOUT_EVENT } from '@/lib/uiPreferences';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
@@ -102,7 +100,6 @@ function GraphFloatingDetailsPanel() {
     activeGraphTab,
     functions,
     openTabs,
-    setOpenTabs,
     setActiveGraphTab,
     classes,
     activeClassId,
@@ -588,14 +585,35 @@ function GraphFloatingDetailsPanel() {
       if (nestedGraphIdForNode(nodeData.data)) {
         return <CompactSummary>→ {linkedGraphName ?? 'graph'}</CompactSummary>;
       }
+      const kindHint =
+        nodeRoleChip ??
+        (typeof nodeData.data.category === 'string' && nodeData.data.category
+          ? nodeData.data.category
+          : null);
+      const pinHint =
+        inputCount + outputCount > 0 ? `${inputCount}↓ ${outputCount}↑` : 'no pins';
       return (
         <CompactSummary>
-          {inputCount}↓ {outputCount}↑ · hover for details
+          {kindHint ? <span className="text-zinc-400">{kindHint}</span> : null}
+          {kindHint ? ' · ' : null}
+          {pinHint}
+          {boundVariable ? (
+            <>
+              {' · '}
+              <span className="text-zinc-400">{boundVariable.name}</span>
+            </>
+          ) : null}
+          {boundFunction && !nodeRoleChip ? (
+            <>
+              {' · '}
+              <span className="text-zinc-400">{boundFunction.name}</span>
+            </>
+          ) : null}
         </CompactSummary>
       );
     }
     if (selection.type === 'code') {
-      return <CompactSummary>Language · emit options · hover for details</CompactSummary>;
+      return <CompactSummary>Emit target · language options</CompactSummary>;
     }
     return null;
   };
@@ -620,13 +638,6 @@ function GraphFloatingDetailsPanel() {
         <FunctionPropertiesPanel
           func={selectedFunction}
           onChange={handleFunctionChange}
-          onOpenGraph={(overloadId) => {
-            const tabId =
-              selectedFunction.overloads.find((o) => o.id === overloadId)?.graphTabId ??
-              selectedFunction.id;
-            openFunctionGraphTab(selectedFunction, setOpenTabs, setActiveGraphTab);
-            setActiveGraphTab(tabId);
-          }}
         />
       )}
 
@@ -655,13 +666,6 @@ function GraphFloatingDetailsPanel() {
               <FunctionPropertiesPanel
                 func={boundFunction}
                 onChange={handleFunctionChange}
-                onOpenGraph={(overloadId) => {
-                  const tabId =
-                    boundFunction.overloads.find((o) => o.id === overloadId)?.graphTabId ??
-                    boundFunction.id;
-                  openFunctionGraphTab(boundFunction, setOpenTabs, setActiveGraphTab);
-                  setActiveGraphTab(tabId);
-                }}
               />
             </div>
           ) : null}

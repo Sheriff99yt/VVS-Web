@@ -1,0 +1,7 @@
+// ===== src/BranchLab.gd =====
+class_name BranchLab
+    func on_start() -> void:
+        if false:
+            print("True path")
+        else:
+            print("False path")

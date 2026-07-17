@@ -1,0 +1,10 @@
+// ===== src/BranchLab.js =====
+class BranchLab {
+    on_start() {
+        if (false) {
+            console.log("True path");
+        } else {
+            console.log("False path");
+        };
+    }
+}

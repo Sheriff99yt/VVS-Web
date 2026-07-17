@@ -93,6 +93,7 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
   const [typeFilters, setTypeFilters] = useState<Set<ReferenceGraphTypeFilter>>(
     () => new Set(ALL_TYPES)
   );
+  const [treeQuery, setTreeQuery] = useState('');
 
   const index = useGraphReferenceIndex(functions, []);
 
@@ -249,8 +250,18 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
 
       <Panel id="ref-right" defaultSize={24} minSize={16}>
         <div className="w-full h-full flex flex-col bg-zinc-950 border-l border-zinc-800 min-h-0">
-          <div className="shrink-0 px-3 py-2 border-b border-zinc-800 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-            Reference tree
+          <div className="shrink-0 px-3 py-2 border-b border-zinc-800 space-y-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+              Reference tree
+            </div>
+            <input
+              type="search"
+              value={treeQuery}
+              onChange={(e) => setTreeQuery(e.target.value)}
+              placeholder="Filter graphs…"
+              className="w-full rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-200 placeholder:text-zinc-600 outline-none focus:border-zinc-600"
+              aria-label="Filter reference tree by graph name"
+            />
           </div>
           <div className="flex-1 overflow-y-auto min-h-0">
             {!index ? (
@@ -273,6 +284,7 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
                 direction={direction}
                 onDirectionChange={setDirection}
                 hideControls
+                nameFilter={treeQuery}
               />
             )}
           </div>

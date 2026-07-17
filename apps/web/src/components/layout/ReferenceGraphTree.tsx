@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-react';
 import type { GraphTab } from '@/contexts/ProjectContext';
 import {
@@ -12,6 +12,7 @@ import {
 import {
   buildReferenceTree,
   countTreeNodes,
+  filterReferenceTreeByName,
   REFERENCE_DEPTH_DEFAULT,
   REFERENCE_DEPTH_MAX,
   REFERENCE_DEPTH_MIN,
@@ -31,6 +32,8 @@ interface ReferenceGraphTreeProps {
   direction?: ReferenceTreeDirection;
   onDirectionChange?: (direction: ReferenceTreeDirection) => void;
   hideControls?: boolean;
+  /** Case-insensitive substring filter on graph display names (thin U89). */
+  nameFilter?: string;
 }
 
 function edgeCaption(ref: GraphReference): string {
@@ -222,6 +225,7 @@ export function ReferenceGraphTree({
   direction: directionProp,
   onDirectionChange,
   hideControls = false,
+  nameFilter = '',
 }: ReferenceGraphTreeProps) {
   const [depthInternal, setDepthInternal] = useState(REFERENCE_DEPTH_DEFAULT);
   const [directionInternal, setDirectionInternal] = useState<ReferenceTreeDirection>('both');
@@ -235,6 +239,27 @@ export function ReferenceGraphTree({
     () => buildReferenceTree(rootGraphId, index, direction, depth),
     [rootGraphId, index, direction, depth]
   );
+
+  const labelFor = useCallback(
+    (graphId: string) => formatReferenceEndpoint(graphId, openTabs, functions),
+    [openTabs, functions]
+  );
+
+  const filtered = useMemo(() => {
+    const q = nameFilter.trim();
+    if (!q) return { ...result, emptyFilter: false as const };
+    const tree = filterReferenceTreeByName(result.tree, q, labelFor);
+    const referencersTree = result.referencersTree
+      ? filterReferenceTreeByName(result.referencersTree, q, labelFor)
+      : undefined;
+    const emptyFilter = !tree && !referencersTree;
+    return {
+      ...result,
+      tree: tree ?? { ...result.tree, children: [] },
+      referencersTree: referencersTree ?? undefined,
+      emptyFilter,
+    };
+  }, [result, nameFilter, labelFor]);
 
   const rootLabel = formatReferenceEndpoint(rootGraphId, openTabs, functions);
 
@@ -297,11 +322,13 @@ export function ReferenceGraphTree({
       )}
 
       <div className={`py-1 ${hideControls ? '' : 'max-h-[min(420px,50vh)]'} overflow-y-auto`}>
-        {direction === 'both' ? (
+        {'emptyFilter' in filtered && filtered.emptyFilter ? (
+          <div className="px-3 py-4 text-[11px] text-zinc-600">No graphs match “{nameFilter.trim()}”.</div>
+        ) : direction === 'both' ? (
           <>
             <TreeSection
               title="Dependencies"
-              tree={result.tree}
+              tree={filtered.tree}
               rootId={rootGraphId}
               activeRootId={rootGraphId}
               direction="dependencies"
@@ -310,10 +337,10 @@ export function ReferenceGraphTree({
               onOpenGraph={onOpenGraph}
               onSelectGraph={onSelectGraph}
             />
-            {result.referencersTree && (
+            {filtered.referencersTree && (
               <TreeSection
                 title="Referencers"
-                tree={result.referencersTree}
+                tree={filtered.referencersTree}
                 rootId={rootGraphId}
                 activeRootId={rootGraphId}
                 direction="referencers"
@@ -327,7 +354,7 @@ export function ReferenceGraphTree({
         ) : (
           <TreeSection
             title={direction === 'dependencies' ? 'Dependencies' : 'Referencers'}
-            tree={result.tree}
+            tree={filtered.tree}
             rootId={rootGraphId}
             activeRootId={rootGraphId}
             direction={direction}

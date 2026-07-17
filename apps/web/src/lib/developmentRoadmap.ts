@@ -997,7 +997,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'editor-chrome-u84',
-    title: 'Editor chrome & scale UX (U86–U90)',
+    title: 'Editor chrome, wires & scale UX (U89–U90 remaining)',
     phase: 6,
     emphasis: 'active',
     items: [
@@ -1005,28 +1005,28 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'details-compact-rethink-u86',
         title: 'Details panel compact rethink (U86)',
         description:
-          'Rethink the compact / collapsed Details panel so it stays useful without clutter.',
-        status: 'planned',
+          'Compact Details shows kind/category, pin counts, and bound symbol hints — no generic “hover for details”.',
+        status: 'done',
       },
       {
         id: 'compiler-log-language-scope-u87',
         title: 'Compiler Log language-scoped mode (U87)',
         description:
-          'Add a log mode that shows errors and warnings scoped to the current selected language only.',
-        status: 'planned',
+          'Log Languages toggle scopes Validator lines to the active graph/project target language (default on).',
+        status: 'done',
       },
       {
         id: 'graph-tabs-ux-u88',
         title: 'Graph tabs UI/UX rethink (U88)',
         description:
-          'Rethink graph tab bar layout, overflow, and dirty/active affordances for many open graphs.',
-        status: 'planned',
+          'Active underline, stronger dirty dots, scroll-into-view, open-graphs overflow list, middle-click / Ctrl+W close.',
+        status: 'done',
       },
       {
         id: 'references-viewer-redesign-u89',
         title: 'References viewer redesign (U89)',
         description:
-          'Redesign the reference viewer to stay useful on huge projects (navigation + scale; pairs with U83 virtualization).',
+          'Partial: Reference tree name filter shipped. Full huge-project redesign (navigation + scale; pairs with U83) still open.',
         status: 'planned',
       },
       {
@@ -1035,6 +1035,13 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Redesign the Library page after the client-first / git-catalog directional change (no hosted blob library).',
         status: 'planned',
+      },
+      {
+        id: 'wire-connection-ux-u96',
+        title: 'Wire / connection UX (U96)',
+        description:
+          'Larger pin hit targets; edge Insert reroute + Disconnect; selection toolbar Auto-connect when exactly two compatible nodes are selected (+ Disconnect affordance).',
+        status: 'done',
       },
     ],
   },
@@ -1048,14 +1055,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'mcp-agent-autonomy-u91',
         title: 'AI / MCP audit & agent autonomy (U91)',
         description:
-          'Audit and upgrade local MCP and what agents can do autonomously in-app — tool surface, consent, safe write paths. Builds on U70 paste-config stub.',
+          'Partial: Windsurf paste, tool list, clearer dangerous-tools consent. Full MCP autonomy audit (safe write paths) still open.',
         status: 'planned',
       },
       {
         id: 'cross-and-lang-examples-u92',
         title: 'New cross-language & language-specific examples (U92)',
         description:
-          'New StartScreen / Test Project examples: shared cross-language fixtures and language-specific ones, with usability tests and goldens.',
+          'Partial: Branch Lab (Entry→Branch→True/False Print) + goldens. More cross-lang / language-specific examples still open.',
         status: 'planned',
       },
       {
@@ -1064,6 +1071,91 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Research track: read raw source and produce text-shaped graphs (reverse of Generate). Must preserve canvas source of truth and fidelity — not near-term polish.',
         status: 'planned',
+      },
+    ],
+  },
+  {
+    id: 'graph-model-u97',
+    title: 'Catalog, functions, async & OOP (U97–U106)',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'add-node-menu-audit-u97',
+        title: 'Add-node menu audit (U97)',
+        description:
+          'Import search finds Import Class but not import nodes used in examples. Revise all menu/catalog nodes so spawn search matches canvas kinds + fixtures.',
+        status: 'planned',
+      },
+      {
+        id: 'function-argument-pins-u98',
+        title: 'Function argument pins (U98)',
+        description:
+          'Expose and wire function parameters as pins end-to-end (define, call, emit).',
+        status: 'planned',
+      },
+      {
+        id: 'function-return-args-u99',
+        title: 'Function return with arguments (U99)',
+        description:
+          'Return values as pins / multi-return where languages support it — visual + emit.',
+        status: 'planned',
+      },
+      {
+        id: 'event-listeners-u100',
+        title: 'Event listeners (U100)',
+        description:
+          'First-class listen / subscribe visuals that map to text across target languages (beyond entry/dispatch).',
+        status: 'planned',
+      },
+      {
+        id: 'cross-lang-async-u101',
+        title: 'Cross-language async concept (U101)',
+        description:
+          'Language-neutral async model (nodes, options, or hybrid) that all packs can map — not per-language one-offs.',
+        status: 'planned',
+      },
+      {
+        id: 'symbols-overlay-rethink-u102',
+        title: 'Symbols overlay rethink (U102)',
+        description:
+          'Partial: removed Open Graph from symbol tree + Details. Full overlay rethink still open (rely on right-click menus).',
+        status: 'partial',
+      },
+      {
+        id: 'components-visual-u103',
+        title: 'Components visual + examples (U103)',
+        description:
+          'Design a component visual concept that works for all languages; add components to multi-lang Test Project examples.',
+        status: 'planned',
+      },
+      {
+        id: 'overloading-revise-u104',
+        title: 'Overloading revise & stress-test (U104)',
+        description:
+          'Revise overload UX/emit; stress-test current behavior under real fixtures and fix or document gaps.',
+        status: 'planned',
+      },
+      {
+        id: 'overwriting-study-u105',
+        title: 'Overwriting (override) study (U105)',
+        description:
+          'Study whether override needs custom visuals or is fully covered by the current modifier / define system.',
+        status: 'planned',
+      },
+      {
+        id: 'inheritance-design-u106',
+        title: 'Inheritance design (U106)',
+        description:
+          'Design how inheritance is authored on the canvas and lowered per language (pairs with CL-010 Rust plan).',
+        status: 'planned',
+      },
+      {
+        id: 'canvas-gestures-u107',
+        title: 'Canvas pan / select gestures (U107)',
+        description:
+          'Right-drag pans; left-click adds/toggles selection (Ctrl+click by default); left-drag box-selects; middle-drag pans; right-click without drag still opens spawn menu.',
+        status: 'done',
       },
     ],
   },

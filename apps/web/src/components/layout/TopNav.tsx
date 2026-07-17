@@ -27,14 +27,17 @@ import {
   buildClaudeDesktopMcpConfig,
   buildCursorMcpConfig,
   buildLocalMcpCliHint,
+  buildWindsurfMcpConfig,
   defaultLocalMcpUrl,
+  MCP_TOOL_SUMMARIES,
 } from '@/lib/mcpPasteConfig';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
 import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
 import { useUiPreference } from '@/hooks/useUiPreference';
-import { readUiPreference } from '@/lib/uiPreferences';
+import { readUiPreference, REQUEST_GENERATE_EVENT } from '@/lib/uiPreferences';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 
 const TOPNAV_ICON_BTN =
   'p-1.5 rounded text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900 transition-colors';
@@ -55,6 +58,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [mcpAllowDangerousTools, setMcpAllowDangerousTools] = useUiPreference('mcpAllowDangerousTools');
   const mcpUrl = defaultLocalMcpUrl();
   const cursorMcpConfig = buildCursorMcpConfig(mcpUrl);
+  const windsurfMcpConfig = buildWindsurfMcpConfig(mcpUrl);
   const claudeMcpConfig = buildClaudeDesktopMcpConfig(mcpUrl);
   const mcpCliHint = buildLocalMcpCliHint();
   const copyMcpText = useCallback(async (key: string, text: string) => {
@@ -116,6 +120,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     codegenCapabilities,
     setCodegenCapabilities,
   } = useProject();
+  const { targetLanguage: activeGraphLanguage } = useActiveGraphCodegenSettings();
 
   const { isFolderProject, folderHandle, folderLabel } = useProjectFolder();
 
@@ -302,6 +307,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     const snapshot = buildSnapshot();
     if (!snapshot) return;
 
+    const analysisLanguage = activeGraphLanguage || targetLanguage;
     const analysis = runProjectAnalysis({
       documents: snapshot.documents,
       functions,
@@ -311,12 +317,16 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       activeClassId,
       openTabs,
       projectDetails,
-      targetLanguage,
+      targetLanguage: analysisLanguage,
       crossOver: crossOverMode,
     });
     window.dispatchEvent(
       new CustomEvent('vvs:validation-result', {
-        detail: { ok: analysis.ok, messages: [...analysis.errors, ...analysis.warnings] },
+        detail: {
+          ok: analysis.ok,
+          messages: [...analysis.errors, ...analysis.warnings],
+          language: analysisLanguage,
+        },
       })
     );
 
@@ -362,6 +372,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     }
   }, [
     activeGraphTab,
+    activeGraphLanguage,
     buildSnapshot,
     classes,
     compileState,
@@ -399,6 +410,14 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     handleSaveRef.current = handleSave;
     handleCompileRef.current = handleCompile;
   });
+
+  useEffect(() => {
+    const onRequestGenerate = () => {
+      void handleCompileRef.current();
+    };
+    window.addEventListener(REQUEST_GENERATE_EVENT, onRequestGenerate);
+    return () => window.removeEventListener(REQUEST_GENERATE_EVENT, onRequestGenerate);
+  }, []);
 
   useEffect(() => {
     if (!autoCompile) return;
@@ -883,6 +902,20 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               </div>
 
               <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Windsurf mcp.json</label>
+                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
+                  {windsurfMcpConfig}
+                </pre>
+                <button
+                  type="button"
+                  onClick={() => void copyMcpText('windsurf', windsurfMcpConfig)}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
+                >
+                  {mcpCopiedKey === 'windsurf' ? 'Copied' : 'Copy Windsurf config'}
+                </button>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Claude Desktop</label>
                 <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
                   {claudeMcpConfig}
@@ -896,6 +929,34 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                 </button>
               </div>
 
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                  What agents can call
+                </label>
+                <ul className="max-h-32 overflow-y-auto space-y-1 rounded border border-zinc-800 bg-zinc-900/80 px-2 py-1.5">
+                  {MCP_TOOL_SUMMARIES.map((tool) => (
+                    <li
+                      key={tool.name}
+                      className="flex items-start gap-2 text-[10px] leading-snug"
+                    >
+                      <span
+                        className={`shrink-0 mt-0.5 px-1 rounded ${
+                          tool.safety === 'dangerous'
+                            ? 'bg-amber-500/15 text-amber-300'
+                            : 'bg-zinc-800 text-zinc-500'
+                        }`}
+                      >
+                        {tool.safety === 'dangerous' ? 'write' : 'read'}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="font-mono text-zinc-300">{tool.name}</span>
+                        <span className="text-zinc-600"> — {tool.summary}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <label className="flex items-start gap-2 text-[11px] text-zinc-400 cursor-pointer">
                 <input
                   type="checkbox"
@@ -904,7 +965,9 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   onChange={(e) => setMcpAllowDangerousTools(e.target.checked)}
                 />
                 <span>
-                  Allow dangerous MCP tools (mutate / delete graph). Off by default — consent only; enforcement lands with the local MCP agent.
+                  Allow <span className="text-amber-300/90">write</span> MCP tools (add/remove nodes,
+                  connect pins, save). Off by default. This is an in-app preference — the local MCP
+                  server still needs matching enforcement (full U91).
                 </span>
               </label>
 

@@ -235,7 +235,7 @@ function PageWelcome() {
       <ul className="space-y-2.5 text-sm text-zinc-400">
         <li className="flex items-start gap-3 rounded-md border border-zinc-800 bg-zinc-900/50 px-3.5 py-3">
           <MousePointerClick size={16} className="mt-0.5 text-zinc-500 shrink-0" />
-          <span>Right-click the canvas to spawn nodes</span>
+          <span>Right-click to spawn nodes · right-drag to pan · left-click adds to selection</span>
         </li>
         <li className="flex items-start gap-3 rounded-md border border-zinc-800 bg-zinc-900/50 px-3.5 py-3">
           <GitBranch size={16} className="mt-0.5 text-zinc-500 shrink-0" />

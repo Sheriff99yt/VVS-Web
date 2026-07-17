@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Trash2, XCircle, Terminal } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Languages, Trash2, XCircle, Terminal } from 'lucide-react';
 import { FloatingPanelShell } from './FloatingPanelShell';
 import { CompilerLogCompactStrip, CompilerLogDiagChips } from './CompilerLogDiagChips';
 import { useCompilerLogs, type LogEntry, type LogType } from '@/hooks/useCompilerLogs';
@@ -13,16 +13,40 @@ import {
 } from '@/lib/graphNavigation';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { useProject } from '@/contexts/ProjectContext';
+import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
+import { useUiPreference } from '@/hooks/useUiPreference';
 import {
   clampDetailsPanelHeight,
   clampFloatingPanelWidth,
   defaultCompilerLogLayout,
+  dispatchRequestGenerate,
   dispatchResetCompilerLogLayout,
   readUiPreference,
   RESET_COMPILER_LOG_LAYOUT_EVENT,
   writeUiPreferences,
 } from '@/lib/uiPreferences';
 import { paneMenuPosition } from '@/lib/paneMenuPosition';
+import { Tooltip } from '@/components/ui/Tooltip';
+import {
+  buildLanguageScopedLogView,
+  buildUnscopedLogView,
+  countValidatorLogEntries,
+} from '@/lib/compilerLogLanguageScope';
+
+const LANG_SHORT: Record<string, string> = {
+  python: 'Python',
+  javascript: 'JavaScript',
+  cpp: 'C++',
+  verse: 'Verse',
+  gdscript: 'GDScript',
+  rust: 'Rust',
+  csharp: 'C#',
+  json: 'JSON',
+};
+
+function languageLabel(id: string): string {
+  return LANG_SHORT[id] ?? id;
+}
 
 const ERROR_FLASH_MS = 900;
 
@@ -82,7 +106,25 @@ function LogLine({ log, onNavigate }: { log: LogEntry; onNavigate: (log: LogEntr
 export function GraphFloatingCompilerLog() {
   const { compilerLogOpen, setCompilerLogOpen } = useEditorPanels();
   const { logs, clearLogs, navigableErrorsRef } = useCompilerLogs();
-  const { validationErrors, validationWarnings, compileState } = useProject();
+  const { validationErrors, validationWarnings, compileState, targetLanguage: projectLanguage } =
+    useProject();
+  const { targetLanguage: graphLanguage } = useActiveGraphCodegenSettings();
+  const scopeLanguage = graphLanguage || projectLanguage;
+  const [languageScoped, setLanguageScoped] = useUiPreference('compilerLogLanguageScoped');
+  const visibleLogs = useMemo(() => {
+    const build = languageScoped ? buildLanguageScopedLogView : buildUnscopedLogView;
+    return build(logs, scopeLanguage, validationErrors, validationWarnings);
+  }, [logs, languageScoped, scopeLanguage, validationErrors, validationWarnings]);
+  const { errorCount, warningCount } = useMemo(
+    () => countValidatorLogEntries(visibleLogs),
+    [visibleLogs]
+  );
+  const hiddenValidatorCount = useMemo(() => {
+    if (!languageScoped) return 0;
+    return logs.filter(
+      (l) => l.source === 'Validator' && l.language && l.language !== scopeLanguage
+    ).length;
+  }, [logs, languageScoped, scopeLanguage]);
   const [errorFlash, setErrorFlash] = useState(false);
   const [expandedHeight, setExpandedHeight] = useState(() =>
     clampDetailsPanelHeight(readUiPreference('compilerLogExpandedHeight'))
@@ -96,9 +138,6 @@ export function GraphFloatingCompilerLog() {
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevErrorCountRef = useRef(0);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-
-  const errorCount = validationErrors.length;
-  const warningCount = validationWarnings.length;
   const isCompiling = compileState === 'compiling';
   const isDirty = compileState === 'dirty';
 
@@ -279,6 +318,36 @@ export function GraphFloatingCompilerLog() {
               onJumpWarnings={jumpWarnings}
               compact
             />
+            <Tooltip
+              content={
+                languageScoped
+                  ? `Live ${languageLabel(scopeLanguage)} only — click for full history (runs Generate)`
+                  : `Full history — click to scope to ${languageLabel(scopeLanguage)} (runs Generate)`
+              }
+              placement="bottom"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguageScoped(!languageScoped);
+                  dispatchRequestGenerate();
+                }}
+                className={`p-0.5 rounded hover:bg-zinc-800/80 ${
+                  languageScoped
+                    ? 'text-sky-400 hover:text-sky-300'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+                aria-pressed={languageScoped}
+                data-testid="compiler-log-language-scope"
+                aria-label={
+                  languageScoped
+                    ? `Language scoped to ${languageLabel(scopeLanguage)}`
+                    : 'Show all languages'
+                }
+              >
+                <Languages size={11} />
+              </button>
+            </Tooltip>
             <button
               type="button"
               onClick={clearLogs}
@@ -291,12 +360,22 @@ export function GraphFloatingCompilerLog() {
         }
       >
         <div className="font-mono text-[10px] leading-relaxed space-y-0.5">
-          {logs.length === 0 ? (
+          {languageScoped ? (
+            <p className="text-zinc-600 py-0.5 text-[9px]">
+              Scoped to {languageLabel(scopeLanguage)} (live)
+              {hiddenValidatorCount > 0
+                ? ` · ${hiddenValidatorCount} historical Validator line${hiddenValidatorCount === 1 ? '' : 's'} hidden`
+                : ''}
+            </p>
+          ) : null}
+          {visibleLogs.length === 0 ? (
             <p className="text-zinc-600 py-1">
-              No messages yet. Generate or fix graph errors — click a line to jump to the node.
+              {languageScoped
+                ? `No ${languageLabel(scopeLanguage)} issues. Toggle language scope to browse Generate history for all languages.`
+                : 'No messages yet. Generate or fix graph errors — click a line to jump to the node.'}
             </p>
           ) : (
-            logs.map((log) => <LogLine key={log.id} log={log} onNavigate={handleLogClick} />)
+            visibleLogs.map((log) => <LogLine key={log.id} log={log} onNavigate={handleLogClick} />)
           )}
         </div>
       </FloatingPanelShell>

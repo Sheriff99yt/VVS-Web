@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs; **U84–U85 / U94–U95** search · find · tooltip · first-open help + selected-only modifier overlay shipped).
+Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs; **U84–U88 / U94–U96** search · find · tooltip · help · compact Details · log language scope · tab overflow · wire hit targets + selected-only modifier overlay shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -368,7 +368,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U77–U78**. **U83 canvas virtualization** shipped. Client-first: **no dedicated server**, **no live code execution** (checks/warnings only). Emit plans: **CL-*** in [`.agents/skills/vvs_cross_language_mapping/SKILL.md`](../.agents/skills/vvs_cross_language_mapping/SKILL.md). See [roadmap.md](roadmap.md).
+**Active next (July 2026):** Phase 6 — **U77–U78**, **U89–U92**, queued **U97–U106** (catalog · functions · async · symbols · components · OOP). **U83 canvas virtualization** shipped. Client-first: **no dedicated server**, **no live code execution** (checks/warnings only). Emit plans: **CL-*** in [`.agents/skills/vvs_cross_language_mapping/SKILL.md`](../.agents/skills/vvs_cross_language_mapping/SKILL.md). See [roadmap.md](roadmap.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.

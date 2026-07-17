@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useCallback } from 'react';
-import { Copy, Trash2, MessageSquarePlus, Ungroup } from 'lucide-react';
-import { useReactFlow, ViewportPortal } from '@xyflow/react';
+import React, { useCallback, useMemo } from 'react';
+import { Copy, Trash2, MessageSquarePlus, Ungroup, Cable, Unplug } from 'lucide-react';
+import { useReactFlow, useStore, ViewportPortal } from '@xyflow/react';
 import { dispatchGraphAction } from '@/lib/graphActions';
 import { shortcutTitle } from '@/lib/graphShortcuts';
 import { useGraphNodeSelectionFromStore } from '@/hooks/useGraphNodeSelection';
+import { findBestAutoConnect } from '@/lib/graphAutoConnect';
+import type { VVSEdge, VVSNode } from '@/types/graph';
 import { Tooltip } from '@/components/ui/Tooltip';
 import styles from './GraphSelectionToolbar.module.css';
 
 export function GraphSelectionToolbar() {
-  const { getInternalNode } = useReactFlow();
+  const { getInternalNode, getNodes, getEdges } = useReactFlow();
 
   const getAbsolutePosition = useCallback(
     (nodeId: string) => getInternalNode(nodeId)?.internals.positionAbsolute,
@@ -18,6 +20,28 @@ export function GraphSelectionToolbar() {
   );
 
   const selection = useGraphNodeSelectionFromStore(getAbsolutePosition);
+  const edgeSelectionCount = useStore(
+    useCallback(
+      (state: { edges: readonly { selected?: boolean }[] }) =>
+        state.edges.filter((e) => e.selected).length,
+      []
+    )
+  );
+
+  const canAutoConnect = useMemo(() => {
+    if (selection.count !== 2) return false;
+    const nodes = getNodes() as VVSNode[];
+    const edges = getEdges() as VVSEdge[];
+    const selected = selection.selectedNodes;
+    if (selected.length !== 2) return false;
+    return findBestAutoConnect(selected[0]!, selected[1]!, edges, nodes) != null;
+  }, [selection.count, selection.selectedNodes, getNodes, getEdges]);
+
+  const canDisconnect =
+    edgeSelectionCount > 0 ||
+    selection.selectedNodes.some((n) =>
+      (getEdges() as VVSEdge[]).some((e) => e.source === n.id || e.target === n.id)
+    );
 
   if (!selection.isVisible || !selection.anchorFlowPoint) return null;
 
@@ -37,6 +61,31 @@ export function GraphSelectionToolbar() {
             <div className={styles.divider} />
           </>
         ) : null}
+        {canAutoConnect ? (
+          <Tooltip content="Auto-connect compatible pins" placement="bottom">
+            <button
+              type="button"
+              className={styles.button}
+              aria-label="Auto-connect selected nodes"
+              onClick={() => dispatchGraphAction('auto-connect-selection')}
+            >
+              <Cable size={14} />
+            </button>
+          </Tooltip>
+        ) : null}
+        {canDisconnect ? (
+          <Tooltip content={shortcutTitle('disconnect')} placement="bottom">
+            <button
+              type="button"
+              className={styles.button}
+              aria-label="Disconnect selection"
+              onClick={() => dispatchGraphAction('disconnect-selection')}
+            >
+              <Unplug size={14} />
+            </button>
+          </Tooltip>
+        ) : null}
+        {(canAutoConnect || canDisconnect) && <div className={styles.divider} />}
         <Tooltip content={shortcutTitle('duplicate')} placement="bottom">
           <button
             type="button"

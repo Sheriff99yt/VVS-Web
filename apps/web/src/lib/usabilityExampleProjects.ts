@@ -1,13 +1,14 @@
 import { ProjectSnapshot } from '@/types/projectSnapshot';
 import { createFirstGraphUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/firstGraphUsabilityTest';
 import { createCoverageLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/coverageLabUsabilityTest';
+import { createBranchLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/branchLabUsabilityTest';
 import {
   createProjectId,
   loadProjectFromStore,
   writeProjectPayload,
 } from '@/lib/projectStore';
 
-export type UsabilityTestLevel = 'simple' | 'complex';
+export type UsabilityTestLevel = 'simple' | 'complex' | 'branch';
 
 /** @deprecated Use `UsabilityTestLevel` */
 export type ExampleLevel = UsabilityTestLevel;
@@ -30,12 +31,13 @@ export interface UsabilityExampleTestDefinition {
 /** @deprecated Use `UsabilityExampleTestDefinition` */
 export type ExampleProjectDefinition = UsabilityExampleTestDefinition;
 
-export const USABILITY_TEST_FIXTURE_REVISION = 5;
+export const USABILITY_TEST_FIXTURE_REVISION = 6;
 
 /**
  * Curated graph fixtures for usability regression — not tutorial demos.
  * See `docs/design/language_capability_catalog.md` · U65 Test Project rethink.
  * Rev 3: Declare ≠ Define vocabulary (U81) — Call / Declare / Define; same-file bodies (U80).
+ * Rev 6: Branch Lab (U92 thin) — Entry → Branch → True/False Print.
  */
 export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
   {
@@ -48,6 +50,17 @@ export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
       'Newcomer path: Declare (var/class/function) → Get User Input → Print → Call → Print. Body via Edit function body (same file).',
     highlights: ['Declare · Call · Define roles', 'Edit function body', 'Get User Input'],
     create: createFirstGraphUsabilityTestSnapshot,
+  },
+  {
+    id: 'branch',
+    stableProjectId: 'vvs-test-branch-lab',
+    level: 'branch',
+    title: 'Branch Lab',
+    moduleName: 'BranchLab',
+    description:
+      'Cross-language Branch flow: program entry → If → True Print / False Print. Thin U92 coverage fixture.',
+    highlights: ['Branch True/False', 'Entry event', 'Cross-language'],
+    create: createBranchLabUsabilityTestSnapshot,
   },
   {
     id: 'complex',

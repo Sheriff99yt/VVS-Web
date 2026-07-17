@@ -1,0 +1,7 @@
+// ===== src/BranchLab.py =====
+class BranchLab:
+    def on_start(self):
+        if False:
+            print("True path")
+        else:
+            print("False path")

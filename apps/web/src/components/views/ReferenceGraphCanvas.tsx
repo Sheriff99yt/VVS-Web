@@ -117,6 +117,7 @@ export function ReferenceGraphCanvas({
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable
+        panOnDrag={[1, 2]}
         onlyRenderVisibleElements={GRAPH_ONLY_RENDER_VISIBLE}
         minZoom={0.15}
         maxZoom={1.5}

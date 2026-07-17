@@ -37,14 +37,14 @@
 }
 
 .handle {
-  width: 8px !important;
-  height: 8px !important;
+  width: 14px !important;
+  height: 14px !important;
   opacity: 0;
   border: none !important;
   background: transparent !important;
 }
 
 .handle[data-pintype='execution'] {
-  width: 10px !important;
-  height: 10px !important;
+  width: 14px !important;
+  height: 14px !important;
 }

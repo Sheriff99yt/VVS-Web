@@ -56,7 +56,7 @@ export function CategorySection({
         {expanded && onViewModeChange ? (
           <SectionViewToggle value={viewMode} onChange={onViewModeChange} />
         ) : onViewModeChange ? (
-          <span className="w-[52px] shrink-0" aria-hidden />
+          <span className="w-6 shrink-0" aria-hidden />
         ) : null}
         {onAdd ? (
           <button

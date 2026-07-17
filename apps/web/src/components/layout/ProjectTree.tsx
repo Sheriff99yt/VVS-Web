@@ -1519,8 +1519,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       onOpen={() =>
                         isReferenceMode ? openClassGraph(cls) : focusOrInsertClassDeclare(cls)
                       }
-                      onOpenAffordance={() => openClassGraph(cls)}
-                      showOpenAffordance
                       onContextMenu={
                         !isReferenceMode
                           ? (e) => openSymbolContextMenu(e, { kind: 'class', id: cls.id })
@@ -1725,10 +1723,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                        .join(' · ')}
                      onSelect={(e) => selectFunction(f, e)}
                      onOpen={() => openGraph(f.id, 'function')}
-                     onOpenAffordance={() => openGraph(f.id, 'function')}
-                     openAffordanceTitle="Edit function body"
                      onContextMenu={(e) => openSymbolContextMenu(e, { kind: 'function', id: f.id })}
-                     showOpenAffordance
                      canvasDrag={
                        !isReferenceMode && primaryDragPayload
                          ? {
@@ -1961,9 +1956,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                           ? openEventHomeGraph(entry.id)
                           : focusOrInsertEventDeclare(entry.id)
                       }
-                      onOpenAffordance={() => openEventHomeGraph(entry.id)}
                       onContextMenu={(e) => openSymbolContextMenu(e, { kind: 'event', id: entry.id })}
-                      showOpenAffordance
                       canvasDrag={
                         !isReferenceMode
                           ? {

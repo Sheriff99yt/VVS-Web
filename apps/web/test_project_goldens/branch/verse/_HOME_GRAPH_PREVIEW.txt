@@ -1,0 +1,7 @@
+// ===== src/BranchLab.verse =====
+<public>BranchLab := class:
+    on_start() : void =
+        if (false?):
+            Print("True path")
+        else:
+            Print("False path")

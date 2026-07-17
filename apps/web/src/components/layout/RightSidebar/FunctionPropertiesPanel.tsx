@@ -12,15 +12,11 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 interface FunctionPropertiesPanelProps {
   func: FunctionSymbol;
   onChange: (next: FunctionSymbol) => void;
-  onOpenGraph?: (overloadId: string) => void;
-  callSiteCount?: number;
 }
 
 export function FunctionPropertiesPanel({
   func,
   onChange,
-  onOpenGraph,
-  callSiteCount,
 }: FunctionPropertiesPanelProps) {
   const [selectedOverloadId, setSelectedOverloadId] = useState(func.overloads[0]?.id ?? '');
 
@@ -176,17 +172,7 @@ export function FunctionPropertiesPanel({
           </label>
         </div>
       </details>
-
-      {onOpenGraph && selectedOverload && (
-        <button
-          type="button"
-          onClick={() => onOpenGraph(selectedOverload.id)}
-          className="w-full px-2 py-1 rounded bg-zinc-800 text-[10px] text-zinc-300 border border-zinc-700 hover:bg-zinc-700"
-        >
-          Open graph
-          {callSiteCount != null ? ` · called ${callSiteCount}×` : ''}
-        </button>
-      )}
     </div>
   );
 }
+

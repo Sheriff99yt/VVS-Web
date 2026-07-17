@@ -1,0 +1,14 @@
+// ===== src/BranchLab.rs =====
+pub struct BranchLab {
+
+}
+impl BranchLab {
+
+    pub fn on_start(&mut self) {
+        if false {
+            println!("{}", "True path");
+        } else {
+            println!("{}", "False path");
+        }
+    }
+}

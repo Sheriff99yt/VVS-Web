@@ -47,6 +47,7 @@ import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, nestedGraphIdForNode } from '@/lib/linkedGraphNodes';
 import { GraphNodeSearch } from './GraphNodeSearch';
 import { GraphSelectionToolbar } from './GraphSelectionToolbar';
+import { ForceAdditiveSelection } from './ForceAdditiveSelection';
 import { GRAPH_ONLY_RENDER_VISIBLE } from '@/lib/graphVirtualization';
 import { fitAllGraphNodes, focusGraphNodes, openGraphCamera, GRAPH_ZOOM } from '@/lib/graphCamera';
 import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT, SPAWN_FUNCTION_IMPLEMENT_EVENT, SPAWN_FUNCTION_CALL_EVENT } from '@/components/layout/GraphFloatingDetails';
@@ -88,6 +89,7 @@ import {
   splitEdgeWithReroute,
   wireRejectionMessage,
 } from '@/lib/graphWiring';
+import { autoConnectTwoNodes } from '@/lib/graphAutoConnect';
 import { dispatchEditorWarning } from '@/lib/editorMessages';
 import {
   resolveCrossGraphTarget,
@@ -442,6 +444,7 @@ function GraphCanvasInner() {
     x: number;
     y: number;
     edgeId: string;
+    flowPosition: { x: number; y: number };
   } | null>(null);
 
   const focusGraphNode = useCallback(
@@ -608,9 +611,16 @@ function GraphCanvasInner() {
     [nodes, edges]
   );
 
+  /** Right-button pan (U107) still fires contextmenu on mouseup — skip spawn menu after a pan. */
+  const suppressPaneContextMenuRef = React.useRef(false);
+
   const onPaneContextMenu = useCallback(
     (event: React.MouseEvent | MouseEvent) => {
       event.preventDefault();
+      if (suppressPaneContextMenuRef.current) {
+        suppressPaneContextMenuRef.current = false;
+        return;
+      }
       const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       setMenu({ x: event.clientX, y: event.clientY, flowPosition });
     },
@@ -653,14 +663,12 @@ function GraphCanvasInner() {
     clearTreeSymbolFocus();
   }, [clearTreeSymbolFocus]);
 
-  /** Sync inspector immediately on click (onSelectionChange can lag; re-click same node does not re-fire). */
+  /** Sync inspector to the clicked node; leave RF selection additive (U107 — click acts like Ctrl+click). */
   const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: { id: string }) => {
-      if (event.shiftKey || event.ctrlKey || event.metaKey) return;
+    (_event: React.MouseEvent, node: { id: string }) => {
       setSelection({ type: 'node', id: node.id });
-      setSelectedNodeIds([node.id]);
     },
-    [setSelection, setSelectedNodeIds]
+    [setSelection]
   );
 
   const deleteEdgeById = useCallback(
@@ -669,6 +677,27 @@ function GraphCanvasInner() {
       setEdgeMenu(null);
     },
     [setEdgesWithHistory]
+  );
+
+  const insertRerouteOnEdge = useCallback(
+    (edgeId: string, position: { x: number; y: number }) => {
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) {
+        setEdgeMenu(null);
+        return;
+      }
+      const { node: rerouteNode, edges: splitEdges } = splitEdgeWithReroute(
+        edge as VVSEdgeType,
+        position
+      );
+      setNodesWithHistory((nds) => nds.concat(rerouteNode));
+      setEdgesWithHistory((eds) => [
+        ...eds.filter((e) => e.id !== edgeId),
+        ...splitEdges,
+      ]);
+      setEdgeMenu(null);
+    },
+    [edges, setNodesWithHistory, setEdgesWithHistory]
   );
 
   const onEdgeClick = useCallback(
@@ -682,16 +711,25 @@ function GraphCanvasInner() {
     [deleteEdgeById]
   );
 
-  const onEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge) => {
-    event.preventDefault();
-    setEdgeMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
-    setMenu(null);
-    setVariableMenu(null);
-    setFunctionMenu(null);
-    setEventMenu(null);
-    setClassMenu(null);
-    setContainerMenu(null);
-  }, []);
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      setEdgeMenu({
+        x: event.clientX,
+        y: event.clientY,
+        edgeId: edge.id,
+        flowPosition,
+      });
+      setMenu(null);
+      setVariableMenu(null);
+      setFunctionMenu(null);
+      setEventMenu(null);
+      setClassMenu(null);
+      setContainerMenu(null);
+    },
+    [screenToFlowPosition]
+  );
 
   const onEdgeDoubleClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
@@ -1553,6 +1591,20 @@ function GraphCanvasInner() {
     );
   }, [nodes, edges, setEdgesWithHistory]);
 
+  const handleAutoConnectSelection = useCallback(() => {
+    const selected = nodes.filter((node) => node.selected);
+    const result = autoConnectTwoNodes(selected, nodes, edges);
+    if (!result.ok) {
+      if (result.reason === 'need_two_nodes') {
+        dispatchEditorWarning('Select exactly two nodes to auto-connect.', 'Wire');
+      } else if (result.reason === 'no_compatible_pins') {
+        dispatchEditorWarning('No compatible pins between the selected nodes.', 'Wire');
+      }
+      return;
+    }
+    setEdgesWithHistory(result.edges);
+  }, [nodes, edges, setEdgesWithHistory]);
+
   const handleFocusSelection = useCallback(() => {
     const selectedNodes = nodes.filter((node) => node.selected);
     if (selectedNodes.length === 0) {
@@ -1758,6 +1810,7 @@ function GraphCanvasInner() {
     handleDuplicate,
     handleDeleteSelection,
     handleDisconnectSelection,
+    handleAutoConnectSelection,
     handleFocusSelection,
     handleSelectAll,
     handleSelectSimilar,
@@ -1780,6 +1833,7 @@ function GraphCanvasInner() {
       if (action === 'duplicate') h.handleDuplicate();
       if (action === 'delete-selection') h.handleDeleteSelection();
       if (action === 'disconnect-selection') h.handleDisconnectSelection();
+      if (action === 'auto-connect-selection') h.handleAutoConnectSelection();
       if (action === 'focus-selection') h.handleFocusSelection();
       if (action === 'zoom-fit') fitAllGraphNodes(h.fitView);
       if (action === 'group-comment') wrapSelectionInComment(h.nodes, h.setNodesWithHistory);
@@ -1984,7 +2038,16 @@ function GraphCanvasInner() {
         onNodeDragStart={onGraphInteractionDragStart}
         onMoveStart={(event) => {
           // User pan/zoom gesture (null = programmatic camera).
-          if (event != null) onGraphInteractionDragStart();
+          if (event != null) {
+            onGraphInteractionDragStart();
+            if (
+              typeof event === 'object' &&
+              'button' in event &&
+              (event as MouseEvent).button === 2
+            ) {
+              suppressPaneContextMenuRef.current = true;
+            }
+          }
         }}
         onEdgeClick={onEdgeClick}
         onEdgeDoubleClick={onEdgeDoubleClick}
@@ -1996,9 +2059,11 @@ function GraphCanvasInner() {
         minZoom={GRAPH_ZOOM.min}
         maxZoom={GRAPH_ZOOM.max}
         onlyRenderVisibleElements={GRAPH_ONLY_RENDER_VISIBLE}
+        /** U107: right-drag pans; left-drag on empty box-selects; click adds like Ctrl+click. */
+        panOnDrag={[1, 2]}
         selectNodesOnDrag
-        selectionOnDrag={false}
-        selectionKeyCode={['Control', 'Meta']}
+        selectionOnDrag
+        selectionKeyCode={null}
         multiSelectionKeyCode={['Control', 'Meta']}
         autoPanOnNodeDrag={false}
         nodeClickDistance={4}
@@ -2007,6 +2072,7 @@ function GraphCanvasInner() {
         noDragClassName="nodrag"
         proOptions={{ hideAttribution: true }}
       >
+        <ForceAdditiveSelection />
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#333" />
         {graphChromeMode !== 'hidden' ? (
           <MiniMap
@@ -2177,15 +2243,26 @@ function GraphCanvasInner() {
       })()}
       {edgeMenu && (
         <div
-          className="fixed z-[60] bg-zinc-900 border border-zinc-700 rounded shadow-xl overflow-hidden text-xs text-white min-w-[140px]"
+          className="fixed z-[60] bg-zinc-900 border border-zinc-700 rounded shadow-xl overflow-hidden text-xs text-white min-w-[156px]"
           style={{ top: edgeMenu.y, left: edgeMenu.x }}
+          role="menu"
         >
           <button
             type="button"
-            className="w-full text-left px-4 py-2 hover:bg-zinc-800 text-red-300 transition-colors"
+            role="menuitem"
+            className="w-full text-left px-3 py-2 hover:bg-zinc-800 text-zinc-200 transition-colors"
+            onClick={() => insertRerouteOnEdge(edgeMenu.edgeId, edgeMenu.flowPosition)}
+          >
+            Insert reroute
+          </button>
+          <div className="h-px bg-zinc-800" />
+          <button
+            type="button"
+            role="menuitem"
+            className="w-full text-left px-3 py-2 hover:bg-zinc-800 text-red-300 transition-colors"
             onClick={() => deleteEdgeById(edgeMenu.edgeId)}
           >
-            Delete wire
+            Disconnect
           </button>
         </div>
       )}

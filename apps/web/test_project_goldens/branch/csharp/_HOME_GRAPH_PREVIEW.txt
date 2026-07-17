@@ -1,0 +1,10 @@
+// ===== src/BranchLab.cs =====
+public class BranchLab {
+    public void on_start() {
+        if (false) {
+            Console.WriteLine("True path");
+        } else {
+            Console.WriteLine("False path");
+        }
+    }
+}

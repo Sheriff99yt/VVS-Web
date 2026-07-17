@@ -9,8 +9,8 @@ Directional phases — not schedule commitments.
 
 ## Now (July 2026)
 
-**Active:** Phase 6 polish — Go (**U77**), pack versions (**U78**), editor chrome (**U86–U90**), AI/examples (**U91–U92**). **U93** code→visual is long-term. Canvas virtualization (**U83**) + search/help quick wins (**U84/U85/U94/U95**) + selected-only node chrome overlay shipped.  
-**Just shipped:** U84/U85/U94/U95 (find · tooltip · first-open help) · selected-only modifiers / import-lang overlay · Cross-language mapping docs · U79 Y→code order · U75 chain select/layout · U71 Code↔graph highlight · U68/U69 Comment [C] · U81/U82 Declare ≠ Define · U66/U67 `(x)` + dim · U64–U65 · U70–U74/U76 · U80 · warning realism cleanup.
+**Active:** Phase 6 polish — Go (**U77**), pack versions (**U78**), editor chrome (**U89–U90**), AI/examples (**U91–U92**). **Queued:** graph/menu fidelity (**U97–U106**). **U107** canvas gestures shipped. **U93** code→visual is long-term. Canvas virtualization (**U83**) + search/help (**U84/U85/U94/U95**) + **U86–U88 / U96** + selected-only node chrome overlay shipped.  
+**Just shipped:** **U107** right-drag pan · left-click additive select · **U102** thin (drop Open Graph on symbols) · U96 auto-connect · thin U89/U91/U92 · CL-010/014/015 plans · U86–U88/U96 base · U84/U85/U94/U95.
 
 | Focus | Status |
 |-------|--------|
@@ -28,9 +28,13 @@ Directional phases — not schedule commitments.
 | Cross-language mapping skill layout + golden doc sync | **Done** — parent + one `<lang>.md` per target ([skill](../.agents/skills/vvs_cross_language_mapping/SKILL.md)) |
 | **Canvas virtualization (U83)** | **Done** — `onlyRenderVisibleElements` on edit + reference canvases; pin/search re-render cuts for large graphs |
 | Go / packs (U77–U78) | **Open** — see Next |
-| Editor chrome / scale UX (U86–U90) | **Open** — details, log language filter, tabs, References, Library |
-| AI / examples (U91–U92) | **Open** — MCP audit, new examples |
+| Editor chrome / scale UX (U86–U88, U96) | **Done** — compact Details · log language · tabs · pins/edge menu · 2-node auto-connect |
+| Editor chrome remaining (U89–U90) | **Open** — U89 full redesign still open (name filter shipped); U90 Library |
+| Wire / connection UX (U96) | **Done** — larger pins; edge menu; selection Auto-connect + Disconnect |
+| AI / examples (U91–U92) | **Partial** — Windsurf/tools/consent + Branch Lab shipped; full audit / more examples open |
 | Search / tooltip / first-open help (U84/U85/U94/U95) | **Done** |
+| Graph / menu / OOP fidelity (U97–U106) | **Queued** — catalog · args/returns · listeners · async · symbols overlay · components · overload/override/inheritance |
+| Canvas gestures (U107) | **Done** — right-drag pan; left-click additive select; left-drag box-select |
 | Code → visual (U93) | **Long-term** — reverse import research |
 | Emit fidelity plans (CL backlog) | **Queued** — plans before code; see Next |
 
@@ -42,7 +46,8 @@ CLOSED                     ACTIVE                              PLANNED
 1  Web editor + packs      6  Polish · U77 Go · U78 packs      3  Library (git repos · U90)
 2  Persistence (local)        CL emit plans (docs synced)        4  Session collab (P2P)
    + local MCP paste          U83 virtualization done            5  UE6 Verse plugin
-                              U86–U92 chrome / AI / examples
+                              U89–U92 chrome · AI
+                              U97–U106 graph / OOP
                               U93 code→visual (long-term)
 ```
 
@@ -50,7 +55,7 @@ CLOSED                     ACTIVE                              PLANNED
 
 ## Next (planned — Phase 6+)
 
-Agent IDs in `.agents/memory/incomplete-ui.md` §13–§17. In-app: Development roadmap → **Open**.  
+Agent IDs in `.agents/memory/incomplete-ui.md` §13–§18. In-app: Development roadmap → **Open**.  
 Emit-fidelity findings: canonical **CL-*** log in [`.agents/skills/vvs_cross_language_mapping/SKILL.md`](../.agents/skills/vvs_cross_language_mapping/SKILL.md) § Issues log.
 
 | # | Item | Notes |
@@ -59,15 +64,27 @@ Emit-fidelity findings: canonical **CL-*** log in [`.agents/skills/vvs_cross_lan
 | **U78** | **Pack versions** manager view | Downloaded pack releases **accumulate** (never overwrite). User lists versions, activates one. First of **multiple new top-level views**. |
 | **U84** | Node search — **all graphs** toggle | **Done** — Layers toggle (default on); one clear X |
 | **U85** | **F** / **Ctrl+F** find + symbol menu | **Done** — F = this graph; Ctrl+F = all graphs; context menu both |
-| **U86** | Details panel **compact** rethink | Redesign compact / collapsed Details so it stays useful without clutter. |
-| **U87** | Compiler Log **language scope** mode | Mode to show errors/warnings for the **current selected language only**. |
-| **U88** | Graph **tabs** UI/UX rethink | Rethink tab bar layout, overflow, dirty/active affordances for many graphs. |
-| **U89** | **References** viewer redesign | Redesign for **huge projects** — scale, navigation, usefulness beyond toy graphs. |
+| **U86** | Details panel **compact** rethink | **Done** — kind/category + pins + bound symbol in compact subtitle |
+| **U87** | Compiler Log **language scope** mode | **Done** — Languages toggle; scopes Validator lines to active target language |
+| **U88** | Graph **tabs** UI/UX rethink | **Done** — scroll active; overflow list; dirty/active; middle-click / Ctrl+W close |
+| **U89** | **References** viewer redesign | **Partial** — tree name filter shipped; full huge-project redesign still open. |
 | **U90** | **Library** page redesign | Redesign after client-first / git-catalog directional change (no hosted blob library). |
-| **U91** | **AI / MCP audit & agent autonomy** | Audit and upgrade local MCP + what agents can do autonomously in-app (tools, consent, safe write paths). Builds on U70 stub. |
-| **U92** | **New examples** (cross-lang + lang-specific) | New StartScreen / Test Project examples: shared cross-language fixtures **and** language-specific ones (usability + goldens). |
+| **U91** | **AI / MCP audit & agent autonomy** | **Partial** — Windsurf paste, tool list, clearer dangerous-tools consent; full autonomy audit still open. |
+| **U92** | **New examples** (cross-lang + lang-specific) | **Partial** — Branch Lab (Entry→Branch→Print) + goldens; more cross-lang / lang-specific examples still open. |
 | **U94** | **Custom tooltip** widget | **Done** — app-default `Tooltip.tsx` on chrome |
 | **U95** | First graph open → **help** | **Done** — `canvasWelcomeDismissed` auto-open |
+| **U96** | **Wire / connection UX** | **Done** — larger pins; edge Insert reroute + Disconnect; **Auto-connect** when exactly two compatible nodes are selected (selection toolbar) |
+| **U97** | **Add-node menu audit** | Searching “import” finds Import Class but not the import nodes examples use. **Revise all menu/catalog nodes** so spawn search matches canvas kinds + examples. |
+| **U98** | **Function argument pins** | Expose / wire function parameters as pins end-to-end (define, call, emit). |
+| **U99** | **Function return with arguments** | Return values as pins / multi-return where languages support it — visual + emit. |
+| **U100** | **Event listeners** | First-class listen / subscribe visuals that map to text across targets (not only entry/dispatch). |
+| **U101** | **Cross-language async concept** | Capture a **language-neutral** async model (nodes, options, or hybrid) that works for all packs — not per-language one-offs. |
+| **U102** | **Symbols overlay rethink** | **Partial** — removed Open Graph from symbol tree + Details; full overlay rethink still open (rely on right-click). |
+| **U103** | **Components** | Design a visual concept that works for **all languages**; add components to multi-lang Test Project examples to prove it. |
+| **U104** | **Overloading** | Revise overload UX/emit; **stress-test** current behavior and fix or document gaps. |
+| **U105** | **Overwriting (override)** | Study whether override needs custom visuals or is fully covered by the current modifier / define system. |
+| **U106** | **Inheritance** | Design how inheritance is authored on the canvas and lowered per language (pairs with CL-010 Rust plan). |
+| **U107** | **Canvas pan / select gestures** | **Done** — **Right-drag** pans the graph; **left-click** adds/toggles selection (Ctrl+click behavior by default); **left-drag** on empty canvas box-selects. Middle-drag also pans. Right-click (no drag) still opens spawn menu. |
 | **U93** | **Long-term: code → visual** | Invent a system that reads raw source and turns it into text-shaped graphs (import / reverse of Generate). Research track — must preserve canvas source of truth. |
 | **Analysis / warnings** | Logical checks (not execution) | Keep strengthening analyzer, portability, `(x)` / dim, compiler log — **no** live run. |
 | **CL backlog** | Target-language emit fidelity | Plans first. Docs match shipped goldens (2026-07-17). Clusters below. |
@@ -101,6 +118,8 @@ Validate cycle: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 | **U83** | Canvas virtualization | Viewport culling + pin/search subscription cuts |
 | **U84** / **U85** | Node search all-graphs + F from symbol | Layers toggle; symbol→search |
 | **U94** / **U95** | Tooltip widget + first-open help | `Tooltip.tsx`; welcome auto-open |
+| **U86** / **U87** / **U88** / **U96** | Details compact · log language · tabs · wires | Compact subtitles; Languages toggle; overflow/Ctrl+W; pin hit + edge menu |
+| **U107** | Canvas pan / select gestures | Right-drag pan; left-click additive; left-drag box-select |
 | — | Cross-language mapping docs | One parent skill + one doc per language; CL issues log |
 
 ---
@@ -111,7 +130,7 @@ Validate cycle: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | U64–U83 done; next U77–U78 + U84–U95 chrome/AI/examples; CL emit plans; **U93** long-term code→visual |
+| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U96 done; next U77–U78 + U89–U92 + **U97–U106** (catalog · functions · async · OOP); CL emit plans; **U93** long-term code→visual |
 | **3** Community library | Planned | Separate **library git repo**; public links only — not hosted blob storage · **U90** redesign |
 | **4** Collaboration | Planned | **Session client/host** (game-lobby style), not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph model → Verse text; not Blueprint VM; run in-engine, not a browser simulator |

@@ -379,17 +379,18 @@
   padding-right: 4px;
 }
 
-/* Base style for minimal handles */
+/* Base style for handles — keep absolute (React Flow) so edge anchors stay on pins. */
 .handle {
-  width: 10px !important;
-  height: 10px !important;
+  width: 12px !important;
+  height: 12px !important;
   border: 1px solid #27272a !important; /* Zinc-800 for crisp edge */
   border-radius: 50% !important; /* Default circle */
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
 .handle:hover {
-  opacity: 0.8;
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(161, 161, 170, 0.35);
 }
 
 /* Shapes: */
@@ -446,9 +447,9 @@
 
 /* Positions */
 .handleLeft {
-  left: -5px !important;
+  left: -6px !important;
 }
 
 .handleRight {
-  right: -5px !important;
+  right: -6px !important;
 }

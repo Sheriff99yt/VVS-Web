@@ -14,6 +14,8 @@ export interface LogEntry {
   tabId?: string;
   nodeId?: string;
   symbolId?: string;
+  /** Target language when this entry came from validation (U87). */
+  language?: string;
 }
 
 const INITIAL_LOGS: LogEntry[] = [
@@ -67,19 +69,28 @@ export function useCompilerLogs() {
     const onValidation = (event: Event) => {
       const result = (event as CustomEvent<ValidationResult>).detail;
       const now = new Date().toLocaleTimeString();
-      navigableErrorsRef.current = [];
-      appendLogs(
-        result.messages.map((msg, index) => ({
-          id: `val-${Date.now()}-${index}`,
-          timestamp: now,
-          type: msg.level === 'error' ? 'error' : 'warning',
-          message: msg.tabId ? `[${msg.tabId}] ${msg.message}` : msg.message,
-          source: 'Validator',
-          tabId: msg.tabId,
-          nodeId: msg.nodeId,
-          symbolId: msg.symbolId,
-        }))
-      );
+      const language = result.language;
+      const entries: LogEntry[] = result.messages.map((msg, index) => ({
+        id: `val-${Date.now()}-${index}`,
+        timestamp: now,
+        type: (msg.level === 'error' ? 'error' : 'warning') as LogType,
+        message: msg.tabId ? `[${msg.tabId}] ${msg.message}` : msg.message,
+        source: 'Validator',
+        tabId: msg.tabId,
+        nodeId: msg.nodeId,
+        symbolId: msg.symbolId,
+        language,
+      }));
+      navigableErrorsRef.current = entries.filter((e) => e.nodeId && e.tabId);
+      // Replace prior Validator lines for this language (keep other languages for unscoped view).
+      setLogs((prev) => {
+        const kept = prev.filter((e) => {
+          if (e.source !== 'Validator') return true;
+          if (!language) return false;
+          return e.language !== language;
+        });
+        return [...kept, ...entries];
+      });
     };
     window.addEventListener('vvs:validation-result', onValidation);
     return () => window.removeEventListener('vvs:validation-result', onValidation);

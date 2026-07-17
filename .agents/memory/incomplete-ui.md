@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84/U85 done; U86–U90 open. **§17** — U94/U95 done; U91–U93 open (AI / examples; U93 long-term). Selected-only node chrome overlay shipped (modifiers + import lang above card; actions toolbar above that).
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84/U85/U94/U95 done** · U86–U93 open
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U107 done; U102 partial; U97–U101 / U103–U106 open. Selected-only node chrome overlay shipped.
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U107 done** · U89–U93 + U97–U106 open (thin slices)
 
 ## Status legend
 
@@ -148,7 +148,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13–§17 priority:** **U77 Go** → **U78 Pack versions** → **U86–U92** chrome & AI/examples → **U93** long-term code→visual. **U83** + **U84/U85/U94/U95** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
+**§13–§18 priority:** **U77 Go** → **U78 Pack versions** → **U89–U92** chrome · AI/examples → **U97–U106** graph/menu/OOP fidelity → **U93** long-term code→visual. **U83** + **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 
@@ -273,21 +273,22 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 16. Editor chrome & scale UX (July 2026) — **Partial** (U84/U85 done)
+## 16. Editor chrome & scale UX (July 2026) — **Partial** (U84–U88 / U96 done; U89 partial · U90 open)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `editor-chrome-u84`.
 
-Details, Compiler Log, tabs, References, and Library — polish for large projects and client-first Library direction.
+Details, Compiler Log, tabs, References, Library, and **wire / connection** polish for large projects and client-first Library direction.
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
 | U84 | Node search — **all graphs** toggle + single clear | **Done** | Layers toggle (default on); `type="text"` removes native clear X; one custom clear |
 | U85 | **F** / **Ctrl+F** find + menu | **Done** | F = find symbol in this graph (else frame); Ctrl+F = all graphs; symbol menu both; pane click + drag clear tree focus |
-| U86 | Details panel **compact** rethink | **Open** | Redesign compact / collapsed Details so it stays useful without clutter. |
-| U87 | Compiler Log **language-scoped** mode | **Open** | Mode to display errors/warnings for the **current selected language only**. |
-| U88 | Graph **tabs** UI/UX rethink | **Open** | Rethink tab bar layout, overflow, dirty/active affordances when many graphs are open. |
-| U89 | **References** viewer redesign (huge projects) | **Open** | Redesign for scale — navigation and usefulness beyond toy graphs (pairs with U83). |
+| U86 | Details panel **compact** rethink | **Done** | Compact subtitle: kind/category · pins · bound symbol (no “hover for details”) |
+| U87 | Compiler Log **language-scoped** mode | **Done** | Languages toggle + `compilerLogLanguageScoped` pref; Validator lines tagged by target language |
+| U88 | Graph **tabs** UI/UX rethink | **Done** | Scroll active into view; overflow list; dirty/active affordances; middle-click / Ctrl+W close |
+| U89 | **References** viewer redesign (huge projects) | **Partial** | Name filter on Reference tree shipped; full huge-project redesign still open (pairs with U83). |
 | U90 | **Library** page redesign (post direction change) | **Open** | Redesign after client-first / git-catalog direction — no hosted blob library assumption. |
+| U96 | **Wire / connection UX** | **Done** | Larger pins; edge Insert reroute + Disconnect; selection toolbar **Auto-connect** (2 compatible nodes) + **Disconnect** |
 
 ---
 
@@ -297,11 +298,33 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U91 | **AI / MCP audit & agent autonomy** | **Open** | Audit and upgrade local MCP + what agents can do autonomously in-app (tools, consent, safe write paths). Builds on U70 stub. |
-| U92 | **New examples** (cross-lang + lang-specific) | **Open** | New StartScreen / Test Project examples that work **across languages**, plus **language-specific** ones (usability tests + goldens). |
+| U91 | **AI / MCP audit & agent autonomy** | **Partial** | Windsurf paste config, MCP tool summaries, clearer dangerous-tools consent; full autonomy audit still open. |
+| U92 | **New examples** (cross-lang + lang-specific) | **Partial** | Branch Lab StartScreen + `test_project_goldens/branch/`; more examples still open. |
 | U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; TopNav / status / toolbars / panels / search |
 | U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |
 | U93 | **Long-term: code → visual** | **Open** (long-term) | System that reads raw source and builds text-shaped graphs (reverse of Generate). Must preserve canvas source of truth / fidelity — research track, not near-term polish. |
+
+---
+
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U107 done; U102 partial)
+
+Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
+
+Add-menu honesty, function/event pin fidelity, language-neutral async, symbols chrome cleanup, components visual concept, and overload / override / inheritance design.
+
+| # | Item | Status | Spec |
+|---|------|--------|------|
+| U97 | **Add-node menu audit** (imports + all catalog nodes) | **Open** | “Import” search finds Import Class but not import nodes used in examples. Revise **all** menu/catalog entries so spawn search matches canvas kinds + fixtures. |
+| U98 | **Function argument pins** | **Open** | Parameters as pins end-to-end (define · call · emit). |
+| U99 | **Function return with arguments** | **Open** | Return / multi-return as pins where targets support it — visual + emit. |
+| U100 | **Event listeners** | **Open** | Listen / subscribe visuals that map to text across languages (beyond entry/dispatch). |
+| U101 | **Cross-language async concept** | **Open** | Language-neutral async model (nodes, options, or hybrid) that packs can map — not one-off per language. |
+| U102 | **Symbols overlay rethink** | **Partial** | Removed Open Graph from symbol tree affordances + Details Function panel; full overlay rethink still open (right-click menus). |
+| U103 | **Components** (visual + examples) | **Open** | Design a component visual that works for **all** languages; add to multi-lang Test Project examples. |
+| U104 | **Overloading** revise & stress-test | **Open** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
+| U105 | **Overwriting (override)** study | **Open** | Decide if override needs custom visuals or is fully covered by current modifiers / defines. |
+| U106 | **Inheritance** design | **Open** | How inheritance is authored on canvas and lowered per language (pairs with CL-010). |
+| U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click adds/toggles (Ctrl+click default); left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
 
 ---
 

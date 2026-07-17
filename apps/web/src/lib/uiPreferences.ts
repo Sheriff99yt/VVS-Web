@@ -77,6 +77,11 @@ export interface UiPreferences {
   mcpAllowDangerousTools: boolean;
   /** U84: node search includes every graph document (default on). */
   nodeSearchAllGraphs: boolean;
+  /**
+   * U87: when true, Compiler Log shows Validator lines only for the current
+   * graph/project target language (System/Compiler lines always shown).
+   */
+  compilerLogLanguageScoped: boolean;
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -105,6 +110,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   stepAnimateChainLayoutSpeed: 'normal',
   mcpAllowDangerousTools: false,
   nodeSearchAllGraphs: true,
+  compilerLogLanguageScoped: true,
 };
 
 export const DETAILS_PANEL_HEIGHT = {
@@ -177,6 +183,8 @@ export const RESET_DETAILS_PANEL_LAYOUT_EVENT = 'vvs:reset-details-panel-layout'
 export const TOGGLE_COMPILER_LOG_PIN_EVENT = 'vvs:toggle-compiler-log-pin';
 export const TOGGLE_GRAPH_CHROME_EVENT = 'vvs:toggle-graph-chrome';
 export const FOCUS_GRAPH_NODE_SEARCH_EVENT = 'vvs:focus-graph-node-search';
+/** Ask TopNav to run Generate (validate + emit) — used by log language-scope toggle. */
+export const REQUEST_GENERATE_EVENT = 'vvs:request-generate';
 
 export type FocusGraphNodeSearchDetail = {
   query?: string;
@@ -273,6 +281,12 @@ export const OPEN_SHORTCUTS_HELP_EVENT = 'vvs:open-shortcuts-help';
 export function dispatchOpenShortcutsHelp(): void {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(OPEN_SHORTCUTS_HELP_EVENT));
+  }
+}
+
+export function dispatchRequestGenerate(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(REQUEST_GENERATE_EVENT));
   }
 }
 

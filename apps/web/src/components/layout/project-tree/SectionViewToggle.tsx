@@ -4,6 +4,7 @@ import React from 'react';
 import { LayoutGrid, List } from 'lucide-react';
 import type { SectionViewMode } from './constants';
 
+/** List/grid control — no chrome; fades in on section hover like the + button. */
 export function SectionViewToggle({
   value,
   onChange,
@@ -11,37 +12,19 @@ export function SectionViewToggle({
   value: SectionViewMode;
   onChange: (mode: SectionViewMode) => void;
 }) {
+  const next: SectionViewMode = value === 'list' ? 'grid' : 'list';
   return (
-    <div
-      className="inline-flex items-center rounded border border-zinc-800 overflow-hidden shrink-0"
-      onClick={(e) => e.stopPropagation()}
+    <button
+      type="button"
+      title={value === 'list' ? 'Grid view' : 'List view'}
+      aria-label={value === 'list' ? 'Switch to grid view' : 'Switch to list view'}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange(next);
+      }}
+      className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 shrink-0 transition-opacity"
     >
-      <button
-        type="button"
-        title="List view"
-        aria-pressed={value === 'list'}
-        onClick={() => onChange('list')}
-        className={`p-1 ${
-          value === 'list'
-            ? 'bg-zinc-800 text-zinc-200'
-            : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900/60'
-        }`}
-      >
-        <List size={14} />
-      </button>
-      <button
-        type="button"
-        title="Grid view"
-        aria-pressed={value === 'grid'}
-        onClick={() => onChange('grid')}
-        className={`p-1 ${
-          value === 'grid'
-            ? 'bg-zinc-800 text-zinc-200'
-            : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900/60'
-        }`}
-      >
-        <LayoutGrid size={14} />
-      </button>
-    </div>
+      {value === 'list' ? <LayoutGrid size={14} /> : <List size={14} />}
+    </button>
   );
 }

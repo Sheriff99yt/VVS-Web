@@ -16,7 +16,8 @@ export type GraphAction =
   | 'select-similar'
   | 'select-chain-downstream'
   | 'select-chain-full'
-  | 'layout-selected-chains';
+  | 'layout-selected-chains'
+  | 'auto-connect-selection';
 
 export function dispatchGraphAction(action: GraphAction) {
   window.dispatchEvent(new CustomEvent('vvs:graph-action', { detail: { action } }));

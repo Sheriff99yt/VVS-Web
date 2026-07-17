@@ -1,0 +1,11 @@
+// ===== src/BranchLab.cpp =====
+class BranchLab {
+public:
+    void on_start() {
+        if (false) {
+            std::cout << "True path" << std::endl;
+        } else {
+            std::cout << "False path" << std::endl;
+        }
+    }
+};

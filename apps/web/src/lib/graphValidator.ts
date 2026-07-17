@@ -10,6 +10,8 @@ export interface ValidationMessage {
 export interface ValidationResult {
   ok: boolean;
   messages: ValidationMessage[];
+  /** Target language these messages were produced for (U87 log scoping). */
+  language?: string;
 }
 
 export { runProjectAnalysis } from './projectAnalysis';

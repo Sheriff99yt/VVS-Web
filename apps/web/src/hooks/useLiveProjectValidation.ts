@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
+import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import type { ValidationMessage } from '@/lib/graphValidator';
 
@@ -32,7 +33,10 @@ function analysisSignature(errors: ValidationMessage[], warnings: ValidationMess
   return `${pack(errors)}::${pack(warnings)}`;
 }
 
-/** Keeps ProjectContext validation messages in sync with live graph analysis. */
+/**
+ * Keeps ProjectContext validation messages in sync with live graph analysis.
+ * Uses the **active graph** target language (same as Code panel), not only project defaults.
+ */
 export function useLiveProjectValidation(): void {
   const {
     functions,
@@ -42,13 +46,13 @@ export function useLiveProjectValidation(): void {
     activeClassId,
     openTabs,
     projectDetails,
-    targetLanguage,
     crossOverMode,
     environmentId,
     setValidationErrors,
     setValidationWarnings,
   } = useProject();
   const documents = useGraphDocuments();
+  const { targetLanguage } = useActiveGraphCodegenSettings();
 
   const analysis = useMemo(() => {
     if (!documents) return null;
@@ -80,7 +84,7 @@ export function useLiveProjectValidation(): void {
   ]);
 
   const signature = analysis
-    ? analysisSignature(analysis.errors, analysis.warnings)
+    ? `${targetLanguage}::${analysisSignature(analysis.errors, analysis.warnings)}`
     : '';
   const lastSignatureRef = useRef('');
 
