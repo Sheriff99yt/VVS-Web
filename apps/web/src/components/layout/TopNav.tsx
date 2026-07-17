@@ -42,6 +42,25 @@ import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 const TOPNAV_ICON_BTN =
   'p-1.5 rounded text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900 transition-colors';
 
+function MenuTip({
+  tip,
+  children,
+  className,
+  ...props
+}: {
+  tip: string;
+  children: React.ReactNode;
+  className?: string;
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <Tooltip content={tip} placement="right" className="block w-full min-w-0">
+      <button type="button" className={className} {...props}>
+        {children}
+      </button>
+    </Tooltip>
+  );
+}
+
 import type { EditorViewTab } from '@/types/editorNavigation';
 
 export interface TopNavProps {
@@ -628,11 +647,15 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'file' ? null : 'file')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'file' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>File</button>
               {openMenu === 'file' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={() => { void handleSave(); setOpenMenu(null); }} title={shortcutTitle('save-project')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <MenuTip
+                    tip={shortcutTitle('save-project')}
+                    onClick={() => { void handleSave(); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <Save size={12} className="shrink-0 opacity-70" />
                     Save project
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('save-project')}</span>
-                  </button>
+                  </MenuTip>
                   {!isFolderProject && folderPickerAvailable ? (
                     <button
                       onClick={() => {
@@ -668,48 +691,82 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'edit' ? null : 'edit')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'edit' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>Edit</button>
               {openMenu === 'edit' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={() => { void handleCompile(); setOpenMenu(null); }} title={shortcutTitle('compile')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <MenuTip
+                    tip={shortcutTitle('compile')}
+                    onClick={() => { void handleCompile(); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <Zap size={12} className="shrink-0 opacity-70" />
                     Generate
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('compile')}</span>
-                  </button>
-                  <button onClick={() => { handleCommitPreview(); setOpenMenu(null); }} title={shortcutTitle('sync-preview')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('sync-preview')}
+                    onClick={() => { handleCommitPreview(); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <RefreshCw size={12} className="shrink-0 opacity-70" />
                     Sync code preview
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('sync-preview')}</span>
-                  </button>
+                  </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
-                  <button onClick={() => { triggerUndo(); setOpenMenu(null); }} disabled={!canUndo} title={shortcutTitle('undo')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
+                  <MenuTip
+                    tip={shortcutTitle('undo')}
+                    onClick={() => { triggerUndo(); setOpenMenu(null); }}
+                    disabled={!canUndo}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+                  >
                     <Undo2 size={12} className="shrink-0 opacity-70" />
                     Undo
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('undo')}</span>
-                  </button>
-                  <button onClick={() => { triggerRedo(); setOpenMenu(null); }} disabled={!canRedo} title={shortcutTitle('redo')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('redo')}
+                    onClick={() => { triggerRedo(); setOpenMenu(null); }}
+                    disabled={!canRedo}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+                  >
                     <Redo2 size={12} className="shrink-0 opacity-70" />
                     Redo
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('redo')}</span>
-                  </button>
+                  </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
-                  <button onClick={() => { dispatchGraphAction('cut'); setOpenMenu(null); }} title={shortcutTitle('cut')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <MenuTip
+                    tip={shortcutTitle('cut')}
+                    onClick={() => { dispatchGraphAction('cut'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <Scissors size={12} className="shrink-0 opacity-70" />
                     Cut
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('cut')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('copy'); setOpenMenu(null); }} title={shortcutTitle('copy')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('copy')}
+                    onClick={() => { dispatchGraphAction('copy'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <Copy size={12} className="shrink-0 opacity-70" />
                     Copy
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('copy')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('paste'); setOpenMenu(null); }} title={shortcutTitle('paste')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('paste')}
+                    onClick={() => { dispatchGraphAction('paste'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <ClipboardPaste size={12} className="shrink-0 opacity-70" />
                     Paste
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('paste')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('duplicate'); setOpenMenu(null); }} title={shortcutTitle('duplicate')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('duplicate')}
+                    onClick={() => { dispatchGraphAction('duplicate'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <Files size={12} className="shrink-0 opacity-70" />
                     Duplicate
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('duplicate')}</span>
-                  </button>
+                  </MenuTip>
                 </div>
               )}
             </div>
@@ -718,41 +775,73 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <button onClick={() => setOpenMenu(openMenu === 'view' ? null : 'view')} className={`px-2 py-1 rounded transition-colors text-xs font-medium ${openMenu === 'view' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}>View</button>
               {openMenu === 'view' && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded py-1 z-[100]">
-                  <button onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }} title="Frame selection — with nothing selected, fit all" className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  <MenuTip
+                    tip="Frame selection — with nothing selected, fit all"
+                    onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <ZoomIn size={12} className="shrink-0 opacity-70" />
                     Frame selection
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('focus-selection')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('zoom-fit'); setOpenMenu(null); }} title="Zoom to fit all" className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip="Zoom to fit all"
+                    onClick={() => { dispatchGraphAction('zoom-fit'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <ZoomIn size={12} className="shrink-0 opacity-70" />
                     Zoom to fit all
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('group-comment'); setOpenMenu(null); }} title={shortcutTitle('group-comment')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('group-comment')}
+                    onClick={() => { dispatchGraphAction('group-comment'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <Group size={12} className="shrink-0 opacity-70" />
                     Comment selection
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('group-comment')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('extract-function'); setOpenMenu(null); }} title={shortcutTitle('extract-function')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('extract-function')}
+                    onClick={() => { dispatchGraphAction('extract-function'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     Extract to function
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('extract-function')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('ungroup-comment'); setOpenMenu(null); }} title={shortcutTitle('ungroup-comment')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('ungroup-comment')}
+                    onClick={() => { dispatchGraphAction('ungroup-comment'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     <Ungroup size={12} className="shrink-0 opacity-70" />
                     Release from comment
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('ungroup-comment')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('toggle-comment-lock'); setOpenMenu(null); }} title={shortcutTitle('toggle-comment-lock')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('toggle-comment-lock')}
+                    onClick={() => { dispatchGraphAction('toggle-comment-lock'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     Lock / unlock comment
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('toggle-comment-lock')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('snap-comment-members'); setOpenMenu(null); }} title={shortcutTitle('snap-comment-members')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('snap-comment-members')}
+                    onClick={() => { dispatchGraphAction('snap-comment-members'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     Resize comment to fit members
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('snap-comment-members')}</span>
-                  </button>
-                  <button onClick={() => { dispatchGraphAction('disconnect-selection'); setOpenMenu(null); }} title={shortcutTitle('disconnect')} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  </MenuTip>
+                  <MenuTip
+                    tip={shortcutTitle('disconnect')}
+                    onClick={() => { dispatchGraphAction('disconnect-selection'); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
                     Disconnect wires
                     <span className="ml-auto text-[9px] text-zinc-600">{shortcutKeys('disconnect')}</span>
-                  </button>
+                  </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <button
                     onClick={() => {

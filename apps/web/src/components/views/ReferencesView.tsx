@@ -23,6 +23,7 @@ import {
 } from '@/lib/graphTabs';
 import { GraphExplorer } from '@/components/layout/GraphExplorer';
 import { ReferenceGraphTree } from '@/components/layout/ReferenceGraphTree';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { ReferenceGraphCanvas } from './ReferenceGraphCanvas';
 
 interface ReferencesViewProps {
@@ -163,17 +164,20 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
         <div className="w-full h-full flex flex-col min-h-0">
           <div className="shrink-0 border-b border-zinc-800 bg-zinc-950">
             <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800/60">
-              <button
-                type="button"
-                className="p-1 rounded text-zinc-500 hover:text-amber-400 hover:bg-zinc-900"
-                title="Focus current asset"
-                onClick={() => selectReferenceGraph(referenceRootGraphId)}
-              >
-                <Crosshair size={13} />
-              </button>
-              <div className="flex-1 min-w-0 text-[10px] text-zinc-400 truncate font-mono" title={focusPath}>
-                {focusPath}
-              </div>
+              <Tooltip content="Focus current asset" placement="bottom">
+                <button
+                  type="button"
+                  className="p-1 rounded text-zinc-500 hover:text-amber-400 hover:bg-zinc-900"
+                  onClick={() => selectReferenceGraph(referenceRootGraphId)}
+                >
+                  <Crosshair size={13} />
+                </button>
+              </Tooltip>
+              <Tooltip content={focusPath} placement="bottom" className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-[10px] text-zinc-400 truncate font-mono">
+                  {focusPath}
+                </div>
+              </Tooltip>
             </div>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2">
@@ -203,20 +207,20 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
                 {TYPE_FILTER_OPTIONS.map((opt) => {
                   const active = typeFilters.has(opt.id);
                   return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      className={`px-2 py-0.5 rounded text-[9px] border transition-colors ${
-                        active
-                          ? 'border-zinc-600 bg-zinc-800 text-zinc-200'
-                          : 'border-zinc-800 text-zinc-600 opacity-50'
-                      }`}
-                      style={active ? { borderTopColor: opt.color, borderTopWidth: 2 } : undefined}
-                      onClick={() => toggleTypeFilter(opt.id)}
-                      title={`Toggle ${opt.label} visibility`}
-                    >
-                      {opt.label}
-                    </button>
+                    <Tooltip key={opt.id} content={`Toggle ${opt.label} visibility`} placement="bottom">
+                      <button
+                        type="button"
+                        className={`px-2 py-0.5 rounded text-[9px] border transition-colors ${
+                          active
+                            ? 'border-zinc-600 bg-zinc-800 text-zinc-200'
+                            : 'border-zinc-800 text-zinc-600 opacity-50'
+                        }`}
+                        style={active ? { borderTopColor: opt.color, borderTopWidth: 2 } : undefined}
+                        onClick={() => toggleTypeFilter(opt.id)}
+                      >
+                        {opt.label}
+                      </button>
+                    </Tooltip>
                   );
                 })}
               </div>

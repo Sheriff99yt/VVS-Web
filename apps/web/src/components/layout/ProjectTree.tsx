@@ -36,6 +36,7 @@ import {
   buildTypePickerOptions,
 } from '@/lib/typePickerOptions';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { VariableBinding } from '@/types/graph';
 import { findGraphIdsUsingVariable } from '@/lib/graphRelations';
 import { useEditorFocus } from '@/hooks/useEditorFocus';
@@ -90,7 +91,7 @@ import { VariableRow } from './project-tree/VariableRow';
 import { ExplorerEmptyHint } from './project-tree/ExplorerEmptyHint';
 import { SectionPopoverAnchor } from './project-tree/SectionPopoverAnchor';
 import { TreeRenameRow } from './project-tree/TreeRenameRow';
-import { RowActionsMenu } from './project-tree/RowActionsMenu';
+import { SymbolMenuItem } from './project-tree/SymbolMenuItem';
 import {
   ExplorerPanelShell,
   ExplorerScrollRegion,
@@ -140,6 +141,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     selection,
     selectedTreeSymbols,
     setSelectedTreeSymbols,
+    selectedNodeIds,
     setOpenTabs,
     activeGraphTab,
     projectDetails,
@@ -338,56 +340,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     }
     setRenamingVariableId(null);
   };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F2') {
-        const activeEl = document.activeElement;
-        if (
-          activeEl &&
-          (activeEl.tagName === 'INPUT' ||
-            activeEl.tagName === 'TEXTAREA' ||
-            activeEl.getAttribute('contenteditable') === 'true')
-        ) {
-          return;
-        }
-        e.preventDefault();
-        if (selection.type === 'class' && selection.id) {
-          const cls = classes.find((c) => c.id === selection.id);
-          if (cls) {
-            setRenamingClassId(cls.id);
-            setRenameClassName(cls.name);
-          }
-        } else if (selection.type === 'function' && selection.id) {
-          const func = functions.find((f) => f.id === selection.id);
-          if (func) {
-            setRenamingFunctionId(func.id);
-            setRenameFunctionName(func.name);
-          }
-        } else if (selection.type === 'event' && selection.id) {
-          const event = events.find((e) => e.id === selection.id);
-          if (event) {
-            setRenamingEventId(event.id);
-            setRenameEventName(event.name);
-          }
-        } else if (selection.type === 'variable' && selection.id) {
-          const variable = variables.find((v) => v.id === selection.id);
-          if (variable) {
-            setRenamingVariableId(variable.id);
-            setRenameVariableName(variable.name);
-          }
-        } else if (selection.type === 'graph' && selection.id) {
-          const container = graphContainers.find((c) => c.id === selection.id);
-          if (container) {
-            setRenamingContainerId(container.id);
-            setRenameContainerName(container.name);
-          }
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selection, classes, functions, events, variables, graphContainers]);
 
   const environmentManifest = useMemo(
     () => getLinkedEnvironmentManifest(environmentId),
@@ -892,6 +844,106 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     },
     [requestDeleteSymbols]
   );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.getAttribute('contenteditable') === 'true')
+      ) {
+        return;
+      }
+
+      if (e.key === 'F2') {
+        e.preventDefault();
+        if (selection.type === 'class' && selection.id) {
+          const cls = classes.find((c) => c.id === selection.id);
+          if (cls) {
+            setRenamingClassId(cls.id);
+            setRenameClassName(cls.name);
+          }
+        } else if (selection.type === 'function' && selection.id) {
+          const func = functions.find((f) => f.id === selection.id);
+          if (func) {
+            setRenamingFunctionId(func.id);
+            setRenameFunctionName(func.name);
+          }
+        } else if (selection.type === 'event' && selection.id) {
+          const event = events.find((e) => e.id === selection.id);
+          if (event) {
+            setRenamingEventId(event.id);
+            setRenameEventName(event.name);
+          }
+        } else if (selection.type === 'variable' && selection.id) {
+          const variable = variables.find((v) => v.id === selection.id);
+          if (variable) {
+            setRenamingVariableId(variable.id);
+            setRenameVariableName(variable.name);
+          }
+        } else if (selection.type === 'graph' && selection.id) {
+          const container = graphContainers.find((c) => c.id === selection.id);
+          if (container) {
+            setRenamingContainerId(container.id);
+            setRenameContainerName(container.name);
+          }
+        }
+        return;
+      }
+
+      // When canvas nodes are selected, let graph shortcuts own Delete / Ctrl+D.
+      if (selectedNodeIds.length > 0) return;
+
+      const mod = e.ctrlKey || e.metaKey;
+      const treeTargets =
+        selectedSymbols.length > 0
+          ? selectedSymbols.filter(
+              (t) => t.kind === 'variable' || t.kind === 'function' || t.kind === 'event'
+            )
+          : selection.type === 'variable' ||
+              selection.type === 'function' ||
+              selection.type === 'event'
+            ? [{ kind: selection.type, id: selection.id! }]
+            : [];
+
+      if (mod && e.key.toLowerCase() === 'd' && !e.shiftKey && !e.altKey && treeTargets.length > 0) {
+        e.preventDefault();
+        for (const target of treeTargets) {
+          if (target.kind === 'variable') duplicateVariable(target.id);
+          else if (target.kind === 'function') duplicateFunction(target.id);
+          else if (target.kind === 'event') duplicateEvent(target.id);
+        }
+        return;
+      }
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && treeTargets.length > 0) {
+        e.preventDefault();
+        requestDeleteSymbols(
+          treeTargets.map((t) => ({
+            kind: t.kind as 'variable' | 'function' | 'event',
+            symbolId: t.id,
+          }))
+        );
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [
+    selection,
+    classes,
+    functions,
+    events,
+    variables,
+    graphContainers,
+    selectedSymbols,
+    selectedNodeIds,
+    duplicateVariable,
+    duplicateFunction,
+    duplicateEvent,
+    requestDeleteSymbols,
+  ]);
 
   const openSymbolContextMenu = useCallback(
     (e: React.MouseEvent, target: SymbolMultiKey) => {
@@ -1435,18 +1487,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 }}
               />
               <label className={explorerLabelClass}>Output graph</label>
-              <select
-                value={newClassContainerId}
-                onChange={(e) => setNewClassContainerId(e.target.value)}
-                className={explorerSelectClass}
-                title="Which graph this class generates code from"
-              >
-                {graphContainers.map((container) => (
-                  <option key={container.id} value={container.id}>
-                    {graphContainerLabel(container)}
-                  </option>
-                ))}
-              </select>
+              <Tooltip content="Which graph this class generates code from" placement="right" className="block w-full">
+                <select
+                  value={newClassContainerId}
+                  onChange={(e) => setNewClassContainerId(e.target.value)}
+                  className={explorerSelectClass}
+                >
+                  {graphContainers.map((container) => (
+                    <option key={container.id} value={container.id}>
+                      {graphContainerLabel(container)}
+                    </option>
+                  ))}
+                </select>
+              </Tooltip>
               <button
                 type="button"
                 className={explorerBtnPrimaryClass}
@@ -1510,8 +1563,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         `Class · outputs to ${folderName}`,
                         isActive ? 'active class' : undefined,
                         canReorderSymbols
-                          ? 'Hover for reorder grip · drag row to graph · drop grip on a Graphs folder to reassign · double-click to focus Declare'
-                          : 'Drag row to graph · double-click to focus Declare',
+                          ? 'Hover for reorder grip · drag row to graph · drop grip on a Graphs folder to reassign · right-click for actions · double-click to focus Declare'
+                          : 'Drag row to graph · right-click for actions · double-click to focus Declare',
                       ]
                         .filter(Boolean)
                         .join(' · ')}
@@ -1550,11 +1603,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       }
                       suffix={
                         <div className="flex items-center gap-0.5 shrink-0">
-                          { isActive ? (
-                            <span
-                              className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"
-                              title="Active class"
-                            />
+                          {isActive ? (
+                            <Tooltip content="Active class" placement="top">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                            </Tooltip>
                           ) : null}
                           {renamingClassId === cls.id ? (
                             <button
@@ -1576,51 +1628,27 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                                 false,
                                 'chip'
                               )}
-                              { isTabDirty(mainTabId) ? (
-                                <span
-                                  className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mr-1"
-                                  title="Uncompiled changes"
-                                />
+                              {isTabDirty(mainTabId) ? (
+                                <Tooltip content="Uncompiled changes" placement="top">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mr-1" />
+                                </Tooltip>
                               ) : null}
                             </>
-                          ) :  isTabDirty(mainTabId) ? (
-                            <span
-                              className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
-                              title="Uncompiled changes"
-                            />
+                          ) : isTabDirty(mainTabId) ? (
+                            <Tooltip content="Uncompiled changes" placement="top">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                            </Tooltip>
                           ) : null}
                         </div>
                       }
                       hoverActions={
-                        
-                        !isReferenceMode &&
-                        renamingClassId !== cls.id ? (
+                        !isReferenceMode && renamingClassId !== cls.id ? (
                           <>
                             {renderClassCanvasStatus(cls, isActive && activeGraphTab === mainTabId, false, true)}
                             <CodegenSuffix
                               tabId={mainTabId}
                               documents={documents}
                               projectDefaults={projectCodegenDefaults}
-                            />
-                            <RowActionsMenu
-                              actions={[
-                                {
-                                  label: 'Rename',
-                                  onClick: () => {
-                                    setRenamingClassId(cls.id);
-                                    setRenameClassName(cls.name);
-                                  },
-                                },
-                                ...(canDeleteClass
-                                  ? [
-                                      {
-                                        label: 'Delete',
-                                        onClick: () => deleteClass(cls.id),
-                                        danger: true,
-                                      },
-                                    ]
-                                  : []),
-                              ]}
                             />
                           </>
                         ) : undefined
@@ -1716,8 +1744,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                                : overloadTreeLabel(primaryOverload)
                              : undefined,
                        canReorderSymbols
-                         ? 'Hover for reorder grip · drag row to call · double-click to Edit function body · Define badge places definition on host graph'
-                         : 'Drag row to call · click to select · double-click to Edit function body · Define badge places definition on host graph',
+                         ? 'Hover for reorder grip · drag row to call · right-click for actions · double-click to Edit function body · Define badge places definition on host graph'
+                         : 'Drag row to call · click to select · right-click for actions · double-click to Edit function body · Define badge places definition on host graph',
                      ]
                        .filter(Boolean)
                        .join(' · ')}
@@ -1748,8 +1776,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                      }
                      suffix={
                        <div className="flex items-center gap-0.5 shrink-0">
-                         { isTabDirty(f.id) ? (
-                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1" title="Uncompiled changes" />
+                         {isTabDirty(f.id) ? (
+                           <Tooltip content="Uncompiled changes" placement="top">
+                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1" />
+                           </Tooltip>
                          ) : null}
                          {!isReferenceMode && renamingFunctionId !== f.id
                            ? renderFunctionCanvasStatus(
@@ -1775,9 +1805,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                        </div>
                      }
                       hoverActions={
-                        
-                        !isReferenceMode &&
-                        renamingFunctionId !== f.id ? (
+                        !isReferenceMode && renamingFunctionId !== f.id ? (
                           <>
                             <CodegenSuffix
                               tabId={f.id}
@@ -1790,29 +1818,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                               false,
                               true
                             )}
-                            <RowActionsMenu
-                            actions={[
-                              {
-                                label: 'Add overload',
-                                onClick: () => {
-                                  setAddingOverloadForId(f.id);
-                                  selectFunction(f);
-                                },
-                              },
-                              {
-                                label: 'Rename',
-                                onClick: () => {
-                                  setRenamingFunctionId(f.id);
-                                  setRenameFunctionName(f.name);
-                                },
-                              },
-                              {
-                                label: 'Delete',
-                                onClick: () => handleDeleteFunction(f.id),
-                                danger: true,
-                              },
-                            ]}
-                          />
                           </>
                         ) : undefined
                       }
@@ -1945,8 +1950,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         isReferenceMode
                           ? rowHint
                           : canReorderSymbols
-                            ? 'Hover for reorder grip · drag row to graph · double-click to focus Declare'
-                            : 'Drag row to graph · double-click to focus Declare',
+                            ? 'Hover for reorder grip · drag row to graph · right-click for actions · double-click to focus Declare'
+                            : 'Drag row to graph · right-click for actions · double-click to focus Declare',
                       ]
                         .filter(Boolean)
                         .join(' · ')}
@@ -2007,28 +2012,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         )
                       }
                       hoverActions={
-                        
-                        !isReferenceMode &&
-                        renamingEventId !== entry.id ? (
+                        !isReferenceMode && renamingEventId !== entry.id ? (
                           <>
                             <EventDispatchChip dispatchCount={entry.dispatchCount} />
                             {renderEventCanvasStatus(entry.id, rowSelected, false, true)}
-                            <RowActionsMenu
-                              actions={[
-                                {
-                                  label: 'Rename',
-                                  onClick: () => {
-                                    setRenamingEventId(entry.id);
-                                    setRenameEventName(entry.label);
-                                  },
-                                },
-                                {
-                                  label: 'Delete',
-                                  onClick: () => handleDeleteEvent(entry.id),
-                                  danger: true,
-                                },
-                              ]}
-                            />
                           </>
                         ) : undefined
                       }
@@ -2375,73 +2362,37 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       {symbolMenu ? (
         <div
           ref={symbolMenuRef}
-          className="fixed z-[80] min-w-[160px] py-0.5 rounded-md border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/40"
+          className="fixed z-[80] min-w-[168px] py-0.5 rounded-md border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/40"
           style={{ left: symbolMenu.x, top: symbolMenu.y }}
           role="menu"
         >
           {symbolMenuSingle ? (
             <>
               {symbolMenuSingle.kind === 'function' || symbolMenuSingle.kind === 'event' ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
-                  onClick={handleSymbolMenuCall}
-                >
-                  Call
-                </button>
+                <SymbolMenuItem label="Call" onClick={handleSymbolMenuCall} />
               ) : null}
               {symbolMenuSingle.kind !== 'graph' ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
-                  onClick={handleSymbolMenuDeclare}
-                >
-                  Declare
-                </button>
+                <SymbolMenuItem label="Declare" onClick={handleSymbolMenuDeclare} />
               ) : null}
               {symbolMenuSingle.kind === 'function' || symbolMenuSingle.kind === 'event' ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
-                  onClick={handleSymbolMenuDefine}
-                >
-                  Define
-                </button>
+                <SymbolMenuItem label="Define" onClick={handleSymbolMenuDefine} />
               ) : null}
               {symbolMenuSingle.kind === 'class' || symbolMenuSingle.kind === 'graph' ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
-                  onClick={handleSymbolMenuOpen}
-                >
-                  Open
-                </button>
+                <SymbolMenuItem label="Open" onClick={handleSymbolMenuOpen} />
               ) : null}
               {symbolMenuFindName ? (
                 <>
                   <div className="my-0.5 border-t border-zinc-800" role="separator" />
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full flex items-center gap-2 text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+                  <SymbolMenuItem
+                    label="Find in this graph"
+                    shortcut={shortcutKeys('node-search-from-symbol')}
                     onClick={handleSymbolMenuFindInGraph}
-                  >
-                    <span className="flex-1">Find in this graph</span>
-                    <span className="text-[9px] text-zinc-600">{shortcutKeys('node-search-from-symbol')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full flex items-center gap-2 text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+                  />
+                  <SymbolMenuItem
+                    label="Find in all graphs"
+                    shortcut={shortcutKeys('node-search')}
                     onClick={handleSymbolMenuFindInAllGraphs}
-                  >
-                    <span className="flex-1">Find in all graphs</span>
-                    <span className="text-[9px] text-zinc-600">{shortcutKeys('node-search')}</span>
-                  </button>
+                  />
                 </>
               ) : null}
               <div className="my-0.5 border-t border-zinc-800" role="separator" />
@@ -2449,58 +2400,47 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 ? (() => {
                     const container = graphContainers.find((c) => c.id === symbolMenuSingle.id);
                     return container && canRenameContainer(container) ? (
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+                      <SymbolMenuItem
+                        label="Rename"
+                        shortcut={shortcutKeys('rename-symbol')}
                         onClick={handleSymbolMenuRename}
-                      >
-                        Rename
-                      </button>
+                      />
                     ) : null;
                   })()
                 : (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+                  <SymbolMenuItem
+                    label="Rename"
+                    shortcut={shortcutKeys('rename-symbol')}
                     onClick={handleSymbolMenuRename}
-                  >
-                    Rename
-                  </button>
+                  />
                 )}
               {symbolMenuSingle.kind === 'function' ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
-                  onClick={handleSymbolMenuAddOverload}
-                >
-                  Add overload
-                </button>
+                <SymbolMenuItem label="Add overload" onClick={handleSymbolMenuAddOverload} />
               ) : null}
             </>
           ) : null}
           {symbolMenuDuplicatable.length > 0 ? (
-            <button
-              type="button"
-              role="menuitem"
-              className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+            <SymbolMenuItem
+              label={
+                symbolMenuDuplicatable.length > 1
+                  ? `Duplicate (${symbolMenuDuplicatable.length})`
+                  : 'Duplicate'
+              }
+              shortcut={shortcutKeys('duplicate')}
               onClick={handleSymbolMenuDuplicate}
-            >
-              Duplicate
-              {symbolMenuDuplicatable.length > 1 ? ` (${symbolMenuDuplicatable.length})` : ''}
-            </button>
+            />
           ) : null}
           {symbolMenuCanDelete ? (
-            <button
-              type="button"
-              role="menuitem"
-              className="w-full text-left px-2.5 py-1.5 text-[11px] text-red-300 hover:bg-zinc-800 hover:text-red-200"
+            <SymbolMenuItem
+              label={
+                symbolMenu.targets.length > 1
+                  ? `Delete (${symbolMenu.targets.length})`
+                  : 'Delete'
+              }
+              shortcut={shortcutKeys('delete')}
+              danger
               onClick={handleSymbolMenuDelete}
-            >
-              Delete{symbolMenu.targets.length > 1 ? ` (${symbolMenu.targets.length})` : ''}
-            </button>
+            />
           ) : null}
         </div>
       ) : null}

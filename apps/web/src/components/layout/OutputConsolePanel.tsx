@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Clock, CheckCircle2, AlertTriangle, XCircle, Trash2 } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { ValidationResult } from '@/lib/graphValidator';
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 
@@ -151,16 +152,17 @@ export function OutputConsolePanel() {
           <Terminal size={12} />
           Compiler Log
         </div>
-        <button
-          onClick={() => {
-            setLogs([]);
-            navigableErrorsRef.current = [];
-          }}
-          className="text-zinc-500 hover:text-red-400 transition-colors p-1"
-          title="Clear Console"
-        >
-          <Trash2 size={12} />
-        </button>
+        <Tooltip content="Clear Console" placement="bottom">
+          <button
+            onClick={() => {
+              setLogs([]);
+              navigableErrorsRef.current = [];
+            }}
+            className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+          >
+            <Trash2 size={12} />
+          </button>
+        </Tooltip>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 font-mono text-[11px] leading-relaxed">
@@ -168,14 +170,19 @@ export function OutputConsolePanel() {
           {logs.map((log) => {
             const isNavigable = Boolean(log.nodeId && log.tabId);
             return (
-              <div
+              <Tooltip
                 key={log.id}
-                onClick={() => handleLogClick(log)}
-                className={`flex items-start gap-2 px-1 py-0.5 rounded transition-colors group ${
-                  isNavigable ? 'hover:bg-zinc-800/50 cursor-pointer' : 'hover:bg-zinc-800/30'
-                }`}
-                title={isNavigable ? 'Go to node' : undefined}
+                content="Go to node"
+                placement="top"
+                disabled={!isNavigable}
+                className="block w-full min-w-0"
               >
+                <div
+                  onClick={() => handleLogClick(log)}
+                  className={`flex items-start gap-2 px-1 py-0.5 rounded transition-colors group ${
+                    isNavigable ? 'hover:bg-zinc-800/50 cursor-pointer' : 'hover:bg-zinc-800/30'
+                  }`}
+                >
                 <div className="flex items-center gap-2 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                   <span className="text-zinc-600 flex items-center gap-1 w-20"><Clock size={10} /> {log.timestamp}</span>
                   <span className="text-zinc-500 w-20 truncate">[{log.source}]</span>
@@ -189,7 +196,8 @@ export function OutputConsolePanel() {
                     </span>
                   )}
                 </div>
-              </div>
+                </div>
+              </Tooltip>
             );
           })}
           {logs.length === 0 && <div className="text-zinc-600 italic px-2">No compiler logs available.</div>}

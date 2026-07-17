@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { PinType, SymbolParameter } from '@vvs/graph-types';
 import { DATA_PIN_TYPE_OPTIONS } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
@@ -75,14 +76,15 @@ export function SymbolParameterEditor({
                   searchable={PARAM_TYPES.length > 4}
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => removeParam(index)}
-                className="p-1 text-zinc-600 hover:text-red-400"
-                title="Remove parameter"
-              >
-                <Trash2 size={11} />
-              </button>
+              <Tooltip content="Remove parameter" placement="top">
+                <button
+                  type="button"
+                  onClick={() => removeParam(index)}
+                  className="p-1 text-zinc-600 hover:text-red-400"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </Tooltip>
             </div>
           ))}
         </div>

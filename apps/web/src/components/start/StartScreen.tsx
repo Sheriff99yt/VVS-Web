@@ -16,6 +16,7 @@ import {
   Map,
 } from 'lucide-react';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
+import { Tooltip } from '@/components/ui/Tooltip';
 import {
   USABILITY_EXAMPLE_TESTS,
   openUsabilityTestProject,
@@ -500,40 +501,45 @@ export function StartScreen() {
                       </div>
                     </div>
                     {folderPickerReady ? (
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => void handleOpenProjectDirectory(e, entry)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            void handleOpenProjectDirectory(
-                              e as unknown as React.MouseEvent,
-                              entry
-                            );
-                          }
-                        }}
-                        className="p-1.5 text-zinc-500 hover:text-blue-400 rounded transition-colors shrink-0"
-                        title={
+                      <Tooltip
+                        content={
                           isFolderRecentEntry(entry)
                             ? 'Browse project folder'
                             : 'Save to folder on disk and browse'
                         }
+                        placement="top"
                       >
-                        <FolderSearch size={14} />
-                      </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => void handleOpenProjectDirectory(e, entry)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              void handleOpenProjectDirectory(
+                                e as unknown as React.MouseEvent,
+                                entry
+                              );
+                            }
+                          }}
+                          className="p-1.5 text-zinc-500 hover:text-blue-400 rounded transition-colors shrink-0"
+                        >
+                          <FolderSearch size={14} />
+                        </span>
+                      </Tooltip>
                     ) : null}
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => handleDeleteProject(e, entry)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleDeleteProject(e as unknown as React.MouseEvent, entry);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-red-400 rounded transition-all"
-                      title="Delete project"
-                    >
-                      <Trash2 size={14} />
-                    </span>
+                    <Tooltip content="Delete project" placement="top">
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => handleDeleteProject(e, entry)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleDeleteProject(e as unknown as React.MouseEvent, entry);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-red-400 rounded transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </span>
+                    </Tooltip>
                     <ChevronRight size={16} className="text-zinc-600 shrink-0" />
                   </div>
                 ))}

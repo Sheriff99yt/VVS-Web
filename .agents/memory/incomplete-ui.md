@@ -300,7 +300,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 |---|------|--------|------|
 | U91 | **AI / MCP audit & agent autonomy** | **Partial** | Windsurf paste config, MCP tool summaries, clearer dangerous-tools consent; full autonomy audit still open. |
 | U92 | **New examples** (cross-lang + lang-specific) | **Partial** | Branch Lab StartScreen + `test_project_goldens/branch/`; more examples still open. |
-| U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; TopNav / status / toolbars / panels / search |
+| U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; left panel + chrome migrated off native `title=` (section/popover `title` props remain) |
 | U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |
 | U93 | **Long-term: code → visual** | **Open** (long-term) | System that reads raw source and builds text-shaped graphs (reverse of Generate). Must preserve canvas source of truth / fidelity — research track, not near-term polish. |
 
@@ -319,7 +319,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U99 | **Function return with arguments** | **Open** | Return / multi-return as pins where targets support it — visual + emit. |
 | U100 | **Event listeners** | **Open** | Listen / subscribe visuals that map to text across languages (beyond entry/dispatch). |
 | U101 | **Cross-language async concept** | **Open** | Language-neutral async model (nodes, options, or hybrid) that packs can map — not one-off per language. |
-| U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chip strip kept on selected nodes (restored). Selection toolbar + right-click menus remain. |
+| U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chips on **hover** (pinned while menus open). Selection toolbar + right-click menus with shortcuts remain. |
 | U103 | **Components** (visual + examples) | **Open** | Design a component visual that works for **all** languages; add to multi-lang Test Project examples. |
 | U104 | **Overloading** revise & stress-test | **Open** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
 | U105 | **Overwriting (override)** study | **Open** | Decide if override needs custom visuals or is fully covered by current modifiers / defines. |

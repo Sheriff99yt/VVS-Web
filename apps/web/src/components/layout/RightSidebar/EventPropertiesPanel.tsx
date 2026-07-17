@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Plus, Trash2, Radio, Send, Link2 } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { EventParameter, PinType, ProjectEventDefinition } from '@/types/graph';
 import { DATA_PIN_TYPE_OPTIONS } from '@vvs/graph-types';
 import { createEventParameterId, eventDisplayName } from '@/lib/eventHelpers';
@@ -98,14 +99,15 @@ export function EventPropertiesPanel({
                     options={PARAM_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeParam(index)}
-                  className="p-1 text-zinc-600 hover:text-red-400"
-                  title="Remove parameter"
-                >
-                  <Trash2 size={11} />
-                </button>
+                <Tooltip content="Remove parameter" placement="top">
+                  <button
+                    type="button"
+                    onClick={() => removeParam(index)}
+                    className="p-1 text-zinc-600 hover:text-red-400"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </Tooltip>
               </div>
             ))}
           </div>
@@ -115,37 +117,40 @@ export function EventPropertiesPanel({
       {hasCanvasActions ? (
         <div className="flex flex-wrap gap-1.5 pt-1 border-t border-zinc-800/80">
           {onSpawnDispatch ? (
-            <button
-              type="button"
-              onClick={onSpawnDispatch}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[10px] hover:bg-indigo-500/25"
-              title="Add Call node to canvas"
-            >
-              <Send size={10} />
-              Call
-            </button>
+            <Tooltip content="Add Call node to canvas" placement="top">
+              <button
+                type="button"
+                onClick={onSpawnDispatch}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[10px] hover:bg-indigo-500/25"
+              >
+                <Send size={10} />
+                Call
+              </button>
+            </Tooltip>
           ) : null}
           {onSpawnDeclareMember ? (
-            <button
-              type="button"
-              onClick={onSpawnDeclareMember}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 text-[10px] hover:bg-sky-500/25"
-              title="Declare event on class member chain"
-            >
-              <Link2 size={10} />
-              Declare
-            </button>
+            <Tooltip content="Declare event on class member chain" placement="top">
+              <button
+                type="button"
+                onClick={onSpawnDeclareMember}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 text-[10px] hover:bg-sky-500/25"
+              >
+                <Link2 size={10} />
+                Declare
+              </button>
+            </Tooltip>
           ) : null}
           {onSpawnHandler ? (
-            <button
-              type="button"
-              onClick={onSpawnHandler}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-violet-500/15 text-violet-300 border border-violet-500/30 text-[10px] hover:bg-violet-500/25"
-              title="Add Define (handler) node to canvas"
-            >
-              <Radio size={10} />
-              Define
-            </button>
+            <Tooltip content="Add Define (handler) node to canvas" placement="top">
+              <button
+                type="button"
+                onClick={onSpawnHandler}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-violet-500/15 text-violet-300 border border-violet-500/30 text-[10px] hover:bg-violet-500/25"
+              >
+                <Radio size={10} />
+                Define
+              </button>
+            </Tooltip>
           ) : null}
         </div>
       ) : null}

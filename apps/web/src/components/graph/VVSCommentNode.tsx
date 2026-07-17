@@ -3,6 +3,7 @@
 import React, { useCallback } from 'react';
 import { NodeProps, NodeResizer } from '@xyflow/react';
 import { Lock, LockOpen, Maximize2 } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useGraphEdit } from '@/contexts/GraphEditContext';
 import {
   isCommentLocked,
@@ -105,35 +106,40 @@ export function VVSCommentNode({
             aria-label="Comment text"
           />
           {memberCount > 0 ? (
+            <Tooltip content="Resize to fit members (Ctrl+Shift+M)" placement="top">
+              <button
+                type="button"
+                className={styles.lockBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resizeToFit();
+                }}
+                aria-label="Resize comment to fit members"
+              >
+                <Maximize2 size={12} />
+              </button>
+            </Tooltip>
+          ) : null}
+          <Tooltip
+            content={
+              locked
+                ? 'Unlock — comment moves alone; members stay put (L)'
+                : 'Lock — adopt nodes currently inside the comment body (L)'
+            }
+            placement="top"
+          >
             <button
               type="button"
               className={styles.lockBtn}
               onClick={(e) => {
                 e.stopPropagation();
-                resizeToFit();
+                toggleLock();
               }}
-              title="Resize to fit members (Ctrl+Shift+M)"
-              aria-label="Resize comment to fit members"
+              aria-pressed={locked}
             >
-              <Maximize2 size={12} />
+              {locked ? <Lock size={12} /> : <LockOpen size={12} />}
             </button>
-          ) : null}
-          <button
-            type="button"
-            className={styles.lockBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLock();
-            }}
-            title={
-              locked
-                ? 'Unlock — comment moves alone; members stay put (L)'
-                : 'Lock — adopt nodes currently inside the comment body (L)'
-            }
-            aria-pressed={locked}
-          >
-            {locked ? <Lock size={12} /> : <LockOpen size={12} />}
-          </button>
+          </Tooltip>
         </div>
         <div className={styles.body} />
       </div>

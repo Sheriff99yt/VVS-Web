@@ -14,6 +14,7 @@ import {
   stopGraphBubble,
 } from './graphInlineFieldProps';
 import { useNumberInputWheel } from './useNumberInputWheel';
+import { Tooltip } from '@/components/ui/Tooltip';
 import styles from './VVSNode.module.css';
 
 interface NodePinInlineWidgetProps {
@@ -29,12 +30,12 @@ export function NodePinInlineWidget({ pin, value, onChange }: NodePinInlineWidge
   if (kind === 'checkbox') {
     return (
       <span className={styles.inlineShield}>
-        <label
-          className={`${styles.inlineCheckbox} ${GRAPH_WHEEL_SHIELD_CLASS}`}
-          title={pin.label || 'Boolean value'}
-          onPointerDown={stopGraphBubble}
-          onClick={stopGraphBubble}
-        >
+        <Tooltip content={pin.label || 'Boolean value'} placement="top">
+          <label
+            className={`${styles.inlineCheckbox} ${GRAPH_WHEEL_SHIELD_CLASS}`}
+            onPointerDown={stopGraphBubble}
+            onClick={stopGraphBubble}
+          >
           <input
             type="checkbox"
             className={styles.inlineCheckboxInput}
@@ -43,7 +44,8 @@ export function NodePinInlineWidget({ pin, value, onChange }: NodePinInlineWidge
             onKeyDown={graphInlineFieldInteractionProps.onKeyDown}
           />
           <span className={styles.inlineCheckboxBox} aria-hidden />
-        </label>
+          </label>
+        </Tooltip>
       </span>
     );
   }
@@ -90,18 +92,19 @@ function NumberPinInput({
   const wheelRef = useNumberInputWheel(onChange);
 
   return (
-    <input
-      ref={wheelRef}
-      type="text"
-      inputMode="decimal"
-      className={`${styles.inlineField} ${styles.inlineFieldNumber} ${GRAPH_WHEEL_SHIELD_CLASS}`}
-      value={String(display)}
-      onChange={(e) => onChange(coerceInlineValue(pin, e.target.value) as number)}
-      aria-label={pin.label || 'Number value'}
-      title="Scroll to adjust · Shift ±10 · Ctrl ±0.1"
-      autoComplete="off"
-      draggable={false}
-      {...graphInlineFieldInteractionProps}
-    />
+    <Tooltip content="Scroll to adjust · Shift ±10 · Ctrl ±0.1" placement="top" className="block w-full min-w-0">
+      <input
+        ref={wheelRef}
+        type="text"
+        inputMode="decimal"
+        className={`${styles.inlineField} ${styles.inlineFieldNumber} ${GRAPH_WHEEL_SHIELD_CLASS}`}
+        value={String(display)}
+        onChange={(e) => onChange(coerceInlineValue(pin, e.target.value) as number)}
+        aria-label={pin.label || 'Number value'}
+        autoComplete="off"
+        draggable={false}
+        {...graphInlineFieldInteractionProps}
+      />
+    </Tooltip>
   );
 }

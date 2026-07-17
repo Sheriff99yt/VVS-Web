@@ -8,6 +8,7 @@ import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { isCodePreviewPaused } from '@/lib/codePreviewPause';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const fieldLabelClass = 'text-[9px] font-semibold uppercase tracking-wide text-zinc-600 mb-1';
 const toggleRowClass =
@@ -100,9 +101,9 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
           {validationWarnings.length > 0 ? ` · ${validationWarnings.length} warnings` : ''}
         </p>
         {filePath ? (
-          <p className="text-[10px] text-zinc-600 font-mono truncate px-0.5" title={filePath}>
-            {filePath}
-          </p>
+          <Tooltip content={filePath} placement="top" className="block w-full min-w-0">
+            <p className="text-[10px] text-zinc-600 font-mono truncate px-0.5">{filePath}</p>
+          </Tooltip>
         ) : null}
       </div>
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, Folder, FileText, Loader2, RefreshCw } from 'lucide-react';
 import { listDirectoryTree, type DirectoryEntry } from '@/lib/projectFolder/listDirectory';
 import { CopyPathButton, formatRepoRelativePath } from '@/components/ui/CopyPathButton';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface ProjectFolderBrowserModalProps {
   handle: FileSystemDirectoryHandle;
@@ -29,9 +30,11 @@ function TreeNode({
         style={{ paddingLeft: depth * 14 + 4 }}
       >
         <FileText size={12} className="text-zinc-600 shrink-0" />
-        <span className="truncate text-[11px] text-zinc-400 font-mono flex-1 min-w-0" title={copyPath}>
-          {displayPath}
-        </span>
+        <Tooltip content={copyPath} placement="top" className="flex-1 min-w-0">
+          <span className="truncate text-[11px] text-zinc-400 font-mono flex-1 min-w-0">
+            {displayPath}
+          </span>
+        </Tooltip>
         <CopyPathButton path={copyPath} className="opacity-60 group-hover/row:opacity-100" />
       </div>
     );
@@ -51,9 +54,9 @@ function TreeNode({
           className="flex items-center gap-1.5 min-w-0 flex-1 text-[11px] text-zinc-300 hover:text-zinc-100 font-mono text-left"
         >
           <Folder size={12} className="text-amber-500/80 shrink-0" />
-          <span className="truncate font-semibold" title={copyPath}>
-            {displayPath}
-          </span>
+          <Tooltip content={copyPath} placement="top" className="min-w-0">
+            <span className="truncate font-semibold">{displayPath}</span>
+          </Tooltip>
           {hasChildren ? (
             <span className="text-zinc-600 text-[10px] shrink-0">{open ? '▾' : '▸'}</span>
           ) : null}
@@ -123,22 +126,24 @@ export function ProjectFolderBrowserModal({
             path={projectRootName}
             title={`Copy project folder name: ${projectRootName}`}
           />
-          <button
-            type="button"
-            onClick={() => void loadTree()}
-            className="p-1.5 text-zinc-500 hover:text-zinc-300 rounded transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-zinc-500 hover:text-zinc-300 rounded transition-colors"
-            title="Close"
-          >
-            <X size={16} />
-          </button>
+          <Tooltip content="Refresh" placement="bottom">
+            <button
+              type="button"
+              onClick={() => void loadTree()}
+              className="p-1.5 text-zinc-500 hover:text-zinc-300 rounded transition-colors"
+            >
+              <RefreshCw size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip content="Close" placement="bottom">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-zinc-500 hover:text-zinc-300 rounded transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </Tooltip>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 py-3 min-h-0">

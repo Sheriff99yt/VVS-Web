@@ -8,6 +8,7 @@ import {
   dispatchSpawnEnvironmentNode,
   type EnvironmentSpawnAction,
 } from '@/lib/environmentHelpers';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { CategorySection } from './CategorySection';
 import { TreeRow } from './TreeRow';
 import { INDENT, type SectionViewMode } from './constants';
@@ -67,17 +68,18 @@ export function EnvironmentApiSection({
             suffix={
               !isReferenceMode ? (
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                  <button
-                    type="button"
-                    className="px-1 py-0.5 rounded text-[8px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30"
-                    title="Add handler"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      dispatchSpawnEnvironmentNode('event_handler', event.id);
-                    }}
-                  >
-                    Handler
-                  </button>
+                  <Tooltip content="Add handler" placement="top">
+                    <button
+                      type="button"
+                      className="px-1 py-0.5 rounded text-[8px] bg-indigo-500/20 text-indigo-200 border border-indigo-500/30"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dispatchSpawnEnvironmentNode('event_handler', event.id);
+                      }}
+                    >
+                      Handler
+                    </button>
+                  </Tooltip>
                 </div>
               ) : null
             }
@@ -95,17 +97,18 @@ export function EnvironmentApiSection({
             hint="Spawn native call node"
             suffix={
               !isReferenceMode ? (
-                <button
-                  type="button"
-                  className="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] bg-sky-500/20 text-sky-200 border border-sky-500/30"
-                  title="Add call"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dispatchSpawnEnvironmentNode('call_native' as EnvironmentSpawnAction, method.id);
-                  }}
-                >
-                  Call
-                </button>
+                <Tooltip content="Add call" placement="top">
+                  <button
+                    type="button"
+                    className="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] bg-sky-500/20 text-sky-200 border border-sky-500/30"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dispatchSpawnEnvironmentNode('call_native' as EnvironmentSpawnAction, method.id);
+                    }}
+                  >
+                    Call
+                  </button>
+                </Tooltip>
               ) : null
             }
           />
@@ -122,17 +125,18 @@ export function EnvironmentApiSection({
             hint="Spawn override handler"
             suffix={
               !isReferenceMode ? (
-                <button
-                  type="button"
-                  className="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] bg-amber-500/20 text-amber-200 border border-amber-500/30"
-                  title="Add override"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dispatchSpawnEnvironmentNode('event_handler', method.id);
-                  }}
-                >
-                  Override
-                </button>
+                <Tooltip content="Add override" placement="top">
+                  <button
+                    type="button"
+                    className="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded text-[8px] bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dispatchSpawnEnvironmentNode('event_handler', method.id);
+                    }}
+                  >
+                    Override
+                  </button>
+                </Tooltip>
               ) : null
             }
           />

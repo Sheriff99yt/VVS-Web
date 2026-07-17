@@ -293,18 +293,19 @@ export function FloatingPanelShell({
   const positionClass = freePosition ? '' : CORNER_CLASS[corner];
 
   const edgeResizeHandle = edgeResize ? (
-    <div
-      role="separator"
-      aria-orientation="horizontal"
-      aria-label="Resize panel"
-      className={`h-2.5 shrink-0 cursor-ns-resize flex items-center justify-center hover:bg-zinc-800/50 active:bg-indigo-500/20 group ${
-        resizeOnTop ? 'border-b border-zinc-800/60' : 'border-t border-zinc-800/60'
-      }`}
-      onPointerDown={startEdgeResize}
-      title="Drag to resize"
-    >
-      <span className="w-9 h-0.5 rounded-full bg-zinc-600 group-hover:bg-zinc-400 transition-colors" />
-    </div>
+    <Tooltip content="Drag to resize" placement="top" className="block w-full min-w-0">
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize panel"
+        className={`h-2.5 shrink-0 cursor-ns-resize flex items-center justify-center hover:bg-zinc-800/50 active:bg-indigo-500/20 group ${
+          resizeOnTop ? 'border-b border-zinc-800/60' : 'border-t border-zinc-800/60'
+        }`}
+        onPointerDown={startEdgeResize}
+      >
+        <span className="w-9 h-0.5 rounded-full bg-zinc-600 group-hover:bg-zinc-400 transition-colors" />
+      </div>
+    </Tooltip>
   ) : null;
 
   return (
@@ -317,29 +318,31 @@ export function FloatingPanelShell({
       onContextMenu={onContextMenu}
     >
       {cornerResize ? (
-        <div
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="Resize panel"
-          className={resizeGripClass}
-          onPointerDown={startCornerResize}
-          title="Drag to resize"
-        >
-          <span className={resizeGripMarkClass} aria-hidden />
-        </div>
+        <Tooltip content="Drag to resize" placement="top" className="block w-full min-w-0">
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Resize panel"
+            className={resizeGripClass}
+            onPointerDown={startCornerResize}
+          >
+            <span className={resizeGripMarkClass} aria-hidden />
+          </div>
+        </Tooltip>
       ) : null}
       {edgeResize && resizeOnTop ? edgeResizeHandle : null}
       {movable ? (
-        <div
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="Move panel"
-          className="h-2.5 shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center hover:bg-zinc-800/40 group border-b border-zinc-800/40"
-          onPointerDown={startMove}
-          title="Drag to move"
-        >
-          <span className="w-7 h-0.5 rounded-full bg-zinc-600 group-hover:bg-zinc-400 transition-colors" />
-        </div>
+        <Tooltip content="Drag to move" placement="top" className="block w-full min-w-0">
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Move panel"
+            className="h-2.5 shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center hover:bg-zinc-800/40 group border-b border-zinc-800/40"
+            onPointerDown={startMove}
+          >
+            <span className="w-7 h-0.5 rounded-full bg-zinc-600 group-hover:bg-zinc-400 transition-colors" />
+          </div>
+        </Tooltip>
       ) : null}
       <div
         className={`relative flex items-center gap-1 px-2 py-1.5 shrink-0 min-h-[28px] ${

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useReducer } from 'react';
 import { ChevronLeft } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { GraphTabMetadata } from '@/lib/graphDefaults';
@@ -118,14 +119,15 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
   return (
     <div className="text-sm text-zinc-300 space-y-5">
       {onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors -mt-1 mb-1"
-          title="Close"
-        >
-          <ChevronLeft size={14} />
-        </button>
+        <Tooltip content="Close" placement="top">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors -mt-1 mb-1"
+          >
+            <ChevronLeft size={14} />
+          </button>
+        </Tooltip>
       )}
       {!isMain && activeTab && (
         <p className="text-[10px] text-zinc-500">

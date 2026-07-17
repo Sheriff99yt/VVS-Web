@@ -5,6 +5,7 @@ import { Loader2, LogIn, LogOut, UserRound } from 'lucide-react';
 import { useAuthSession } from '@/hooks/useAuthSession';
 import { isAuthConfigured, isGitHubOAuthConfigured } from '@/lib/auth/session';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export function AuthButton() {
   const configured = isAuthConfigured() && isHostedFeaturesEnabled();
@@ -69,25 +70,26 @@ export function AuthButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openModal}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded border text-xs transition-colors ${
-          user
-            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15'
-            : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
-        }`}
-        title={user ? 'Cloud account' : 'Sign in for cloud save'}
-      >
-        {loading ? (
-          <Loader2 size={13} className="animate-spin" />
-        ) : user ? (
-          <UserRound size={13} />
-        ) : (
-          <LogIn size={13} />
-        )}
-        <span className="max-w-[140px] truncate">{label}</span>
-      </button>
+      <Tooltip content={user ? 'Cloud account' : 'Sign in for cloud save'} placement="bottom">
+        <button
+          type="button"
+          onClick={openModal}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded border text-xs transition-colors ${
+            user
+              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+          }`}
+        >
+          {loading ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : user ? (
+            <UserRound size={13} />
+          ) : (
+            <LogIn size={13} />
+          )}
+          <span className="max-w-[140px] truncate">{label}</span>
+        </button>
+      </Tooltip>
 
       {open ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">

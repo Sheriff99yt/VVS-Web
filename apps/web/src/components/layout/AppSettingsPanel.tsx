@@ -10,6 +10,7 @@ import {
   dispatchResetDetailsPanelLayout,
 } from '@/lib/uiPreferences';
 import { shortcutKeys } from '@/lib/graphShortcuts';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface AppSettingsPanelProps {
   onCloseSettings?: () => void;
@@ -168,19 +169,20 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
       </section>
 
       <section className="border-t border-zinc-800/80 pt-4">
-        <button
-          type="button"
-          onClick={() => {
-            onCloseSettings?.();
-            dispatchOpenShortcutsHelp();
-          }}
-          className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
-          title={`Canvas help (${shortcutKeys('help')})`}
-        >
-          <Keyboard size={12} className="text-zinc-500 shrink-0" />
-          <span className="flex-1">Canvas help</span>
-          <span className="text-[9px] text-zinc-600">{shortcutKeys('help')}</span>
-        </button>
+        <Tooltip content={`Canvas help (${shortcutKeys('help')})`} placement="top" className="block w-full min-w-0">
+          <button
+            type="button"
+            onClick={() => {
+              onCloseSettings?.();
+              dispatchOpenShortcutsHelp();
+            }}
+            className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
+          >
+            <Keyboard size={12} className="text-zinc-500 shrink-0" />
+            <span className="flex-1">Canvas help</span>
+            <span className="text-[9px] text-zinc-600">{shortcutKeys('help')}</span>
+          </button>
+        </Tooltip>
       </section>
     </div>
   );

@@ -9,8 +9,8 @@ Directional phases — not schedule commitments.
 
 ## Now (July 2026)
 
-**Active:** Phase 6 polish — Go (**U77**), pack versions (**U78**), editor chrome (**U89–U90**), AI/examples (**U91–U92**). **Queued:** graph/menu fidelity (**U97–U106**). **U107** canvas gestures shipped. **U93** code→visual is long-term. Canvas virtualization (**U83**) + search/help (**U84/U85/U94/U95**) + **U86–U88 / U96** + selected-only node chrome overlay shipped.  
-**Just shipped:** **U102** symbols overlay rethink (modifiers → Details) · **U107** right-drag pan · Ctrl/⌘+click multi-select · U96 auto-connect · thin U89/U91/U92 · CL plans · U86–U88/U96 base.
+**Active:** Phase 6 polish — Go (**U77**), pack versions (**U78**), editor chrome (**U89–U90**), AI/examples (**U91–U92**). **Queued:** graph/menu fidelity (**U97–U106**). **U107** canvas gestures shipped. **U93** code→visual is long-term. Canvas virtualization (**U83**) + search/help (**U84/U85/U94/U95**) + **U86–U88 / U96** + hover node chrome overlay shipped.  
+**Just shipped:** **U94** Tooltip migration across chrome · hover modifier chips (pinned while menus open) · symbol context shortcuts · **U102**/ **U107** gestures · U96 auto-connect · thin U89/U91/U92 · CL plans.
 
 | Focus | Status |
 |-------|--------|
@@ -71,7 +71,7 @@ Emit-fidelity findings: canonical **CL-*** log in [`.agents/skills/vvs_cross_lan
 | **U90** | **Library** page redesign | Redesign after client-first / git-catalog directional change (no hosted blob library). |
 | **U91** | **AI / MCP audit & agent autonomy** | **Partial** — Windsurf paste, tool list, clearer dangerous-tools consent; full autonomy audit still open. |
 | **U92** | **New examples** (cross-lang + lang-specific) | **Partial** — Branch Lab (Entry→Branch→Print) + goldens; more cross-lang / lang-specific examples still open. |
-| **U94** | **Custom tooltip** widget | **Done** — app-default `Tooltip.tsx` on chrome |
+| **U94** | **Custom tooltip** widget | **Done** — app-default `Tooltip.tsx`; native `title=` migrated off interactive chrome |
 | **U95** | First graph open → **help** | **Done** — `canvasWelcomeDismissed` auto-open |
 | **U96** | **Wire / connection UX** | **Done** — larger pins; edge Insert reroute + Disconnect; **Auto-connect** when exactly two compatible nodes are selected (selection toolbar) |
 | **U97** | **Add-node menu audit** | Searching “import” finds Import Class but not the import nodes examples use. **Revise all menu/catalog nodes** so spawn search matches canvas kinds + examples. |
@@ -79,7 +79,7 @@ Emit-fidelity findings: canonical **CL-*** log in [`.agents/skills/vvs_cross_lan
 | **U99** | **Function return with arguments** | Return values as pins / multi-return where languages support it — visual + emit. |
 | **U100** | **Event listeners** | First-class listen / subscribe visuals that map to text across targets (not only entry/dispatch). |
 | **U101** | **Cross-language async concept** | Capture a **language-neutral** async model (nodes, options, or hybrid) that works for all packs — not per-language one-offs. |
-| **U102** | **Symbols overlay rethink** | **Done** — Open Graph removed from symbols; selected-node **modifier chips kept**; selection toolbar + right-click menus remain. |
+| **U102** | **Symbols overlay rethink** | **Done** — Open Graph removed from symbols; **hover** modifier chips (pinned while menus open); selection toolbar + right-click menus remain. |
 | **U103** | **Components** | Design a visual concept that works for **all languages**; add components to multi-lang Test Project examples to prove it. |
 | **U104** | **Overloading** | Revise overload UX/emit; **stress-test** current behavior and fix or document gaps. |
 | **U105** | **Overwriting (override)** | Study whether override needs custom visuals or is fully covered by the current modifier / define system. |

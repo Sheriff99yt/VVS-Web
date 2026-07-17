@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs; **U84–U88 / U94–U96** search · find · tooltip · help · compact Details · log language scope · tab overflow · wire hit targets + selected-only modifier overlay shipped).
+Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs; **U84–U88 / U94–U96** search · find · tooltip · help · compact Details · log language scope · tab overflow · wire hit targets + **hover** modifier overlay shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -185,8 +185,8 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
 | Chain select / layout (U75) | Canvas shortcuts | **S** = forward exec + data attrs; **A** = full undirected chain; **S S** = layout (`lane-topo-v1`). Attribute direction in Settings (above / below / below-extended). Head-anchored; multi-chain Y-separate; works inside locked comments |
 | Node search (U84/U85) | Canvas overlay + shortcuts | **Ctrl+F** = find in all graphs (Layers forced on; prefill from tree symbol). **F** with a tree symbol selected = find in this graph only; otherwise frame selection. Space / Ctrl+K open search respecting Layers. Symbol context menu: Find in this graph / Find in all graphs. Outside click / canvas drag clears tree-symbol focus |
-| Tooltips (U94) | Editor chrome | App-default `Tooltip` (`components/ui/Tooltip.tsx`) — portal tips with Esc dismiss + viewport clamp; replaces native `title=` on TopNav, status, toolbars, panels, search |
-| Selection / modifiers chrome | Selected node | Actions toolbar stacks **above** modifiers. Modifier chips + import target-language sit in a selected-only overlay **above the card**. Linked graph/module subtitle stays in-header. U102: Open Graph removed from symbol tree/Details |
+| Tooltips (U94) | Editor chrome | App-default `Tooltip` (`components/ui/Tooltip.tsx`) — portal tips with Esc dismiss + viewport clamp; native `title=` replaced on left panel, TopNav, status, toolbars, panels, nodes, start screen (section/popover heading `title` props remain) |
+| Selection / modifiers chrome | Hover node | Actions toolbar (when selected) stacks **above** the card. Modifier chips + import target-language sit in a **hover** overlay above the card (pinned while a chip menu is open). Linked graph/module subtitle stays in-header. U102: Open Graph removed from symbol tree/Details; symbol context menu shows shortcuts (F2 / F / Ctrl+D / Delete) |
 
 **Floating panels** (canvas overlay, shared `FloatingPanelShell`):
 

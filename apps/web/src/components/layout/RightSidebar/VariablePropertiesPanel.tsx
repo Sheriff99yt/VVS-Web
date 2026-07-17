@@ -23,6 +23,7 @@ import {
   variableTypePickerValue,
 } from '@/lib/typePickerOptions';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface VariablePropertiesPanelProps {
@@ -138,20 +139,25 @@ export function VariablePropertiesPanel({ variable, onChange }: VariableProperti
           {(['instance', 'static'] as VariableBinding[]).map((binding) => {
             const coaBlocked = !isBindingCoaAllowed(binding, crossOverMode);
             return (
-              <button
+              <Tooltip
                 key={binding}
-                type="button"
-                disabled={coaBlocked}
-                onClick={() => patch({ binding })}
-                title={coaBlocked ? 'Not allowed in current COA language set' : undefined}
-                className={`px-2 py-0.5 rounded text-[10px] border transition-colors disabled:opacity-35 disabled:cursor-not-allowed ${
-                  variable.binding === binding
-                    ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
-                    : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
-                }`}
+                content="Not allowed in current COA language set"
+                placement="top"
+                disabled={!coaBlocked}
               >
-                {binding}
-              </button>
+                <button
+                  type="button"
+                  disabled={coaBlocked}
+                  onClick={() => patch({ binding })}
+                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors disabled:opacity-35 disabled:cursor-not-allowed ${
+                    variable.binding === binding
+                      ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {binding}
+                </button>
+              </Tooltip>
             );
           })}
         </div>

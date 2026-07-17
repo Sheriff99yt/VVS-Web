@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useProject } from '@/contexts/ProjectContext';
 import { getLanguageProfile } from '@vvs/language-profiles';
 import { LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
@@ -59,18 +60,24 @@ export function PortabilitySummaryPanel() {
             const navigable = Boolean((msg.tabId && msg.nodeId) || msg.symbolId);
             return (
               <li key={`${msg.code ?? 'msg'}-${i}`}>
-                <button
-                  type="button"
+                <Tooltip
+                  content="Select and focus related node"
+                  placement="left"
                   disabled={!navigable}
-                  onClick={() => navigateToValidationMessage(msg)}
-                  className={`w-full flex items-start gap-1 leading-relaxed text-left rounded px-0.5 ${
-                    msg.level === 'error' ? 'text-red-400/90' : 'text-amber-400/90'
-                  } ${navigable ? 'hover:bg-zinc-800/60 cursor-pointer' : 'cursor-default'}`}
-                  title={navigable ? 'Select and focus related node' : undefined}
+                  className="block w-full min-w-0"
                 >
-                  <AlertTriangle size={10} className="shrink-0 mt-0.5" />
-                  <span className="min-w-0">{msg.message}</span>
-                </button>
+                  <button
+                    type="button"
+                    disabled={!navigable}
+                    onClick={() => navigateToValidationMessage(msg)}
+                    className={`w-full flex items-start gap-1 leading-relaxed text-left rounded px-0.5 ${
+                      msg.level === 'error' ? 'text-red-400/90' : 'text-amber-400/90'
+                    } ${navigable ? 'hover:bg-zinc-800/60 cursor-pointer' : 'cursor-default'}`}
+                  >
+                    <AlertTriangle size={10} className="shrink-0 mt-0.5" />
+                    <span className="min-w-0">{msg.message}</span>
+                  </button>
+                </Tooltip>
               </li>
             );
           })}
@@ -92,9 +99,11 @@ export function PortabilitySummaryPanel() {
               className="px-1.5 py-1 rounded border border-zinc-800/80 bg-zinc-900/50"
             >
               <span className="text-[10px] text-zinc-300">{descriptor.label}</span>
-              <p className="text-[9px] text-zinc-600 truncate" title={descriptor.description}>
-                {descriptor.portabilityFeature ? 'May warn per target' : 'Universal'}
-              </p>
+              <Tooltip content={descriptor.description} placement="top" className="block w-full min-w-0">
+                <p className="text-[9px] text-zinc-600 truncate">
+                  {descriptor.portabilityFeature ? 'May warn per target' : 'Universal'}
+                </p>
+              </Tooltip>
             </div>
           ))}
         </div>

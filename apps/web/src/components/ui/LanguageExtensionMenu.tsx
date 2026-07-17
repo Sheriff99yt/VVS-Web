@@ -7,6 +7,7 @@ import {
   formatTargetFileExtension,
   type TargetLanguage,
 } from '@vvs/graph-types';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const LANGUAGE_OPTIONS: { value: TargetLanguage; label: string }[] = [
   { value: 'python', label: 'Python' },
@@ -68,24 +69,25 @@ export function LanguageExtensionMenu({
         if (!open) setHoveredLang(null);
       }}
     >
-      <button
-        id={autoId}
-        type="button"
-        disabled={disabled}
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((prev) => !prev);
-          setHoveredLang(null);
-        }}
-        onMouseDown={(e) => e.stopPropagation()}
-        className="inline-flex items-center justify-between gap-1 h-6 min-w-[5.5rem] max-w-[7.5rem] px-1.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-200 hover:border-zinc-700 focus:outline-none focus:border-zinc-600 disabled:opacity-50"
-        title="Language and file extension"
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <span className="truncate text-left">{triggerLabel}</span>
-        <ChevronDown size={10} className="text-zinc-500 shrink-0" />
-      </button>
+      <Tooltip content="Language and file extension" placement="bottom">
+        <button
+          id={autoId}
+          type="button"
+          disabled={disabled}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((prev) => !prev);
+            setHoveredLang(null);
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="inline-flex items-center justify-between gap-1 h-6 min-w-[5.5rem] max-w-[7.5rem] px-1.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-200 hover:border-zinc-700 focus:outline-none focus:border-zinc-600 disabled:opacity-50"
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          <span className="truncate text-left">{triggerLabel}</span>
+          <ChevronDown size={10} className="text-zinc-500 shrink-0" />
+        </button>
+      </Tooltip>
 
       {open ? (
         <div

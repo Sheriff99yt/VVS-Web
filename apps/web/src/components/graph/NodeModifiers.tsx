@@ -15,11 +15,31 @@ import {
   type ModifierKey,
 } from '@vvs/language-profiles';
 import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import styles from './VVSNode.module.css';
 
 interface NodeModifiersProps {
   id: string;
   data: VVSNodeData;
+  /** True while a modifier menu is open — keeps the hover strip mounted/visible. */
+  onInteractionChange?: (active: boolean) => void;
+}
+
+/** Whether this node kind exposes any modifier chips. */
+export function nodeHasModifierChrome(data: VVSNodeData): boolean {
+  const kindId = resolveNodeKindId(data);
+  const def = getNodeKindDefinition(kindId);
+  const schema = Array.isArray(def?.propertySchema) ? def.propertySchema : [];
+  return schema.some(
+    (f) =>
+      f.key === 'visibility' ||
+      f.key === 'binding' ||
+      f.key === 'isConst' ||
+      f.key === 'isAbstract' ||
+      f.key === 'isVirtual' ||
+      f.key === 'isOverride' ||
+      f.key === 'isAsync'
+  );
 }
 
 type MenuOption = {
@@ -93,6 +113,7 @@ function ModifierDropdown({
   active,
   activeClass,
   onChange,
+  onOpenChange,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -103,15 +124,25 @@ function ModifierDropdown({
   active: boolean;
   activeClass?: string;
   onChange: (value: string) => void;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openRef = useRef(false);
 
   useEffect(() => {
     return () => {
       if (closeTimer.current) clearTimeout(closeTimer.current);
+      if (openRef.current) onOpenChange?.(false);
     };
-  }, []);
+  }, [onOpenChange]);
+
+  const setMenuOpen = (next: boolean) => {
+    if (openRef.current === next) return;
+    openRef.current = next;
+    setOpen(next);
+    onOpenChange?.(next);
+  };
 
   const clearClose = () => {
     if (closeTimer.current) {
@@ -122,12 +153,12 @@ function ModifierDropdown({
 
   const openMenu = () => {
     clearClose();
-    if (enabled) setOpen(true);
+    if (enabled) setMenuOpen(true);
   };
 
   const scheduleClose = () => {
     clearClose();
-    closeTimer.current = setTimeout(() => setOpen(false), 100);
+    closeTimer.current = setTimeout(() => setMenuOpen(false), 160);
   };
 
   const chipClass = [
@@ -140,12 +171,12 @@ function ModifierDropdown({
     .join(' ');
 
   return (
-    <div
-      className={chipClass}
-      title={enabled ? title : disabledTitle}
-      onMouseEnter={openMenu}
-      onMouseLeave={scheduleClose}
-    >
+    <Tooltip content={enabled ? title : disabledTitle} placement="top">
+      <div
+        className={chipClass}
+        onMouseEnter={openMenu}
+        onMouseLeave={scheduleClose}
+      >
       {icon}
       {open && enabled ? (
         <div
@@ -167,7 +198,7 @@ function ModifierDropdown({
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange(opt.value);
-                  setOpen(false);
+                  setMenuOpen(false);
                 }}
               >
                 {opt.label}
@@ -176,15 +207,26 @@ function ModifierDropdown({
           })}
         </div>
       ) : null}
-    </div>
+      </div>
+    </Tooltip>
   );
 }
 
-export function NodeModifiers({ id, data }: NodeModifiersProps) {
+export function NodeModifiers({
+  id,
+  data,
+  onInteractionChange,
+}: NodeModifiersProps) {
   const { updateNodeData } = useReactFlow();
   const { variables, functions, events } = useProject();
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const { renameVariable, renameFunction, renameEvent } = useSymbolLifecycle();
+  const openMenuCount = useRef(0);
+
+  const handleMenuOpenChange = (open: boolean) => {
+    openMenuCount.current = Math.max(0, openMenuCount.current + (open ? 1 : -1));
+    onInteractionChange?.(openMenuCount.current > 0);
+  };
 
   const kindId = resolveNodeKindId(data);
   const def = getNodeKindDefinition(kindId);
@@ -293,6 +335,7 @@ export function NodeModifiers({ id, data }: NodeModifiersProps) {
           disabledTitle={modifierIneffectiveTooltip(targetLanguage, 'visibility')}
           active={false}
           onChange={(v) => handleUpdate('visibility', v)}
+          onOpenChange={handleMenuOpenChange}
         />
       ) : null}
 
@@ -306,6 +349,7 @@ export function NodeModifiers({ id, data }: NodeModifiersProps) {
           disabledTitle={modifierIneffectiveTooltip(targetLanguage, 'binding')}
           active={false}
           onChange={(v) => handleUpdate('binding', v)}
+          onOpenChange={handleMenuOpenChange}
         />
       ) : null}
 
@@ -329,6 +373,7 @@ export function NodeModifiers({ id, data }: NodeModifiersProps) {
               active={active}
               activeClass={activeClass}
               onChange={(v) => handleUpdate(schemaKey, v === 'true')}
+              onOpenChange={handleMenuOpenChange}
             />
           );
         }

@@ -11,7 +11,7 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "coverageLabUsabilityTest",
-  "nextFunctionWork": "U77 Go / U78 packs; U89–U92 remaining; U97–U101 / U103–U106 open (U102 overlay rethink done · U107 gestures done); U93 long-term; CL plans; client-first",
+  "nextFunctionWork": "U77 Go / U78 packs; U89–U92 remaining; U97–U101 / U103–U106 open (U102 hover modifiers · U107 gestures · U94 tooltip migration done); U93 long-term; CL plans; client-first",
   "crossLanguageMapping": ".agents/skills/vvs_cross_language_mapping/SKILL.md",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {

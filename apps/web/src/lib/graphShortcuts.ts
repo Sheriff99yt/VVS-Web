@@ -34,7 +34,8 @@ export type GraphShortcutId =
   | 'save-project'
   | 'compile'
   | 'sync-preview'
-  | 'help';
+  | 'help'
+  | 'rename-symbol';
 
 export interface GraphShortcutDef {
   id: GraphShortcutId;
@@ -153,6 +154,7 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
   { id: 'save-project', label: 'Save project', keysWin: 'Ctrl+S', keysMac: '⌘S', section: 'project' },
   { id: 'compile', label: 'Generate', keysWin: 'Ctrl+G', keysMac: '⌘G', section: 'project' },
   { id: 'sync-preview', label: 'Sync code preview', keysWin: 'Ctrl+Shift+S', keysMac: '⌘⇧S', section: 'project' },
+  { id: 'rename-symbol', label: 'Rename symbol', keysWin: 'F2', section: 'project' },
 ];
 
 const shortcutById = new Map(GRAPH_SHORTCUTS.map((s) => [s.id, s]));

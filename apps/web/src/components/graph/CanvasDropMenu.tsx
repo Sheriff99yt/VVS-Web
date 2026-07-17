@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { paneMenuPosition } from '@/lib/paneMenuPosition';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export interface CanvasDropMenuItem {
   id: string;
@@ -73,19 +74,25 @@ export function CanvasDropMenu({
           {index > 0 && dividerSet.has(item.id) ? (
             <div className="h-px bg-zinc-800 w-full" />
           ) : null}
-          <button
-            type="button"
-            role="menuitem"
-            className="w-full text-left px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-zinc-800"
-            disabled={item.disabled}
-            title={item.title}
-            onClick={() => {
-              item.onClick();
-              onClose();
-            }}
+          <Tooltip
+            content={item.title}
+            placement="right"
+            disabled={!item.title}
+            className="block w-full min-w-0"
           >
-            {item.label}
-          </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="w-full text-left px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-zinc-800"
+              disabled={item.disabled}
+              onClick={() => {
+                item.onClick();
+                onClose();
+              }}
+            >
+              {item.label}
+            </button>
+          </Tooltip>
         </React.Fragment>
       ))}
     </div>

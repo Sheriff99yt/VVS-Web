@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export interface RowActionItem {
   label: string;
@@ -32,17 +33,18 @@ export function RowActionsMenu({
 
   return (
     <div ref={rootRef} className="relative inline-block text-left shrink-0">
-      <button
-        type="button"
-        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200 transition-opacity"
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(!isOpen);
-        }}
-        title="More actions"
-      >
-        <MoreVertical size={11} />
-      </button>
+      <Tooltip content="More actions" placement="top">
+        <button
+          type="button"
+          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
+        >
+          <MoreVertical size={11} />
+        </button>
+      </Tooltip>
 
       {isOpen && (
         <div className="absolute right-0 mt-1 w-24 rounded border border-zinc-800 bg-zinc-950 shadow-xl z-30 py-1">

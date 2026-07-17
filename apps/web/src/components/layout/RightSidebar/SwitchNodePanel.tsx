@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { VVSNode } from '@/types/graph';
 import { VVSNodeData, collectProjectEnumTypes } from '@vvs/graph-types';
 import { Plus, Trash2 } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
@@ -230,13 +231,15 @@ export function SwitchNodePanel({ nodeData, onApply }: SwitchNodePanelProps) {
                 />
               )}
             </div>
-            <button
-              onClick={() => handleRemoveCase(key)}
-              className="mt-5 p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-              title="Remove Case"
-            >
-              <Trash2 size={14} />
-            </button>
+            <Tooltip content="Remove Case" placement="top">
+              <button
+                type="button"
+                onClick={() => handleRemoveCase(key)}
+                className="mt-5 p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </Tooltip>
           </div>
         );
       })}

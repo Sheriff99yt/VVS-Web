@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { FolderOutput, Loader2, X } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export interface SaveOnDiskPromptDialogProps {
   open: boolean;
@@ -71,14 +72,15 @@ export function SaveOnDiskPromptDialog({
             ) : null}
           </div>
           {!saving ? (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="absolute top-3 right-3 p-1.5 text-zinc-500 hover:text-zinc-300 rounded"
-              title={secondaryLabel}
-            >
-              <X size={16} />
-            </button>
+            <Tooltip content={secondaryLabel} placement="bottom">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="absolute top-3 right-3 p-1.5 text-zinc-500 hover:text-zinc-300 rounded"
+              >
+                <X size={16} />
+              </button>
+            </Tooltip>
           ) : null}
         </div>
 

@@ -28,6 +28,7 @@ import { findNodeIdAtSourceLocation, findGraphTabContainingNodeId } from '@/lib/
 import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import { LanguageExtensionMenu } from '@/components/ui/LanguageExtensionMenu';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const ERROR_DIAG_HIGHLIGHT: CodeHighlightPalette = {
   accent: '#ef4444',
@@ -627,16 +628,12 @@ export function CodePreviewPanel({
       <div className="flex items-center gap-1 border-b border-zinc-800 bg-zinc-950 px-2 h-9 shrink-0">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           <FileCode2 size={12} className="text-zinc-600 shrink-0" />
-          <span
-            className="text-[11px] text-zinc-400 font-mono truncate min-w-0"
-            title={copyablePath}
-          >
-            {filePath}
-          </span>
-          <CopyPathButton
-            path={copyablePath}
-            title={`Copy path: ${copyablePath}`}
-          />
+          <Tooltip content={copyablePath} placement="bottom" className="block min-w-0 flex-1">
+            <span className="text-[11px] text-zinc-400 font-mono truncate min-w-0 block">
+              {filePath}
+            </span>
+          </Tooltip>
+          <CopyPathButton path={copyablePath} />
         </div>
 
         <div className="flex items-center gap-0.5 shrink-0">
@@ -651,61 +648,70 @@ export function CodePreviewPanel({
             />
           ) : null}
           {validationErrors.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => {
-                selectCodePreview();
-                setHighlightErrors((on) => !on);
-              }}
-              className={highlightErrors ? BAR_BTN_ERR_ON : BAR_BTN}
-              title={
+            <Tooltip
+              content={
                 highlightErrors
                   ? `Hide error highlights in code\n${validationErrors.map((e) => e.message).join('\n')}`
                   : `Highlight errors in code${
                       mappedErrorCount === 0 ? ' (no mapped lines yet)' : ''
                     }\n${validationErrors.map((e) => e.message).join('\n')}`
               }
-              aria-pressed={highlightErrors}
-              aria-label="Toggle error highlights"
+              placement="bottom"
             >
-              <AlertTriangle size={11} />
-              {validationErrors.length}
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  selectCodePreview();
+                  setHighlightErrors((on) => !on);
+                }}
+                className={highlightErrors ? BAR_BTN_ERR_ON : BAR_BTN}
+                aria-pressed={highlightErrors}
+                aria-label="Toggle error highlights"
+              >
+                <AlertTriangle size={11} />
+                {validationErrors.length}
+              </button>
+            </Tooltip>
           ) : null}
           {validationWarnings.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => {
-                selectCodePreview();
-                setHighlightWarnings((on) => !on);
-              }}
-              className={highlightWarnings ? BAR_BTN_WARN_ON : BAR_BTN}
-              title={
+            <Tooltip
+              content={
                 highlightWarnings
                   ? `Hide warning highlights in code\n${validationWarnings.map((w) => w.message).join('\n')}`
                   : `Highlight warnings in code${
                       mappedWarningCount === 0 ? ' (no mapped lines yet)' : ''
                     }\n${validationWarnings.map((w) => w.message).join('\n')}`
               }
-              aria-pressed={highlightWarnings}
-              aria-label="Toggle warning highlights"
+              placement="bottom"
             >
-              <AlertTriangle size={11} />
-              {validationWarnings.length}
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  selectCodePreview();
+                  setHighlightWarnings((on) => !on);
+                }}
+                className={highlightWarnings ? BAR_BTN_WARN_ON : BAR_BTN}
+                aria-pressed={highlightWarnings}
+                aria-label="Toggle warning highlights"
+              >
+                <AlertTriangle size={11} />
+                {validationWarnings.length}
+              </button>
+            </Tooltip>
           ) : null}
-          <button
-            type="button"
-            onClick={() => {
-              selectCodePreview();
-              void handleCopy();
-            }}
-            disabled={isEmpty}
-            className={`${BAR_BTN} disabled:opacity-40 disabled:pointer-events-none`}
-            title={copied ? 'Copied' : 'Copy code'}
-          >
-            {copied ? <Check size={12} className="text-zinc-200" /> : <Copy size={12} />}
-          </button>
+          <Tooltip content={copied ? 'Copied' : 'Copy code'} placement="bottom">
+            <button
+              type="button"
+              onClick={() => {
+                selectCodePreview();
+                void handleCopy();
+              }}
+              disabled={isEmpty}
+              className={`${BAR_BTN} disabled:opacity-40 disabled:pointer-events-none`}
+            >
+              {copied ? <Check size={12} className="text-zinc-200" /> : <Copy size={12} />}
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -728,25 +734,33 @@ export function CodePreviewPanel({
         ) : null}
 
         {!isEmpty ? (
-          <div
-            className={`h-full transition-opacity duration-150 ${isStale ? 'opacity-55' : 'opacity-100'}`}
-            title={isJsonPreview ? undefined : 'Double-click a line to select the canvas node'}
+          <Tooltip
+            content="Double-click a line to select the canvas node"
+            placement="top"
+            disabled={isJsonPreview}
+            className="block h-full w-full min-w-0"
           >
-            <GeneratedCodeView
-              value={displayCode}
-              language={isJsonPreview ? 'json' : targetLanguage}
-              highlightRanges={highlightRanges}
-              onReverseSelectLine={isJsonPreview ? undefined : handleReverseSelectLine}
+            <div
+              className={`h-full transition-opacity duration-150 ${isStale ? 'opacity-55' : 'opacity-100'}`}
+            >
+              <GeneratedCodeView
+                value={displayCode}
+                language={isJsonPreview ? 'json' : targetLanguage}
+                highlightRanges={highlightRanges}
+                onReverseSelectLine={isJsonPreview ? undefined : handleReverseSelectLine}
               readOnly
               className="h-full"
             />
-          </div>
+            </div>
+          </Tooltip>
         ) : null}
 
         {isStale && !isEmpty ? (
-          <div className="absolute top-2 right-2 z-10 pointer-events-none" title="Preview paused">
-            <AlertTriangle size={12} className="text-zinc-500" />
-          </div>
+          <Tooltip content="Preview paused" placement="left">
+            <div className="absolute top-2 right-2 z-10 pointer-events-none">
+              <AlertTriangle size={12} className="text-zinc-500" />
+            </div>
+          </Tooltip>
         ) : null}
       </div>
     </div>

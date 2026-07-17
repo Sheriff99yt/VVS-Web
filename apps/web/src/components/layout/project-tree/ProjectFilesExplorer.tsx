@@ -19,6 +19,7 @@ import type {
 import type { GeneratedFileTreeNode } from '@/lib/generatedFileTree';
 import { dispatchSelectGeneratedFile } from '@/lib/generatedFileNavigation';
 import { rootOrphanEntries, vvsDisplayTree, vvsFolderEntries } from '@/lib/mergedStructureTree';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { INDENT, type SectionViewMode } from './constants';
 import { gridTileClass } from './explorerStyles';
 
@@ -49,48 +50,49 @@ function PlainFileRow({
 
   if (layout === 'grid') {
     return (
+      <Tooltip content={path} placement="right" className="block w-full min-w-0">
+        <button
+          type="button"
+          className={`${gridTileClass(false)} text-left w-full`}
+          onClick={() => {
+            if (isGenerated) dispatchSelectGeneratedFile(path);
+          }}
+        >
+          {plainFileIcon(kind)}
+          <span
+            className={`truncate text-[9px] font-mono text-left flex-1 min-w-0 ${
+              isGenerated ? 'text-zinc-400 group-hover:text-emerald-200' : 'text-zinc-500'
+            }`}
+          >
+            {name}
+          </span>
+        </button>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip content={path} placement="right" className="block w-full min-w-0">
       <button
         type="button"
-        className={`${gridTileClass(false)} text-left w-full`}
-        title={path}
+        className="group w-full flex items-center gap-1 py-0.5 pr-2 rounded text-left hover:bg-zinc-900/60"
+        style={{ paddingLeft: depth * 12 + 20 }}
         onClick={() => {
           if (isGenerated) dispatchSelectGeneratedFile(path);
         }}
       >
         {plainFileIcon(kind)}
         <span
-          className={`truncate text-[9px] font-mono text-left flex-1 min-w-0 ${
+          className={`truncate text-[10px] font-mono flex-1 ${
             isGenerated ? 'text-zinc-400 group-hover:text-emerald-200' : 'text-zinc-500'
           }`}
         >
           {name}
         </span>
       </button>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      className="group w-full flex items-center gap-1 py-0.5 pr-2 rounded text-left hover:bg-zinc-900/60"
-      style={{ paddingLeft: depth * 12 + 20 }}
-      title={path}
-      onClick={() => {
-        if (isGenerated) dispatchSelectGeneratedFile(path);
-      }}
-    >
-      {plainFileIcon(kind)}
-      <span
-        className={`truncate text-[10px] font-mono flex-1 ${
-          isGenerated ? 'text-zinc-400 group-hover:text-emerald-200' : 'text-zinc-500'
-        }`}
-      >
-        {name}
-      </span>
-    </button>
+    </Tooltip>
   );
 }
-
 function VvsDirNode({
   node,
   depth,

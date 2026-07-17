@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { resolveGraphCodegenSettings, type ProjectCodegenDefaults } from '@vvs/graph-types';
 import type { GraphDocument } from '@/lib/graphDefaults';
 
@@ -28,11 +29,13 @@ export function CodegenSuffix({
   const lang = LANGUAGE_SHORT[settings.targetLanguage] ?? settings.targetLanguage;
 
   return (
-    <span
-      className="shrink-0 text-[8px] font-mono text-zinc-600 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity"
-      title={`Output: ${settings.targetLanguage} · .${settings.targetFileExtension}`}
+    <Tooltip
+      content={`Output: ${settings.targetLanguage} · .${settings.targetFileExtension}`}
+      placement="top"
     >
-      {lang}
-    </span>
+      <span className="shrink-0 text-[8px] font-mono text-zinc-600 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
+        {lang}
+      </span>
+    </Tooltip>
   );
 }

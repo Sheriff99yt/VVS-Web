@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { GraphPropertiesPanel } from './RightSidebar/GraphPropertiesPanel';
 import { GraphCodegenPanel, ProjectCodegenDefaultsPanel } from './CodegenTargetPanel';
 import { CrossOverArchitecturePanel } from './CrossOverArchitecturePanel';
@@ -72,14 +73,15 @@ export function GraphSettingsModal() {
               </button>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 shrink-0"
-            title="Close"
-          >
-            <X size={14} />
-          </button>
+          <Tooltip content="Close" placement="bottom">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 shrink-0"
+            >
+              <X size={14} />
+            </button>
+          </Tooltip>
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0 space-y-5">

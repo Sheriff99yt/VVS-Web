@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { PinDefinition, VVSNode } from '@/types/graph';
 import { pinRoleHint, pinTypeLabel } from '@/lib/pinLabels';
 
@@ -84,7 +85,8 @@ function PinRow({
   const showInline = direction === 'input' && !isExec && onInlineChange;
 
   return (
-    <div className="space-y-1 py-1.5 border-b border-zinc-800/60 last:border-0" title={pinRoleHint(pin, direction)}>
+    <Tooltip content={pinRoleHint(pin, direction)} placement="left" className="block w-full min-w-0">
+      <div className="space-y-1 py-1.5 border-b border-zinc-800/60 last:border-0">
       <div className="flex items-center gap-1.5 min-w-0">
         <span className="text-[11px] font-medium text-zinc-300 truncate flex-1">
           {pin.label || pin.id}
@@ -94,7 +96,8 @@ function PinRow({
       {showInline ? (
         <InlinePinField input={pin} value={inlineValue ?? ''} onChange={onInlineChange} />
       ) : null}
-    </div>
+      </div>
+    </Tooltip>
   );
 }
 
@@ -122,15 +125,16 @@ export function NodePinsPanel({
           </p>
           <p className="text-[11px] text-indigo-300 font-medium">{linkedGraphName}</p>
           {onOpenLinkedGraph ? (
-            <button
-              type="button"
-              onClick={onOpenLinkedGraph}
-              className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300"
-              title="Open linked graph"
-            >
-              <ExternalLink size={11} />
-              Open
-            </button>
+            <Tooltip content="Open linked graph" placement="top">
+              <button
+                type="button"
+                onClick={onOpenLinkedGraph}
+                className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300"
+              >
+                <ExternalLink size={11} />
+                Open
+              </button>
+            </Tooltip>
           ) : null}
         </div>
       ) : null}

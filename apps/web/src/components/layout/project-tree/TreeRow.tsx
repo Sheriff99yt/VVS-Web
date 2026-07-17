@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { configureCanvasDrag, type TreeCanvasDrag } from '@/lib/treeDrag';
 import { INDENT } from './constants';
 import { gridTileClass, listRowClass } from './explorerStyles';
@@ -160,16 +161,61 @@ export function TreeRow({
 
   if (layout === 'grid') {
     return (
+      <Tooltip
+        content={rowTitle || undefined}
+        disabled={!rowTitle}
+        placement="right"
+        className="block w-full min-w-0"
+      >
+        <div
+          draggable={rowDraggable}
+          onDragStart={rowDraggable ? startCanvasDrag : undefined}
+          onDragEnd={onDragEnd}
+          className={`${gridTileClass(Boolean(active), {
+            dropTarget,
+            dragging,
+            interactive,
+          })} ${rowDraggable && canvasDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${className}`}
+          onClick={onSelect}
+          onContextMenu={onContextMenu}
+          onDoubleClick={(e) => {
+            if (!onOpen) return;
+            e.preventDefault();
+            onOpen();
+          }}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragLeave={handleDragLeave}
+        >
+          {grip}
+          {icon ? <span className="shrink-0">{icon}</span> : null}
+          {labelNode}
+          {suffix ? (
+            <div className="absolute top-0.5 right-0.5 z-10 pointer-events-none [&_button]:pointer-events-auto flex items-center gap-0.5">
+              {suffix}
+            </div>
+          ) : null}
+        </div>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip
+      content={rowTitle || undefined}
+      disabled={!rowTitle}
+      placement="right"
+      className="block w-full min-w-0"
+    >
       <div
         draggable={rowDraggable}
         onDragStart={rowDraggable ? startCanvasDrag : undefined}
         onDragEnd={onDragEnd}
-        className={`${gridTileClass(Boolean(active), {
+        className={`${listRowClass(Boolean(active), {
           dropTarget,
           dragging,
-          interactive,
+          depthClass: INDENT[depth],
         })} ${rowDraggable && canvasDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${className}`}
-        title={rowTitle || undefined}
         onClick={onSelect}
         onContextMenu={onContextMenu}
         onDoubleClick={(e) => {
@@ -184,72 +230,40 @@ export function TreeRow({
         {grip}
         {icon ? <span className="shrink-0">{icon}</span> : null}
         {labelNode}
+        {meta ? (
+          <span
+            className={`text-[9px] text-zinc-600 truncate max-w-[32%] shrink-[3] transition-opacity ${secondaryClass}`}
+          >
+            {meta}
+          </span>
+        ) : null}
         {suffix ? (
-          <div className="absolute top-0.5 right-0.5 z-10 pointer-events-none [&_button]:pointer-events-auto flex items-center gap-0.5">
+          <div className="pointer-events-none shrink-0 flex items-center gap-0.5 [&_button]:pointer-events-auto [&_span[role=button]]:pointer-events-auto">
             {suffix}
           </div>
         ) : null}
+        {hoverActions ? (
+          <div
+            className={`pointer-events-none [&_button]:pointer-events-auto shrink-0 flex items-center gap-0.5 transition-opacity ${secondaryClass}`}
+          >
+            {hoverActions}
+          </div>
+        ) : null}
+        {showOpenAffordance && openAffordance ? (
+          <Tooltip content={openAffordanceTitle ?? 'Open graph'} placement="top">
+            <button
+              type="button"
+              className={`p-0.5 rounded text-zinc-500 hover:text-zinc-200 shrink-0 transition-opacity ${secondaryClass}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                openAffordance();
+              }}
+            >
+              <ExternalLink size={10} />
+            </button>
+          </Tooltip>
+        ) : null}
       </div>
-    );
-  }
-
-  return (
-    <div
-      draggable={rowDraggable}
-      onDragStart={rowDraggable ? startCanvasDrag : undefined}
-      onDragEnd={onDragEnd}
-      className={`${listRowClass(Boolean(active), {
-        dropTarget,
-        dragging,
-        depthClass: INDENT[depth],
-      })} ${rowDraggable && canvasDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${className}`}
-      title={rowTitle || undefined}
-      onClick={onSelect}
-      onContextMenu={onContextMenu}
-      onDoubleClick={(e) => {
-        if (!onOpen) return;
-        e.preventDefault();
-        onOpen();
-      }}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      onDragLeave={handleDragLeave}
-    >
-      {grip}
-      {icon ? <span className="shrink-0">{icon}</span> : null}
-      {labelNode}
-      {meta ? (
-        <span
-          className={`text-[9px] text-zinc-600 truncate max-w-[32%] shrink-[3] transition-opacity ${secondaryClass}`}
-        >
-          {meta}
-        </span>
-      ) : null}
-      {suffix ? (
-        <div className="pointer-events-none shrink-0 flex items-center gap-0.5 [&_button]:pointer-events-auto [&_span[role=button]]:pointer-events-auto">
-          {suffix}
-        </div>
-      ) : null}
-      {hoverActions ? (
-        <div
-          className={`pointer-events-none [&_button]:pointer-events-auto shrink-0 flex items-center gap-0.5 transition-opacity ${secondaryClass}`}
-        >
-          {hoverActions}
-        </div>
-      ) : null}
-      {showOpenAffordance && openAffordance ? (
-        <button
-          type="button"
-          className={`p-0.5 rounded text-zinc-500 hover:text-zinc-200 shrink-0 transition-opacity ${secondaryClass}`}
-          title={openAffordanceTitle ?? 'Open graph'}
-          onClick={(e) => {
-            e.stopPropagation();
-            openAffordance();
-          }}
-        >
-          <ExternalLink size={10} />
-        </button>
-      ) : null}
-    </div>
+    </Tooltip>
   );
 }

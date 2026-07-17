@@ -2,6 +2,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface CopyPathButtonProps {
   path: string;
@@ -28,15 +29,16 @@ export function CopyPathButton({ path, className = '', title }: CopyPathButtonPr
   );
 
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className={`p-1 rounded text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors shrink-0 ${className}`}
-      title={title ?? `Copy path: ${path}`}
-      aria-label={`Copy path ${path}`}
-    >
-      {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
-    </button>
+    <Tooltip content={title ?? `Copy path: ${path}`} placement="top">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className={`p-1 rounded text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors shrink-0 ${className}`}
+        aria-label={`Copy path ${path}`}
+      >
+        {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+      </button>
+    </Tooltip>
   );
 }
 

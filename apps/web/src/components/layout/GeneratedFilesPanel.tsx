@@ -5,6 +5,7 @@ import { ChevronRight, FileCode2, Folder, FolderOpen } from 'lucide-react';
 import { buildGeneratedFileTree, type GeneratedFileTreeNode } from '@/lib/generatedFileTree';
 import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
 import { CopyPathButton } from '@/components/ui/CopyPathButton';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface GeneratedFilesPanelProps {
   selectedFilePath: string | null;
@@ -31,23 +32,24 @@ function TreeNode({
 
   if (!isDir) {
     return (
-      <button
-        type="button"
-        onClick={() => onSelectFile(node.path)}
-        onDoubleClick={() => onOpenFile(node.path)}
-        className={`group/row w-full flex items-center gap-1 py-0.5 pr-1 rounded text-left transition-colors ${
-          isSelected ? 'bg-indigo-500/15 text-indigo-200' : 'hover:bg-zinc-800/50 text-zinc-400'
-        }`}
-        style={{ paddingLeft: depth * 14 + 8 }}
-        title={node.path}
-      >
-        <FileCode2 size={12} className="text-emerald-500/80 shrink-0" />
-        <span className="truncate text-[11px] font-mono flex-1 min-w-0">{node.name}</span>
-        <CopyPathButton
-          path={node.path}
-          className="opacity-0 group-hover/row:opacity-100 shrink-0"
-        />
-      </button>
+      <Tooltip content={node.path} placement="right" className="block w-full min-w-0">
+        <button
+          type="button"
+          onClick={() => onSelectFile(node.path)}
+          onDoubleClick={() => onOpenFile(node.path)}
+          className={`group/row w-full flex items-center gap-1 py-0.5 pr-1 rounded text-left transition-colors ${
+            isSelected ? 'bg-indigo-500/15 text-indigo-200' : 'hover:bg-zinc-800/50 text-zinc-400'
+          }`}
+          style={{ paddingLeft: depth * 14 + 8 }}
+        >
+          <FileCode2 size={12} className="text-emerald-500/80 shrink-0" />
+          <span className="truncate text-[11px] font-mono flex-1 min-w-0">{node.name}</span>
+          <CopyPathButton
+            path={node.path}
+            className="opacity-0 group-hover/row:opacity-100 shrink-0"
+          />
+        </button>
+      </Tooltip>
     );
   }
 
@@ -59,25 +61,26 @@ function TreeNode({
         className="group/row flex items-center gap-0.5 py-0.5 pr-1 rounded hover:bg-zinc-800/40"
         style={{ paddingLeft: depth * 14 + 4 }}
       >
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="flex items-center gap-1 min-w-0 flex-1 text-left"
-          title={node.path}
-        >
-          <ChevronRight
-            size={11}
-            className={`text-zinc-600 shrink-0 transition-transform ${open ? 'rotate-90' : ''}`}
-          />
-          {open ? (
-            <FolderOpen size={12} className="text-amber-500/80 shrink-0" />
-          ) : (
-            <Folder size={12} className="text-amber-500/80 shrink-0" />
-          )}
-          <span className="truncate text-[11px] font-mono text-zinc-300 font-semibold">
-            {node.name}
-          </span>
-        </button>
+        <Tooltip content={node.path} placement="right" className="block min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            className="flex items-center gap-1 min-w-0 flex-1 text-left"
+          >
+            <ChevronRight
+              size={11}
+              className={`text-zinc-600 shrink-0 transition-transform ${open ? 'rotate-90' : ''}`}
+            />
+            {open ? (
+              <FolderOpen size={12} className="text-amber-500/80 shrink-0" />
+            ) : (
+              <Folder size={12} className="text-amber-500/80 shrink-0" />
+            )}
+            <span className="truncate text-[11px] font-mono text-zinc-300 font-semibold">
+              {node.name}
+            </span>
+          </button>
+        </Tooltip>
         <CopyPathButton
           path={node.path}
           className="opacity-0 group-hover/row:opacity-100 shrink-0"

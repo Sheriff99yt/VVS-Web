@@ -59,6 +59,7 @@ Before adding visible UI, answer:
 - Navigation section open (e.g. Graphs).
 - Everything else (Functions, Variables, Generated) **collapsed** until expanded.
 - Nested detail (signatures, codegen suffix, OK canvas checks) only on **hover or selection** — not inline by default.
+- Symbol **actions** (rename / delete / call / declare) live on the **right-click menu** (with shortcuts); list-mode kebab menus are not used.
 - List **or** grid per section (header toggle; default list).
 - Missing Declare/Define badges stay visible (fidelity).
 

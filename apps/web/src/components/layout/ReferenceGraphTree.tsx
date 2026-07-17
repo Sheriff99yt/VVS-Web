@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { GraphTab } from '@/contexts/ProjectContext';
 import {
   buildReferenceIndex,
@@ -95,16 +96,16 @@ function TreeBranch({
           <span className="w-[11px] shrink-0" />
         )}
 
-        <button
-          type="button"
-          className="flex-1 min-w-0 text-left"
-          onClick={() => (onSelectGraph ?? onOpenGraph)(node.graphId)}
-          onDoubleClick={(e) => {
-            e.preventDefault();
-            onOpenGraph(node.graphId);
-          }}
-          title="Click to focus · Double-click to open in Canvas"
-        >
+        <Tooltip content="Click to focus · Double-click to open in Canvas" placement="right" className="block w-full min-w-0">
+          <button
+            type="button"
+            className="flex-1 min-w-0 text-left"
+            onClick={() => (onSelectGraph ?? onOpenGraph)(node.graphId)}
+            onDoubleClick={(e) => {
+              e.preventDefault();
+              onOpenGraph(node.graphId);
+            }}
+          >
           <div className="flex items-center gap-1.5 min-w-0">
             <span
               className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -132,6 +133,7 @@ function TreeBranch({
             <div className="text-[9px] text-zinc-600 italic mt-0.5 pl-3">Increase depth to see more</div>
           )}
         </button>
+        </Tooltip>
       </div>
 
       {expanded && hasChildren && (
@@ -274,25 +276,27 @@ export function ReferenceGraphTree({
           <div className="flex items-center justify-between gap-2">
             <span className="text-[9px] uppercase tracking-wide text-zinc-600 shrink-0">Depth</span>
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className="p-1 rounded border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-30"
-                disabled={depth <= REFERENCE_DEPTH_MIN}
-                onClick={() => setDepth(Math.max(REFERENCE_DEPTH_MIN, depth - 1))}
-                title="Decrease search depth"
-              >
-                <Minus size={11} />
-              </button>
+              <Tooltip content="Decrease search depth" placement="top">
+                <button
+                  type="button"
+                  className="p-1 rounded border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-30"
+                  disabled={depth <= REFERENCE_DEPTH_MIN}
+                  onClick={() => setDepth(Math.max(REFERENCE_DEPTH_MIN, depth - 1))}
+                >
+                  <Minus size={11} />
+                </button>
+              </Tooltip>
               <span className="text-[11px] text-zinc-200 w-6 text-center tabular-nums">{depth}</span>
-              <button
-                type="button"
-                className="p-1 rounded border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-30"
-                disabled={depth >= REFERENCE_DEPTH_MAX}
-                onClick={() => setDepth(Math.min(REFERENCE_DEPTH_MAX, depth + 1))}
-                title="Increase search depth"
-              >
-                <Plus size={11} />
-              </button>
+              <Tooltip content="Increase search depth" placement="top">
+                <button
+                  type="button"
+                  className="p-1 rounded border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-30"
+                  disabled={depth >= REFERENCE_DEPTH_MAX}
+                  onClick={() => setDepth(Math.min(REFERENCE_DEPTH_MAX, depth + 1))}
+                >
+                  <Plus size={11} />
+                </button>
+              </Tooltip>
             </div>
           </div>
 

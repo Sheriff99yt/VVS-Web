@@ -4,7 +4,6 @@ import React from 'react';
 import { TREE_DRAG_MIME } from '@/lib/treeDrag';
 import { type SectionViewMode } from './constants';
 import { TreeRow } from './TreeRow';
-import { RowActionsMenu } from './RowActionsMenu';
 import { LOGICAL_DATA_TYPE_DESCRIPTORS } from '@vvs/graph-types';
 
 export function VariableRow({
@@ -66,18 +65,7 @@ export function VariableRow({
   onReorderDrop?: (e: React.DragEvent) => void;
   onReorderDragLeave?: () => void;
 }) {
-  const canRename = !!onRename;
-  const canDelete = !!onDelete;
   const isGrid = layout === 'grid';
-  const menu =
-    !isRenaming && !isGrid && (canRename || canDelete) ? (
-      <RowActionsMenu
-        actions={[
-          ...(canRename ? [{ label: 'Rename', onClick: () => onRename?.() }] : []),
-          ...(canDelete ? [{ label: 'Delete', onClick: () => onDelete?.(), danger: true }] : []),
-        ]}
-      />
-    ) : null;
 
   const typeMeta = !isRenaming
     ? [
@@ -130,10 +118,10 @@ export function VariableRow({
         typeMeta,
         hint ??
           (canReorder
-            ? 'Hover for reorder grip · drag row to graph · double-click to focus Declare'
+            ? 'Hover for reorder grip · drag row to graph · right-click for actions · double-click to focus Declare'
             : onOpen
-              ? 'Drag row to graph · click to select · double-click to focus Declare'
-              : 'Drag row to graph · click to select'),
+              ? 'Drag row to graph · click to select · right-click for actions · double-click to focus Declare'
+              : 'Drag row to graph · click to select · right-click for actions'),
       ]
         .filter(Boolean)
         .join(' · ')}
@@ -176,12 +164,7 @@ export function VariableRow({
         )
       }
       hoverActions={
-        !isRenaming && !isGrid ? (
-          <>
-            {hoverBadge}
-            {menu}
-          </>
-        ) : undefined
+        !isRenaming && !isGrid ? <>{hoverBadge}</> : undefined
       }
     />
   );

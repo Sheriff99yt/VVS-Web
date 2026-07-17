@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { NodeProps, useReactFlow } from '@xyflow/react';
 import { AlertTriangle, FolderOpen } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import {
   isNodeEffectiveForLanguage,
   nodeIneffectiveTooltip,
@@ -16,7 +17,7 @@ import { hasHandlerNodeForEvent } from '@/lib/defineNodeSync';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
 import { NodePinRow } from './NodePinRow';
-import { NodeModifiers } from './NodeModifiers';
+import { NodeModifiers, nodeHasModifierChrome } from './NodeModifiers';
 import styles from './VVSNode.module.css';
 
 interface VVSNodeBodyProps {
@@ -71,6 +72,8 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
       : '';
   const hasPins = data.inputs.length > 0 || data.outputs.length > 0;
   const title = getNodeDisplayTitle(data);
+  const [modifiersPinned, setModifiersPinned] = useState(false);
+  const showHeaderOverlay = Boolean(importLangGate) || nodeHasModifierChrome(data);
 
   const handleInlineChange = useCallback(
     (pinId: string, value: string | number | boolean) => {
@@ -86,22 +89,21 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
 
   return (
     <>
-      <div
-        className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''} ${isUnsupported ? styles.nodeUnsupported : ''}`}
-        data-category={data.category}
-        title={unsupportedTitle || undefined}
-      >
-        {selected ? (
-          <div className={styles.headerOverlay}>
+      <Tooltip content={unsupportedTitle || undefined} placement="top" disabled={!unsupportedTitle} className="block w-full min-w-0">
+        <div
+          className={`${styles.nodeContainer} ${selected ? styles.nodeContainerSelected : ''} ${data.isSimulating ? styles.nodeSimulating : ''} ${hasBrokenRef ? styles.nodeBrokenRef : ''} ${isUnsupported ? styles.nodeUnsupported : ''}`}
+          data-category={data.category}
+        >
+        {showHeaderOverlay ? (
+          <div
+            className={`${styles.headerOverlay} ${modifiersPinned ? styles.headerOverlayPinned : ''}`}
+          >
             {importLangGate ? (
-              <span
-                className={styles.headerOverlayMeta}
-                title="Emits only for these target languages"
-              >
-                {importLangGate}
-              </span>
+              <Tooltip content="Emits only for these target languages" placement="top">
+                <span className={styles.headerOverlayMeta}>{importLangGate}</span>
+              </Tooltip>
             ) : null}
-            <NodeModifiers id={id} data={data} />
+            <NodeModifiers id={id} data={data} onInteractionChange={setModifiersPinned} />
           </div>
         ) : null}
 
@@ -113,24 +115,31 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
               ) : null}
               <span className={`${styles.title} truncate`}>{title}</span>
               {hasBrokenRef ? (
-                <span title="Unresolved symbol reference">
-                  <AlertTriangle size={12} className="text-amber-400 shrink-0" aria-hidden />
-                </span>
+                <Tooltip content="Unresolved symbol reference" placement="top">
+                  <span>
+                    <AlertTriangle size={12} className="text-amber-400 shrink-0" aria-hidden />
+                  </span>
+                </Tooltip>
               ) : null}
             </div>
             {linkedTargetLabel && (
-              <span
-                className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}
-                title={
+              <Tooltip
+                content={
                   isGraphRef
                     ? 'Double-click to open referenced graph'
                     : isImportNode
                       ? 'Double-click to open module'
                       : 'Double-click to open graph'
                 }
+                placement="bottom"
+                className="block w-full min-w-0"
               >
-                {isImportNode ? `↳ ${linkedTargetLabel}` : `→ ${linkedTargetLabel}`}
-              </span>
+                <span
+                  className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}
+                >
+                  {isImportNode ? `↳ ${linkedTargetLabel}` : `→ ${linkedTargetLabel}`}
+                </span>
+              </Tooltip>
             )}
           </div>
         </div>
@@ -155,7 +164,8 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      </Tooltip>
     </>
   );
 }

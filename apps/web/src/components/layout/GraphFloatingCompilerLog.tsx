@@ -78,22 +78,24 @@ function logColor(type: LogType): string {
 
 function LogLine({ log, onNavigate }: { log: LogEntry; onNavigate: (log: LogEntry) => void }) {
   const navigable = Boolean((log.nodeId && log.tabId) || log.symbolId);
+  const tip = navigable ? (log.symbolId ? 'Go to variable' : 'Go to node') : undefined;
   return (
-    <button
-      type="button"
-      onClick={() => onNavigate(log)}
-      disabled={!navigable}
-      className={`w-full text-left flex items-start gap-1.5 py-0.5 rounded px-0.5 ${
-        navigable ? 'hover:bg-zinc-800/60 cursor-pointer' : 'cursor-default'
-      }`}
-      title={navigable ? (log.symbolId ? 'Go to variable' : 'Go to node') : undefined}
-    >
-      {logIcon(log.type)}
-      <span className={`flex-1 min-w-0 break-words leading-snug ${logColor(log.type)}`}>
-        <span className="text-zinc-600 mr-1">[{log.source}]</span>
-        {log.message}
-      </span>
-    </button>
+    <Tooltip content={tip} placement="top" disabled={!navigable} className="block w-full min-w-0">
+      <button
+        type="button"
+        onClick={() => onNavigate(log)}
+        disabled={!navigable}
+        className={`w-full text-left flex items-start gap-1.5 py-0.5 rounded px-0.5 ${
+          navigable ? 'hover:bg-zinc-800/60 cursor-pointer' : 'cursor-default'
+        }`}
+      >
+        {logIcon(log.type)}
+        <span className={`flex-1 min-w-0 break-words leading-snug ${logColor(log.type)}`}>
+          <span className="text-zinc-600 mr-1">[{log.source}]</span>
+          {log.message}
+        </span>
+      </button>
+    </Tooltip>
   );
 }
 
@@ -348,14 +350,15 @@ export function GraphFloatingCompilerLog() {
                 <Languages size={11} />
               </button>
             </Tooltip>
-            <button
-              type="button"
-              onClick={clearLogs}
-              className="p-0.5 rounded text-zinc-500 hover:text-red-400 hover:bg-zinc-800/80"
-              title="Clear log"
-            >
-              <Trash2 size={11} />
-            </button>
+            <Tooltip content="Clear log" placement="bottom">
+              <button
+                type="button"
+                onClick={clearLogs}
+                className="p-0.5 rounded text-zinc-500 hover:text-red-400 hover:bg-zinc-800/80"
+              >
+                <Trash2 size={11} />
+              </button>
+            </Tooltip>
           </div>
         }
       >

@@ -944,7 +944,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'custom-tooltip-u94',
         title: 'Custom tooltip widget (U94)',
         description:
-          'App-default Tooltip (`components/ui/Tooltip.tsx`) — Esc dismiss, viewport clamp; wired on search, TopNav, status, toolbars, floating panels.',
+          'App-default Tooltip (`components/ui/Tooltip.tsx`) — Esc dismiss, viewport clamp; migrated across left panel + editor chrome (native title= tips removed from interactive controls).',
         status: 'done',
       },
       {
@@ -956,9 +956,9 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'selected-node-chrome-overlay',
-        title: 'Selected-only node chrome overlay',
+        title: 'Hover node chrome overlay',
         description:
-          'Modifier chips + import target-language sit in an absolute strip above the card when selected (do not grow header). Selection actions toolbar stacks above that strip.',
+          'Modifier chips + import target-language sit in an absolute strip above the card on hover (pinned while a chip menu is open). Selection actions toolbar stacks above that strip when selected.',
         status: 'done',
       },
     ],
@@ -1119,7 +1119,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbols-overlay-rethink-u102',
         title: 'Symbols overlay rethink (U102)',
         description:
-          'Open Graph removed from symbol tree/Details. Selected-node modifier chip strip kept (NodeModifiers). Selection toolbar + right-click menus remain.',
+          'Open Graph removed from symbol tree/Details. Hover modifier chip strip kept (NodeModifiers; pinned while menus open). Selection toolbar + right-click menus with shortcuts remain.',
         status: 'done',
       },
       {

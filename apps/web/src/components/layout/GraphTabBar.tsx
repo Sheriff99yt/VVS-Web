@@ -221,30 +221,32 @@ export function GraphTabBar() {
                 {tab.name}
               </span>
               {dirty ? (
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 ring-1 ring-amber-400/40"
-                  title="Uncompiled changes"
-                />
+                <Tooltip content="Uncompiled changes" placement="top">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 ring-1 ring-amber-400/40"
+                  />
+                </Tooltip>
               ) : null}
               {canCloseGraphTab(tab) ? (
-                <button
-                  type="button"
-                  onClick={(e) => handleClose(e, tab.id)}
-                  className="text-zinc-600 hover:text-red-400 ml-0.5 transition-colors p-0.5 rounded hover:bg-zinc-800/50"
-                  title="Close tab"
-                >
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
+                <Tooltip content="Close tab" placement="top">
+                  <button
+                    type="button"
+                    onClick={(e) => handleClose(e, tab.id)}
+                    className="text-zinc-600 hover:text-red-400 ml-0.5 transition-colors p-0.5 rounded hover:bg-zinc-800/50"
                   >
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    >
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </Tooltip>
               ) : null}
             </div>
           );
@@ -313,18 +315,19 @@ export function GraphTabBar() {
       </div>
 
       <div className="relative shrink-0 mb-1" ref={menuRef}>
-        <button
-          type="button"
-          onClick={() => {
-            setShowMenu(!showMenu);
-            setShowOverflow(false);
-          }}
-          title="Open or Create Graph"
-          className={`flex items-center gap-1 px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors ${showMenu ? 'bg-zinc-800 text-zinc-100' : ''}`}
-        >
-          <FilePlus size={14} />
-          <ChevronDown size={12} className="opacity-70" />
-        </button>
+        <Tooltip content="Open or Create Graph" placement="bottom">
+          <button
+            type="button"
+            onClick={() => {
+              setShowMenu(!showMenu);
+              setShowOverflow(false);
+            }}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors ${showMenu ? 'bg-zinc-800 text-zinc-100' : ''}`}
+          >
+            <FilePlus size={14} />
+            <ChevronDown size={12} className="opacity-70" />
+          </button>
+        </Tooltip>
 
         {showMenu && (
           <div className="absolute top-full right-0 origin-top-right mt-2 w-48 bg-zinc-900 border border-zinc-700 shadow-2xl rounded-md py-1 z-50">
