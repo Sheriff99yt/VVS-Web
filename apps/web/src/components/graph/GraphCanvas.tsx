@@ -28,6 +28,7 @@ import { GraphAction } from '@/lib/graphActions';
 import {
   expandToFullChains,
   selectDownstreamFromSelection,
+  selectExecRangeBetween,
 } from '@/lib/graphExecChains';
 import {
   layoutSelectedExecChains,
@@ -47,7 +48,6 @@ import { dispatchNavigateToNode } from '@/lib/graphNavigation';
 import { findGraphEntryNodeId, nestedGraphIdForNode } from '@/lib/linkedGraphNodes';
 import { GraphNodeSearch } from './GraphNodeSearch';
 import { GraphSelectionToolbar } from './GraphSelectionToolbar';
-import { ForceAdditiveSelection } from './ForceAdditiveSelection';
 import { GRAPH_ONLY_RENDER_VISIBLE } from '@/lib/graphVirtualization';
 import { fitAllGraphNodes, focusGraphNodes, openGraphCamera, GRAPH_ZOOM } from '@/lib/graphCamera';
 import { GraphFloatingDetails, SPAWN_EVENT_NODE_EVENT, SPAWN_EVENT_DECLARE_MEMBER_EVENT, SPAWN_FUNCTION_IMPLEMENT_EVENT, SPAWN_FUNCTION_CALL_EVENT } from '@/components/layout/GraphFloatingDetails';
@@ -613,6 +613,8 @@ function GraphCanvasInner() {
 
   /** Right-button pan (U107) still fires contextmenu on mouseup — skip spawn menu after a pan. */
   const suppressPaneContextMenuRef = React.useRef(false);
+  /** Anchor for Shift+click exec-chain range select. */
+  const selectionAnchorRef = React.useRef<string | null>(null);
 
   const onPaneContextMenu = useCallback(
     (event: React.MouseEvent | MouseEvent) => {
@@ -638,6 +640,7 @@ function GraphCanvasInner() {
       suppressPaneClickRef.current = false;
       return;
     }
+    selectionAnchorRef.current = null;
     if (menu) setMenu(null);
     if (variableMenu) setVariableMenu(null);
     if (functionMenu) setFunctionMenu(null);
@@ -663,12 +666,53 @@ function GraphCanvasInner() {
     clearTreeSymbolFocus();
   }, [clearTreeSymbolFocus]);
 
-  /** Sync inspector to the clicked node; leave RF selection additive (U107 — click acts like Ctrl+click). */
+  /**
+   * Plain click: exclusive select + set Shift-range anchor.
+   * Shift+click: select all exec-chain nodes between anchor and target (U75-adjacent).
+   * Ctrl/Cmd+click: leave to React Flow multi-select.
+   */
   const onNodeClick = useCallback(
-    (_event: React.MouseEvent, node: { id: string }) => {
+    (event: React.MouseEvent, node: { id: string }) => {
+      if (event.ctrlKey || event.metaKey) return;
+
+      if (event.shiftKey) {
+        const anchor =
+          selectionAnchorRef.current ??
+          nodes.find((n) => n.selected)?.id ??
+          null;
+        if (anchor && anchor !== node.id) {
+          const { nodeIds } = selectExecRangeBetween(anchor, node.id, nodes, edges);
+          if (nodeIds.size > 0) {
+            setNodes((nds) =>
+              nds.map((n) => ({
+                ...n,
+                selected: nodeIds.has(n.id),
+              }))
+            );
+            setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+            setSelectedNodeIds([...nodeIds]);
+            setSelection({ type: 'node', id: node.id });
+            return;
+          }
+        }
+        // Not on the same chain — exclusive select the clicked node.
+        selectionAnchorRef.current = node.id;
+        setSelection({ type: 'node', id: node.id });
+        setSelectedNodeIds([node.id]);
+        setNodes((nds) =>
+          nds.map((n) => ({
+            ...n,
+            selected: n.id === node.id,
+          }))
+        );
+        return;
+      }
+
+      selectionAnchorRef.current = node.id;
       setSelection({ type: 'node', id: node.id });
+      setSelectedNodeIds([node.id]);
     },
-    [setSelection]
+    [nodes, edges, setNodes, setEdges, setSelection, setSelectedNodeIds]
   );
 
   const deleteEdgeById = useCallback(
@@ -2059,7 +2103,7 @@ function GraphCanvasInner() {
         minZoom={GRAPH_ZOOM.min}
         maxZoom={GRAPH_ZOOM.max}
         onlyRenderVisibleElements={GRAPH_ONLY_RENDER_VISIBLE}
-        /** U107: right-drag pans; left-drag on empty box-selects; click adds like Ctrl+click. */
+        /** U107: right/middle-drag pans; left-click selects one; Ctrl/Cmd+click multi-selects; left-drag box-selects. */
         panOnDrag={[1, 2]}
         selectNodesOnDrag
         selectionOnDrag
@@ -2072,7 +2116,6 @@ function GraphCanvasInner() {
         noDragClassName="nodrag"
         proOptions={{ hideAttribution: true }}
       >
-        <ForceAdditiveSelection />
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#333" />
         {graphChromeMode !== 'hidden' ? (
           <MiniMap

@@ -10,7 +10,7 @@ Directional phases — not schedule commitments.
 ## Now (July 2026)
 
 **Active:** Phase 6 polish — Go (**U77**), pack versions (**U78**), editor chrome (**U89–U90**), AI/examples (**U91–U92**). **Queued:** graph/menu fidelity (**U97–U106**). **U107** canvas gestures shipped. **U93** code→visual is long-term. Canvas virtualization (**U83**) + search/help (**U84/U85/U94/U95**) + **U86–U88 / U96** + selected-only node chrome overlay shipped.  
-**Just shipped:** **U107** right-drag pan · left-click additive select · **U102** thin (drop Open Graph on symbols) · U96 auto-connect · thin U89/U91/U92 · CL-010/014/015 plans · U86–U88/U96 base · U84/U85/U94/U95.
+**Just shipped:** **U102** symbols overlay rethink (modifiers → Details) · **U107** right-drag pan · Ctrl/⌘+click multi-select · U96 auto-connect · thin U89/U91/U92 · CL plans · U86–U88/U96 base.
 
 | Focus | Status |
 |-------|--------|
@@ -33,8 +33,8 @@ Directional phases — not schedule commitments.
 | Wire / connection UX (U96) | **Done** — larger pins; edge menu; selection Auto-connect + Disconnect |
 | AI / examples (U91–U92) | **Partial** — Windsurf/tools/consent + Branch Lab shipped; full audit / more examples open |
 | Search / tooltip / first-open help (U84/U85/U94/U95) | **Done** |
-| Graph / menu / OOP fidelity (U97–U106) | **Queued** — catalog · args/returns · listeners · async · symbols overlay · components · overload/override/inheritance |
-| Canvas gestures (U107) | **Done** — right-drag pan; left-click additive select; left-drag box-select |
+| Graph / menu / OOP fidelity (U97–U106) | **Partial** — **U102** symbols overlay done; rest queued |
+| Canvas gestures (U107) | **Done** — right-drag pan; left-click single select; Ctrl/⌘+click multi-select; left-drag box-select |
 | Code → visual (U93) | **Long-term** — reverse import research |
 | Emit fidelity plans (CL backlog) | **Queued** — plans before code; see Next |
 
@@ -79,12 +79,12 @@ Emit-fidelity findings: canonical **CL-*** log in [`.agents/skills/vvs_cross_lan
 | **U99** | **Function return with arguments** | Return values as pins / multi-return where languages support it — visual + emit. |
 | **U100** | **Event listeners** | First-class listen / subscribe visuals that map to text across targets (not only entry/dispatch). |
 | **U101** | **Cross-language async concept** | Capture a **language-neutral** async model (nodes, options, or hybrid) that works for all packs — not per-language one-offs. |
-| **U102** | **Symbols overlay rethink** | **Partial** — removed Open Graph from symbol tree + Details; full overlay rethink still open (rely on right-click). |
+| **U102** | **Symbols overlay rethink** | **Done** — Open Graph removed from symbols; selected-node **modifier chips kept**; selection toolbar + right-click menus remain. |
 | **U103** | **Components** | Design a visual concept that works for **all languages**; add components to multi-lang Test Project examples to prove it. |
 | **U104** | **Overloading** | Revise overload UX/emit; **stress-test** current behavior and fix or document gaps. |
 | **U105** | **Overwriting (override)** | Study whether override needs custom visuals or is fully covered by the current modifier / define system. |
 | **U106** | **Inheritance** | Design how inheritance is authored on the canvas and lowered per language (pairs with CL-010 Rust plan). |
-| **U107** | **Canvas pan / select gestures** | **Done** — **Right-drag** pans the graph; **left-click** adds/toggles selection (Ctrl+click behavior by default); **left-drag** on empty canvas box-selects. Middle-drag also pans. Right-click (no drag) still opens spawn menu. |
+| **U107** | **Canvas pan / select gestures** | **Done** — **Right-drag** pans the graph; **left-click** selects one node; **Ctrl/⌘+click** multi-selects; **left-drag** on empty canvas box-selects. Middle-drag also pans. Right-click (no drag) still opens spawn menu. |
 | **U93** | **Long-term: code → visual** | Invent a system that reads raw source and turns it into text-shaped graphs (import / reverse of Generate). Research track — must preserve canvas source of truth. |
 | **Analysis / warnings** | Logical checks (not execution) | Keep strengthening analyzer, portability, `(x)` / dim, compiler log — **no** live run. |
 | **CL backlog** | Target-language emit fidelity | Plans first. Docs match shipped goldens (2026-07-17). Clusters below. |

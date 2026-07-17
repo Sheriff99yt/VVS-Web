@@ -4,6 +4,9 @@ import {
   buildExecAdjacency,
   expandToFullChains,
   selectDownstreamFromSelection,
+  selectExecRangeBetween,
+  nodesOnDirectedExecPaths,
+  shortestUndirectedExecPath,
 } from './graphExecChains';
 
 function execNode(id: string): VVSNode {
@@ -203,6 +206,132 @@ describe('graphExecChains', () => {
     const nodes = [execNode('a')];
     expect(ids(selectDownstreamFromSelection(new Set(), nodes, []))).toEqual([]);
     expect(ids(expandToFullChains(new Set(), nodes, []))).toEqual([]);
+  });
+
+  test('Shift range: linear chain selects nodes in between', () => {
+    const nodes = [execNode('a'), execNode('b'), execNode('c'), execNode('d')];
+    const edges = [execEdge('a', 'b'), execEdge('b', 'c'), execEdge('c', 'd')];
+    expect(ids(selectExecRangeBetween('a', 'd', nodes, edges))).toEqual(['a', 'b', 'c', 'd']);
+    expect(ids(selectExecRangeBetween('d', 'b', nodes, edges))).toEqual(['b', 'c', 'd']);
+  });
+
+  test('Shift range: branch selects all nodes on paths between ends', () => {
+    const nodes = [
+      execNode('start'),
+      branchNode('br'),
+      execNode('t'),
+      execNode('f'),
+      dataNode('cond'),
+    ];
+    const edges = [
+      execEdge('start', 'br'),
+      {
+        id: 'e-t',
+        source: 'br',
+        target: 't',
+        sourceHandle: 'true_exec',
+        targetHandle: 'exec_in',
+        type: 'vvs_standard_edge',
+        data: { pinType: 'execution' as const },
+      },
+      {
+        id: 'e-f',
+        source: 'br',
+        target: 'f',
+        sourceHandle: 'false_exec',
+        targetHandle: 'exec_in',
+        type: 'vvs_standard_edge',
+        data: { pinType: 'execution' as const },
+      },
+      dataEdge('cond', 'br', 'result', 'condition'),
+    ];
+    expect(ids(selectExecRangeBetween('start', 't', nodes, edges))).toEqual([
+      'br',
+      'cond',
+      'start',
+      't',
+    ]);
+    // Sibling arms: undirected path through branch
+    expect(ids(selectExecRangeBetween('t', 'f', nodes, edges))).toEqual(['br', 'cond', 'f', 't']);
+  });
+
+  test('Shift range: disconnected nodes → empty', () => {
+    const nodes = [execNode('a'), execNode('b'), execNode('x')];
+    const edges = [execEdge('a', 'b')];
+    expect(ids(selectExecRangeBetween('a', 'x', nodes, edges))).toEqual([]);
+    expect(shortestUndirectedExecPath('a', 'x', buildExecAdjacency(edges))).toBeNull();
+    expect(nodesOnDirectedExecPaths('a', 'b', buildExecAdjacency(edges))).toEqual(
+      new Set(['a', 'b'])
+    );
+  });
+
+  test('Shift range: from data attribute child to downstream exec', () => {
+    const nodes = [
+      execNode('start'),
+      branchNode('br'),
+      execNode('t'),
+      dataNode('cond'),
+    ];
+    const edges = [
+      execEdge('start', 'br'),
+      {
+        id: 'e-t',
+        source: 'br',
+        target: 't',
+        sourceHandle: 'true_exec',
+        targetHandle: 'exec_in',
+        type: 'vvs_standard_edge',
+        data: { pinType: 'execution' as const },
+      },
+      dataEdge('cond', 'br', 'result', 'condition'),
+    ];
+    expect(ids(selectExecRangeBetween('cond', 't', nodes, edges))).toEqual([
+      'br',
+      'cond',
+      't',
+    ]);
+    expect(ids(selectExecRangeBetween('t', 'cond', nodes, edges))).toEqual([
+      'br',
+      'cond',
+      't',
+    ]);
+  });
+
+  test('Shift range: from nested expression child through chain', () => {
+    const nodes = [
+      execNode('a'),
+      execNode('b'),
+      execNode('c'),
+      dataNode('inner'),
+      dataNode('outer'),
+    ];
+    const edges = [
+      execEdge('a', 'b'),
+      execEdge('b', 'c'),
+      dataEdge('inner', 'outer'),
+      dataEdge('outer', 'b', 'result', 'exec_in'),
+    ];
+    // Mis-typed data into exec_in still treats outer→b as data host resolve.
+    expect(ids(selectExecRangeBetween('inner', 'c', nodes, edges))).toEqual([
+      'b',
+      'c',
+      'inner',
+      'outer',
+    ]);
+  });
+
+  test('Shift range: from parented child of an exec node', () => {
+    const child: VVSNode = {
+      ...dataNode('child'),
+      parentId: 'b',
+    };
+    const nodes = [execNode('a'), execNode('b'), execNode('c'), child];
+    const edges = [execEdge('a', 'b'), execEdge('b', 'c')];
+    expect(ids(selectExecRangeBetween('child', 'c', nodes, edges))).toEqual([
+      'b',
+      'c',
+      'child',
+    ]);
   });
 
   test('buildExecAdjacency only uses execution pins', () => {

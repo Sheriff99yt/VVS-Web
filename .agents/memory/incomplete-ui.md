@@ -4,8 +4,8 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U107 done; U102 partial; U97–U101 / U103–U106 open. Selected-only node chrome overlay shipped.
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U107 done** · U89–U93 + U97–U106 open (thin slices)
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U102 · U107 done; U97–U101 / U103–U106 open.
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U102 / U107 done** · U89–U93 + U97–U101 / U103–U106 open
 
 ## Status legend
 
@@ -306,7 +306,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U107 done; U102 partial)
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U102 · U107 done)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
 
@@ -319,12 +319,12 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U99 | **Function return with arguments** | **Open** | Return / multi-return as pins where targets support it — visual + emit. |
 | U100 | **Event listeners** | **Open** | Listen / subscribe visuals that map to text across languages (beyond entry/dispatch). |
 | U101 | **Cross-language async concept** | **Open** | Language-neutral async model (nodes, options, or hybrid) that packs can map — not one-off per language. |
-| U102 | **Symbols overlay rethink** | **Partial** | Removed Open Graph from symbol tree affordances + Details Function panel; full overlay rethink still open (right-click menus). |
+| U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chip strip kept on selected nodes (restored). Selection toolbar + right-click menus remain. |
 | U103 | **Components** (visual + examples) | **Open** | Design a component visual that works for **all** languages; add to multi-lang Test Project examples. |
 | U104 | **Overloading** revise & stress-test | **Open** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
 | U105 | **Overwriting (override)** study | **Open** | Decide if override needs custom visuals or is fully covered by current modifiers / defines. |
 | U106 | **Inheritance** design | **Open** | How inheritance is authored on canvas and lowered per language (pairs with CL-010). |
-| U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click adds/toggles (Ctrl+click default); left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
+| U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click selects one; Ctrl/⌘+click multi-selects; left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
 
 ---
 

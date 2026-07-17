@@ -19,6 +19,7 @@ export type GraphShortcutId =
   | 'spawn-menu'
   | 'pan-viewport'
   | 'additive-select'
+  | 'chain-range-select'
   | 'box-select'
   | 'node-search'
   | 'panel-filter'
@@ -113,8 +114,15 @@ export const GRAPH_SHORTCUTS: GraphShortcutDef[] = [
   {
     id: 'additive-select',
     label: 'Add/toggle node in selection',
-    keysWin: 'Left-click',
-    keysMac: 'Left-click',
+    keysWin: 'Ctrl+click',
+    keysMac: '⌘+click',
+    section: 'canvas',
+  },
+  {
+    id: 'chain-range-select',
+    label: 'Select exec chain between nodes (incl. attributes)',
+    keysWin: 'Shift+click',
+    keysMac: 'Shift+click',
     section: 'canvas',
   },
   {

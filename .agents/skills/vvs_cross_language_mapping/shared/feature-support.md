@@ -6,7 +6,7 @@ Parent: [`../SKILL.md`](../SKILL.md). C++ Coverage Lab modifier matrix: [`../cpp
 
 Before marking a feature supported, confirm all five:
 
-1. **Graph / UI** — properties in `@vvs/graph-types` and controls exposed (e.g. `NodeModifiers.tsx`).
+1. **Graph / UI** — properties in `@vvs/graph-types` and controls exposed (e.g. Details `PropertySchemaPanel`).
 2. **Syntax pack** — target pack can express the keyword/concept; else mark **ineffective** and disable the chip (do not invent emit).
 3. **Backend** — schema stores safely (mostly JSON passthrough).
 4. **Coverage Lab output** — Machine/Sensor modules match goldens via Code | Files (`extract_test_project_outputs.ts` / `useProjectTranspileResult`). Do **not** use Calculator-era goldens.

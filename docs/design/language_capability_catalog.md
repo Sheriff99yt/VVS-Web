@@ -114,7 +114,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Enum-typed field** | Type picker → enum | `VariableSymbol.typeRef` `{ kind: 'enum' }` | all | **shipped** | Default = member name (`OK`); emit via pack `EnumMemberAccess` |
 | **Class-typed field** | Type picker → class | `typeRef` `{ kind: 'class' }` | all | **shipped** | Dual Class Lab `Host: Machine` |
 | **Typed Array / Map** | Type picker → `list[T]` / `dict[K,V]` | `typeRef` `{ kind: 'array'\|'map' }` | all | **shipped** | Dual Class Lab `Readings: list[float]` → `std::vector<float>` |
-| Visibility (public / private / protected) | Inspector + `NodeModifiers` on Declare | `properties.visibility` on define kinds | cpp, cs, java-like, rs, gd, verse | **shipped** | C++ access sections; C# keywords; Rust `pub`; Verse `<public>`/`<private>`; JS `#` private — Dual Class Lab goldens |
+| Visibility (public / private / protected) | Details / symbol panels (`PropertySchemaPanel`) | `properties.visibility` on define kinds | cpp, cs, java-like, rs, gd, verse | **shipped** | C++ access sections; C# keywords; Rust `pub`; Verse `<public>`/`<private>`; JS `#` private — Dual Class Lab goldens |
 | **Static** vs instance | Modifier on Declare | `properties.binding` (`static`) | cpp, cs, java, py, js, gd | **shipped** | C++ `inline static`; C#/JS/GDScript `static`; Python `@staticmethod` when set |
 | **Abstract** / pure virtual | Modifier on Declare function | `properties.isAbstract` | cpp, cs | **shipped** | C++ `virtual … = 0`; C# `abstract` prototype (no body); do **not** invent class `abstract` |
 | **Override** / `virtual` | Modifier on Declare function | `properties.isVirtual`, `isOverride` | cpp, cs, verse | **shipped** | Emit only when toggled on the node; ineffective langs omit keywords |
@@ -261,7 +261,7 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 
 ### Progressive confirmation (C++ before “shipped”)
 
-1. Graph/UI — property on define node (`NodeModifiers` / `propertySchema`)
+1. Graph/UI — property on define node (`PropertySchemaPanel` / `propertySchema`)
 2. Syntax pack — `cpp.base.json` template slots only (no inventing members)
 3. Backend — JSON passthrough (no special-case schema)
 4. Coverage Lab golden — **Code panel path** (`extract_test_project_outputs.ts` / `useProjectTranspileResult`) matches expected C++ for both Machine and Sensor files
@@ -296,7 +296,7 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 1. **Docs/skills** (this section) — locked direction
 2. **Golden + strip emit magic** — failing C++ assert; remove shared inventing paths
 3. **C++ modifier fidelity** — access sections + keywords match calculator; tests green
-4. **ModifierEffectiveness UI** — disable ineffective chips in `NodeModifiers.tsx`
+4. **modifierEffectiveness UI** — disable ineffective fields in `PropertySchemaPanel.tsx`
 5. **Rollout** — C# → Python → JS → Rust → GDScript → Verse using the same table
 
 Agent skills: `vvs_cross_language_mapping` (parent + one `<lang>.md` per target), `vvs_visual_code_fidelity`, `vvs_transpiler_development`, `vvs_usability_example_tests`.
@@ -319,7 +319,7 @@ Agent skills: `vvs_cross_language_mapping` (parent + one `<lang>.md` per target)
 
 **Policy (July 2026):** Show options that work for **≥1** language; disable for current language when ineffective. Remove schema/UI options that never change emit for any language (e.g. var virtual/abstract/override, event binding/abstract, get-input placeholder/required/password, function returnType until emit uses it).
 
-**Implementation:** `packages/language-profiles` `modifierEffectiveness` + `apps/web/src/components/graph/NodeModifiers.tsx`. Same table gates Progressive Confirmation step 2.
+**Implementation:** `packages/language-profiles` `modifierEffectiveness` + `apps/web/src/components/layout/RightSidebar/PropertySchemaPanel.tsx`. Same table gates Progressive Confirmation step 2.
 Catalog §A rows for visibility / static / abstract / virtual / const / async move to **shipped** for a family only after that family’s calculator golden passes and chips disable correctly for `ineffective` keys.
 
 ---
@@ -333,7 +333,7 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 | Core node registry | `packages/syntax-registry/core-pack.json` |
 | Language profiles | `packages/language-profiles/src/profiles.ts` |
 | Capability tags | `packages/graph-types/src/codegenTarget.ts` |
-| Node modifier chips | `apps/web/src/components/graph/NodeModifiers.tsx` |
+| Node / Details modifiers | `apps/web/src/components/layout/RightSidebar/PropertySchemaPanel.tsx` |
 | Agent skill | `.agents/skills/vvs_usability_example_tests/SKILL.md` |
 | Cross-language emit map | `.agents/skills/vvs_cross_language_mapping/SKILL.md` (+ one of `cpp.md` / `python.md` / …) |
 

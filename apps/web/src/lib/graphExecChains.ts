@@ -212,6 +212,185 @@ function withAttributes(
 }
 
 /**
+ * Undirected shortest path on exec wires (inclusive endpoints).
+ * Returns null if the nodes are not in the same weakly connected component.
+ */
+export function shortestUndirectedExecPath(
+  fromId: string,
+  toId: string,
+  graph: ExecChainGraph
+): string[] | null {
+  if (fromId === toId) return [fromId];
+  const prev = new Map<string, string | null>();
+  prev.set(fromId, null);
+  const queue = [fromId];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    for (const n of neighborsUndirected(graph, id)) {
+      if (prev.has(n)) continue;
+      prev.set(n, id);
+      if (n === toId) {
+        const path: string[] = [toId];
+        let cur: string | null = toId;
+        while (cur !== fromId) {
+          cur = prev.get(cur!) ?? null;
+          if (cur == null) return null;
+          path.push(cur);
+        }
+        path.reverse();
+        return path;
+      }
+      queue.push(n);
+    }
+  }
+  return null;
+}
+
+/** Nodes that can reach `sink` via directed exec edges (includes `sink`). */
+function ancestorsOf(sink: string, graph: ExecChainGraph): Set<string> {
+  return downstreamFrom([sink], {
+    forward: graph.reverse,
+    reverse: graph.forward,
+  });
+}
+
+/**
+ * Every node that lies on **some** directed exec path from `fromId` to `toId`
+ * (includes endpoints). Empty set if no directed path.
+ */
+export function nodesOnDirectedExecPaths(
+  fromId: string,
+  toId: string,
+  graph: ExecChainGraph
+): Set<string> {
+  if (fromId === toId) return new Set([fromId]);
+  const reachable = downstreamFrom([fromId], graph);
+  if (!reachable.has(toId)) return new Set();
+  const canReachTo = ancestorsOf(toId, graph);
+  const out = new Set<string>();
+  for (const id of reachable) {
+    if (canReachTo.has(id)) out.add(id);
+  }
+  return out;
+}
+
+function isOnExecGraph(id: string, graph: ExecChainGraph): boolean {
+  return graph.forward.has(id) || graph.reverse.has(id);
+}
+
+/**
+ * Map a clicked node to exec-chain host(s): itself if on exec wires, else
+ * follow data outputs / parentId until an exec participant is found.
+ * Lets Shift+range start or end on attribute / parented children.
+ */
+export function resolveExecHostsForRange(
+  nodeId: string,
+  nodes: readonly VVSNode[],
+  edges: readonly VVSEdge[],
+  graph: ExecChainGraph
+): string[] {
+  const known = knownNodeIds(nodes);
+  if (!known.has(nodeId)) return [];
+  if (isOnExecGraph(nodeId, graph)) return [nodeId];
+
+  const byId = new Map(nodes.map((n) => [n.id, n] as const));
+  const data = buildDataAdjacency(edges);
+  const hosts = new Set<string>();
+  const queue = [nodeId];
+  const seen = new Set<string>();
+
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (seen.has(id)) continue;
+    seen.add(id);
+
+    if (isOnExecGraph(id, graph)) {
+      hosts.add(id);
+      continue;
+    }
+
+    for (const t of data.forward.get(id) ?? []) {
+      if (known.has(t) && !seen.has(t)) queue.push(t);
+    }
+
+    const parentId = byId.get(id)?.parentId;
+    if (parentId && known.has(parentId) && !seen.has(parentId)) {
+      queue.push(parentId);
+    }
+  }
+
+  return [...hosts];
+}
+
+function rangeBetweenExecHosts(
+  fromHost: string,
+  toHost: string,
+  graph: ExecChainGraph
+): Set<string> {
+  let nodeIds = nodesOnDirectedExecPaths(fromHost, toHost, graph);
+  if (nodeIds.size === 0) {
+    nodeIds = nodesOnDirectedExecPaths(toHost, fromHost, graph);
+  }
+  if (nodeIds.size === 0) {
+    const path = shortestUndirectedExecPath(fromHost, toHost, graph);
+    if (path) nodeIds = new Set(path);
+  }
+  return nodeIds;
+}
+
+/**
+ * Shift+click range on an exec chain: select everything between two nodes.
+ * Endpoints may be exec nodes **or** data/parented children — those resolve to
+ * their exec hosts first. Prefers all nodes on directed paths; otherwise the
+ * undirected shortest path. Pulls in data attributes / parented children.
+ */
+export function selectExecRangeBetween(
+  fromId: string,
+  toId: string,
+  nodes: readonly VVSNode[],
+  edges: readonly VVSEdge[]
+): ChainResolveResult {
+  const known = knownNodeIds(nodes);
+  if (!known.has(fromId) || !known.has(toId)) {
+    return { nodeIds: new Set(), components: [] };
+  }
+
+  const graph = buildExecAdjacency(edges);
+  const fromHosts = resolveExecHostsForRange(fromId, nodes, edges, graph);
+  const toHosts = resolveExecHostsForRange(toId, nodes, edges, graph);
+  if (fromHosts.length === 0 || toHosts.length === 0) {
+    return { nodeIds: new Set(), components: [] };
+  }
+
+  let best: Set<string> | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const a of fromHosts) {
+    for (const b of toHosts) {
+      const ids = rangeBetweenExecHosts(a, b, graph);
+      if (ids.size === 0) continue;
+      if (ids.size < bestScore) {
+        bestScore = ids.size;
+        best = ids;
+      }
+    }
+  }
+
+  if (!best) {
+    return { nodeIds: new Set(), components: [] };
+  }
+
+  // Keep the clicked child endpoints even if they are attributes of the hosts.
+  best.add(fromId);
+  best.add(toId);
+
+  const nodeIds = filterToKnown(best, known);
+  const component = execComponentContaining(fromHosts[0]!, graph).filter((id) =>
+    known.has(id)
+  );
+  return withAttributes({ nodeIds, components: [component] }, nodes, edges);
+}
+
+/**
  * **S** — select the current seeds plus everything forward-reachable on exec
  * wires (downstream only; does **not** walk upstream to chain heads), then
  * pull in data-wired attributes (e.g. If condition) and parented children.

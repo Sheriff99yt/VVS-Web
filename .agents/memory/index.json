@@ -11,14 +11,14 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "coverageLabUsabilityTest",
-  "nextFunctionWork": "U77 Go / U78 packs; U89–U92 remaining; U97–U106 open (U102 partial · U107 gestures done); U93 long-term; CL plans; client-first",
+  "nextFunctionWork": "U77 Go / U78 packs; U89–U92 remaining; U97–U101 / U103–U106 open (U102 overlay rethink done · U107 gestures done); U93 long-term; CL plans; client-first",
   "crossLanguageMapping": ".agents/skills/vvs_cross_language_mapping/SKILL.md",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
     "totalItems": 94,
-    "done": 77,
-    "open": 16,
-    "partial": ["U89", "U91", "U92", "U102"],
+    "done": 78,
+    "open": 15,
+    "partial": ["U89", "U91", "U92"],
     "depthFirstSection": 18,
     "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "sectionsPartial": [13, 14, 15, 16, 17, 18],
@@ -35,7 +35,6 @@
       "U99",
       "U100",
       "U101",
-      "U102",
       "U103",
       "U104",
       "U105",
@@ -48,7 +47,7 @@
       "role": "ui-backlog",
       "refreshAfter": "each UI loop iteration or audit",
       "itemPrefix": "U",
-      "openCount": 17
+      "openCount": 15
     },
     "decisions.md": { "role": "locked-product-rules", "mutable": "append-or-revise-with-care" },
     "workspace-facts.md": { "role": "canonical-paths-and-facts", "mutable": true }

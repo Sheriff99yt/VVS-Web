@@ -186,7 +186,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Chain select / layout (U75) | Canvas shortcuts | **S** = forward exec + data attrs; **A** = full undirected chain; **S S** = layout (`lane-topo-v1`). Attribute direction in Settings (above / below / below-extended). Head-anchored; multi-chain Y-separate; works inside locked comments |
 | Node search (U84/U85) | Canvas overlay + shortcuts | **Ctrl+F** = find in all graphs (Layers forced on; prefill from tree symbol). **F** with a tree symbol selected = find in this graph only; otherwise frame selection. Space / Ctrl+K open search respecting Layers. Symbol context menu: Find in this graph / Find in all graphs. Outside click / canvas drag clears tree-symbol focus |
 | Tooltips (U94) | Editor chrome | App-default `Tooltip` (`components/ui/Tooltip.tsx`) — portal tips with Esc dismiss + viewport clamp; replaces native `title=` on TopNav, status, toolbars, panels, search |
-| Selection / modifiers chrome | Selected node | Actions toolbar (duplicate / comment / delete) stacks **above** modifiers. Modifier chips + import target-language sit in a selected-only absolute overlay **above the card** — they do not grow the node header. Linked graph/module subtitle stays in-header for navigation |
+| Selection / modifiers chrome | Selected node | Actions toolbar stacks **above** modifiers. Modifier chips + import target-language sit in a selected-only overlay **above the card**. Linked graph/module subtitle stays in-header. U102: Open Graph removed from symbol tree/Details |
 
 **Floating panels** (canvas overlay, shared `FloatingPanelShell`):
 

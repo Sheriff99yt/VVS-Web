@@ -11,6 +11,7 @@ interface PropertySchemaPanelProps {
   onChange: (key: string, value: string | number | boolean) => void;
 }
 
+/** Edited on the selected-node chip strip (`NodeModifiers`), not duplicated in Details. */
 const INLINE_MODIFIER_KEYS = new Set([
   'visibility',
   'binding',

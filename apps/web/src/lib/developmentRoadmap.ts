@@ -1119,8 +1119,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbols-overlay-rethink-u102',
         title: 'Symbols overlay rethink (U102)',
         description:
-          'Partial: removed Open Graph from symbol tree + Details. Full overlay rethink still open (rely on right-click menus).',
-        status: 'partial',
+          'Open Graph removed from symbol tree/Details. Selected-node modifier chip strip kept (NodeModifiers). Selection toolbar + right-click menus remain.',
+        status: 'done',
       },
       {
         id: 'components-visual-u103',
@@ -1154,7 +1154,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'canvas-gestures-u107',
         title: 'Canvas pan / select gestures (U107)',
         description:
-          'Right-drag pans; left-click adds/toggles selection (Ctrl+click by default); left-drag box-selects; middle-drag pans; right-click without drag still opens spawn menu.',
+          'Right-drag pans; left-click selects one node; Ctrl/Cmd+click multi-selects; left-drag box-selects; middle-drag pans; right-click without drag still opens spawn menu.',
         status: 'done',
       },
     ],
