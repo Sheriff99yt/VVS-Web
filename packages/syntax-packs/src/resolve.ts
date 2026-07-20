@@ -9,6 +9,8 @@ import rustBase from './packs/rust.base.json';
 import csharpBase from './packs/csharp.base.json';
 import javascriptEs2022 from './packs/overlays/javascript.es2022.json';
 
+import { getRegisteredPacks } from './registry';
+
 const PACKS: SyntaxPackManifest[] = [
   pythonBase as SyntaxPackManifest,
   javascriptBase as SyntaxPackManifest,
@@ -29,7 +31,8 @@ export function listSyntaxPacks(): SyntaxPackManifest[] {
 }
 
 export function getSyntaxPack(packRef: string): SyntaxPackManifest | undefined {
-  return packById.get(packRef) ?? PACKS.find((p) => p.id === packRef);
+  const registered = getRegisteredPacks();
+  return registered.find((p) => `${p.id}@${p.version}` === packRef || p.id === packRef);
 }
 
 function mergeTemplates(

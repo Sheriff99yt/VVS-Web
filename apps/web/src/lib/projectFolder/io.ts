@@ -16,6 +16,7 @@ import {
   toPersistedSnapshot,
 } from '@vvs/graph-types';
 import { loadEnvironmentManifest } from '@vvs/environment-templates';
+import { registerPack, type SyntaxPackManifest } from '@vvs/syntax-packs';
 import {
   appendGitignoreLines,
   ensureDirPath,
@@ -180,6 +181,23 @@ export async function loadProjectFromFolder(
   });
 
   if (!snapshot) return null;
+
+  // Load and register custom syntax packs from .vvs/packs directory
+  try {
+    const vvsDirHandle = await root.getDirectoryHandle('.vvs', { create: false });
+    const packsDirHandle = await vvsDirHandle.getDirectoryHandle('packs', { create: false });
+    for await (const entry of packsDirHandle.values()) {
+      if (entry.kind === 'file' && entry.name.endsWith('.json')) {
+        const file = await (entry as any).getFile();
+        const text = await file.text();
+        const pack = JSON.parse(text) as SyntaxPackManifest;
+        registerPack(pack);
+      }
+    }
+  } catch (err) {
+    // packs directory doesn't exist or is not readable, ignore
+  }
+
   return { snapshot, manifest, integration };
 }
 
@@ -226,6 +244,25 @@ export async function saveProjectToFolder(
   await writeJsonFile(root, `${SYMBOLS_DIR}/events.json`, persisted.events ?? []);
   await writeJsonFile(root, `${SYMBOLS_DIR}/functions.json`, persisted.functions);
   await writeJsonFile(root, `${SYMBOLS_DIR}/classes.json`, persisted.classes);
+
+  // Save custom/accumulated syntax packs to .vvs/packs folder
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('vvs_accumulated_packs');
+      if (stored) {
+        const parsed = JSON.parse(stored) as SyntaxPackManifest[];
+        if (parsed.length > 0) {
+          const packsDir = `${VVS_DIR}/packs`;
+          await ensureDirPath(root, packsDir);
+          for (const pack of parsed) {
+            await writeJsonFile(root, `${packsDir}/${pack.id}@${pack.version}.json`, pack);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save custom syntax packs to folder:', err);
+    }
+  }
 }
 
 export async function createProjectInFolder(

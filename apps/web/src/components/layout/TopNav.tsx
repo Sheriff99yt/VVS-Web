@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings, HelpCircle, History, Search, FilePlus, Keyboard } from 'lucide-react';
+import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Layers, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings, HelpCircle, History, Search, FilePlus, Keyboard } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
@@ -1031,6 +1031,14 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                 className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'roadmap' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
               >
                 <Milestone size={14} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Syntax packs" placement="bottom" className="flex">
+              <button
+                onClick={() => navigate({ editorView: 'packs' })}
+                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'packs' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+              >
+                <Layers size={14} />
               </button>
             </Tooltip>
           </div>

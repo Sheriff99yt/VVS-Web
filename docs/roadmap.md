@@ -77,6 +77,8 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | **U91** | **AI / MCP** audit | Partial — Windsurf paste + consent; full autonomy audit open |
 | **U92** | **New examples** | Partial — Branch Lab shipped; more cross-lang / lang-specific open |
 | **U93** | **Code → visual** | Long-term reverse import research |
+| **U118** | **Dynamic naming conventions** | Settings options to make node and symbol naming follow default VVS global naming, a specific supported language, or toggle to auto-follow the currently selected language |
+| **U119** | **Bad practices / Not recommended settings** | Add configuration toggles for non-recommended settings: (1) Allow connecting multiple execution outputs to one input (warns/prevents duplicate code generation/redundancy), and (2) Dynamic/Weak typing setting (warns of type coercion, exceptions, cognitive load, and overhead). |
 
 ### Graph model (U97–U106)
 

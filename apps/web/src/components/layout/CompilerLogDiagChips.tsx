@@ -85,7 +85,7 @@ export function CompilerLogCompactStrip({
       className="absolute bottom-2.5 right-2.5 z-30 pointer-events-none"
       data-vvs-log-compact=""
     >
-      <div className="pointer-events-auto flex flex-row items-end gap-1.5 rounded-md border border-zinc-800 bg-zinc-950 pl-1.5 pr-1 py-1 shadow-sm shadow-black/40">
+      <div className="pointer-events-auto flex flex-row items-end gap-1.5">
         {showCompactActions ? (
           <CompactActionHistory onOpenActivity={onOpenActivity} />
         ) : null}

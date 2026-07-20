@@ -4,9 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U79–U83 done; U77–U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U102 · U107 · U108–U117 done; U97–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U78–U83 done; U77 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U102 · U107 · U108–U117 done; U97–U101 / U103–U106 / U118–U119 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 open** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U102 / U107 / U108–U117 done** · U89–U93 + U97–U101 / U103–U106 open
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 done** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U102 / U107 / U108–U117 done** · U89–U93 + U97–U101 / U103–U106 + U118–U119 open
 
 ## Status legend
 
@@ -254,7 +254,7 @@ Top-level **views** beyond canvas (Pack versions is the first named; more TBD).
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U78 | **Pack versions** manager view | **Open** | Pack releases **accumulate** (never overwrite). List installed versions; user sets **active**. GitHub check prompts to **add** a version. First of multiple new views (Library git catalog, etc.) |
+| U78 | **Pack versions** manager view | **Done** | Pack releases **accumulate** (never overwrite). List installed versions; user sets **active**. GitHub check prompts to **add** a version. First of multiple new views (Library git catalog, etc.) |
 | U79 | **Investigate / rethink canvas Y → code order** | **Done** | **Locked:** chain = primary emit/nest order; Y = secondary for unconnected heads (+ event peers). Teaching warnings `CHAIN_ORDER_Y_MISMATCH` / `EVENT_PEER_Y_ORDER` — no auto-reorder. Comment attach topmost Y remains. |
 | U80 | **Same-file function emit** — stop per-function output files; function tabs = **Edit function body** only | **Done** | `transpileProject` no longer emits function-tab files; fixtures rev 2; goldens refreshed |
 | U81 | **Function Declare ≠ Define** — `function_define` (Declare, chain) + `function_implement` (Define, chain placement); no stub without Define; no legacy fold | **Done** | Emit/order/sourceMap; tree badges; release menu; Test Project fixtures on chain |
@@ -336,6 +336,8 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U115 | **Undo: rename + class CRUD** | **Done** | Rename + class create/rename/delete/move; slice includes classes / activeClassId / projectDetails |
 | U116 | **Undo: preserve across tab switch** | **Done** | Tab switch no longer clears history; snapshots carry activeGraphTab |
 | U117 | **Undo: lean canvas snapshots** | **Done** | Canvas edits = nodes+edges+tab; pushHistory = full project slice (true op-deltas deferred) |
+| U118 | **Dynamic naming conventions** | **Open** | Settings options to follow default VVS global naming or specific language. |
+| U119 | **Bad practices / Not recommended settings** | **Open** | Settings to toggle: (1) allow multiple exec outputs to one input (warns/prevents code redundancy), and (2) Dynamic/Weak typing warnings. |
 
 ---
 

@@ -7,7 +7,7 @@ import type {
 } from '@/types/editorNavigation';
 import { VVS_HISTORY_STATE_KEY, VVS_NAVIGATION_VERSION } from '@/types/editorNavigation';
 
-const EDITOR_VIEWS = new Set<EditorViewTab>(['canvas', 'references', 'library', 'roadmap']);
+const EDITOR_VIEWS = new Set<EditorViewTab>(['canvas', 'references', 'library', 'roadmap', 'packs']);
 const CAMERA_KINDS = new Set<VvsNavigationCameraKind>([
   'camera',
   'after-graph-edit',

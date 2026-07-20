@@ -51,4 +51,81 @@ describe('projectFolder graph manifest helpers', () => {
     expect(snapshot.documents.main).toBeUndefined();
     expect(snapshot.documents[MAIN_GRAPH_CONTAINER_ID]).toBeDefined();
   });
+
+  test('loadProjectFromFolder registers custom packs from packs directory', async () => {
+    const mockProjectJson = JSON.stringify({
+      format: 'vvs.project',
+      formatVersion: 2,
+      name: 'Test',
+      defaultTarget: 'python',
+      module: { name: 'Test' },
+      settings: { autoCompile: false, autoSave: false },
+      graphs: { containers: {}, functions: {} }
+    });
+
+    const mockPackJson = JSON.stringify({
+      id: 'mock.base',
+      version: '1.5.0',
+      family: 'python',
+      templates: {},
+      layout: {
+        indentUnit: '  ',
+        blockPlaceholder: 'TODO',
+        commentPrefix: '#',
+        instanceReceiver: 'self'
+      }
+    });
+
+    // Mock Directory/File handles
+    const projectFileHandle = {
+      getFile: async () => ({ text: async () => mockProjectJson })
+    };
+    const packFileHandle = {
+      kind: 'file',
+      name: 'mock.base@1.5.0.json',
+      getFile: async () => ({ text: async () => mockPackJson })
+    };
+
+    const packsDirHandle = {
+      kind: 'directory',
+      name: 'packs',
+      values: async function* () {
+        yield packFileHandle;
+      }
+    };
+
+    const vvsDirHandle = {
+      kind: 'directory',
+      name: '.vvs',
+      getDirectoryHandle: async (name: string) => {
+        if (name === 'packs') return packsDirHandle;
+        throw new Error('Not found');
+      },
+      getFileHandle: async (name: string) => {
+        if (name === 'project.json') return projectFileHandle;
+        throw new Error('Not found');
+      }
+    };
+
+    const mockRoot = {
+      kind: 'directory',
+      getDirectoryHandle: async (name: string) => {
+        if (name === '.vvs') return vvsDirHandle;
+        throw new Error('Not found');
+      },
+      getFileHandle: async (name: string) => {
+        throw new Error('Not found');
+      }
+    } as unknown as FileSystemDirectoryHandle;
+
+    const { getSyntaxPack } = await import('@vvs/syntax-packs');
+    const { loadProjectFromFolder } = await import('./io');
+
+    expect(getSyntaxPack('mock.base@1.5.0')).toBeUndefined();
+
+    const res = await loadProjectFromFolder(mockRoot);
+    expect(res).toBeDefined();
+
+    expect(getSyntaxPack('mock.base@1.5.0')).toBeDefined();
+  });
 });

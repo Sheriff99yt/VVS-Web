@@ -9,6 +9,8 @@ import { StatusBar } from './StatusBar';
 import { LibraryView } from '../views/LibraryView';
 import { RoadmapView } from '../views/RoadmapView';
 import { ReferencesView } from '../views/ReferencesView';
+import { PacksView } from '../views/PacksView';
+import { initializeCustomPacks } from '@/lib/packsInitializer';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { ReactFlowProvider } from '@xyflow/react';
 import { ProjectProvider } from '@/contexts/ProjectContext';
@@ -99,13 +101,18 @@ export function EditorLayout({
   initialDocuments,
 }: EditorLayoutProps) {
   const [activeTab, setActiveTab] = React.useState<EditorViewTab>(
-    initialView === 'library' || initialView === 'references' || initialView === 'roadmap'
+    initialView === 'library' || initialView === 'references' || initialView === 'roadmap' || initialView === 'packs'
       ? initialView
       : 'canvas'
   );
   const isCanvas = activeTab === 'canvas';
   const isReferences = activeTab === 'references';
   const isRoadmap = activeTab === 'roadmap';
+  const isPacks = activeTab === 'packs';
+
+  React.useEffect(() => {
+    initializeCustomPacks();
+  }, []);
 
   return (
     <ProjectProvider
@@ -148,6 +155,11 @@ export function EditorLayout({
                   {isRoadmap ? (
                     <div className="h-full">
                       <RoadmapView />
+                    </div>
+                  ) : null}
+                  {isPacks ? (
+                    <div className="h-full">
+                      <PacksView />
                     </div>
                   ) : null}
                 </div>
