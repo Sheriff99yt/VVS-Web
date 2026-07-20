@@ -1,0 +1,1 @@
+{"id":"javascript.es2026","version":"1.0.0","family":"javascript","extends":"javascript.base","capabilities":["es2026"],"templates":{"print":{"quasi":"console.log({value})"}}}

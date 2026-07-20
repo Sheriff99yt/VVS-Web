@@ -1,0 +1,1 @@
+{"id":"python.base","version":"2.0.0","family":"python","layout":{"indentUnit":"  ","blockPlaceholder":"pass","commentPrefix":"#","instanceReceiver":"self","emptyFunctionBody":"pass","emptyHandlerBody":"pass"},"templates":{"print":{"quasi":"print({value}, flush=True)"}}}

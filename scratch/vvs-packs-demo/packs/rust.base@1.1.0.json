@@ -1,0 +1,1 @@
+{"id":"rust.base","version":"1.1.0","family":"rust","layout":{"indentUnit":"  ","blockPlaceholder":"todo!()","commentPrefix":"//","instanceReceiver":"self","emptyFunctionBody":"todo!()","emptyHandlerBody":"todo!()"},"templates":{"print":{"quasi":"println!(\"{}\", {value})"}}}
