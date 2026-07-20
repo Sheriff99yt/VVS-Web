@@ -18,6 +18,7 @@ interface CanvasDropMenuProps {
   items: CanvasDropMenuItem[];
   dividersBefore?: string[];
   onClose: () => void;
+  header?: string;
 }
 
 export function CanvasDropMenu({
@@ -26,6 +27,7 @@ export function CanvasDropMenu({
   items,
   dividersBefore = [],
   onClose,
+  header,
 }: CanvasDropMenuProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const pos = paneMenuPosition(x, y, 220, items.length * 36 + 8);
@@ -69,6 +71,11 @@ export function CanvasDropMenu({
       onClick={(e) => e.stopPropagation()}
       role="menu"
     >
+      {header && (
+        <div className="px-4 py-2 bg-zinc-800/80 border-b border-zinc-700 text-zinc-400 select-none font-semibold text-[10px] uppercase tracking-wider">
+          {header}
+        </div>
+      )}
       {items.map((item, index) => (
         <React.Fragment key={item.id}>
           {index > 0 && dividerSet.has(item.id) ? (

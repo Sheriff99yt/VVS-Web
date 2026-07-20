@@ -83,11 +83,16 @@ function buildVarDefineData(variable: VariableSymbol, existingProperties?: Recor
   return normalizeNodeData({ ...base, kindId: 'var_define' });
 }
 
-function buildFunctionDefineData(func: FunctionSymbol, existingProperties?: Record<string, unknown>): VVSNodeData {
+function buildFunctionDefineData(
+  func: FunctionSymbol,
+  overload: FunctionSymbol['overloads'][number],
+  existingProperties?: Record<string, unknown>
+): VVSNodeData {
   const def = resolveKind('function_define');
-  const overload = resolveOverloadForCall(func);
+  const paramSummary = overload.parameters.map((p) => p.type.replace(/^data_/, '')).join(', ');
+  const sigSuffix = paramSummary ? `(${paramSummary})` : '()';
   return normalizeNodeData({
-    label: `Declare ${func.name}`,
+    label: `Declare ${func.name}${sigSuffix}`,
     category: 'Project',
     kindId: 'function_define',
     inputs: def?.inputs ?? [EXEC_IN],
@@ -98,13 +103,15 @@ function buildFunctionDefineData(func: FunctionSymbol, existingProperties?: Reco
     properties: {
       ...(existingProperties ?? {}),
       symbolId: func.id,
+      overloadId: overload.id,
       name: func.name,
       binding: func.binding,
       visibility: func.visibility,
-      isAbstract: func.flags?.abstract,
+      isAsync: func.flags?.async,
+      isStatic: func.binding === 'static',
       isVirtual: func.flags?.virtual,
       isOverride: func.flags?.override,
-      isAsync: func.flags?.async,
+      isAbstract: func.flags?.abstract,
       returnType: overload.returnType,
       graphTabId: overload.graphTabId ?? func.id,
     },
@@ -390,31 +397,37 @@ export function insertDefineNodeForFunction(
 ): Record<string, GraphDocument> {
   const classNodeLoc = findClassDefineNode(documents, cls);
   const tabId = classNodeLoc?.tabId ?? activeGraphTab ?? classHomeGraphId(cls);
-  const doc = documents[tabId] ?? { nodes: [], edges: [] };
-  const existing = doc.nodes.filter(
-    (n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === func.id
-  );
-  if (existing.length > 0) return documents;
+  let nextDocs = { ...documents };
 
-  const defineCount = doc.nodes.filter((n) =>
-    isMemberDefineKind(n.data.kindId ?? '')
-  ).length;
+  for (const overload of func.overloads) {
+    const doc = nextDocs[tabId] ?? { nodes: [], edges: [] };
+    const hasNode = doc.nodes.some(
+      (n) =>
+        n.data.kindId === 'function_define' &&
+        n.data.properties?.symbolId === func.id &&
+        (n.data.graphBinding?.overloadId === overload.id || n.data.properties?.overloadId === overload.id)
+    );
+    if (hasNode) continue;
 
-  const data = buildFunctionDefineData(func);
-  const at = getLastGraphFlowPosition();
-  const node: VVSNode = {
-    id: `define-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    type: 'vvs_standard_node',
-    position: at ?? { x: 80, y: 40 + defineCount * 72 },
-    data: {
-      ...data,
-      resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
-    },
-  };
-  return {
-    ...documents,
-    [tabId]: insertNodeOnMemberChain(doc, node),
-  };
+    const defineCount = doc.nodes.filter((n) =>
+      isMemberDefineKind(n.data.kindId ?? '')
+    ).length;
+
+    const data = buildFunctionDefineData(func, overload);
+    const at = getLastGraphFlowPosition();
+    const node: VVSNode = {
+      id: `define-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type: 'vvs_standard_node',
+      position: at ?? { x: 80, y: 40 + defineCount * 72 },
+      data: {
+        ...data,
+        resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
+      },
+    };
+    nextDocs[tabId] = insertNodeOnMemberChain(doc, node);
+  }
+
+  return nextDocs;
 }
 
 /** Place function Define (`function_implement`) on the member chain — body placement (U81). */
@@ -642,19 +655,13 @@ export function relocateClassHomeGraph(
 
 function syncDefineNodeData(
   node: VVSNode,
-  kind: 'variable' | 'function' | 'event',
-  symbol: VariableSymbol | FunctionSymbol | ProjectEventDefinition
+  kind: 'variable' | 'event',
+  symbol: VariableSymbol | ProjectEventDefinition
 ): VVSNode {
   if (kind === 'variable') {
     return {
       ...node,
       data: buildVarDefineData(symbol as VariableSymbol, node.data.properties),
-    };
-  }
-  if (kind === 'function') {
-    return {
-      ...node,
-      data: buildFunctionDefineData(symbol as FunctionSymbol, node.data.properties),
     };
   }
   return {
@@ -668,31 +675,118 @@ export function syncDefineNodesForSymbol(
   kind: 'variable' | 'function' | 'event',
   symbol: VariableSymbol | FunctionSymbol | ProjectEventDefinition
 ): Record<string, GraphDocument> {
-  const expectedKind =
-    kind === 'variable'
-      ? 'var_define'
-      : kind === 'function'
-        ? 'function_define'
-        : 'event_member_define';
+  if (kind !== 'function') {
+    const expectedKind = kind === 'variable' ? 'var_define' : 'event_member_define';
+    let changed = false;
+    const next: Record<string, GraphDocument> = { ...documents };
 
-  let changed = false;
-  const next: Record<string, GraphDocument> = { ...documents };
+    for (const [tabId, doc] of Object.entries(documents)) {
+      let docChanged = false;
+      const nodes = doc.nodes.map((node) => {
+        if (node.data.kindId !== expectedKind) return node;
+        if (node.data.properties?.symbolId !== symbol.id) return node;
+        docChanged = true;
+        return syncDefineNodeData(node, kind as any, symbol as any);
+      });
+      if (docChanged) {
+        changed = true;
+        next[tabId] = { ...doc, nodes };
+      }
+    }
+    return changed ? next : documents;
+  }
+
+  // Specialized sync for functions (overload aware)
+  const func = symbol as FunctionSymbol;
+  let nextDocs = { ...documents };
+  let docIdWithClass: string | undefined;
 
   for (const [tabId, doc] of Object.entries(documents)) {
-    let docChanged = false;
-    const nodes = doc.nodes.map((node) => {
-      if (node.data.kindId !== expectedKind) return node;
-      if (node.data.properties?.symbolId !== symbol.id) return node;
-      docChanged = true;
-      return syncDefineNodeData(node, kind, symbol);
-    });
-    if (docChanged) {
-      changed = true;
-      next[tabId] = { ...doc, nodes };
+    const hasDefine = doc.nodes.some(
+      (n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === func.id
+    );
+    if (hasDefine) {
+      docIdWithClass = tabId;
+      break;
     }
   }
 
-  return changed ? next : documents;
+  if (!docIdWithClass) {
+    return documents;
+  }
+
+  const doc = nextDocs[docIdWithClass] ?? { nodes: [], edges: [] };
+  let docChanged = false;
+
+  const nextNodes: VVSNode[] = [];
+  const activeOverloadIds = new Set(func.overloads.map((o) => o.id));
+
+  for (const node of doc.nodes) {
+    if (node.data.kindId === 'function_define' && node.data.properties?.symbolId === func.id) {
+      const overloadId = (node.data.properties?.overloadId || node.data.graphBinding?.overloadId) as string | undefined;
+      if (!overloadId || !activeOverloadIds.has(overloadId)) {
+        // Drop node because overload was deleted
+        docChanged = true;
+        continue;
+      }
+      const overload = func.overloads.find((o) => o.id === overloadId)!;
+      const updatedData = buildFunctionDefineData(func, overload, node.data.properties);
+      nextNodes.push({
+        ...node,
+        data: {
+          ...updatedData,
+          resolvedPorts: { inputs: updatedData.inputs, outputs: updatedData.outputs },
+        },
+      });
+      docChanged = true;
+    } else {
+      nextNodes.push(node);
+    }
+  }
+
+  let finalDoc = { ...doc, nodes: nextNodes };
+
+  if (docChanged) {
+    const nodeIds = new Set(nextNodes.map((n) => n.id));
+    const nextEdges = doc.edges.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
+    if (nextEdges.length !== doc.edges.length) {
+      finalDoc.edges = nextEdges;
+    }
+  }
+
+  for (const overload of func.overloads) {
+    const hasNode = finalDoc.nodes.some(
+      (n) =>
+        n.data.kindId === 'function_define' &&
+        n.data.properties?.symbolId === func.id &&
+        (n.data.graphBinding?.overloadId === overload.id || n.data.properties?.overloadId === overload.id)
+    );
+    if (!hasNode) {
+      const defineCount = finalDoc.nodes.filter((n) =>
+        isMemberDefineKind(n.data.kindId ?? '')
+      ).length;
+      const data = buildFunctionDefineData(func, overload);
+      const at = getLastGraphFlowPosition();
+      const node: VVSNode = {
+        id: `define-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: 'vvs_standard_node',
+        position: at ?? { x: 80, y: 40 + defineCount * 72 },
+        data: {
+          ...data,
+          resolvedPorts: { inputs: data.inputs, outputs: data.outputs },
+        },
+      };
+      finalDoc = insertNodeOnMemberChain(finalDoc, node);
+      docChanged = true;
+    }
+  }
+
+  if (docChanged) {
+    nextDocs[docIdWithClass] = finalDoc;
+    return nextDocs;
+  }
+
+  return documents;
 }
 
 export function removeDefineNodesForSymbol(

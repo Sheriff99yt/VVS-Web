@@ -18,7 +18,7 @@ export function nestedGraphIdForNode(data: VVSNodeData): string | null {
   if (data.linkKind === 'graph_ref') return null;
 
   const kindId = resolveNodeKindId(data);
-  if (kindId === 'function_define') {
+  if (kindId === 'function_define' || kindId === 'function_implement') {
     const fromProps =
       typeof data.properties?.graphTabId === 'string' && data.properties.graphTabId.trim()
         ? data.properties.graphTabId.trim()

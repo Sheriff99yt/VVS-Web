@@ -2,6 +2,7 @@ import type { Connection } from '@xyflow/react';
 import type { PinDefinition, PinType, VVSEdge, VVSNode } from '@/types/graph';
 import { pinsAreCompatible, type TypeRef } from '@vvs/graph-types';
 import { wouldWireCreateCycle } from './graphCycles';
+import { readUiPreferences } from './uiPreferences';
 
 export type WireRejectionReason =
   | 'missing_node'
@@ -180,10 +181,16 @@ function pruneEdgesForConnection(
   evaluation: Extract<WireEvaluation, { ok: true }>
 ): VVSEdge[] {
   let next = edges;
+  const prefs = readUiPreferences();
+  const allowMultipleExec = prefs.allowMultipleExecToInput ?? false;
+  const isExec = evaluation.pinType === 'execution';
+
   if (evaluation.target.pinId != null) {
-    next = edgesWithoutTargetHandle(next, evaluation.target.nodeId, evaluation.target.pinId);
+    if (!isExec || !allowMultipleExec) {
+      next = edgesWithoutTargetHandle(next, evaluation.target.nodeId, evaluation.target.pinId);
+    }
   }
-  if (evaluation.pinType === 'execution' && evaluation.source.pinId != null) {
+  if (isExec && evaluation.source.pinId != null) {
     next = edgesWithoutSourceHandle(next, evaluation.source.nodeId, evaluation.source.pinId);
   }
   return next;

@@ -11,6 +11,7 @@ import {
 } from '@/lib/uiPreferences';
 import { shortcutKeys } from '@/lib/graphShortcuts';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface AppSettingsPanelProps {
   onCloseSettings?: () => void;
@@ -39,6 +40,9 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
   const [showHistoryTab, setShowHistoryTab] = useUiPreference('logPanelTabHistory');
   const [showActivityTab, setShowActivityTab] = useUiPreference('logPanelTabActivity');
   const [compactActionHistory, setCompactActionHistory] = useUiPreference('compactActionHistory');
+  const [namingConvention, setNamingConvention] = useUiPreference('namingConvention');
+  const [allowMultipleExecToInput, setAllowMultipleExecToInput] = useUiPreference('allowMultipleExecToInput');
+  const [warnDynamicWeakTyping, setWarnDynamicWeakTyping] = useUiPreference('warnDynamicWeakTyping');
   const {
     codeOpen,
     graphNavOpen,
@@ -118,6 +122,48 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
             { value: 'fast', label: 'Fast' },
           ]}
           onChange={setStepAnimateChainLayoutSpeed}
+        />
+      </section>
+
+      <section className="space-y-2 border-t border-zinc-800/80 pt-4">
+        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+          Conventions & Safety
+        </p>
+        <div className="rounded border border-zinc-800/80 bg-zinc-900/30 px-2.5 py-2 space-y-2">
+          <div>
+            <p className="text-[11px] text-zinc-200 font-medium">Naming convention</p>
+            <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">
+              Make node titles and symbol roles follow target keywords (e.g. Declare vs let/func/def)
+            </p>
+          </div>
+          <SearchableSelect
+            value={namingConvention}
+            onChange={(next) => setNamingConvention(next as any)}
+            searchable={false}
+            options={[
+              { value: 'global', label: 'Global (Default)' },
+              { value: 'auto', label: 'Auto (Follow active language)' },
+              { value: 'python', label: 'Python' },
+              { value: 'javascript', label: 'JS/TS' },
+              { value: 'cpp', label: 'C++' },
+              { value: 'verse', label: 'Verse' },
+              { value: 'gdscript', label: 'GDScript' },
+              { value: 'rust', label: 'Rust' },
+              { value: 'csharp', label: 'C#' },
+            ]}
+          />
+        </div>
+        <ToggleRow
+          label="Allow multiple exec connections (U119)"
+          description="Allow multiple execution outputs to wire into a single input (warns in Compiler Log)"
+          checked={allowMultipleExecToInput}
+          onChange={setAllowMultipleExecToInput}
+        />
+        <ToggleRow
+          label="Dynamic/weak typing warnings (U119)"
+          description="Warn in the Compiler Log for dynamic typing models (e.g., untyped ports or dynamic target languages)"
+          checked={warnDynamicWeakTyping}
+          onChange={setWarnDynamicWeakTyping}
         />
       </section>
 

@@ -419,6 +419,8 @@ function GraphCanvasInner() {
     variable: GraphVariable;
   } | null>(null);
 
+  const [isDragOverActive, setIsDragOverActive] = useState(false);
+
   const [functionMenu, setFunctionMenu] = useState<{
     x: number;
     y: number;
@@ -1249,14 +1251,20 @@ function GraphCanvasInner() {
       event.dataTransfer.types.includes(TREE_DRAG_MIME.variable)
     ) {
       event.dataTransfer.dropEffect = 'copy';
+      setIsDragOverActive(true);
       return;
     }
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const onDragLeave = useCallback((event: React.DragEvent) => {
+    setIsDragOverActive(false);
+  }, []);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
+      setIsDragOverActive(false);
 
       if (
         event.dataTransfer.types.includes(TREE_DRAG_MIME.classFolder) &&
@@ -2336,9 +2344,18 @@ function GraphCanvasInner() {
       style={{ background: '#0a0a0c' }}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      onDragLeave={onDragLeave}
       onDragOverCapture={onDragOver}
       onDropCapture={onDrop}
     >
+      {isDragOverActive && (
+        <div className="absolute inset-4 border-2 border-dashed border-sky-500/40 bg-sky-950/20 rounded-lg pointer-events-none z-50 flex items-center justify-center transition-all duration-200">
+          <div className="bg-zinc-900 border border-zinc-700/80 px-4 py-2 rounded text-xs font-semibold text-sky-400 shadow-xl flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+            Drag here to spawn or declare on canvas
+          </div>
+        </div>
+      )}
       <GraphShortcutsHelp
         open={shortcutsHelpOpen}
         onOpenChange={setShortcutsHelpOpen}
@@ -2496,6 +2513,7 @@ function GraphCanvasInner() {
             onClose={() => setVariableMenu(null)}
             dividersBefore={dividersBefore}
             items={items}
+            header={`Variable: ${variableMenu.variable.name}`}
           />
         );
       })()}
@@ -2527,6 +2545,7 @@ function GraphCanvasInner() {
             onClose={() => setFunctionMenu(null)}
             dividersBefore={dividersBefore}
             items={items}
+            header={`Function: ${functionMenu.func.name}`}
           />
         );
       })()}
@@ -2550,6 +2569,7 @@ function GraphCanvasInner() {
             onClose={() => setEventMenu(null)}
             dividersBefore={dividersBefore}
             items={items}
+            header={`Event: ${eventName}`}
           />
         );
       })()}
@@ -2574,6 +2594,7 @@ function GraphCanvasInner() {
             onClose={() => setClassMenu(null)}
             dividersBefore={dividersBefore}
             items={items}
+            header={`Class: ${classMenu.cls.name}`}
           />
         );
       })()}
@@ -2598,6 +2619,7 @@ function GraphCanvasInner() {
             onClose={() => setContainerMenu(null)}
             dividersBefore={dividersBefore}
             items={items}
+            header={`Folder: ${containerMenu.containerName}`}
           />
         );
       })()}

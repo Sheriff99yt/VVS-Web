@@ -322,7 +322,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U101 | **Cross-language async concept** | **Open** | Language-neutral async model (nodes, options, or hybrid) that packs can map — not one-off per language. |
 | U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chips on **hover** (pinned while menus open). Selection toolbar + right-click menus with shortcuts remain. |
 | U103 | **Components** (visual + examples) | **Open** | Design a component visual that works for **all** languages; add to multi-lang Test Project examples. |
-| U104 | **Overloading** revise & stress-test | **Open** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
+| U104 | **Overloading** revise & stress-test | **Done** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
 | U105 | **Overwriting (override)** study | **Open** | Decide if override needs custom visuals or is fully covered by current modifiers / defines. |
 | U106 | **Inheritance** design | **Open** | How inheritance is authored on canvas and lowered per language (pairs with CL-010). |
 | U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click selects one; Ctrl/⌘+click multi-selects; left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
@@ -336,8 +336,8 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U115 | **Undo: rename + class CRUD** | **Done** | Rename + class create/rename/delete/move; slice includes classes / activeClassId / projectDetails |
 | U116 | **Undo: preserve across tab switch** | **Done** | Tab switch no longer clears history; snapshots carry activeGraphTab |
 | U117 | **Undo: lean canvas snapshots** | **Done** | Canvas edits = nodes+edges+tab; pushHistory = full project slice (true op-deltas deferred) |
-| U118 | **Dynamic naming conventions** | **Open** | Settings options to follow default VVS global naming or specific language. |
-| U119 | **Bad practices / Not recommended settings** | **Open** | Settings to toggle: (1) allow multiple exec outputs to one input (warns/prevents code redundancy), and (2) Dynamic/Weak typing warnings. |
+| U118 | **Dynamic naming conventions** | **Done** | Settings options to follow default VVS global naming or specific language. |
+| U119 | **Bad practices / Not recommended settings** | **Done** | Settings to toggle: (1) allow multiple exec outputs to one input (warns/prevents code redundancy), and (2) Dynamic/Weak typing warnings. |
 
 ---
 

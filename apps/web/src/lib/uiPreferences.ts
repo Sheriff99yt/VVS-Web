@@ -107,6 +107,12 @@ export interface UiPreferences {
    * `true`: strip follows the single selected node instead.
    */
   nodeOptionsStripOnSelect: boolean;
+  /** U118: dynamic naming convention mode. */
+  namingConvention: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'auto';
+  /** U119: allow multiple execution outputs to connect to a single input. */
+  allowMultipleExecToInput: boolean;
+  /** U119: warn of dynamic/weak typing coercion and cognitive overhead. */
+  warnDynamicWeakTyping: boolean;
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -144,6 +150,9 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   audioFeedbackEnabled: false,
   audioFeedbackVolume: 0.35,
   nodeOptionsStripOnSelect: false,
+  namingConvention: 'global',
+  allowMultipleExecToInput: false,
+  warnDynamicWeakTyping: false,
 };
 
 export const DETAILS_PANEL_HEIGHT = {
@@ -418,6 +427,26 @@ export function readUiPreferences(): UiPreferences {
         typeof rest.audioFeedbackVolume === 'number'
           ? rest.audioFeedbackVolume
           : DEFAULT_UI_PREFERENCES.audioFeedbackVolume,
+      namingConvention:
+        rest.namingConvention === 'global' ||
+        rest.namingConvention === 'python' ||
+        rest.namingConvention === 'javascript' ||
+        rest.namingConvention === 'cpp' ||
+        rest.namingConvention === 'verse' ||
+        rest.namingConvention === 'gdscript' ||
+        rest.namingConvention === 'rust' ||
+        rest.namingConvention === 'csharp' ||
+        rest.namingConvention === 'auto'
+          ? rest.namingConvention
+          : DEFAULT_UI_PREFERENCES.namingConvention,
+      allowMultipleExecToInput:
+        typeof rest.allowMultipleExecToInput === 'boolean'
+          ? rest.allowMultipleExecToInput
+          : DEFAULT_UI_PREFERENCES.allowMultipleExecToInput,
+      warnDynamicWeakTyping:
+        typeof rest.warnDynamicWeakTyping === 'boolean'
+          ? rest.warnDynamicWeakTyping
+          : DEFAULT_UI_PREFERENCES.warnDynamicWeakTyping,
     };
     return migrateLegacyDetailsPref(merged);
   } catch {

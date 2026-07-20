@@ -24,6 +24,14 @@ const SPAWN_SEARCH_ALIASES: Record<string, readonly string[]> = {
   variable_get: ['get', 'read'],
   variable_set: ['set', 'assign', 'write'],
   enum_define: ['enum', 'declare'],
+  math_add: ['add', 'math', '+', 'sum', 'plus', 'addition'],
+  math_subtract: ['subtract', 'math', '-', 'minus', 'difference', 'subtraction'],
+  math_multiply: ['multiply', 'math', '*', 'times', 'product', 'multiplication'],
+  math_divide: ['divide', 'math', '/', 'div', 'quotient', 'division'],
+  expr_enum_member: ['enum', 'member', 'access', 'dot', 'value'],
+  array_push: ['array', 'push', 'add', 'append', 'insert', 'list'],
+  string_concat: ['string', 'concat', 'combine', 'join', 'merge', 'add'],
+  event_on_update: ['tick', 'update', 'frame', 'on update'],
 };
 
 /** Lowercase haystack for spawn-menu filtering (label, kindId, category, aliases). */

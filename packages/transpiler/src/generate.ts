@@ -195,7 +195,7 @@ function resolveTabCodegen(ctx: CodegenContext): {
       ? classesOnHome.find((c) => c.id === ctx.activeClassId)
       : undefined) ??
     (ctx.classes ? classForHomeGraphId(ctx.classes, activeTabId) : undefined);
-  const isFunctionTab = ctx.functions.some((f) => f.id === activeTabId);
+  const isFunctionTab = ctx.functions.some((f) => f.id === activeTabId || activeTabId.startsWith(`${f.id}::`));
   const isOrgGraph = activeTabId === MAIN_GRAPH_CONTAINER_ID && !homeClass;
   const isLegacyMain = activeTabId === 'main';
   const isClassHomeModule = homeClass != null;
@@ -216,7 +216,7 @@ function resolveTabCodegen(ctx: CodegenContext): {
     extendsType = homeClass.extendsType ?? '';
     activeClassId = homeClass.id;
   } else if (isFunctionTab) {
-    const fn = ctx.functions.find((f) => f.id === activeTabId);
+    const fn = ctx.functions.find((f) => f.id === activeTabId || activeTabId.startsWith(`${f.id}::`));
     if (fn) {
       moduleName = fn.name;
       activeClassId = fn.classId ?? activeClassId;

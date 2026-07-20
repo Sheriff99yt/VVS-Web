@@ -794,16 +794,19 @@ function irStatementsForGraph(
 
 function buildFunctionBodies(
   documents: Record<string, import('@vvs/graph-types').GraphDocument> | undefined,
-  functions: { id: string; name: string }[],
+  functions: FunctionSymbol[],
   lowerCtx: LowerContext
 ): Record<string, IrStatement[]> {
   const bodies: Record<string, IrStatement[]> = {};
   if (!documents) return bodies;
   for (const func of functions) {
-    const doc = documents[func.id];
-    if (!doc) continue;
-    const graphNodes = doc.nodes.filter(isCodegenNode);
-    bodies[func.id] = irStatementsForGraph(graphNodes, doc.edges, lowerCtx);
+    for (const overload of func.overloads) {
+      const tabId = overload.graphTabId ?? func.id;
+      const doc = documents[tabId];
+      if (!doc) continue;
+      const graphNodes = doc.nodes.filter(isCodegenNode);
+      bodies[tabId] = irStatementsForGraph(graphNodes, doc.edges, lowerCtx);
+    }
   }
   return bodies;
 }

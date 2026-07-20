@@ -6,6 +6,7 @@ import { mergePropertyDefaults } from '@vvs/syntax-registry';
 import { resolveNodeKindId as registryResolveNodeKindId } from '@vvs/syntax-registry';
 import { resolveGraphNodeKindId, normalizeGraphNodeData as normalizeGraphNodeDataCore } from '@vvs/graph-types';
 import { getInputKindLabel, syncGetInputNodePorts } from './getInputNode';
+import { readUiPreferences } from './uiPreferences';
 
 export { inferKindIdFromLabel } from '@vvs/syntax-registry';
 
@@ -23,34 +24,119 @@ export function getVariableName(data: VVSNodeData): string | undefined {
   return undefined;
 }
 
-export function getNodeDisplayTitle(data: VVSNodeData): string {
+function getNamingPrefix(
+  type: 'Get' | 'Set' | 'Declare' | 'Define' | 'Call' | 'Dispatch' | 'On',
+  namingConvention: string,
+  activeLanguage?: string
+): string {
+  let convention = namingConvention;
+  if (convention === 'auto') {
+    convention = activeLanguage || 'global';
+  }
+
+  switch (convention) {
+    case 'python':
+      if (type === 'Define' || type === 'Declare') return 'def';
+      if (type === 'On') return 'def on_';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'javascript':
+    case 'typescript':
+      if (type === 'Declare') return 'let';
+      if (type === 'Define') return 'function';
+      if (type === 'On') return 'on';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'cpp':
+      if (type === 'Declare') return 'declare';
+      if (type === 'Define') return 'void';
+      if (type === 'On') return 'On';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'verse':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'def';
+      if (type === 'On') return 'On';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'gdscript':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'func';
+      if (type === 'On') return 'on';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'rust':
+      if (type === 'Declare') return 'let';
+      if (type === 'Define') return 'fn';
+      if (type === 'On') return 'on';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'csharp':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'void';
+      if (type === 'On') return 'On';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+  }
+  return type;
+}
+
+export function getNodeDisplayTitle(data: VVSNodeData, activeLanguage?: string): string {
   const kindId = resolveNodeKindId(data);
   const def = getNodeKindDefinition(kindId);
+  const prefs = readUiPreferences();
+  const convention = prefs.namingConvention ?? 'global';
 
   if (kindId === 'variable_get') {
     const name = getVariableName(data);
-    return name ? `Get ${name}` : def?.title ?? data.label;
+    const prefix = getNamingPrefix('Get', convention, activeLanguage);
+    return name ? `${prefix} ${name}` : def?.title ?? data.label;
   }
   if (kindId === 'var_define') {
     const name =
       typeof data.properties?.name === 'string'
         ? data.properties.name
         : getVariableName(data);
-    return name ? `Declare ${name}` : def?.title ?? data.label;
+    const prefix = getNamingPrefix('Declare', convention, activeLanguage);
+    return name ? `${prefix} ${name}` : def?.title ?? data.label;
   }
   if (kindId === 'function_define') {
     const fn = data.properties?.name;
-    if (typeof fn === 'string' && fn) return `Declare ${fn}`;
+    const prefix = getNamingPrefix('Declare', convention, activeLanguage);
+    if (typeof fn === 'string' && fn) return `${prefix} ${fn}`;
     return def?.title ?? data.label;
   }
   if (kindId === 'function_implement') {
     const fn = data.properties?.name;
-    if (typeof fn === 'string' && fn) return `Define ${fn}`;
+    const prefix = getNamingPrefix('Define', convention, activeLanguage);
+    if (typeof fn === 'string' && fn) return `${prefix} ${fn}`;
     return def?.title ?? data.label;
   }
   if (kindId === 'class_define') {
     const cls = data.properties?.name;
-    if (typeof cls === 'string' && cls) return `Declare ${cls}`;
+    const prefix = getNamingPrefix('Declare', convention, activeLanguage);
+    if (typeof cls === 'string' && cls) return `${prefix} ${cls}`;
     return def?.title ?? data.label;
   }
   if (kindId === 'graph_ref') {
@@ -60,17 +146,22 @@ export function getNodeDisplayTitle(data: VVSNodeData): string {
   }
   if (kindId === 'event_member_define') {
     const name = data.properties?.name;
-    if (typeof name === 'string' && name) return `Declare ${name}`;
+    const prefix = getNamingPrefix('Declare', convention, activeLanguage);
+    if (typeof name === 'string' && name) return `${prefix} ${name}`;
     return def?.title ?? data.label;
   }
   if (kindId === 'variable_set') {
     const name = getVariableName(data);
-    return name ? `Set ${name}` : def?.title ?? data.label;
+    const prefix = getNamingPrefix('Set', convention, activeLanguage);
+    return name ? `${prefix} ${name}` : def?.title ?? data.label;
   }
   if (kindId === 'vvs.project.call_function') {
     const fn = data.properties?.functionName;
-    if (typeof fn === 'string' && fn) return `Call ${fn}`;
-    if (data.label.startsWith('Call ')) return data.label;
+    const prefix = getNamingPrefix('Call', convention, activeLanguage);
+    if (typeof fn === 'string' && fn) return `${prefix} ${fn}`;
+    if (data.label.startsWith('Call ')) {
+      return data.label.replace(/^Call/, prefix);
+    }
     return def?.title ?? data.label;
   }
   if (kindId === 'vvs.project.import_module') {
@@ -83,18 +174,27 @@ export function getNodeDisplayTitle(data: VVSNodeData): string {
   }
   if (kindId === 'event_define' || kindId === 'event_custom' || kindId === 'event_on_start' || kindId === 'event_on_update') {
     const eventName = data.properties?.eventName;
+    const prefix = getNamingPrefix('On', convention, activeLanguage);
     if (typeof eventName === 'string' && eventName.trim()) {
-      return eventDisplayName(eventName);
+      return `${prefix} ${eventName}`;
     }
-    if (data.label.startsWith('On ')) return data.label;
+    if (data.label.startsWith('On ')) {
+      return data.label.replace(/^On/, prefix);
+    }
     return def?.title ?? data.label;
   }
   if (kindId === 'event_dispatch') {
     const eventName = data.properties?.eventName;
+    const prefix = getNamingPrefix('Dispatch', convention, activeLanguage);
     if (typeof eventName === 'string' && eventName.trim()) {
-      return `Call ${eventName}`;
+      return `${prefix} ${eventName}`;
     }
-    if (data.label.startsWith('Call ') || data.label.startsWith('Dispatch ')) return data.label;
+    if (data.label.startsWith('Call ')) {
+      return data.label.replace(/^Call/, prefix);
+    }
+    if (data.label.startsWith('Dispatch ')) {
+      return data.label.replace(/^Dispatch/, prefix);
+    }
     return def?.title ?? data.label;
   }
   if (kindId === 'action_get_input') {

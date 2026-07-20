@@ -37,6 +37,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const [dimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
   const [stripOnSelect] = useUiPreference('nodeOptionsStripOnSelect');
+  const [namingConvention] = useUiPreference('namingConvention');
   const kindId = resolveNodeKindId(data);
   const eventId =
     kindId === 'event_member_define'
@@ -72,7 +73,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const isGraphRef = kindId === 'graph_ref' || data.linkKind === 'graph_ref';
   const isImportNode = data.linkKind === 'import_module';
   const hasPins = data.inputs.length > 0 || data.outputs.length > 0;
-  const title = getNodeDisplayTitle(data);
+  const title = getNodeDisplayTitle(data, targetLanguage);
   const stateTip = [unsupportedTitle, hasBrokenRef ? 'Unresolved symbol reference' : '']
     .filter(Boolean)
     .join(' · ');

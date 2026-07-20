@@ -20,8 +20,10 @@ import { emptyHandlerBodyLine } from './layout';
 import { appendIrStatements } from './sinkStatements';
 import { typedParamFragment, typeNameForPin } from './emitTypes';
 
-export function overloadParamNames(func: FunctionSymbol): string[] {
-  return func.overloads[0]?.parameters.map((p) => parameterCodegenName(p)) ?? [];
+export function overloadParamNames(func: FunctionSymbol, properties?: Record<string, unknown>): string[] {
+  const overloadId = properties?.overloadId;
+  const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0];
+  return overload?.parameters.map((p) => parameterCodegenName(p)) ?? [];
 }
 
 export function printContextForIr(
@@ -269,8 +271,10 @@ function functionParamList(
   lang: TargetLanguage,
   properties?: Record<string, unknown>
 ): string {
-  const params = overloadParamNames(func);
-  const overloadParams = func.overloads[0]?.parameters ?? [];
+  const params = overloadParamNames(func, properties);
+  const overloadId = properties?.overloadId;
+  const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0];
+  const overloadParams = overload?.parameters ?? [];
   const binding = properties?.binding ?? func.binding ?? 'instance';
   if (lang === 'python' && binding === 'instance') {
     return ['self', ...params].join(', ');
@@ -305,10 +309,12 @@ export function functionReturnTypeName(
   lang: TargetLanguage,
   properties?: Record<string, unknown>
 ): string {
+  const overloadId = properties?.overloadId;
+  const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0];
   const fromProps = properties?.returnType;
   const raw =
     (typeof fromProps === 'string' && fromProps.trim() ? fromProps.trim() : undefined) ||
-    func.overloads[0]?.returnType ||
+    overload?.returnType ||
     'void';
   if (raw === 'void') return 'void';
   if (lang === 'cpp' || lang === 'csharp') {
@@ -447,8 +453,10 @@ export function renderFunctionDeclPrototype(
   properties?: Record<string, unknown>
 ): string | null {
   if (lang !== 'cpp' && lang !== 'csharp') return null;
-  const overloadParams = func.overloads[0]?.parameters ?? [];
-  const params = overloadParamNames(func)
+  const overloadId = properties?.overloadId;
+  const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0];
+  const overloadParams = overload?.parameters ?? [];
+  const params = overloadParamNames(func, properties)
     .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
     .join(', ');
 
