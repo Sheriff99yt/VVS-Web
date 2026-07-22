@@ -46,10 +46,10 @@ export function useSyncProjectSelection({
 
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
-      if (!isCanvasActive) return;
+      const ids = selectedNodes.map((node) => node.id);
+      if (!isCanvasActive && ids.length === 0) return;
 
       startTransition(() => {
-        const ids = selectedNodes.map((node) => node.id);
         lastPrevIdsRef.current = null;
 
         setSelectedNodeIds((prevIds) => {

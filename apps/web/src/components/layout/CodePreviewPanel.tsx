@@ -477,18 +477,20 @@ export function CodePreviewPanel({
       symbolLink?.highlightNodeIds
     );
 
-    const extraIds: string[] = [];
     if (nodeToCodeHighlight === 'hover-selection' && hoveredNodeId) {
       if (!selectedIds.includes(hoveredNodeId)) {
-        extraIds.push(hoveredNodeId);
+        return [...selectedIds, hoveredNodeId];
       }
     }
-    if (hoveredCodeNodeId && !selectedIds.includes(hoveredCodeNodeId) && !extraIds.includes(hoveredCodeNodeId)) {
-      extraIds.push(hoveredCodeNodeId);
-    }
 
-    return extraIds.length > 0 ? [...selectedIds, ...extraIds] : selectedIds;
-  }, [nodeToCodeHighlight, selection, selectedNodeIds, symbolLink?.highlightNodeIds, hoveredNodeId, hoveredCodeNodeId]);
+    return selectedIds;
+  }, [nodeToCodeHighlight, selection, selectedNodeIds, symbolLink?.highlightNodeIds, hoveredNodeId]);
+
+  const hoverCodeHighlightRanges = useMemo(() => {
+    if (!hoveredCodeNodeId || nodeToCodeHighlight === 'off') return [];
+    const ranges = buildColoredHighlightRanges([hoveredCodeNodeId], sourceMap, filePath, nodesById);
+    return ranges.map((r) => ({ ...r, isCodeHover: true }));
+  }, [hoveredCodeNodeId, nodeToCodeHighlight, sourceMap, filePath, nodesById]);
 
   const errorNodeIds = useMemo(
     () => nodeIdsFromValidationMessages(validationErrors),
@@ -541,9 +543,10 @@ export function CodePreviewPanel({
       ...errorHighlightRanges,
       ...warningHighlightRanges,
       ...selectionHighlightRanges,
+      ...hoverCodeHighlightRanges,
     ];
     return merged.length > 0 ? merged : undefined;
-  }, [errorHighlightRanges, warningHighlightRanges, selectionHighlightRanges]);
+  }, [errorHighlightRanges, warningHighlightRanges, selectionHighlightRanges, hoverCodeHighlightRanges]);
 
   // When diagnostic toggles turn on, jump to a file that contains mapped ranges.
   const diagNavKey = `${highlightErrors}:${highlightWarnings}:${errorNodeIds.join(',')}|${warningNodeIds.join(',')}`;
@@ -568,6 +571,8 @@ export function CodePreviewPanel({
     }
   }
 
+  const [scrollToLine, setScrollToLine] = useState<{ line: number; sequenceId: number } | null>(null);
+  const scrollSeqRef = useRef(0);
   const [prevHighlightNavKey, setPrevHighlightNavKey] = useState<string | null>(null);
   
   if (highlightNodeIds.length === 0 && prevHighlightNavKey !== null) {
@@ -587,6 +592,8 @@ export function CodePreviewPanel({
           // Fire on next tick to avoid updating parent during render
           setTimeout(() => onSelectedFilePathChange?.(targetPath), 0);
         }
+        scrollSeqRef.current += 1;
+        setScrollToLine({ line: ranges[0]!.startLine, sequenceId: scrollSeqRef.current });
         setPrevHighlightNavKey(navKey);
         break;
       }
@@ -863,6 +870,7 @@ export function CodePreviewPanel({
                 value={displayCode}
                 language={isJsonPreview ? 'json' : targetLanguage}
                 highlightRanges={highlightRanges}
+                scrollToLine={scrollToLine}
                 onReverseSelectLine={isJsonPreview ? undefined : handleReverseSelectLine}
                 onHoverSourceLocation={isJsonPreview ? undefined : handleHoverSourceLocation}
                 onHoverSourceLeave={isJsonPreview ? undefined : handleHoverSourceLeave}

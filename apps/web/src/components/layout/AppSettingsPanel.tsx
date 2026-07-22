@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Keyboard, RotateCcw } from 'lucide-react';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
@@ -13,11 +13,16 @@ import { shortcutKeys } from '@/lib/graphShortcuts';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
+import { fuzzyMatchAny } from '@/lib/fuzzySearch';
+
+import { SettingCard, Switch, SegmentedControl } from '@/components/settings/SettingsControls';
+
 interface AppSettingsPanelProps {
   onCloseSettings?: () => void;
+  searchQuery?: string;
 }
 
-export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
+export function AppSettingsPanel({ onCloseSettings, searchQuery }: AppSettingsPanelProps) {
   const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
   const [nodeOptionsStripOnSelect, setNodeOptionsStripOnSelect] = useUiPreference(
     'nodeOptionsStripOnSelect'
@@ -53,311 +58,302 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
     setGraphChromeMode,
   } = useEditorPanels();
 
+  const query = (searchQuery ?? '').trim();
+  const match = useCallback(
+    (label: string, description: string = '') => {
+      if (!query) return true;
+      return fuzzyMatchAny(query, [label, description]);
+    },
+    [query]
+  );
+
+  const canvasMatch =
+    match('Dim unsupported nodes', 'Fade nodes that do not emit for the current language') ||
+    match('Show node strip on select', 'one shared strip follows hover') ||
+    match('Unsupported as (x) comments', 'Emit comment lines for language-ineffective nodes') ||
+    match('Author comments', 'Emit Comment [C] box text') ||
+    match('Node → Code highlight', 'Highlight generated code lines when interacting with canvas nodes') ||
+    match('Chain attribute direction (S S)', 'Where expression trees hang on S S layout') ||
+    match('Animate auto layout', 'Smoothly move nodes when running S S chain layout') ||
+    match('Step animate layout', 'move columns left-to-right in sequence') ||
+    match('Step animation speed', 'How quickly staggered columns move');
+
+  const safetyMatch =
+    match('Naming convention', 'Make node titles and symbol roles follow target keywords python javascript cpp verse gdscript rust csharp') ||
+    match('Allow multiple exec connections (U119)', 'Allow multiple execution outputs to wire into a single input') ||
+    match('Dynamic/weak typing warnings (U119)', 'Warn in the Compiler Log for dynamic typing models');
+
+  const panelMatch =
+    match('Code preview open', 'Show generated code beside the canvas') ||
+    match('Graph navigator open', 'Show the left project tree') ||
+    match('Minimap', 'Canvas map chrome');
+
+  const outputMatch =
+    match('Log', 'Compiler and validator messages') ||
+    match('History', 'Graph undo / redo timeline') ||
+    match('Activity', 'Save, generate, and other project events') ||
+    match('Compact action lines', 'show three live action lines in the bottom-right');
+
+  const floatMatch =
+    match('Reset details panel layout', 'details size position') ||
+    match('Reset log panel layout', 'log size position');
+
+  const helpMatch = match('Canvas help', 'shortcuts help');
+
+  const hasAnyMatch = canvasMatch || safetyMatch || panelMatch || outputMatch || floatMatch || helpMatch;
+
+  if (!hasAnyMatch) {
+    return (
+      <div className="py-8 text-center text-zinc-500 text-[11px]">
+        No editor settings match &quot;{searchQuery}&quot;
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
-      <section className="space-y-1">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-          App preferences
-        </p>
-        <p className="text-[10px] text-zinc-600 leading-relaxed">
-          Stored in this browser. They apply across projects and do not change generated code.
-        </p>
-      </section>
+      {!query ? (
+        <section className="space-y-1">
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+            App preferences
+          </p>
+          <p className="text-[10px] text-zinc-600 leading-relaxed">
+            Stored in this browser. They apply across projects and do not change generated code.
+          </p>
+        </section>
+      ) : null}
 
-      <section className="space-y-2">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Canvas</p>
-        <ToggleRow
-          label="Dim unsupported nodes"
-          description="Fade nodes that do not emit for the current language"
-          checked={dimUnsupportedNodes}
-          onChange={setDimUnsupportedNodes}
-        />
-        <ToggleRow
-          label="Show node strip on select"
-          description="Off (default): one shared strip follows hover. On: a strip on each selected node that has options."
-          checked={nodeOptionsStripOnSelect}
-          onChange={setNodeOptionsStripOnSelect}
-        />
-        <ToggleRow
-          label="Unsupported as (x) comments"
-          description="Emit comment lines for language-ineffective nodes in the code panel"
-          checked={showUnsupportedComments}
-          onChange={setShowUnsupportedComments}
-        />
-        <ToggleRow
-          label="Author comments"
-          description="Emit Comment [C] box text in the code panel (separate from (x))"
-          checked={showUserComments}
-          onChange={setShowUserComments}
-        />
-        <ChoiceRow
-          label="Node → Code highlight"
-          description="Highlight generated code lines when interacting with canvas nodes"
-          value={nodeToCodeHighlight}
-          options={[
-            { value: 'off', label: 'Off' },
-            { value: 'selection', label: 'Selection' },
-            { value: 'hover-selection', label: 'Hover + Selection' },
-          ]}
-          onChange={setNodeToCodeHighlight}
-        />
-        <ChoiceRow
-          label="Chain attribute direction (S S)"
-          description="Where expression trees hang on S S layout — extended uses a flat horizontal stair under the spine"
-          value={chainAttributeDirection}
-          options={[
-            { value: 'above', label: 'Above' },
-            { value: 'below', label: 'Below' },
-            { value: 'below-extended', label: 'Below extended' },
-          ]}
-          onChange={setChainAttributeDirection}
-        />
-        <ToggleRow
-          label="Animate auto layout"
-          description="Smoothly move nodes when running S S chain layout"
-          checked={animateChainLayout}
-          onChange={setAnimateChainLayout}
-        />
-        <ToggleRow
-          label="Step animate layout"
-          description="When animation is on, move columns left-to-right in sequence instead of all at once"
-          checked={stepAnimateChainLayout}
-          onChange={setStepAnimateChainLayout}
-        />
-        <ChoiceRow
-          label="Step animation speed"
-          description="How quickly staggered columns move during S S layout"
-          value={stepAnimateChainLayoutSpeed}
-          options={[
-            { value: 'slow', label: 'Slow' },
-            { value: 'normal', label: 'Normal' },
-            { value: 'fast', label: 'Fast' },
-          ]}
-          onChange={setStepAnimateChainLayoutSpeed}
-        />
-      </section>
+      {canvasMatch ? (
+        <section className="space-y-2">
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Canvas & Layout</p>
+          {match('Dim unsupported nodes', 'Fade nodes that do not emit for the current language') ? (
+            <SettingCard label="Dim unsupported nodes" description="Fade nodes that do not emit for the active target language">
+              <Switch checked={dimUnsupportedNodes} onChange={setDimUnsupportedNodes} />
+            </SettingCard>
+          ) : null}
+          {match('Show node strip on select', 'one shared strip follows hover') ? (
+            <SettingCard label="Show node strip on select" description="Off: shared strip follows hover. On: strip on selected node">
+              <Switch checked={nodeOptionsStripOnSelect} onChange={setNodeOptionsStripOnSelect} />
+            </SettingCard>
+          ) : null}
+          {match('Unsupported as (x) comments', 'Emit comment lines for language-ineffective nodes') ? (
+            <SettingCard label="Unsupported as (x) comments" description="Emit comment lines for unsupported nodes in the code panel">
+              <Switch checked={showUnsupportedComments} onChange={setShowUnsupportedComments} />
+            </SettingCard>
+          ) : null}
+          {match('Author comments', 'Emit Comment [C] box text') ? (
+            <SettingCard label="Author comments" description="Emit Comment [C] box text in generated code">
+              <Switch checked={showUserComments} onChange={setShowUserComments} />
+            </SettingCard>
+          ) : null}
+          {match('Node → Code highlight', 'Highlight generated code lines when interacting with canvas nodes') ? (
+            <SettingCard label="Node → Code highlight" description="Highlight generated code lines when interacting with canvas nodes">
+              <SegmentedControl
+                value={nodeToCodeHighlight}
+                options={[
+                  { value: 'off', label: 'Off' },
+                  { value: 'selection', label: 'Select' },
+                  { value: 'hover-selection', label: 'Hover + Select' },
+                ]}
+                onChange={setNodeToCodeHighlight}
+              />
+            </SettingCard>
+          ) : null}
+          {match('Chain attribute direction (S S)', 'Where expression trees hang on S S layout') ? (
+            <SettingCard label="Chain attribute direction (S S)" description="Where expression trees hang on auto-layout">
+              <SegmentedControl
+                value={chainAttributeDirection}
+                options={[
+                  { value: 'above', label: 'Above' },
+                  { value: 'below', label: 'Below' },
+                  { value: 'below-extended', label: 'Extended' },
+                ]}
+                onChange={setChainAttributeDirection}
+              />
+            </SettingCard>
+          ) : null}
+          {match('Animate auto layout', 'Smoothly move nodes when running S S chain layout') ? (
+            <SettingCard label="Animate auto layout" description="Smoothly animate node movements on layout">
+              <Switch checked={animateChainLayout} onChange={setAnimateChainLayout} />
+            </SettingCard>
+          ) : null}
+          {match('Step animate layout', 'move columns left-to-right in sequence') ? (
+            <SettingCard label="Step animate layout" description="Move columns in left-to-right sequence">
+              <Switch checked={stepAnimateChainLayout} onChange={setStepAnimateChainLayout} />
+            </SettingCard>
+          ) : null}
+          {match('Step animation speed', 'How quickly staggered columns move') ? (
+            <SettingCard label="Step animation speed" description="How quickly staggered layout columns move">
+              <SegmentedControl
+                value={stepAnimateChainLayoutSpeed}
+                options={[
+                  { value: 'slow', label: 'Slow' },
+                  { value: 'normal', label: 'Normal' },
+                  { value: 'fast', label: 'Fast' },
+                ]}
+                onChange={setStepAnimateChainLayoutSpeed}
+              />
+            </SettingCard>
+          ) : null}
+        </section>
+      ) : null}
 
-      <section className="space-y-2 border-t border-zinc-800/80 pt-4">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-          Conventions & Safety
-        </p>
-        <div className="rounded border border-zinc-800/80 bg-zinc-900/30 px-2.5 py-2 space-y-2">
-          <div>
-            <p className="text-[11px] text-zinc-200 font-medium">Naming convention</p>
-            <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">
-              Make node titles and symbol roles follow target keywords (e.g. Declare vs let/func/def)
-            </p>
+      {safetyMatch ? (
+        <section className="space-y-2 border-t border-zinc-800/80 pt-4">
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+            Conventions & Safety
+          </p>
+          {match('Naming convention', 'Make node titles and symbol roles follow target keywords python javascript cpp verse gdscript rust csharp') ? (
+            <SettingCard label="Naming convention" description="Make node titles follow target keywords">
+              <SearchableSelect
+                value={namingConvention}
+                onChange={(next) => setNamingConvention(next as any)}
+                searchable={false}
+                options={[
+                  { value: 'global', label: 'Global' },
+                  { value: 'auto', label: 'Auto' },
+                  { value: 'python', label: 'Python' },
+                  { value: 'javascript', label: 'JS/TS' },
+                  { value: 'cpp', label: 'C++' },
+                  { value: 'verse', label: 'Verse' },
+                  { value: 'gdscript', label: 'GDScript' },
+                  { value: 'rust', label: 'Rust' },
+                  { value: 'csharp', label: 'C#' },
+                ]}
+              />
+            </SettingCard>
+          ) : null}
+          {match('Allow multiple exec connections (U119)', 'Allow multiple execution outputs to wire into a single input') ? (
+            <SettingCard label="Allow multiple exec connections (U119)" description="Allow multiple exec outputs to wire into a single input">
+              <Switch checked={allowMultipleExecToInput} onChange={setAllowMultipleExecToInput} />
+            </SettingCard>
+          ) : null}
+          {match('Dynamic/weak typing warnings (U119)', 'Warn in the Compiler Log for dynamic typing models') ? (
+            <SettingCard label="Dynamic/weak typing warnings (U119)" description="Warn in Compiler Log for untyped ports">
+              <Switch checked={warnDynamicWeakTyping} onChange={setWarnDynamicWeakTyping} />
+            </SettingCard>
+          ) : null}
+        </section>
+      ) : null}
+
+      {panelMatch ? (
+        <section className="space-y-2 border-t border-zinc-800/80 pt-4">
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+            Default Panels
+          </p>
+          {match('Code preview open', 'Show generated code beside the canvas') ? (
+            <SettingCard label="Code preview open" description="Show generated code panel beside canvas">
+              <Switch
+                checked={codeOpen}
+                onChange={(next) => {
+                  if (next !== codeOpen) toggleCode();
+                }}
+              />
+            </SettingCard>
+          ) : null}
+          {match('Graph navigator open', 'Show the left project tree') ? (
+            <SettingCard label="Graph navigator open" description="Show left project tree sidebar">
+              <Switch
+                checked={graphNavOpen}
+                onChange={(next) => {
+                  if (next !== graphNavOpen) toggleGraphNav();
+                }}
+              />
+            </SettingCard>
+          ) : null}
+          {match('Minimap', 'Canvas map chrome') ? (
+            <SettingCard label="Minimap" description={`Canvas map chrome (${shortcutKeys('toggle-minimap')})`}>
+              <SegmentedControl
+                value={graphChromeMode}
+                options={[
+                  { value: 'map', label: 'Map' },
+                  { value: 'map-controls', label: 'Map + Controls' },
+                  { value: 'hidden', label: 'Hidden' },
+                ]}
+                onChange={setGraphChromeMode}
+              />
+            </SettingCard>
+          ) : null}
+        </section>
+      ) : null}
+
+      {outputMatch ? (
+        <section className="space-y-2 border-t border-zinc-800/80 pt-4">
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+            Output Window Tabs
+          </p>
+          {match('Log', 'Compiler and validator messages') ? (
+            <SettingCard label="Compiler Log" description="Compiler and validator diagnostic messages">
+              <Switch checked={showLogTab} onChange={setShowLogTab} />
+            </SettingCard>
+          ) : null}
+          {match('History', 'Graph undo / redo timeline') ? (
+            <SettingCard label="Graph History" description="Graph undo / redo timeline">
+              <Switch checked={showHistoryTab} onChange={setShowHistoryTab} />
+            </SettingCard>
+          ) : null}
+          {match('Activity', 'Save, generate, and other project events') ? (
+            <SettingCard label="Activity Feed" description="Save, generate, and project events">
+              <Switch checked={showActivityTab} onChange={setShowActivityTab} />
+            </SettingCard>
+          ) : null}
+          {match('Compact action lines', 'show three live action lines in the bottom-right') ? (
+            <SettingCard label="Compact action lines" description="Live action status in bottom-right corner">
+              <Switch checked={compactActionHistory} onChange={setCompactActionHistory} />
+            </SettingCard>
+          ) : null}
+        </section>
+      ) : null}
+
+      {floatMatch ? (
+        <section className="space-y-2 border-t border-zinc-800/80 pt-4">
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+            Floating Panels
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {match('Reset details panel layout', 'details size position') ? (
+              <button
+                type="button"
+                onClick={() => dispatchResetDetailsPanelLayout()}
+                className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
+              >
+                <RotateCcw size={12} className="text-zinc-500 shrink-0" />
+                Reset details panel layout
+              </button>
+            ) : null}
+            {match('Reset log panel layout', 'log size position') ? (
+              <button
+                type="button"
+                onClick={() => dispatchResetCompilerLogLayout()}
+                className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
+              >
+                <RotateCcw size={12} className="text-zinc-500 shrink-0" />
+                Reset log panel layout
+              </button>
+            ) : null}
           </div>
-          <SearchableSelect
-            value={namingConvention}
-            onChange={(next) => setNamingConvention(next as any)}
-            searchable={false}
-            options={[
-              { value: 'global', label: 'Global (Default)' },
-              { value: 'auto', label: 'Auto (Follow active language)' },
-              { value: 'python', label: 'Python' },
-              { value: 'javascript', label: 'JS/TS' },
-              { value: 'cpp', label: 'C++' },
-              { value: 'verse', label: 'Verse' },
-              { value: 'gdscript', label: 'GDScript' },
-              { value: 'rust', label: 'Rust' },
-              { value: 'csharp', label: 'C#' },
-            ]}
-          />
-        </div>
-        <ToggleRow
-          label="Allow multiple exec connections (U119)"
-          description="Allow multiple execution outputs to wire into a single input (warns in Compiler Log)"
-          checked={allowMultipleExecToInput}
-          onChange={setAllowMultipleExecToInput}
-        />
-        <ToggleRow
-          label="Dynamic/weak typing warnings (U119)"
-          description="Warn in the Compiler Log for dynamic typing models (e.g., untyped ports or dynamic target languages)"
-          checked={warnDynamicWeakTyping}
-          onChange={setWarnDynamicWeakTyping}
-        />
-      </section>
+        </section>
+      ) : null}
 
-      <section className="space-y-2 border-t border-zinc-800/80 pt-4">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-          Default panels
-        </p>
-        <ToggleRow
-          label="Code preview open"
-          description="Show generated code beside the canvas"
-          checked={codeOpen}
-          onChange={(next) => {
-            if (next !== codeOpen) toggleCode();
-          }}
-        />
-        <ToggleRow
-          label="Graph navigator open"
-          description="Show the left project tree"
-          checked={graphNavOpen}
-          onChange={(next) => {
-            if (next !== graphNavOpen) toggleGraphNav();
-          }}
-        />
-        <ChoiceRow
-          label="Minimap"
-          description={`Canvas map chrome (${shortcutKeys('toggle-minimap')} cycles) — map, map + zoom controls, or hidden`}
-          value={graphChromeMode}
-          options={[
-            { value: 'map', label: 'Map' },
-            { value: 'map-controls', label: 'Map + controls' },
-            { value: 'hidden', label: 'Hidden' },
-          ]}
-          onChange={setGraphChromeMode}
-        />
-      </section>
-
-      <section className="space-y-2 border-t border-zinc-800/80 pt-4">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-          Output panel tabs
-        </p>
-        <p className="text-[10px] text-zinc-600 leading-relaxed">
-          Show or hide tabs in the floating Output window (Log · History · Activity). Right-click the
-          panel for the same toggles. Cycle with <kbd className="text-zinc-400">`</kbd>.
-        </p>
-        <ToggleRow
-          label="Log"
-          description="Compiler and validator messages"
-          checked={showLogTab}
-          onChange={setShowLogTab}
-        />
-        <ToggleRow
-          label="History"
-          description="Graph undo / redo timeline"
-          checked={showHistoryTab}
-          onChange={setShowHistoryTab}
-        />
-        <ToggleRow
-          label="Activity"
-          description="Save, generate, and other project events"
-          checked={showActivityTab}
-          onChange={setShowActivityTab}
-        />
-        <ToggleRow
-          label="Compact action lines"
-          description="When Output is closed, show three live action lines in the bottom-right (on by default)"
-          checked={compactActionHistory}
-          onChange={setCompactActionHistory}
-        />
-      </section>
-
-      <section className="space-y-2 border-t border-zinc-800/80 pt-4">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-          Floating panels
-        </p>
-        <p className="text-[10px] text-zinc-600 leading-relaxed">
-          Reset size and position if a panel is stuck off-screen or behind another.
-        </p>
-        <div className="flex flex-col gap-1.5">
-          <button
-            type="button"
-            onClick={() => dispatchResetDetailsPanelLayout()}
-            className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
-          >
-            <RotateCcw size={12} className="text-zinc-500 shrink-0" />
-            Reset details panel layout
-          </button>
-          <button
-            type="button"
-            onClick={() => dispatchResetCompilerLogLayout()}
-            className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
-          >
-            <RotateCcw size={12} className="text-zinc-500 shrink-0" />
-            Reset log panel layout
-          </button>
-        </div>
-      </section>
-
-      <section className="border-t border-zinc-800/80 pt-4">
-        <Tooltip content={`Canvas help (${shortcutKeys('help')})`} placement="top" className="block w-full min-w-0">
-          <button
-            type="button"
-            onClick={() => {
-              onCloseSettings?.();
-              dispatchOpenShortcutsHelp();
-            }}
-            className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
-          >
-            <Keyboard size={12} className="text-zinc-500 shrink-0" />
-            <span className="flex-1">Canvas help</span>
-            <span className="text-[9px] text-zinc-600">{shortcutKeys('help')}</span>
-          </button>
-        </Tooltip>
-      </section>
-    </div>
-  );
-}
-
-function ToggleRow({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <label className="flex items-start gap-2.5 cursor-pointer rounded border border-zinc-800/80 bg-zinc-900/30 px-2.5 py-2 hover:bg-zinc-900/60 transition-colors">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 rounded border-zinc-600 bg-zinc-950 text-indigo-500 focus:ring-indigo-500/40"
-      />
-      <span className="min-w-0">
-        <span className="block text-[11px] text-zinc-200 font-medium">{label}</span>
-        <span className="block text-[10px] text-zinc-500 leading-relaxed mt-0.5">{description}</span>
-      </span>
-    </label>
-  );
-}
-
-function ChoiceRow<T extends string>({
-  label,
-  description,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  value: T;
-  options: { value: T; label: string }[];
-  onChange: (next: T) => void;
-}) {
-  return (
-    <div className="rounded border border-zinc-800/80 bg-zinc-900/30 px-2.5 py-2 space-y-2">
-      <div>
-        <p className="text-[11px] text-zinc-200 font-medium">{label}</p>
-        <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{description}</p>
-      </div>
-      <div className="flex gap-1">
-        {options.map((opt) => {
-          const active = opt.value === value;
-          return (
+      {helpMatch ? (
+        <section className="border-t border-zinc-800/80 pt-4">
+          <Tooltip content={`Canvas help (${shortcutKeys('help')})`} placement="top" className="block w-full min-w-0">
             <button
-              key={opt.value}
               type="button"
-              onClick={() => onChange(opt.value)}
-              className={`flex-1 px-2 py-1 rounded text-[11px] border transition-colors ${
-                active
-                  ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-200'
-                  : 'border-zinc-700/80 bg-zinc-950/40 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
-              }`}
+              onClick={() => {
+                onCloseSettings?.();
+                dispatchOpenShortcutsHelp();
+              }}
+              className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-[11px] text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100 transition-colors"
             >
-              {opt.label}
+              <Keyboard size={12} className="text-zinc-500 shrink-0" />
+              <span className="flex-1">Canvas help</span>
+              <span className="text-[9px] text-zinc-600">{shortcutKeys('help')}</span>
             </button>
-          );
-        })}
-      </div>
+          </Tooltip>
+        </section>
+      ) : null}
     </div>
   );
 }
+

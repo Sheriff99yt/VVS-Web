@@ -9,6 +9,7 @@ import { useUiPreference } from '@/hooks/useUiPreference';
 import { isCodePreviewPaused } from '@/lib/codePreviewPause';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { LanguageExtensionMenu } from '@/components/ui/LanguageExtensionMenu';
 
 const fieldLabelClass = 'text-[9px] font-semibold uppercase tracking-wide text-zinc-600 mb-1';
 const toggleRowClass =
@@ -30,6 +31,8 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
 
   const {
     targetLanguage,
+    targetFileExtension,
+    setGraphLanguageWithExtension,
     isOrgGraph: previewOrgGraph,
   } = useActiveGraphCodegenSettings(codegenTabId);
 
@@ -37,6 +40,8 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
     'showUnsupportedComments'
   );
   const [showUserComments, setShowUserComments] = useUiPreference('showUserComments');
+  const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
+  const [nodeToCodeHighlight, setNodeToCodeHighlight] = useUiPreference('nodeToCodeHighlight');
   const [jsonFormatNote, setJsonFormatNote] = useState<string | null>(null);
 
   const isOrgGraph = previewOrgGraph || isOrgOnlyGraphTab(codegenTabId, classes);
@@ -85,7 +90,18 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
   return (
     <div className="flex flex-col gap-3 text-[11px]">
       <div className="flex flex-col gap-1">
-        <p className={fieldLabelClass}>Preview</p>
+        <div className="flex items-center justify-between gap-1">
+          <p className={fieldLabelClass}>Preview</p>
+          {!isOrgGraph ? (
+            <LanguageExtensionMenu
+              language={targetLanguage}
+              extension={targetFileExtension}
+              onPick={(lang, ext) => {
+                setGraphLanguageWithExtension(lang, ext);
+              }}
+            />
+          ) : null}
+        </div>
         <div className="flex items-center gap-2 text-zinc-400 px-0.5">
           {isCompiling ? (
             <Loader2 size={11} className="animate-spin text-zinc-400 shrink-0" />
@@ -114,7 +130,32 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
       ) : (
         <>
           <div className="flex flex-col gap-1.5">
-            <p className={fieldLabelClass}>Emit options</p>
+            <p className={fieldLabelClass}>Highlighting & Emit</p>
+
+            <div className="flex flex-col gap-1 rounded border border-zinc-800 bg-zinc-900/40 p-2">
+              <span className="text-[10px] text-zinc-300 font-medium">Node → Code highlight</span>
+              <div className="flex gap-1 mt-1">
+                {[
+                  { value: 'off', label: 'Off' },
+                  { value: 'selection', label: 'Select' },
+                  { value: 'hover-selection', label: 'Hover+Select' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setNodeToCodeHighlight(opt.value as any)}
+                    className={`flex-1 px-1.5 py-1 rounded text-[10px] border transition-colors ${
+                      nodeToCodeHighlight === opt.value
+                        ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-200 font-medium'
+                        : 'border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={() => setShowUserComments(!showUserComments)}
@@ -128,6 +169,7 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
                 {showUserComments ? 'On' : 'Off'}
               </span>
             </button>
+
             <button
               type="button"
               onClick={() => setShowUnsupportedComments(!showUnsupportedComments)}
@@ -139,6 +181,18 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
               </span>
               <span className={showUnsupportedComments ? 'text-zinc-200' : 'text-zinc-600'}>
                 {showUnsupportedComments ? 'On' : 'Off'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDimUnsupportedNodes(!dimUnsupportedNodes)}
+              className={toggleRowClass}
+              aria-pressed={dimUnsupportedNodes}
+            >
+              <span>Dim unsupported nodes</span>
+              <span className={dimUnsupportedNodes ? 'text-zinc-200' : 'text-zinc-600'}>
+                {dimUnsupportedNodes ? 'On' : 'Off'}
               </span>
             </button>
           </div>

@@ -7,9 +7,10 @@ export interface CodeHighlightPalette {
   markBg: string;
 }
 
-/** Source range plus optional per-node highlight colors. */
 export interface CodeHighlightRange extends SourceRange {
   colors?: CodeHighlightPalette;
+  /** When true, this range is for code-line hovering and must not trigger auto-scroll. */
+  isCodeHover?: boolean;
 }
 
 /**
@@ -21,6 +22,8 @@ export interface GeneratedCodeViewProps {
   language: TargetLanguage;
   /** Line ranges to highlight (from TranspileResult.sourceMap). */
   highlightRanges?: CodeHighlightRange[];
+  /** Explicit scroll request — scrolls once when sequenceId increments. */
+  scrollToLine?: { line: number; sequenceId: number } | null;
   readOnly?: boolean;
   className?: string;
   /**

@@ -3,6 +3,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Lock, RotateCcw, Search } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { fuzzyMatchAny } from '@/lib/fuzzySearch';
 import {
   REBINDABLE_SHORTCUT_IDS,
   chordFromKeyboardEvent,
@@ -111,11 +112,17 @@ function ShortcutRow({
   );
 }
 
-export function ShortcutsSettingsPanel() {
+interface ShortcutsSettingsPanelProps {
+  searchQuery?: string;
+}
+
+export function ShortcutsSettingsPanel({ searchQuery }: ShortcutsSettingsPanelProps = {}) {
   const [recordingId, setRecordingId] = useState<GraphShortcutId | null>(null);
   const [conflictHint, setConflictHint] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [, bump] = useState(0);
+
+  const activeFilter = searchQuery !== undefined ? searchQuery : filter;
 
   const onCapture = useCallback((e: React.KeyboardEvent, id: GraphShortcutId) => {
     e.preventDefault();
@@ -144,14 +151,13 @@ export function ShortcutsSettingsPanel() {
   }, []);
 
   const overrides = readShortcutOverrides();
-  const filterQ = filter.trim().toLowerCase();
+  const filterQ = activeFilter.trim();
 
   const groups = useMemo(() => {
     return SHORTCUT_SETTINGS_GROUPS.map((group) => {
       const items = shortcutsForSettingsGroup(group.id).filter((def) => {
         if (!filterQ) return true;
-        const hay = `${def.label} ${def.hint ?? ''} ${def.keysWin} ${def.keysMac ?? ''} ${group.label}`.toLowerCase();
-        return hay.includes(filterQ);
+        return fuzzyMatchAny(filterQ, [def.label, def.hint, def.keysWin, def.keysMac, group.label]);
       });
       return { group, items };
     }).filter((g) => g.items.length > 0);
@@ -162,29 +168,33 @@ export function ShortcutsSettingsPanel() {
 
   return (
     <div className="space-y-3">
-      <div>
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-          Keyboard shortcuts
-        </p>
-        <p className="text-[10px] text-zinc-600 leading-relaxed mt-1">
-          {rebindableCount} rebindable · click Record then press a chord · Esc cancels · conflicts
-          blocked. Gestures and sequences are listed but fixed. Stored in this browser only.
-        </p>
-      </div>
+      {searchQuery === undefined ? (
+        <div>
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+            Keyboard shortcuts
+          </p>
+          <p className="text-[10px] text-zinc-600 leading-relaxed mt-1">
+            {rebindableCount} rebindable · click Record then press a chord · Esc cancels · conflicts
+            blocked. Gestures and sequences are listed but fixed. Stored in this browser only.
+          </p>
+        </div>
+      ) : null}
 
-      <div className="relative">
-        <Search
-          size={12}
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none"
-        />
-        <input
-          type="text"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          placeholder="Filter shortcuts…"
-          className="w-full bg-zinc-950 border border-zinc-800 rounded pl-7 pr-2.5 py-1.5 text-[11px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600"
-        />
-      </div>
+      {searchQuery === undefined ? (
+        <div className="relative">
+          <Search
+            size={12}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none"
+          />
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter shortcuts…"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded pl-7 pr-2.5 py-1.5 text-[11px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600"
+          />
+        </div>
+      ) : null}
 
       {conflictHint ? (
         <p className="text-[10px] text-amber-400/90 bg-amber-500/10 border border-amber-500/25 rounded px-2.5 py-1.5">

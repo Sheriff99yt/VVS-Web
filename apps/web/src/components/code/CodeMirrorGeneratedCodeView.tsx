@@ -179,18 +179,6 @@ function applyHighlightEffects(
 ): void {
   const deco = buildHighlightDecorations(view, ranges);
   const effects: StateEffect<unknown>[] = [setHighlightEffect.of(deco)];
-
-  if (ranges?.length) {
-    const first = ranges.reduce((a, b) => (a.startLine < b.startLine ? a : b));
-    const lineNum = Math.min(Math.max(1, first.startLine), view.state.doc.lines);
-    const line = view.state.doc.line(lineNum);
-    const from =
-      first.startCol > 1
-        ? line.from + first.startCol - 1
-        : line.from;
-    effects.push(EditorView.scrollIntoView(from, { y: 'center' }));
-  }
-
   view.dispatch({ effects });
 }
 
@@ -198,6 +186,7 @@ export function CodeMirrorGeneratedCodeView({
   value,
   language,
   highlightRanges,
+  scrollToLine,
   readOnly = true,
   className,
   onReverseSelectLine,
@@ -303,6 +292,20 @@ export function CodeMirrorGeneratedCodeView({
   const syncHighlights = useCallback((view: EditorView) => {
     applyHighlightEffects(view, highlightRangesRef.current);
   }, []);
+
+  const prevScrollSeqRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!scrollToLine || scrollToLine.sequenceId === prevScrollSeqRef.current) return;
+    prevScrollSeqRef.current = scrollToLine.sequenceId;
+    const view = editorRef.current?.view;
+    if (!view) return;
+    const lineNum = Math.min(Math.max(1, scrollToLine.line), view.state.doc.lines);
+    const line = view.state.doc.line(lineNum);
+    view.dispatch({
+      effects: [EditorView.scrollIntoView(line.from, { y: 'center' })],
+    });
+  }, [scrollToLine]);
 
   useEffect(() => {
     const view = editorRef.current?.view;

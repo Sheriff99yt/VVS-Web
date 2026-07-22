@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   X,
   FolderKanban,
@@ -8,6 +8,7 @@ import {
   Keyboard,
   Volume2,
   Info,
+  Search,
 } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { GraphPropertiesPanel } from './RightSidebar/GraphPropertiesPanel';
@@ -53,6 +54,8 @@ export function dispatchOpenSettings(section: SettingsSection | SettingsTab = 'p
 export function GraphSettingsModal() {
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SettingsSection>('project');
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const onOpen = (event: Event) => {
@@ -62,7 +65,9 @@ export function GraphSettingsModal() {
         detail?.section ??
         (detail?.tab === 'app' ? 'editor' : detail?.tab === 'project' ? 'project' : 'project');
       setSection(next);
+      setSearchQuery('');
       setOpen(true);
+      setTimeout(() => searchInputRef.current?.focus(), 50);
     };
     window.addEventListener(OPEN_SETTINGS_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_SETTINGS_EVENT, onOpen);
@@ -73,11 +78,11 @@ export function GraphSettingsModal() {
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4">
       <div
-        className="w-[min(720px,calc(100%-24px))] h-[min(560px,calc(100vh-48px))] flex bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden"
+        className="w-[min(880px,calc(100%-32px))] h-[min(640px,calc(100vh-48px))] flex bg-zinc-950 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden"
         role="dialog"
         aria-labelledby="settings-title"
       >
-        <aside className="w-44 shrink-0 border-r border-zinc-800 bg-zinc-950/80 flex flex-col">
+        <aside className="w-48 shrink-0 border-r border-zinc-800 bg-zinc-950/80 flex flex-col">
           <div className="px-3 py-3 border-b border-zinc-800/80">
             <h2 id="settings-title" className="text-xs font-semibold text-zinc-200">
               Settings
@@ -89,9 +94,12 @@ export function GraphSettingsModal() {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSection(item.id)}
+                onClick={() => {
+                  setSection(item.id);
+                  if (searchQuery) setSearchQuery('');
+                }}
                 className={`w-full flex items-center gap-2 px-2.5 py-2 rounded text-left text-[11px] transition-colors ${
-                  section === item.id
+                  section === item.id && !searchQuery
                     ? 'bg-zinc-800 text-zinc-100'
                     : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/80'
                 }`}
@@ -104,72 +112,149 @@ export function GraphSettingsModal() {
         </aside>
 
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
-          <div className="flex items-center justify-end px-3 py-2 border-b border-zinc-800 shrink-0">
-            <Tooltip content="Close" placement="bottom">
+          <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-zinc-800 shrink-0">
+            <div className="relative flex-1 max-w-md">
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    if (searchQuery) {
+                      e.stopPropagation();
+                      setSearchQuery('');
+                    } else {
+                      setOpen(false);
+                    }
+                  }
+                }}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search all settings (⌘,)..."
+                className="w-full pl-7 pr-7 py-1 bg-zinc-900/80 border border-zinc-800 rounded text-[11px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
+                >
+                  <X size={12} />
+                </button>
+              ) : null}
+            </div>
+            <Tooltip content="Close (Esc)" placement="bottom">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 shrink-0"
               >
                 <X size={14} />
               </button>
             </Tooltip>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
-            {section === 'project' ? (
-              <div className="space-y-5 max-w-lg">
-                <section className="space-y-1">
-                  <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-                    Active graph
-                  </p>
-                  <p className="text-[10px] text-zinc-600 leading-relaxed">
-                    Language and export for the graph you are editing. Other graphs keep their own
-                    overrides.
-                  </p>
-                </section>
-                <GraphCodegenPanel />
-                <div className="border-t border-zinc-800/80 pt-4">
-                  <GraphPropertiesPanel />
+          <div className="flex-1 overflow-y-auto px-5 py-5 min-h-0">
+            {searchQuery.trim() ? (
+              <div className="space-y-6 max-w-2xl">
+                <div className="text-[10px] text-zinc-500 font-semibold uppercase tracking-widest pb-1 border-b border-zinc-800/80">
+                  Search results across all tabs for &quot;{searchQuery}&quot;
                 </div>
-                <div className="border-t border-zinc-800/80 pt-4">
-                  <ProjectCodegenDefaultsPanel />
-                </div>
-                <div className="border-t border-zinc-800/80 pt-4">
-                  <SyntaxPackLockPanel />
-                </div>
-                <div className="border-t border-zinc-800/80 pt-4">
-                  <PortabilitySummaryPanel />
-                </div>
-                <div className="border-t border-zinc-800/80 pt-4">
-                  <CrossOverArchitecturePanel />
-                </div>
-              </div>
-            ) : null}
 
-            {section === 'editor' ? (
-              <div className="max-w-lg">
-                <AppSettingsPanel onCloseSettings={() => setOpen(false)} />
-              </div>
-            ) : null}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
+                    <SlidersHorizontal size={13} className="text-indigo-400 shrink-0" />
+                    <span>Editor & Preferences</span>
+                  </div>
+                  <AppSettingsPanel onCloseSettings={() => setOpen(false)} searchQuery={searchQuery} />
+                </div>
 
-            {section === 'shortcuts' ? (
-              <div className="max-w-lg">
-                <ShortcutsSettingsPanel />
-              </div>
-            ) : null}
+                <div className="space-y-2 border-t border-zinc-800/80 pt-4">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
+                    <Keyboard size={13} className="text-indigo-400 shrink-0" />
+                    <span>Keyboard Shortcuts</span>
+                  </div>
+                  <ShortcutsSettingsPanel searchQuery={searchQuery} />
+                </div>
 
-            {section === 'audio' ? (
-              <div className="max-w-lg">
-                <AudioSettingsPanel />
-              </div>
-            ) : null}
+                {/audio|sound|volume|mute|buzz|feedback/i.test(searchQuery) ? (
+                  <div className="space-y-2 border-t border-zinc-800/80 pt-4">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
+                      <Volume2 size={13} className="text-indigo-400 shrink-0" />
+                      <span>Audio Settings</span>
+                    </div>
+                    <AudioSettingsPanel />
+                  </div>
+                ) : null}
 
-            {section === 'about' ? (
-              <div className="max-w-lg">
-                <AboutSettingsPanel />
+                {/project|language|codegen|target|syntax|export|cross/i.test(searchQuery) ? (
+                  <div className="space-y-2 border-t border-zinc-800/80 pt-4">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
+                      <FolderKanban size={13} className="text-indigo-400 shrink-0" />
+                      <span>Project & Codegen</span>
+                    </div>
+                    <GraphCodegenPanel />
+                    <GraphPropertiesPanel />
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            ) : (
+              <>
+                {section === 'project' ? (
+                  <div className="space-y-5 max-w-2xl">
+                    <section className="space-y-1">
+                      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+                        Active graph
+                      </p>
+                      <p className="text-[10px] text-zinc-600 leading-relaxed">
+                        Language and export for the graph you are editing. Other graphs keep their own
+                        overrides.
+                      </p>
+                    </section>
+                    <GraphCodegenPanel />
+                    <div className="border-t border-zinc-800/80 pt-4">
+                      <GraphPropertiesPanel />
+                    </div>
+                    <div className="border-t border-zinc-800/80 pt-4">
+                      <ProjectCodegenDefaultsPanel />
+                    </div>
+                    <div className="border-t border-zinc-800/80 pt-4">
+                      <SyntaxPackLockPanel />
+                    </div>
+                    <div className="border-t border-zinc-800/80 pt-4">
+                      <PortabilitySummaryPanel />
+                    </div>
+                    <div className="border-t border-zinc-800/80 pt-4">
+                      <CrossOverArchitecturePanel />
+                    </div>
+                  </div>
+                ) : null}
+
+                {section === 'editor' ? (
+                  <div className="max-w-2xl">
+                    <AppSettingsPanel onCloseSettings={() => setOpen(false)} searchQuery={searchQuery} />
+                  </div>
+                ) : null}
+
+                {section === 'shortcuts' ? (
+                  <div className="max-w-2xl">
+                    <ShortcutsSettingsPanel />
+                  </div>
+                ) : null}
+
+                {section === 'audio' ? (
+                  <div className="max-w-2xl">
+                    <AudioSettingsPanel />
+                  </div>
+                ) : null}
+
+                {section === 'about' ? (
+                  <div className="max-w-2xl">
+                    <AboutSettingsPanel />
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       </div>
