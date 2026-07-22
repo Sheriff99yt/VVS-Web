@@ -188,7 +188,7 @@ export async function loadProjectFromFolder(
     const packsDirHandle = await vvsDirHandle.getDirectoryHandle('packs', { create: false });
     for await (const entry of packsDirHandle.values()) {
       if (entry.kind === 'file' && entry.name.endsWith('.json')) {
-        const file = await (entry as any).getFile();
+        const file = await (entry as FileSystemFileHandle).getFile();
         const text = await file.text();
         const pack = JSON.parse(text) as SyntaxPackManifest;
         registerPack(pack);

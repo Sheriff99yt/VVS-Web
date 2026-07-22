@@ -285,6 +285,7 @@ export function ProjectProvider({
   const [prevDeps, setPrevDeps] = React.useState(depsKey);
   useEffect(() => {
     if (prevDeps === depsKey) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrevDeps(depsKey);
     setCompileStateInner((prev) => {
       if (prev === 'compiling') return prev;

@@ -397,7 +397,7 @@ export function insertDefineNodeForFunction(
 ): Record<string, GraphDocument> {
   const classNodeLoc = findClassDefineNode(documents, cls);
   const tabId = classNodeLoc?.tabId ?? activeGraphTab ?? classHomeGraphId(cls);
-  let nextDocs = { ...documents };
+  const nextDocs = { ...documents };
 
   for (const overload of func.overloads) {
     const doc = nextDocs[tabId] ?? { nodes: [], edges: [] };
@@ -686,7 +686,7 @@ export function syncDefineNodesForSymbol(
         if (node.data.kindId !== expectedKind) return node;
         if (node.data.properties?.symbolId !== symbol.id) return node;
         docChanged = true;
-        return syncDefineNodeData(node, kind as any, symbol as any);
+        return syncDefineNodeData(node, kind as Parameters<typeof syncDefineNodeData>[1], symbol as Parameters<typeof syncDefineNodeData>[2]);
       });
       if (docChanged) {
         changed = true;
@@ -698,7 +698,7 @@ export function syncDefineNodesForSymbol(
 
   // Specialized sync for functions (overload aware)
   const func = symbol as FunctionSymbol;
-  let nextDocs = { ...documents };
+  const nextDocs = { ...documents };
   let docIdWithClass: string | undefined;
 
   for (const [tabId, doc] of Object.entries(documents)) {

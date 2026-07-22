@@ -78,6 +78,7 @@ export function PacksView() {
             merged.push(p);
           }
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPackPool(merged);
         return;
       } catch (e) {

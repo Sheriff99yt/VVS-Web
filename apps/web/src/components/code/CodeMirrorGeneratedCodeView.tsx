@@ -219,74 +219,79 @@ export function CodeMirrorGeneratedCodeView({
     };
   }, []);
 
+  const handleUpdate = useCallback((update: any) => {
+    if (!update.selectionSet) return;
+    hasSelectionRef.current = Boolean(selectionFromView(update.view));
+  }, []);
+
+  const handleDblClick = useCallback((event: MouseEvent, view: EditorView) => {
+    const handler = onReverseSelectLineRef.current;
+    if (!handler) return false;
+    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+    if (pos == null) return false;
+    const line = view.state.doc.lineAt(pos);
+    const col = pos - line.from + 1;
+    handler(line.number, col);
+    return true;
+  }, []);
+
+  const handleMouseUp = useCallback((_event: MouseEvent, view: EditorView) => {
+    const sel = selectionFromView(view);
+    hasSelectionRef.current = Boolean(sel);
+    onSelectionRangeChangeRef.current?.(sel);
+    return false;
+  }, []);
+
+  const handleMouseMove = useCallback((event: MouseEvent, view: EditorView) => {
+    const handler = onHoverSourceLocationRef.current;
+    if (!handler) return false;
+    if (hasSelectionRef.current) {
+      if (hoverRafRef.current != null) {
+        cancelAnimationFrame(hoverRafRef.current);
+        hoverRafRef.current = null;
+      }
+      return false;
+    }
+    if (hoverRafRef.current != null) cancelAnimationFrame(hoverRafRef.current);
+    const { clientX, clientY } = event;
+    hoverRafRef.current = requestAnimationFrame(() => {
+      hoverRafRef.current = null;
+      const pos = view.posAtCoords({ x: clientX, y: clientY });
+      if (pos == null) {
+        onHoverSourceLeaveRef.current?.();
+        return;
+      }
+      const line = view.state.doc.lineAt(pos);
+      const col = pos - line.from + 1;
+      handler(line.number, col);
+    });
+    return false;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverRafRef.current != null) {
+      cancelAnimationFrame(hoverRafRef.current);
+      hoverRafRef.current = null;
+    }
+    onHoverSourceLeaveRef.current?.();
+    return false;
+  }, []);
+
   const extensions = useMemo(
     () => [
       ...getCodeMirrorExtensions(language, readOnly),
       ...vvsCodeMirrorTheme(),
       highlightField,
       smoothScrollHandler,
-      EditorView.updateListener.of((update) => {
-        if (!update.selectionSet) return;
-        hasSelectionRef.current = Boolean(selectionFromView(update.view));
-      }),
+      EditorView.updateListener.of(handleUpdate),
       EditorView.domEventHandlers({
-        dblclick(event, view) {
-          const handler = onReverseSelectLineRef.current;
-          if (!handler) return false;
-          const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-          if (pos == null) return false;
-          const line = view.state.doc.lineAt(pos);
-          const col = pos - line.from + 1;
-          handler(line.number, col);
-          return true;
-        },
-        mouseup(_event, view) {
-          // Fire selection callback once on drag end, not on every intermediate
-          // cursor position. This gives the parent the final drag extent.
-          const sel = selectionFromView(view);
-          hasSelectionRef.current = Boolean(sel);
-          onSelectionRangeChangeRef.current?.(sel);
-          return false;
-        },
-        mousemove(event, view) {
-          const handler = onHoverSourceLocationRef.current;
-          if (!handler) return false;
-          // Suspend hover while a drag selection is active so the yellow ring
-          // follows the user's selection (canvas multi-select) instead of the
-          // cursor passing through every line of generated text.
-          if (hasSelectionRef.current) {
-            if (hoverRafRef.current != null) {
-              cancelAnimationFrame(hoverRafRef.current);
-              hoverRafRef.current = null;
-            }
-            return false;
-          }
-          if (hoverRafRef.current != null) cancelAnimationFrame(hoverRafRef.current);
-          const { clientX, clientY } = event;
-          hoverRafRef.current = requestAnimationFrame(() => {
-            hoverRafRef.current = null;
-            const pos = view.posAtCoords({ x: clientX, y: clientY });
-            if (pos == null) {
-              onHoverSourceLeaveRef.current?.();
-              return;
-            }
-            const line = view.state.doc.lineAt(pos);
-            const col = pos - line.from + 1;
-            handler(line.number, col);
-          });
-          return false;
-        },
-        mouseleave() {
-          if (hoverRafRef.current != null) {
-            cancelAnimationFrame(hoverRafRef.current);
-            hoverRafRef.current = null;
-          }
-          onHoverSourceLeaveRef.current?.();
-          return false;
-        },
+        dblclick: handleDblClick,
+        mouseup: handleMouseUp,
+        mousemove: handleMouseMove,
+        mouseleave: handleMouseLeave,
       }),
     ],
-    [language, readOnly]
+    [language, readOnly, handleUpdate, handleDblClick, handleMouseUp, handleMouseMove, handleMouseLeave]
   );
 
   const syncHighlights = useCallback((view: EditorView) => {

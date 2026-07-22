@@ -143,7 +143,7 @@ export function CodePreviewPropertiesPanel({ filePath }: { filePath: string | nu
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setNodeToCodeHighlight(opt.value as any)}
+                    onClick={() => setNodeToCodeHighlight(opt.value as 'off' | 'selection' | 'hover-selection')}
                     className={`flex-1 px-1.5 py-1 rounded text-[10px] border transition-colors ${
                       nodeToCodeHighlight === opt.value
                         ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-200 font-medium'

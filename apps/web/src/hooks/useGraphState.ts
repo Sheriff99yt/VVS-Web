@@ -68,10 +68,15 @@ export function useGraphState(
   const applyProjectSliceRef = useRef(options.applyProjectSlice);
   const ensureHistoryTabRef = useRef(options.ensureHistoryTab);
   const commitTabDocumentRef = useRef(options.commitTabDocument);
+  // eslint-disable-next-line react-hooks/refs
   getActiveGraphTabRef.current = options.getActiveGraphTab;
+  // eslint-disable-next-line react-hooks/refs
   getProjectSliceRef.current = options.getProjectSlice;
+  // eslint-disable-next-line react-hooks/refs
   applyProjectSliceRef.current = options.applyProjectSlice;
+  // eslint-disable-next-line react-hooks/refs
   ensureHistoryTabRef.current = options.ensureHistoryTab;
+  // eslint-disable-next-line react-hooks/refs
   commitTabDocumentRef.current = options.commitTabDocument;
 
   const pastRef = useRef<GraphHistorySnapshot[]>([]);

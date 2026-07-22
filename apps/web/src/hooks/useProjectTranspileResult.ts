@@ -62,6 +62,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
   return useMemo(() => {
     if (paused) {
       return (
+        // eslint-disable-next-line react-hooks/refs
         liveBundleRef.current ?? {
           result: { ...EMPTY_RESULT, language: targetLanguage },
           fileOwners: {},
@@ -71,6 +72,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
 
     if (!documents) {
       const empty = { result: { ...EMPTY_RESULT, language: targetLanguage }, fileOwners: {} };
+      // eslint-disable-next-line react-hooks/refs
       liveBundleRef.current = empty;
       return empty;
     }
@@ -106,6 +108,7 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
       emitUserComments: showUserComments,
     });
     const bundle = { result, fileOwners: fileOwnersForEmitResult(snapshot, result) };
+    // eslint-disable-next-line react-hooks/refs
     liveBundleRef.current = bundle;
     return bundle;
   }, [

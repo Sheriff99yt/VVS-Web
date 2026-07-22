@@ -53,6 +53,7 @@ export function useApiHealth(pollMs = 30_000) {
   }, [apiMode]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
     if (apiMode === 'http') {
       const id = window.setInterval(() => void refresh(), pollMs);

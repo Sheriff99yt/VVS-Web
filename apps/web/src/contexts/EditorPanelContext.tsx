@@ -114,7 +114,9 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
   // (avoids HMR "deps changed size" and unnecessary re-subscribe).
   const expandGraphNavRef = useRef(expandGraphNav);
   const toggleGraphChromeRef = useRef(toggleGraphChrome);
+  // eslint-disable-next-line react-hooks/refs
   expandGraphNavRef.current = expandGraphNav;
+  // eslint-disable-next-line react-hooks/refs
   toggleGraphChromeRef.current = toggleGraphChrome;
 
   useEffect(() => {

@@ -145,7 +145,6 @@ import {
   findMemberDeclareNodeForSymbol,
   findHandlerNodeForEvent,
   hasHandlerNodeForEvent,
-  hasImplementNodeForFunction,
   findImplementNodeForFunction,
   insertImplementNodeForFunction,
 } from '@/lib/defineNodeSync';
@@ -290,7 +289,6 @@ function GraphCanvasInner() {
     activeClassId,
     setActiveClassId,
     graphContainers,
-    setActiveGraphTab,
     setFunctions,
     setOpenTabs,
     setCompileState,

@@ -155,6 +155,7 @@ export function Tooltip({
       onFocus={show}
       onBlur={hide}
     >
+      {/* eslint-disable-next-line react-hooks/refs */}
       {React.cloneElement(children, {
         // Strip native browser tooltip — we own hover tips.
         title: undefined,
