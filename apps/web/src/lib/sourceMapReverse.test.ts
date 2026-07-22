@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { findNodeIdAtSourceLocation, findGraphTabContainingNodeId } from './sourceMapReverse';
+import {
+  findNodeIdAtSourceLocation,
+  findGraphTabContainingNodeId,
+  findNodeIdsInSourceRange,
+} from './sourceMapReverse';
 import type { SourceRange } from '@vvs/graph-types';
 
 describe('findNodeIdAtSourceLocation', () => {
@@ -82,5 +86,98 @@ describe('findGraphTabContainingNodeId', () => {
   test('returns null when the node is missing', () => {
     expect(findGraphTabContainingNodeId({ a: { nodes: [] } }, 'missing')).toBeNull();
     expect(findGraphTabContainingNodeId(null, 'x')).toBeNull();
+  });
+});
+
+describe('findNodeIdsInSourceRange', () => {
+  const sourceMap: Record<string, SourceRange[]> = {
+    'node-1': [{ filePath: 'main.py', startLine: 5, startCol: 1, endLine: 5, endCol: 40 }],
+    'node-2': [{ filePath: 'main.py', startLine: 7, startCol: 1, endLine: 12, endCol: 1 }],
+    'node-3': [{ filePath: 'main.py', startLine: 12, startCol: 4, endLine: 20, endCol: 1 }],
+    'other-file': [{ filePath: 'other.py', startLine: 5, startCol: 1, endLine: 5, endCol: 10 }],
+  };
+
+  test('collects every node whose emit range intersects the drag', () => {
+    const ids = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 6,
+      startCol: 1,
+      endLine: 8,
+      endCol: 1,
+    });
+    expect(ids).toEqual(['node-2']);
+  });
+
+  test('returns multiple ids when the drag spans multiple statements', () => {
+    const ids = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 5,
+      startCol: 1,
+      endLine: 13,
+      endCol: 1,
+    });
+    expect(new Set(ids)).toEqual(new Set(['node-1', 'node-2', 'node-3']));
+  });
+
+  test('normalizes reversed drag direction (anchor after head)', () => {
+    const forward = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 5,
+      startCol: 1,
+      endLine: 8,
+      endCol: 1,
+    });
+    const backward = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 8,
+      startCol: 1,
+      endLine: 5,
+      endCol: 1,
+    });
+    expect(new Set(backward)).toEqual(new Set(forward));
+  });
+
+  test('touch-only selection at a boundary line still matches', () => {
+    const ids = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 7,
+      startCol: 1,
+      endLine: 7,
+      endCol: 1,
+    });
+    expect(ids).toEqual(['node-2']);
+  });
+
+  test('global sweeping range with col endpoint after the line length still picks up nodes', () => {
+    const ids = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 1,
+      startCol: 1,
+      endLine: 100,
+      endCol: 1,
+    });
+    expect(new Set(ids)).toEqual(new Set(['node-1', 'node-2', 'node-3']));
+  });
+
+  test('ignores ranges on other files in the same source map', () => {
+    const ids = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 5,
+      startCol: 1,
+      endLine: 5,
+      endCol: 5,
+    });
+    expect(ids).toEqual(['node-1']);
+  });
+
+  test('returns empty when nothing matches', () => {
+    const ids = findNodeIdsInSourceRange(sourceMap, {
+      filePath: 'main.py',
+      startLine: 100,
+      startCol: 1,
+      endLine: 110,
+      endCol: 1,
+    });
+    expect(ids).toEqual([]);
   });
 });

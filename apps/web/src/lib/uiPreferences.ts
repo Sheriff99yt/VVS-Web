@@ -113,6 +113,13 @@ export interface UiPreferences {
   allowMultipleExecToInput: boolean;
   /** U119: warn of dynamic/weak typing coercion and cognitive overhead. */
   warnDynamicWeakTyping: boolean;
+  /**
+   * Node-to-code highlight mode:
+   * - `'off'`: no code highlighting from canvas interaction.
+   * - `'selection'`: highlight code when one or more nodes are selected.
+   * - `'hover-selection'`: highlight on hover AND selection (default).
+   */
+  nodeToCodeHighlight: 'off' | 'selection' | 'hover-selection';
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -153,6 +160,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   namingConvention: 'global',
   allowMultipleExecToInput: false,
   warnDynamicWeakTyping: false,
+  nodeToCodeHighlight: 'hover-selection',
 };
 
 export const DETAILS_PANEL_HEIGHT = {
@@ -447,6 +455,12 @@ export function readUiPreferences(): UiPreferences {
         typeof rest.warnDynamicWeakTyping === 'boolean'
           ? rest.warnDynamicWeakTyping
           : DEFAULT_UI_PREFERENCES.warnDynamicWeakTyping,
+      nodeToCodeHighlight:
+        rest.nodeToCodeHighlight === 'off' ||
+        rest.nodeToCodeHighlight === 'selection' ||
+        rest.nodeToCodeHighlight === 'hover-selection'
+          ? rest.nodeToCodeHighlight
+          : DEFAULT_UI_PREFERENCES.nodeToCodeHighlight,
     };
     return migrateLegacyDetailsPref(merged);
   } catch {

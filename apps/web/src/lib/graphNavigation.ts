@@ -1,15 +1,39 @@
 export interface NavigateToNodeDetail {
   tabId: string;
   nodeId: string;
+  /**
+   * Optional full set of nodes to select/frame on the canvas. When provided,
+   * `nodeId` is still required as the primary (selection / Details / sourceMap
+   * focus) but all ids in this array are selected on the target graph and framed
+   * by the camera. Used by Code panel drag-to-select (U71 follow-on) to ring
+   * every canvas node whose emitted range intersects the drag, plus the existing
+   * single-node reverse-select which omits this field.
+   */
+  nodeIds?: string[];
 }
 
 /** Navigate to a graph tab and focus a node (recorded in editor navigation history). */
-export function dispatchNavigateToNode(tabId: string, nodeId: string): void {
+export function dispatchNavigateToNode(
+  tabId: string,
+  nodeId: string,
+  nodeIds?: string[]
+): void {
+  const detail: NavigateToNodeDetail = { tabId, nodeId };
+  if (nodeIds && nodeIds.length > 0) detail.nodeIds = nodeIds;
   window.dispatchEvent(
     new CustomEvent('vvs:navigate-to-node', {
-      detail: { tabId, nodeId } satisfies NavigateToNodeDetail,
+      detail,
     })
   );
+}
+
+/**
+ * Multi-node variant of `dispatchNavigateToNode`. Primary is `nodeIds[0]`; the
+ * whole array is selected and framed on the target graph. No-op if empty.
+ */
+export function dispatchNavigateToNodes(tabId: string, nodeIds: string[]): void {
+  if (nodeIds.length === 0) return;
+  dispatchNavigateToNode(tabId, nodeIds[0]!, nodeIds);
 }
 
 /** Jump to the first live/analysis message that has a related graph node. */

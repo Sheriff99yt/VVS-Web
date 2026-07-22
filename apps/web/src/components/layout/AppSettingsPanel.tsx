@@ -43,6 +43,7 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
   const [namingConvention, setNamingConvention] = useUiPreference('namingConvention');
   const [allowMultipleExecToInput, setAllowMultipleExecToInput] = useUiPreference('allowMultipleExecToInput');
   const [warnDynamicWeakTyping, setWarnDynamicWeakTyping] = useUiPreference('warnDynamicWeakTyping');
+  const [nodeToCodeHighlight, setNodeToCodeHighlight] = useUiPreference('nodeToCodeHighlight');
   const {
     codeOpen,
     graphNavOpen,
@@ -88,6 +89,17 @@ export function AppSettingsPanel({ onCloseSettings }: AppSettingsPanelProps) {
           description="Emit Comment [C] box text in the code panel (separate from (x))"
           checked={showUserComments}
           onChange={setShowUserComments}
+        />
+        <ChoiceRow
+          label="Node → Code highlight"
+          description="Highlight generated code lines when interacting with canvas nodes"
+          value={nodeToCodeHighlight}
+          options={[
+            { value: 'off', label: 'Off' },
+            { value: 'selection', label: 'Selection' },
+            { value: 'hover-selection', label: 'Hover + Selection' },
+          ]}
+          onChange={setNodeToCodeHighlight}
         />
         <ChoiceRow
           label="Chain attribute direction (S S)"

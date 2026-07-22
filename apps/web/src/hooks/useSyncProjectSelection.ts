@@ -1,4 +1,4 @@
-import { useCallback, startTransition } from 'react';
+import { useCallback, useRef, startTransition } from 'react';
 import { useOnSelectionChange, type OnSelectionChangeParams } from '@xyflow/react';
 import type { SelectionState, TreeSymbolSelectionKey } from '@/contexts/ProjectContext';
 import { selectionFromCanvasNodes } from '@/lib/projectSelection';
@@ -26,6 +26,14 @@ function nodeIdsEqual(a: string[], b: string[]): boolean {
 /**
  * Mirrors React Flow node selection into ProjectContext for the floating inspector
  * and code preview multi-highlight. Keeps graph selection logic out of GraphCanvas render body.
+ *
+ * The `logActivity` side effect runs **after** the React state settles (via a queued
+ * microtask + ids ref) instead of inside the `setSelectedNodeIds` updater. Calling
+ * `logActivity` from within a setState updater notifies the activity-log external
+ * store synchronously, which re-renders subscribers such as `CompactActionHistory`
+ * while a parent (e.g. `ProjectProvider`) is still rendering — React 19 surfaces this
+ * as "Cannot update a component while rendering a different component". Pulling the
+ * notification out of the updater keeps it strictly post-render.
  */
 export function useSyncProjectSelection({
   isCanvasActive,
@@ -33,14 +41,19 @@ export function useSyncProjectSelection({
   setSelectedNodeIds,
   setSelectedTreeSymbols,
 }: UseSyncProjectSelectionOptions) {
+  // Latest prevIds seen by the updater; read by the queued side effect below.
+  const lastPrevIdsRef = useRef<string[] | null>(null);
+
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
       if (!isCanvasActive) return;
 
       startTransition(() => {
         const ids = selectedNodes.map((node) => node.id);
+        lastPrevIdsRef.current = null;
 
         setSelectedNodeIds((prevIds) => {
+          lastPrevIdsRef.current = prevIds;
           const unchanged = nodeIdsEqual(prevIds, ids);
           setSelection((prev) => {
             // Keep code-preview inspector when RF re-emits the same selection.
@@ -48,12 +61,20 @@ export function useSyncProjectSelection({
             return selectionFromCanvasNodes(prev, ids);
           });
           if (ids.length > 0) setSelectedTreeSymbols?.([]);
-          if (!unchanged) {
+          return unchanged ? prevIds : ids;
+        });
+
+        // Side effect moved out of the setState updater: queue a microtask so it
+        // runs after React commits the render, never synchronously mid-render.
+        queueMicrotask(() => {
+          const prevIds = lastPrevIdsRef.current;
+          if (prevIds == null) return;
+          if (!nodeIdsEqual(prevIds, ids)) {
             logActivity('select', selectionActivityLabel(ids.length), {
               group: ACTIVITY_GROUP.selection,
             });
           }
-          return unchanged ? prevIds : ids;
+          lastPrevIdsRef.current = null;
         });
       });
     },

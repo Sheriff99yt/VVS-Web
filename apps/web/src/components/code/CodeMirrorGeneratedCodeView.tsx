@@ -61,6 +61,23 @@ function smoothScrollIntoView(
 
 const smoothScrollHandler = EditorView.scrollHandler.of(smoothScrollIntoView);
 
+function selectionFromView(
+  view: EditorView
+): { startLine: number; startCol: number; endLine: number; endCol: number } | null {
+  const { main } = view.state.selection;
+  if (main.empty) return null;
+  const start = main.from < main.to ? main.from : main.to;
+  const end = main.from < main.to ? main.to : main.from;
+  const startLine = view.state.doc.lineAt(start);
+  const endLine = view.state.doc.lineAt(end);
+  return {
+    startLine: startLine.number,
+    startCol: start - startLine.from + 1,
+    endLine: endLine.number,
+    endCol: end - endLine.from + 1,
+  };
+}
+
 const highlightField = StateField.define<DecorationSet>({
   create() {
     return Decoration.none;
@@ -186,18 +203,24 @@ export function CodeMirrorGeneratedCodeView({
   onReverseSelectLine,
   onHoverSourceLocation,
   onHoverSourceLeave,
+  onSelectionRangeChange,
 }: GeneratedCodeViewProps) {
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const highlightRangesRef = useRef(highlightRanges);
   const onReverseSelectLineRef = useRef(onReverseSelectLine);
   const onHoverSourceLocationRef = useRef(onHoverSourceLocation);
   const onHoverSourceLeaveRef = useRef(onHoverSourceLeave);
+  const onSelectionRangeChangeRef = useRef(onSelectionRangeChange);
   const hoverRafRef = useRef<number | null>(null);
+  // True while an active text selection exists — used to suspend hover ringing so a
+  // drag through the code panel doesn't ring every node the cursor passes over.
+  const hasSelectionRef = useRef(false);
   React.useLayoutEffect(() => {
     highlightRangesRef.current = highlightRanges;
     onReverseSelectLineRef.current = onReverseSelectLine;
     onHoverSourceLocationRef.current = onHoverSourceLocation;
     onHoverSourceLeaveRef.current = onHoverSourceLeave;
+    onSelectionRangeChangeRef.current = onSelectionRangeChange;
   });
 
   useEffect(() => {
@@ -213,6 +236,10 @@ export function CodeMirrorGeneratedCodeView({
       ...vvsCodeMirrorTheme(),
       highlightField,
       smoothScrollHandler,
+      EditorView.updateListener.of((update) => {
+        if (!update.selectionSet) return;
+        hasSelectionRef.current = Boolean(selectionFromView(update.view));
+      }),
       EditorView.domEventHandlers({
         dblclick(event, view) {
           const handler = onReverseSelectLineRef.current;
@@ -224,9 +251,27 @@ export function CodeMirrorGeneratedCodeView({
           handler(line.number, col);
           return true;
         },
+        mouseup(_event, view) {
+          // Fire selection callback once on drag end, not on every intermediate
+          // cursor position. This gives the parent the final drag extent.
+          const sel = selectionFromView(view);
+          hasSelectionRef.current = Boolean(sel);
+          onSelectionRangeChangeRef.current?.(sel);
+          return false;
+        },
         mousemove(event, view) {
           const handler = onHoverSourceLocationRef.current;
           if (!handler) return false;
+          // Suspend hover while a drag selection is active so the yellow ring
+          // follows the user's selection (canvas multi-select) instead of the
+          // cursor passing through every line of generated text.
+          if (hasSelectionRef.current) {
+            if (hoverRafRef.current != null) {
+              cancelAnimationFrame(hoverRafRef.current);
+              hoverRafRef.current = null;
+            }
+            return false;
+          }
           if (hoverRafRef.current != null) cancelAnimationFrame(hoverRafRef.current);
           const { clientX, clientY } = event;
           hoverRafRef.current = requestAnimationFrame(() => {

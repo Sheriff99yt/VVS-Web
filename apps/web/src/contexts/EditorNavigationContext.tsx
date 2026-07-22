@@ -113,6 +113,13 @@ export function EditorNavigationProvider({
   const seededRef = useRef(false);
   const lastRecordedFrameRef = useRef<VvsEditorNavigationFrame | null>(null);
   const applyingClearTimerRef = useRef<number | null>(null);
+  /**
+   * Multi-node override captured by `vvs:navigate-to-node` and consumed once on
+   * the next `applyNavigationFrame`. When set, `pendingCanvasFocus.nodeIds`
+   * reflects the caller's entire selection (e.g. a Code panel drag spanning
+   * several output lines) rather than `[frame.focusedNodeId]`.
+   */
+  const pendingNodeIdsOverrideRef = useRef<string[] | null>(null);
 
   const beginApplyingNavigation = useCallback(() => {
     applyingNavigationRef.current = true;
@@ -198,13 +205,21 @@ export function EditorNavigationProvider({
 
       if (frame.focusedNodeId && frame.editorView === 'canvas') {
         focusRequestIdRef.current += 1;
+        const nodeIdsOverride = pendingNodeIdsOverrideRef.current;
+        pendingNodeIdsOverrideRef.current = null;
+        const focusNodeIds =
+          nodeIdsOverride && nodeIdsOverride.length > 0
+            ? nodeIdsOverride
+            : [frame.focusedNodeId];
         setPendingCanvasFocus({
           graphTab: frame.graphTab,
           nodeId: frame.focusedNodeId,
-          nodeIds: [frame.focusedNodeId],
+          nodeIds: focusNodeIds,
           requestId: focusRequestIdRef.current,
         });
       } else {
+        // Don't leak the override past a non-focus frame — it was meant for this apply only.
+        pendingNodeIdsOverrideRef.current = null;
         setPendingCanvasFocus(null);
       }
 
@@ -453,6 +468,8 @@ export function EditorNavigationProvider({
 
     const onNavigateToNode = (event: Event) => {
       const detail = (event as CustomEvent<NavigateToNodeDetail>).detail;
+      // Stash multi-node array so applyNavigationFrame can select all of them.
+      pendingNodeIdsOverrideRef.current = detail.nodeIds ?? null;
       navigate(
         {
           graphTab: detail.tabId,

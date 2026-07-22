@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   FileCode2,
   Copy,
@@ -24,12 +24,13 @@ import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { isCodePreviewPaused } from '@/lib/codePreviewPause';
-import { findNodeIdAtSourceLocation, findGraphTabContainingNodeId } from '@/lib/sourceMapReverse';
-import { dispatchNavigateToNode } from '@/lib/graphNavigation';
+import { findNodeIdAtSourceLocation, findNodeIdsInSourceRange, findGraphTabContainingNodeId } from '@/lib/sourceMapReverse';
+import { dispatchNavigateToNode, dispatchNavigateToNodes } from '@/lib/graphNavigation';
 import {
   clearCodeHoverHighlight,
   setCodeHoverHighlight,
 } from '@/lib/codeHoverHighlightStore';
+import { subscribeHoverChrome, getHoverChromeNodeId } from '@/lib/nodeHoverChromeStore';
 import type { ValidationMessage } from '@/lib/graphValidator';
 import { LanguageExtensionMenu } from '@/components/ui/LanguageExtensionMenu';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -217,6 +218,13 @@ export function CodePreviewPanel({
   } = useActiveGraphCodegenSettings(codegenTabId);
   const [showUnsupportedComments] = useUiPreference('showUnsupportedComments');
   const [showUserComments] = useUiPreference('showUserComments');
+  const [nodeToCodeHighlight] = useUiPreference('nodeToCodeHighlight');
+
+  const hoveredNodeId = useSyncExternalStore(
+    subscribeHoverChrome,
+    getHoverChromeNodeId,
+    () => null
+  );
 
   const previewDocument =
     documents?.[previewTabId] ??
@@ -456,15 +464,31 @@ export function CodePreviewPanel({
     return map;
   }, [previewNodes]);
 
-  const highlightNodeIds = useMemo(
-    () =>
-      resolveCodePreviewHighlightNodeIds(
-        selection,
-        selectedNodeIds,
-        symbolLink?.highlightNodeIds
-      ),
-    [selection, selectedNodeIds, symbolLink?.highlightNodeIds]
-  );
+  const [hoveredCodeNodeId, setHoveredCodeNodeId] = useState<string | null>(null);
+
+  const highlightNodeIds = useMemo(() => {
+    if (nodeToCodeHighlight === 'off') {
+      return [];
+    }
+
+    const selectedIds = resolveCodePreviewHighlightNodeIds(
+      selection,
+      selectedNodeIds,
+      symbolLink?.highlightNodeIds
+    );
+
+    const extraIds: string[] = [];
+    if (nodeToCodeHighlight === 'hover-selection' && hoveredNodeId) {
+      if (!selectedIds.includes(hoveredNodeId)) {
+        extraIds.push(hoveredNodeId);
+      }
+    }
+    if (hoveredCodeNodeId && !selectedIds.includes(hoveredCodeNodeId) && !extraIds.includes(hoveredCodeNodeId)) {
+      extraIds.push(hoveredCodeNodeId);
+    }
+
+    return extraIds.length > 0 ? [...selectedIds, ...extraIds] : selectedIds;
+  }, [nodeToCodeHighlight, selection, selectedNodeIds, symbolLink?.highlightNodeIds, hoveredNodeId, hoveredCodeNodeId]);
 
   const errorNodeIds = useMemo(
     () => nodeIdsFromValidationMessages(validationErrors),
@@ -638,9 +662,11 @@ export function CodePreviewPanel({
         col,
       });
       if (!nodeId) {
+        setHoveredCodeNodeId(null);
         clearCodeHoverHighlight();
         return;
       }
+      setHoveredCodeNodeId(nodeId);
       const owningTab =
         findGraphTabContainingNodeId(documents, nodeId, activeGraphTab) ??
         fileOwners[filePath] ??
@@ -668,6 +694,33 @@ export function CodePreviewPanel({
       previewTabId,
       openTabs,
     ]
+  );
+
+  const handleHoverSourceLeave = useCallback(() => {
+    setHoveredCodeNodeId(null);
+    clearCodeHoverHighlight();
+  }, []);
+
+  const handleSelectionRangeChange = useCallback(
+    (sel: { startLine: number; startCol: number; endLine: number; endCol: number } | null) => {
+      if (!sel) return;
+      const allNodeIds = findNodeIdsInSourceRange(sourceMap, { ...sel, filePath });
+      if (allNodeIds.length === 0) return;
+
+      const targetTab =
+        findGraphTabContainingNodeId(documents, allNodeIds[0]!, activeGraphTab) ??
+        fileOwners[filePath] ??
+        (selectedFilePath ? fileOwners[selectedFilePath] : undefined) ??
+        previewTabId;
+
+      const tabNodeIds = allNodeIds.filter(
+        (id) => findGraphTabContainingNodeId(documents, id, activeGraphTab) === targetTab
+      );
+      if (tabNodeIds.length === 0) return;
+
+      dispatchNavigateToNodes(targetTab, tabNodeIds);
+    },
+    [sourceMap, filePath, documents, activeGraphTab, fileOwners, selectedFilePath, previewTabId]
   );
 
   useEffect(() => () => clearCodeHoverHighlight(), []);
@@ -812,7 +865,8 @@ export function CodePreviewPanel({
                 highlightRanges={highlightRanges}
                 onReverseSelectLine={isJsonPreview ? undefined : handleReverseSelectLine}
                 onHoverSourceLocation={isJsonPreview ? undefined : handleHoverSourceLocation}
-                onHoverSourceLeave={isJsonPreview ? undefined : clearCodeHoverHighlight}
+                onHoverSourceLeave={isJsonPreview ? undefined : handleHoverSourceLeave}
+                onSelectionRangeChange={isJsonPreview ? undefined : handleSelectionRangeChange}
                 readOnly
                 className="h-full"
               />
