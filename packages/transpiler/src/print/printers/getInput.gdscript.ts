@@ -10,12 +10,10 @@ export function printGetInputGdscript(stmt: IrAssignVariable, ctx: PrintContext)
   const inputKind = stmt.inputKind ?? 'text';
   const readCall = `OS.read_string_from_stdin()`;
   const rhs = inputKind === 'number' ? `float(${readCall})` : readCall;
-  const prefix = `${ctx.indent}var ${varName} = `;
+  const printPromptLine = `${ctx.indent}print(${prompt.text})\n`;
+  const varLine = `${ctx.indent}var ${varName} = ${rhs}`;
   return {
-    text: `${prefix}${rhs}`,
-    expressionSpans: offsetSpans(
-      prompt.spans,
-      prefix.length + (inputKind === 'number' ? 6 : 0)
-    ),
+    text: `${printPromptLine}${varLine}`,
+    expressionSpans: offsetSpans(prompt.spans, `${ctx.indent}print(`.length),
   };
 }

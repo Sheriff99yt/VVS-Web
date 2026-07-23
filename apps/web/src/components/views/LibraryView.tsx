@@ -6,12 +6,15 @@ import {
   Globe,
   Search,
   Download,
-  Heart,
   Filter,
   Package,
   Check,
   Layers,
-  BookOpen,
+  GitBranch,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Code2,
 } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
@@ -19,7 +22,7 @@ import { COMMUNITY_LIBRARY_CATALOG, getLibraryAsset } from '@/lib/libraryCatalog
 import { buildLibraryImport, dispatchLibraryOpen } from '@/lib/libraryImport';
 import { dispatchSwitchToCanvas } from '@/lib/editorNavigate';
 import { LibraryAssetDetail } from './LibraryAssetDetail';
-import type { LibraryAsset, LibraryAssetCategory } from '@/types/libraryAsset';
+import type { LibraryAsset } from '@/types/libraryAsset';
 import { useEnvironmentCatalog } from '@/hooks/useEnvironmentCatalog';
 import { environmentManifestToLibraryAsset } from '@/lib/environmentCatalog';
 import { EnvironmentTemplatesPanel } from '@/components/environments/EnvironmentTemplatesPanel';
@@ -28,8 +31,10 @@ import { createProjectFromEnvironment } from '@vvs/environment-templates';
 import { applyProjectSnapshot } from '@/lib/applyProjectSnapshot';
 import { saveProjectToStore } from '@/lib/projectStore';
 import type { EnvironmentCategory } from '@vvs/environment-templates';
+import { useGitCatalog } from '@/hooks/useGitCatalog';
+import { GitPackImportModal } from './GitPackImportModal';
 
-type LibrarySection = 'templates' | 'community' | 'installed';
+type LibrarySection = 'templates' | 'git_catalogs' | 'installed';
 
 export function LibraryView() {
   const searchParams = useSearchParams();
@@ -56,20 +61,19 @@ export function LibraryView() {
   } = useProject();
   const { loadDocuments } = useGraphWorkspace();
   const { environments, ready: environmentsReady } = useEnvironmentCatalog();
+  const { repos: gitRepos, addCatalogRepo, removeCatalogRepo } = useGitCatalog();
 
   const [activeSection, setActiveSection] = useState<LibrarySection>(() => {
-    if (initialSection === 'templates' || initialSection === 'community' || initialSection === 'installed') {
+    if (initialSection === 'templates' || initialSection === 'git_catalogs' || initialSection === 'installed') {
       return initialSection;
     }
     return 'templates';
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCommunityCategory, setActiveCommunityCategory] = useState<
-    LibraryAssetCategory | 'All'
-  >('All');
   const [activeEnvCategory, setActiveEnvCategory] = useState<EnvironmentCategory | 'all'>('all');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
+  const [isGitImportModalOpen, setIsGitImportModalOpen] = useState(false);
 
   const environmentAssets = useMemo(
     () => environments.map(environmentManifestToLibraryAsset),
@@ -82,15 +86,6 @@ export function LibraryView() {
     () => new Set(installedLibrary.map((e) => e.assetId)),
     [installedLibrary]
   );
-
-  const filteredCommunity = communityCatalog.filter((asset) => {
-    const matchesSearch =
-      asset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory =
-      activeCommunityCategory === 'All' || asset.type === activeCommunityCategory;
-    return matchesSearch && matchesCategory;
-  });
 
   const installedAssets = installedLibrary
     .map((entry) => ({
@@ -190,105 +185,20 @@ export function LibraryView() {
     dispatchSwitchToCanvas();
   };
 
-  const assetTypeBadgeClass = (type: LibraryAsset['type']) => {
-    if (type === 'Scripts') return 'bg-blue-500/20 text-blue-400';
-    if (type === 'Node packs') return 'bg-emerald-500/20 text-emerald-400';
-    if (type === 'Environments') return 'bg-indigo-500/20 text-indigo-400';
-    return 'bg-purple-500/20 text-purple-400';
-  };
-
-  const renderCommunityCard = (asset: LibraryAsset, showInstall = true) => {
-    const installed = installedIds.has(asset.id);
-    return (
-      <div
-        key={asset.id}
-        role="button"
-        tabIndex={0}
-        onClick={() => {
-          setSelectedEnvironmentId(null);
-          setSelectedAssetId(asset.id);
-        }}
-        onKeyDown={(e) => e.key === 'Enter' && setSelectedAssetId(asset.id)}
-        className={`bg-zinc-900 border rounded-lg overflow-hidden flex flex-col hover:border-zinc-600 transition-colors cursor-pointer text-left ${
-          selectedAssetId === asset.id ? 'border-indigo-500/60' : 'border-zinc-800'
-        }`}
-      >
-        <div className="p-5 flex flex-col h-full relative">
-          <div className="absolute top-4 right-4 flex items-center gap-2">
-            {installed && (
-              <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-bold uppercase tracking-wide flex items-center gap-1">
-                <Check size={10} /> Installed
-              </span>
-            )}
-            <span
-              className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wide font-bold ${assetTypeBadgeClass(asset.type)}`}
-            >
-              {asset.type}
-            </span>
-          </div>
-          <h3 className="font-bold text-lg text-zinc-100 mb-1 pr-24 leading-tight">{asset.title}</h3>
-          <p className="text-xs text-zinc-500 mb-3">
-            by <span className="text-zinc-400">{asset.author}</span>
-          </p>
-          <p className="text-sm text-zinc-400 mb-4 flex-1 leading-relaxed line-clamp-3">
-            {asset.description}
-          </p>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {asset.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full border border-zinc-700/50"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-          <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50 mt-auto">
-            <div className="flex items-center gap-4 text-xs text-zinc-500 font-medium">
-              <div className="flex items-center gap-1.5">
-                <Download size={14} /> {asset.downloads}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Heart size={14} /> {asset.likes}
-              </div>
-            </div>
-            {showInstall && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (installed) setSelectedAssetId(asset.id);
-                  else handleInstall(asset.id);
-                }}
-                className={`px-4 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2 ${
-                  installed
-                    ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                    : 'bg-zinc-100 hover:bg-white text-zinc-900'
-                }`}
-              >
-                {installed ? <>View</> : <>Install</>}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const sectionMeta = {
     templates: {
       title: 'Project templates',
       description: 'Start from an environment manifest — host files, natives, and events included.',
       icon: Layers,
     },
-    community: {
-      title: 'Community',
-      description: 'Mock community scripts, node packs, and graph templates.',
-      icon: Globe,
+    git_catalogs: {
+      title: 'Git & release pack imports',
+      description: 'Client-first pack imports directly from GitHub repositories, releases, or local manifests.',
+      icon: GitBranch,
     },
     installed: {
       title: 'Installed in project',
-      description: `${installedAssets.length} asset${installedAssets.length === 1 ? '' : 's'} linked to this project.`,
+      description: `${installedAssets.length} extension${installedAssets.length === 1 ? '' : 's'} linked to this project.`,
       icon: Package,
     },
   }[activeSection];
@@ -296,21 +206,21 @@ export function LibraryView() {
   const SectionIcon = sectionMeta.icon;
 
   return (
-    <div className="flex h-full w-full bg-zinc-950 overflow-hidden text-zinc-300">
-      <div className="w-56 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0 overflow-y-auto">
+    <div className="flex h-full w-full bg-zinc-950 overflow-hidden text-zinc-300 font-sans">
+      <div className="w-60 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0 overflow-y-auto">
         <div className="p-4">
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">
-            Library
+          <h2 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-3">
+            Client-First Library
           </h2>
           <div className="flex flex-col gap-1">
             {(
               [
                 { id: 'templates' as const, label: 'Templates', icon: Layers, count: environments.length },
                 {
-                  id: 'community' as const,
-                  label: 'Community',
-                  icon: Globe,
-                  count: communityCatalog.length,
+                  id: 'git_catalogs' as const,
+                  label: 'Git Imports',
+                  icon: GitBranch,
+                  count: gitRepos.length,
                 },
                 {
                   id: 'installed' as const,
@@ -329,18 +239,18 @@ export function LibraryView() {
                   setSelectedAssetId(null);
                   setSelectedEnvironmentId(null);
                 }}
-                className={`flex items-center justify-between gap-3 px-3 py-2 rounded text-sm font-medium transition-colors ${
+                className={`flex items-center justify-between gap-3 px-3 py-2 rounded text-xs font-medium transition-colors ${
                   activeSection === id
                     ? 'bg-zinc-800 text-white border border-zinc-700/50'
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 border border-transparent'
                 }`}
               >
-                <span className="flex items-center gap-3">
-                  <Icon size={16} className={activeSection === id ? 'text-indigo-400' : ''} />
+                <span className="flex items-center gap-2.5">
+                  <Icon size={15} className={activeSection === id ? 'text-indigo-400' : ''} />
                   {label}
                 </span>
                 {count > 0 && (
-                  <span className="text-[10px] bg-zinc-800 text-zinc-500 px-1.5 rounded-full font-mono">
+                  <span className="text-[10px] bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full font-mono">
                     {count}
                   </span>
                 )}
@@ -348,28 +258,6 @@ export function LibraryView() {
             ))}
           </div>
         </div>
-
-        {activeSection === 'community' && (
-          <div className="px-4 pb-4 border-t border-zinc-800/60 pt-4 mt-2">
-            <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Filter</p>
-            <div className="flex flex-col gap-1">
-              {(['All', 'Scripts', 'Node packs', 'Templates'] as const).map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setActiveCommunityCategory(cat)}
-                  className={`text-left px-2 py-1.5 text-xs rounded transition-colors ${
-                    activeCommunityCategory === cat
-                      ? 'text-zinc-100 bg-zinc-800'
-                      : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="flex-1 flex min-w-0 h-full">
@@ -394,17 +282,15 @@ export function LibraryView() {
                 </button>
               )}
 
-              {activeSection === 'community' && (
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-                  <input
-                    type="text"
-                    placeholder="Search community assets..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs rounded pl-8 pr-3 py-2 w-64 focus:outline-none focus:border-zinc-600 transition-colors"
-                  />
-                </div>
+              {activeSection === 'git_catalogs' && (
+                <button
+                  type="button"
+                  onClick={() => setIsGitImportModalOpen(true)}
+                  className="text-xs px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors shrink-0 flex items-center gap-1.5"
+                >
+                  <Plus size={14} />
+                  Import Git Catalog Repo
+                </button>
               )}
             </div>
 
@@ -427,45 +313,85 @@ export function LibraryView() {
               </>
             )}
 
-            {activeSection === 'community' && (
-              <>
-                <div className="flex items-center gap-2 text-[10px] text-zinc-600 mb-6">
-                  <BookOpen size={12} />
-                  Examples and demos also live under Community until wired to real catalog APIs.
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredCommunity.map((asset) => renderCommunityCard(asset))}
-                  {filteredCommunity.length === 0 && (
-                    <div className="col-span-full py-24 flex flex-col items-center justify-center text-center text-zinc-500 border border-dashed border-zinc-800 rounded-lg">
-                      <Filter size={32} className="mb-4 text-zinc-600" />
-                      <h3 className="text-zinc-300 font-semibold mb-1">No assets found</h3>
-                      <p className="text-sm">Try adjusting your search or filters.</p>
+            {activeSection === 'git_catalogs' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {gitRepos.map((repo) => (
+                    <div
+                      key={repo.id}
+                      className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex flex-col justify-between hover:border-zinc-700 transition-colors"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold text-zinc-100 text-sm flex items-center gap-2 font-mono">
+                            <GitBranch size={14} className="text-indigo-400" />
+                            {repo.name}
+                          </h3>
+                          {repo.id !== 'vvs-official-packs' && (
+                            <button
+                              type="button"
+                              onClick={() => removeCatalogRepo(repo.id)}
+                              className="text-zinc-600 hover:text-red-400 p-1 transition-colors"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-zinc-400 leading-relaxed">
+                          {repo.description || 'Custom Git pack catalog'}
+                        </p>
+                      </div>
+
+                      <div className="pt-4 border-t border-zinc-800/60 mt-4 flex items-center justify-between">
+                        <span className="text-[10px] text-zinc-500 font-mono">
+                          {repo.owner}/{repo.repo}
+                        </span>
+                        <a
+                          href={`https://github.com/${repo.owner}/${repo.repo}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition-colors"
+                        >
+                          View Repository <ExternalLink size={11} />
+                        </a>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              </>
+              </div>
             )}
 
             {activeSection === 'installed' && (
               <>
                 {installedAssets.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {installedAssets.map(({ asset }) => renderCommunityCard(asset, false))}
+                    {installedAssets.map(({ asset }) => (
+                      <div
+                        key={asset.id}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3"
+                      >
+                        <h3 className="font-bold text-zinc-100">{asset.title}</h3>
+                        <p className="text-xs text-zinc-400 leading-relaxed">{asset.description}</p>
+                        <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
+                          <span className="text-[10px] text-emerald-400 font-mono">Active</span>
+                          <button
+                            type="button"
+                            onClick={() => handleUninstall(asset.id)}
+                            className="text-xs text-red-400 hover:text-red-300"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="py-24 flex flex-col items-center justify-center text-center text-zinc-500 border border-dashed border-zinc-800 rounded-lg bg-zinc-900/30">
                     <Package size={32} className="mb-4 text-zinc-600" />
                     <h3 className="text-zinc-300 font-semibold mb-1">Nothing installed yet</h3>
                     <p className="text-sm max-w-sm mb-4">
-                      Pick a project template or install a community asset for this project.
+                      Pick a project template or import a custom Git catalog pack.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection('templates')}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                    >
-                      Browse templates →
-                    </button>
                   </div>
                 )}
               </>
@@ -484,18 +410,13 @@ export function LibraryView() {
             onStartProject={() => handleStartFromEnvironment(selectedEnvironmentAsset.id)}
           />
         )}
-
-        {selectedAsset && !selectedEnvironmentId && (
-          <LibraryAssetDetail
-            asset={selectedAsset}
-            installed={selectedInstalled}
-            onClose={() => setSelectedAssetId(null)}
-            onInstall={() => handleInstall(selectedAsset.id)}
-            onUninstall={() => handleUninstall(selectedAsset.id)}
-            onOpenInProject={() => handleOpenInProject(selectedAsset)}
-          />
-        )}
       </div>
+
+      <GitPackImportModal
+        isOpen={isGitImportModalOpen}
+        onClose={() => setIsGitImportModalOpen(false)}
+        onImportRepo={(url) => addCatalogRepo(url)}
+      />
     </div>
   );
 }

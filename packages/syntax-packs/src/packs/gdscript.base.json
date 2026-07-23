@@ -127,7 +127,7 @@
       "quasi": "{enum}.{member}"
     },
     "SwitchSelectBind": {
-      "quasi": "{name} = {value}"
+      "quasi": "var {name} = {value}"
     },
     "ModuleImportFrom": {
       "quasi": "const {names} = preload(\"{mod}\")"

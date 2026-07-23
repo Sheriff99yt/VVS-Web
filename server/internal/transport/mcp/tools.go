@@ -75,6 +75,9 @@ func registerProposeSyntaxDelta(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("rationale", mcp.Description("Why this syntax change is needed")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if res, err := EnsureWritePermission(ctx); res != nil || err != nil {
+			return res, err
+		}
 		packID, err := req.RequireString("pack_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -170,6 +173,9 @@ func registerAddClass(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("name", mcp.Required(), mcp.Description("Display name for the new class")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if res, err := EnsureWritePermission(ctx); res != nil || err != nil {
+			return res, err
+		}
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -234,6 +240,9 @@ func registerAddNode(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("class_id", mcp.Description("Class id — targets the class graph tab when tab_id is omitted")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if res, err := EnsureWritePermission(ctx); res != nil || err != nil {
+			return res, err
+		}
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -264,6 +273,9 @@ func registerRemoveNode(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("class_id", mcp.Description("Class id — targets the class graph tab when tab_id is omitted")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if res, err := EnsureWritePermission(ctx); res != nil || err != nil {
+			return res, err
+		}
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -294,6 +306,9 @@ func registerConnectPins(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithString("class_id", mcp.Description("Class id — targets the class graph tab when tab_id is omitted")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if res, err := EnsureWritePermission(ctx); res != nil || err != nil {
+			return res, err
+		}
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
@@ -356,6 +371,9 @@ func registerSaveProject(s *mcpserver.MCPServer, deps Deps) {
 		mcp.WithObject("snapshot", mcp.Required(), mcp.Description("ProjectSnapshot v3 JSON object")),
 	)
 	s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if res, err := EnsureWritePermission(ctx); res != nil || err != nil {
+			return res, err
+		}
 		projectID, err := req.RequireString("project_id")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil

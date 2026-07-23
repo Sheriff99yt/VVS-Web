@@ -372,7 +372,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U78** + CL emit plans, **U89–U92**, queued **U97–U106**. **U77 Go**, **U83**, **U102**, **U107–U119** + code-panel hover shipped. Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
+**Active next (July 2026):** Phase 6 — CL emit plans, **U89–U92**, queued **U97–U106**. **U77 Go**, **U78 Pack Manager**, **U83**, **U102**, **U107–U119** + code-panel hover shipped. Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.

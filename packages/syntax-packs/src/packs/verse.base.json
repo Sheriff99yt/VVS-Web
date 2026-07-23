@@ -46,7 +46,7 @@
       "quasi": "else:"
     },
     "ForLoopHeader": {
-      "quasi": "loop:"
+      "quasi": "for ({index} : {last}):"
     },
     "WhileLoopHeader": {
       "quasi": "loop:"

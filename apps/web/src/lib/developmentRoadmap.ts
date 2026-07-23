@@ -453,6 +453,55 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'pack-versions-view-u78',
+        title: 'Pack versions manager view (U78)',
+        description:
+          'PacksView top-level view; accumulatedPacksStore, usePackRegistry & usePackReleases hooks; GitHub releases fetch & download; pinned base packs + capability overlays across 8 target languages.',
+        status: 'done',
+      },
+      {
+        id: 'emit-fidelity-cl-fixes',
+        title: 'Target-language emit fidelity fixes (CL-006, CL-012–CL-015)',
+        description:
+          'Verse block colon syntax for-loops (CL-015); Verse type-aware GetInput (CL-014); GDScript temp var declaration var _vvs_sel (CL-012); GDScript GetInput prompt print (CL-013); C# async Task return type (CL-006).',
+        status: 'done',
+      },
+      {
+        id: 'references-viewer-redesign-u89',
+        title: 'References viewer redesign (U89)',
+        description:
+          'ReferencesView huge-project redesign; metric counts (referencers, dependencies, total graphs); type filter badges; graph vs flat list view toggle; navigation path toolbar.',
+        status: 'done',
+      },
+      {
+        id: 'library-page-redesign-u90',
+        title: 'Library page redesign (U90)',
+        description:
+          'Client-first Library redesign; Templates tab (environments & OpenAPI/AsyncAPI spec imports); Git Imports tab (useGitCatalog hook, GitPackImportModal, GitHub repo import); Installed Extensions tab.',
+        status: 'done',
+      },
+      {
+        id: 'ai-mcp-autonomy-u91',
+        title: 'AI / MCP autonomy & safety guard (U91)',
+        description:
+          'Go MCP write consent guard (EnsureWritePermission, VVS_MCP_ALLOW_WRITE=1); unit tests (consent_test.go); mcpActivityStore; live MCP Ready activity status indicator in StatusBar.',
+        status: 'done',
+      },
+      {
+        id: 'cross-and-lang-examples-u92',
+        title: 'New cross-language & language-specific examples (U92)',
+        description:
+          'Three full multi-language test projects (First Graph, Branch Lab, Coverage Lab) across 8 target languages (24 goldens total); StartScreen starters for all 8 languages; validate_test_projects_folder.ts.',
+        status: 'done',
+      },
+      {
+        id: 'add-node-menu-audit-u97',
+        title: 'Add-node menu catalog audit (U97)',
+        description:
+          'Synonym search (module, declare, call, event, var); Import Module spawn row; pin-compatibility filtering; list_available_nodes registry integration.',
+        status: 'done',
+      },
+      {
         id: 'milestone-3-language-platform',
         title: 'Milestone 3 — language platform closed',
         description:
@@ -1119,69 +1168,11 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
 /** Open / partial only — shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
-    id: 'phase-6-priority',
-    title: 'Priority — Pack versions & emit plans',
+    id: 'priority-3-ai-and-examples',
+    title: 'Priority 3 — AI Autonomy, Multi-Lang Examples & Reverse Codegen',
     phase: 6,
     emphasis: 'active',
     items: [
-      {
-        id: 'pack-versions-u78',
-        title: 'Pack versions manager view (U78)',
-        description:
-          'Downloaded pack releases accumulate (never overwrite). List versions, set active. GitHub update adds a version. First of multiple new top-level views.',
-        status: 'planned',
-      },
-      {
-        id: 'emit-fidelity-cl-backlog',
-        title: 'Target-language emit fidelity (CL backlog)',
-        description:
-          'Plans first — then code. Open clusters: Rust inheritance (CL-010); Verse GetInput/for-loop (CL-014/015); C# async Task (CL-006); Rust static/imports (CL-008/009); GDScript temps/GetInput (CL-012/013); Verse defaults (CL-016). Canonical log: .agents/skills/vvs_cross_language_mapping/SKILL.md.',
-        status: 'planned',
-      },
-    ],
-  },
-  {
-    id: 'editor-chrome-open',
-    title: 'Editor chrome — References & Library',
-    phase: 6,
-    emphasis: 'active',
-    items: [
-      {
-        id: 'references-viewer-redesign-u89',
-        title: 'References viewer redesign (U89)',
-        description:
-          'Partial: Reference tree name filter shipped. Full huge-project redesign (navigation + scale) still open.',
-        status: 'partial',
-      },
-      {
-        id: 'library-page-redesign-u90',
-        title: 'Library page redesign (U90)',
-        description:
-          'Redesign the Library page after the client-first / git-catalog directional change (no hosted blob library).',
-        status: 'planned',
-      },
-    ],
-  },
-  {
-    id: 'ai-examples-help-u91',
-    title: 'AI, examples & reverse import',
-    phase: 6,
-    emphasis: 'active',
-    items: [
-      {
-        id: 'mcp-agent-autonomy-u91',
-        title: 'AI / MCP audit & agent autonomy (U91)',
-        description:
-          'Partial: Windsurf paste, tool list, clearer dangerous-tools consent. Full MCP autonomy audit (safe write paths) still open.',
-        status: 'partial',
-      },
-      {
-        id: 'cross-and-lang-examples-u92',
-        title: 'New cross-language & language-specific examples (U92)',
-        description:
-          'Partial: Branch Lab (Entry→Branch→True/False Print) + goldens. More cross-lang / language-specific examples still open.',
-        status: 'partial',
-      },
       {
         id: 'code-to-visual-u93',
         title: 'Long-term: code → visual (U93)',
@@ -1192,18 +1183,11 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
   {
-    id: 'graph-model-u97',
-    title: 'Catalog, functions, async & OOP',
+    id: 'priority-4-catalog-and-oop',
+    title: 'Priority 4 — Canvas Catalog, Function Pins, Async & OOP Fidelity',
     phase: 6,
     emphasis: 'active',
     items: [
-      {
-        id: 'add-node-menu-audit-u97',
-        title: 'Add-node menu audit (U97)',
-        description:
-          'Partial: Import Module spawn row restored; synonym search (module, declare, …). Full catalog vs fixture audit still open.',
-        status: 'partial',
-      },
       {
         id: 'function-argument-pins-u98',
         title: 'Function argument pins (U98)',

@@ -1,4 +1,4 @@
-// ===== coveragelab.go =====
+// ===== src/CoverageLab.go =====
 // (x) Import iostream
 // (x) Import System
 // (x) Import string

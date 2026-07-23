@@ -15,7 +15,6 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 | Focus | IDs | Status |
 |-------|-----|--------|
-| **Pack versions** manager view | U78 | Open |
 | Target-language emit fidelity plans | CL backlog | Open — plans before code |
 | References viewer redesign | U89 | Partial (name filter done) |
 | Library page redesign | U90 | Open |
@@ -29,10 +28,17 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 |-------|-----|--------|
 | Code → visual (reverse of Generate) | U93 | Research — must keep canvas source of truth |
 
-### Just shipped (editor chrome, undo & Go pack)
+### Just shipped (examples, catalog audit, library redesign, MCP safety, references redesign)
 
 | Focus | IDs |
 |-------|-----|
+| **Multi-language test project examples** (24 goldens across 8 languages) | U92 |
+| **Catalog & add-node menu audit** (synonyms, module import spawn) | U97 |
+| **Client-first Library** page redesign (Git repo import, OpenAPI/AsyncAPI templates) | U90 |
+| **AI / MCP Autonomy & Safety Guard** (write consent guard, activity indicator) | U91 |
+| **References** viewer redesign (huge-project metrics & flat tree mode) | U89 |
+| Target-language emit fidelity fixes | CL-006, CL-012–CL-015 |
+| **Pack versions** manager view | U78 |
 | **Go** target language pack (8th language) | U77 |
 | Action history · menus · settings · shortcuts · audio · naming | U108–U113 |
 | Symbol / class undo · tab-stable undo · lean canvas snapshots | U114–U117 |
@@ -45,11 +51,11 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ──────────────────
 1  Web editor + 8 packs        6  Polish                          3  Library (git · U90)
-2  Persistence (local)            U78 pack versions                  4  Session collab (P2P)
-   + local MCP paste              CL emit plans                      5  UE6 Verse plugin
-   U77 Go pack done               U89–U92 chrome · AI
-   U83 virtualization done        U97–U106 graph / OOP
-                                  U93 code→visual (long-term)
+2  Persistence (local)            CL emit plans                      4  Session collab (P2P)
+   + local MCP paste              U89–U92 chrome · AI                5  UE6 Verse plugin
+   U77 Go pack done               U97–U106 graph / OOP
+   U78 Pack manager done          U93 code→visual (long-term)
+   U83 virtualization done
 ```
 
 Not current focus: dedicated VPS / self-hosted auth-Postgres product; any live code execution / Play / interpreter / runner.
@@ -65,7 +71,6 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 
 | # | Item | Notes |
 |---|------|--------|
-| **U78** | **Pack versions** manager | Releases accumulate; list / activate; GitHub updates add a version |
 | **CL** | Emit fidelity plans | See clusters below — plans before code |
 
 ### Editor & AI
@@ -130,7 +135,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U119 + U77 Go done; next **U78** + **U89–U92** + **U97–U106**; CL plans; **U93** long-term |
+| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U119 + U77 Go + U78 Packs done; next **U89–U92** + **U97–U106**; CL plans; **U93** long-term |
 | **3** Community library | Planned | Separate **library git repo**; public links only · **U90** redesign |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

@@ -1,4 +1,4 @@
-// ===== firstgraph.go =====
+// ===== src/FirstGraph.go =====
 type FirstGraph struct {
 	var VisitorName string = ""
 	// (x) Declare SayHello

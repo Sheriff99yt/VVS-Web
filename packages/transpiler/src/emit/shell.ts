@@ -318,6 +318,13 @@ export function functionReturnTypeName(
     (typeof fromProps === 'string' && fromProps.trim() ? fromProps.trim() : undefined) ||
     overload?.returnType ||
     'void';
+
+  const isAsync = Boolean(properties?.isAsync);
+  if (lang === 'csharp' && isAsync) {
+    const baseType = raw === 'void' ? '' : typeNameForPin(raw as PinType, 'csharp');
+    return baseType ? `Task<${baseType}>` : 'Task';
+  }
+
   if (raw === 'void') return 'void';
   if (lang === 'cpp' || lang === 'csharp') {
     return typeNameForPin(raw as PinType, lang);

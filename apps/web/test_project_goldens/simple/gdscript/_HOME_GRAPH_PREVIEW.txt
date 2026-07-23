@@ -5,6 +5,7 @@ class_name FirstGraph
     func SayHello() -> void:
         print("Hello from SayHello!")
     func on_start() -> void:
+        print("What is your name?")
         var _vvs_input_fg_get_input = OS.read_string_from_stdin()
         print(_vvs_input_fg_get_input)
         self.SayHello()

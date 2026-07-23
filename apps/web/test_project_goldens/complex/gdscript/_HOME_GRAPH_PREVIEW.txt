@@ -24,6 +24,7 @@ class_name Machine
     func on_pulse() -> void:
         print(("Power=" + str(self.Power)))
     func on_start() -> void:
+        print("Operator name?")
         var _vvs_input_lab_get_input = OS.read_string_from_stdin()
         print(_vvs_input_lab_get_input)
         self.Boot()
@@ -51,7 +52,7 @@ extends Machine
     func on_tick() -> void:
         print("Tick")
     func on_start() -> void:
-        _vvs_sel = self.Status
+        var _vvs_sel = self.Status
         if _vvs_sel == SensorStatus.OK:
             self.Sample()
             self.Report()

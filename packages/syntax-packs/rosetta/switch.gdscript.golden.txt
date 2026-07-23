@@ -1,4 +1,4 @@
-        _vvs_sel = 1
+        var _vvs_sel = 1
         if _vvs_sel == 0:
             pass
         elif _vvs_sel == 1:

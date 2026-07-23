@@ -133,10 +133,13 @@ export function StatusBar() {
           </>
         ) : (
           <Tooltip
-            content="Client-first — edit and Generate offline; Connect AI for local MCP paste config"
+            content="Client-first — edit and Generate offline; Connect AI (MCP) for Cursor, Windsurf, or Claude Desktop"
             placement="top"
           >
-            <span className="flex items-center gap-1 px-1.5 text-zinc-600">Local</span>
+            <div className="flex items-center gap-1.5 px-1.5 text-zinc-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-300">MCP Ready</span>
+            </div>
           </Tooltip>
         )}
         {isCoaAuthoringActive(crossOverMode) ? (

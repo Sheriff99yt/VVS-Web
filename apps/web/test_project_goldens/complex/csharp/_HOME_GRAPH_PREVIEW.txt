@@ -19,7 +19,7 @@ public class Machine {
     }
     protected abstract void Diagnose();
     // (x) Declare Shutdown
-    public async void Shutdown() {
+    public async Task Shutdown() {
         this.Ready = false;
         Console.WriteLine("Shutdown");
     }
@@ -50,7 +50,7 @@ public class Sensor : Machine {
     public Machine Host = null;
     public Dictionary<string, string> Tags = new Dictionary<string, string>();
     // (x) Declare Sample
-    public async void Sample() {
+    public async Task Sample() {
         this.Readings.Add(this.Power);
         Console.WriteLine("Sampled");
     }

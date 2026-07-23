@@ -110,7 +110,7 @@ const MACHINE_EXPECTS: Record<CoverageLang, string[]> = {
     'Diagnose() = 0',
     'inline static',
   ],
-  csharp: ['void Boot()', 'this.Boot()', 'if ', 'async void Shutdown', 'on_pulse', 'on_start'],
+  csharp: ['void Boot()', 'this.Boot()', 'if ', 'async Task Shutdown', 'on_pulse', 'on_start'],
   rust: ['fn Boot(', 'self.Boot()', 'if ', 'async fn Shutdown', 'fn on_pulse', 'fn on_start'],
   gdscript: ['func Boot(', 'self.Boot()', 'if ', 'func Shutdown', 'func on_pulse', 'func on_start'],
   verse: ['Boot', 'if ', 'Shutdown', 'on_pulse', 'on_start'],
@@ -128,10 +128,7 @@ describe('usability example test snapshots', () => {
         expect(content).toContain(anchor);
       }
       expect(content).toContain('Done.');
-      if (lang !== 'gdscript') {
-        // GDScript Get User Input uses OS.read_string_from_stdin() without embedding the prompt.
-        expect(content).toMatch(/What is your name\?/);
-      }
+      expect(content).toMatch(/What is your name\?/);
     });
 
     test(`coverage lab Machine transpiles for ${lang}`, () => {

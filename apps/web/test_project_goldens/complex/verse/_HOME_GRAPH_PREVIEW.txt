@@ -25,7 +25,7 @@
         Print(("Power=" + ToString(Power)))
     on_start() : void =
         Print("Operator name?")
-        var _vvs_input_lab_get_input : float = 0.0
+        var _vvs_input_lab_get_input : string = ""
         Print(_vvs_input_lab_get_input)
         Boot()
         if (Ready?):

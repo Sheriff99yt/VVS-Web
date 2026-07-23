@@ -36,7 +36,7 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     expect(code).toContain('public static float Serial');
     expect(code).toContain('public readonly float MaxPower');
     expect(code).toContain('public virtual void Boot()');
-    expect(code).toContain('public async void Shutdown()');
+    expect(code).toContain('public async Task Shutdown()');
     expect(code).toContain('protected abstract void Diagnose();');
     expect(code).not.toContain('protected abstract void Diagnose() {');
   });

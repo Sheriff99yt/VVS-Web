@@ -4,9 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-23  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U77 / U79–U83 done; U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U97 · U102 · U107 · U108–U119 done; U98–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97 · U102 · U107 · U108–U119 done; U98–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 done** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U97 / U102 / U107 / U108–U119 done** · U78 / U89–U93 / U98–U101 / U103–U106 open
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 / U98–U101 / U103–U106 open
 
 ## Status legend
 
@@ -149,7 +149,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13–§18 priority:** **U78 Pack versions** → **U89–U92** chrome · AI/examples → **U97–U106** graph/menu/OOP fidelity → **U93** long-term code→visual. **U77 Go**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
+**§15–§18 priority:** **U89–U92** chrome · AI/examples → **U97–U106** graph/menu/OOP fidelity → **U93** long-term code→visual. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 
@@ -287,20 +287,20 @@ Details, Compiler Log, tabs, References, Library, and **wire / connection** poli
 | U86 | Details panel **compact** rethink | **Done** | Compact subtitle: kind/category · pins · bound symbol (no “hover for details”) |
 | U87 | Compiler Log **language-scoped** mode | **Done** | Languages toggle + `compilerLogLanguageScoped` pref; Validator lines tagged by target language |
 | U88 | Graph **tabs** UI/UX rethink | **Done** | Scroll active into view; overflow list; dirty/active affordances; middle-click / Ctrl+W close |
-| U89 | **References** viewer redesign (huge projects) | **Partial** | Name filter on Reference tree shipped; full huge-project redesign still open (pairs with U83). |
-| U90 | **Library** page redesign (post direction change) | **Open** | Redesign after client-first / git-catalog direction — no hosted blob library assumption. |
+| U89 | **References** viewer redesign (huge projects) | **Done** | Huge-project redesign shipped: Graph vs Tree List view toggle, Referencers/Dependencies metrics bar, type filter badges, and breadcrumb path toolbar |
+| U90 | **Library** page redesign (post direction change) | **Done** | Client-first Library redesign: Templates tab (environments & OpenAPI/AsyncAPI spec imports), Git Imports tab (useGitCatalog hook, GitPackImportModal, GitHub repo import), and Installed Extensions tab |
 | U96 | **Wire / connection UX** | **Done** | Larger pins; edge Insert reroute + Disconnect; selection toolbar **Auto-connect** (2 compatible nodes) + **Disconnect** |
 
 ---
 
-## 17. AI, examples, help & reverse import (July 2026) — **Partial** (U94/U95 done)
+## 17. AI, examples, help & reverse import (July 2026) — **Partial** (U91/U94/U95 done)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `ai-examples-help-u91`.
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U91 | **AI / MCP audit & agent autonomy** | **Partial** | Windsurf paste config, MCP tool summaries, clearer dangerous-tools consent; full autonomy audit still open. |
-| U92 | **New examples** (cross-lang + lang-specific) | **Partial** | Branch Lab StartScreen + `test_project_goldens/branch/`; more examples still open. |
+| U91 | **AI / MCP audit & agent autonomy** | **Done** | Go MCP write consent guard (EnsureWritePermission, VVS_MCP_ALLOW_WRITE=1), unit tests (consent_test.go), mcpActivityStore, and live MCP Ready activity status indicator in StatusBar |
+| U92 | **New examples** (cross-lang + lang-specific) | **Done** | Three full test projects (First Graph, Branch Lab, Coverage Lab) across 8 target languages (24 goldens total) + StartScreen starters for all 8 languages + validate_test_projects_folder.ts |
 | U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; left panel + chrome migrated off native `title=` (section/popover `title` props remain) |
 | U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |
 | U93 | **Long-term: code → visual** | **Open** (long-term) | System that reads raw source and builds text-shaped graphs (reverse of Generate). Must preserve canvas source of truth / fidelity — research track, not near-term polish. |

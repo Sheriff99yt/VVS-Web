@@ -7,9 +7,11 @@ import type { PrintContext, PrintedStmt } from '../types';
 export function printGetInputVerse(stmt: IrAssignVariable, ctx: PrintContext): PrintedStmt {
   const printExpr = createDefaultExprPrinter();
   const prompt = stmt.prompt ? printExpr(stmt.prompt, ctx) : { text: '""', spans: [] };
+  const inputKind = stmt.inputKind ?? 'text';
   const prefix = `${ctx.indent}Print(`;
   const suffix = ')';
-  const text = `${prefix}${prompt.text}${suffix}\n${ctx.indent}var ${stmt.targetName} : float = 0.0`;
+  const varType = inputKind === 'number' ? 'float = 0.0' : 'string = ""';
+  const text = `${prefix}${prompt.text}${suffix}\n${ctx.indent}var ${stmt.targetName} : ${varType}`;
   return {
     text,
     expressionSpans: offsetSpans(prompt.spans, prefix.length),
