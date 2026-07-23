@@ -502,6 +502,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'symbol-spawn-ux',
+        title: 'Declare / implement / invoke spawn UX',
+        description:
+          'Unified symbol role badges (Declare, On, Dispatch, Call, Get, Set) across node outliner search, drop menus, context menus, and Project Tree badges per unified_symbol_model.md Phase D.',
+        status: 'done',
+      },
+      {
         id: 'milestone-3-language-platform',
         title: 'Milestone 3 — language platform closed',
         description:
@@ -1250,13 +1257,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     id: 'unified-symbols',
     title: 'Unified symbol model & portability',
     items: [
-      {
-        id: 'symbol-spawn-ux',
-        title: 'Declare / implement / invoke spawn UX',
-        description:
-          'Role chips in spawn catalog. Done: Project tree badges, Event panel Declare · On · Dispatch, Call/Declare/Define menus. Remaining: catalog role chips. Spec: unified_symbol_model.md Phase D.',
-        status: 'partial',
-      },
       {
         id: 'coa-deferred',
         title: 'Cross Over Architecture (COA)',

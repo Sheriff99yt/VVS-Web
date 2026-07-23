@@ -10,6 +10,8 @@ export interface CanvasDropMenuItem {
   onClick: () => void;
   disabled?: boolean;
   title?: string;
+  roleBadge?: string;
+  roleBadgeClass?: string;
 }
 
 interface CanvasDropMenuProps {
@@ -90,14 +92,19 @@ export function CanvasDropMenu({
             <button
               type="button"
               role="menuitem"
-              className="w-full text-left px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-zinc-800"
+              className="w-full flex items-center justify-between px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-zinc-800"
               disabled={item.disabled}
               onClick={() => {
                 item.onClick();
                 onClose();
               }}
             >
-              {item.label}
+              <span className="truncate">{item.label}</span>
+              {item.roleBadge ? (
+                <span className={`text-[8px] px-1 py-0.2 font-mono uppercase tracking-wider rounded border ml-2 shrink-0 ${item.roleBadgeClass || 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
+                  {item.roleBadge}
+                </span>
+              ) : null}
             </button>
           </Tooltip>
         </React.Fragment>

@@ -13,6 +13,7 @@ import {
   filterOutlinerNodes,
   nodeCategoryColor,
   nodeDisplayLabel,
+  nodeSymbolRoleLabel,
 } from '@/lib/nodeOutliner';
 import { shortcutKeys, shortcutTitle } from '@/lib/graphShortcuts';
 import {
@@ -330,6 +331,14 @@ export function GraphNodeSearch() {
                   <span className="text-[11px] text-zinc-200 truncate flex-1">
                     {nodeDisplayLabel(hit.node)}
                   </span>
+                  {(() => {
+                    const role = nodeSymbolRoleLabel(hit.node);
+                    return (
+                      <span className={`text-[8px] px-1 py-0.2 font-mono uppercase tracking-wider rounded border ${role.badgeClass} shrink-0`}>
+                        {role.label}
+                      </span>
+                    );
+                  })()}
                   {searchAllGraphs ? (
                     <span className="text-[9px] text-zinc-500 shrink-0 truncate max-w-[72px]">
                       {hit.tabLabel}
