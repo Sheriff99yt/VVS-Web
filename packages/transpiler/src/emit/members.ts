@@ -389,7 +389,10 @@ export function appendEnumDecl(
 ): void {
   const startLine = sink.lineCount + 1;
   const body = member.members.map((m) => `    ${m}`).join(',\n');
-  if (ir.targetLanguage === 'cpp') {
+  if (ir.targetLanguage === 'go') {
+    const consts = member.members.map((m, i) => i === 0 ? `\t${member.name}_${m} ${member.name} = iota` : `\t${member.name}_${m}`).join('\n');
+    sink.appendRaw(`type ${member.name} int\nconst (\n${consts}\n)`);
+  } else if (ir.targetLanguage === 'cpp') {
     sink.appendRaw(`enum class ${member.name} {\n${body}\n};`);
   } else if (ir.targetLanguage === 'csharp') {
     sink.appendRaw(`public enum ${member.name} {\n${body}\n}`);

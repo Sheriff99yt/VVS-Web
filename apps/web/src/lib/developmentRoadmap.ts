@@ -440,16 +440,23 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'syntax-pack-csharp-shipped',
-        title: 'C# syntax pack family (M3 complete)',
+        title: 'C# syntax pack family',
         description:
-          'csharp.base.json; class module shells; get_input + switch printers; 14 Rosetta goldens; UI target (.cs); scripts/update-csharp-goldens.ts. Closes Phase 6 language platform milestone.',
+          'csharp.base.json; class module shells; get_input + switch printers; 14 Rosetta goldens; UI target (.cs); scripts/update-csharp-goldens.ts.',
+        status: 'done',
+      },
+      {
+        id: 'syntax-pack-go-shipped',
+        title: 'Go syntax pack family (U77)',
+        description:
+          'go.base.json; struct+func shells; get_input + switch printers; 14 Rosetta goldens; UI target (.go); update-go-goldens.ts. Expands target language platform to 8 languages.',
         status: 'done',
       },
       {
         id: 'milestone-3-language-platform',
         title: 'Milestone 3 — language platform closed',
         description:
-          'Seven pack-driven codegen families (py/js/cpp/verse/gdscript/rust/csharp); 98 Rosetta goldens; Godot env pack. Next: usability/workflow standards (terms_refactor_plan).',
+          'Eight pack-driven codegen families (py/js/cpp/verse/gdscript/rust/csharp/go); 112 Rosetta goldens; Godot env pack. Next: usability/workflow standards (terms_refactor_plan).',
         status: 'done',
       },
       {
@@ -1029,6 +1036,27 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'dynamic-naming-u118',
+        title: 'Dynamic naming conventions (U118)',
+        description:
+          'Settings options to make node and symbol naming follow default VVS global naming, a specific supported language, or auto-follow target language.',
+        status: 'done',
+      },
+      {
+        id: 'bad-practices-settings-u119',
+        title: 'Bad practices & safety settings (U119)',
+        description:
+          'Settings toggles for: (1) allow multiple exec outputs to one input (warns of redundancy), and (2) Dynamic/Weak typing warnings.',
+        status: 'done',
+      },
+      {
+        id: 'go-target-language-u77',
+        title: 'Go Target Language Pack (U77)',
+        description:
+          'Go (.go) target language family support: go.base.json syntax pack, goProfile, custom statement printers (getInput, switch), 14 Rosetta goldens, and UI selectors.',
+        status: 'done',
+      },
+      {
         id: 'details-compact-rethink-u86',
         title: 'Details panel compact rethink (U86)',
         description:
@@ -1092,16 +1120,10 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'phase-6-priority',
-    title: 'Priority — Go, packs & emit plans',
+    title: 'Priority — Pack versions & emit plans',
     phase: 6,
     emphasis: 'active',
     items: [
-      {
-        id: 'go-language-u77',
-        title: 'Go language pack (U77)',
-        description: 'Eighth target language — syntax pack, emit, and Test Project / Rosetta coverage.',
-        status: 'planned',
-      },
       {
         id: 'pack-versions-u78',
         title: 'Pack versions manager view (U78)',

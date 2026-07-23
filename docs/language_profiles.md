@@ -45,9 +45,10 @@ The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation rema
 | GDScript | Yes | `gdscript.base` | 14 fixtures | `env.gdscript.godot-game` |
 | Rust | Yes | `rust.base` | 14 fixtures | — (console env planned) |
 | C# | Yes | `csharp.base` | 14 fixtures | — (console env planned) |
+| Go | Yes | `go.base` | 14 fixtures | — (console env planned) |
 | Graph JSON | Yes | — | — | — |
 
-**Milestone 3 (July 2026):** Language platform closed — seven codegen families + 98 Rosetta goldens. **Next:** usability & workflow standards ([terms_refactor_plan.md](design/terms_refactor_plan.md)).
+**Milestone 3 (July 2026):** Language platform closed — eight codegen families + 112 Rosetta goldens. **Next:** usability & workflow standards ([terms_refactor_plan.md](design/terms_refactor_plan.md)).
 
 ## Feature matrix (summary)
 

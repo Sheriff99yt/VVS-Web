@@ -23,6 +23,7 @@ const TARGET_OPTIONS = [
   { value: 'gdscript', label: 'GDScript' },
   { value: 'rust', label: 'Rust' },
   { value: 'csharp', label: 'C#' },
+  { value: 'go', label: 'Go' },
   { value: 'json', label: 'Graph JSON' },
 ] as const satisfies ReadonlyArray<{ value: TargetLanguage; label: string }>;
 

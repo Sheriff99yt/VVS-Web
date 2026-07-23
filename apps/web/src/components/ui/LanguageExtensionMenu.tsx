@@ -17,6 +17,7 @@ const LANGUAGE_OPTIONS: { value: TargetLanguage; label: string }[] = [
   { value: 'gdscript', label: 'GDScript' },
   { value: 'rust', label: 'Rust' },
   { value: 'csharp', label: 'C#' },
+  { value: 'go', label: 'Go' },
   { value: 'json', label: 'JSON' },
 ];
 

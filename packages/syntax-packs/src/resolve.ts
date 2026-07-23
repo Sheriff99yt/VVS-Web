@@ -7,6 +7,7 @@ import verseBase from './packs/verse.base.json';
 import gdscriptBase from './packs/gdscript.base.json';
 import rustBase from './packs/rust.base.json';
 import csharpBase from './packs/csharp.base.json';
+import goBase from './packs/go.base.json';
 import javascriptEs2022 from './packs/overlays/javascript.es2022.json';
 
 import { getRegisteredPacks } from './registry';
@@ -19,6 +20,7 @@ const PACKS: SyntaxPackManifest[] = [
   gdscriptBase as SyntaxPackManifest,
   rustBase as SyntaxPackManifest,
   csharpBase as SyntaxPackManifest,
+  goBase as SyntaxPackManifest,
   javascriptEs2022 as SyntaxPackManifest,
 ];
 

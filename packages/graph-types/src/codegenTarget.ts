@@ -1,7 +1,7 @@
 import type { TargetLanguage } from './symbols';
 
 /** Language family for syntax pack resolution. */
-export type LanguageFamily = 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp';
+export type LanguageFamily = 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'go';
 
 /** Pinned syntax pack versions in `.vvs/project.json`. */
 export interface SyntaxPackLockEntry {
@@ -32,6 +32,7 @@ export const DEFAULT_CAPABILITIES: Record<LanguageFamily, string[]> = {
   gdscript: ['typed'],
   rust: ['edition2021'],
   csharp: ['dotnet8'],
+  go: ['go1.22'],
 };
 
 export function defaultCodegenTarget(lang: TargetLanguage): CodegenTarget | null {
@@ -85,4 +86,5 @@ export const FAMILY_CAPABILITY_OPTIONS: Record<
   gdscript: [{ id: 'typed', label: 'Typed signatures (-> void)' }],
   rust: [{ id: 'edition2021', label: 'Rust 2021 edition' }],
   csharp: [{ id: 'dotnet8', label: '.NET 8 / C# 12' }],
+  go: [{ id: 'go1.22', label: 'Go 1.22+' }],
 };

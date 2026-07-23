@@ -15,7 +15,6 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 | Focus | IDs | Status |
 |-------|-----|--------|
-| **Go** language pack | U77 | Open |
 | **Pack versions** manager view | U78 | Open |
 | Target-language emit fidelity plans | CL backlog | Open — plans before code |
 | References viewer redesign | U89 | Partial (name filter done) |
@@ -30,12 +29,14 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 |-------|-----|--------|
 | Code → visual (reverse of Generate) | U93 | Research — must keep canvas source of truth |
 
-### Just shipped (editor chrome & undo)
+### Just shipped (editor chrome, undo & Go pack)
 
 | Focus | IDs |
 |-------|-----|
+| **Go** target language pack (8th language) | U77 |
 | Action history · menus · settings · shortcuts · audio · naming | U108–U113 |
 | Symbol / class undo · tab-stable undo · lean canvas snapshots | U114–U117 |
+| Dynamic naming conventions · Bad practices / safety settings | U118, U119 |
 | Code → graph **hover** (yellow node/tab outline) + full [code_panel.md](code_panel.md) | U71 follow-on |
 | Canvas gestures · symbols overlay · wires · tabs · search/help | U84–U88, U94–U96, U102, U107 |
 | Canvas virtualization | U83 |
@@ -43,11 +44,11 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 ```text
 CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ──────────────────
-1  Web editor + packs          6  Polish                          3  Library (git · U90)
-2  Persistence (local)            U77 Go · U78 pack versions         4  Session collab (P2P)
+1  Web editor + 8 packs        6  Polish                          3  Library (git · U90)
+2  Persistence (local)            U78 pack versions                  4  Session collab (P2P)
    + local MCP paste              CL emit plans                      5  UE6 Verse plugin
-   U83 virtualization done        U89–U92 chrome · AI
-                                  U97–U106 graph / OOP
+   U77 Go pack done               U89–U92 chrome · AI
+   U83 virtualization done        U97–U106 graph / OOP
                                   U93 code→visual (long-term)
 ```
 
@@ -64,7 +65,6 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 
 | # | Item | Notes |
 |---|------|--------|
-| **U77** | **Go** language pack | Eighth target — pack + emit + Test Project coverage |
 | **U78** | **Pack versions** manager | Releases accumulate; list / activate; GitHub updates add a version |
 | **CL** | Emit fidelity plans | See clusters below — plans before code |
 
@@ -77,8 +77,6 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | **U91** | **AI / MCP** audit | Partial — Windsurf paste + consent; full autonomy audit open |
 | **U92** | **New examples** | Partial — Branch Lab shipped; more cross-lang / lang-specific open |
 | **U93** | **Code → visual** | Long-term reverse import research |
-| **U118** | **Dynamic naming conventions** | Settings options to make node and symbol naming follow default VVS global naming, a specific supported language, or toggle to auto-follow the currently selected language |
-| **U119** | **Bad practices / Not recommended settings** | Add configuration toggles for non-recommended settings: (1) Allow connecting multiple execution outputs to one input (warns/prevents duplicate code generation/redundancy), and (2) Dynamic/Weak typing setting (warns of type coercion, exceptions, cognitive load, and overhead). |
 
 ### Graph model (U97–U106)
 
@@ -116,7 +114,7 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
-| **Undo & chrome (U108–U117)** | Action history · File/Edit/View/Help · Settings (Shortcuts / Audio / About) · rebindable shortcuts · audio cues · **VVS Web** naming · symbol/class undo · tab-stable history · lean canvas snapshots |
+| **Undo, settings & safety (U108–U119)** | Action history · File/Edit/View/Help · Settings (Shortcuts / Audio / About / Naming / Safety) · rebindable shortcuts · audio cues · **VVS Web** naming · symbol/class undo · tab-stable history · lean canvas snapshots · **dynamic naming conventions (U118)** · **multi-exec & weak-typing safety settings (U119)** |
 | **Code panel** | Selection highlight · double-click → node · **hover → yellow node/tab outline** · error/warning toggles · Files pin · [code_panel.md](code_panel.md) |
 | **Find & gestures** | U84 all-graphs search · U85 Ctrl+F this graph / Ctrl+Shift+F all · U94 tooltips · U95 first-open help · U107 pan/select |
 | **Chrome & wires** | U86 Details compact · U87 log language scope · U88 tabs · U96 pins/edge menu/auto-connect · U102 symbols overlay |
@@ -132,7 +130,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U117 done; next **U77–U78** + **U89–U92** + **U97–U106**; CL plans; **U93** long-term |
+| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U119 + U77 Go done; next **U78** + **U89–U92** + **U97–U106**; CL plans; **U93** long-term |
 | **3** Community library | Planned | Separate **library git repo**; public links only · **U90** redesign |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

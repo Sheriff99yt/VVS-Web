@@ -12,6 +12,7 @@ const TARGET_LANGUAGES: TargetLanguage[] = [
   'gdscript',
   'rust',
   'csharp',
+  'go',
   'json',
 ];
 

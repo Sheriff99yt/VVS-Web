@@ -1,0 +1,66 @@
+// ===== coveragelab.go =====
+// (x) Import iostream
+// (x) Import System
+// (x) Import string
+// (x) Import Enum
+// (x) Import vector
+// (x) Import unordered_map
+// (x) Import Collections.Generic
+type Machine struct {
+	var Power float64 = 0
+	var Serial float64 = 0
+	var MaxPower float64 = 100
+	var Ready bool = false
+	// (x) Declare Boot
+func Boot() void {
+	self.Ready = true
+	fmt.Println("Booted")
+	Sensor.on_tick()
+}
+	// (x) Declare Diagnose
+	// (x) Declare Shutdown
+func Shutdown() void {
+	self.Ready = false
+	fmt.Println("Shutdown")
+}
+func (self *Machine) on_pulse() {
+	fmt.Println(("Power=" + fmt.Sprintf("%v", self.Power)))
+}
+func (self *Machine) on_start() {
+	fmt.Print("Operator name?")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	_vvs_input_lab_get_input := scanner.Text()
+	fmt.Println(_vvs_input_lab_get_input)
+	self.Boot()
+	// if (self.Ready)
+}
+}
+type SensorStatus int
+const (
+	SensorStatus_OK SensorStatus = iota
+	SensorStatus_WARN
+	SensorStatus_FAIL
+)
+type Sensor struct {
+	var Readings []float64 = []
+	var Status SensorStatus = SensorStatus_OK
+	var Host Machine = null
+	var Tags map[string]string = {}
+	// (x) Declare Sample
+func Sample() void {
+	// push self.Power
+	fmt.Println("Sampled")
+}
+	// (x) Declare Report
+func Report() void {
+	fmt.Println("--- Readings ---")
+	// foreach val
+}
+func (self *Sensor) on_tick() {
+	fmt.Println("Tick")
+}
+func (self *Sensor) on_start() {
+	// switch
+}
+}

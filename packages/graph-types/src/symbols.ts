@@ -11,7 +11,7 @@ import {
   type TypeRef,
 } from './typeRef';
 
-export type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'json';
+export type TargetLanguage = 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'go' | 'json';
 
 export type PortabilityFeature =
   | 'function.static'

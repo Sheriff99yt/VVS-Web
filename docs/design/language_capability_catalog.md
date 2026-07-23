@@ -7,7 +7,7 @@
 
 ## Purpose
 
-VVS targets **seven pack-driven families** (python, javascript, cpp, verse, gdscript, rust, csharp) plus json preview. Languages differ in surface syntax and in **what members and expressions can express**. This document is the **single inventory** of those differences so we can:
+VVS targets **eight pack-driven families** (python, javascript, cpp, verse, gdscript, rust, csharp, go) plus json preview. Languages differ in surface syntax and in **what members and expressions can express**. This document is the **single inventory** of those differences so we can:
 
 1. Plan **one neutral UI** (spawn catalog, inspector, Project tree) that scales to every target.
 2. Know which features need **new or extended canvas nodes** vs syntax-pack-only emission.

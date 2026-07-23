@@ -32,7 +32,8 @@ const LANGUAGE_FAMILIES: { id: LanguageFamily; name: string }[] = [
   { id: 'verse', name: 'Verse' },
   { id: 'gdscript', name: 'GDScript' },
   { id: 'rust', name: 'Rust' },
-  { id: 'csharp', name: 'C#' }
+  { id: 'csharp', name: 'C#' },
+  { id: 'go', name: 'Go' },
 ];
 
 /** Shape displayed in the "available updates" list — backed by real GitHub assets now. */

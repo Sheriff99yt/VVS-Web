@@ -117,7 +117,7 @@ export interface ListRegistryOptions {
   environmentManifest?: ProjectEnvironmentManifest;
   targetLanguage?: TargetLanguage;
   /** Naming convention for spawn menu labels (e.g., 'global', 'python', 'auto'). */
-  namingConvention?: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'auto';
+  namingConvention?: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'go' | 'auto';
 }
 
 function pinsMatchFilter(pin: PinDefinition, filter?: PinDefinition): boolean {
@@ -197,6 +197,15 @@ function getSpawnNamingPrefix(
       if (type === 'Declare') return 'var';
       if (type === 'Define') return 'void';
       if (type === 'On') return 'On';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'go':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'func';
+      if (type === 'On') return 'on';
       if (type === 'Get') return 'get';
       if (type === 'Set') return 'set';
       if (type === 'Call') return 'call';

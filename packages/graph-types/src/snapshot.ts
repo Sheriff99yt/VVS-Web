@@ -97,7 +97,7 @@ export interface ProjectSnapshotV3 {
 
 export type ProjectSnapshot = ProjectSnapshotV3;
 
-const TARGET_LANGUAGES: TargetLanguage[] = ['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp', 'json'];
+const TARGET_LANGUAGES: TargetLanguage[] = ['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp', 'go', 'json'];
 
 export function defaultTabMetadata(
   tabType: 'main' | 'function' | 'macro' | 'class' | 'graph' | 'container',

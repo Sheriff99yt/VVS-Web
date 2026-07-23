@@ -1,0 +1,17 @@
+// ===== firstgraph.go =====
+type FirstGraph struct {
+	var VisitorName string = ""
+	// (x) Declare SayHello
+func SayHello() void {
+	fmt.Println("Hello from SayHello!")
+}
+func (self *FirstGraph) on_start() {
+	fmt.Print("What is your name?")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	_vvs_input_fg_get_input := scanner.Text()
+	fmt.Println(_vvs_input_fg_get_input)
+	self.SayHello()
+	fmt.Println("Done.")
+}
+}

@@ -110,6 +110,7 @@ const LANGUAGE_FAMILIES: LanguageFamily[] = [
   'gdscript',
   'rust',
   'csharp',
+  'go',
 ];
 
 /** Matches base + overlay asset filenames like "python.base@1.2.0.json" or "javascript.es2026@1.0.0-rc1.json". */

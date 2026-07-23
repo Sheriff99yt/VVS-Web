@@ -13,6 +13,7 @@ const LANGUAGE_SHORT: Record<string, string> = {
   gdscript: 'GD',
   rust: 'Rust',
   csharp: 'C#',
+  go: 'Go',
   json: 'JSON',
 };
 

@@ -22,6 +22,7 @@ export const ROSETTA_FAMILIES: LanguageFamily[] = [
   'gdscript',
   'rust',
   'csharp',
+  'go',
 ];
 
 export interface RosettaFixture {
@@ -62,6 +63,7 @@ export function extractOnStartBody(content: string, family: LanguageFamily): str
     if (family === 'gdscript' && lines[i]!.includes('func on_start')) start = i + 1;
     if (family === 'rust' && lines[i]!.includes('fn on_start')) start = i + 1;
     if (family === 'csharp' && lines[i]!.includes('void on_start')) start = i + 1;
+    if (family === 'go' && lines[i]!.includes('func (self *') && lines[i]!.includes('on_start')) start = i + 1;
   }
   if (start < 0) return content;
   for (let i = start + 1; i < lines.length; i++) {
@@ -79,6 +81,10 @@ export function extractOnStartBody(content: string, family: LanguageFamily): str
       break;
     }
     if (family === 'csharp' && /^    void /.test(l)) {
+      end = i;
+      break;
+    }
+    if (family === 'go' && /^func /.test(l)) {
       end = i;
       break;
     }
@@ -125,6 +131,10 @@ export function extractImports(content: string, family: LanguageFamily): string 
       continue;
     }
     if (family === 'csharp' && trimmed.startsWith('using ')) {
+      imports.push(line);
+      continue;
+    }
+    if (family === 'go' && (trimmed.startsWith('import ') || trimmed.startsWith('package '))) {
       imports.push(line);
       continue;
     }

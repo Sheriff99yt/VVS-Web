@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped — classes no longer coupled to fixed home-graph tabs; **U84–U88 / U94–U96** search · find · tooltip · help · compact Details · log language scope · tab overflow · wire hit targets + **hover** modifier overlay shipped).
+Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -217,7 +217,7 @@ Graph-level and project settings → TopNav **Settings** (gear, right of Connect
 
 **Codegen model:** `documents[tabId].metadata.targetLanguage` and `targetFileExtension` override project-level `targetLanguage` / `targetFileExtensions` for that graph. Unset fields inherit project defaults at emit time (`resolveGraphCodegenSettings` in `@vvs/graph-types`). New graphs seed metadata from project defaults when first opened (`useGraphTabSync`).
 
-Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/codegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**. **Function Declare/Define:** all seven targets share the same canvas table — C++ prototypes + out-of-line Define; others U66 `(x) Declare` + in-class Define (never silent omit). Spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Function Declare / Define per language.
+Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go, Graph JSON**. Codegen runs in **`@vvs/transpiler`** (facade: `apps/web/src/lib/codegen.ts`). Portability warnings per target: **`docs/language_profiles.md`**. **Function Declare/Define:** all eight targets share the same canvas table — C++ prototypes + out-of-line Define; others U66 `(x) Declare` + in-class Define (never silent omit). Spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) § Function Declare / Define per language.
 
 ### Graph editor features
 
@@ -334,7 +334,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 |-----------|----------|--------|
 | Structured IR | `packages/transpiler/src/ir/types.ts` | Done — `IrExpr` tree, structured stmts; wave-1 `IrEmittedStmt` deprecated |
 | Language-neutral lowering | `packages/transpiler/src/lower/graphToIr.ts` | Done — no target-language strings in lower/ |
-| Print registry | `packages/transpiler/src/print/` | Done — **seven pack-driven families** (python, javascript, cpp, verse, gdscript, rust, csharp) pack-first |
+| Print registry | `packages/transpiler/src/print/` | Done — **eight pack-driven families** (python, javascript, cpp, verse, gdscript, rust, csharp, go) pack-first |
 | Print adapter | `packages/transpiler/src/print/template.ts` | Done — `printFromTemplate`, pack `layout` helpers (`bodyIndent`, `blockPlaceholder`, `emptyHandlerBody`, …) |
 | Unified block emit | `packages/transpiler/src/print/blocks.ts` | Done — `buildIfBranch` / `buildForLoop` / … for string print path (`stmt.ts`) |
 | Block close helpers | `packages/transpiler/src/print/blockHelpers.ts` | Done — `condSpanOffset`, `blockCloseLine`, `ifElseLine` shared with `emit/sinkStatements.ts` (span-aware nested emit) |
@@ -344,9 +344,9 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Module shell renderer | `packages/transpiler/src/emit/shell.ts` | Done — `ClassModuleOpen`, `EventHandlerOpen`, `FunctionDefOpen`, etc. from pack JSON |
 | Empty body layout | `packages/transpiler/src/emit/layout.ts` | Done — `emptyHandlerBody` / `emptyFunctionBody` from pack `layout` (no hardcoded `pass` / `// empty` in emit) |
 | Pack migration CI gate | `packages/transpiler/src/print/packMigrationGate.test.ts` | Done — bans legacy emitters in `stmt.ts` / `expr.ts`; per-language `emit/*.ts` removed; `classModule` + `sinkStatements` use pack helpers |
-| Base syntax packs | `packages/syntax-packs/src/packs/*.base.json` | Done — full Rosetta + shell + layout for all seven families |
+| Base syntax packs | `packages/syntax-packs/src/packs/*.base.json` | Done — full Rosetta + shell + layout for all eight families |
 | Capability overlay | `javascript.es2022.json` | Done — proof of inherit-only version deltas |
-| Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — **14 fixtures × 7 families** (98 golden pairs); regen via `scripts/update-{family}-goldens.ts` |
+| Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — **14 fixtures × 8 families** (112 golden pairs); regen via `scripts/update-{family}-goldens.ts` |
 | Pack coverage gate | `packages/syntax-packs/src/packCoverage.test.ts` | Done — required Rosetta + **shell** template keys + layout profile per base pack |
 | Fidelity linter | `packages/syntax-packs/src/fidelity.ts` | Done — CI via `rosetta.test.ts` |
 | CodegenTarget | `packages/graph-types/src/codegenTarget.ts` | Done — family + capabilities + syntaxPackLock |
@@ -372,7 +372,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — **U77–U78** + CL emit plans, **U89–U92**, queued **U97–U106**. **U83** / **U102** / **U107–U117** + code-panel hover shipped. Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
+**Active next (July 2026):** Phase 6 — **U78** + CL emit plans, **U89–U92**, queued **U97–U106**. **U77 Go**, **U83**, **U102**, **U107–U119** + code-panel hover shipped. Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.

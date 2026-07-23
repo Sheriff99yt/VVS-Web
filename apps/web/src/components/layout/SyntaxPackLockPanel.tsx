@@ -13,6 +13,7 @@ const FAMILY_OPTIONS: { id: LanguageFamily; label: string; defaultBase: string }
   { id: 'gdscript', label: 'GDScript', defaultBase: 'gdscript.base' },
   { id: 'rust', label: 'Rust', defaultBase: 'rust.base' },
   { id: 'csharp', label: 'C#', defaultBase: 'csharp.base' },
+  { id: 'go', label: 'Go', defaultBase: 'go.base' },
 ];
 
 function parseOverlays(value: string): string[] {

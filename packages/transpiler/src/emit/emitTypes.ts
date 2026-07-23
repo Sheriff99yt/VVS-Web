@@ -28,7 +28,7 @@ export function typeNameForTypeRef(
       if (targetLanguage === 'python') return `list[${elem}]`;
       if (targetLanguage === 'javascript') return `Array<${elem}>`;
       if (targetLanguage === 'gdscript') return `Array[${elem}]`;
-      if (targetLanguage === 'verse') return `[]${elem}`;
+      if (targetLanguage === 'verse' || targetLanguage === 'go') return `[]${elem}`;
       return `list[${elem}]`;
     }
     case 'map': {
@@ -41,6 +41,7 @@ export function typeNameForTypeRef(
       if (targetLanguage === 'javascript') return `Map<${key}, ${val}>`;
       if (targetLanguage === 'gdscript') return 'Dictionary';
       if (targetLanguage === 'verse') return `[${key}]${val}`;
+      if (targetLanguage === 'go') return `map[${key}]${val}`;
       return `dict[${key}, ${val}]`;
     }
     case 'builtin':
@@ -70,11 +71,21 @@ export function typeNameForPin(
     if (targetLanguage === 'javascript') return 'Array';
     if (targetLanguage === 'gdscript') return 'Array';
     if (targetLanguage === 'verse') return '[]float';
+    if (targetLanguage === 'go') return '[]float64';
     return 'list';
   }
 
   const emitKind = variableDataTypeToLegacyEmitKind(dataType);
 
+  if (targetLanguage === 'go') {
+    return emitKind === 'number'
+      ? 'float64'
+      : emitKind === 'string'
+        ? 'string'
+        : emitKind === 'boolean'
+          ? 'bool'
+          : 'any';
+  }
   if (targetLanguage === 'cpp') {
     return emitKind === 'number'
       ? 'float'
@@ -142,6 +153,7 @@ export function typedParamFragment(
     : typeNameForPin(pinType as PinType | VariableDataType | string | undefined, targetLanguage);
   if (targetLanguage === 'rust') return `${name}: ${t}`;
   if (targetLanguage === 'verse') return `${name} : ${t}`;
+  if (targetLanguage === 'go') return `${name} ${t}`;
   return `${t} ${name}`;
 }
 

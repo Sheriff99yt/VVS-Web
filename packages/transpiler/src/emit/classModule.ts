@@ -74,6 +74,7 @@ export function emitClassModule(
     'gdscript',
     'rust',
     'csharp',
+    'go',
   ].includes(lang);
 
   if (classDecl && !supportedClassLang) {

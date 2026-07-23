@@ -25,6 +25,8 @@ export function targetLanguageToCodeMirror(language: TargetLanguage): Extension[
       return [cpp()];
     case 'csharp':
       return [javascript()];
+    case 'go':
+      return [cpp()];
     default:
       return [];
   }

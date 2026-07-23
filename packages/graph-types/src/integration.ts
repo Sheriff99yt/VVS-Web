@@ -62,6 +62,7 @@ export function createDefaultIntegration(options?: {
     'rust',
     'gdscript',
     'verse',
+    'go',
   ];
   const emit: ProjectIntegrationConfig['emit'] = {};
   for (const lang of emitTargets) {

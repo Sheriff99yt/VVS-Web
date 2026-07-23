@@ -89,7 +89,7 @@ Stable facts agents should assume without re-exploring the tree.
 - Panel dual-write: `defineNodeSync`, `useSymbolLifecycle`, `add*WithDefine` in `ProjectTree.tsx` / `GraphCanvas.tsx`
 - Compile gate: TopNav blocks Generate when `!analyzeProject(...).ok`
 
-**Active pilot (July 2026):** Coverage Lab (Machine+Sensor). **Verify as Code panel shows.** **Locked:** one graph → one file; **no live code execution** (logical checks/warnings only); **U83 canvas virtualization** shipped. Modifier chips disable when ineffective. Next: U77–U78. Do not invent keywords / includes / Default / file layout / Play runners.
+**Active pilot (July 2026):** Coverage Lab (Machine+Sensor). **Verify as Code panel shows.** **Locked:** one graph → one file; **no live code execution** (logical checks/warnings only); **U83 canvas virtualization** + **U77 Go pack** shipped. Modifier chips disable when ineffective. Next: U78. Do not invent keywords / includes / Default / file layout / Play runners.
 
 
 **U66/U67 (shipped):** `packages/language-profiles/src/nodeEffectiveness.ts` — gated Import Module **and** non-abstract Function Declare (non-C++) → `(x)` comments (Code panel toggle) + canvas dim (TopNav Dim). Prefs `showUnsupportedComments` / `dimUnsupportedNodes` default on.

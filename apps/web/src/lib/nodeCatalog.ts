@@ -22,7 +22,7 @@ export function buildCoreCategories(
     environmentId?: string;
     environmentManifest?: ProjectEnvironmentManifest;
     targetLanguage?: TargetLanguage;
-    namingConvention?: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'auto';
+    namingConvention?: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'go' | 'auto';
   }
 ): LibraryCategory[] {
   return list({

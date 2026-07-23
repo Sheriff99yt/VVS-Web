@@ -9,6 +9,7 @@ export const TARGET_FILE_EXTENSIONS: Record<TargetLanguage, readonly string[]> =
   gdscript: ['gd'],
   rust: ['rs'],
   csharp: ['cs'],
+  go: ['go'],
   json: ['json'],
 };
 
@@ -20,6 +21,7 @@ export const DEFAULT_TARGET_FILE_EXTENSION: Record<TargetLanguage, string> = {
   gdscript: 'gd',
   rust: 'rs',
   csharp: 'cs',
+  go: 'go',
   json: 'json',
 };
 

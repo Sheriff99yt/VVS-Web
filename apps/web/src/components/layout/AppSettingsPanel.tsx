@@ -219,6 +219,7 @@ export function AppSettingsPanel({ onCloseSettings, searchQuery }: AppSettingsPa
                   { value: 'gdscript', label: 'GDScript' },
                   { value: 'rust', label: 'Rust' },
                   { value: 'csharp', label: 'C#' },
+                  { value: 'go', label: 'Go' },
                 ]}
               />
             </SettingCard>

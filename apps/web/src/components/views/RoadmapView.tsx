@@ -162,11 +162,11 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        <span className="text-zinc-300">Priority:</span> Go pack (U77), pack versions (U78), and
+        <span className="text-zinc-300">Priority:</span> Pack versions (U78) and
         emit-fidelity plans (CL backlog). Then References / Library (U89–U90), AI & examples
         (U91–U92), and graph/OOP fidelity (U97–U106).{' '}
-        <span className="text-zinc-300">Just shipped:</span> U108–U117 (history · menus · settings ·
-        undo), code-panel hover nav, U83 virtualization, U102 / U107.
+        <span className="text-zinc-300">Just shipped:</span> Go Target Language Pack (U77), U108–U119 (history · menus · settings ·
+        undo · naming · safety), code-panel hover nav, U83 virtualization.
       </p>
     </div>
   );

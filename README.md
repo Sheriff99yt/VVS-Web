@@ -31,11 +31,11 @@ Details: [docs/setup.md](docs/setup.md) § GitHub Pages / Releases.
 | Layer | Today | Not yet |
 |-------|--------|---------|
 | **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, references view, wiring, variables/functions, local project save, **real** codegen preview (`@vvs/transpiler`), Hello World + **Calculator** examples | Cloud sync, MCP connect |
-| **Transpiler** (`packages/transpiler`) | Client-side codegen (Python, JS, C++, C#, Verse), conversion nodes, snapshot tests; monolith `generate.ts` | Full analyze → IR → per-language emitter split |
+| **Transpiler** (`packages/transpiler`) | Client-side codegen (Python, JS, C++, Verse, GDScript, Rust, C#, Go), conversion nodes, snapshot tests | Full analyze → IR → per-language emitter split |
 | **Backend** (`server/`) | Go skeleton — `GET /health` only | REST API, MCP server, WebSockets |
 | **UE6 plugin** (`plugins/`) | Roadmap doc only | In-engine canvas (reuses v1 Verse emitter) |
 
-**What you can do today:** run the app locally, create projects, edit graphs, explore multi-graph examples (e.g. **Calculator**), save to browser storage, and preview **real** generated code (Python, C++, C#, Verse) via `@vvs/transpiler`. Status chrome is honest — **offline / disconnected**, not fake “synced” or “MCP connected.”
+**What you can do today:** run the app locally, create projects, edit graphs, explore multi-graph examples (e.g. **Calculator**), save to browser storage, and preview **real** generated code (Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go) via `@vvs/transpiler`. Status chrome is honest — **offline / disconnected**, not fake “synced” or “MCP connected.”
 
 **Canonical detail:** [docs/current_state.md](docs/current_state.md) · **Direction:** [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md) · **Phases:** [docs/roadmap.md](docs/roadmap.md)
 

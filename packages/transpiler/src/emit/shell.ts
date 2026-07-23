@@ -147,7 +147,8 @@ function eventHandlerParamList(
   if (
     lang === 'csharp' ||
     lang === 'cpp' ||
-    lang === 'verse'
+    lang === 'verse' ||
+    lang === 'go'
   ) {
     return handler.paramNames.map((p, i) => typed(p, i)).join(', ');
   }
@@ -186,6 +187,7 @@ function eventHandlerTagAnchor(lang: TargetLanguage, handler: IrEventHandler): s
   if (lang === 'gdscript') return `func on_${handler.handlerName}(`;
   if (lang === 'rust') return `fn on_${handler.handlerName}(`;
   if (lang === 'csharp') return `void on_${handler.handlerName}(`;
+  if (lang === 'go') return `on_${handler.handlerName}(`;
   if (lang === 'javascript') return `on_${handler.handlerName}(`;
   if (lang === 'cpp') return eventHandlerSignature(lang, handler);
   return `on_${handler.handlerName}`;

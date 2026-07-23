@@ -31,6 +31,7 @@ Parent skill for **visual → code** fidelity. **One markdown file per language*
 | Rust | [`rust.md`](rust.md) |
 | GDScript | [`gdscript.md`](gdscript.md) |
 | Verse (UEFN) | [`verse.md`](verse.md) |
+| Go | [`go.md`](go.md) |
 
 Each language doc is self-contained: Declare/Define, that language’s concept→emit column, declaration examples, and control-flow examples.
 

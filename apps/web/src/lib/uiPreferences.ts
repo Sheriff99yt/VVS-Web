@@ -108,7 +108,7 @@ export interface UiPreferences {
    */
   nodeOptionsStripOnSelect: boolean;
   /** U118: dynamic naming convention mode. */
-  namingConvention: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'auto';
+  namingConvention: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'go' | 'auto';
   /** U119: allow multiple execution outputs to connect to a single input. */
   allowMultipleExecToInput: boolean;
   /** U119: warn of dynamic/weak typing coercion and cognitive overhead. */
@@ -444,6 +444,7 @@ export function readUiPreferences(): UiPreferences {
         rest.namingConvention === 'gdscript' ||
         rest.namingConvention === 'rust' ||
         rest.namingConvention === 'csharp' ||
+        rest.namingConvention === 'go' ||
         rest.namingConvention === 'auto'
           ? rest.namingConvention
           : DEFAULT_UI_PREFERENCES.namingConvention,

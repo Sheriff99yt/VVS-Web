@@ -51,6 +51,7 @@ const LANG_SHORT: Record<string, string> = {
   gdscript: 'GDScript',
   rust: 'Rust',
   csharp: 'C#',
+  go: 'Go',
   json: 'JSON',
 };
 

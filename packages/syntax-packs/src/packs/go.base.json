@@ -1,0 +1,173 @@
+{
+  "id": "go.base",
+  "version": "1",
+  "family": "go",
+  "layout": {
+    "indentUnit": "\t",
+    "blockPlaceholder": "// empty",
+    "commentPrefix": "// ",
+    "instanceReceiver": "self",
+    "statementSuffix": "",
+    "bodyIndent": "\t",
+    "handlerBodyIndent": "\t",
+    "memberChainIndent": "\t",
+    "varDeclIndent": "\t",
+    "emptyHandlerBody": "\t// empty",
+    "emptyFunctionBody": "\t// empty",
+    "importTemplate": {
+      "quasi": "import \"{mod}\""
+    }
+  },
+  "templates": {
+    "Print": {
+      "quasi": "fmt.Println({value})"
+    },
+    "AssignInstance": {
+      "quasi": "self.{target} = {value}"
+    },
+    "AssignLocal": {
+      "quasi": "{target} := {value}"
+    },
+    "CallInstance": {
+      "quasi": "self.{callee}()"
+    },
+    "CallFunction": {
+      "quasi": "{callee}()"
+    },
+    "CallCrossClass": {
+      "quasi": "{receiver}.{callee}()"
+    },
+    "CallCrossClassStatic": {
+      "quasi": "{class}.{callee}()"
+    },
+    "DispatchEvent": {
+      "quasi": "self.on_{handler}({args})"
+    },
+    "DispatchEventCrossClass": {
+      "quasi": "{receiver}.on_{handler}({args})"
+    },
+    "IfBranchHeader": {
+      "quasi": "if {cond} {"
+    },
+    "IfBranchElse": {
+      "quasi": "} else {"
+    },
+    "IfBranchClose": {
+      "quasi": "}"
+    },
+    "ForLoopHeader": {
+      "quasi": "for {index} := {first}; {index} <= {last}; {index}++ {"
+    },
+    "ForLoopClose": {
+      "quasi": "}"
+    },
+    "WhileLoopHeader": {
+      "quasi": "for {cond} {"
+    },
+    "WhileLoopClose": {
+      "quasi": "}"
+    },
+    "SequenceHeader": {
+      "quasi": "{"
+    },
+    "SequenceComment": {
+      "quasi": "// sequence"
+    },
+    "SequenceClose": {
+      "quasi": "}"
+    },
+    "ModuleImport": {
+      "quasi": "import \"{mod}\""
+    },
+    "ImportClass": {
+      "quasi": "import \"{mod}\""
+    },
+    "ImportClassAlias": {
+      "quasi": "import {alias} \"{mod}\""
+    },
+    "AwaitWait": {
+      "quasi": "time.Sleep(time.Duration({duration} * float64(time.Second)))"
+    },
+    "AwaitWaitAsync": {
+      "quasi": "time.Sleep(time.Duration({duration} * float64(time.Second)))"
+    },
+    "AwaitWaitSync": {
+      "quasi": "time.Sleep(time.Duration({duration} * float64(time.Second)))"
+    },
+    "CallNative": {
+      "quasi": "{call}"
+    },
+    "ConvertToString": {
+      "quasi": "fmt.Sprintf(\"%v\", {value})"
+    },
+    "ConvertToNumber": {
+      "quasi": "func() float64 { v, _ := strconv.ParseFloat({value}, 64); return v }()"
+    },
+    "InstanceRef": {
+      "quasi": "self.{name}"
+    },
+    "NullLiteral": {
+      "quasi": "nil"
+    },
+    "BoolLiteralTrue": {
+      "quasi": "true"
+    },
+    "BoolLiteralFalse": {
+      "quasi": "false"
+    },
+    "VarDefine": {
+      "quasi": "var {name} {type} = {default}"
+    },
+    "DeclareLocal": {
+      "quasi": "var {name} {type}"
+    },
+    "ClassDefine": {
+      "quasi": "// struct {name}"
+    },
+    "FunctionDefine": {
+      "quasi": "// func {name}"
+    },
+    "EventDefine": {
+      "quasi": "// event {name}"
+    },
+    "ClassModuleOpen": {
+      "quasi": "type {name} struct {"
+    },
+    "ClassModuleClose": {
+      "quasi": "}"
+    },
+    "EventHandlerOpen": {
+      "quasi": "func (self *{class}) on_{handler}({paramList}) {"
+    },
+    "EventHandlerClose": {
+      "quasi": "}"
+    },
+    "FunctionDefOpen": {
+      "quasi": "func {name}({paramList}) {returnType} {"
+    },
+    "FunctionDeclPrototype": {
+      "quasi": "// func (self *{class}) {name}({paramList})"
+    },
+    "FunctionTabClose": {
+      "quasi": "}"
+    },
+    "ConstructorOpen": {
+      "quasi": "func New{class}({paramList}) *{class} {"
+    },
+    "EnumMemberAccess": {
+      "quasi": "{enum}_{member}"
+    },
+    "GetInputLineRead": {
+      "quasi": "scanner := bufio.NewScanner(os.Stdin); scanner.Scan(); {name} := scanner.Text()"
+    },
+    "GetInputParseLineF32": {
+      "quasi": "{target}, _ := strconv.ParseFloat({name}, 64)"
+    },
+    "ModuleImportFrom": {
+      "quasi": "import \"{mod}\""
+    },
+    "ModuleImportIncludeSystem": {
+      "quasi": "import \"{mod}\""
+    }
+  }
+}

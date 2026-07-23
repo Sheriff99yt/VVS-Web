@@ -17,6 +17,7 @@ const TARGET_LANGS = new Set<string>([
   'gdscript',
   'rust',
   'csharp',
+  'go',
   'json',
 ]);
 

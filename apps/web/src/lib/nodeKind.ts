@@ -98,6 +98,15 @@ function getNamingPrefix(
       if (type === 'Call') return 'call';
       if (type === 'Dispatch') return 'dispatch';
       break;
+    case 'go':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'func';
+      if (type === 'On') return 'on';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
   }
   return type;
 }

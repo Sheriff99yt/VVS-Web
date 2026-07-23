@@ -7,7 +7,7 @@ export const GET_INPUT_LINE_TEMP = '_vvs_line';
 
 /** C# scopes line buffer per GetInput node id. */
 export function getInputLineTempName(stmt: IrAssignVariable, family: string): string {
-  if (family === 'csharp') return `_vvs_line_${stmt.sourceGraphNodeId}`;
+  if (family === 'csharp' || family === 'go') return `_vvs_line_${stmt.sourceGraphNodeId}`;
   return GET_INPUT_LINE_TEMP;
 }
 

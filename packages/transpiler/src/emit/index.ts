@@ -17,7 +17,7 @@ export {
   emitVerseFunctionTab,
 } from './classModule';
 
-const SUPPORTED_LANGUAGES = new Set(['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp']);
+const SUPPORTED_LANGUAGES = new Set(['python', 'javascript', 'cpp', 'verse', 'gdscript', 'rust', 'csharp', 'go']);
 
 export function emitIrModule(ir: IrModule): TranspileResult {
   const sink = new CodeSink(ir.filePath);

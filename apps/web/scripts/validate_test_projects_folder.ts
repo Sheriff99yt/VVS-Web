@@ -38,6 +38,7 @@ const LANGS: TargetLanguage[] = [
   'rust',
   'gdscript',
   'verse',
+  'go',
 ];
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));

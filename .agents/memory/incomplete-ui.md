@@ -4,9 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-23  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U78–U83 done; U77 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U97 · U102 · U107 · U108–U117 done; U98–U101 / U103–U106 / U118–U119 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U77 / U79–U83 done; U78 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U97 · U102 · U107 · U108–U119 done; U98–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 done** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U97 / U102 / U107 / U108–U117 done** · U89–U93 + U98–U101 / U103–U106 + U118–U119 open
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 done** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U97 / U102 / U107 / U108–U119 done** · U78 / U89–U93 / U98–U101 / U103–U106 open
 
 ## Status legend
 
@@ -149,7 +149,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§13–§18 priority:** **U77 Go** → **U78 Pack versions** → **U89–U92** chrome · AI/examples → **U97–U106** graph/menu/OOP fidelity → **U93** long-term code→visual. **U83** + **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
+**§13–§18 priority:** **U78 Pack versions** → **U89–U92** chrome · AI/examples → **U97–U106** graph/menu/OOP fidelity → **U93** long-term code→visual. **U77 Go**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 
@@ -242,7 +242,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 | U74 | Rethink left panel **Output** view usefulness | **Done** (light) | Empty state + Generated files label; log empty hint |
 | U75 | Node chain **auto-layout** (S / A / S S) | **Done** | Forward+attrs / full chain; `lane-topo-v1` with above·below·below-extended (stair + spine buffer); head-anchored; multi-chain Y-separate; absolute layout through locked comments; Settings `chainAttributeDirection` |
 | U76 | **Format JSON** when selected in Code panel | **Done** | Pretty-print on demand in Code panel |
-| U77 | Add **Go** as target language | **Open** | Pack + lower/emit + Coverage Lab / Rosetta slice |
+| U77 | Add **Go** as target language | **Done** | `go.base.json` syntax pack; `goProfile`; Go custom statement printers (`getInput`, `switch`); 14 Rosetta goldens; UI target language selectors |
 
 ---
 
