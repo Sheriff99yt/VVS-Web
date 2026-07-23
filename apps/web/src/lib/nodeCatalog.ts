@@ -22,6 +22,7 @@ export function buildCoreCategories(
     environmentId?: string;
     environmentManifest?: ProjectEnvironmentManifest;
     targetLanguage?: TargetLanguage;
+    namingConvention?: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'auto';
   }
 ): LibraryCategory[] {
   return list({
@@ -34,6 +35,7 @@ export function buildCoreCategories(
     environmentId: options?.environmentId,
     environmentManifest: options?.environmentManifest,
     targetLanguage: options?.targetLanguage,
+    namingConvention: options?.namingConvention,
   }).map((cat) => ({
     name: cat.name,
     items: cat.items.map((item) => ({

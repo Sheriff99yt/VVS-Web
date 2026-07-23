@@ -7,6 +7,7 @@ import { buildCoreCategories, spawnMenuItemKey } from '@/lib/nodeCatalog';
 import { LibraryNodeTemplate } from '@/types/ui';
 import type { FunctionSymbol, GraphTab, TargetLanguage, ProjectEventDefinition } from '@/types/graph';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
+import { useUiPreference } from '@/hooks/useUiPreference';
 
 /**
  * Spawn / search catalog for adding nodes.
@@ -58,6 +59,7 @@ export function NodeContextMenu({
   const inputRef = useRef<HTMLInputElement>(null);
   const eventNameRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [namingConvention] = useUiPreference('namingConvention');
 
   const allCategories = useMemo(
     () =>
@@ -78,6 +80,7 @@ export function NodeContextMenu({
           environmentId,
           environmentManifest,
           targetLanguage,
+          namingConvention,
         }
       ),
     [
@@ -90,6 +93,7 @@ export function NodeContextMenu({
       environmentId,
       environmentManifest,
       targetLanguage,
+      namingConvention,
     ]
   );
 

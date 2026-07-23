@@ -22,7 +22,7 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 | Library page redesign | U90 | Open |
 | AI / MCP autonomy audit | U91 | Partial |
 | More examples (cross-lang + lang-specific) | U92 | Partial |
-| Catalog / functions / async / OOP | U97–U101, U103–U106 | Partial — U97 open; U102 done |
+| Catalog / functions / async / OOP | U97–U101, U103–U106 | Partial — U97 done; U102 done |
 
 ### Long-term
 
@@ -84,7 +84,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 
 | # | Item | Notes |
 |---|------|--------|
-| **U97** | Add-node menu audit | Partial — Import Module + synonyms; full catalog audit open |
+| **U97** | Add-node menu audit | Done — Full catalog audit + naming convention integration |
 | **U98** | Function argument pins | Define / call / emit end-to-end |
 | **U99** | Function return with arguments | Pins / multi-return where languages support it |
 | **U100** | Event listeners | Listen / subscribe visuals across targets |

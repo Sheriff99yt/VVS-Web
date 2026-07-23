@@ -3,10 +3,10 @@
 Tracked gaps between **what the shell shows** and **what the UI skill / product matrix requires**.  
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
-**Last updated:** 2026-07-17  
-**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U78–U83 done; U77 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U102 · U107 · U108–U117 done; U97–U101 / U103–U106 / U118–U119 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Last updated:** 2026-07-23  
+**Depth-first:** Sections **1–12** complete. **§13–§14** — U68–U76 / U78–U83 done; U77 open. **§16** — U84–U88 / U96 done; U89 partial; U90 open. **§17** — U94/U95 done; U91–U92 partial; U93 long-term. **§18** — U97 · U102 · U107 · U108–U117 done; U98–U101 / U103–U106 / U118–U119 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 done** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U102 / U107 / U108–U117 done** · U89–U93 + U97–U101 / U103–U106 + U118–U119 open
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U78 done** · **U83 done** · U64–U82 shipped · **U84–U88 / U94–U96 / U97 / U102 / U107 / U108–U117 done** · U89–U93 + U98–U101 / U103–U106 + U118–U119 open
 
 ## Status legend
 
@@ -307,7 +307,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U102 · U107 · U108–U117 done)
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U97 · U102 · U107 · U108–U117 done)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
 
@@ -315,7 +315,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U97 | **Add-node menu audit** (imports + all catalog nodes) | **Partial** | **Import Module** back in spawn catalog (`SPAWNABLE_DYNAMIC_KINDS`); synonym search via `spawnSearch.ts`. Full catalog audit still open. |
+| U97 | **Add-node menu audit** (imports + all catalog nodes) | **Done** | Full catalog audit completed; naming convention prefixes integrated into spawn menu labels. All 38 nodes verified for correct spawnability, categorization, and dynamic handling. |
 | U98 | **Function argument pins** | **Open** | Parameters as pins end-to-end (define · call · emit). |
 | U99 | **Function return with arguments** | **Open** | Return / multi-return as pins where targets support it — visual + emit. |
 | U100 | **Event listeners** | **Open** | Listen / subscribe visuals that map to text across languages (beyond entry/dispatch). |

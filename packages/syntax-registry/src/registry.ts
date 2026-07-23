@@ -116,6 +116,8 @@ export interface ListRegistryOptions {
   environmentId?: string;
   environmentManifest?: ProjectEnvironmentManifest;
   targetLanguage?: TargetLanguage;
+  /** Naming convention for spawn menu labels (e.g., 'global', 'python', 'auto'). */
+  namingConvention?: 'global' | 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'auto';
 }
 
 function pinsMatchFilter(pin: PinDefinition, filter?: PinDefinition): boolean {
@@ -126,12 +128,130 @@ function pinsMatchFilter(pin: PinDefinition, filter?: PinDefinition): boolean {
   return pin.type === filter.type;
 }
 
-function kindToSpawnTemplate(kind: NodeKindDefinition): SpawnNodeTemplate {
+function getSpawnNamingPrefix(
+  type: 'Get' | 'Set' | 'Declare' | 'Define' | 'Call' | 'Dispatch' | 'On',
+  namingConvention: string,
+  targetLanguage?: string
+): string {
+  let convention = namingConvention;
+  if (convention === 'auto') {
+    convention = targetLanguage || 'global';
+  }
+
+  switch (convention) {
+    case 'python':
+      if (type === 'Define' || type === 'Declare') return 'def';
+      if (type === 'On') return 'def on_';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'javascript':
+    case 'typescript':
+      if (type === 'Declare') return 'let';
+      if (type === 'Define') return 'function';
+      if (type === 'On') return 'on';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'cpp':
+      if (type === 'Declare') return 'declare';
+      if (type === 'Define') return 'void';
+      if (type === 'On') return 'On';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'verse':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'def';
+      if (type === 'On') return 'On';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'gdscript':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'func';
+      if (type === 'On') return 'on';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'rust':
+      if (type === 'Declare') return 'let';
+      if (type === 'Define') return 'fn';
+      if (type === 'On') return 'on';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+    case 'csharp':
+      if (type === 'Declare') return 'var';
+      if (type === 'Define') return 'void';
+      if (type === 'On') return 'On';
+      if (type === 'Get') return 'get';
+      if (type === 'Set') return 'set';
+      if (type === 'Call') return 'call';
+      if (type === 'Dispatch') return 'dispatch';
+      break;
+  }
+  return type;
+}
+
+function kindToSpawnTemplate(
+  kind: NodeKindDefinition,
+  namingConvention?: string,
+  targetLanguage?: string
+): SpawnNodeTemplate {
+  let label = kind.title;
+  
+  if (namingConvention) {
+    if (kind.kindId === 'variable_get') {
+      const prefix = getSpawnNamingPrefix('Get', namingConvention, targetLanguage);
+      label = `${prefix} Variable`;
+    } else if (kind.kindId === 'var_define') {
+      const prefix = getSpawnNamingPrefix('Declare', namingConvention, targetLanguage);
+      label = `${prefix} Variable`;
+    } else if (kind.kindId === 'function_define') {
+      const prefix = getSpawnNamingPrefix('Declare', namingConvention, targetLanguage);
+      label = `${prefix} Function`;
+    } else if (kind.kindId === 'function_implement') {
+      const prefix = getSpawnNamingPrefix('Define', namingConvention, targetLanguage);
+      label = `${prefix} Function`;
+    } else if (kind.kindId === 'class_define') {
+      const prefix = getSpawnNamingPrefix('Declare', namingConvention, targetLanguage);
+      label = `${prefix} Class`;
+    } else if (kind.kindId === 'event_member_define') {
+      const prefix = getSpawnNamingPrefix('Declare', namingConvention, targetLanguage);
+      label = `${prefix} Event`;
+    } else if (kind.kindId === 'variable_set') {
+      const prefix = getSpawnNamingPrefix('Set', namingConvention, targetLanguage);
+      label = `${prefix} Variable`;
+    } else if (kind.kindId === 'vvs.project.call_function') {
+      const prefix = getSpawnNamingPrefix('Call', namingConvention, targetLanguage);
+      label = `${prefix} Function`;
+    } else if (kind.kindId === 'event_define' || kind.kindId === 'event_custom' || kind.kindId === 'event_on_update') {
+      const prefix = getSpawnNamingPrefix('On', namingConvention, targetLanguage);
+      label = `${prefix} Event`;
+    } else if (kind.kindId === 'event_dispatch') {
+      const prefix = getSpawnNamingPrefix('Dispatch', namingConvention, targetLanguage);
+      label = `${prefix} Event`;
+    }
+  }
+
   return {
     type: kind.kindId,
     kindId: kind.kindId,
     kindVersion: kind.kindVersion,
-    label: kind.title,
+    label,
     category: kind.category,
     inputs: kind.inputs,
     outputs: kind.outputs,
@@ -177,13 +297,15 @@ function sortCatalogCategories(categories: LibraryCategory[]): LibraryCategory[]
 
 function expandMissingDeclareRows(options: ListRegistryOptions): SpawnNodeTemplate[] {
   const items: SpawnNodeTemplate[] = [];
+  const { namingConvention, targetLanguage } = options;
 
   for (const fn of options.functionsMissingDeclare ?? []) {
+    const prefix = namingConvention ? getSpawnNamingPrefix('Declare', namingConvention, targetLanguage) : 'Declare';
     items.push({
       type: 'function_define',
       kindId: 'function_define',
       kindVersion: 1,
-      label: `Declare ${fn.name}`,
+      label: `${prefix} ${fn.name}`,
       category: 'Project',
       inputs: [EXEC_IN],
       outputs: [EXEC_OUT],
@@ -194,11 +316,12 @@ function expandMissingDeclareRows(options: ListRegistryOptions): SpawnNodeTempla
   }
 
   for (const event of options.eventsMissingDeclare ?? []) {
+    const prefix = namingConvention ? getSpawnNamingPrefix('Declare', namingConvention, targetLanguage) : 'Declare';
     items.push({
       type: 'event_member_define',
       kindId: 'event_member_define',
       kindVersion: 1,
-      label: `Declare ${event.name}`,
+      label: `${prefix} ${event.name}`,
       category: 'Events',
       inputs: [EXEC_IN],
       outputs: [EXEC_OUT],
@@ -210,6 +333,10 @@ function expandMissingDeclareRows(options: ListRegistryOptions): SpawnNodeTempla
 
 export function expandProjectSymbols(options: ListRegistryOptions): LibraryCategory[] {
   const categories: LibraryCategory[] = [];
+  const { namingConvention, targetLanguage } = options;
+
+  const callPrefix = namingConvention ? getSpawnNamingPrefix('Call', namingConvention, targetLanguage) : 'Call';
+  const dispatchPrefix = namingConvention ? getSpawnNamingPrefix('Dispatch', namingConvention, targetLanguage) : 'Dispatch';
 
   const callItems: SpawnNodeTemplate[] = options.functions
     .filter((fn) => fn.id !== options.currentGraphId)
@@ -217,7 +344,7 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
       type: 'vvs.project.call_function',
       kindId: 'vvs.project.call_function',
       kindVersion: 1,
-      label: `Call ${fn.name}`,
+      label: `${callPrefix} ${fn.name}`,
       category: 'Project',
       inputs: [EXEC_IN],
       outputs: [EXEC_OUT],
@@ -234,7 +361,7 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
     type: 'event_dispatch',
     kindId: 'event_dispatch',
     kindVersion: 1,
-    label: `Dispatch ${event.name}`,
+    label: `${dispatchPrefix} ${event.name}`,
     category: 'Project',
     inputs: [EXEC_IN],
     outputs: [EXEC_OUT],
@@ -250,6 +377,7 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
 
 export function list(options: ListRegistryOptions): LibraryCategory[] {
   const coreByCategory = new Map<string, SpawnNodeTemplate[]>();
+  const { namingConvention, targetLanguage } = options;
 
   for (const kind of listCoreKinds()) {
     if (options.filterPin) {
@@ -260,7 +388,7 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
     }
     const categoryName = spawnCatalogCategory(kind);
     const items = coreByCategory.get(categoryName) ?? [];
-    items.push(kindToSpawnTemplate(kind));
+    items.push(kindToSpawnTemplate(kind, namingConvention, targetLanguage));
     coreByCategory.set(categoryName, items);
   }
 
