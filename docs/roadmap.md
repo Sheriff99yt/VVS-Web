@@ -3,7 +3,7 @@
 Directional phases — not schedule commitments.  
 **Ships today:** [current_state.md](current_state.md) · **North star:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) · **Code panel UX:** [code_panel.md](code_panel.md)
 
-**Product default (locked):** client-first editor — **no VVS accounts**, **no dedicated app server**, **no live code execution**. Edit graphs, **Generate** ordinary source, run **logical checks / warnings** in-app. Persist via **local / folder / git**. **Executing** code and **hosting** a backend are left to third parties / static Pages. Scale the **canvas** as needed (virtualization **U83** shipped).
+**Product default (locked):** client-first editor — **no VVS accounts**, **no dedicated app server**, **no live code execution**. Edit graphs, **Generate** ordinary source, run **logical checks** / import from existing code.
 
 In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
@@ -15,9 +15,9 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 | Focus | IDs | Status |
 |-------|-----|--------|
+| **Library backend API** | U90+ | **Shipped** — Go service, Postgres schema, TypeScript client, GitHub workflow |
 | Target-language emit fidelity plans | CL backlog | Open — plans before code |
 | References viewer redesign | U89 | Partial (name filter done) |
-| Library page redesign | U90 | Open |
 | AI / MCP autonomy audit | U91 | Partial |
 | More examples (cross-lang + lang-specific) | U92 | Partial |
 | Catalog / functions / async / OOP | U97–U101, U103–U106 | Partial — U97 done; U102 done |
@@ -28,10 +28,11 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 |-------|-----|--------|
 | Code → visual (reverse of Generate) | U93 | Research — must keep canvas source of truth |
 
-### Just shipped (examples, catalog audit, library redesign, MCP safety, references redesign)
+### Just shipped (Library API, examples, catalog audit, library redesign, MCP safety, references redesign)
 
 | Focus | IDs |
 |-------|-----|
+| **Library backend API** (Go service) | U90+ |
 | **Multi-language test project examples** (24 goldens across 8 languages) | U92 |
 | **Catalog & add-node menu audit** (synonyms, module import spawn) | U97 |
 | **Client-first Library** page redesign (Git repo import, OpenAPI/AsyncAPI templates) | U90 |
@@ -49,13 +50,15 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 ```text
 CLOSED                         ACTIVE                              PLANNED
-─────────────────────────────  ──────────────────────────────────  ──────────────────
-1  Web editor + 8 packs        6  Polish                          3  Library (git · U90)
-2  Persistence (local)            CL emit plans                      4  Session collab (P2P)
-   + local MCP paste              U89–U92 chrome · AI                5  UE6 Verse plugin
-   U77 Go pack done               U97–U106 graph / OOP
-   U78 Pack manager done          U93 code→visual (long-term)
-   U83 virtualization done
+─────────────────────────────  ──────────────────────────────────  ─────────────────────
+1  Web editor + 8 packs        6  Polish                          4  Session collab (P2P)
+2  Persistence (local)            CL emit plans                      5  UE6 Verse plugin
+   + local MCP paste              U89–U92 chrome · AI                3  Library (git · API done)
+   U77 Go pack done               U97–U106 graph / OOP                  vvs-library repo · web UI
+   U78 Pack manager done          U93 code→visual (long-term)          wiring & integration
+   U83 virtualization done     3  Library backend                    
+   **U90 Library API done**        Go service · Postgres schema
+                                  GitHub PR workflow · TZ types
 ```
 
 Not current focus: dedicated VPS / self-hosted auth-Postgres product; any live code execution / Play / interpreter / runner.
@@ -72,16 +75,42 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | # | Item | Notes |
 |---|------|--------|
 | **CL** | Emit fidelity plans | See clusters below — plans before code |
+| **Library** | Web UI integration | Import dialog, share button, search page |
 
 ### Editor & AI
 
 | # | Item | Notes |
 |---|------|--------|
 | **U89** | **References** redesign | Partial — tree name filter shipped; huge-project nav still open |
-| **U90** | **Library** redesign | After client-first / git-catalog direction (no hosted blob library) |
+| **U90** | **Library** API done → **web UI** | Wiring to browse/search/import; upload form; auth integration |
 | **U91** | **AI / MCP** audit | Partial — Windsurf paste + consent; full autonomy audit open |
 | **U92** | **New examples** | Partial — Branch Lab shipped; more cross-lang / lang-specific open |
 | **U93** | **Code → visual** | Long-term reverse import research |
+
+### Library backend (U90+)
+
+Completed this sprint:
+
+| # | Task | Status |
+|---|------|--------|
+| **API** | Go service + handlers | ✓ Done |
+| **DB** | Postgres schema + indexes | ✓ Done |
+| **Client** | TypeScript types + fetch client | ✓ Done |
+| **Workflow** | GitHub PR automation placeholder | ✓ Done |
+| **Docs** | Full API reference ([library-backend-api.md](library-backend-api.md)) | ✓ Done |
+
+Remaining (Phase 3):
+
+| # | Task | Notes |
+|---|------|--------|
+| **vvs-library repo** | Create public community library repo | Directory structure + _index.json generator |
+| **GitHub Actions CI** | Validate + generate metadata | Rosetta test + graph schema check |
+| **Web UI** | Browse/search/import/upload pages | Connect to backend; auth integration |
+| **Wire main.go** | Instantiate LibraryService + register routes | Database init + migrations |
+| **Auth middleware** | JWT validation for uploads | GitHub OAuth integration |
+| **GitHub API impl** | Fill PR creation function | Real GitHub API calls, PR auto-merge |
+
+See [library-backend-api.md](library-backend-api.md) for full API spec.
 
 ### Graph model (U97–U106)
 
@@ -119,7 +148,8 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
-| **Undo, settings & safety (U108–U119)** | Action history · File/Edit/View/Help · Settings (Shortcuts / Audio / About / Naming / Safety) · rebindable shortcuts · audio cues · **VVS Web** naming · symbol/class undo · tab-stable history · lean canvas snapshots · **dynamic naming conventions (U118)** · **multi-exec & weak-typing safety settings (U119)** |
+| **Library backend (this sprint)** | Go service, Postgres, TypeScript client, GitHub workflow scaffolding |
+| **Undo, settings & safety (U108–U119)** | Action history · File/Edit/View/Help · Settings (Shortcuts / Audio / About / Naming / Safety) · rebindable shortcuts · audio cues · **VVS Web** naming |
 | **Code panel** | Selection highlight · double-click → node · **hover → yellow node/tab outline** · error/warning toggles · Files pin · [code_panel.md](code_panel.md) |
 | **Find & gestures** | U84 all-graphs search · U85 Ctrl+F this graph / Ctrl+Shift+F all · U94 tooltips · U95 first-open help · U107 pan/select |
 | **Chrome & wires** | U86 Details compact · U87 log language scope · U88 tabs · U96 pins/edge menu/auto-connect · U102 symbols overlay |
@@ -136,11 +166,11 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
 | **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U119 + U77 Go + U78 Packs done; next **U89–U92** + **U97–U106**; CL plans; **U93** long-term |
-| **3** Community library | Planned | Separate **library git repo**; public links only · **U90** redesign |
+| **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |
 
-Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md) · backlog `.agents/memory/incomplete-ui.md` · lang emit [cross_language_mapping/SKILL.md](../.agents/skills/vvs_cross_language_mapping/SKILL.md).
+Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md) · backlog `.agents/memory/incomplete-ui.md` · lang emit [cross_language_mapping/SKILL.md](../.agents/skills/vvs_cross_language_mapping/SKILL.md) · library [library-backend-api.md](library-backend-api.md)
 
 ---
 
@@ -149,7 +179,7 @@ Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md) · backlo
 - Bundled LLM — bring your own via MCP  
 - Proprietary runtime / Blueprint VM  
 - Hidden transforms or invented emit without canvas nodes  
-- **Live code execution** — no Play, interpreter, runner, or “run from VVS”  
+- **Live code execution** — no Play, interpreter, runner, or "run from VVS"  
 - Reviving mock Play/Pause graph simulation  
 - **Dedicated server hosting** — static Pages + local projects only  
 
@@ -170,7 +200,7 @@ Product default: **no VVS accounts, no dedicated app server**. Browser/editor + 
 | **Hosting** | **No dedicated server** — static showcase (Pages) OK |
 | **Canvas scale** | Virtualization (U83) shipped — keep measuring large graphs |
 | **Pack updates** | Fetch from GitHub; versions **accumulate**; Pack versions view (U78) |
-| **Library** | Separate official **library git repo**; public links only |
+| **Library** | Separate official **library git repo**; public links only; API for search/browse/upload |
 | **MCP / AI** | Paste config; user runs **local MCP**; **desktop only** — **mobile: no AI** |
 | **Collab** | Session **client/host**, not account cloud multiplayer |
 
@@ -184,6 +214,7 @@ Product default: **no VVS accounts, no dedicated app server**. Browser/editor + 
 | [code_panel.md](code_panel.md) | Code panel navigation & highlight UX |
 | [design/fidelity_streamline.md](design/fidelity_streamline.md) | Fidelity program |
 | [design/user_types.md](design/user_types.md) | TypeRef / declare → type → use |
+| [library-backend-api.md](library-backend-api.md) | Library API spec & implementation guide |
 | [`.agents/skills/vvs_cross_language_mapping/SKILL.md`](../.agents/skills/vvs_cross_language_mapping/SKILL.md) | Per-language emit docs + CL issues log |
 | In-app **Development roadmap** | Open vs Done tracks |
 | [deployment.md](deployment.md) | Legacy self-host notes — **not** product direction |
