@@ -34,6 +34,22 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Lint and Test (Web & Packages)
+        run: |
+          bun run --filter web lint
+          bun test packages
+          cd apps/web && bun test src/lib
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Go build & test
+        working-directory: server
+        run: |
+          go build ./...
+          go test ./...
+
       - name: Static export for GitHub Pages
         working-directory: apps/web
         env:
