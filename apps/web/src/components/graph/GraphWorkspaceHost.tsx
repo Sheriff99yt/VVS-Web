@@ -232,9 +232,7 @@ export function GraphWorkspaceHost({
     [projectDetails.moduleName, projectDetails.extendsType, projectDetails.description]
   );
 
-  const allFunctions = React.useMemo(() => {
-    return [...functions, ...classes.flatMap(cls => cls.functions)];
-  }, [functions, classes]);
+
 
   const {
     getAllDocuments,
@@ -252,13 +250,13 @@ export function GraphWorkspaceHost({
     activeGraphTab,
     openTabs,
     graphContainerIds: graphContainers.map((container) => container.id),
-    functionIds: allFunctions.flatMap((fn) => [
+    functionIds: functions.flatMap((fn) => [
       fn.id,
       ...fn.overloads
         .map((o) => o.graphTabId)
         .filter((id): id is string => Boolean(id && id.trim())),
     ]),
-    functions: allFunctions,
+    functions: functions,
     nodes,
     edges,
     setNodes,

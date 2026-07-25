@@ -100,7 +100,7 @@ func (s *LibraryService) SearchLibrary(ctx context.Context, req models.LibrarySe
 	var items []models.LibraryItemSummary
 	for rows.Next() {
 		var item models.LibraryItemSummary
-		var langs pq.StringArray // or use sql.NullString with custom parsing
+		var langs []string
 
 		err := rows.Scan(&item.ID, &item.Type, &item.Title, &item.Description, &item.Author,
 			&item.Rating, &item.Downloads, &langs, &item.Version)
@@ -108,7 +108,7 @@ func (s *LibraryService) SearchLibrary(ctx context.Context, req models.LibrarySe
 			log.Printf("Error scanning row: %v", err)
 			continue
 		}
-		item.TargetLanguages = []string(langs)
+		item.TargetLanguages = langs
 		items = append(items, item)
 	}
 
@@ -123,8 +123,8 @@ func (s *LibraryService) SearchLibrary(ctx context.Context, req models.LibrarySe
 func (s *LibraryService) GetLibraryItem(ctx context.Context, id string) (models.LibraryItem, error) {
 	var item models.LibraryItem
 	var graphJSON []byte
-	var langs pq.StringArray
-	var tags pq.StringArray
+	var langs []string
+	var tags []string
 
 	query := `
 		SELECT id, type, title, description, tags, author, graph, target_languages,
@@ -188,8 +188,8 @@ func (s *LibraryService) UploadScript(ctx context.Context, userID string, req mo
 
 	var item models.LibraryItem
 	var returnedGraphJSON []byte
-	var tags pq.StringArray
-	var langs pq.StringArray
+	var langs []string
+	var tags []string
 
 	err := s.db.QueryRow(ctx, query,
 		id,                         // id

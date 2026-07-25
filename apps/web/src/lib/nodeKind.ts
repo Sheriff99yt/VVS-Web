@@ -153,6 +153,14 @@ export function getNodeDisplayTitle(data: VVSNodeData, activeLanguage?: string):
     if (typeof refLabel === 'string' && refLabel.trim()) return refLabel.trim();
     return def?.title ?? data.label;
   }
+  if (kindId === 'function_entry' || kindId === 'function_implement') {
+    const fnName = data.properties?.name || data.label;
+    const prefix = getNamingPrefix('Declare', convention, activeLanguage);
+    if (typeof fnName === 'string' && fnName.trim()) {
+      return `${prefix} ${fnName.trim()}`;
+    }
+    return def?.title ?? data.label;
+  }
   if (kindId === 'event_member_define') {
     const name = data.properties?.name;
     const prefix = getNamingPrefix('Declare', convention, activeLanguage);

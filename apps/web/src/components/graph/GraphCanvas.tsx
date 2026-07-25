@@ -601,11 +601,32 @@ function GraphCanvasInner() {
       pendingCanvasFocus.nodeIds?.length > 0
         ? pendingCanvasFocus.nodeIds
         : [pendingCanvasFocus.nodeId];
-    const anyExists = focusIds.some((id) => nodes.some((n) => n.id === id));
-    if (!anyExists) return;
+
+    const resolvedFocusIds = focusIds.flatMap((id) => {
+      const exactNode = nodes.find((n) => n.id === id);
+      if (exactNode) return [id];
+      
+      const symbolNodes = nodes.filter(
+        (n) =>
+          n.data.graphBinding?.symbolId === id ||
+          n.data.properties?.symbolId === id ||
+          n.data.properties?.functionId === id ||
+          n.data.properties?.eventId === id ||
+          n.data.properties?.variableId === id
+      );
+      
+      const entryNode = symbolNodes.find(
+        (n) => n.data.kindId === 'function_entry' || n.data.kindId === 'function_implement'
+      );
+      if (entryNode) return [entryNode.id];
+      
+      return symbolNodes.map((n) => n.id);
+    });
+
+    if (resolvedFocusIds.length === 0) return;
 
     processedFocusRequestRef.current = pendingCanvasFocus.requestId;
-    focusGraphNode(pendingCanvasFocus.nodeId, focusIds);
+    focusGraphNode(resolvedFocusIds[0], resolvedFocusIds);
     clearPendingCanvasFocus();
   }, [pendingCanvasFocus, activeGraphTab, nodes, focusGraphNode, clearPendingCanvasFocus]);
 
