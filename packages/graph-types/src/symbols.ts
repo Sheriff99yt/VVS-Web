@@ -58,9 +58,20 @@ export type EventParameter = SymbolParameter;
 export interface FunctionOverload {
   id: string;
   parameters: SymbolParameter[];
-  returnType: PinType | 'void';
+  returnType?: PinType | 'void';
+  returnParameters?: SymbolParameter[];
   /** Graph tab id for this overload body (defaults to function id when single overload). */
   graphTabId?: string;
+}
+
+export function overloadReturnParameters(overload: FunctionOverload): SymbolParameter[] {
+  if (Array.isArray(overload.returnParameters) && overload.returnParameters.length > 0) {
+    return overload.returnParameters;
+  }
+  if (overload.returnType && overload.returnType !== 'void') {
+    return [{ id: 'return_val', label: 'Return', type: overload.returnType }];
+  }
+  return [];
 }
 
 /** Default class id for v2→v3 migration and single-class projects. */
@@ -443,6 +454,7 @@ export function createDefaultOverload(): FunctionOverload {
     id: createOverloadId(),
     parameters: [],
     returnType: 'void',
+    returnParameters: [],
   };
 }
 

@@ -182,6 +182,7 @@ function memberDeclFromEntry(
         declareSourceGraphNodeId: entry.nodeId,
         emitBody: false,
         symbol,
+        overloads: symbol.overloads.map((o) => ({ id: o.id, tabId: o.graphTabId ?? symbol.id })),
         properties: node.data.properties,
       };
     }
@@ -197,6 +198,7 @@ function memberDeclFromEntry(
         implementSourceGraphNodeId: entry.nodeId,
         emitBody: true,
         symbol,
+        overloads: symbol.overloads.map((o) => ({ id: o.id, tabId: o.graphTabId ?? symbol.id })),
         properties: {
           ...(declareNode?.data.properties ?? {}),
           ...node.data.properties,

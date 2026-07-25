@@ -254,6 +254,7 @@ export function GraphWorkspaceHost({
         .map((o) => o.graphTabId)
         .filter((id): id is string => Boolean(id && id.trim())),
     ]),
+    functions,
     nodes,
     edges,
     setNodes,

@@ -38,6 +38,22 @@
       ]
     },
     {
+      "kindId": "function_entry",
+      "kindVersion": 1,
+      "category": "Events",
+      "title": "Function Entry",
+      "symbolRole": "implement",
+      "semantics": "function.entry",
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
+    },
+    {
       "kindId": "event_define",
       "kindVersion": 1,
       "category": "Events",
@@ -317,6 +333,56 @@
           "type": "execution"
         }
       ]
+    },
+    {
+      "kindId": "flow_return",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Return",
+      "semantics": "flow.return",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "value",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "kindId": "flow_break",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Break",
+      "semantics": "flow.break",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "kindId": "flow_continue",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Continue",
+      "semantics": "flow.continue",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": []
     },
     {
       "kindId": "action_print",

@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { FunctionBinding, FunctionSymbol, SymbolVisibility } from '@vvs/graph-types';
-import { createDefaultOverload } from '@vvs/graph-types';
+import type { FunctionBinding, FunctionSymbol, PinType, SymbolVisibility } from '@vvs/graph-types';
+import { createDefaultOverload, FUNCTION_RETURN_TYPE_OPTIONS, overloadReturnParameters } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { SymbolParameterEditor } from './SymbolParameterEditor';
 import { overloadDisplayLabel } from '@/lib/functionTabs';
@@ -133,12 +133,33 @@ export function FunctionPropertiesPanel({
       </div>
 
       {selectedOverload && (
-        <>
+        <div className="space-y-3 pt-1 border-t border-zinc-800/80">
           <SymbolParameterEditor
+            title="Input Arguments"
+            addLabel="Add Input"
+            emptyLabel="No input args"
             parameters={selectedOverload.parameters}
             onChange={(parameters) => updateOverload(selectedOverload.id, { parameters })}
           />
-        </>
+
+          <SymbolParameterEditor
+            title="Return Parameters"
+            addLabel="Add Return"
+            emptyLabel="No return parameters (void)"
+            parameters={overloadReturnParameters(selectedOverload)}
+            onChange={(returnParameters) =>
+              updateOverload(selectedOverload.id, {
+                returnParameters,
+                returnType:
+                  returnParameters.length === 1
+                    ? returnParameters[0]!.type
+                    : returnParameters.length > 1
+                      ? 'data_any'
+                      : 'void',
+              })
+            }
+          />
+        </div>
       )}
 
       <details className="text-[10px] text-zinc-500">

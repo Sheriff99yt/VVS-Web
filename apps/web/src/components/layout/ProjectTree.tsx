@@ -702,6 +702,17 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     [editorFocus, functions, setFunctions, setOpenTabs]
   );
 
+  const handleRemoveOverload = useCallback(
+    (funcId: string, overloadId: string) => {
+      const func = functions.find((f) => f.id === funcId);
+      if (!func || func.overloads.length <= 1) return;
+      const nextOverloads = func.overloads.filter((o) => o.id !== overloadId);
+      const next: FunctionSymbol = { ...func, overloads: nextOverloads };
+      commitFunctionSymbolUpdate(next, setFunctions, setOpenTabs);
+    },
+    [functions, setFunctions, setOpenTabs]
+  );
+
   const selectGraphForReferences = useCallback(
     (graphId: string) => {
       focusReference(graphId, null);
@@ -1810,7 +1821,20 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                      }
                       hoverActions={
                         !isReferenceMode && renamingFunctionId !== f.id ? (
-                          <>
+                          <div className="flex items-center gap-1">
+                            <Tooltip content="Add overload signature" placement="top">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddOverload(f.id);
+                                }}
+                                className="px-1 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 shrink-0 flex items-center gap-0.5 transition-colors"
+                              >
+                                <Plus size={9} />
+                                Overload
+                              </button>
+                            </Tooltip>
                             <CodegenSuffix
                               tabId={f.id}
                               documents={documents}
@@ -1822,35 +1846,67 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                               false,
                               true
                             )}
-                          </>
+                          </div>
                         ) : undefined
                       }
                   />
-                  {extraOverloads.map((overload, index) => {
-                    const dragPayload: FunctionOverloadDragPayload = {
-                      functionId: f.id,
-                      overloadId: overload.id,
-                    };
-                    return (
-                      <TreeRow
-                        key={overload.id}
-                        depth="l2"
-                        active={
-                          selection.type === 'function' &&
-                          selection.id === f.id &&
-                          activeGraphTab === (overload.graphTabId ?? f.id)
-                        }
-                        icon={<div className="w-1 h-1 rounded-full bg-indigo-400/60 shrink-0 ml-2" />}
-                        label={overloadTreeLabel(overload)}
-                        hint={`override ${index + 2} · Drag row to call this override · click to open`}
-                        canvasDrag={{
-                          mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
-                          payload: JSON.stringify(dragPayload),
-                        }}
-                        onSelect={() => openFunctionOverloadGraph(f, overload.id)}
-                      />
-                    );
-                  })}
+                  {f.overloads.length > 1 &&
+                    f.overloads.map((overload, index) => {
+                      const dragPayload: FunctionOverloadDragPayload = {
+                        functionId: f.id,
+                        overloadId: overload.id,
+                      };
+                      const overloadTab = overload.graphTabId ?? f.id;
+                      const isOverloadActive = activeGraphTab === overloadTab;
+                      return (
+                        <TreeRow
+                          key={overload.id}
+                          depth="l2"
+                          active={isOverloadActive}
+                          icon={<GitBranch size={10} className="text-indigo-400 shrink-0 ml-1" />}
+                          label={
+                            <span className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-[9px] font-mono text-zinc-500 shrink-0">#{index + 1}</span>
+                              <span className="truncate text-zinc-300 font-mono text-[10px]">
+                                {overloadTreeLabel(overload)}
+                              </span>
+                            </span>
+                          }
+                          hint={`Overload #${index + 1} · Drag to canvas to spawn Call node · Click to open graph`}
+                          canvasDrag={{
+                            mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
+                            payload: JSON.stringify(dragPayload),
+                          }}
+                          onSelect={() => openFunctionOverloadGraph(f, overload.id)}
+                          onOpen={() => openFunctionOverloadGraph(f, overload.id)}
+                          suffix={
+                            <div className="flex items-center gap-1 shrink-0">
+                              {isOverloadActive ? (
+                                <span className="px-1 py-0.2 rounded text-[8px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                  Active
+                                </span>
+                              ) : null}
+                            </div>
+                          }
+                          hoverActions={
+                            !isReferenceMode && f.overloads.length > 1 ? (
+                              <Tooltip content="Remove overload signature" placement="top">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveOverload(f.id, overload.id);
+                                  }}
+                                  className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
+                                >
+                                  <Trash2 size={11} />
+                                </button>
+                              </Tooltip>
+                            ) : undefined
+                          }
+                        />
+                      );
+                    })}
                   {addingOverloadForId === f.id ? renderOverloadCreateForm(f.id) : null}
                 </React.Fragment>
                 );

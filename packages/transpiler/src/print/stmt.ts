@@ -15,6 +15,9 @@ import type {
   IrSwitch,
   IrWhileLoop,
   IrPrint,
+  IrReturn,
+  IrBreak,
+  IrContinue,
 } from '../ir/types';
 import { resolveMethodBinding, substituteCallExpr } from '@vvs/environment-templates';
 import { PackTemplateMissingError } from '@vvs/syntax-packs';
@@ -114,6 +117,40 @@ export function createStmtPrinters(
       const s = stmt as IrPrint;
       const msg = printExpr(s.value, ctx);
       return printFromTemplate(ctx, 'Print', { value: { text: msg.text, spans: msg.spans } });
+    },
+
+    Return: (stmt, ctx) => {
+      if (stmt.kind !== 'Return') return null;
+      const s = stmt as IrReturn;
+      if (s.values && s.values.length > 0) {
+        const valTexts = s.values.map((v) => printExpr(v, ctx).text);
+        let tupleStr = valTexts.join(', ');
+        const lang = ctx.family;
+        if (lang === 'cpp') tupleStr = `std::make_tuple(${valTexts.join(', ')})`;
+        else if (lang === 'csharp' || lang === 'rust' || lang === 'verse') tupleStr = `(${valTexts.join(', ')})`;
+        else if (lang === 'javascript') tupleStr = `[${valTexts.join(', ')}]`;
+        return printFromTemplate(ctx, 'ReturnVal', { value: { text: tupleStr, spans: [] } });
+      }
+      if (s.value) {
+        const val = printExpr(s.value, ctx);
+        const printed = printFromTemplate(ctx, 'ReturnVal', { value: { text: val.text, spans: val.spans } });
+        const valOffset = printed.text.indexOf(val.text);
+        return {
+          text: printed.text,
+          expressionSpans: offsetSpans(val.spans, valOffset >= 0 ? valOffset : printed.text.length),
+        };
+      }
+      return printFromTemplate(ctx, 'ReturnVoid', {});
+    },
+
+    Break: (stmt, ctx) => {
+      if (stmt.kind !== 'Break') return null;
+      return printFromTemplate(ctx, 'Break', {});
+    },
+
+    Continue: (stmt, ctx) => {
+      if (stmt.kind !== 'Continue') return null;
+      return printFromTemplate(ctx, 'Continue', {});
     },
 
     AssignVariable: (stmt, ctx) => {

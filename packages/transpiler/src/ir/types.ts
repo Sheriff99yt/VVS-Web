@@ -22,6 +22,9 @@ export type IrStmtKind =
   | 'Switch'
   | 'Sequence'
   | 'Print'
+  | 'Return'
+  | 'Break'
+  | 'Continue'
   | 'EventHandler'
   | 'DispatchEvent'
   | 'ModuleImport'
@@ -261,6 +264,20 @@ export interface IrCallNative extends IrBase {
   argExprs: Record<string, IrExpr>;
 }
 
+export interface IrReturn extends IrBase {
+  kind: 'Return';
+  value?: IrExpr;
+  values?: IrExpr[];
+}
+
+export interface IrBreak extends IrBase {
+  kind: 'Break';
+}
+
+export interface IrContinue extends IrBase {
+  kind: 'Continue';
+}
+
 export interface IrCommentFallback extends IrBase {
   kind: 'CommentFallback';
   /** Original intended statement kind (diagnostics / fallback labeling). */
@@ -278,6 +295,9 @@ export type IrStructuredStatement =
   | IrSwitch
   | IrSequence
   | IrPrint
+  | IrReturn
+  | IrBreak
+  | IrContinue
   | IrDispatchEvent
   | IrModuleImport
   | IrImportClass
@@ -332,6 +352,7 @@ export type IrMemberDecl =
       /** When false, Declare only — never invent a stub body. */
       emitBody: boolean;
       symbol: FunctionSymbol;
+      overloads: { id: string; tabId: string }[];
       properties?: Record<string, unknown>;
     }
   | {

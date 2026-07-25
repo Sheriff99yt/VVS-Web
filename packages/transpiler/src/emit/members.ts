@@ -267,13 +267,16 @@ function appendFunctionDeclare(
     return;
   }
 
-  const proto = formatFunctionDeclPrototype(symbol, ir.targetLanguage, member.properties);
-  if (proto) {
-    const headerStartLine = sink.lineCount + 1;
-    sink.appendRaw(proto);
-    sink.tagRange(nodeId, headerStartLine, headerStartLine, symbol.name);
-    return;
+  for (const overload of member.overloads) {
+    const props = { ...member.properties, overloadId: overload.id };
+    const proto = formatFunctionDeclPrototype(symbol, ir.targetLanguage, props);
+    if (proto) {
+      const headerStartLine = sink.lineCount + 1;
+      sink.appendRaw(proto);
+      sink.tagRange(nodeId, headerStartLine, headerStartLine, symbol.name);
+    }
   }
+  return;
 
   // Effective abstract with no prototype form (Python, etc.) → honest comment.
   if (isAbstract) {
@@ -312,25 +315,28 @@ function appendFunctionDefinition(
     return;
   }
 
-  const header = formatFunctionDefHeader(
-    symbol,
-    ir.targetLanguage,
-    functionNeedsAsync(ir, symbol.id),
-    member.properties
-  );
+  for (const overload of member.overloads) {
+    const props = { ...member.properties, overloadId: overload.id };
+    const header = formatFunctionDefHeader(
+      symbol,
+      ir.targetLanguage,
+      functionNeedsAsync(ir, symbol.id),
+      props
+    );
 
-  const headerStartLine = sink.lineCount + 1;
-  sink.appendRaw(header);
+    const headerStartLine = sink.lineCount + 1;
+    sink.appendRaw(header);
 
-  // Define owns the emitted header + body. Declare only maps to its own emit
-  // (C++ prototype or U66 `(x) Declare`), never the Define `def` / method line.
-  const defineNodeId =
-    member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
-  sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
+    // Define owns the emitted header + body. Declare only maps to its own emit
+    // (C++ prototype or U66 `(x) Declare`), never the Define `def` / method line.
+    const defineNodeId =
+      member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
+    sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
 
-  appendFunctionBody(sink, ir, symbol.id, emptyLine, ir.environmentManifest, defineNodeId, undefined, {
-    onBeforeNode: onBeforeFlowNode,
-  });
+    appendFunctionBody(sink, ir, overload.tabId, emptyLine, ir.environmentManifest, defineNodeId, undefined, {
+      onBeforeNode: onBeforeFlowNode,
+    });
+  }
 
   const tabClose = renderFunctionTabClose(ir.targetLanguage);
   if (tabClose) {

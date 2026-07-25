@@ -38,6 +38,7 @@ import {
   functionImplementNode,
   getUserInputNode,
   printStringNode,
+  returnNode,
   stringConcatNode,
   switchNode,
   usabilityTestDocument,
@@ -46,7 +47,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const COVERAGE_LAB_FIXTURE_REVISION = 5;
+export const COVERAGE_LAB_FIXTURE_REVISION = 6;
 
 /** Primary class - Machine (entry / modifiers / abstract). */
 export const MACHINE_CLASS = createClassSymbol('Machine', {
@@ -107,6 +108,17 @@ FN_DIAGNOSE.visibility = 'protected';
 const FN_SHUTDOWN = createFunctionSymbol('Shutdown', { id: 'fn-shutdown', classId: MAIN_CLASS_ID });
 FN_SHUTDOWN.flags = { async: true };
 FN_SHUTDOWN.visibility = 'public';
+
+const FN_CALCULATE = createFunctionSymbol('Calculate', { id: 'fn-calculate', classId: MAIN_CLASS_ID });
+FN_CALCULATE.visibility = 'public';
+FN_CALCULATE.overloads = [{
+  id: 'o1',
+  parameters: [
+    { id: 'p-a', label: 'A', type: 'data_number' },
+    { id: 'p-b', label: 'B', type: 'data_number' },
+  ],
+  returnType: 'data_number',
+}];
 
 const EVT_MACHINE_START = {
   id: 'evt-machine-start',
@@ -244,9 +256,11 @@ const MACHINE_MEMBER_NODES: VVSNode[] = [
   functionDefineNode('lab-fn-diagnose', { x: 2640, y: -200 }, FN_DIAGNOSE),
   functionDefineNode('lab-fn-shutdown', { x: 2840, y: -200 }, FN_SHUTDOWN),
   functionImplementNode('lab-fn-shutdown-impl', { x: 2940, y: -200 }, FN_SHUTDOWN),
+  functionDefineNode('lab-fn-calculate', { x: 3040, y: -200 }, FN_CALCULATE),
+  functionImplementNode('lab-fn-calculate-impl', { x: 3140, y: -200 }, FN_CALCULATE),
   // Event peers: Y wins emit order (pulse higher => on_pulse before on_start).
-  eventMemberDefineNode('lab-evt-start-mem', { x: 3140, y: -120 }, EVT_MACHINE_START),
-  eventMemberDefineNode('lab-evt-pulse-mem', { x: 3340, y: -280 }, EVT_PULSE),
+  eventMemberDefineNode('lab-evt-start-mem', { x: 3340, y: -120 }, EVT_MACHINE_START),
+  eventMemberDefineNode('lab-evt-pulse-mem', { x: 3540, y: -280 }, EVT_PULSE),
 ];
 
 const MACHINE_MEMBER_EDGES: VVSEdge[] = [
@@ -266,8 +280,10 @@ const MACHINE_MEMBER_EDGES: VVSEdge[] = [
   execEdge('lab-mm-5', 'lab-fn-boot-impl', 'lab-fn-diagnose'),
   execEdge('lab-mm-6', 'lab-fn-diagnose', 'lab-fn-shutdown'),
   execEdge('lab-mm-6b', 'lab-fn-shutdown', 'lab-fn-shutdown-impl'),
-  execEdge('lab-mm-7', 'lab-fn-shutdown-impl', 'lab-evt-start-mem'),
-  execEdge('lab-mm-8', 'lab-evt-start-mem', 'lab-evt-pulse-mem'),
+  execEdge('lab-mm-7', 'lab-fn-shutdown-impl', 'lab-fn-calculate'),
+  execEdge('lab-mm-7b', 'lab-fn-calculate', 'lab-fn-calculate-impl'),
+  execEdge('lab-mm-8', 'lab-fn-calculate-impl', 'lab-evt-start-mem'),
+  execEdge('lab-mm-9', 'lab-evt-start-mem', 'lab-evt-pulse-mem'),
 ];
 
 /** Sensor member chain ? no duplicate imports; shared imports live once at file top. */
@@ -310,7 +326,8 @@ const MACHINE_START_NODES: VVSNode[] = [
   }),
   printStringNode('lab-print-boot', { x: 520, y: 40 }),
   boundCallFunction('lab-call-boot', { x: 760, y: 40 }, FN_BOOT),
-  boundVariableGet('lab-get-ready', { x: 760, y: 180 }, VAR_READY),
+  boundCallFunction('lab-call-calculate', { x: 760, y: 140 }, FN_CALCULATE),
+  boundVariableGet('lab-get-ready', { x: 760, y: 260 }, VAR_READY),
   branchNode('lab-branch-ready', { x: 1000, y: 40 }),
   boundEventDispatch('lab-dispatch-pulse', { x: 1240, y: 0 }, EVT_PULSE),
   // Conditional import (Python-style): only on the false branch.
@@ -327,7 +344,8 @@ const MACHINE_START_EDGES: VVSEdge[] = [
   execEdge('lab-ms-0', 'lab-on-machine-start', 'lab-get-input'),
   execEdge('lab-ms-0b', 'lab-get-input', 'lab-print-boot'),
   execEdge('lab-ms-1', 'lab-print-boot', 'lab-call-boot'),
-  execEdge('lab-ms-2', 'lab-call-boot', 'lab-branch-ready'),
+  execEdge('lab-ms-2', 'lab-call-boot', 'lab-call-calculate'),
+  execEdge('lab-ms-2b', 'lab-call-calculate', 'lab-branch-ready'),
   dataEdge('lab-ms-3', 'lab-get-ready', 'lab-branch-ready', 'val', 'condition', 'data_boolean'),
   dataEdge('lab-ms-input-print', 'lab-get-input', 'lab-print-boot', 'value', 'in_str', 'data_string'),
   execEdge('lab-ms-4', 'lab-branch-ready', 'lab-dispatch-pulse', 'true_exec', 'exec_in'),
@@ -372,6 +390,17 @@ const SHUTDOWN_NODES: VVSNode[] = [
 const SHUTDOWN_EDGES: VVSEdge[] = [
   execEdge('lab-sd-0', 'lab-shutdown-entry', 'lab-shutdown-ready'),
   execEdge('lab-sd-1', 'lab-shutdown-ready', 'lab-shutdown-print'),
+];
+
+const CALCULATE_NODES: VVSNode[] = [
+  functionEntryNode('lab-calculate-entry', { x: 40, y: 900 }, FN_CALCULATE),
+  printStringNode('lab-calculate-print', { x: 280, y: 900 }, 'Calculating'),
+  returnNode('lab-calculate-return', { x: 520, y: 900 }),
+];
+
+const CALCULATE_EDGES: VVSEdge[] = [
+  execEdge('lab-c-0', 'lab-calculate-entry', 'lab-calculate-print'),
+  execEdge('lab-c-1', 'lab-calculate-print', 'lab-calculate-return'),
 ];
 
 // -- Sensor runtime flows --
@@ -491,7 +520,7 @@ export function createCoverageLabUsabilityTestSnapshot(): ProjectSnapshot {
       VAR_TAGS,
     ],
     events: [EVT_MACHINE_START, EVT_PULSE, EVT_SENSOR_START, EVT_TICK],
-    functions: [FN_BOOT, FN_DIAGNOSE, FN_SHUTDOWN, FN_SAMPLE, FN_REPORT],
+    functions: [FN_BOOT, FN_DIAGNOSE, FN_SHUTDOWN, FN_CALCULATE, FN_SAMPLE, FN_REPORT],
     openTabs: [
       { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: PROJECT_MAP_CONTAINER_NAME },
     ],
@@ -511,6 +540,10 @@ export function createCoverageLabUsabilityTestSnapshot(): ProjectSnapshot {
       'fn-shutdown': {
         ...usabilityTestDocument(SHUTDOWN_NODES, SHUTDOWN_EDGES),
         metadata: defaultTabMetadata('function', 'Shutdown'),
+      },
+      'fn-calculate': {
+        ...usabilityTestDocument(CALCULATE_NODES, CALCULATE_EDGES),
+        metadata: defaultTabMetadata('function', 'Calculate'),
       },
       'fn-sample': {
         ...usabilityTestDocument(SAMPLE_NODES, SAMPLE_EDGES),

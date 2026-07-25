@@ -49,7 +49,7 @@ describe('list catalog grouping', () => {
   test('renames project symbol sections to Call and Dispatch', () => {
     const categories = expandProjectSymbols({
       currentGraphId: 'main',
-      functions: [{ id: 'fn-1', name: 'Add', binding: 'instance', overloads: [{ id: 'o1', returnType: 'void' }] }],
+      functions: [{ id: 'fn-1', name: 'Add', binding: 'instance', overloads: [{ id: 'o1', returnType: 'void', parameters: [] }] }],
       events: [{ id: 'evt-1', name: 'calculate' }],
     });
     expect(categories.map((c) => c.name)).toEqual(['Call', 'Dispatch']);
@@ -60,7 +60,7 @@ describe('list catalog grouping', () => {
       currentGraphId: 'main',
       functions: [],
       events: [],
-      functionsMissingDeclare: [{ id: 'fn-1', name: 'Add', binding: 'instance', overloads: [{ id: 'o1', returnType: 'void' }] }],
+      functionsMissingDeclare: [{ id: 'fn-1', name: 'Add', binding: 'instance', overloads: [{ id: 'o1', returnType: 'void', parameters: [] }] }],
       eventsMissingDeclare: [{ id: 'evt-1', name: 'calculate' }],
     });
     const defineSection = categories.find((c) => c.name === 'Define');

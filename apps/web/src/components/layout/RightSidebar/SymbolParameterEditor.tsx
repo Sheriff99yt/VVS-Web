@@ -18,12 +18,16 @@ interface SymbolParameterEditorProps {
   parameters: SymbolParameter[];
   onChange: (parameters: SymbolParameter[]) => void;
   emptyLabel?: string;
+  title?: string;
+  addLabel?: string;
 }
 
 export function SymbolParameterEditor({
   parameters,
   onChange,
   emptyLabel = 'No params',
+  title = 'Parameters',
+  addLabel = 'Add',
 }: SymbolParameterEditorProps) {
   const updateParam = (index: number, patch: Partial<SymbolParameter>) => {
     onChange(parameters.map((p, i) => (i === index ? { ...p, ...patch } : p)));
@@ -43,14 +47,14 @@ export function SymbolParameterEditor({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Parameters</span>
+        <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">{title}</span>
         <button
           type="button"
           onClick={addParam}
           className="flex items-center gap-0.5 text-[10px] text-indigo-400 hover:text-indigo-300"
         >
           <Plus size={11} />
-          Add
+          {addLabel}
         </button>
       </div>
 

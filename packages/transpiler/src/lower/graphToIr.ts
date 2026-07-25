@@ -131,6 +131,15 @@ function resolveNodeOutputExpr(
   const kindId = resolveNodeKindId(node.data);
   const varName = getVariableName(node.data);
 
+  if (kindId === 'literal_number' || kindId === 'literal_string' || kindId === 'literal_boolean') {
+    const val = node.data.properties?.value ?? node.data.inlineValues?.value ?? node.data.inlineValues?.val;
+    if (val !== undefined) {
+      if (kindId === 'literal_number') return literalIr(node.id, Number(val), 'number');
+      if (kindId === 'literal_boolean') return literalIr(node.id, Boolean(val), 'boolean');
+      return literalIr(node.id, String(val), 'string');
+    }
+  }
+
   if (kindId === 'variable_get' && varName) {
     const symbol = ctx.variables.find((v) => v.name === varName);
     if (symbol?.graphTabId || symbol?.scopedNodeId) {
@@ -382,6 +391,9 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   if (kindId === 'flow_switch') return 'Switch';
   if (kindId === 'flow_sequence') return 'Sequence';
   if (kindId === 'action_print') return 'Print';
+  if (kindId === 'flow_return' || kindId === 'action_return') return 'Return';
+  if (kindId === 'flow_break' || kindId === 'action_break') return 'Break';
+  if (kindId === 'flow_continue' || kindId === 'action_continue') return 'Continue';
   if (kindId === 'env.call_native') return 'CallNative';
   if (kindId === 'action_get_input' || kindId === 'variable_set') return 'AssignVariable';
   return null;
@@ -538,6 +550,63 @@ function lowerStatement(
       sourceGraphNodeId: node.id,
       seconds: waitSeconds(node),
       async: kindId === 'action_await_wait',
+    };
+  }
+
+  if (kindId === 'flow_return' || kindId === 'action_return') {
+    const dataPins = (node.data.inputs ?? []).filter((p) => p.type !== 'execution');
+    if (dataPins.length > 1) {
+      const exprValues: IrExpr[] = [];
+      for (const pin of dataPins) {
+        const edge = getDataEdgeToPin(edges, node.id, pin.id);
+        if (edge) {
+          const sourceNode = nodes.find((n) => n.id === edge.source);
+          if (sourceNode) {
+            exprValues.push(resolveNodeOutputExpr(sourceNode, edge.sourceHandle ?? '', ctx, 0));
+          } else {
+            exprValues.push(literalIr(node.id, 0, 'number'));
+          }
+        }
+      }
+      if (exprValues.length > 0) {
+        return {
+          kind: 'Return',
+          sourceGraphNodeId: node.id,
+          values: exprValues,
+        };
+      }
+    }
+
+    const valEdge =
+      getDataEdgeToPin(edges, node.id, 'value') ??
+      getDataEdgeToPin(edges, node.id, 'return_val') ??
+      getDataEdgeToPin(edges, node.id, 'val') ??
+      (dataPins[0] ? getDataEdgeToPin(edges, node.id, dataPins[0].id) : undefined);
+    let valueExpr: IrExpr | undefined;
+    if (valEdge) {
+      const sourceNode = nodes.find((n) => n.id === valEdge.source);
+      if (sourceNode) {
+        valueExpr = resolveNodeOutputExpr(sourceNode, valEdge.sourceHandle ?? '', ctx, 0);
+      }
+    }
+    return {
+      kind: 'Return',
+      sourceGraphNodeId: node.id,
+      ...(valueExpr ? { value: valueExpr } : {}),
+    };
+  }
+
+  if (kindId === 'flow_break' || kindId === 'action_break') {
+    return {
+      kind: 'Break',
+      sourceGraphNodeId: node.id,
+    };
+  }
+
+  if (kindId === 'flow_continue' || kindId === 'action_continue') {
+    return {
+      kind: 'Continue',
+      sourceGraphNodeId: node.id,
     };
   }
 
@@ -929,9 +998,9 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
   };
 
   const activeTabId = tabId ?? 'main';
-  const isFunctionTab = activeTabId !== 'main' && functions.some((f) => f.id === activeTabId);
+  const isFunctionTab = activeTabId !== 'main' && (functions ?? []).some((f) => f.id === activeTabId);
 
-  const graphNodes = nodes
+  const graphNodes = (nodes ?? [])
     .filter(isCodegenNode)
     .map((n) => ({ ...n, data: normalizeNodeData(n.data) }));
   const memberBuild = buildIrMembers(ctx, graphNodes, edges, lowerCtx);

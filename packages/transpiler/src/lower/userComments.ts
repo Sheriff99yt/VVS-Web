@@ -151,8 +151,9 @@ export function filterUserCommentsForIr(
  * - Empty membership → orphan (file-scope).
  */
 export function collectUserComments(nodes: GraphNode[]): IrUserComment[] {
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const comments = nodes.filter((n) => n.type === 'vvs_comment_node');
+  const safeNodes = nodes ?? [];
+  const byId = new Map(safeNodes.map((n) => [n.id, n]));
+  const comments = safeNodes.filter((n) => n.type === 'vvs_comment_node');
   const out: IrUserComment[] = [];
 
   for (const comment of comments) {

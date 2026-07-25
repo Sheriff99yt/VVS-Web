@@ -150,8 +150,9 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
         openMainGraph(setActiveGraphTab);
         setSelection({ type: 'graph', id: null });
       } else {
-        const func = functions.find((f) => f.id === graphId);
-        if (func) openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
+        const funcId = graphId.split('::')[0];
+        const func = functions.find((f) => f.id === funcId);
+        if (func) openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab, graphId);
         setSelection({ type: 'graph', id: graphId });
       }
       onSwitchToCanvas();

@@ -1,5 +1,6 @@
 import type { PinDefinition, PinType, FunctionSymbol, VVSNodeData } from '@/types/graph';
 import type { GraphTab } from '@vvs/graph-types';
+import { overloadReturnParameters } from '@vvs/graph-types';
 import type { Dispatch, SetStateAction } from 'react';
 import { formatFunctionTabName } from '@/lib/functionTabs';
 import { resolveNodeKindId } from '@/lib/nodeKind';
@@ -50,15 +51,15 @@ export function callNodeOutputs(
   overloadId?: string
 ): PinDefinition[] {
   const overload = resolveOverloadForCall(func, overloadId);
-  const outputs: PinDefinition[] = [EXEC_OUT];
-  if (overload.returnType && overload.returnType !== 'void') {
-    outputs.push({
-      id: 'return_val',
-      label: 'Return',
-      type: overload.returnType as PinType,
-    });
-  }
-  return outputs;
+  const returns = overloadReturnParameters(overload);
+  return [
+    EXEC_OUT,
+    ...returns.map((p) => ({
+      id: p.id,
+      label: p.label,
+      type: p.type,
+    })),
+  ];
 }
 
 export function functionEntryOutputs(
@@ -74,6 +75,77 @@ export function functionEntryOutputs(
       type: p.type,
     })),
   ];
+}
+
+export function defineNodeInputs(
+  func: FunctionSymbol,
+  overloadId?: string
+): PinDefinition[] {
+  return [EXEC_IN];
+}
+
+export function returnNodeInputs(
+  func: FunctionSymbol,
+  overloadId?: string
+): PinDefinition[] {
+  const overload = resolveOverloadForCall(func, overloadId);
+  const returns = overloadReturnParameters(overload);
+  return [
+    EXEC_IN,
+    ...returns.map((p) => ({
+      id: p.id,
+      label: p.label,
+      type: p.type,
+    })),
+  ];
+}
+
+export function applyFunctionReturnBinding(
+  data: VVSNodeData,
+  func: FunctionSymbol,
+  overloadId?: string
+): VVSNodeData {
+  const overload = resolveOverloadForCall(func, overloadId ?? data.graphBinding?.overloadId);
+  return {
+    ...data,
+    label: 'Return',
+    category: 'Flow Control',
+    kindId: 'flow_return',
+    graphBinding: {
+      kind: 'call_function',
+      symbolId: func.id,
+      overloadId: overload.id,
+    },
+    properties: {
+      ...data.properties,
+      functionId: func.id,
+      symbolId: func.id,
+      overloadId: overload.id,
+    },
+    inputs: returnNodeInputs(func, overload.id),
+    outputs: [],
+  };
+}
+
+export function defineNodeOutputs(
+  func: FunctionSymbol,
+  overloadId?: string
+): PinDefinition[] {
+  return [EXEC_OUT];
+}
+
+export function implementNodeInputs(
+  func: FunctionSymbol,
+  overloadId?: string
+): PinDefinition[] {
+  return [EXEC_IN];
+}
+
+export function implementNodeOutputs(
+  func: FunctionSymbol,
+  overloadId?: string
+): PinDefinition[] {
+  return [EXEC_OUT];
 }
 
 export function applyFunctionImplementBinding(
@@ -100,8 +172,70 @@ export function applyFunctionImplementBinding(
       name: func.name,
       graphTabId: overload.graphTabId ?? func.id,
     },
-    inputs: [EXEC_IN],
-    outputs: [EXEC_OUT],
+    inputs: implementNodeInputs(func, overload.id),
+    outputs: implementNodeOutputs(func, overload.id),
+  };
+}
+
+export function applyFunctionEntryBinding(
+  data: VVSNodeData,
+  func: FunctionSymbol,
+  overloadId?: string
+): VVSNodeData {
+  const overload = resolveOverloadForCall(
+    func,
+    overloadId ??
+      data.graphBinding?.overloadId ??
+      (typeof data.properties?.overloadId === 'string' ? data.properties.overloadId : undefined)
+  );
+  return {
+    ...data,
+    label: func.name,
+    category: 'Events',
+    kindId: 'function_entry',
+    graphBinding: {
+      kind: 'call_function',
+      symbolId: func.id,
+      overloadId: overload.id,
+    },
+    properties: {
+      ...data.properties,
+      functionId: func.id,
+      symbolId: func.id,
+      name: func.name,
+      overloadId: overload.id,
+    },
+    inputs: [],
+    outputs: functionEntryOutputs(func, overload.id),
+  };
+}
+
+export function applyFunctionDefineBinding(
+  data: VVSNodeData,
+  func: FunctionSymbol,
+  overloadId?: string
+): VVSNodeData {
+  const overload = resolveOverloadForCall(func, overloadId ?? data.graphBinding?.overloadId);
+  return {
+    ...data,
+    label: `Declare ${func.name}`,
+    category: 'Project',
+    kindId: 'function_define',
+    linkKind: 'call_function',
+    linkedGraphId: func.id,
+    graphBinding: {
+      kind: 'call_function',
+      symbolId: func.id,
+      overloadId: overload.id,
+    },
+    properties: {
+      ...data.properties,
+      symbolId: func.id,
+      name: func.name,
+      overloadId: overload.id,
+    },
+    inputs: defineNodeInputs(func, overload.id),
+    outputs: defineNodeOutputs(func, overload.id),
   };
 }
 
@@ -150,7 +284,8 @@ export function applyFunctionCallBinding(
 
 export function syncCallNodesForFunction(
   nodes: Array<{ id: string; type: string; data: VVSNodeData }>,
-  func: FunctionSymbol
+  func: FunctionSymbol,
+  activeTabId?: string
 ): Array<{ id: string; type: string; data: VVSNodeData }> {
   return nodes.map((node) => {
     if (node.type !== 'vvs_standard_node') return node;
@@ -159,16 +294,39 @@ export function syncCallNodesForFunction(
       kindId === 'vvs.project.call_function' ||
       node.data.linkKind === 'call_function' ||
       kindId.startsWith('call_function_');
-    if (!isCall) return node;
+      
     const bound =
       node.data.graphBinding?.symbolId ??
       node.data.linkedGraphId ??
       (typeof node.data.properties?.functionId === 'string' ? node.data.properties.functionId : undefined);
+      
     if (bound !== func.id) return node;
-    return {
-      ...node,
-      data: applyFunctionCallBinding(node.data, func, node.data.graphBinding?.overloadId),
-    };
+
+    let overloadId = node.data.graphBinding?.overloadId ?? 
+      (typeof node.data.properties?.overloadId === 'string' ? node.data.properties.overloadId : undefined);
+      
+    if (!overloadId && activeTabId && activeTabId.startsWith(`${func.id}::`)) {
+      overloadId = activeTabId.split('::')[1];
+    }
+
+    if (kindId === 'function_entry') {
+      return { ...node, data: applyFunctionEntryBinding(node.data, func, overloadId) };
+    }
+    if (kindId === 'function_define') {
+      return { ...node, data: applyFunctionDefineBinding(node.data, func, overloadId) };
+    }
+    if (kindId === 'function_implement') {
+      return { ...node, data: applyFunctionImplementBinding(node.data, func, overloadId) };
+    }
+    if (kindId === 'flow_return' || kindId === 'action_return') {
+      return { ...node, data: applyFunctionReturnBinding(node.data, func, overloadId) };
+    }
+    
+    if (isCall) {
+      return { ...node, data: applyFunctionCallBinding(node.data, func, overloadId) };
+    }
+    
+    return node;
   });
 }
 

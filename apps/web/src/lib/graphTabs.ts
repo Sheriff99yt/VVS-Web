@@ -35,10 +35,11 @@ export function openMainGraph(setActiveGraphTab: Dispatch<SetStateAction<string>
 export function openFunctionGraphTab(
   func: { id: string; name: string },
   setOpenTabs: Dispatch<SetStateAction<GraphTab[]>>,
-  setActiveGraphTab: Dispatch<SetStateAction<string>>
+  setActiveGraphTab: Dispatch<SetStateAction<string>>,
+  tabId?: string
 ): void {
   openGraphTab(
-    { id: func.id, type: 'function', name: formatFunctionTabName(func.name) },
+    { id: tabId ?? func.id, type: 'function', name: formatFunctionTabName(func.name) },
     setOpenTabs,
     setActiveGraphTab
   );

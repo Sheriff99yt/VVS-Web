@@ -9,7 +9,7 @@ import type {
 } from '@/types/graph';
 import { normalizeNodeData } from '@/lib/nodeKind';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
-import { applyFunctionCallBinding } from '@/lib/functionHelpers';
+import { applyFunctionCallBinding, applyFunctionDefineBinding, applyFunctionImplementBinding } from '@/lib/functionHelpers';
 import { applyEventDefineBinding, applyEventDispatchBinding } from '@/lib/eventHelpers';
 import { buildGraphRefNodeData } from '@/lib/graphRefHelpers';
 
@@ -94,6 +94,17 @@ export function printStringNode(
     inputs: [EXEC_IN, { id: 'in_str', label: 'String', type: 'data_string' }],
     outputs: [EXEC_OUT],
     inlineValues,
+  });
+}
+
+export function returnNode(id: string, position: { x: number; y: number }): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: 'Return',
+    category: 'Flow',
+    kindId: 'flow_return',
+    inputs: [EXEC_IN, { id: 'value', label: 'Value', type: 'data_any' }],
+    outputs: [EXEC_OUT],
+    inlineValues: {},
   });
 }
 
@@ -508,7 +519,7 @@ export function functionDefineNode(
   func: FunctionSymbol
 ): VVSNode {
   const overload = func.overloads[0];
-  return usabilityTestNode(id, position, {
+  const base = {
     label: `Declare ${func.name}`,
     category: 'Project',
     kindId: 'function_define',
@@ -516,7 +527,7 @@ export function functionDefineNode(
     outputs: [EXEC_OUT],
     inlineValues: {},
     linkedGraphId: func.id,
-    graphBinding: { kind: 'call_function', symbolId: func.id, overloadId: overload?.id },
+    graphBinding: { kind: 'call_function' as const, symbolId: func.id, overloadId: overload?.id },
     properties: {
       symbolId: func.id,
       name: func.name,
@@ -529,7 +540,8 @@ export function functionDefineNode(
       returnType: overload?.returnType,
       graphTabId: overload?.graphTabId ?? func.id,
     },
-  });
+  };
+  return usabilityTestNode(id, position, applyFunctionDefineBinding(base, func, overload?.id));
 }
 
 export function functionImplementNode(
@@ -538,7 +550,7 @@ export function functionImplementNode(
   func: FunctionSymbol
 ): VVSNode {
   const overload = func.overloads[0];
-  return usabilityTestNode(id, position, {
+  const base = {
     label: `Define ${func.name}`,
     category: 'Project',
     kindId: 'function_implement',
@@ -546,13 +558,14 @@ export function functionImplementNode(
     outputs: [EXEC_OUT],
     inlineValues: {},
     linkedGraphId: func.id,
-    graphBinding: { kind: 'call_function', symbolId: func.id, overloadId: overload?.id },
+    graphBinding: { kind: 'call_function' as const, symbolId: func.id, overloadId: overload?.id },
     properties: {
       symbolId: func.id,
       name: func.name,
       graphTabId: overload?.graphTabId ?? func.id,
     },
-  });
+  };
+  return usabilityTestNode(id, position, applyFunctionImplementBinding(base, func, overload?.id));
 }
 
 export function eventMemberDefineNode(

@@ -1,4 +1,4 @@
-import type { PinDefinition, FunctionSymbol, GraphBinding, TargetLanguage, ProjectEventDefinition } from '@vvs/graph-types';
+import type { PinDefinition, PinType, FunctionSymbol, GraphBinding, TargetLanguage, ProjectEventDefinition } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { expandEnvironmentSymbols as expandEnvSymbols } from '@vvs/environment-templates';
 import corePack from '../core-pack.json';
@@ -310,17 +310,31 @@ function expandMissingDeclareRows(options: ListRegistryOptions): SpawnNodeTempla
 
   for (const fn of options.functionsMissingDeclare ?? []) {
     const prefix = namingConvention ? getSpawnNamingPrefix('Declare', namingConvention, targetLanguage) : 'Declare';
+    const overload = fn.overloads[0];
+    const paramInputs = overload?.parameters.map((p) => ({
+      id: p.id,
+      label: p.label,
+      type: p.type,
+    })) ?? [];
+    const outputs: PinDefinition[] = [EXEC_OUT];
+    if (overload?.returnType && overload.returnType !== 'void') {
+      outputs.push({
+        id: 'return_val',
+        label: 'Return',
+        type: overload.returnType as PinType,
+      });
+    }
     items.push({
       type: 'function_define',
       kindId: 'function_define',
       kindVersion: 1,
       label: `${prefix} ${fn.name}`,
       category: 'Project',
-      inputs: [EXEC_IN],
-      outputs: [EXEC_OUT],
+      inputs: [EXEC_IN, ...paramInputs],
+      outputs,
       linkedGraphId: fn.id,
       linkKind: 'call_function',
-      graphBinding: { kind: 'call_function', symbolId: fn.id },
+      graphBinding: { kind: 'call_function', symbolId: fn.id, overloadId: overload?.id },
     });
   }
 

@@ -60,6 +60,7 @@ interface UseGraphTabSyncOptions {
   graphContainerIds: string[];
   /** Function symbol ids whose body graphs must survive tab close. */
   functionIds?: string[];
+  functions?: import('@vvs/graph-types').FunctionSymbol[];
   nodes: VVSNode[];
   edges: VVSEdge[];
   setNodes: React.Dispatch<React.SetStateAction<VVSNode[]>>;
@@ -82,6 +83,7 @@ export function useGraphTabSync({
   openTabs,
   graphContainerIds,
   functionIds = [],
+  functions = [],
   nodes,
   edges,
   setNodes,
@@ -317,7 +319,10 @@ export function useGraphTabSync({
     if (!nextDoc) {
       const codegenDefaults = getProjectCodegenDefaults();
       nextDoc = withDefaultMetadata(
-        createDefaultGraphForTab(tabType, tabName, undefined, codegenDefaults),
+        createDefaultGraphForTab(tabType, tabName, undefined, codegenDefaults, {
+          tabId: activeGraphTab,
+          functions,
+        }),
         tabType,
         tabName,
         codegenDefaults
@@ -339,6 +344,7 @@ export function useGraphTabSync({
     flushCurrentTab,
     notifyMetadata,
     getProjectCodegenDefaults,
+    functions,
   ]);
 
   const importGraphTab = useCallback(

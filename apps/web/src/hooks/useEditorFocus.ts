@@ -89,7 +89,7 @@ export function useEditorFocus() {
   const focusFunction = useCallback(
     (func: FunctionSymbol, graphTab?: string) => {
       const tabId = graphTab ?? func.overloads[0]?.graphTabId ?? func.id;
-      openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab);
+      openFunctionGraphTab(func, setOpenTabs, setActiveGraphTab, tabId);
       if (tabId !== func.id) {
         setActiveGraphTab(tabId);
       }

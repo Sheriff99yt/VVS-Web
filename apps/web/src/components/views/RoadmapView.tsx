@@ -162,8 +162,8 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        <span className="text-zinc-300">Priority:</span> Function argument pins & return values (U98–U99) and graph/OOP fidelity (U100–U106).{' '}
-        <span className="text-zinc-300">Just shipped:</span> Multi-language test project examples (U92), Catalog add-node menu audit (U97), Client-first Library redesign (U90), AI / MCP autonomy & safety guard (U91), References viewer redesign (U89).
+        <span className="text-zinc-300">Priority:</span> Event listeners (U100), cross-language async concept (U101), and graph/OOP fidelity (U102–U106).{' '}
+        <span className="text-zinc-300">Just shipped:</span> Function return with arguments (U99), Function argument pins end-to-end (U98), Generic Return/Break/Continue nodes, Multi-language test project examples (U92).
       </p>
     </div>
   );

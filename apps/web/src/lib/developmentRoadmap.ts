@@ -502,6 +502,27 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'function-argument-pins-u98',
+        title: 'Function argument pins (U98)',
+        description:
+          'Function parameters exposed as pins end-to-end on function_define and function_implement nodes; automatic pin synchronization across all open documents when parameters change.',
+        status: 'done',
+      },
+      {
+        id: 'function-return-args-u99',
+        title: 'Function return with arguments (U99)',
+        description:
+          'Return statement node (flow_return) with value input pin lowering to return statements across all 8 target languages.',
+        status: 'done',
+      },
+      {
+        id: 'overloading-revise-u104',
+        title: 'Overloading revise & stress-test (U104)',
+        description:
+          'Audit overload UX and emit; CallNodeOverloadPanel in floating details; graphBinding.overloadId overload resolution across 8 target languages.',
+        status: 'done',
+      },
+      {
         id: 'symbol-spawn-ux',
         title: 'Declare / implement / invoke spawn UX',
         description:
@@ -1196,20 +1217,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     emphasis: 'active',
     items: [
       {
-        id: 'function-argument-pins-u98',
-        title: 'Function argument pins (U98)',
-        description:
-          'Expose and wire function parameters as pins end-to-end (define, call, emit).',
-        status: 'planned',
-      },
-      {
-        id: 'function-return-args-u99',
-        title: 'Function return with arguments (U99)',
-        description:
-          'Return values as pins / multi-return where languages support it — visual + emit.',
-        status: 'planned',
-      },
-      {
         id: 'event-listeners-u100',
         title: 'Event listeners (U100)',
         description:
@@ -1231,13 +1238,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'planned',
       },
       {
-        id: 'overloading-revise-u104',
-        title: 'Overloading revise & stress-test (U104)',
-        description:
-          'Revise overload UX/emit; stress-test current behavior under real fixtures and fix or document gaps.',
-        status: 'planned',
-      },
-      {
         id: 'overwriting-study-u105',
         title: 'Overwriting (override) study (U105)',
         description:
@@ -1249,6 +1249,13 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Inheritance design (U106)',
         description:
           'Design how inheritance is authored on the canvas and lowered per language (pairs with CL-010 Rust plan).',
+        status: 'planned',
+      },
+      {
+        id: 'flow-control-return-break-continue',
+        title: 'Generic flow control (Return, Break, Continue)',
+        description:
+          'Generic control-flow nodes (Return, Break, Continue) that lower to target-language statements across all syntax packs.',
         status: 'planned',
       },
     ],

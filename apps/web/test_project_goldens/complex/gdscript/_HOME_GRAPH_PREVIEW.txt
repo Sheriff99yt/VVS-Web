@@ -21,6 +21,10 @@ class_name Machine
     func Shutdown() -> void:
         self.Ready = false
         print("Shutdown")
+    # (x) Declare Calculate
+    func Calculate(a, b) -> void:
+        print("Calculating")
+        return
     func on_pulse() -> void:
         print(("Power=" + str(self.Power)))
     func on_start() -> void:
@@ -28,6 +32,7 @@ class_name Machine
         var _vvs_input_lab_get_input = OS.read_string_from_stdin()
         print(_vvs_input_lab_get_input)
         self.Boot()
+        self.Calculate()
         if self.Ready:
             self.on_pulse()
         else:

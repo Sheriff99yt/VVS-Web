@@ -1,5 +1,5 @@
 import type { GraphTab, FunctionSymbol, FunctionBinding } from '@vvs/graph-types';
-import { createDefaultOverload } from '@vvs/graph-types';
+import { createDefaultOverload, overloadReturnParameters } from '@vvs/graph-types';
 import type { Dispatch, SetStateAction } from 'react';
 import { reorderById } from '@/lib/symbolOrder';
 
@@ -73,11 +73,16 @@ export function overloadDisplayLabel(overload: FunctionSymbol['overloads'][numbe
 
 export function overloadTreeLabel(overload: FunctionSymbol['overloads'][number]): string {
   const sig = overloadDisplayLabel(overload);
-  const ret =
-    overload.returnType === 'void'
-      ? 'void'
-      : overload.returnType.replace(/^data_/, '');
-  return `${sig} → ${ret}`;
+  const returns = overloadReturnParameters(overload);
+  if (returns.length === 0) {
+    return `${sig} → void`;
+  }
+  if (returns.length === 1) {
+    const retLabel = returns[0]!.type.replace(/^data_/, '');
+    return `${sig} → ${retLabel}`;
+  }
+  const retLabels = returns.map((r) => r.type.replace(/^data_/, ''));
+  return `${sig} → (${retLabels.join(', ')})`;
 }
 
 /** Append a new overload and return ids needed to open its graph tab. */

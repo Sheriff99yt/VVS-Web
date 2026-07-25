@@ -112,7 +112,7 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
     return { kind: 'function', symbolId, displayName };
   }
 
-  if (kindId === 'function_entry') {
+  if (kindId === 'function_entry' || kindId === 'function_implement' || kindId === 'flow_return' || kindId === 'action_return') {
     const symbolId =
       data.graphBinding?.symbolId ??
       (typeof data.properties?.functionId === 'string' ? data.properties.functionId : undefined) ??

@@ -22,7 +22,7 @@ import { resolve as resolveKind } from '@/lib/nodeRegistry';
 import { classHomeGraphId, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
-import { resolveOverloadForCall, buildFunctionImplementData } from '@/lib/functionHelpers';
+import { resolveOverloadForCall, buildFunctionImplementData, applyFunctionDefineBinding, applyFunctionImplementBinding } from '@/lib/functionHelpers';
 import { applyEventDefineBinding } from '@/lib/eventHelpers';
 import { getLastGraphFlowPosition } from '@/lib/graphPointerPlacement';
 
@@ -91,7 +91,7 @@ function buildFunctionDefineData(
   const def = resolveKind('function_define');
   const paramSummary = overload.parameters.map((p) => p.type.replace(/^data_/, '')).join(', ');
   const sigSuffix = paramSummary ? `(${paramSummary})` : '()';
-  return normalizeNodeData({
+  const baseData = normalizeNodeData({
     label: `Declare ${func.name}${sigSuffix}`,
     category: 'Project',
     kindId: 'function_define',
@@ -116,6 +116,8 @@ function buildFunctionDefineData(
       graphTabId: overload.graphTabId ?? func.id,
     },
   });
+  // Apply parameter pins using the new binding function
+  return applyFunctionDefineBinding(baseData, func, overload.id);
 }
 
 function buildEventDefineData(event: ProjectEventDefinition, existingProperties?: Record<string, unknown>): VVSNodeData {
@@ -722,15 +724,21 @@ export function syncDefineNodesForSymbol(
   const activeOverloadIds = new Set(func.overloads.map((o) => o.id));
 
   for (const node of doc.nodes) {
-    if (node.data.kindId === 'function_define' && node.data.properties?.symbolId === func.id) {
+    if (
+      (node.data.kindId === 'function_define' || node.data.kindId === 'function_implement') &&
+      (node.data.properties?.symbolId === func.id || node.data.graphBinding?.symbolId === func.id)
+    ) {
       const overloadId = (node.data.properties?.overloadId || node.data.graphBinding?.overloadId) as string | undefined;
-      if (!overloadId || !activeOverloadIds.has(overloadId)) {
+      if (node.data.kindId === 'function_define' && (!overloadId || !activeOverloadIds.has(overloadId))) {
         // Drop node because overload was deleted
         docChanged = true;
         continue;
       }
-      const overload = func.overloads.find((o) => o.id === overloadId)!;
-      const updatedData = buildFunctionDefineData(func, overload, node.data.properties);
+      const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0]!;
+      const updatedData =
+        node.data.kindId === 'function_implement'
+          ? applyFunctionImplementBinding(node.data, func, overload.id)
+          : buildFunctionDefineData(func, overload, node.data.properties);
       nextNodes.push({
         ...node,
         data: {

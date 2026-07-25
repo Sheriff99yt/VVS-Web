@@ -21,12 +21,17 @@ class Machine:
     async def Shutdown(self):
         self.Ready = False
         print("Shutdown")
+    # (x) Declare Calculate
+    def Calculate(self, a, b):
+        print("Calculating")
+        return
     def on_pulse(self):
         print(("Power=" + str(self.Power)))
     def on_start(self):
         _vvs_input_lab_get_input = input("Operator name?")
         print(_vvs_input_lab_get_input)
         self.Boot()
+        self.Calculate()
         if self.Ready:
             self.on_pulse()
         else:

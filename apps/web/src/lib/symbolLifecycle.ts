@@ -24,7 +24,13 @@ import {
 } from '@vvs/graph-types';
 import { createVariableSymbol } from '@vvs/graph-types';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
-import { applyFunctionCallBinding } from '@/lib/functionHelpers';
+import {
+  applyFunctionCallBinding,
+  applyFunctionDefineBinding,
+  applyFunctionEntryBinding,
+  applyFunctionImplementBinding,
+  applyFunctionReturnBinding,
+} from '@/lib/functionHelpers';
 import { applyEventDefineBinding, applyEventDispatchBinding, applyEventEmitBinding, applyEventSubscribeBinding, createEventId } from '@/lib/eventHelpers';
 import { createFunctionSymbol } from '@/lib/functionTabs';
 import { formatFunctionTabName } from '@/lib/functionTabs';
@@ -138,8 +144,44 @@ function syncNodeForVariable(node: GraphNode, variable: VariableSymbol): GraphNo
   };
 }
 
-function syncNodeForFunction(node: GraphNode, func: FunctionSymbol): GraphNode {
-  const overloadId = node.data.graphBinding?.overloadId;
+export function syncNodeForFunction(node: GraphNode, func: FunctionSymbol, tabId?: string): GraphNode {
+  const kindId = resolveNodeKindId(node.data);
+  let overloadId =
+    node.data.graphBinding?.overloadId ??
+    (typeof node.data.properties?.overloadId === 'string' ? node.data.properties.overloadId : undefined);
+
+  if (!overloadId && tabId && tabId.startsWith(`${func.id}::`)) {
+    overloadId = tabId.split('::')[1];
+  }
+
+  if (kindId === 'function_entry') {
+    return {
+      ...node,
+      data: applyFunctionEntryBinding(node.data, func, overloadId),
+    };
+  }
+
+  if (kindId === 'function_define') {
+    return {
+      ...node,
+      data: applyFunctionDefineBinding(node.data, func, overloadId),
+    };
+  }
+
+  if (kindId === 'function_implement') {
+    return {
+      ...node,
+      data: applyFunctionImplementBinding(node.data, func, overloadId),
+    };
+  }
+
+  if (kindId === 'flow_return' || kindId === 'action_return') {
+    return {
+      ...node,
+      data: applyFunctionReturnBinding(node.data, func, overloadId),
+    };
+  }
+
   return {
     ...node,
     data: applyFunctionCallBinding(node.data, func, overloadId),
@@ -179,10 +221,10 @@ export function applyFunctionUpdateToDocuments(
   func: FunctionSymbol
 ): Record<string, GraphDocument> {
   const updated = fromCoreDocuments(
-    mapDocuments(asCoreDocuments(documents), (_tabId, node) => {
+    mapDocuments(asCoreDocuments(documents), (tabId, node) => {
       const ref = resolveNodeSymbolRef(node);
       if (!ref || ref.kind !== 'function' || ref.symbolId !== func.id) return node;
-      return syncNodeForFunction(node as GraphNode, func);
+      return syncNodeForFunction(node as GraphNode, func, tabId);
     })
   );
   return syncDefineNodesForSymbol(updated, 'function', func);

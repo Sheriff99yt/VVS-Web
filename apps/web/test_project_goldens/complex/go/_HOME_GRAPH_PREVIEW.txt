@@ -23,6 +23,11 @@ func Shutdown() void {
 	self.Ready = false
 	fmt.Println("Shutdown")
 }
+	// (x) Declare Calculate
+func Calculate(a, b) data_number {
+	fmt.Println("Calculating")
+	return
+}
 func (self *Machine) on_pulse() {
 	fmt.Println(("Power=" + fmt.Sprintf("%v", self.Power)))
 }
@@ -33,6 +38,7 @@ func (self *Machine) on_start() {
 	_vvs_input_lab_get_input := scanner.Text()
 	fmt.Println(_vvs_input_lab_get_input)
 	self.Boot()
+	self.Calculate()
 	// if (self.Ready)
 }
 }

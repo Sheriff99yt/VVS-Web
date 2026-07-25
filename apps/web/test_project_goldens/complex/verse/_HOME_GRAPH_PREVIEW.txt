@@ -21,6 +21,10 @@
     Shutdown<public>() : void =
         set Ready = false
         Print("Shutdown")
+    # (x) Declare Calculate
+    Calculate<public>(a : float, b : float) : void =
+        Print("Calculating")
+        return
     on_pulse() : void =
         Print(("Power=" + ToString(Power)))
     on_start() : void =
@@ -28,6 +32,7 @@
         var _vvs_input_lab_get_input : string = ""
         Print(_vvs_input_lab_get_input)
         Boot()
+        Calculate()
         if (Ready?):
             on_pulse()
         else:

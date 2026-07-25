@@ -10,7 +10,7 @@ export function generatedFileName(
 ): string {
   const ext = resolveTargetFileExtension(targetLanguage, targetFileExtensions);
   if (tab.type === 'main' || (tab.type === 'container' && className)) {
-    const base = (className ?? moduleName).replace(/\s+/g, '_').toLowerCase() || 'module';
+    const base = (className ?? moduleName ?? 'Main').replace(/\s+/g, '_').toLowerCase() || 'module';
     return `${base}.${ext}`;
   }
   const base =

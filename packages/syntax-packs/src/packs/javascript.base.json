@@ -147,6 +147,18 @@
     },
     "ModuleImportIncludeSystem": {
       "quasi": "import \"{mod}\""
+    },
+    "ReturnVal": {
+      "quasi": "return {value};"
+    },
+    "ReturnVoid": {
+      "quasi": "return;"
+    },
+    "Break": {
+      "quasi": "break;"
+    },
+    "Continue": {
+      "quasi": "continue;"
     }
   }
 }

@@ -116,6 +116,18 @@
     },
     "ArrayPush": {
       "quasi": "set {array} += array{{value}}"
+    },
+    "ReturnVal": {
+      "quasi": "return {value}"
+    },
+    "ReturnVoid": {
+      "quasi": "return"
+    },
+    "Break": {
+      "quasi": "break"
+    },
+    "Continue": {
+      "quasi": "break"
     }
   }
 }

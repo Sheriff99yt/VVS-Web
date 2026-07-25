@@ -4,7 +4,7 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-07-23  
-**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97 · U102 · U107 · U108–U119 done; U98–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97 / U102 / U107 / U108–U119 done; U98–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
 **Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 / U98–U101 / U103–U106 open
 
@@ -316,8 +316,8 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | # | Item | Status | Spec |
 |---|------|--------|------|
 | U97 | **Add-node menu audit** (imports + all catalog nodes) | **Done** | Full catalog audit completed; naming convention prefixes integrated into spawn menu labels. All 38 nodes verified for correct spawnability, categorization, and dynamic handling. |
-| U98 | **Function argument pins** | **Open** | Parameters as pins end-to-end (define · call · emit). |
-| U99 | **Function return with arguments** | **Open** | Return / multi-return as pins where targets support it — visual + emit. |
+| U98 | **Function argument pins** | **Done** | Parameter input pins populated on function_define and function_implement nodes end-to-end; syncs on parameter list changes. |
+| U99 | **Function return with arguments** | **Done** | Return statement node (`flow_return`) with value pin lowering to return statements across all 8 target languages. |
 | U100 | **Event listeners** | **Open** | Listen / subscribe visuals that map to text across languages (beyond entry/dispatch). |
 | U101 | **Cross-language async concept** | **Open** | Language-neutral async model (nodes, options, or hybrid) that packs can map — not one-off per language. |
 | U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chips on **hover** (pinned while menus open). Selection toolbar + right-click menus with shortcuts remain. |

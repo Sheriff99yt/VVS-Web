@@ -32,6 +32,8 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 | Focus | IDs |
 |-------|-----|
+| **Function argument pins end-to-end** (define, implement, call, emit) | U98 |
+| **Function return with arguments** (Return node & value pin codegen) | U99 |
 | **Multi-language test project examples** (24 goldens across 8 languages) | U92 |
 | **Catalog & add-node menu audit** (synonyms, module import spawn) | U97 |
 | **Client-first Library** page redesign (Git repo import, OpenAPI/AsyncAPI templates) | U90 |
@@ -82,20 +84,23 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | **U91** | **AI / MCP** audit | Partial — Windsurf paste + consent; full autonomy audit open |
 | **U92** | **New examples** | Partial — Branch Lab shipped; more cross-lang / lang-specific open |
 | **U93** | **Code → visual** | Long-term reverse import research |
+| **U118** | **Dynamic naming conventions** | Done — Settings to make node titles follow specific language keywords or auto-follow selected language |
+| **U119** | **Bad practices / safety settings** | Done — Settings toggles and Compiler Log warnings for multiple exec connections and dynamic/weak typing |
 
 ### Graph model (U97–U106)
 
 | # | Item | Notes |
 |---|------|--------|
 | **U97** | Add-node menu audit | Done — Full catalog audit + naming convention integration |
-| **U98** | Function argument pins | Define / call / emit end-to-end |
-| **U99** | Function return with arguments | Pins / multi-return where languages support it |
+| **U98** | Function argument pins | Done — Define / implement / call / emit end-to-end; auto-sync across documents |
+| **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with value pin lowering across 8 target languages |
 | **U100** | Event listeners | Listen / subscribe visuals across targets |
 | **U101** | Cross-language async concept | Language-neutral model for all packs |
 | **U103** | Components | Visual concept + multi-lang Test Project proof |
-| **U104** | Overloading | Revise UX/emit; stress-test |
+| **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
 | **U105** | Overwriting (override) | Study vs current modifiers |
 | **U106** | Inheritance | Canvas authoring + per-language lowering (pairs CL-010) |
+| **Flow Control** | Generic Return, Break, Continue | Language-neutral control-flow nodes that lower across all syntax packs |
 
 Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no** live run.
 

@@ -80,13 +80,16 @@ import {
 import { getLinkedEnvironmentManifest } from '@/lib/environmentContext';
 import {
   applyFunctionCallBinding,
+  applyFunctionReturnBinding,
+  applyFunctionEntryBinding,
   buildFunctionImplementData,
   FUNCTION_RENAMED_EVENT,
   FUNCTION_OVERLOAD_DRAG_MIME,
   resolveOverloadForCall,
-  syncCallNodesForFunction,
+  resolveFunctionForNode,
   type FunctionOverloadDragPayload,
 } from '@/lib/functionHelpers';
+import { syncNodeForFunction } from '@/lib/symbolLifecycle';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { clearCanvasSelectionKeepTreeSymbol, isTreeSymbolSelection } from '@/lib/projectSelection';
 
@@ -598,6 +601,58 @@ function GraphCanvasInner() {
     clearPendingCanvasFocus();
   }, [pendingCanvasFocus, activeGraphTab, nodes, focusGraphNode, clearPendingCanvasFocus]);
 
+  // Convert tree symbol selection into a concrete node focus once the node exists
+  const processedTreeSymbolFocusRef = React.useRef<{ type: string; id: string } | null>(null);
+
+  React.useEffect(() => {
+    if (!isTreeSymbolSelection(selection.type) || !selection.id) {
+      processedTreeSymbolFocusRef.current = null;
+      return;
+    }
+
+    if (
+      processedTreeSymbolFocusRef.current?.type === selection.type &&
+      processedTreeSymbolFocusRef.current?.id === selection.id
+    ) {
+      return;
+    }
+
+    let targetNodeId: string | null = null;
+    if (selection.type === 'function') {
+      const entryNode = nodes.find(
+        (n) =>
+          (n.data.kindId === 'function_entry' || n.data.kindId === 'function_implement') &&
+          (n.data.graphBinding?.symbolId === selection.id ||
+            n.data.properties?.symbolId === selection.id ||
+            n.data.properties?.functionId === selection.id)
+      );
+      if (entryNode) targetNodeId = entryNode.id;
+    } else if (selection.type === 'event') {
+      const entryNode = nodes.find(
+        (n) =>
+          n.data.kindId === 'event_member_define' &&
+          (n.data.graphBinding?.symbolId === selection.id ||
+            n.data.properties?.symbolId === selection.id ||
+            n.data.properties?.eventId === selection.id)
+      );
+      if (entryNode) targetNodeId = entryNode.id;
+    } else if (selection.type === 'variable') {
+      const entryNode = nodes.find(
+        (n) =>
+          n.data.kindId === 'variable_member_define' &&
+          (n.data.graphBinding?.symbolId === selection.id ||
+            n.data.properties?.symbolId === selection.id ||
+            n.data.properties?.variableId === selection.id)
+      );
+      if (entryNode) targetNodeId = entryNode.id;
+    }
+
+    if (targetNodeId) {
+      processedTreeSymbolFocusRef.current = { type: selection.type, id: selection.id };
+      dispatchNavigateToNode(activeGraphTab, targetNodeId);
+    }
+  }, [selection.type, selection.id, nodes, activeGraphTab]);
+
   const processedViewportRequestRef = React.useRef<number | null>(null);
   const cameraDwellTimerRef = React.useRef<number | null>(null);
   const userCameraGestureRef = React.useRef(false);
@@ -1035,6 +1090,26 @@ function GraphCanvasInner() {
         const event = classEvents.find((e) => e.id === template.graphBinding?.symbolId);
         if (event) {
           newNode.data = applyEventDispatchBinding(newNode.data, event);
+        }
+      }
+
+      // Auto-bind Return / Entry nodes to the owning function when inside a function graph.
+      if (template.type === 'flow_return' || template.type === 'action_return' || template.type === 'function_entry') {
+        const parts = activeGraphTab.split('::');
+        const funcId = parts[0];
+        const overloadIdFromTab = parts[1];
+        const func = functions.find((f) => f.id === funcId || f.overloads.some((o) => o.graphTabId === activeGraphTab));
+        if (func) {
+          const overload = overloadIdFromTab
+            ? func.overloads.find((o) => o.id === overloadIdFromTab)
+            : func.overloads.find((o) => o.graphTabId === activeGraphTab) ?? func.overloads[0];
+          const oid = overload?.id;
+          if (template.type === 'flow_return' || template.type === 'action_return') {
+            newNode.data = applyFunctionReturnBinding(newNode.data, func, oid);
+          } else {
+            newNode.data = applyFunctionEntryBinding(newNode.data, func, oid);
+          }
+          newNode.data = { ...newNode.data, resolvedPorts: { inputs: newNode.data.inputs, outputs: newNode.data.outputs } };
         }
       }
 
@@ -1827,7 +1902,11 @@ function GraphCanvasInner() {
   React.useEffect(() => {
     const handleFunctionRenamed = (event: Event) => {
       const { func } = (event as CustomEvent<{ func: import('@/types/graph').FunctionSymbol }>).detail;
-      setNodesWithHistory((nds) => syncCallNodesForFunction(nds, func) as VVSNodeType[]);
+      setNodesWithHistory((nds) => nds.map((n) => {
+        const matched = resolveFunctionForNode(n.data, [func]);
+        if (!matched || matched.id !== func.id) return n;
+        return syncNodeForFunction(n, func, activeGraphTab);
+      }) as VVSNodeType[]);
     };
     window.addEventListener(FUNCTION_RENAMED_EVENT, handleFunctionRenamed);
     return () => window.removeEventListener(FUNCTION_RENAMED_EVENT, handleFunctionRenamed);
