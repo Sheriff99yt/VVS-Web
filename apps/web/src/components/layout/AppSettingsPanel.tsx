@@ -207,6 +207,7 @@ export function AppSettingsPanel({ onCloseSettings, searchQuery }: AppSettingsPa
             <SettingCard label="Naming convention" description="Make node titles follow target keywords">
               <SearchableSelect
                 value={namingConvention}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(next) => setNamingConvention(next as any)}
                 searchable={false}
                 options={[

@@ -11,6 +11,9 @@ import {
   insertProgramEntryHandlerNode,
   syncDefineNodesForClass,
   relocateClassHomeGraph,
+  insertDefineNodeForFunction,
+  insertImplementNodeForFunction,
+  syncDefineNodesForSymbol,
 } from './defineNodeSync';
 
 describe('defineNodeSync', () => {
@@ -159,5 +162,80 @@ describe('defineNodeSync', () => {
     expect(next['container-a']!.nodes).toHaveLength(0);
     expect(next['container-b']!.nodes).toHaveLength(1);
     expect(next['container-b']!.nodes[0]?.id).toBe('class-define-cls-moved');
+  });
+
+  it('includes only execution pins on function_define and function_implement nodes', () => {
+    const cls = createClassSymbol('Calc', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+    const func = {
+      id: 'fn-add',
+      name: 'Add',
+      classId: cls.id,
+      visibility: 'public' as const,
+      binding: 'instance' as const,
+      overloads: [
+        {
+          id: 'ov-add',
+          parameters: [
+            { id: 'p-x', label: 'X', type: 'data_number' as const },
+            { id: 'p-y', label: 'Y', type: 'data_number' as const },
+          ],
+          returnType: 'data_number',
+        },
+      ],
+    };
+
+    let documents = { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } };
+    documents = insertDefineNodeForVariable(documents, cls, createVariableSymbol('dummy', { classId: cls.id }));
+
+    // Insert function_define and function_implement
+    documents = insertDefineNodeForFunction(documents, cls, func);
+    documents = insertImplementNodeForFunction(documents, cls, func);
+
+    const doc = documents[MAIN_GRAPH_CONTAINER_ID]!;
+    const defNode = doc.nodes.find((n) => n.data.kindId === 'function_define');
+    const implNode = doc.nodes.find((n) => n.data.kindId === 'function_implement');
+
+    expect(defNode).toBeDefined();
+    expect(defNode?.data.inputs).toEqual([
+      { id: 'exec_in', label: '', type: 'execution' },
+    ]);
+    expect(defNode?.data.outputs).toEqual([
+      { id: 'exec_out', label: '', type: 'execution' },
+    ]);
+
+    expect(implNode).toBeDefined();
+    expect(implNode?.data.inputs).toEqual([
+      { id: 'exec_in', label: '', type: 'execution' },
+    ]);
+    expect(implNode?.data.outputs).toEqual([
+      { id: 'exec_out', label: '', type: 'execution' },
+    ]);
+
+    // Test sync when function parameter changes
+    const updatedFunc = {
+      ...func,
+      overloads: [
+        {
+          id: 'ov-add',
+          parameters: [
+            { id: 'p-x', label: 'X', type: 'data_number' as const },
+            { id: 'p-y', label: 'Y', type: 'data_number' as const },
+            { id: 'p-z', label: 'Z', type: 'data_number' as const },
+          ],
+          returnType: 'data_number',
+        },
+      ],
+    };
+
+    const syncedDocs = syncDefineNodesForSymbol(documents, 'function', updatedFunc);
+    const syncedDoc = syncedDocs[MAIN_GRAPH_CONTAINER_ID]!;
+    const syncedDef = syncedDoc.nodes.find((n) => n.data.kindId === 'function_define');
+    const syncedImpl = syncedDoc.nodes.find((n) => n.data.kindId === 'function_implement');
+
+    expect(syncedDef?.data.inputs).toHaveLength(1); // just exec_in
+    expect(syncedImpl?.data.inputs).toHaveLength(1); // just exec_in
   });
 });

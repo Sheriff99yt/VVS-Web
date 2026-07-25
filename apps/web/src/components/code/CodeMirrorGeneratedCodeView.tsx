@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
+import { EditorView, Decoration, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { StateField, StateEffect, RangeSetBuilder, type SelectionRange } from '@codemirror/state';
 import type { SourceRange } from '@/types/transpile';
 import type { CodeHighlightRange, GeneratedCodeViewProps } from './types';
@@ -219,7 +219,7 @@ export function CodeMirrorGeneratedCodeView({
     };
   }, []);
 
-  const handleUpdate = useCallback((update: any) => {
+  const handleUpdate = useCallback((update: ViewUpdate) => {
     if (!update.selectionSet) return;
     hasSelectionRef.current = Boolean(selectionFromView(update.view));
   }, []);
