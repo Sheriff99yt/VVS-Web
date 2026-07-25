@@ -38,7 +38,7 @@ func (self *Machine) on_start() {
 	_vvs_input_lab_get_input := scanner.Text()
 	fmt.Println(_vvs_input_lab_get_input)
 	self.Boot()
-	self.Calculate()
+	self.Calculate(0, 0)
 	// if (self.Ready)
 }
 }

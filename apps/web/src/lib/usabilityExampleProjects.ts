@@ -2,13 +2,14 @@ import { ProjectSnapshot } from '@/types/projectSnapshot';
 import { createFirstGraphUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/firstGraphUsabilityTest';
 import { createCoverageLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/coverageLabUsabilityTest';
 import { createBranchLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/branchLabUsabilityTest';
+import { createNewFeaturesUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/newFeaturesUsabilityTest';
 import {
   createProjectId,
   loadProjectFromStore,
   writeProjectPayload,
 } from '@/lib/projectStore';
 
-export type UsabilityTestLevel = 'simple' | 'complex' | 'branch';
+export type UsabilityTestLevel = 'simple' | 'complex' | 'branch' | 'new-features';
 
 /** @deprecated Use `UsabilityTestLevel` */
 export type ExampleLevel = UsabilityTestLevel;
@@ -77,6 +78,17 @@ export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
       '1:1 member order',
     ],
     create: createCoverageLabUsabilityTestSnapshot,
+  },
+  {
+    id: 'new-features',
+    stableProjectId: 'vvs-test-new-features',
+    level: 'new-features',
+    title: 'New Features Lab',
+    moduleName: 'NewFeaturesLab',
+    description:
+      'Demonstrates Global Scope, Function Overloads with arguments, and Events with parameters.',
+    highlights: ['Global Scope', 'Function Overloads', 'Event Parameters'],
+    create: createNewFeaturesUsabilityTestSnapshot,
   },
 ];
 

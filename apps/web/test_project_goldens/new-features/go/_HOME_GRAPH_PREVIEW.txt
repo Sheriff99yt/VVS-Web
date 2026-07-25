@@ -1,0 +1,22 @@
+// ===== src/NewFeaturesLab.go =====
+func (self *MainClass) on_start() {
+	Global.on_ondatareceived(("Hello from Global: " + self.GlobalGreeting))
+}
+type MainClass struct {
+}
+	var GlobalGreeting string = "World"
+	// (x) Declare ProcessData
+func ProcessData(a, b) data_number {
+	self.ProcessData((a + b))
+func ProcessData(a, b) data_string {
+	// empty
+}
+func ProcessData(a, b) data_number {
+	self.ProcessData((a + b))
+func ProcessData(a, b) data_string {
+	// empty
+}
+func (self *Global) on_ondatareceived(payload string) {
+	self.ProcessData(payload, payload)
+	fmt.Println("/* Call ProcessData.return_val */")
+}

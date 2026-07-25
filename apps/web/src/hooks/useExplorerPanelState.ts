@@ -130,15 +130,18 @@ export function useExplorerPanelState(input: {
     [classEvents, documents, classes]
   );
 
-  const filteredClasses = useMemo(
-    () =>
-      classes.filter((cls) => {
-        if (matchesExplorerFilter(cls.name, q)) return true;
-        const container = graphContainers.find((c) => c.id === classContainerId(cls));
-        return container ? matchesExplorerFilter(container.name, q) : false;
-      }),
-    [classes, graphContainers, q]
-  );
+  const filteredClasses = useMemo(() => {
+    const filtered = classes.filter((cls) => {
+      if (matchesExplorerFilter(cls.name, q)) return true;
+      const container = graphContainers.find((c) => c.id === classContainerId(cls));
+      return container ? matchesExplorerFilter(container.name, q) : false;
+    });
+    return filtered.sort((a, b) => {
+      if (a.isGlobalScope && !b.isGlobalScope) return -1;
+      if (!a.isGlobalScope && b.isGlobalScope) return 1;
+      return 0;
+    });
+  }, [classes, graphContainers, q]);
 
   const filteredFunctions = useMemo(
     () => classFunctions.filter((f) => matchesExplorerFilter(f.name, q)),

@@ -1,0 +1,24 @@
+// ===== src/NewFeaturesLab.rs =====
+    pub fn on_start(&mut self) {
+        Global::new().on_ondatareceived(("Hello from Global: " + self.GlobalGreeting));
+    }
+pub struct MainClass {
+
+}
+
+    pub GlobalGreeting: String,
+    // (x) Declare ProcessData
+    pub fn ProcessData(&mut self, a: f32, b: f32) {
+        self.ProcessData((a + b));
+    pub fn ProcessData(&mut self, a: String, b: String) {
+        // empty
+    }
+    pub fn ProcessData(&mut self, a: f32, b: f32) {
+        self.ProcessData((a + b));
+    pub fn ProcessData(&mut self, a: String, b: String) {
+        // empty
+    }
+    pub fn on_ondatareceived(&mut self, payload: String) {
+        self.ProcessData(payload, payload);
+        println!("{}", "/* Call ProcessData.return_val */");
+    }

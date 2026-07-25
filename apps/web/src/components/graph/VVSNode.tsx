@@ -32,7 +32,7 @@ interface VVSNodeBodyProps {
 
 function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const { updateNodeData } = useReactFlow();
-  const { validationErrors, validationWarnings, activeGraphTab } = useProject();
+  const { validationErrors, validationWarnings, activeGraphTab, classes, activeClassId } = useProject();
   const documents = useGraphDocuments();
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const [dimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
@@ -51,8 +51,12 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
     kindId === 'event_member_define'
       ? Boolean(eventId && documents && hasHandlerNodeForEvent(documents, eventId))
       : undefined;
-  const effectivenessOpts =
-    kindId === 'event_member_define' ? { eventHasHandler } : undefined;
+  const activeClass = classes.find((c) => c.id === activeClassId);
+  const isGlobalScope = activeClass?.isGlobalScope;
+  const effectivenessOpts = {
+    eventHasHandler,
+    isGlobalScope,
+  };
   const isUnsupported =
     dimUnsupportedNodes &&
     !isNodeEffectiveForLanguage(kindId, data.properties, targetLanguage, effectivenessOpts);

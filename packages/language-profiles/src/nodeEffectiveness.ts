@@ -28,6 +28,8 @@ export type NodeEffectivenessOptions = {
    * When `true` or omitted, treated as effective (signature owned with On).
    */
   eventHasHandler?: boolean;
+  /** Whether the node belongs to the Global scope class. */
+  isGlobalScope?: boolean;
 };
 
 function isImportKind(kindId: string): boolean {
@@ -112,6 +114,18 @@ export function nodeEffectiveness(
   const lang = targetLanguage.trim().toLowerCase();
   const gates = parseNodeTargetLanguages(properties);
 
+  if (options?.isGlobalScope && lang === 'csharp') {
+    if (
+      isFunctionDeclareKind(kindId) ||
+      isEventDeclareKind(kindId) ||
+      kindId === 'class_define' ||
+      kindId === 'variable_define' ||
+      kindId === 'function_implement'
+    ) {
+      return 'ineffective';
+    }
+  }
+
   if (isImportKind(kindId)) {
     return applyLanguageGates(gates, lang);
   }
@@ -151,8 +165,19 @@ export function nodeIneffectiveTooltip(
   options?: NodeEffectivenessOptions
 ): string {
   if (isNodeEffectiveForLanguage(kindId, properties, targetLanguage, options)) return '';
-  const gates = parseNodeTargetLanguages(properties);
   const lang = (targetLanguage.trim() || 'this language') as TargetLanguage | string;
+  if (options?.isGlobalScope && String(lang).toLowerCase() === 'csharp') {
+    if (
+      isFunctionDeclareKind(kindId) ||
+      isEventDeclareKind(kindId) ||
+      kindId === 'class_define' ||
+      kindId === 'variable_define' ||
+      kindId === 'function_implement'
+    ) {
+      return 'File-level globals not supported in C#';
+    }
+  }
+  const gates = parseNodeTargetLanguages(properties);
   if (gates.length > 0) {
     return `Not emitted for ${lang} — gated to ${gates.join(', ')}`;
   }

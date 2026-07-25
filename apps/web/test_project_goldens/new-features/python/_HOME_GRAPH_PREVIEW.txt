@@ -1,0 +1,17 @@
+// ===== src/NewFeaturesLab.py =====
+    def on_start(self):
+        Global().on_ondatareceived(("Hello from Global: " + self.GlobalGreeting))
+class MainClass:
+    GlobalGreeting = "World"
+    # (x) Declare ProcessData
+    def ProcessData(self, a, b):
+        self.ProcessData((a + b))
+    def ProcessData(self, a, b):
+        pass
+    def ProcessData(self, a, b):
+        self.ProcessData((a + b))
+    def ProcessData(self, a, b):
+        pass
+    def on_ondatareceived(self, payload):
+        self.ProcessData(payload, payload)
+        print("/* Call ProcessData.return_val */")

@@ -143,4 +143,36 @@ describe('nodeEffectiveness', () => {
     expect(declareTip).toContain('prototype');
     expect(nodeIneffectiveTooltip('function_define', {}, 'cpp')).toBe('');
   });
+
+  test('Global Scope: ineffective for strictly OOP languages', () => {
+    // Ineffective in C#
+    expect(
+      nodeEffectiveness('function_define', {}, 'csharp', { isGlobalScope: true })
+    ).toBe('ineffective');
+    expect(
+      nodeEffectiveness('variable_define', {}, 'csharp', { isGlobalScope: true })
+    ).toBe('ineffective');
+    expect(
+      nodeEffectiveness('event_member_define', {}, 'csharp', { isGlobalScope: true, eventHasHandler: true })
+    ).toBe('ineffective');
+    expect(
+      nodeEffectiveness('function_implement', {}, 'csharp', { isGlobalScope: true })
+    ).toBe('ineffective');
+    expect(
+      nodeEffectiveness('class_define', {}, 'csharp', { isGlobalScope: true })
+    ).toBe('ineffective');
+
+    // Effective in Python/JS/CPP/etc.
+    expect(
+      nodeEffectiveness('function_implement', {}, 'python', { isGlobalScope: true })
+    ).toBe('effective');
+    expect(
+      nodeEffectiveness('variable_define', {}, 'cpp', { isGlobalScope: true })
+    ).toBe('effective');
+    
+    // Tooltip validation
+    const tip = nodeIneffectiveTooltip('function_define', {}, 'csharp', { isGlobalScope: true });
+    expect(tip).toContain('File-level globals');
+    expect(tip).toContain('not supported in C#');
+  });
 });

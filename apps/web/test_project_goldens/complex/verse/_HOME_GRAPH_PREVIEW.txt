@@ -32,7 +32,7 @@
         var _vvs_input_lab_get_input : string = ""
         Print(_vvs_input_lab_get_input)
         Boot()
-        Calculate()
+        Calculate(0, 0)
         if (Ready?):
             on_pulse()
         else:

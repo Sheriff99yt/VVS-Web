@@ -28,13 +28,13 @@
       "quasi": "{target} = {value}"
     },
     "CallInstance": {
-      "quasi": "self.{callee}()"
+      "quasi": "self.{callee}({args})"
     },
     "CallFunction": {
-      "quasi": "{callee}()"
+      "quasi": "{callee}({args})"
     },
     "CallCrossClass": {
-      "quasi": "{receiver}.{callee}()"
+      "quasi": "{receiver}.{callee}({args})"
     },
     "DispatchEvent": {
       "quasi": "self.on_{handler}({args})"

@@ -148,6 +148,7 @@ export interface ClassSymbol {
   /** Graph canvas that hosts this class define chain and runtime nodes. */
   containerId?: string;
   visibility?: SymbolVisibility;
+  isGlobalScope?: boolean;
 }
 
 export function classHomeGraphId(cls: ClassSymbol): string {
@@ -179,6 +180,7 @@ export function createClassSymbol(
     graphTabId?: string;
     containerId?: string;
     visibility?: SymbolVisibility;
+    isGlobalScope?: boolean;
   }
 ): ClassSymbol {
   const id = options?.id ?? createClassId();
@@ -191,6 +193,7 @@ export function createClassSymbol(
     graphTabId: options?.graphTabId,
     containerId: options?.containerId ?? MAIN_GRAPH_CONTAINER_ID,
     visibility: options?.visibility ?? 'public',
+    isGlobalScope: options?.isGlobalScope,
   };
 }
 
@@ -210,6 +213,7 @@ export function normalizeClassSymbols(raw: unknown): ClassSymbol[] {
         containerId:
           typeof cls.containerId === 'string' ? cls.containerId : MAIN_GRAPH_CONTAINER_ID,
         visibility: cls.visibility === 'private' ? 'private' : 'public',
+        isGlobalScope: cls.isGlobalScope === true,
       };
     }
     return createClassSymbol('Untitled');

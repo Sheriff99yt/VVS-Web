@@ -11,6 +11,7 @@ import {
   Boxes,
   FolderOutput,
   PenLine,
+  Globe,
 } from 'lucide-react';
 import type { FunctionBinding, FunctionSymbol, ClassSymbol, GraphContainer, VariableSymbol } from '@vvs/graph-types';
 import { createVariableSymbol, resolveNodeKindId } from '@vvs/graph-types';
@@ -544,7 +545,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       } else {
         const func = functions.find((f) => f.id === graphId);
         if (func) {
-          editorFocus.focusFunction(func, graphId);
+          editorFocus.focusFunction(func, graphId === func.id ? undefined : graphId);
         } else {
           editorFocus.focusFunctionGraphTab(graphId);
         }
@@ -1550,7 +1551,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         isSymbolMultiSelected('class', cls.id) ||
                         (selection.type === 'class' && selection.id === cls.id)
                       }
-                      icon={<Boxes size={10} className="text-violet-400/80 shrink-0" />}
+                      icon={cls.isGlobalScope ? <Globe size={10} className="text-teal-400/80 shrink-0" /> : <Boxes size={10} className="text-violet-400/80 shrink-0" />}
                       label={
                         renamingClassId === cls.id ? (
                           <input

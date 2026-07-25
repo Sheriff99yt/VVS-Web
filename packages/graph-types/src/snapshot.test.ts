@@ -42,7 +42,7 @@ describe('normalizeProjectSnapshot', () => {
     expect(snap?.version).toBe(3);
     expect(snap?.functions[0]?.kind).toBe('function');
     expect(snap?.functions[0]?.overloads.length).toBeGreaterThan(0);
-    expect(snap?.classes).toHaveLength(1);
+    expect(snap?.classes).toHaveLength(2); // Main + Global
     expect(snap?.classes[0]?.id).toBe(MAIN_CLASS_ID);
     expect(snap?.activeClassId).toBe(MAIN_CLASS_ID);
   });
@@ -50,7 +50,7 @@ describe('normalizeProjectSnapshot', () => {
   test('upgrades v2 snapshot with synthetic main-class and stamps classId', () => {
     const snap = normalizeProjectSnapshot(v2Base);
     expect(snap?.version).toBe(3);
-    expect(snap?.classes).toHaveLength(1);
+    expect(snap?.classes).toHaveLength(2); // Main + Global
     expect(snap?.classes[0]).toMatchObject({
       id: MAIN_CLASS_ID,
       name: 'Calculator',
@@ -75,7 +75,7 @@ describe('normalizeProjectSnapshot', () => {
       ],
       activeClassId: 'cls-b',
     });
-    expect(snap?.classes).toHaveLength(2);
+    expect(snap?.classes).toHaveLength(3); // Alpha + Beta + Global
     expect(snap?.activeClassId).toBe('cls-b');
   });
 
@@ -115,6 +115,15 @@ describe('normalizeProjectSnapshot', () => {
     const snap = normalizeProjectSnapshot(v2Base);
     expect(snap?.documents[MAIN_GRAPH_CONTAINER_ID]).toBeDefined();
     expect(snap?.openTabs.some((tab) => tab.id === MAIN_GRAPH_CONTAINER_ID)).toBe(true);
+  });
+
+  test('finalizeGraphContainerSnapshot injects Global scope class', () => {
+    const raw = createEmptyProjectSnapshot();
+    const snap = normalizeProjectSnapshot(raw)!;
+    const globalClass = snap.classes.find((c) => c.isGlobalScope);
+    expect(globalClass).toBeDefined();
+    expect(globalClass?.id).toBe(`global-${MAIN_GRAPH_CONTAINER_ID}`);
+    expect(globalClass?.name).toBe('Global');
   });
 });
 

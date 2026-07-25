@@ -1,0 +1,17 @@
+// ===== src/NewFeaturesLab.gd =====
+    func on_start() -> void:
+        Global.new().on_ondatareceived(("Hello from Global: " + self.GlobalGreeting))
+class_name MainClass
+    var GlobalGreeting = "World"
+    # (x) Declare ProcessData
+    func ProcessData(a, b) -> void:
+        self.ProcessData((a + b))
+    func ProcessData(a, b) -> void:
+        pass
+    func ProcessData(a, b) -> void:
+        self.ProcessData((a + b))
+    func ProcessData(a, b) -> void:
+        pass
+    func on_ondatareceived(payload) -> void:
+        self.ProcessData(payload, payload)
+        print("/* Call ProcessData.return_val */")

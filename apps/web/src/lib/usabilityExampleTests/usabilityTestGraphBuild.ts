@@ -9,7 +9,7 @@ import type {
 } from '@/types/graph';
 import { normalizeNodeData } from '@/lib/nodeKind';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
-import { applyFunctionCallBinding, applyFunctionDefineBinding, applyFunctionImplementBinding } from '@/lib/functionHelpers';
+import { applyFunctionCallBinding, applyFunctionDefineBinding, applyFunctionEntryBinding, applyFunctionImplementBinding, applyFunctionReturnBinding } from '@/lib/functionHelpers';
 import { applyEventDefineBinding, applyEventDispatchBinding } from '@/lib/eventHelpers';
 import { buildGraphRefNodeData } from '@/lib/graphRefHelpers';
 
@@ -106,6 +106,22 @@ export function returnNode(id: string, position: { x: number; y: number }): VVSN
     outputs: [EXEC_OUT],
     inlineValues: {},
   });
+}
+
+export function functionReturnNode(
+  id: string,
+  position: { x: number; y: number },
+  func: FunctionSymbol,
+  overloadId?: string
+): VVSNode {
+  const empty: VVSNodeData = {
+    label: '',
+    category: 'Flow Control',
+    inputs: [],
+    outputs: [],
+    inlineValues: {},
+  };
+  return usabilityTestNode(id, position, applyFunctionReturnBinding(empty, func, overloadId));
 }
 
 export function branchNode(id: string, position: { x: number; y: number }): VVSNode {
@@ -450,17 +466,17 @@ export function boundEventDispatch(
 export function functionEntryNode(
   id: string,
   position: { x: number; y: number },
-  func: FunctionSymbol
+  func: FunctionSymbol,
+  overloadId?: string
 ): VVSNode {
-  return usabilityTestNode(id, position, {
-    label: func.name,
+  const empty: VVSNodeData = {
+    label: '',
     category: 'Events',
-    kindId: 'function_entry',
-    properties: { functionId: func.id, symbolId: func.id, name: func.name },
     inputs: [],
-    outputs: [EXEC_OUT],
+    outputs: [],
     inlineValues: {},
-  });
+  };
+  return usabilityTestNode(id, position, applyFunctionEntryBinding(empty, func, overloadId));
 }
 
 export function classDefineNode(

@@ -1,0 +1,11 @@
+// ===== src/NewFeaturesLab.cs =====
+    public void on_start() {
+        new Global().on_ondatareceived(("Hello from Global: " + this.GlobalGreeting));
+    }
+public class MainClass {
+}
+    // (x) Declare GlobalGreeting
+    // (x) Declare ProcessData
+    // (x) Implement ProcessData
+    // (x) Implement ProcessData
+    // (x) Declare OnDataReceived

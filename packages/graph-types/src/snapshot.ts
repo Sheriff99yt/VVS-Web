@@ -455,8 +455,20 @@ function finalizeGraphContainerSnapshot(snapshot: ProjectSnapshot): ProjectSnaps
       : Object.keys(documents)[0] ?? MAIN_GRAPH_CONTAINER_ID;
   }
 
+  const classes = [...next.classes];
+  for (const container of graphContainers) {
+    if (!classes.some((c) => c.containerId === container.id && c.isGlobalScope)) {
+      classes.push(createClassSymbol('Global', {
+        id: `global-${container.id}`,
+        containerId: container.id,
+        isGlobalScope: true,
+      }));
+    }
+  }
+
   return {
     ...next,
+    classes,
     graphContainers,
     documents,
     openTabs,

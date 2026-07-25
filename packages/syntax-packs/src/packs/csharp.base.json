@@ -29,16 +29,16 @@
       "quasi": "var {target} = {value};"
     },
     "CallInstance": {
-      "quasi": "this.{callee}();"
+      "quasi": "this.{callee}({args});"
     },
     "CallFunction": {
-      "quasi": "{callee}();"
+      "quasi": "{callee}({args});"
     },
     "CallCrossClass": {
-      "quasi": "{receiver}.{callee}();"
+      "quasi": "{receiver}.{callee}({args});"
     },
     "CallCrossClassStatic": {
-      "quasi": "{class}.{callee}();"
+      "quasi": "{class}.{callee}({args});"
     },
     "DispatchEvent": {
       "quasi": "this.on_{handler}({args});"

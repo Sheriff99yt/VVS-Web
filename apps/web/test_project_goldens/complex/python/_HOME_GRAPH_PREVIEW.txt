@@ -31,7 +31,7 @@ class Machine:
         _vvs_input_lab_get_input = input("Operator name?")
         print(_vvs_input_lab_get_input)
         self.Boot()
-        self.Calculate()
+        self.Calculate(0, 0)
         if self.Ready:
             self.on_pulse()
         else:

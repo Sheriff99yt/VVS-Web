@@ -524,6 +524,14 @@ function GraphCanvasInner() {
   );
 
   const processedFocusRequestRef = React.useRef<number | null>(null);
+  const reactFlowWrapperRef = React.useRef<HTMLDivElement>(null);
+  
+  React.useEffect(() => {
+    // Automatically focus the canvas wrapper when opened
+    // so keyboard shortcuts work without clicking the canvas first.
+    reactFlowWrapperRef.current?.focus({ preventScroll: true });
+  }, [activeGraphTab]);
+
   const suppressPaneClickRef = React.useRef(false);
   const chainLayoutAnimGenRef = React.useRef(0);
   const chainLayoutAnimRafRef = React.useRef<number | null>(null);
@@ -2446,6 +2454,7 @@ function GraphCanvasInner() {
       <GraphFloatingCompilerLog />
       <HistoryDiscardDialog />
       <ReactFlow
+        ref={reactFlowWrapperRef}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}

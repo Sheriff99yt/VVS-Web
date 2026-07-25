@@ -118,6 +118,7 @@ export type IrExpr =
 export interface IrCallFunction extends IrBase {
   kind: 'CallFunction';
   calleeName: string;
+  args?: IrExpr[];
   /** When true, emit as instance method call (self/this receiver). */
   instanceCall: boolean;
   /** Owning class module name when calling across class boundaries. */
@@ -380,6 +381,7 @@ export interface IrClass {
   classId: string;
   name: string;
   extendsType?: string;
+  isGlobalScope?: boolean;
   members: IrMemberDecl[];
   onStartBody: IrStatement[];
   eventHandlers: IrEventHandler[];

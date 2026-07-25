@@ -1,4 +1,5 @@
 import { CodeSink } from '../codeSink';
+import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import type { IrMemberDecl, IrModule } from '../ir/types';
 import {
   appendFunctionBody,
@@ -21,6 +22,7 @@ import {
   emitRemainingUserComments,
   emitUserCommentsBeforeNode,
 } from './userComments';
+import { commentPrefixFromPack } from '../print/template';
 import {
   appendEventHandlerDefinition,
   renderClassModuleClose,
@@ -90,11 +92,32 @@ export function emitClassModule(
 
   const openClassShell = () => {
     if (!classDecl || state.classOpened) return;
+    const effective = isNodeEffectiveForLanguage(
+      'class_define',
+      classDecl.properties,
+      lang,
+      { isGlobalScope: ir.activeClass?.isGlobalScope }
+    );
+    if (!effective) {
+      if (ir.emitUnsupportedComments !== false) {
+        const ctx = printContextForIr(ir, '', ir.environmentManifest);
+        const prefix = commentPrefixFromPack(ctx);
+        const label = ir.moduleName || 'Class';
+        sink.appendTagged({
+          nodeId: classDecl.sourceGraphNodeId,
+          text: `${prefix}(x) Declare class ${label}`,
+        });
+      }
+      state.classEffective = false;
+      state.classOpened = true; // Mark as opened so we don't try again
+      return;
+    }
     const classLineStart = sink.lineCount + 1;
     const properties = classDecl.properties ?? {};
     const extendsType = classDecl.extendsType || ir.extendsType || '';
     sink.appendRaw(renderClassModuleOpen(lang, ir.moduleName, extendsType, properties));
     tagClassDeclLine(sink, ir, classLineStart);
+    state.classEffective = true;
     state.classOpened = true;
   };
 
@@ -153,7 +176,7 @@ export function emitClassModule(
     });
   }
 
-  if (state.classOpened && supportedClassLang) {
+  if (state.classOpened && state.classEffective !== false && supportedClassLang) {
     // Rust already closed the struct when opening impl; ClassModuleClose closes impl (or struct if no methods).
     const classClose = renderClassModuleClose(lang);
     if (classClose) {

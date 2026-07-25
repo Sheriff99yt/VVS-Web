@@ -496,10 +496,13 @@ function lowerStatement(
       Boolean(targetClassName) &&
       activeClass!.extendsType === targetClassName;
     const staticCall = fn?.binding === 'static' || fn?.binding === 'module';
+    const paramIds = node.data.inputs.filter((p) => p.type !== 'execution').map((p) => p.id);
+    const args = paramIds.map((pinId) => resolvePinValueExpr(node, pinId, ctx, 0));
     return {
       kind: 'CallFunction',
       sourceGraphNodeId: node.id,
       calleeName: name,
+      args,
       instanceCall: !staticCall,
       crossClass: crossClass && !inheritedCall,
       targetClassName,

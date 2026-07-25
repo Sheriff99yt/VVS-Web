@@ -27,6 +27,8 @@ export interface MemberState {
   cppVisibility: string;
   /** Class shell has been opened (ClassModuleOpen emitted). */
   classOpened?: boolean;
+  /** Whether the class is effective for the target language (false if globally dimmed) */
+  classEffective?: boolean;
   /** Rust: struct closed and `impl` opened. */
   rustImplOpened?: boolean;
 }
@@ -170,6 +172,26 @@ function appendVariableDecl(
   state: MemberState
 ): void {
   const { symbol, sourceGraphNodeId } = member;
+  const effective = isNodeEffectiveForLanguage(
+    'variable_define',
+    member.properties,
+    ir.targetLanguage,
+    { isGlobalScope: ir.activeClass?.isGlobalScope }
+  );
+
+  if (!effective) {
+    if (ir.emitUnsupportedComments !== false) {
+      const ctx = printContextForIr(ir, '', ir.environmentManifest);
+      const indent = memberChainIndentFor(ctx);
+      const prefix = commentPrefixFromPack(ctx);
+      sink.appendTagged({
+        nodeId: member.sourceGraphNodeId,
+        text: `${indent}${prefix}(x) Declare ${symbol.name}`,
+      });
+    }
+    return;
+  }
+
   if (ir.targetLanguage === 'cpp') {
     const vis = String(member.properties?.visibility ?? symbol.visibility ?? '');
     ensureCppVisibility(sink, ir, state, vis);
@@ -247,7 +269,8 @@ function appendFunctionDeclare(
   const effective = isNodeEffectiveForLanguage(
     'function_define',
     member.properties,
-    ir.targetLanguage
+    ir.targetLanguage,
+    { isGlobalScope: ir.activeClass?.isGlobalScope }
   );
 
   const emitXComment = () => {
@@ -312,6 +335,27 @@ function appendFunctionDefinition(
   // Declare-only (no body): prototype, abstract comment, or U66 (x).
   if (!member.emitBody) {
     appendFunctionDeclare(sink, ir, member, isAbstract);
+    return;
+  }
+
+  const effective = isNodeEffectiveForLanguage(
+    'function_implement',
+    member.properties,
+    ir.targetLanguage,
+    { isGlobalScope: ir.activeClass?.isGlobalScope }
+  );
+
+  if (!effective) {
+    if (ir.emitUnsupportedComments !== false) {
+      const ctx = printContextForIr(ir, '', ir.environmentManifest);
+      const indent = memberChainIndentFor(ctx);
+      const prefix = commentPrefixFromPack(ctx);
+      const label = (typeof member.properties?.name === 'string' && member.properties.name.trim()) || symbol.name;
+      sink.appendTagged({
+        nodeId: member.implementSourceGraphNodeId ?? member.sourceGraphNodeId,
+        text: `${indent}${prefix}(x) Implement ${label}`,
+      });
+    }
     return;
   }
 
@@ -490,7 +534,8 @@ export function appendIrMembersInOrder(
             isNodeEffectiveForLanguage(
               'function_define',
               member.properties,
-              ir.targetLanguage
+              ir.targetLanguage,
+              { isGlobalScope: ir.activeClass?.isGlobalScope }
             );
           if (needsVis) {
             ensureCppVisibility(sink, ir, state, vis);
@@ -500,8 +545,14 @@ export function appendIrMembersInOrder(
         break;
       }
       case 'EventDecl': {
-        // Unpaired Event Declare → U66 `(x)` (never silent skip). Paired On owns the method body.
-        if (!member.handlerSourceGraphNodeId) {
+        const effective = isNodeEffectiveForLanguage(
+          'event_member_define',
+          member.properties,
+          ir.targetLanguage,
+          { isGlobalScope: ir.activeClass?.isGlobalScope, eventHasHandler: !!member.handlerSourceGraphNodeId }
+        );
+
+        if (!effective) {
           if (ir.emitUnsupportedComments !== false) {
             const ctx = printContextForIr(ir, '', ir.environmentManifest);
             const indent = memberChainIndentFor(ctx);

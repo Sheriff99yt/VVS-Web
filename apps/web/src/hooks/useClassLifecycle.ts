@@ -107,7 +107,7 @@ export function useClassLifecycle() {
       if (classes.length <= 1) return;
 
       const cls = classes.find((c) => c.id === classId);
-      if (!cls) return;
+      if (!cls || cls.isGlobalScope) return;
 
       const homeGraphId = classGraphTabId(cls);
       const classFunctions = symbolsForClass(functions, classId);

@@ -42,6 +42,9 @@ export function createStmtPrinters(
       const s = stmt as IrCallFunction;
       const { family } = ctx;
 
+      const argsArray = (s.args ?? []).map((expr) => printExpr(expr, ctx));
+      const argsStr = argsArray.map((a) => a.text).join(', ');
+
       if (s.crossClass && s.targetClassName) {
         const classRef = s.targetClassName;
         if (family === 'python') {
@@ -49,6 +52,7 @@ export function createStmtPrinters(
           return printFromTemplate(ctx, 'CallCrossClass', {
             receiver,
             callee: s.calleeName,
+            args: argsStr,
           });
         }
         if (family === 'cpp') {
@@ -56,8 +60,8 @@ export function createStmtPrinters(
           const receiver = s.instanceCall ? `${classRef}()` : classRef;
           const slots = (
             key === 'CallCrossClassStatic'
-              ? { class: classRef, callee: s.calleeName }
-              : { receiver, callee: s.calleeName }
+              ? { class: classRef, callee: s.calleeName, args: argsStr }
+              : { receiver, callee: s.calleeName, args: argsStr }
           ) as Record<string, string>;
           return printFromTemplate(ctx, key, slots);
         }
@@ -66,8 +70,8 @@ export function createStmtPrinters(
           const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
           const slots = (
             key === 'CallCrossClassStatic'
-              ? { class: classRef, callee: s.calleeName }
-              : { receiver, callee: s.calleeName }
+              ? { class: classRef, callee: s.calleeName, args: argsStr }
+              : { receiver, callee: s.calleeName, args: argsStr }
           ) as Record<string, string>;
           return printFromTemplate(ctx, key, slots);
         }
@@ -75,6 +79,7 @@ export function createStmtPrinters(
           return printFromTemplate(ctx, 'CallCrossClass', {
             receiver: classRef,
             callee: s.calleeName,
+            args: argsStr,
           });
         }
         if (family === 'gdscript') {
@@ -82,6 +87,7 @@ export function createStmtPrinters(
           return printFromTemplate(ctx, 'CallCrossClass', {
             receiver,
             callee: s.calleeName,
+            args: argsStr,
           });
         }
         if (family === 'rust') {
@@ -89,11 +95,13 @@ export function createStmtPrinters(
             return printFromTemplate(ctx, 'CallCrossClass', {
               receiver: `${classRef}::new()`,
               callee: s.calleeName,
+              args: argsStr,
             });
           }
           return printFromTemplate(ctx, 'CallCrossClassStatic', {
             class: classRef,
             callee: s.calleeName,
+            args: argsStr,
           });
         }
         if (family === 'csharp') {
@@ -101,15 +109,15 @@ export function createStmtPrinters(
           const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
           const slots = (
             key === 'CallCrossClassStatic'
-              ? { class: classRef, callee: s.calleeName }
-              : { receiver, callee: s.calleeName }
+              ? { class: classRef, callee: s.calleeName, args: argsStr }
+              : { receiver, callee: s.calleeName, args: argsStr }
           ) as Record<string, string>;
           return printFromTemplate(ctx, key, slots);
         }
       }
 
       const key = s.instanceCall ? 'CallInstance' : 'CallFunction';
-      return printFromTemplate(ctx, key, { callee: s.calleeName });
+      return printFromTemplate(ctx, key, { callee: s.calleeName, args: argsStr });
     },
 
     Print: (stmt, ctx) => {
