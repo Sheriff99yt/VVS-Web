@@ -19,7 +19,7 @@ export interface LibraryItemSummary {
 
 export interface LibraryItem extends LibraryItemSummary {
   tags: string[];
-  graph: any; // ProjectSnapshot or similar
+  graph: unknown; // ProjectSnapshot or similar
   nodeCount: number;
   createdAt: string; // ISO8601
   updatedAt: string; // ISO8601
@@ -47,7 +47,7 @@ export interface LibrarySearchResponse {
 export interface UploadScriptRequest {
   title: string;
   description: string;
-  graph: any; // ProjectSnapshot
+  graph: unknown; // ProjectSnapshot
   targetLanguages: string[];
   tags: string[];
   licenseId: string;
