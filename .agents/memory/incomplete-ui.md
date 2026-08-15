@@ -3,7 +3,7 @@
 Tracked gaps between **what the shell shows** and **what the UI skill / product matrix requires**.  
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
-**Last updated:** 2026-07-23  
+**Last updated:** 2026-08-15  
 **Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97 / U102 / U107 / U108–U119 done; U98–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
 **Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 / U98–U101 / U103–U106 open
@@ -274,7 +274,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 16. Editor chrome & scale UX (July 2026) — **Partial** (U84–U88 / U96 done; U89 partial · U90 open)
+## 16. Editor chrome & scale UX (July 2026) — **Partial** (U84–U89 / U96 done; U90 open)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `editor-chrome-u84`.
 
@@ -287,7 +287,7 @@ Details, Compiler Log, tabs, References, Library, and **wire / connection** poli
 | U86 | Details panel **compact** rethink | **Done** | Compact subtitle: kind/category · pins · bound symbol (no “hover for details”) |
 | U87 | Compiler Log **language-scoped** mode | **Done** | Languages toggle + `compilerLogLanguageScoped` pref; Validator lines tagged by target language |
 | U88 | Graph **tabs** UI/UX rethink | **Done** | Scroll active into view; overflow list; dirty/active affordances; middle-click / Ctrl+W close |
-| U89 | **References** viewer redesign (huge projects) | **Done** | Huge-project redesign shipped: Graph vs Tree List view toggle, Referencers/Dependencies metrics bar, type filter badges, and breadcrumb path toolbar |
+| U89 | **References** viewer redesign (huge projects) | **Done** | Huge-project redesign shipped: Graph vs Tree List view toggle, Referencers/Dependencies metrics bar, type filter badges, breadcrumb path toolbar, breadth applied to tree + persisted prefs + type filter on list |
 | U90 | **Library** page redesign (post direction change) | **Done** | Client-first Library redesign: Templates tab (environments & OpenAPI/AsyncAPI spec imports), Git Imports tab (useGitCatalog hook, GitPackImportModal, GitHub repo import), and Installed Extensions tab |
 | U96 | **Wire / connection UX** | **Done** | Larger pins; edge Insert reroute + Disconnect; selection toolbar **Auto-connect** (2 compatible nodes) + **Disconnect** |
 
@@ -299,8 +299,8 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U91 | **AI / MCP audit & agent autonomy** | **Done** | Go MCP write consent guard (EnsureWritePermission, VVS_MCP_ALLOW_WRITE=1), unit tests (consent_test.go), mcpActivityStore, and live MCP Ready activity status indicator in StatusBar |
-| U92 | **New examples** (cross-lang + lang-specific) | **Done** | Three full test projects (First Graph, Branch Lab, Coverage Lab) across 8 target languages (24 goldens total) + StartScreen starters for all 8 languages + validate_test_projects_folder.ts |
+| U91 | **AI / MCP audit & agent autonomy** | **Done** | Dual consent (UI `mcpAllowDangerousTools` intent + server `VVS_MCP_ALLOW_WRITE` gate); audit doc `docs/design/mcp_autonomy_audit.md`; inventory lock test `mcpPasteConfig.test.ts` vs `tools.go`; EnsureWritePermission + consent_test.go; mcpActivityStore; MCP Ready in StatusBar |
+| U92 | **New examples** (cross-lang + lang-specific) | **Done** | Five fixtures (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) × 8 langs (40 goldens); Go golden assertion + StartScreen + validate_test_projects_folder.ts |
 | U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; left panel + chrome migrated off native `title=` (section/popover `title` props remain) |
 | U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |
 | U93 | **Long-term: code → visual** | **Open** (long-term) | System that reads raw source and builds text-shaped graphs (reverse of Generate). Must preserve canvas source of truth / fidelity — research track, not near-term polish. |
@@ -324,7 +324,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U103 | **Components** (visual + examples) | **Open** | Design a component visual that works for **all** languages; add to multi-lang Test Project examples. |
 | U104 | **Overloading** revise & stress-test | **Done** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
 | U105 | **Overwriting (override)** study | **Open** | Decide if override needs custom visuals or is fully covered by current modifiers / defines. |
-| U106 | **Inheritance** design | **Open** | How inheritance is authored on canvas and lowered per language (pairs with CL-010). |
+| U106 | **Inheritance** on canvas | **Done** | Extends picker on Declare Class; inherited members in Project tree + spawn Get/Set; EXTENDS_CLASS_MISSING analyzer. CL-010 owns Rust self.base. |
 | U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click selects one; Ctrl/⌘+click multi-selects; left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
 | U108 | **Action history window** | **Done** | Floating panel — graph undo restore + activity log (save/generate/import/export/delete/wire/copy/cut/paste/duplicate) |
 | U109 | **Top bar menus** | **Done** | File · Edit · View · Help — shortcuts, history, settings |

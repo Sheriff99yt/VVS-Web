@@ -88,6 +88,12 @@
     "AwaitWait": {
       "quasi": "std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>({duration} * 1000)));"
     },
+    "AwaitWaitAsync": {
+      "quasi": "std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>({duration} * 1000)));"
+    },
+    "AwaitWaitSync": {
+      "quasi": "std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>({duration} * 1000)));"
+    },
     "CallNative": {
       "quasi": "{call}"
     },
@@ -177,6 +183,12 @@
     },
     "Continue": {
       "quasi": "continue;"
+    },
+    "CallSuper": {
+      "quasi": "{parent}::{callee}({args});"
+    },
+    "DispatchEventSuper": {
+      "quasi": "{parent}::on_{handler}({args});"
     }
   }
 }

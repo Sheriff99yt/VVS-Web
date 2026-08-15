@@ -2,7 +2,7 @@ import { type VariableSymbol, parseTypeRef, resolveTypeRef, targetLanguageToFami
 import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
 import { CodeSink } from '../codeSink';
-import type { IrEventHandler, IrMemberDecl, IrModule } from '../ir/types';
+import type { IrEventHandler, IrMemberDecl, IrModule, IrModuleImport } from '../ir/types';
 import {
   appendFunctionBody,
   appendImportStatement,
@@ -31,6 +31,88 @@ export interface MemberState {
   classEffective?: boolean;
   /** Rust: struct closed and `impl` opened. */
   rustImplOpened?: boolean;
+  /** Rust static/const items already written (hoisted off the struct). */
+  rustEmittedItemNodeIds?: Set<string>;
+}
+
+/** Rust cannot put `static` / `const` on a struct field — those become real items. */
+export type RustVariableItemKind = 'field' | 'static' | 'const';
+
+export function rustVariableItemKind(
+  member: Extract<IrMemberDecl, { kind: 'VariableDecl' }>
+): RustVariableItemKind {
+  const binding = String(member.properties?.binding ?? member.symbol.binding ?? 'instance');
+  const isConst =
+    Boolean(member.properties?.isConst) || Boolean(member.symbol.flags?.readonly);
+  if (isConst) return 'const';
+  if (binding === 'static') return 'static';
+  return 'field';
+}
+
+function rustVariableIsMap(
+  member: Extract<IrMemberDecl, { kind: 'VariableDecl' }>
+): boolean {
+  const fromProps = parseTypeRef(member.properties?.typeRef);
+  const ref = fromProps ?? resolveTypeRef(member.symbol);
+  return ref?.kind === 'map';
+}
+
+function isRustHashMapUse(member: IrMemberDecl): boolean {
+  if (member.kind !== 'ModuleImport') return false;
+  const names = member.importNames ?? [];
+  return member.moduleSlug === 'std::collections' && names.includes('HashMap');
+}
+
+export function rustHashMapImportAnchor(ir: IrModule): string | undefined {
+  const found = ir.members.find(
+    (m): m is Extract<IrMemberDecl, { kind: 'VariableDecl' }> =>
+      m.kind === 'VariableDecl' && rustVariableIsMap(m)
+  );
+  return found?.sourceGraphNodeId;
+}
+
+export function rustHashMapImportMember(anchorNodeId: string): IrModuleImport {
+  return {
+    kind: 'ModuleImport',
+    sourceGraphNodeId: anchorNodeId,
+    moduleSlug: 'std::collections',
+    importStyle: 'from',
+    importNames: ['HashMap'],
+    displayLabel: 'HashMap',
+    targetLanguages: ['rust'],
+  };
+}
+
+/** Compiler-required `use std::collections::HashMap;` — tagged to the map field. */
+export function withRustHashMapImport(ir: IrModule): IrModule {
+  if (ir.targetLanguage !== 'rust') return ir;
+  if (ir.members.some(isRustHashMapUse)) return ir;
+  const anchor = rustHashMapImportAnchor(ir);
+  if (!anchor) return ir;
+  return { ...ir, members: [rustHashMapImportMember(anchor), ...ir.members] };
+}
+
+/** One file-top `use` for a merged multi-class rust module. */
+export function withRustHashMapImportAtFileTop(irs: IrModule[]): IrModule[] {
+  if (irs.length === 0 || irs[0]!.targetLanguage !== 'rust') return irs;
+  if (irs.some((ir) => ir.members.some(isRustHashMapUse))) return irs;
+  let anchor: string | undefined;
+  for (const ir of irs) {
+    anchor = rustHashMapImportAnchor(ir);
+    if (anchor) break;
+  }
+  if (!anchor) return irs;
+  const first = irs[0]!;
+  return [{ ...first, members: [rustHashMapImportMember(anchor), ...first.members] }, ...irs.slice(1)];
+}
+
+function markRustItemEmitted(state: MemberState, nodeId: string): void {
+  if (!state.rustEmittedItemNodeIds) state.rustEmittedItemNodeIds = new Set();
+  state.rustEmittedItemNodeIds.add(nodeId);
+}
+
+function rustItemAlreadyEmitted(state: MemberState, nodeId: string): boolean {
+  return Boolean(state.rustEmittedItemNodeIds?.has(nodeId));
 }
 
 export interface MemberEmitHooks {
@@ -119,9 +201,14 @@ function formatVariableDefault(
     if (targetLanguage === 'python') return 'None';
     if (targetLanguage === 'cpp') return '{}';
     if (targetLanguage === 'csharp') return 'null';
-    if (targetLanguage === 'rust') return 'Default::default()';
+    if (targetLanguage === 'rust')
+      return typeRef.name?.trim() ? `${typeRef.name.trim()}::new()` : 'Default::default()';
     if (targetLanguage === 'gdscript') return 'null';
-    if (targetLanguage === 'verse') return 'false'; // placeholder — class refs rare in Verse samples
+    if (targetLanguage === 'verse') {
+      // Archetype value (Type{}) — a default PIN value, not a constructor node.
+      const className = typeNameForTypeRef(typeRef, 'verse').trim();
+      return className ? `${className}{}` : '{}';
+    }
     if (targetLanguage === 'javascript') return 'null';
     return 'null';
   }
@@ -165,6 +252,68 @@ function formatTypeForLanguage(
   return typeNameForTypeRef(resolveTypeRef(symbol), targetLanguage);
 }
 
+function appendRustItemDecl(
+  sink: CodeSink,
+  ir: IrModule,
+  member: Extract<IrMemberDecl, { kind: 'VariableDecl' }>,
+  kind: 'static' | 'const',
+  indent: string
+): void {
+  const { symbol, sourceGraphNodeId } = member;
+  const enumType = enumTypeFromSymbolOrProps(symbol, member.properties);
+  const val = formatVariableDefault(symbol, ir.targetLanguage, enumType);
+  const family = targetLanguageToFamily(ir.targetLanguage) ?? 'rust';
+  const profile = resolvePrintProfile(family, ir.codegenTarget?.capabilities ?? []);
+  const templateKey = kind === 'static' ? 'VarDefineStatic' : 'VarDefineConst';
+  const row = requireTemplate(profile, templateKey, ir.targetLanguage);
+  const mods = resolveModifierSlots(ir.targetLanguage, member.properties, symbol.visibility);
+  const slots: Record<string, string> = {
+    ...mods,
+    name: symbol.name,
+    default: val,
+    type: formatTypeForLanguage(ir.targetLanguage, symbol, member.properties),
+  };
+  const rendered = renderTemplate(row, slots, profile.layout);
+  const startLine = sink.lineCount + 1;
+  sink.appendRaw(`${indent}${rendered.text}`);
+  sink.tagRange(sourceGraphNodeId, startLine, sink.lineCount, symbol.name);
+}
+
+/** Module-level `static` items that belong on this class (not struct fields). */
+export function appendRustHoistedStatics(
+  sink: CodeSink,
+  ir: IrModule,
+  state: MemberState
+): void {
+  if (ir.targetLanguage !== 'rust') return;
+  for (const member of ir.members) {
+    if (member.kind !== 'VariableDecl') continue;
+    if (rustVariableItemKind(member) !== 'static') continue;
+    if (rustItemAlreadyEmitted(state, member.sourceGraphNodeId)) continue;
+    appendRustItemDecl(sink, ir, member, 'static', '');
+    markRustItemEmitted(state, member.sourceGraphNodeId);
+  }
+}
+
+/** Associated `const` items inside `impl` (Rust has no const struct fields). */
+export function appendRustAssociatedConsts(
+  sink: CodeSink,
+  ir: IrModule,
+  state: MemberState
+): void {
+  if (ir.targetLanguage !== 'rust') return;
+  const family = targetLanguageToFamily(ir.targetLanguage) ?? 'rust';
+  const profile = resolvePrintProfile(family, ir.codegenTarget?.capabilities ?? []);
+  const indent = profile.layout?.varDeclIndent ?? '    ';
+  for (const member of ir.members) {
+    if (member.kind !== 'VariableDecl') continue;
+    if (rustVariableItemKind(member) !== 'const') continue;
+    if (rustItemAlreadyEmitted(state, member.sourceGraphNodeId)) continue;
+    appendRustItemDecl(sink, ir, member, 'const', indent);
+    markRustItemEmitted(state, member.sourceGraphNodeId);
+  }
+}
+
 function appendVariableDecl(
   sink: CodeSink,
   ir: IrModule,
@@ -190,6 +339,29 @@ function appendVariableDecl(
       });
     }
     return;
+  }
+
+  if (ir.targetLanguage === 'rust') {
+    const itemKind = rustVariableItemKind(member);
+    if (itemKind !== 'field') {
+      if (rustItemAlreadyEmitted(state, sourceGraphNodeId)) return;
+      // Module-scope static/const when the struct is not open (or already in impl).
+      // Otherwise hoist at class/impl open — never invent `// static` on a field.
+      if (itemKind === 'static' && !state.classOpened) {
+        appendRustItemDecl(sink, ir, member, 'static', '');
+        markRustItemEmitted(state, sourceGraphNodeId);
+        return;
+      }
+      if (itemKind === 'const' && (!state.classOpened || state.rustImplOpened)) {
+        const family = targetLanguageToFamily(ir.targetLanguage) ?? 'rust';
+        const profile = resolvePrintProfile(family, ir.codegenTarget?.capabilities ?? []);
+        const indent = state.rustImplOpened ? (profile.layout?.varDeclIndent ?? '    ') : '';
+        appendRustItemDecl(sink, ir, member, 'const', indent);
+        markRustItemEmitted(state, sourceGraphNodeId);
+        return;
+      }
+      return;
+    }
   }
 
   if (ir.targetLanguage === 'cpp') {
@@ -462,6 +634,46 @@ export function appendEnumDecl(
   }
   sink.appendRaw('');
   sink.tagRange(member.sourceGraphNodeId, startLine, sink.lineCount - 1, `enum ${member.name}`);
+}
+
+
+/** Rust composition: every class with a shell gets `fn new()` so `Parent::new()` / `Type::new()` compile. */
+export function appendRustNewConstructor(sink: CodeSink, ir: IrModule): void {
+  if (ir.targetLanguage !== 'rust') return;
+  const classDecl = ir.members.find(
+    (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
+  );
+  if (!classDecl) return;
+
+  const extendsType = (classDecl.extendsType || ir.extendsType || '').trim();
+  const fields = ir.members.filter(
+    (m): m is Extract<IrMemberDecl, { kind: 'VariableDecl' }> =>
+      m.kind === 'VariableDecl' && rustVariableItemKind(m) === 'field'
+  );
+
+  const family = targetLanguageToFamily(ir.targetLanguage) ?? 'rust';
+  const profile = resolvePrintProfile(family, ir.codegenTarget?.capabilities ?? []);
+  const row = requireTemplate(profile, 'ConstructorOpen', ir.targetLanguage);
+  const header = renderTemplate(
+    row,
+    { linePrefix: '    ', paramList: '' },
+    profile.layout
+  ).text;
+
+  const startLine = sink.lineCount + 1;
+  sink.appendRaw(header);
+  sink.appendRaw('        Self {');
+  if (extendsType) {
+    sink.appendRaw(`            base: ${extendsType}::new(),`);
+  }
+  for (const field of fields) {
+    const enumType = enumTypeFromSymbolOrProps(field.symbol, field.properties);
+    const val = formatVariableDefault(field.symbol, ir.targetLanguage, enumType);
+    sink.appendRaw(`            ${field.symbol.name}: ${val},`);
+  }
+  sink.appendRaw('        }');
+  sink.appendRaw('    }');
+  sink.tagRange(classDecl.sourceGraphNodeId, startLine, sink.lineCount, 'fn new');
 }
 
 /**

@@ -39,7 +39,7 @@ describe('validateWaitAndAsyncNodes', () => {
     expect(result.diagnostics.some((d) => d.code === 'BLOCKING_WAIT_ON_TARGET')).toBe(false);
   });
 
-  it('warns BLOCKING_WAIT on javascript (stub comment emit)', () => {
+  it('does not warn BLOCKING_WAIT on javascript (busy-wait emit)', () => {
     const result = analyzeProject({
       documents: {
         main: {
@@ -54,10 +54,10 @@ describe('validateWaitAndAsyncNodes', () => {
       projectDetails: { extendsType: '' },
       targetLanguage: 'javascript',
     });
-    expect(result.diagnostics.some((d) => d.code === 'BLOCKING_WAIT_ON_TARGET')).toBe(true);
+    expect(result.diagnostics.some((d) => d.code === 'BLOCKING_WAIT_ON_TARGET')).toBe(false);
   });
 
-  it('errors WAIT_IN_ASYNC_FUNCTION when blocking wait is inside async function', () => {
+  it('does not error when Wait is inside an async function (follows the flag)', () => {
     const result = analyzeProject({
       documents: {
         'fn-async': {
@@ -82,9 +82,7 @@ describe('validateWaitAndAsyncNodes', () => {
       projectDetails: { extendsType: '' },
       targetLanguage: 'python',
     });
-    const err = result.diagnostics.find((d) => d.code === 'WAIT_IN_ASYNC_FUNCTION');
-    expect(err?.level).toBe('error');
-    expect(err?.message).toContain('async function');
+    expect(result.diagnostics.some((d) => d.code === 'WAIT_IN_ASYNC_FUNCTION')).toBe(false);
   });
 
   it('does not warn Main graph missing On Start (obsolete)', () => {

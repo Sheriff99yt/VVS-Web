@@ -171,6 +171,8 @@ export function applyFunctionImplementBinding(
       symbolId: func.id,
       name: func.name,
       graphTabId: overload.graphTabId ?? func.id,
+      ...(func.flags?.virtual ? { isVirtual: true } : {}),
+      ...(func.flags?.override ? { isOverride: true } : {}),
     },
     inputs: implementNodeInputs(func, overload.id),
     outputs: implementNodeOutputs(func, overload.id),

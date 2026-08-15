@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { ClassSymbol, GraphContainer } from '@vvs/graph-types';
 import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import {
+  buildExtendsClassPickerOptions,
   classContainerId,
   classGraphTabId,
   classesForContainer,
   containerMatchesFilter,
 } from './classScope';
+import { classVisibleSymbols, createVariableSymbol } from '@vvs/graph-types';
 
 const mainClass: ClassSymbol = {
   kind: 'class',
@@ -60,5 +62,35 @@ describe('classScope container helpers', () => {
     expect(
       containerMatchesFilter(containers[0]!, classes, 'utilities', matches)
     ).toBe(false);
+  });
+});
+
+describe('class inheritance listing (U106)', () => {
+  it('lists inherited members and builds an Extends class picker', () => {
+    const parent: ClassSymbol = {
+      kind: 'class',
+      id: MAIN_CLASS_ID,
+      name: 'Machine',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    };
+    const child: ClassSymbol = {
+      kind: 'class',
+      id: 'class-sensor',
+      name: 'Sensor',
+      extendsType: 'Machine',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    };
+    const power = createVariableSymbol('Power', { id: 'var-power', classId: MAIN_CLASS_ID });
+    const visible = classVisibleSymbols(child.id, [parent, child], {
+      variables: [power],
+      functions: [],
+      events: [],
+    });
+    expect(visible.variables.map((v) => v.name)).toEqual(['Power']);
+    expect(visible.inherited.get(power.id)?.inheritedFromClassName).toBe('Machine');
+
+    const options = buildExtendsClassPickerOptions([parent, child], child.id);
+    expect(options.some((o) => o.value === 'Machine')).toBe(true);
+    expect(options.some((o) => o.value === 'Sensor')).toBe(false);
   });
 });

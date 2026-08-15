@@ -69,7 +69,7 @@ Before marking a feature supported, confirm all five:
 
 ### Flow / action / expression (summary)
 
-Shipped flow: `flow_branch`, `flow_for`, `flow_while`, `flow_switch`, `flow_sequence`. Shipped actions: `action_print`, `action_get_input`, Wait / Await Wait. Math + convert nodes ship; string-concat / comparison operator nodes are still gaps.
+Shipped flow: `flow_branch`, `flow_for`, `flow_while`, `flow_switch`, `flow_sequence`. Shipped actions: `action_print`, `action_get_input`, Wait (`action_wait` with `isAsync` option and `seconds` pin). Math + convert nodes ship; string-concat / comparison operator nodes are still gaps.
 
 ### Events
 

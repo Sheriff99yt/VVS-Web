@@ -46,7 +46,10 @@
       "quasi": "else:"
     },
     "ForLoopHeader": {
-      "quasi": "for ({index} : {last}):"
+      "quasi": "for ({index} := {first}..{last}):"
+    },
+    "ForEachHeader": {
+      "quasi": "for ({element} : {collection}):"
     },
     "WhileLoopHeader": {
       "quasi": "loop:"
@@ -64,6 +67,12 @@
       "quasi": "using { {alias} }"
     },
     "AwaitWait": {
+      "quasi": "# wait {duration}s"
+    },
+    "AwaitWaitAsync": {
+      "quasi": "Sleep({duration})"
+    },
+    "AwaitWaitSync": {
       "quasi": "# wait {duration}s"
     },
     "CallNative": {
@@ -128,6 +137,12 @@
     },
     "Continue": {
       "quasi": "break"
+    },
+    "CallSuper": {
+      "quasi": "(super:){callee}({args})"
+    },
+    "DispatchEventSuper": {
+      "quasi": "(super:)on_{handler}({args})"
     }
   }
 }

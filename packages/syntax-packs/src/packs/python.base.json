@@ -109,7 +109,7 @@
       "quasi": "{prefix}class {name}{extendsSuffix}:"
     },
     "EventHandlerOpen": {
-      "quasi": "{linePrefix}    def on_{handler}({paramList}):"
+      "quasi": "{linePrefix}    {asyncKw}def on_{handler}({paramList}):"
     },
     "FunctionDefOpen": {
       "quasi": "    {staticKw}{asyncKw}def {name}({paramList}):"
@@ -143,6 +143,12 @@
     },
     "Continue": {
       "quasi": "continue"
+    },
+    "CallSuper": {
+      "quasi": "super().{callee}({args})"
+    },
+    "DispatchEventSuper": {
+      "quasi": "super().on_{handler}({args})"
     }
   }
 }

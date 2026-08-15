@@ -89,3 +89,6 @@ apps/web/next-env.d.ts
 # Local-only maintainer scripts (never commit)
 tools/check_git_safe.ps1
 tools/publish_github.ps1
+
+# Temp local scratch (never commit)
+scratch/

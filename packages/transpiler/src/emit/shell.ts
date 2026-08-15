@@ -16,6 +16,7 @@ import type { IrEventHandler, IrModule } from '../ir/types';
 import { handlerBodyIndent } from '../lower/graphToIr';
 import { createPrintContext, type PrintContext } from '../print';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
+import { isModifierEffective } from '@vvs/language-profiles';
 import { emptyHandlerBodyLine } from './layout';
 import { appendIrStatements } from './sinkStatements';
 import { typedParamFragment, typeNameForPin } from './emitTypes';
@@ -96,7 +97,7 @@ export function renderClassModuleOpen(
   extendsType?: string,
   properties?: Record<string, unknown>
 ): string {
-  // Unset visibility omits keyword — do not invent `public`.
+  // Unset visibility omits keyword -- do not invent `public`.
   const mods = resolveModifierSlots(lang, properties);
   const extendsField =
     lang === 'rust' && extendsType?.trim()
@@ -182,11 +183,27 @@ function eventHandlerSignature(
   return '';
 }
 
-function eventHandlerTagAnchor(lang: TargetLanguage, handler: IrEventHandler): string {
+function eventHandlerReturnType(
+  lang: TargetLanguage,
+  properties?: Record<string, unknown>
+): string {
+  // Generated on_* methods are ordinary methods, not C# EventHandler delegates.
+  if (lang === 'csharp' && Boolean(properties?.isAsync)) return 'Task';
+  return 'void';
+}
+
+function eventHandlerTagAnchor(
+  lang: TargetLanguage,
+  handler: IrEventHandler,
+  properties?: Record<string, unknown>
+): string {
   if (lang === 'python') return `def on_${handler.handlerName}(`;
   if (lang === 'gdscript') return `func on_${handler.handlerName}(`;
   if (lang === 'rust') return `fn on_${handler.handlerName}(`;
-  if (lang === 'csharp') return `void on_${handler.handlerName}(`;
+  if (lang === 'csharp') {
+    const ret = eventHandlerReturnType(lang, properties);
+    return `${ret} on_${handler.handlerName}(`;
+  }
   if (lang === 'go') return `on_${handler.handlerName}(`;
   if (lang === 'javascript') return `on_${handler.handlerName}(`;
   if (lang === 'cpp') return eventHandlerSignature(lang, handler);
@@ -211,7 +228,10 @@ export function appendEventHandlerDefinition(
   const lang = ir.targetLanguage;
   if (options?.leadingBlankLine && sink.lineCount > 0) sink.appendRaw('');
 
-  const memberProps = options?.memberProperties;
+  const memberProps = {
+    ...handler.properties,
+    ...options?.memberProperties,
+  };
   // Prefer event symbol parameters when types not passed explicitly.
   const paramTypes =
     options?.paramTypes ??
@@ -226,7 +246,8 @@ export function appendEventHandlerDefinition(
     handler: handler.handlerName,
     paramList: eventHandlerParamList(lang, handler, paramTypes),
     class: ir.activeClass?.name || 'Main',
-    visibility: mods.visibility,
+    returnType: eventHandlerReturnType(lang, memberProps),
+    ...mods,
     comma_params:
       handler.paramNames.length > 0
         ? ', ' + eventHandlerParamList(lang, handler, paramTypes)
@@ -240,7 +261,7 @@ export function appendEventHandlerDefinition(
   const templateName = handler.isConstructor ? 'ConstructorOpen' : 'EventHandlerOpen';
   sink.appendRaw(renderShell(lang, templateName as any, slots));
 
-  const anchor = eventHandlerTagAnchor(lang, handler);
+  const anchor = eventHandlerTagAnchor(lang, handler, memberProps);
   const signatureLine =
     options?.leadingNewline && slots.linePrefix.includes('\n') ? startLine + 1 : startLine;
   // Dual-node events: event_member_define owns the signature line; On handler owns the full span.
@@ -264,7 +285,7 @@ export function appendEventHandlerDefinition(
     handlerSourceGraphNodeId,
     signatureLine,
     sink.lineCount,
-    eventHandlerTagAnchor(lang, handler)
+    eventHandlerTagAnchor(lang, handler, memberProps)
   );
 }
 
@@ -282,7 +303,7 @@ function functionParamList(
     return ['self', ...params].join(', ');
   }
   if (lang === 'gdscript' || lang === 'javascript' || lang === 'cpp') {
-    // C++ FunctionDefOpen embeds types only when paramList supplies them — use typed fragments.
+    // C++ FunctionDefOpen embeds types only when paramList supplies them -- use typed fragments.
     if (lang === 'cpp') {
       return params
         .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
@@ -305,7 +326,7 @@ function functionParamList(
   return params.join(', ');
 }
 
-/** Return type token for C++ / C# prototypes and defs — from Declare props or overload. */
+/** Return type token for C++ / C# prototypes and defs -- from Declare props or overload. */
 export function functionReturnTypeName(
   func: FunctionSymbol,
   lang: TargetLanguage,
@@ -319,7 +340,7 @@ export function functionReturnTypeName(
     overload?.returnType ||
     'void';
 
-  const isAsync = Boolean(properties?.isAsync);
+  const isAsync = Boolean(functionModifierProperties(func, properties).isAsync);
   if (lang === 'csharp' && isAsync) {
     const baseType = raw === 'void' ? '' : typeNameForPin(raw as PinType, 'csharp');
     return baseType ? `Task<${baseType}>` : 'Task';
@@ -330,6 +351,24 @@ export function functionReturnTypeName(
     return typeNameForPin(raw as PinType, lang);
   }
   return raw;
+}
+
+
+/** Merge canvas properties with symbol flags so override/virtual/abstract emit even when only one side is set. */
+export function functionModifierProperties(
+  func: FunctionSymbol | undefined,
+  properties?: Record<string, unknown>
+): Record<string, unknown> {
+  const flags = func?.flags;
+  return {
+    ...properties,
+    visibility: properties?.visibility ?? func?.visibility,
+    binding: properties?.binding ?? func?.binding,
+    isVirtual: Boolean(properties?.isVirtual || flags?.virtual),
+    isOverride: Boolean(properties?.isOverride || flags?.override),
+    isAbstract: Boolean(properties?.isAbstract || flags?.abstract),
+    isAsync: properties?.isAsync != null ? Boolean(properties.isAsync) : Boolean(flags?.async),
+  };
 }
 
 export function resolveModifierSlots(
@@ -368,14 +407,16 @@ export function resolveModifierSlots(
     else if (vis === 'protected') visibility = 'protected ';
     if (binding === 'static') staticKw = 'static ';
     if (isAbstract) abstractKw = 'abstract ';
-    if (isVirtual && !isAbstract) virtualKw = 'virtual ';
+    // C# forbids `virtual override` -- override already implies a virtual slot.
+    if (isVirtual && !isAbstract && !isOverride) virtualKw = 'virtual ';
     if (isOverride) overrideKw = 'override ';
     if (isConst) constKw = 'readonly ';
     if (isAsync) asyncKw = 'async ';
   } else if (lang === 'rust') {
     if (vis === 'public') visibility = 'pub ';
+    if (binding === 'static') staticKw = 'static ';
     if (isConst) constKw = 'const ';
-    if (isAsync) asyncKw = 'async ';
+    // isAsync is ineffective (no Tokio) — never emit async fn.
   } else if (lang === 'cpp') {
     visibility = '';
     if (binding === 'static') staticKw = 'inline static ';
@@ -406,11 +447,13 @@ export function renderFunctionDefHeader(
   isAsync = false,
   properties?: Record<string, unknown>
 ): string {
-  const mods = resolveModifierSlots(lang, properties, func.visibility);
-  // Async only when define-node / caller says so — never invent from body scan.
-  const wantAsync = Boolean(properties?.isAsync) || isAsync;
+  const merged = functionModifierProperties(func, properties);
+  const mods = resolveModifierSlots(lang, merged, func.visibility);
+  // Async only when the modifier is effective for this language (single dim table).
+  const wantAsync =
+    (Boolean(merged.isAsync) || isAsync) && isModifierEffective(lang, 'isAsync');
   const actualAsyncKw = wantAsync
-    ? lang === 'csharp' || lang === 'javascript' || lang === 'rust' || lang === 'python'
+    ? lang === 'csharp' || lang === 'javascript' || lang === 'python'
       ? 'async '
       : mods.asyncKw
     : '';
@@ -424,14 +467,14 @@ export function renderFunctionDefHeader(
     asyncKw: actualAsyncKw || (wantAsync ? mods.asyncKw : ''),
     staticDecorator: mods.staticKw,
     prefix: Object.values(mods).join(''),
-    returnType: functionReturnTypeName(func, lang, properties),
+    returnType: functionReturnTypeName(func, lang, { ...merged, isAsync: wantAsync }),
     name: func.name,
     paramList: functionParamList(func, lang, properties),
   });
 }
 
 /** C++ out-of-line method definition header: `void Class::Name(...) {`
- *  Omits virtual/static/override — those belong on the in-class Declare prototype only.
+ *  Omits virtual/static/override -- those belong on the in-class Declare prototype only.
  */
 export function renderFunctionDefOutOfLineHeader(
   func: FunctionSymbol,
@@ -469,8 +512,9 @@ export function renderFunctionDeclPrototype(
     .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
     .join(', ');
 
-  const mods = resolveModifierSlots(lang, properties, func.visibility);
-  const isAbstract = Boolean(properties?.isAbstract ?? false);
+  const merged = functionModifierProperties(func, properties);
+  const mods = resolveModifierSlots(lang, merged, func.visibility);
+  const isAbstract = Boolean(merged.isAbstract);
   // overrideKw comes from resolveModifierSlots (C++ postfix); suffix is pure-virtual only.
   const pureSuffix = lang === 'cpp' && isAbstract ? ' = 0' : '';
 
@@ -482,7 +526,7 @@ export function renderFunctionDeclPrototype(
     overrideKw: mods.overrideKw,
     asyncKw: '',
     prefix: Object.values(mods).join(''),
-    returnType: functionReturnTypeName(func, lang, properties),
+    returnType: functionReturnTypeName(func, lang, merged),
     name: func.name,
     paramList: params,
     suffix: pureSuffix,

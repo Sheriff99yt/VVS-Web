@@ -1,0 +1,19 @@
+// ===== src/InheritanceLab.js =====
+class Parent {
+    // (x) Declare Speak
+    Speak() {
+        console.log("parent");
+    }
+}
+class Child extends Parent {
+    // (x) Declare Speak
+    Speak() {
+        super.Speak();
+        console.log("child");
+    }
+    async on_start() {
+        await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
+        this.Speak();
+        console.log("done");
+    }
+}

@@ -1,4 +1,5 @@
 // ===== src/CoverageLab.rs =====
+use std::collections::HashMap;
 // (x) Import iostream
 // (x) Import System
 // (x) Import string
@@ -6,15 +7,21 @@
 // (x) Import vector
 // (x) Import unordered_map
 // (x) Import Collections.Generic
+pub static Serial: f32 = 0;
 pub struct Machine {
 
     Power: f32,
-    pub Serial: f32,
-    pub MaxPower: f32,
     pub Ready: bool,
 }
 impl Machine {
 
+    pub const MaxPower: f32 = 100;
+    pub fn new() -> Self {
+        Self {
+            Power: 0,
+            Ready: false,
+        }
+    }
     // (x) Declare Boot
     pub fn Boot(&mut self) {
         self.Ready = true;
@@ -23,7 +30,7 @@ impl Machine {
     }
     // (x) Declare Diagnose
     // (x) Declare Shutdown
-    pub async fn Shutdown(&mut self) {
+    pub fn Shutdown(&mut self) {
         self.Ready = false;
         println!("{}", "Shutdown");
     }
@@ -68,9 +75,18 @@ pub struct Sensor {
 }
 impl Sensor {
 
+    pub fn new() -> Self {
+        Self {
+            base: Machine::new(),
+            Readings: Vec::new(),
+            Status: SensorStatus::OK,
+            Host: Machine::new(),
+            Tags: HashMap::new(),
+        }
+    }
     // (x) Declare Sample
-    pub async fn Sample(&mut self) {
-        self.Readings.push(self.Power);
+    pub fn Sample(&mut self) {
+        self.Readings.push(self.base.Power);
         println!("{}", "Sampled");
     }
     // (x) Declare Report

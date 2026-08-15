@@ -70,7 +70,7 @@ public class Sensor : Machine {
     public void on_tick() {
         Console.WriteLine("Tick");
     }
-    public void on_start() {
+    public override void on_start() {
         switch (this.Status) {
             case SensorStatus.OK:
             this.Sample();

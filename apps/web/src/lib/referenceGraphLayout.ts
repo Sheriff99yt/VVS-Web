@@ -40,7 +40,7 @@ const TYPE_COLORS: Record<'main' | 'function' | 'macro', string> = {
   macro: '#f59e0b',
 };
 
-function graphTypeFor(
+export function graphTypeFor(
   graphId: string,
   openTabs: GraphTab[],
   functions: { id: string; name: string }[]

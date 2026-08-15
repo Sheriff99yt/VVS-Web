@@ -1,7 +1,7 @@
 import { list } from '@vvs/syntax-registry';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import type { LibraryCategory, LibraryNodeTemplate } from '@/types/ui';
-import type { FunctionSymbol, TargetLanguage } from '@/types/graph';
+import type { FunctionSymbol, TargetLanguage, VariableSymbol } from '@/types/graph';
 
 /** Stable React key for spawn menu rows (kindId alone is not unique for dynamic symbols). */
 export function spawnMenuItemKey(item: LibraryNodeTemplate, index: number): string {
@@ -17,6 +17,7 @@ export function buildCoreCategories(
   filterPin?: import('@/types/graph').PinDefinition,
   options?: {
     events?: import('@/types/graph').ProjectEventDefinition[];
+    variables?: VariableSymbol[];
     functionsMissingDeclare?: FunctionSymbol[];
     eventsMissingDeclare?: import('@/types/graph').ProjectEventDefinition[];
     environmentId?: string;
@@ -29,6 +30,7 @@ export function buildCoreCategories(
     currentGraphId,
     functions,
     events: options?.events,
+    variables: options?.variables,
     functionsMissingDeclare: options?.functionsMissingDeclare,
     eventsMissingDeclare: options?.eventsMissingDeclare,
     filterPin,

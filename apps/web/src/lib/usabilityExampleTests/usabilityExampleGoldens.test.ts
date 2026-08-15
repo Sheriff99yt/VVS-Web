@@ -21,6 +21,7 @@ const LANGS: TargetLanguage[] = [
   'rust',
   'gdscript',
   'verse',
+  'go',
 ];
 
 const GOLDEN_ROOT = join(import.meta.dir, '../../../test_project_goldens');
@@ -79,5 +80,18 @@ describe('U65 Test Project goldens (Code panel path, disk-loaded)', () => {
     const cpp = emitFixtureFromDisk(complex, 'cpp');
     expect(cpp).toContain('Tags');
     expect(cpp).toMatch(/std::unordered_map|map</i);
+  });
+
+  test('Inheritance Lab teaches parent/child Speak and Wait async', () => {
+    const inheritance = USABILITY_EXAMPLE_TESTS.find((f) => f.id === 'inheritance')!;
+    const py = emitFixtureFromDisk(inheritance, 'python');
+    expect(py).toContain('print("parent")');
+    expect(py).toContain('super().Speak()');
+    expect(py).toContain('print("child")');
+    const parentBlock = py.split('class Child')[0] ?? '';
+    expect(parentBlock).toContain('print("parent")');
+    expect(parentBlock).not.toContain('print("child")');
+    expect(py).toMatch(/async def on_start/);
+    expect(py).toMatch(/sleep|asyncio|delay/);
   });
 });

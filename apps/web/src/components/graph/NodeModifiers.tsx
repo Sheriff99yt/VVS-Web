@@ -14,7 +14,7 @@ import {
   modifierIneffectiveTooltip,
   type ModifierKey,
 } from '@vvs/language-profiles';
-import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock } from 'lucide-react';
+import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock, CornerLeftUp } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import styles from './VVSNode.module.css';
@@ -39,7 +39,8 @@ export function nodeHasModifierChrome(data: VVSNodeData): boolean {
       f.key === 'isAbstract' ||
       f.key === 'isVirtual' ||
       f.key === 'isOverride' ||
-      f.key === 'isAsync'
+      f.key === 'isAsync' ||
+      f.key === 'isSuper'
   );
 }
 
@@ -103,6 +104,11 @@ const BOOL_MODIFIERS: Array<{
     offLabel: 'Sync',
   },
 ];
+
+function asyncModifierKey(kindId: string): ModifierKey {
+  if (kindId === 'action_wait' || kindId === 'action_await_wait') return 'waitIsAsync';
+  return 'isAsync';
+}
 
 function ModifierDropdown({
   icon,
@@ -219,7 +225,7 @@ export function NodeModifiers({
   onInteractionChange,
 }: NodeModifiersProps) {
   const { updateNodeData } = useReactFlow();
-  const { variables, functions, events } = useProject();
+  const { variables, functions, events, classes, activeClassId, projectDetails } = useProject();
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const { renameVariable, renameFunction, renameEvent } = useSymbolLifecycle();
   const openMenuCount = useRef(0);
@@ -244,8 +250,9 @@ export function NodeModifiers({
       : ['instance', 'static'];
 
   const boolKeysPresent = BOOL_MODIFIERS.some(({ schemaKey }) => hasModifier(schemaKey));
+  const hasSuper = hasModifier('isSuper');
 
-  if (!hasVisibility && !hasBinding && !boolKeysPresent) {
+  if (!hasVisibility && !hasBinding && !boolKeysPresent && !hasSuper) {
     return null;
   }
 
@@ -272,7 +279,7 @@ export function NodeModifiers({
           if (isFlag) renameVariable({ ...v, flags: { ...v.flags, [flagKey!]: value } });
           else renameVariable({ ...v, [key]: value });
         }
-      } else if (kindId === 'function_define') {
+      } else if (kindId === 'function_define' || kindId === 'function_implement') {
         const f = functions.find((x) => x.id === symbolId);
         if (f) {
           if (isFlag) renameFunction({ ...f, flags: { ...f.flags, [flagKey!]: value } });
@@ -358,7 +365,9 @@ export function NodeModifiers({
       {BOOL_MODIFIERS.map(
         ({ schemaKey, modifierKey, title, icon, activeClass, onLabel, offLabel }) => {
           if (!hasModifier(schemaKey)) return null;
-          const enabled = isModifierInteractive(targetLanguage, modifierKey);
+          const resolvedKey =
+            schemaKey === 'isAsync' ? asyncModifierKey(kindId) : modifierKey;
+          const enabled = isModifierInteractive(targetLanguage, resolvedKey);
           const active = Boolean(props[schemaKey as keyof typeof props]);
           return (
             <ModifierDropdown
@@ -371,7 +380,7 @@ export function NodeModifiers({
                 { value: 'false', label: offLabel },
               ]}
               enabled={enabled}
-              disabledTitle={modifierIneffectiveTooltip(targetLanguage, modifierKey)}
+              disabledTitle={modifierIneffectiveTooltip(targetLanguage, resolvedKey)}
               active={active}
               activeClass={activeClass}
               onChange={(v) => handleUpdate(schemaKey, v === 'true')}
@@ -380,6 +389,27 @@ export function NodeModifiers({
           );
         }
       )}
+
+      {hasSuper ? (
+        <ModifierDropdown
+          icon={<CornerLeftUp size={11} strokeWidth={2.5} />}
+          title="Super"
+          value={Boolean(props.isSuper) ? 'true' : 'false'}
+          options={[
+            { value: 'true', label: 'Super' },
+            { value: 'false', label: 'This class' },
+          ]}
+          enabled={Boolean(
+            (classes.find((c) => c.id === activeClassId)?.extendsType ?? '').trim() ||
+              (projectDetails.extendsType ?? '').trim()
+          )}
+          disabledTitle="Super is only available when the class Extends a parent"
+          active={Boolean(props.isSuper)}
+          activeClass={styles.modifierChipActiveRose}
+          onChange={(v) => handleUpdate('isSuper', v === 'true')}
+          onOpenChange={handleMenuOpenChange}
+        />
+      ) : null}
     </div>
   );
 }

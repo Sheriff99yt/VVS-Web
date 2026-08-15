@@ -81,4 +81,50 @@ describe('action_get_input codegen', () => {
     );
     expect(code).toContain('float(input("Enter your name:"))');
   });
+
+  test('verse emits prompt, honest (x), and typed string local', () => {
+    const code = transpileGraphCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'verse',
+        variables: [],
+        functions: [],
+        nodes: [baseNode],
+        edges: [],
+      })
+    );
+    expect(code).toContain('Print("Enter your name:")');
+    expect(code).toContain('# (x) Get User Input');
+    expect(code).toContain('var _vvs_input_input_1 : string = ""');
+    expect(code).not.toContain(': float = 0.0');
+  });
+
+  test('verse number inputKind binds a float local', () => {
+    const numberNode = {
+      ...baseNode,
+      data: {
+        ...baseNode.data,
+        properties: { inputKind: 'number', required: true },
+        outputs: [
+          { id: 'exec_out', label: '', type: 'execution' as const },
+          { id: 'value', label: 'Value', type: 'data_number' as const },
+        ],
+      },
+    };
+    const code = transpileGraphCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'verse',
+        variables: [],
+        functions: [],
+        nodes: [numberNode],
+        edges: [],
+      })
+    );
+    expect(code).toContain('Print("Enter your name:")');
+    expect(code).toContain('# (x) Get User Input');
+    expect(code).toContain('var _vvs_input_input_1 : float = 0.0');
+  });
 });

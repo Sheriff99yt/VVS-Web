@@ -9,6 +9,8 @@ interface PropertySchemaPanelProps {
   fields: PropertyFieldDefinition[];
   values: Record<string, unknown>;
   onChange: (key: string, value: string | number | boolean) => void;
+  /** Dynamic choices for class / enum-like fields (e.g. Declare Class Extends). */
+  fieldOptions?: Record<string, Array<{ value: string; label: string; description?: string; group?: string }>>;
 }
 
 /** Edited on the selected-node chip strip (`NodeModifiers`), not duplicated in Details. */
@@ -20,9 +22,10 @@ const INLINE_MODIFIER_KEYS = new Set([
   'isVirtual',
   'isOverride',
   'isAsync',
+  'isSuper',
 ]);
 
-export function PropertySchemaPanel({ fields, values, onChange }: PropertySchemaPanelProps) {
+export function PropertySchemaPanel({ fields, values, onChange, fieldOptions }: PropertySchemaPanelProps) {
   const visibleFields = fields.filter(
     (field) => isPropertyFieldVisible(field, values) && !INLINE_MODIFIER_KEYS.has(field.key)
   );
@@ -36,7 +39,19 @@ export function PropertySchemaPanel({ fields, values, onChange }: PropertySchema
         const raw = values[field.key];
         const descriptionId = field.description ? `${field.key}-desc` : undefined;
 
-        if (field.type === 'enum' && field.enumValues?.length) {
+        const choiceOptions =
+          fieldOptions?.[field.key] ??
+          (field.type === 'enum' && field.enumValues?.length
+            ? field.enumValues.map((option) => ({ value: option, label: option }))
+            : field.type === 'class'
+              ? []
+              : undefined);
+        if (choiceOptions) {
+          const current = typeof raw === 'string' ? raw : '';
+          const options =
+            current && !choiceOptions.some((option) => option.value === current)
+              ? [{ value: current, label: current, description: 'Current value' }, ...choiceOptions]
+              : choiceOptions;
           return (
             <div key={field.key} className="space-y-1">
               <label className="text-[11px] font-medium text-zinc-400" htmlFor={field.key}>
@@ -44,14 +59,11 @@ export function PropertySchemaPanel({ fields, values, onChange }: PropertySchema
               </label>
               <SearchableSelect
                 id={field.key}
-                value={typeof raw === 'string' ? raw : String(field.enumValues[0])}
+                value={current}
                 onChange={(value) => onChange(field.key, value)}
-                options={field.enumValues.map((option) => ({
-                  value: option,
-                  label: option,
-                }))}
+                options={options}
                 placeholder={`Select ${field.label}…`}
-                searchable={field.enumValues.length > 1}
+                searchable={options.length > 1}
               />
               {field.description ? (
                 <p id={descriptionId} className="text-[10px] text-zinc-600 leading-relaxed">

@@ -134,7 +134,7 @@
       "quasi": "}"
     },
     "EventHandlerOpen": {
-      "quasi": "{linePrefix}    {visibility}void on_{handler}({paramList}) {"
+      "quasi": "{linePrefix}    {visibility}{virtualKw}{overrideKw}{asyncKw}{returnType} on_{handler}({paramList}) {"
     },
     "EventHandlerClose": {
       "quasi": "    }"
@@ -177,6 +177,12 @@
     },
     "Continue": {
       "quasi": "continue;"
+    },
+    "CallSuper": {
+      "quasi": "base.{callee}({args});"
+    },
+    "DispatchEventSuper": {
+      "quasi": "base.on_{handler}({args});"
     }
   }
 }

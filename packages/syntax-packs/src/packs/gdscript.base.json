@@ -146,6 +146,12 @@
     },
     "Continue": {
       "quasi": "continue"
+    },
+    "CallSuper": {
+      "quasi": "super.{callee}({args})"
+    },
+    "DispatchEventSuper": {
+      "quasi": "super.on_{handler}({args})"
     }
   }
 }

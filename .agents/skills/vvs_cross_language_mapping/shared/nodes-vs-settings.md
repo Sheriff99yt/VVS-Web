@@ -45,7 +45,7 @@ Two canvas positions, or existence without a body, are two nodes. An option cann
 
 ### Options (inspector) — not nodes
 
-Visibility, binding (static), const / readonly, abstract, virtual, override, async, extends / implements, name, type, enum type, import path / style / names / target languages, Get User Input inputKind, Wait **async** flag.
+Visibility, binding (static), const / readonly, abstract, virtual, override, async, extends / implements, name, type, enum type, import path / style / names / target languages, Get User Input inputKind, Wait **async** flag, Call / Dispatch **Super** (how the call is written — not a Super node).
 
 These only change how that node’s line is written.
 

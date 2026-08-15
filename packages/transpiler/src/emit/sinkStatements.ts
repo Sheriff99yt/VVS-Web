@@ -203,6 +203,8 @@ function appendForEach(
       headerText = `${ctx.indent}foreach (var ${stmt.elementVar} in ${collPrinted.text}) {`;
     } else if (ctx.family === 'rust') {
       headerText = `${ctx.indent}for ${stmt.elementVar} in ${collPrinted.text}.iter() {`;
+    } else if (ctx.family === 'verse') {
+      headerText = `${ctx.indent}for (${stmt.elementVar} : ${collPrinted.text}):`;
     } else {
       headerText = `${ctx.indent}for (${elementTypeName} ${stmt.elementVar} : ${collPrinted.text}) {`;
     }
@@ -236,27 +238,49 @@ function appendArrayPush(sink: CodeSink, stmt: IrArrayPush, ctx: PrintContext): 
       { noIndent: true }
     );
     if (packed) {
-      sink.appendRaw(`${ctx.indent}${packed.text}`);
+      const packedLine = `${ctx.indent}${packed.text}`;
+      sink.appendRaw(packedLine);
       sink.tagRange(stmt.sourceGraphNodeId, startLine, startLine, 'push');
+      if (packed.expressionSpans?.length) {
+        sink.registerExpressionSpans(
+          startLine,
+          [packedLine],
+          offsetSpans(packed.expressionSpans, ctx.indent.length)
+        );
+      }
       return;
     }
   }
+  let line: string;
+  let valOffset: number;
   if (ctx.family === 'cpp') {
-    sink.appendRaw(`${ctx.indent}${arr.text}.push_back(${val.text});`);
+    line = `${ctx.indent}${arr.text}.push_back(${val.text});`;
+    valOffset = ctx.indent.length + arr.text.length + '.push_back('.length;
   } else if (ctx.family === 'python') {
-    sink.appendRaw(`${ctx.indent}${arr.text}.append(${val.text})`);
+    line = `${ctx.indent}${arr.text}.append(${val.text})`;
+    valOffset = ctx.indent.length + arr.text.length + '.append('.length;
   } else if (ctx.family === 'javascript') {
-    sink.appendRaw(`${ctx.indent}${arr.text}.push(${val.text});`);
+    line = `${ctx.indent}${arr.text}.push(${val.text});`;
+    valOffset = ctx.indent.length + arr.text.length + '.push('.length;
   } else if (ctx.family === 'csharp') {
-    sink.appendRaw(`${ctx.indent}${arr.text}.Add(${val.text});`);
+    line = `${ctx.indent}${arr.text}.Add(${val.text});`;
+    valOffset = ctx.indent.length + arr.text.length + '.Add('.length;
   } else if (ctx.family === 'rust') {
-    sink.appendRaw(`${ctx.indent}${arr.text}.push(${val.text});`);
+    line = `${ctx.indent}${arr.text}.push(${val.text});`;
+    valOffset = ctx.indent.length + arr.text.length + '.push('.length;
   } else if (ctx.family === 'gdscript') {
-    sink.appendRaw(`${ctx.indent}${arr.text}.append(${val.text})`);
+    line = `${ctx.indent}${arr.text}.append(${val.text})`;
+    valOffset = ctx.indent.length + arr.text.length + '.append('.length;
   } else {
-    sink.appendRaw(`${ctx.indent}// push ${val.text}`);
+    line = `${ctx.indent}// push ${val.text}`;
+    valOffset = ctx.indent.length + '// push '.length;
   }
+  sink.appendRaw(line);
   sink.tagRange(stmt.sourceGraphNodeId, startLine, startLine, 'push');
+  sink.registerExpressionSpans(startLine, [line], [
+    ...offsetSpans(arr.spans, ctx.indent.length),
+    ...offsetSpans(val.spans, valOffset),
+  ]);
 }
 
 function appendWhileLoop(

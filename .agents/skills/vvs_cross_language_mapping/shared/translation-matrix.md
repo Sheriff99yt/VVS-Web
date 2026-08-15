@@ -13,12 +13,12 @@ Each language doc embeds **only its own Emit column** under Concept → emit. Ro
 | **Class** | `Class Define` Node | `class MyClass:` | `class MyClass` | `class MyClass` | `public class MyClass` | `pub struct MyClass` + `impl` | `class_name MyClass` | `<public>MyClass := class:` |
 | **Inheritance** | `Class Define` Option: **Extends** | `(BaseClass)` | `: public BaseClass` | `extends BaseClass` | `: BaseClass` | `base: BaseClass` *(comp)* | `extends BaseClass` | `<public>Child(Base) := class:` |
 | **Implements** | `Class Define` Option: **Implements** | `(IDamageable)` | `, public IDamageable` | *Implicit* | `, IDamageable` | `impl IDamageable for` | *Implicit* | `, IDamageable` |
-| **Variable** | `Variable Define` Node | `A = 0` | `float A = 0;` | `A = 0;` | `public float A = 0;` | `pub A: f32` | `var A = 0` | `var A : float = 0` |
+| **Variable** | `Variable Define` Node | `A = 0` | `float A = 0;` | `A = 0;` | `public float A = 0;` | `pub A: f32` | `var A = 0` | `var A : float = 0` / class `Type{}` |
 | **Private Var** | `Variable` Option: **Visibility** | `_secretKey` | `private:` / `protected:` | `#secretKey` | `protected` / `private float A;` | `secretKey: String` *(no pub)* | `_secretKey` | omit `<public>` |
-| **Constant Var** | `Variable` Option: **Constant** | `MaxPower = 100` | `const float MaxPower` | `MaxPower = 100` | `public readonly float` | plain field today | plain `var` / `const` | plain `var` today |
-| **Static Var** | `Variable` Option: **Static** | `Serial = 0` | `inline static float` | `static Serial = 0` | `public static float` | plain field today | `static var Serial` | plain `var` today |
+| **Constant Var** | `Variable` Option: **Constant** | `MaxPower = 100` | `const float MaxPower` | `MaxPower = 100` | `public readonly float` | associated `pub const` | plain `var` / `const` | plain `var` today |
+| **Static Var** | `Variable` Option: **Static** | `Serial = 0` | `inline static float` | `static Serial = 0` | `public static float` | module `pub static` | `static var Serial` | plain `var` today |
 | **Array** | `Variable` Pin Type: **Array** | `[]` | `std::vector<T>` | `[]` | `List<T>` | `Vec<T>` | `[]` | `[]type = array{}` |
-| **Map/Dictionary** | `Variable` Pin Type: **Map** | `{}` | `std::unordered_map` | `new Map()` | `Dictionary<K, V>` | `HashMap<K, V>` | `{}` | `[type]type = map{}` |
+| **Map/Dictionary** | `Variable` Pin Type: **Map** | `{}` | `std::unordered_map` | `new Map()` | `Dictionary<K, V>` | `HashMap<K, V>` + `use` | `{}` | `[type]type = map{}` |
 | **Function** | `Function Declare` + `Function Define` | `# (x) Declare` + `def Func(self):` | prototype + `Class::Func` (U82) | `// (x) Declare` + `Func()` | `// (x) Declare` + `void Func()` | `// (x) Declare` + `fn Func` | `# (x) Declare` + `func Func():` | `# (x) Declare` + `Func() : void =` |
 | **Abstract Func** | Declare `isAbstract` (no Define body) | `# (x) Declare Func` | `virtual void Func() = 0;` | `// (x) Declare Func` | `protected abstract void Func();` | `// (x) Declare Func` | `# (x) Declare Func` | `# (x) Declare Func` |
 | **Virtual / Override** | Declare `isVirtual` / `isOverride` | *Implicit* | `virtual` / `override` postfix | *Implicit* | `virtual` / `override` | *Implicit* | *Implicit* | `<override>` |
@@ -32,11 +32,11 @@ Each language doc embeds **only its own Emit column** under Concept → emit. Ro
 | **Namespaces** | `Namespace Define` Node | `module.py` | `namespace X` | `namespace X` | `namespace X` | `mod x` | `class_name` | `x := module:` |
 | **Structs** | `Struct Define` Node | `@dataclass` | `struct X` | `interface X` | `struct X` | `struct X` | *Dictionary* | `X := struct:` |
 | **Destructor** | `Destructor Define` Node | `__del__` | `~X()` | *(None)* | `~X()` | `impl Drop` | `NOTIFICATION_PREDELETE` | *(None)* |
-| **Async Function** | `Function` Option: **Async** | `async def` | *(ineffective — disable chip)* | `async Func()` | `async void` today | `async fn` | *(ineffective today)* | *(ineffective today)* |
+| **Async Function** | `Function` Option: **Async** | `async def` | *(ineffective — disable chip)* | `async Func()` | `async Task` / `async Task<T>` | `async fn` | *(ineffective today)* | *(ineffective today)* |
 | **Await** | `Await` Node | `await X` | *(ineffective with Async)* | `await X` | `await X` | `X.await` | `await X` | `X()` *(implicit)* |
 | **If/Else** | `Branch (If)` Node | `if: / else:` | `if () {} else {}` | `if () {} else {}` | `if () {} else {}` | `if {} else {}` | `if: / else:` | `if (): / else:` |
 | **Switch/Match** | `Switch` Node | `if/elif` (`_vvs_sel`) | `switch() case:` | `switch() case:` | `switch() case:` | `if/else if` (`_vvs_sel`) | `if/elif` (`_vvs_sel`) | sequential `if` cascade |
-| **For Loop** | `For Loop` Node | `for x in y:` | `for (T x : xs)` | `for (const x of xs)` | `foreach (var x in xs)` | `for x in y.iter() {}` | `for x in y:` | *broken — see CL-015* |
+| **For Loop** | `For Loop` Node | `for x in y:` | `for (T x : xs)` | `for (const x of xs)` | `foreach (var x in xs)` | `for x in y.iter() {}` | `for x in y:` | `for (val : xs):` / `for (i := a..b):` |
 | **While Loop** | `While Loop` Node | `while x:` | `while() {}` | `while() {}` | `while() {}` | `while x {}` | `while x:` | `loop: if:` |
 | **Break** | `Break` Node | `break` | `break;` | `break;` | `break;` | `break;` | `break` | `break` |
 | **Continue** | `Continue` Node | `continue` | `continue;` | `continue;` | `continue;` | `continue;` | `continue` | *Implicit/Logic* |

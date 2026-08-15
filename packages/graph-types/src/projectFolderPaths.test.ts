@@ -45,7 +45,7 @@ describe('listVirtualProjectFolderPaths', () => {
     expect(pathSet.has(VVS_INTEGRATION_FILE)).toBe(true);
     expect(pathSet.has(`${VVS_SYMBOLS_DIR}/variables.json`)).toBe(true);
     expect(pathSet.has('.vvs/graphs/containers/main-graph.graph.json')).toBe(true);
-    expect(pathSet.has('.vvs/graphs/functions/Add.graph.json')).toBe(true);
+    expect(pathSet.has('.vvs/graphs/functions/Add__fn-add.graph.json')).toBe(true);
     expect(pathSet.has('Calculator/Calculator.py')).toBe(true);
     expect(pathSet.has('main.py')).toBe(true);
     expect(pathSet.has('src/ui/panel.css')).toBe(true);

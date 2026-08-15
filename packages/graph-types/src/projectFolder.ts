@@ -60,7 +60,10 @@ export function containerGraphRelativePath(containerId: string): string {
 }
 
 export function functionGraphRelativePath(tab: GraphTab): string {
-  const stem = sanitizeGraphFileStem(tab.name);
+  const nameStem = sanitizeGraphFileStem(tab.name);
+  const idStem = sanitizeGraphFileStem(tab.id);
+  // Same method name on two classes (Parent.Speak / Child.Speak) must not share a file.
+  const stem = idStem && idStem !== nameStem ? `${nameStem}__${idStem}` : nameStem;
   return `graphs/functions/${stem}.graph.json`;
 }
 

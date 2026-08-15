@@ -120,14 +120,14 @@ const PACK_FAMILIES = ['python', 'cpp', 'javascript', 'verse', 'gdscript', 'rust
 function skipTemplate(family: (typeof PACK_FAMILIES)[number], key: (typeof REQUIRED_TEMPLATES)[number]): boolean {
   if (family === 'python' && (key === 'AwaitWait' || key === 'Assign')) return true;
   if (family === 'gdscript' && (key === 'AwaitWait' || key === 'Assign')) return true;
-  if (family === 'rust' && (key === 'AwaitWaitAsync' || key === 'AwaitWaitSync' || key === 'Assign')) return true;
+  if (family === 'rust' && key === 'Assign') return true;
   if (family === 'csharp' && (key === 'AwaitWait' || key === 'Assign')) return true;
   if (family === 'go' && (key === 'AwaitWait' || key === 'Assign')) return true;
-  if (family === 'cpp' && (key === 'AwaitWaitAsync' || key === 'AwaitWaitSync' || key === 'AssignInstance' || key === 'AssignLocal')) {
+  if (family === 'cpp' && (key === 'AssignInstance' || key === 'AssignLocal')) {
     return true;
   }
   if (family === 'javascript' && (key === 'AwaitWait' || key === 'Assign')) return true;
-  if (family === 'verse' && (key === 'AwaitWaitAsync' || key === 'AwaitWaitSync' || key === 'Assign' || key === 'AssignInstance' || key === 'AssignLocal')) {
+  if (family === 'verse' && (key === 'Assign' || key === 'AssignInstance' || key === 'AssignLocal')) {
     return true;
   }
   return false;

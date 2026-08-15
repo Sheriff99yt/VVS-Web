@@ -7,7 +7,7 @@
 
 **Agent rule:** For Verse (UEFN) work, open **this file only** (plus `SKILL.md` for workflow). Do not open other language docs.
 
-> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues (`CL-014`–`CL-016`, `CL-018`). GetInput / for-loop emit are **wrong vs Verse** — documented as shipped goldens; do not treat as target language truth until fixed.
+> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues (`CL-014`, `CL-018`). **CL-015** for-loop shape is fixed. **CL-016** class-typed field default is `Type{}` (not logic `false`). **CL-014** GetInput is honest `(x)` + prompt — Verse still has no blocking string read on a plain class.
 
 ## Declare / Define
 
@@ -32,7 +32,7 @@
         Print("Shutdown")
 ```
 
-Coverage Lab: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, Switch → sequential `if` with `# switch` comment, GetInput currently stubs `var _vvs_input_… : float = 0.0` (**CL-014**), for-each currently emits invalid brace form (**CL-015**).
+Coverage Lab: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, `var Host<public> : Machine = Machine{}` (**CL-016**), Switch → sequential `if` with `# switch` comment, GetInput → `Print(prompt)` + `# (x) Get User Input` + typed local (**CL-014** open — no real read), for-each → `for (val : Readings):` (**CL-015**).
 
 ## Concept → emit
 
@@ -43,13 +43,14 @@ Coverage Lab: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, Swit
 | **Class** | `Class Define` Node | `<public>MyClass := class:` |
 | **Inheritance** | `Class Define` Option: **Extends** | `<public>Child(Base) := class:` |
 | **Implements** | `Class Define` Option: **Implements** | `, IDamageable` |
-| **Variable** | `Variable Define` Node | `var A : float = 0` / `var A<public> : …` |
+| **Variable** | `Variable Define` Node | `var A : float = 0` / `var A<public> : …` / class-typed `var Host<public> : Machine = Machine{}` |
 | **Private Var** | `Variable` Option: **Visibility** | omit `<public>` |
 | **Constant Var** | `Variable` Option: **Constant** | plain `var` today |
 | **Static Var** | `Variable` Option: **Static** | plain `var` today *(module static planned)* |
 | **Array** | `Variable` Pin Type: **Array** | `[]float = array{}` |
 | **Map/Dictionary** | `Variable` Pin Type: **Map** | `[string]string = map{}` |
 | **Function** | `Function Declare` + `Function Define` | `# (x) Declare` + `Func<public>() : void =` |
+| **Call Super** | `Call` Option: **Super** (not a node) | `(super:)Name(...)` when the class Extends |
 | **Abstract Func** | Declare `isAbstract` (no Define body) | `# (x) Declare Func` |
 | **Virtual / Override** | Declare `isVirtual` / `isOverride` | `<override>` |
 | **Free Function** | `Function` Option: **Not in Class** | `Func() : void =` |
@@ -64,9 +65,10 @@ Coverage Lab: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, Swit
 | **Destructor** | `Destructor Define` Node | *(None)* |
 | **Async Function** | `Function` Option: **Async** | *(ineffective today — CL-018; `<suspends>` planned)* |
 | **Await** | `Await` Node | `X()` *(implicit)* |
+| **Get User Input** | `Get User Input` Node | `Print(prompt)` + `# (x) Get User Input` + typed local (**CL-014** — no stdin) |
 | **If/Else** | `Branch (If)` Node | `if (): / else:` / `if (Ready?):` |
 | **Switch/Match** | `Switch` Node | sequential `if` cascade (`# switch` comment) |
-| **For Loop** | `For Loop` Node | *broken today — CL-015*; target `for (val : xs):` |
+| **For Loop** | `For Loop` Node | range `for (i := first..last):` · for-each `for (val : xs):` |
 | **While Loop** | `While Loop` Node | `loop: if:` |
 | **Break** | `Break` Node | `break` |
 | **Continue** | `Continue` Node | *Implicit/Logic* |
@@ -97,6 +99,7 @@ AdvancedClass := class(BaseClass, IDamageable):
     var secretKey<private> : string = "" # Private
     var History<public> : []float = array{} # Array
     var Scores<public> : [string]int = map{} # Dictionary / Map
+    var Host<public> : Machine = Machine{} # Class-typed default (archetype value)
 
     # --- Getters / Setters ---
     GetValueA<public>() : float =
@@ -166,10 +169,13 @@ FlowAndAsyncDemo := class():
 
         # Switch — Coverage Lab: sequential if cascade with # switch comment
 
-        # For Loop — Coverage Lab currently emits invalid brace form (CL-015).
-        # Target shape:
-        # for (Val : Readings):
-        #     Print(ToString(Val))
+        # For Loop — Coverage Lab for-each (CL-015):
+        for (Val : Readings):
+            Print(ToString(Val))
+
+        # Range for (flow_for first/last pins):
+        # for (I := 0..2):
+        #     Print(ToString(I))
 
         var MutVal : int = Val
         loop:

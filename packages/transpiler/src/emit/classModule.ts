@@ -12,8 +12,12 @@ import { emptyFunctionBodyLine } from './layout';
 import {
   appendCppOutOfLineFunction,
   appendIrMembersInOrder,
+  appendRustAssociatedConsts,
+  appendRustHoistedStatics,
+  appendRustNewConstructor,
   tagClassDeclLine,
   tagClassStructuralLine,
+  withRustHashMapImport,
   type MemberState,
 } from './members';
 import {
@@ -55,8 +59,13 @@ export function emitClassModule(
     skipImports?: boolean;
     /** Multi-class merge: only the first class may flush unowned attach targets as orphans. */
     allowUnownedCommentAttachAsOrphan?: boolean;
+    /** Merged home already injected the file-top HashMap `use`. */
+    skipGeneratedImports?: boolean;
   }
 ): void {
+  if (!options?.skipGeneratedImports) {
+    ir = withRustHashMapImport(ir);
+  }
   const classDecl = ir.members.find(
     (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
   );
@@ -115,6 +124,9 @@ export function emitClassModule(
     const classLineStart = sink.lineCount + 1;
     const properties = classDecl.properties ?? {};
     const extendsType = classDecl.extendsType || ir.extendsType || '';
+    if (lang === 'rust') {
+      appendRustHoistedStatics(sink, ir, state);
+    }
     sink.appendRaw(renderClassModuleOpen(lang, ir.moduleName, extendsType, properties));
     tagClassDeclLine(sink, ir, classLineStart);
     state.classEffective = true;
@@ -128,6 +140,8 @@ export function emitClassModule(
     const implOpen = renderClassImplOpen(lang, ir.moduleName);
     if (implOpen) sink.appendRaw(implOpen);
     state.rustImplOpened = true;
+    appendRustAssociatedConsts(sink, ir, state);
+    appendRustNewConstructor(sink, ir);
   };
 
   const cppOutOfLine: Extract<IrMemberDecl, { kind: 'FunctionDecl' }>[] = [];
@@ -152,6 +166,11 @@ export function emitClassModule(
       return true;
     },
   });
+
+  // Rust: open impl + fn new() even when the class has only fields (no methods yet).
+  if (lang === 'rust' && state.classOpened && state.classEffective !== false) {
+    ensureRustImpl();
+  }
 
   // Orphan event handlers (not paired to an event_member_define on the chain).
   // Do not auto-open a class shell here — shell opens only on ClassDecl.

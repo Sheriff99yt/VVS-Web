@@ -1,4 +1,4 @@
-import type { PinDefinition, PinType, FunctionSymbol, GraphBinding, TargetLanguage, ProjectEventDefinition } from '@vvs/graph-types';
+import type { PinDefinition, PinType, FunctionSymbol, GraphBinding, TargetLanguage, ProjectEventDefinition, VariableSymbol } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { expandEnvironmentSymbols as expandEnvSymbols } from '@vvs/environment-templates';
 import corePack from '../core-pack.json';
@@ -117,6 +117,8 @@ export interface ListRegistryOptions {
   currentGraphId: string;
   functions: FunctionSymbol[];
   events?: ProjectEventDefinition[];
+  /** Class-scoped + inherited fields for Get / Set spawn rows. */
+  variables?: VariableSymbol[];
   /** Symbols without a matching declare node on the class define chain. */
   functionsMissingDeclare?: FunctionSymbol[];
   eventsMissingDeclare?: ProjectEventDefinition[];
@@ -299,6 +301,8 @@ function catalogCategoryOrder(name: string): number {
   if (name === 'Declare') return 0;
   if (name === 'Define') return 1;
   if (name === 'Handlers') return 2;
+  if (name === 'Get') return 898;
+  if (name === 'Set') return 899;
   if (name === 'Call') return 900;
   if (name === 'Dispatch') return 901;
   return 100;
@@ -402,6 +406,38 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
 
   if (dispatchItems.length > 0) {
     categories.push({ name: 'Dispatch', items: dispatchItems });
+  }
+
+  const getPrefix = namingConvention ? getSpawnNamingPrefix('Get', namingConvention, targetLanguage) : 'Get';
+  const setPrefix = namingConvention ? getSpawnNamingPrefix('Set', namingConvention, targetLanguage) : 'Set';
+  const classFields = (options.variables ?? []).filter((variable) => !variable.graphTabId && !variable.scopedNodeId);
+
+  const getItems: SpawnNodeTemplate[] = classFields.map((variable) => ({
+    type: 'variable_get',
+    kindId: 'variable_get',
+    kindVersion: 1,
+    label: `${getPrefix} ${variable.name}`,
+    category: 'Variables',
+    inputs: [],
+    outputs: [{ id: 'val', label: variable.name, type: variable.type }],
+    graphBinding: { kind: 'variable_ref', symbolId: variable.id },
+  }));
+  if (getItems.length > 0) {
+    categories.push({ name: 'Get', items: getItems });
+  }
+
+  const setItems: SpawnNodeTemplate[] = classFields.map((variable) => ({
+    type: 'variable_set',
+    kindId: 'variable_set',
+    kindVersion: 1,
+    label: `${setPrefix} ${variable.name}`,
+    category: 'Variables',
+    inputs: [EXEC_IN, { id: 'val', label: 'New Value', type: variable.type }],
+    outputs: [EXEC_OUT],
+    graphBinding: { kind: 'variable_ref', symbolId: variable.id },
+  }));
+  if (setItems.length > 0) {
+    categories.push({ name: 'Set', items: setItems });
   }
 
   return categories;

@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { spawnItemMatchesQuery } from '@vvs/syntax-registry';
 import { buildCoreCategories, spawnMenuItemKey } from '@/lib/nodeCatalog';
 import { LibraryNodeTemplate } from '@/types/ui';
-import type { FunctionSymbol, GraphTab, TargetLanguage, ProjectEventDefinition } from '@/types/graph';
+import type { FunctionSymbol, GraphTab, TargetLanguage, ProjectEventDefinition, VariableSymbol } from '@/types/graph';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { useUiPreference } from '@/hooks/useUiPreference';
 
@@ -24,6 +24,7 @@ interface NodeContextMenuProps {
   currentGraphId: string;
   functions: FunctionSymbol[];
   events?: ProjectEventDefinition[];
+  variables?: VariableSymbol[];
   functionsMissingDeclare?: FunctionSymbol[];
   eventsMissingDeclare?: ProjectEventDefinition[];
   openTabs: GraphTab[];
@@ -44,6 +45,7 @@ export function NodeContextMenu({
   currentGraphId,
   functions,
   events,
+  variables,
   functionsMissingDeclare,
   eventsMissingDeclare,
   openTabs,
@@ -75,6 +77,7 @@ export function NodeContextMenu({
           : undefined,
         {
           events,
+          variables,
           functionsMissingDeclare,
           eventsMissingDeclare,
           environmentId,
@@ -86,6 +89,7 @@ export function NodeContextMenu({
     [
       functions,
       events,
+      variables,
       functionsMissingDeclare,
       eventsMissingDeclare,
       currentGraphId,

@@ -93,10 +93,10 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 | C++ | [`cpp.md`](cpp.md) | 2026-07-17 | synced_with_open_issues |
 | Python | [`python.md`](python.md) | 2026-07-17 | synced_with_open_issues |
 | JavaScript | [`javascript.md`](javascript.md) | 2026-07-17 | synced |
-| C# | [`csharp.md`](csharp.md) | 2026-07-17 | synced_with_open_issues |
-| Rust | [`rust.md`](rust.md) | 2026-07-17 | synced_with_open_issues |
+| C# | [`csharp.md`](csharp.md) | 2026-08-15 | synced |
+| Rust | [`rust.md`](rust.md) | 2026-08-15 | synced_with_open_issues |
 | GDScript | [`gdscript.md`](gdscript.md) | 2026-07-17 | synced_with_open_issues |
-| Verse | [`verse.md`](verse.md) | 2026-07-17 | synced_with_open_issues |
+| Verse | [`verse.md`](verse.md) | 2026-08-15 | synced_with_open_issues |
 
 Statuses: `pending` · `in_progress` · `synced` · `synced_with_open_issues`
 
@@ -113,19 +113,19 @@ All cross-language mapping findings live here (`CL-NNN`). Do **not** duplicate f
 | CL-003 | python | P1 | `complex/python` | Concept → emit said Switch → `match:`; Coverage Lab emits `if/elif` cascade via `_vvs_sel`. | fixed-in-cycle (`python.md`, matrix) | done |
 | CL-004 | javascript | P1 | `complex/javascript` | For Loop cell said `for(;;)`; Coverage Lab emits `for (const val of …)`. | fixed-in-cycle (`javascript.md`, matrix) | done |
 | CL-005 | csharp | P1 | `complex/csharp` | Instance **Constant** emits `readonly`, not `const`. For-each is `foreach`, not `for(;;)`. | fixed-in-cycle (`csharp.md`, matrix) | done |
-| CL-006 | csharp | P1 | `complex/csharp` | **Async** on void methods emits `async Task` (Shutdown/Sample) instead of `async void`. | fixed-in-cycle (`shell.ts`, `csharp.base.json`) | done |
+| CL-006 | csharp | P1 | `complex/csharp` | **Async** on functions/handlers emits `async Task` / `async Task<T>`, never `async void`. | fixed-in-cycle (`shell.ts`, `csharp.base.json`) | done |
 | CL-007 | rust | P1 | `complex/rust` | Switch cell said `match {}`; Coverage Lab emits `if/else if` cascade (`_vvs_sel`). | fixed-in-cycle (`rust.md`, matrix) | done |
-| CL-008 | rust | P1 | `complex/rust` | **Static** / **Constant** field modifiers do not change emit (plain `pub Serial: f32` / `pub MaxPower: f32`). Docs now match; real `const`/`static` needs modifier plan. | needs-system-plan (packs / modifierEffectiveness) | open |
-| CL-009 | rust | P1 | `complex/rust` | `HashMap<…>` used with no `use std::collections::HashMap;` (ineffective Import nodes are `(x)` comments only). | needs-system-plan (import wiring / packs) | open |
-| CL-010 | rust | P0 | `complex/rust` | Inheritance is `base: Machine` composition, but bodies use `self.Power` / `Sensor::new()` without field projection or `new` impl — will not compile as Rust. Needs inheritance-lowering plan. | needs-system-plan — [plans/CL-010-rust-inheritance.md](plans/CL-010-rust-inheritance.md) | open |
+| CL-008 | rust | P1 | `complex/rust` | **Static** Serial is module `pub static Serial: f32`; **Constant** MaxPower is associated `pub const MaxPower: f32` in `impl` (not struct fields, no `// static`). | fixed-in-cycle — [plans/CL-008-009-rust-static-const-import.md](plans/CL-008-009-rust-static-const-import.md) | done |
+| CL-009 | rust | P1 | `complex/rust` | Generated visible `use std::collections::HashMap;` at file top (Import Module emit), tagged to the map field. No VVS HashMap runtime. | fixed-in-cycle — [plans/CL-008-009-rust-static-const-import.md](plans/CL-008-009-rust-static-const-import.md) | done |
+| CL-010 | rust | P0 | `complex/rust` | Inheritance is `base: Machine` composition; Get/Set/Call now project `self.base.<name>` and rust subclasses emit `fn new()`. | fixed-in-cycle — [plans/CL-010-rust-inheritance.md](plans/CL-010-rust-inheritance.md) | open |
 | CL-011 | gdscript | P1 | `complex/gdscript` | Switch cell said `match:`; Coverage Lab emits `if/elif` cascade. | fixed-in-cycle (`gdscript.md`, matrix) | done |
 | CL-012 | gdscript | P1 | `complex/gdscript` | Switch temp `_vvs_sel = self.Status` omits `var` — invalid GDScript. | fixed-in-cycle (`gdscript.base.json`) | done |
 | CL-013 | gdscript | P1 | `simple/gdscript`, `complex/gdscript` | Get User Input uses `OS.read_string_from_stdin()` only — prompt string from the node is now printed. | fixed-in-cycle (`getInput.gdscript.ts`) | done |
-| CL-014 | verse | P0 | `simple/verse`, `complex/verse` | Get User Input emits typed variable initialization (`: string = ""` vs `: float = 0.0`). | fixed-in-cycle (`getInput.verse.ts`) | done |
-| CL-015 | verse | P0 | `complex/verse` | For-each over array emits Verse block colon syntax `for (val : Readings):`. | fixed-in-cycle (`verse.base.json`) | done |
-| CL-016 | verse | P1 | `complex/verse` | Class-typed field default `Host = false` (logic) for `Machine` — wrong defaulting. | needs-system-plan (Verse defaults / type defaults) | open |
+| CL-014 | verse | P0 | `simple/verse`, `complex/verse` | Verse has no blocking string-read API on a plain class. Emit is now `Print(prompt)` + `# (x) Get User Input` + typed local (`string = ""` / `float = 0.0`) so the node is locatable and not a silent fake. Still not real player/string input (needs creative_device / UI — do not mark done). | needs-system-plan (UEFN player/UI read) | open |
+| CL-015 | verse | P0 | `complex/verse` | For-each emits `for (val : Readings):`; range-for emits `for (i := first..last):`. | fixed-in-cycle (`verse.base.json`, `sinkStatements.ts`) | done |
+| CL-016 | verse | P1 | `complex/verse` | Class-typed field default was `Host = false` (logic) for `Machine`. Now `Host = Machine{}` (Verse archetype value on the Variable default pin — not a constructor node). | fixed-in-cycle (`members.ts` formatVariableDefault) | done |
 | CL-017 | multi | P2 | `complex/*` | Native `match` / pattern Switch for Python, Rust, GDScript (and richer Verse cascade) not covered — today if-cascade is intentional ship shape; promote only with a Switch-lowering plan. | needs-system-plan (optional Switch lowering) | open |
-| CL-018 | gdscript / verse | P2 | `complex/gdscript`, `complex/verse` | **Async** modifier ineffective in Coverage Lab emit (plain `func` / no `<suspends>`). Docs note current no-op; chip disable vs real async needs modifier plan. | needs-system-plan (modifierEffectiveness) | open |
+| CL-018 | multi | P2 | `complex/*` | **Async** chips dim where emit is a no-op (U66/U67). Function `isAsync` vs Wait `waitIsAsync`: rust function async is now dimmed (no Tokio, emit `fn`); rust/C++/Go Wait.isAsync dimmed (same-thread sleep). GDScript Wait async stays live (`await` timer); function async stays dim. Verse both dim (no `<suspends>` — not invented). Wait.isAsync does not flip the enclosing function. | fixed-in-cycle (`modifierEffectiveness`) | done |
 
 ## Related project docs
 

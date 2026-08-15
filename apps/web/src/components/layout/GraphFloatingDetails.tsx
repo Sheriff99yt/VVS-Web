@@ -38,7 +38,8 @@ import { FloatingPanelShell } from './FloatingPanelShell';
 import { readUiPreference, writeUiPreferences, clampDetailsPanelHeight, clampFloatingPanelWidth, defaultDetailsPanelLayout, dispatchResetDetailsPanelLayout, RESET_DETAILS_PANEL_LAYOUT_EVENT } from '@/lib/uiPreferences';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
-import { activeClass } from '@/lib/classScope';
+import { activeClass, buildExtendsClassPickerOptions } from '@/lib/classScope';
+import { useClassLifecycle } from '@/hooks/useClassLifecycle';
 import {
   hasDefineNodeForEvent,
   hasHandlerNodeForEvent,
@@ -116,6 +117,7 @@ function GraphFloatingDetailsPanel() {
     fixBrokenNode,
     fixAllBrokenRefs,
   } = useSymbolLifecycle();
+  const { renameClass } = useClassLifecycle();
 
   const [pinned, setPinned] = useUiPreference('detailsPanelPinned');
   const [hoverExpanded, setHoverExpanded] = useState(false);
@@ -348,7 +350,7 @@ function GraphFloatingDetailsPanel() {
           if (isFlag) renameVariable({ ...v, flags: { ...v.flags, [flagKey!]: value } });
           else renameVariable({ ...v, [key]: value });
         }
-      } else if (nodeData.data.kindId === 'function_define') {
+      } else if (nodeData.data.kindId === 'function_define' || nodeData.data.kindId === 'function_implement') {
         const f = functions.find(x => x.id === symbolId);
         if (f) {
           if (isFlag) renameFunction({ ...f, flags: { ...f.flags, [flagKey!]: value } });
@@ -360,6 +362,20 @@ function GraphFloatingDetailsPanel() {
           // Event doesn't have flags currently, but if it does later, handle it here
           renameEvent({ ...e, [key]: value });
         }
+      }
+    }
+
+    if (nodeData.data.kindId === 'class_define' && (key === 'name' || key === 'extendsType' || key === 'visibility')) {
+      const classId =
+        (typeof nodeData.data.properties?.classId === 'string' && nodeData.data.properties.classId) ||
+        (typeof symbolId === 'string' ? symbolId : undefined);
+      const cls = classId ? classes.find((item) => item.id === classId) : undefined;
+      if (cls) {
+        const nextValue = key === 'extendsType' ? String(value).trim() : value;
+        renameClass({
+          ...cls,
+          [key]: key === 'extendsType' ? (nextValue || undefined) : nextValue,
+        });
       }
     }
   };
@@ -731,6 +747,20 @@ function GraphFloatingDetailsPanel() {
               fields={filteredPropertySchema}
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}
+              fieldOptions={
+                nodeKindId === 'class_define'
+                  ? {
+                      extendsType: buildExtendsClassPickerOptions(
+                        classes,
+                        typeof nodeData.data.properties?.classId === 'string'
+                          ? nodeData.data.properties.classId
+                          : typeof nodeData.data.properties?.symbolId === 'string'
+                            ? nodeData.data.properties.symbolId
+                            : undefined
+                      ),
+                    }
+                  : undefined
+              }
             />
           ) : null}
 

@@ -1,2 +1,2 @@
-        for (_vvs_i_for_loop : 2):
+        for (_vvs_i_for_loop := 0..2):
             Print(ToString(_vvs_i_for_loop))

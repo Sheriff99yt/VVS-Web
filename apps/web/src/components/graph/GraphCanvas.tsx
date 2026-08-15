@@ -134,7 +134,7 @@ import { useEditorFocus } from '@/hooks/useEditorFocus';
 import { useGraphKeyboardShortcuts } from '@/hooks/useGraphKeyboardShortcuts';
 import { GraphShortcutsHelp } from './GraphShortcutsHelp';
 import { OPEN_SHORTCUTS_HELP_EVENT, readUiPreference } from '@/lib/uiPreferences';
-import { activeClass, classGraphTabId, classScopedSymbols, isOnClassHomeGraph } from '@/lib/classScope';
+import { activeClass, classGraphTabId, classScopedSymbols, classVisibleSymbols, isOnClassHomeGraph } from '@/lib/classScope';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
 import {
   hasDefineNodeForClass,
@@ -329,6 +329,11 @@ function GraphCanvasInner() {
   const classEvents = useMemo(
     () => classScopedSymbols(activeClassId, { variables: [], functions, events }).events,
     [activeClassId, functions, events]
+  );
+  const spawnVariables = useMemo(
+    () =>
+      classVisibleSymbols(activeClassId, classes, { variables, functions, events }).variables,
+    [activeClassId, classes, variables, functions, events]
   );
 
   const { screenToFlowPosition, getNode, fitView, getViewport, setViewport } = useReactFlow();
@@ -1122,6 +1127,20 @@ function GraphCanvasInner() {
         }
       }
 
+      if (template.graphBinding?.kind === 'variable_ref') {
+        const variable =
+          spawnVariables.find((item) => item.id === template.graphBinding?.symbolId) ??
+          variables.find((item) => item.id === template.graphBinding?.symbolId);
+        if (variable) {
+          const role = template.type === 'variable_set' ? 'set' : 'get';
+          newNode.data = applyVariableRefBinding(newNode.data, variable, role);
+          newNode.data = {
+            ...newNode.data,
+            resolvedPorts: { inputs: newNode.data.inputs, outputs: newNode.data.outputs },
+          };
+        }
+      }
+
       // Auto-bind Return / Entry nodes to the owning function when inside a function graph.
       if (template.type === 'flow_return' || template.type === 'action_return' || template.type === 'function_entry') {
         const parts = activeGraphTab.split('::');
@@ -1225,6 +1244,8 @@ function GraphCanvasInner() {
       activeGraphTab,
       functions,
       classEvents,
+      spawnVariables,
+      variables,
       openTabs,
       getDocuments,
     ]
@@ -2581,6 +2602,7 @@ function GraphCanvasInner() {
             currentGraphId={activeGraphTab}
             functions={functions}
             events={classEvents}
+            variables={spawnVariables}
             functionsMissingDeclare={functionsMissingDeclare}
             eventsMissingDeclare={eventsMissingDeclare}
             openTabs={openTabs}

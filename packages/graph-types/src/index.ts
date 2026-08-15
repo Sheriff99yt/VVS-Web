@@ -17,6 +17,7 @@ export * from './codegenTarget';
 export * from './defineNodes';
 export * from './canvasOrderY';
 export * from './classMembers';
+export * from './inheritance';
 export * from './normalizeGraphNodeData';
 export * from './targetFileExtensions';
 export * from './graphCodegen';

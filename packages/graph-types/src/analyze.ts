@@ -29,6 +29,7 @@ import {
 import { analyzeClassMembers } from './classMembers';
 import { validateCanvasOrderYHints } from './canvasOrderY';
 import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryEvent } from './symbols';
+import { classExtendsTargetMissing, extendsTypeIsSet, resolveExtendsClass } from './inheritance';
 
 export interface AnalyzeProjectInput {
   documents: Record<string, GraphDocument>;
@@ -335,10 +336,15 @@ function functionIsAsync(func: FunctionSymbol, doc: GraphDocument): boolean {
 }
 
 /**
- * Sync Wait emits a real delay on most targets. On these languages the template is a
- * comment/stub — warn so the graph→code promise stays honest.
+ * Sync Wait emits a real delay on most targets. Verse has no blocking sleep in std
+ * without <suspends> — warn so the graph→code promise stays honest.
  */
-const BLOCKING_WAIT_STUB_TARGETS = new Set<TargetLanguage>(['javascript', 'verse', 'json']);
+const BLOCKING_WAIT_STUB_TARGETS = new Set<TargetLanguage>(['verse', 'json']);
+
+function waitNodeIsAsync(node: AnalyzeProjectInput['documents'][string]['nodes'][number]): boolean {
+  const flag = node.data.properties?.isAsync;
+  return flag === true || flag === 'true';
+}
 
 function validateWaitAndAsyncNodes(input: AnalyzeProjectInput): Diagnostic[] {
   const messages: Diagnostic[] = [];
@@ -354,24 +360,15 @@ function validateWaitAndAsyncNodes(input: AnalyzeProjectInput): Diagnostic[] {
       const kindId = resolveNodeKindId(node.data);
 
       if (kindId === 'action_wait') {
-        if (BLOCKING_WAIT_STUB_TARGETS.has(input.targetLanguage)) {
+        const asyncWait = waitNodeIsAsync(node) || inAsyncFunction;
+        if (!asyncWait && BLOCKING_WAIT_STUB_TARGETS.has(input.targetLanguage)) {
           messages.push({
             level: 'warning',
-            message: `Blocking Wait does not emit a real delay for "${input.targetLanguage}" — use Await Wait in an async function`,
+            message: `Blocking Wait does not emit a real delay for "${input.targetLanguage}" — enable Async on Wait`,
             tabId,
             nodeId: node.id,
             source: 'semantic',
             code: 'BLOCKING_WAIT_ON_TARGET',
-          });
-        }
-        if (inFunctionContext && inAsyncFunction) {
-          messages.push({
-            level: 'error',
-            message: 'Blocking Wait cannot be used inside an async function — use Await Wait',
-            tabId,
-            nodeId: node.id,
-            source: 'semantic',
-            code: 'WAIT_IN_ASYNC_FUNCTION',
           });
         }
       }
@@ -1070,6 +1067,81 @@ function validateProgramEntry(input: AnalyzeProjectInput): Diagnostic[] {
   return messages;
 }
 
+
+function classDefineExtendsType(node: import('./nodes').GraphNode): string | undefined {
+  const raw = node.data.properties?.extendsType;
+  return typeof raw === 'string' ? raw : undefined;
+}
+
+function validateExtendsTargets(input: AnalyzeProjectInput): Diagnostic[] {
+  const classes = input.classes ?? [];
+  if (classes.length === 0) return [];
+  const messages: Diagnostic[] = [];
+  const reported = new Set<string>();
+
+  const reportMissing = (options: {
+    className: string;
+    extendsType: string;
+    classId?: string;
+    tabId?: string;
+    nodeId?: string;
+  }) => {
+    const key = `${options.classId ?? options.className}:${options.extendsType}:${options.nodeId ?? ''}`;
+    if (reported.has(key)) return;
+    reported.add(key);
+    messages.push({
+      level: 'error',
+      source: 'semantic',
+      code: 'EXTENDS_CLASS_MISSING',
+      message: `Class "${options.className}" extends "${options.extendsType}" but that class is not in the project.`,
+      symbolId: options.classId,
+      tabId: options.tabId,
+      nodeId: options.nodeId,
+    });
+  };
+
+  for (const cls of classes) {
+    if (classExtendsTargetMissing(classes, cls)) {
+      const tabId = classHomeGraphId(cls);
+      const doc = input.documents[tabId];
+      const node = doc?.nodes.find((n) => resolveNodeKindId(n.data) === 'class_define');
+      reportMissing({
+        className: cls.name,
+        extendsType: (cls.extendsType ?? '').trim(),
+        classId: cls.id,
+        tabId,
+        nodeId: node?.id,
+      });
+    }
+  }
+
+  for (const [tabId, doc] of Object.entries(input.documents)) {
+    for (const node of doc.nodes) {
+      if (resolveNodeKindId(node.data) !== 'class_define') continue;
+      const extendsType = classDefineExtendsType(node);
+      if (!extendsTypeIsSet(extendsType)) continue;
+      if (resolveExtendsClass(classes, extendsType)) continue;
+      const className =
+        (typeof node.data.properties?.name === 'string' && node.data.properties.name.trim()) ||
+        node.data.label.replace(/^Declare\s+/, '').trim() ||
+        'Class';
+      const classId =
+        (typeof node.data.properties?.classId === 'string' && node.data.properties.classId) ||
+        (typeof node.data.properties?.symbolId === 'string' && node.data.properties.symbolId) ||
+        undefined;
+      reportMissing({
+        className,
+        extendsType: (extendsType ?? '').trim(),
+        classId,
+        tabId,
+        nodeId: node.id,
+      });
+    }
+  }
+
+  return messages;
+}
+
 export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   const diagnostics: Diagnostic[] = [];
   const containerTabIds = new Set(
@@ -1097,6 +1169,7 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   diagnostics.push(...validateLegacyLifecycleNodes(input));
   diagnostics.push(...validateCrossClassCalls(input));
   diagnostics.push(...validateCrossClassDispatches(input));
+  diagnostics.push(...validateExtendsTargets(input));
   diagnostics.push(...validateVirtualFunctionFlags(input));
   diagnostics.push(...validateCanvasOrderYHints(input.documents));
 

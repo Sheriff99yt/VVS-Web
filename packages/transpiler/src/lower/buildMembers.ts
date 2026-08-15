@@ -203,6 +203,22 @@ function memberDeclFromEntry(
         properties: {
           ...(declareNode?.data.properties ?? {}),
           ...node.data.properties,
+          // True-wins: Define schema defaults must not wipe Declare/symbol override flags.
+          isVirtual: !!(
+            declareNode?.data.properties?.isVirtual ||
+            node.data.properties?.isVirtual ||
+            symbol.flags?.virtual
+          ),
+          isOverride: !!(
+            declareNode?.data.properties?.isOverride ||
+            node.data.properties?.isOverride ||
+            symbol.flags?.override
+          ),
+          isAbstract: !!(
+            declareNode?.data.properties?.isAbstract ||
+            node.data.properties?.isAbstract ||
+            symbol.flags?.abstract
+          ),
         },
       };
     }

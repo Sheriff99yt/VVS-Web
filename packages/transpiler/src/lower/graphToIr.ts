@@ -1,4 +1,5 @@
-import type { GraphNode, GraphEdge, ProjectEventDefinition, ClassSymbol, FunctionSymbol } from '@vvs/graph-types';
+import type { GraphNode, GraphEdge, ProjectEventDefinition, ClassSymbol, FunctionSymbol, TargetLanguage } from '@vvs/graph-types';
+import { isModifierInteractive } from '@vvs/language-profiles';
 import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { buildExecutionOrder, findAllExecutionHeads } from '../analyze/graphOrder';
 import { getInputKind, inputTempVarName } from '../inputHelpers';
@@ -24,9 +25,11 @@ import {
 import type { CodegenContext } from '../generate';
 import { buildIrMembers, resolveActiveClass, type BuildMembersResult } from './buildMembers';
 import { collectUserComments } from './userComments';import type {
+  IrAwaitWait,
   IrEventHandler,
   IrExpr,
   IrModule,
+  IrModuleImport,
   IrStatement,
   IrStmtKind,
   IrStructuredStatement,
@@ -45,6 +48,9 @@ interface LowerContext {
   activeClassId?: string;
   projectModuleName?: string;
   variables: import('@vvs/graph-types').VariableSymbol[];
+  targetLanguage?: TargetLanguage;
+  /** When lowering a function body, Wait may follow the function async flag. */
+  enclosingAsync?: boolean;
 }
 
 function isImportClassNode(node: GraphNode): boolean {
@@ -82,9 +88,37 @@ function waitDurationExpr(node: GraphNode, ctx: LowerContext): IrExpr {
   return literalIr(node.id, 1, 'number');
 }
 
-function waitIsAsync(node: GraphNode, kindId: string): boolean {
+function waitIsAsync(node: GraphNode, kindId: string, enclosingAsync?: boolean): boolean {
   if (kindId === 'action_await_wait') return true;
   const flag = node.data.properties?.isAsync;
+  if (flag === true || flag === 'true') return true;
+  return Boolean(enclosingAsync);
+}
+
+/** Wait async only when the language actually emits a different await/sleep. Never invent `# async`. */
+function waitEmitsAsync(
+  node: GraphNode,
+  kindId: string,
+  ctx: LowerContext
+): boolean {
+  // Legacy Await Wait node stays the async wait; the option on Wait is what we dim.
+  if (kindId === 'action_await_wait') return true;
+  const lang = ctx.targetLanguage;
+  if (lang && lang !== 'json' && !isModifierInteractive(lang, 'waitIsAsync')) {
+    return false;
+  }
+  return waitIsAsync(node, kindId, ctx.enclosingAsync);
+}
+
+function activeParentClassName(ctx: LowerContext): string | undefined {
+  const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
+  const activeClass = ctx.classes?.find((c) => c.id === activeClassId);
+  const raw = activeClass?.extendsType?.trim();
+  return raw || undefined;
+}
+
+function nodeWantsSuper(node: GraphNode): boolean {
+  const flag = node.data.properties?.isSuper;
   return flag === true || flag === 'true';
 }
 
@@ -160,11 +194,11 @@ function resolveNodeOutputExpr(
   }
 
   if (kindId === 'variable_get' && varName) {
-    const symbol = ctx.variables.find((v) => v.name === varName);
+    const symbol = variableSymbolFromNode(node, ctx, varName);
     if (symbol?.graphTabId || symbol?.scopedNodeId) {
       return { kind: 'LocalRef', sourceGraphNodeId: node.id, name: varName };
     }
-    return instanceRefIr(node.id, varName);
+    return instanceRefIr(node.id, varName, inheritedMemberDepth(symbol?.classId, ctx));
   }
 
   if (kindId === 'action_get_input' && pinId === 'value') {
@@ -300,6 +334,50 @@ function targetClassIdFromNode(node: GraphNode): string | undefined {
   const fromBinding = node.data.graphBinding?.targetClassId;
   if (typeof fromBinding === 'string' && fromBinding.trim()) return fromBinding;
   return undefined;
+}
+
+
+function variableSymbolFromNode(
+  node: GraphNode,
+  ctx: LowerContext,
+  varName?: string
+): import('@vvs/graph-types').VariableSymbol | undefined {
+  const bindingId = node.data.graphBinding?.symbolId;
+  const propId = node.data.properties?.symbolId;
+  const id =
+    typeof bindingId === 'string' && bindingId.trim()
+      ? bindingId.trim()
+      : typeof propId === 'string' && propId.trim()
+        ? propId.trim()
+        : undefined;
+  if (id) {
+    const byId = ctx.variables.find((v) => v.id === id);
+    if (byId) return byId;
+  }
+  if (varName) return ctx.variables.find((v) => v.name === varName);
+  return undefined;
+}
+
+/** Hops from the active class to the ancestor that owns `memberClassId`. 0 = own / not inherited. */
+function inheritedMemberDepth(memberClassId: string | undefined, ctx: LowerContext): number {
+  if (!memberClassId) return 0;
+  const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
+  if (memberClassId === activeClassId) return 0;
+  const classes = ctx.classes ?? [];
+  let current = classes.find((c) => c.id === activeClassId);
+  let depth = 0;
+  const seen = new Set<string>();
+  while (current?.extendsType) {
+    if (seen.has(current.id)) break;
+    seen.add(current.id);
+    depth += 1;
+    const parentName = current.extendsType;
+    const parent = classes.find((c) => c.name === parentName || c.id === parentName);
+    if (!parent) break;
+    if (parent.id === memberClassId) return depth;
+    current = parent;
+  }
+  return 0;
 }
 
 function importAliasFromNode(node: GraphNode): string | undefined {
@@ -507,27 +585,27 @@ function lowerStatement(
     const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
     const crossClass = fnClassId !== activeClassId;
     const targetClass = crossClass ? ctx.classes?.find((c) => c.id === fnClassId) : undefined;
-    const activeClass = ctx.classes?.find((c) => c.id === activeClassId);
     const targetClassName = targetClass
       ? resolveClassModuleName(targetClass, ctx.projectModuleName)
       : undefined;
-    // Inherited methods on the same instance — do not instantiate the base class.
-    const inheritedCall =
-      Boolean(crossClass) &&
-      Boolean(activeClass?.extendsType) &&
-      Boolean(targetClassName) &&
-      activeClass!.extendsType === targetClassName;
+    // Inherited methods on the same instance — project through `base`, do not instantiate.
+    const inheritedDepth = inheritedMemberDepth(fn?.classId, ctx);
+    const inheritedCall = inheritedDepth > 0;
     const staticCall = fn?.binding === 'static' || fn?.binding === 'module';
     const paramIds = node.data.inputs.filter((p) => p.type !== 'execution').map((p) => p.id);
     const args = paramIds.map((pinId) => resolvePinValueExpr(node, pinId, ctx, 0));
+    const isSuper = nodeWantsSuper(node) && Boolean(activeParentClassName(ctx));
     return {
       kind: 'CallFunction',
       sourceGraphNodeId: node.id,
       calleeName: name,
       args,
       instanceCall: !staticCall,
-      crossClass: crossClass && !inheritedCall,
+      crossClass: crossClass && !inheritedCall && !isSuper,
       targetClassName,
+      inheritedDepth: inheritedDepth || undefined,
+      isSuper: isSuper || undefined,
+      parentClassName: isSuper ? activeParentClassName(ctx) : undefined,
     };
   }
 
@@ -555,13 +633,16 @@ function lowerStatement(
       Boolean(activeClass?.extendsType) &&
       Boolean(targetClassName) &&
       activeClass!.extendsType === targetClassName;
+    const isSuper = nodeWantsSuper(node) && Boolean(activeParentClassName(ctx));
     return {
       kind: 'DispatchEvent',
       sourceGraphNodeId: node.id,
       handlerName: handler,
       args,
-      crossClass: crossClass && !inheritedDispatch,
+      crossClass: crossClass && !inheritedDispatch && !isSuper,
       targetClassName,
+      isSuper: isSuper || undefined,
+      parentClassName: isSuper ? activeParentClassName(ctx) : undefined,
     };
   }
 
@@ -574,7 +655,7 @@ function lowerStatement(
       kind: 'AwaitWait',
       sourceGraphNodeId: node.id,
       seconds: waitDurationExpr(node, ctx),
-      async: waitIsAsync(node, kindId),
+      async: waitEmitsAsync(node, kindId, ctx),
     };
   }
 
@@ -774,14 +855,17 @@ function lowerStatement(
     if (!varName) return commentFallback(node.id, 'AssignVariable', 'set (no variable)');
     const pinId = firstInputPinId(node, ['val', 'in_val', 'value']);
     const value = pinId ? resolvePinValueExpr(node, pinId, ctx, 0) : nullIr(node.id);
-    const symbol = ctx.variables.find((v) => v.name === varName);
+    const symbol = variableSymbolFromNode(node, ctx, varName);
     const targetBinding = symbol?.graphTabId || symbol?.scopedNodeId ? 'local' : 'instance';
+    const inheritedDepth =
+      targetBinding === 'instance' ? inheritedMemberDepth(symbol?.classId, ctx) : 0;
     return {
       kind: 'AssignVariable',
       sourceGraphNodeId: node.id,
       assignKind: 'variable_set',
       targetName: varName,
       targetBinding,
+      inheritedDepth: inheritedDepth || undefined,
       value,
     };
   }
@@ -902,7 +986,10 @@ function buildFunctionBodies(
       const doc = documents[tabId];
       if (!doc) continue;
       const graphNodes = doc.nodes.filter(isCodegenNode);
-      bodies[tabId] = irStatementsForGraph(graphNodes, doc.edges, lowerCtx);
+      bodies[tabId] = irStatementsForGraph(graphNodes, doc.edges, {
+        ...lowerCtx,
+        enclosingAsync: Boolean(func.flags?.async),
+      });
     }
   }
   return bodies;
@@ -996,6 +1083,115 @@ export function bodyIndent(family: import('@vvs/graph-types').LanguageFamily): s
   return resolvePrintProfile(family).layout?.bodyIndent ?? '        ';
 }
 
+
+function collectAwaitWaits(stmts: IrStatement[], out: IrAwaitWait[]): void {
+  for (const stmt of stmts) {
+    if (stmt.kind === 'AwaitWait') {
+      out.push(stmt);
+      continue;
+    }
+    if (stmt.kind === 'IfBranch') {
+      collectAwaitWaits(stmt.trueBody, out);
+      collectAwaitWaits(stmt.falseBody, out);
+    } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+      collectAwaitWaits(stmt.body, out);
+    } else if (stmt.kind === 'Switch') {
+      for (const c of stmt.cases) collectAwaitWaits(c.body, out);
+      collectAwaitWaits(stmt.defaultBody, out);
+    } else if (stmt.kind === 'Sequence') {
+      for (const step of stmt.steps) collectAwaitWaits(step, out);
+    }
+  }
+}
+
+function waitStdlibSpecs(
+  language: string,
+  waits: IrAwaitWait[]
+): Array<{ moduleSlug: string; importStyle: IrModuleImport['importStyle'] }> {
+  if (waits.length === 0) return [];
+  const anyAsync = waits.some((w) => w.async);
+  const anySync = waits.some((w) => !w.async);
+  if (language === 'python') {
+    const specs: Array<{ moduleSlug: string; importStyle: IrModuleImport['importStyle'] }> = [];
+    if (anySync) specs.push({ moduleSlug: 'time', importStyle: 'module' });
+    if (anyAsync) specs.push({ moduleSlug: 'asyncio', importStyle: 'module' });
+    return specs;
+  }
+  if (language === 'csharp') {
+    const specs: Array<{ moduleSlug: string; importStyle: IrModuleImport['importStyle'] }> = [];
+    if (anySync) specs.push({ moduleSlug: 'System.Threading', importStyle: 'module' });
+    if (anyAsync) specs.push({ moduleSlug: 'System.Threading.Tasks', importStyle: 'module' });
+    return specs;
+  }
+  if (language === 'cpp') {
+    return [
+      { moduleSlug: 'thread', importStyle: 'include_system' },
+      { moduleSlug: 'chrono', importStyle: 'include_system' },
+    ];
+  }
+  if (language === 'go') {
+    return [{ moduleSlug: 'time', importStyle: 'module' }];
+  }
+  return [];
+}
+
+function existingImportSlugs(imports: IrStatement[], members: IrModule['members']): Set<string> {
+  const slugs = new Set<string>();
+  for (const stmt of imports) {
+    if (stmt.kind === 'ModuleImport') slugs.add(stmt.moduleSlug);
+  }
+  for (const member of members) {
+    if (member.kind === 'ModuleImport') slugs.add(member.moduleSlug);
+  }
+  return slugs;
+}
+
+function collectAllAwaitWaits(args: {
+  onStartBody: IrStatement[];
+  eventHandlers: IrEventHandler[];
+  functionBodies: Record<string, IrStatement[]>;
+  members: IrModule['members'];
+}): IrAwaitWait[] {
+  const waits: IrAwaitWait[] = [];
+  collectAwaitWaits(args.onStartBody, waits);
+  for (const handler of args.eventHandlers) collectAwaitWaits(handler.body, waits);
+  for (const body of Object.values(args.functionBodies)) collectAwaitWaits(body, waits);
+  for (const member of args.members) {
+    if (member.kind === 'EventDecl') collectAwaitWaits(member.body, waits);
+  }
+  return waits;
+}
+
+function appendWaitStdlibImports(
+  imports: IrStatement[],
+  args: {
+    targetLanguage: string;
+    onStartBody: IrStatement[];
+    eventHandlers: IrEventHandler[];
+    functionBodies: Record<string, IrStatement[]>;
+    members: IrModule['members'];
+  }
+): IrStatement[] {
+  const waits = collectAllAwaitWaits(args);
+  const specs = waitStdlibSpecs(args.targetLanguage, waits);
+  if (specs.length === 0) return imports;
+  const have = existingImportSlugs(imports, args.members);
+  const sourceGraphNodeId = waits[0]!.sourceGraphNodeId;
+  const extra: IrModuleImport[] = [];
+  for (const spec of specs) {
+    if (have.has(spec.moduleSlug)) continue;
+    have.add(spec.moduleSlug);
+    extra.push({
+      kind: 'ModuleImport',
+      sourceGraphNodeId,
+      moduleSlug: spec.moduleSlug,
+      displayLabel: spec.moduleSlug,
+      importStyle: spec.importStyle,
+    });
+  }
+  return extra.length === 0 ? imports : [...extra, ...imports];
+}
+
 export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
   const {
     nodes,
@@ -1023,6 +1219,7 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     activeClassId: ctx.activeClassId,
     projectModuleName: ctx.projectModuleName ?? moduleName,
     variables: ctx.variables,
+    targetLanguage,
   };
 
   const activeTabId = tabId ?? 'main';
@@ -1133,13 +1330,22 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
   for (const body of Object.values(functionBodies)) collectFlowImportIds(body);
 
   const allNodes = collectAllCodegenNodes(graphNodes, documents, functions);
-  const imports = [
-    ...collectModuleImports(allNodes, activeClass?.id),
-    ...collectClassImports(allNodes, ctx.classes, ctx.projectModuleName ?? moduleName),
-  ].filter(
-    (stmt) =>
-      !memberImportNodeIds.has(stmt.sourceGraphNodeId) &&
-      !flowImportNodeIds.has(stmt.sourceGraphNodeId)
+  const imports = appendWaitStdlibImports(
+    [
+      ...collectModuleImports(allNodes, activeClass?.id),
+      ...collectClassImports(allNodes, ctx.classes, ctx.projectModuleName ?? moduleName),
+    ].filter(
+      (stmt) =>
+        !memberImportNodeIds.has(stmt.sourceGraphNodeId) &&
+        !flowImportNodeIds.has(stmt.sourceGraphNodeId)
+    ),
+    {
+      targetLanguage,
+      onStartBody,
+      eventHandlers,
+      functionBodies,
+      members: memberBuild.members,
+    }
   );
 
   return {

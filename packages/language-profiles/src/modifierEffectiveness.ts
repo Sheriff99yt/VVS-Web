@@ -9,7 +9,8 @@ export type ModifierKey =
   | 'isVirtual'
   | 'isAbstract'
   | 'isOverride'
-  | 'isAsync';
+  | 'isAsync'
+  | 'waitIsAsync';
 
 const TABLE: Record<ModifierKey, Partial<Record<TargetLanguage, ModifierEffectiveness>>> = {
   visibility: {
@@ -20,6 +21,7 @@ const TABLE: Record<ModifierKey, Partial<Record<TargetLanguage, ModifierEffectiv
     rust: 'effective',
     gdscript: 'ineffective',
     verse: 'partial',
+    go: 'ineffective',
   },
   binding: {
     cpp: 'effective',
@@ -29,6 +31,7 @@ const TABLE: Record<ModifierKey, Partial<Record<TargetLanguage, ModifierEffectiv
     rust: 'effective',
     gdscript: 'effective',
     verse: 'ineffective',
+    go: 'ineffective',
   },
   isConst: {
     cpp: 'effective',
@@ -38,6 +41,7 @@ const TABLE: Record<ModifierKey, Partial<Record<TargetLanguage, ModifierEffectiv
     rust: 'effective',
     gdscript: 'ineffective',
     verse: 'partial',
+    go: 'ineffective',
   },
   isVirtual: {
     cpp: 'effective',
@@ -47,6 +51,7 @@ const TABLE: Record<ModifierKey, Partial<Record<TargetLanguage, ModifierEffectiv
     rust: 'ineffective',
     gdscript: 'ineffective',
     verse: 'ineffective',
+    go: 'ineffective',
   },
   isAbstract: {
     cpp: 'effective',
@@ -56,6 +61,7 @@ const TABLE: Record<ModifierKey, Partial<Record<TargetLanguage, ModifierEffectiv
     rust: 'ineffective',
     gdscript: 'ineffective',
     verse: 'ineffective',
+    go: 'ineffective',
   },
   isOverride: {
     cpp: 'effective',
@@ -65,15 +71,28 @@ const TABLE: Record<ModifierKey, Partial<Record<TargetLanguage, ModifierEffectiv
     rust: 'ineffective',
     gdscript: 'ineffective',
     verse: 'effective',
+    go: 'ineffective',
   },
   isAsync: {
     cpp: 'ineffective',
     csharp: 'effective',
     python: 'effective',
     javascript: 'effective',
-    rust: 'effective',
+    rust: 'ineffective',
     gdscript: 'ineffective',
     verse: 'ineffective',
+    go: 'ineffective',
+  },
+  // Wait.isAsync — only where await/sleep actually differs. No Tokio / no coroutines / no <suspends> → dim.
+  waitIsAsync: {
+    cpp: 'ineffective',
+    csharp: 'effective',
+    python: 'effective',
+    javascript: 'effective',
+    rust: 'ineffective',
+    gdscript: 'effective',
+    verse: 'ineffective',
+    go: 'ineffective',
   },
 };
 
@@ -100,6 +119,7 @@ export function modifierIneffectiveTooltip(lang: TargetLanguage, key: ModifierKe
   if (effect === 'partial') {
     return `Limited support in ${lang} output — may not match all visibility options`;
   }
-  const label = key === 'binding' ? 'Binding' : key.replace(/^is/, '');
+  const label =
+    key === 'binding' ? 'Binding' : key === 'waitIsAsync' ? 'Async' : key.replace(/^is/, '');
   return `Not used in ${lang} output — changing ${label} has no effect`;
 }

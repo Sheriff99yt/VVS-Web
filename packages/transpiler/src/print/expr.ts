@@ -37,6 +37,13 @@ function renderExprTemplate(
   };
 }
 
+
+/** Rust composition projection: depth 1 -> `base.`, depth 2 -> `base.base.`. */
+export function rustInheritedBasePath(depth?: number): string {
+  if (!depth || depth < 1) return '';
+  return `${Array.from({ length: depth }, () => 'base').join('.')}.`;
+}
+
 export function printLiteralExpr(expr: IrExpr, ctx: PrintContext): PrintedExpr {
   if (expr.kind !== 'Literal') throw new Error('expected Literal');
   if (expr.literalType === 'boolean') {
@@ -58,10 +65,11 @@ export function printLiteralExpr(expr: IrExpr, ctx: PrintContext): PrintedExpr {
 
 export function printInstanceRefExpr(expr: IrExpr, ctx: PrintContext): PrintedExpr {
   if (expr.kind !== 'InstanceRef') throw new Error('expected InstanceRef');
+  const basePath = ctx.family === 'rust' ? rustInheritedBasePath(expr.inheritedDepth) : '';
   return renderExprTemplate(
     ctx,
     'InstanceRef',
-    { name: { text: expr.name, spans: [] } },
+    { name: { text: expr.name, spans: [] }, basePath: { text: basePath, spans: [] } },
     expr.sourceGraphNodeId
   );
 }

@@ -15,13 +15,14 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 | Focus | IDs | Status |
 |-------|-----|--------|
-| **Node vs option vs pin + catalog leftovers** | — | **Shipped** August 2026 — lock + spawn/pin/role/Declare spawn |
-| Target-language emit fidelity | CL-010 first | **Next** — Rust inheritance, then Verse GetInput / for |
-| Cross-language async | U101 | Partial — one Wait node; async is an option |
-| Inheritance on canvas | U106 | Open — pairs CL-010 |
-| Override | U105 | Partial — stays an option on Declare, not a node |
-| Components | U103 | Open — only if it is a real typed construct |
-| References / AI / examples | U89, U91, U92 | Frozen polish — not the core thread |
+| **Node vs option vs pin + catalog leftovers** | — | **Shipped** — lock + spawn/pin/role/Declare spawn |
+| Target-language emit fidelity | CL-006, CL-008–CL-010, CL-012–CL-013, CL-015–CL-016, CL-018 | **Shipped** — Rust inheritance / static / HashMap, C# `async Task`, Verse for + `Type{}`, async dim |
+| Inheritance + Super + override | U106, U105 | **Shipped** — Extends picker, inherited Get/Set/Call, Super option on Call, override option emit |
+| Cross-language async | U101 / CL-018 | **Shipped** — one Wait node; chips dim where await is a no-op |
+| Verse GetInput | CL-014 | **Open** — honest `(x)` + prompt; no invented player API |
+| Components | U103 | Open — only if a language has a real Component construct |
+| References viewer (huge-project nav) | U89 | **Shipped** — breadth caps the tree; persisted prefs; type filter on list |
+| AI / examples | U91, U92 | Frozen polish — not the core thread |
 | Library remaining (auth / upload) | U90 | Frozen — client-first; no accounts as product |
 
 ### Long-term
@@ -30,7 +31,7 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 |-------|-----|--------|
 | Code → visual (reverse of Generate) | U93 | Research — must keep canvas source of truth |
 
-### Just shipped (node catalog lock, Wait pin, On role, Declare spawn, Library API, U97–U99)
+### Just shipped (August 2026 emit / OOP wave + earlier catalog lock)
 
 | Focus | IDs |
 |-------|-----|
@@ -38,12 +39,12 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 | **Function argument pins end-to-end** (define, implement, call, emit) | U98 |
 | **Function return with arguments** (Return node & value pin codegen) | U99 |
 | **Library backend API** (Go service) | U90+ |
-| **Multi-language test project examples** (24 goldens across 8 languages) | U92 |
+| **Multi-language test project examples** (5 fixtures × 8 langs = 40 goldens; Inheritance Lab + Go asserted) | U92 |
 | **Catalog & add-node menu audit** (synonyms, module import spawn) | U97 |
 | **Client-first Library** page redesign (Git repo import, OpenAPI/AsyncAPI templates) | U90 |
-| **AI / MCP Autonomy & Safety Guard** (write consent guard, activity indicator) | U91 |
+| **AI / MCP Autonomy & Safety Guard** (dual consent, inventory audit, activity indicator) | U91 |
 | **References** viewer redesign (huge-project metrics & flat tree mode) | U89 |
-| Target-language emit fidelity fixes | CL-006, CL-012–CL-015 |
+| Target-language emit + OOP | CL-006, CL-008–CL-010, CL-012–CL-013, CL-015–CL-016, CL-018, U101, U105, U106, Call Super |
 | **Pack versions** manager view | U78 |
 | **Go** target language pack (8th language) | U77 |
 | Action history · menus · settings · shortcuts · audio · naming | U108–U113 |
@@ -58,8 +59,8 @@ CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ─────────────────────
 1  Web editor + 8 packs        6  Polish                          4  Session collab (P2P)
 2  Persistence (local)            CL emit plans                      5  UE6 Verse plugin
-   + local MCP paste              CL-010 then U101 / U106                3  Library (git · API done)
-   U77 Go pack done               node leftovers shipped                  vvs-library repo · web UI
+   + local MCP paste              emit/OOP wave shipped                3  Library (git · API done)
+   U77 Go pack done               CL-014 honest (x)                       vvs-library repo · web UI
    U78 Pack manager done          U93 code→visual (long-term)          wiring & integration
    U83 virtualization done     3  Library backend                    
    **U90 Library API done**        Go service · Postgres schema
@@ -79,19 +80,19 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 
 | # | Item | Notes |
 |---|------|--------|
-| **CL-010** | Rust inheritance emit | Composition `base:` vs `self.Power` / `new` — next core thread |
-| **U101** | Async concept | Finish pack-complete await on the one Wait node |
-| **U106** | Inheritance on canvas | Authoring + per-language lowering; pairs CL-010 |
-| **CL-014/015** | Verse GetInput + for | After CL-010 |
+| **CL-014** | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API — do not invent one. |
+| **CL-017** | Switch `match` | Optional native match. If-cascade is the shipped shape. |
+| **U103** | Components | Only if a language has a real Component construct. |
+
+Shipped this wave (moved to Recently completed): CL-006, CL-008, CL-009, CL-010, CL-015, CL-016, CL-018, U101, U105, U106, Call Super.
 
 ### Editor & AI
 
 | # | Item | Notes |
 |---|------|--------|
-| **U89** | **References** redesign | Partial — tree name filter shipped; huge-project nav still open |
 | **U90** | **Library** API done → **web UI** | Wiring to browse/search/import; upload form; auth integration |
 | **U91** | **AI / MCP** audit | Partial — Windsurf paste + consent; full autonomy audit open |
-| **U92** | **New examples** | Partial — Branch Lab shipped; more cross-lang / lang-specific open |
+| **U92** | **New examples** | Done — five fixtures (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) × 8 langs (40 goldens); Go golden assertion |
 | **U93** | **Code → visual** | Long-term reverse import research |
 | **U118** | **Dynamic naming conventions** | Done — Settings to make node titles follow specific language keywords or auto-follow selected language |
 | **U119** | **Bad practices / safety settings** | Done — Settings toggles and Compiler Log warnings for multiple exec connections and dynamic/weak typing |
@@ -129,10 +130,12 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U98** | Function argument pins | Done — Define / implement / call / emit end-to-end; auto-sync across documents |
 | **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with value pin lowering across 8 target languages |
 | **U100** | Event listeners | **Cut** — subscribe/emit hidden runtime rejected; Dispatch only |
-| **U101** | Cross-language async concept | **Partial** — one Wait node; async is an option |
+| **U101** | Cross-language async concept | **Done** — one Wait node; `isAsync` option; pack-complete await/sleep |
+| **CL-018** | Dim ineffective async | **Done** — U66/U67 chips; Wait.isAsync does not flip the function |
+| **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
 | **U103** | Components | Visual concept + multi-lang Test Project proof |
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
-| **U105** | Overwriting (override) | **Partial** — stays an option on Declare, not a node |
+| **U105** | Overwriting (override) | **Done** — option on Declare/Define; emit + dim per language |
 | **U106** | Inheritance | Canvas authoring + per-language lowering (pairs CL-010) |
 | **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
 
@@ -142,13 +145,13 @@ Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no
 
 | Priority | CL IDs | Cluster | Plan needed for |
 |----------|--------|---------|-----------------|
-| **P0** | CL-010 | Rust inheritance / lowering | Composition `base:` vs `self.Power` / `new` |
-| **P0** | CL-014, CL-015 | Verse GetInput + for-loop | Real string input; Verse `for` shape |
-| **P1** | CL-006 | C# async return type | `async void` vs `async Task` |
-| **P1** | CL-008, CL-009 | Rust static/const + imports | Modifier emit; `HashMap` `use` |
+| **P0** | CL-010 | Rust inheritance / lowering | **Done** — composition + `self.base` projection |
+| **P0** | CL-014 | Verse GetInput | No blocking string read on a plain class; `(x)` + prompt shipped |
+| **P1** | CL-008, CL-009 | Rust static/const + imports | **Done** — module `static` / associated `const`; generated `use std::collections::HashMap;` |
 | **P1** | CL-012, CL-013 | GDScript temps + GetInput | `var` on Switch temp; print prompt |
-| **P1** | CL-016 | Verse field defaults | Class-typed default → correct default |
-| **P2** | CL-017, CL-018 | Switch `match` / async chips | Optional native match; disable ineffective async |
+| **P1** | CL-016 | Verse field defaults | **Done** — class-typed `Host = Machine{}` (archetype value, not constructor) |
+| **P2** | CL-017 | Switch `match` | Optional native match — if-cascade is intentional ship shape |
+| **P2** | CL-018 | Async chips | **Done** — rust `isAsync` dimmed (no Tokio; Wait is `thread::sleep`); Call Super is a Call option |
 
 Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
@@ -158,12 +161,17 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
+| **CL-016 Verse class defaults** | Class-typed field default is `Type{}` (Coverage Lab `Host = Machine{}`), not logic `false` |
+| **CL-006 C# async Task** | Void+async methods emit `async Task` / `async Task<T>`, not `async void` |
+| **CL-008 / CL-009 Rust static/const + HashMap** | Module `pub static`; associated `pub const` in `impl`; file-top `use std::collections::HashMap;` |
+| **CL-018 rust async dim + Call Super option** | Rust `isAsync` ineffective (no Tokio). Super is an option on Call / Dispatch, not a node |
+| **CL-015 Verse for** | Range `for (i := first..last):` and for-each `for (val : xs):` |
 | **Node catalog (August 2026)** | Node vs option vs pin lock; spawn excludes; Wait seconds as wired expression; On role entry/tick emit; Function Declare spawn only for C++ / abstract |
 | **Library backend (this sprint)** | Go service, Postgres, TypeScript client, GitHub workflow scaffolding |
 | **Undo, settings & safety (U108–U119)** | Action history · File/Edit/View/Help · Settings (Shortcuts / Audio / About / Naming / Safety) · rebindable shortcuts · audio cues · **VVS Web** naming |
 | **Code panel** | Selection highlight · double-click → node · **hover → yellow node/tab outline** · error/warning toggles · Files pin · [code_panel.md](code_panel.md) |
 | **Find & gestures** | U84 all-graphs search · U85 Ctrl+F this graph / Ctrl+Shift+F all · U94 tooltips · U95 first-open help · U107 pan/select |
-| **Chrome & wires** | U86 Details compact · U87 log language scope · U88 tabs · U96 pins/edge menu/auto-connect · U102 symbols overlay |
+| **Chrome & wires** | U86 Details compact · U87 log language scope · U88 tabs · U89 References (breadth/prefs/type filter) · U96 pins/edge menu/auto-connect · U102 symbols overlay |
 | **Fidelity & scale** | U64–U71 · U75 layout · U79 Y-order · U80–U82 · U83 virtualization · U66/U67 `(x)` + dim · U68/U69 comments |
 
 Detail notes for older IDs: prior revisions of this file and `.agents/memory/incomplete-ui.md`.
@@ -176,7 +184,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U119 + U77 Go + U78 Packs done; node leftovers shipped; next **CL-010** then **U101** / **U106**; **U93** long-term |
+| **6** Fidelity, canvas scale & polish | **Active** | Catalog lock + August emit/OOP wave shipped. Open: CL-014 honest `(x)`, optional CL-017 match, U103 only if real construct. **U93** long-term. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

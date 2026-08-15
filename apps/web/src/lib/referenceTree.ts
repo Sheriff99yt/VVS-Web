@@ -24,7 +24,7 @@ export interface ReferenceTreeNode {
   /** Edge from parent graph to this node */
   viaRef?: GraphReference;
   children: ReferenceTreeNode[];
-  /** More links exist but were cut off by depth or cycle */
+  /** More links exist but were cut off by depth, breadth, or cycle */
   truncated?: boolean;
   /** Stopped because of a cycle back to an ancestor */
   cyclic?: boolean;
@@ -41,7 +41,7 @@ export interface ReferenceTreeResult {
 }
 
 /**
- * Keep nodes whose label matches `query`, plus ancestors needed for path context.
+ * Keep nodes whose label matches the query, plus ancestors needed for path context.
  * Empty query returns the tree unchanged.
  */
 export function filterReferenceTreeByName(
@@ -61,8 +61,35 @@ export function filterReferenceTreeByName(
   return { ...node, children: filteredChildren };
 }
 
+/**
+ * Keep nodes whose graph type is in the typeFilters set, plus ancestors needed for path.
+ * Empty set returns the tree unchanged.
+ */
+export function filterReferenceTreeByType(
+  node: ReferenceTreeNode,
+  typeFilters: Set<ReferenceGraphTypeFilter>,
+  typeFor: (graphId: string) => ReferenceGraphTypeFilter
+): ReferenceTreeNode | null {
+  if (typeFilters.size === 0) return node;
+
+  const selfMatch = typeFilters.has(typeFor(node.graphId));
+  const filteredChildren = node.children
+    .map((child) => filterReferenceTreeByType(child, typeFilters, typeFor))
+    .filter((c): c is ReferenceTreeNode => c != null);
+
+  if (!selfMatch && filteredChildren.length === 0) return null;
+  return { ...node, children: filteredChildren };
+}
+
 function peerGraphId(ref: GraphReference, direction: 'dependencies' | 'referencers'): string {
   return direction === 'dependencies' ? ref.toGraphId : ref.fromGraphId;
+}
+
+function clampBreadth(breadthLimit: number): number {
+  return Math.min(
+    REFERENCE_BREADTH_MAX,
+    Math.max(REFERENCE_BREADTH_MIN, breadthLimit)
+  );
 }
 
 function buildSubtree(
@@ -72,6 +99,7 @@ function buildSubtree(
   maxDepth: number,
   currentDepth: number,
   ancestorPath: Set<string>,
+  breadthLimit: number = REFERENCE_BREADTH_DEFAULT,
   viaRef?: GraphReference
 ): ReferenceTreeNode {
   const edges =
@@ -93,14 +121,23 @@ function buildSubtree(
     };
   }
 
-  const children: ReferenceTreeNode[] = [];
+  const uniquePeers: { ref: GraphReference; nextId: string }[] = [];
   const seenPeers = new Set<string>();
 
   for (const ref of edges) {
     const nextId = peerGraphId(ref, direction);
     if (seenPeers.has(nextId)) continue;
     seenPeers.add(nextId);
+    uniquePeers.push({ ref, nextId });
+  }
 
+  const limit = clampBreadth(breadthLimit);
+  const truncatedByBreadth = uniquePeers.length > limit;
+  const keptPeers = uniquePeers.slice(0, limit);
+
+  const children: ReferenceTreeNode[] = [];
+
+  for (const { ref, nextId } of keptPeers) {
     if (ancestorPath.has(nextId)) {
       children.push({
         graphId: nextId,
@@ -116,7 +153,7 @@ function buildSubtree(
     nextPath.add(graphId);
 
     children.push(
-      buildSubtree(nextId, index, direction, maxDepth, currentDepth + 1, nextPath, ref)
+      buildSubtree(nextId, index, direction, maxDepth, currentDepth + 1, nextPath, limit, ref)
     );
   }
 
@@ -125,6 +162,7 @@ function buildSubtree(
     depth: currentDepth,
     viaRef,
     children,
+    truncated: truncatedByBreadth,
   };
 }
 
@@ -132,12 +170,14 @@ export function buildReferenceTree(
   rootId: string,
   index: Map<string, GraphReferenceEdges>,
   direction: ReferenceTreeDirection,
-  maxDepth: number
+  maxDepth: number,
+  breadthLimit: number = REFERENCE_BREADTH_DEFAULT
 ): ReferenceTreeResult {
   const clampedDepth = Math.min(
     REFERENCE_DEPTH_MAX,
     Math.max(REFERENCE_DEPTH_MIN, maxDepth)
   );
+  const clampedBreadth = clampBreadth(breadthLimit);
   const rootPath = new Set<string>([rootId]);
 
   if (direction === 'both') {
@@ -145,8 +185,8 @@ export function buildReferenceTree(
       rootId,
       direction,
       maxDepth: clampedDepth,
-      tree: buildSubtree(rootId, index, 'dependencies', clampedDepth, 0, rootPath),
-      referencersTree: buildSubtree(rootId, index, 'referencers', clampedDepth, 0, rootPath),
+      tree: buildSubtree(rootId, index, 'dependencies', clampedDepth, 0, rootPath, clampedBreadth),
+      referencersTree: buildSubtree(rootId, index, 'referencers', clampedDepth, 0, rootPath, clampedBreadth),
     };
   }
 
@@ -155,7 +195,7 @@ export function buildReferenceTree(
     rootId,
     direction,
     maxDepth: clampedDepth,
-    tree: buildSubtree(rootId, index, dir, clampedDepth, 0, rootPath),
+    tree: buildSubtree(rootId, index, dir, clampedDepth, 0, rootPath, clampedBreadth),
   };
 }
 

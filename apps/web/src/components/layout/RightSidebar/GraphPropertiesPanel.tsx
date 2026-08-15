@@ -16,6 +16,7 @@ import { dispatchEnvironmentImportModal } from '@/components/environments/Enviro
 import { useEnvironmentCatalog } from '@/hooks/useEnvironmentCatalog';
 import { formatEmitPreview } from '@vvs/graph-types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { buildExtendsClassPickerOptions } from '@/lib/classScope';
 
 interface GraphPropertiesPanelProps {
   onClose?: () => void;
@@ -31,6 +32,9 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
     environmentId,
     environmentVersion,
     setEnvironmentLink,
+    classes,
+    setClasses,
+    activeClassId,
     integration,
     setIntegration,
   } = useProject();
@@ -259,13 +263,30 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
           </div>
           <div className="space-y-1.5">
             <label className="text-[11px] font-medium text-zinc-400">Extends (optional)</label>
-            <input
-              type="text"
-              value={derivedExtends}
-              readOnly={Boolean(environmentId && isMain)}
-              onChange={(e) => handleChange('extendsType', e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-70"
-              placeholder="Base type in target language"
+            <SearchableSelect
+              value={derivedExtends ?? ''}
+              disabled={Boolean(environmentId && isMain)}
+              onChange={(value) => {
+                handleChange('extendsType', value);
+                const cls = classes.find((item) => item.id === activeClassId);
+                if (cls) {
+                  setClasses((prev) =>
+                    prev.map((item) =>
+                      item.id === cls.id ? { ...item, extendsType: value.trim() || undefined } : item
+                    )
+                  );
+                }
+              }}
+              options={(() => {
+                const options = buildExtendsClassPickerOptions(classes, activeClassId);
+                const current = derivedExtends ?? '';
+                if (current && !options.some((option) => option.value === current)) {
+                  return [{ value: current, label: current, description: 'Current value' }, ...options];
+                }
+                return options;
+              })()}
+              placeholder="Parent class…"
+              searchable
             />
             {environmentId && isMain ? (
               <p className="text-[9px] text-zinc-600">Derived from linked environment for {targetLanguage}</p>

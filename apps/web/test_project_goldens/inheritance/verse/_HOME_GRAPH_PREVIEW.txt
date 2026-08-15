@@ -1,0 +1,14 @@
+// ===== src/InheritanceLab.verse =====
+<public>Parent := class:
+    # (x) Declare Speak
+    Speak<public>() : void =
+        Print("parent")
+<public>Child(Parent) := class:
+    # (x) Declare Speak
+    Speak<public><override>() : void =
+        (super:)Speak()
+        Print("child")
+    on_start() : void =
+        # wait 1s
+        Speak()
+        Print("done")

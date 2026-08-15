@@ -26,8 +26,10 @@ export function nullIr(nodeId: string): IrExpr {
   return { kind: 'Literal', sourceGraphNodeId: nodeId, value: '', literalType: 'null' };
 }
 
-export function instanceRefIr(nodeId: string, name: string): IrExpr {
-  return { kind: 'InstanceRef', sourceGraphNodeId: nodeId, name };
+export function instanceRefIr(nodeId: string, name: string, inheritedDepth?: number): IrExpr {
+  return inheritedDepth && inheritedDepth > 0
+    ? { kind: 'InstanceRef', sourceGraphNodeId: nodeId, name, inheritedDepth }
+    : { kind: 'InstanceRef', sourceGraphNodeId: nodeId, name };
 }
 
 export function getInputTempIr(nodeId: string, tempName: string): IrExpr {

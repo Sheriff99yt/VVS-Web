@@ -32,6 +32,7 @@ import type { GraphTab } from '@vvs/graph-types';
 import { graphToIr } from './lower/graphToIr';
 import { documentHasFunctionImplement } from './lower/buildMembers';
 import { emitIrModule, emitClassModule } from './emit';
+import { withRustHashMapImportAtFileTop } from './emit/members';
 import { CodeSink } from './codeSink';
 import type { IrModule } from './ir/types';
 import { resolveNodeKindId } from '@vvs/graph-types';
@@ -383,10 +384,11 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
 
   const sink = new CodeSink(filePath);
   const language = classIrs[0]!.targetLanguage;
+  const mergedIrs = withRustHashMapImportAtFileTop(classIrs);
 
-  for (let i = 0; i < classIrs.length; i++) {
+  for (let i = 0; i < mergedIrs.length; i++) {
     if (i > 0 && sink.lineCount > 0) sink.appendRaw('');
-    const ir = { ...classIrs[i]!, filePath, imports: [] };
+    const ir = { ...mergedIrs[i]!, filePath, imports: [] };
     // Orphan Comment [C] (no attach target) emit once on the first class only.
     if (i > 0) {
       ir.userComments = (ir.userComments ?? []).filter((c) => Boolean(c.beforeNodeId));
@@ -395,6 +397,7 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
     // Follow-up classes must not flush comments owned by another class's emit set.
     emitClassModule(sink, ir, {
       allowUnownedCommentAttachAsOrphan: i === 0,
+      skipGeneratedImports: true,
     });
   }
 

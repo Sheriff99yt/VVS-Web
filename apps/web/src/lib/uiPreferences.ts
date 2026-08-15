@@ -1,4 +1,12 @@
 import type { ShortcutOverrideMap } from '@/lib/shortcutOverrides';
+import {
+  REFERENCE_BREADTH_DEFAULT,
+  REFERENCE_BREADTH_MAX,
+  REFERENCE_BREADTH_MIN,
+  REFERENCE_DEPTH_DEFAULT,
+  REFERENCE_DEPTH_MAX,
+  REFERENCE_DEPTH_MIN,
+} from '@/lib/referenceTree';
 
 const UI_PREFERENCES_KEY = 'vvs:ui-preferences';
 const LEGACY_DETAILS_KEY = 'vvs:details-panel-expanded';
@@ -120,6 +128,14 @@ export interface UiPreferences {
    * - `'hover-selection'`: highlight on hover AND selection (default).
    */
   nodeToCodeHighlight: 'off' | 'selection' | 'hover-selection';
+  /** U89: References viewer Graph vs Tree List. */
+  referencesViewMode: 'graph' | 'flat';
+  /** U89: referencers BFS / tree depth. */
+  referencesReferencersDepth: number;
+  /** U89: dependencies BFS / tree depth. */
+  referencesDependenciesDepth: number;
+  /** U89: max unique peers per tree/canvas node. */
+  referencesBreadthLimit: number;
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -161,6 +177,10 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   allowMultipleExecToInput: false,
   warnDynamicWeakTyping: false,
   nodeToCodeHighlight: 'hover-selection',
+  referencesViewMode: 'graph',
+  referencesReferencersDepth: REFERENCE_DEPTH_DEFAULT,
+  referencesDependenciesDepth: REFERENCE_DEPTH_DEFAULT,
+  referencesBreadthLimit: REFERENCE_BREADTH_DEFAULT,
 };
 
 export const DETAILS_PANEL_HEIGHT = {
@@ -374,6 +394,16 @@ function migrateLegacyDetailsPref(prefs: UiPreferences): UiPreferences {
   return prefs;
 }
 
+function clampStoredInt(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number
+): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
 export function readUiPreferences(): UiPreferences {
   if (typeof window === 'undefined') {
     return { ...DEFAULT_UI_PREFERENCES };
@@ -462,6 +492,28 @@ export function readUiPreferences(): UiPreferences {
         rest.nodeToCodeHighlight === 'hover-selection'
           ? rest.nodeToCodeHighlight
           : DEFAULT_UI_PREFERENCES.nodeToCodeHighlight,
+      referencesViewMode:
+        rest.referencesViewMode === 'graph' || rest.referencesViewMode === 'flat'
+          ? rest.referencesViewMode
+          : DEFAULT_UI_PREFERENCES.referencesViewMode,
+      referencesReferencersDepth: clampStoredInt(
+        rest.referencesReferencersDepth,
+        REFERENCE_DEPTH_MIN,
+        REFERENCE_DEPTH_MAX,
+        DEFAULT_UI_PREFERENCES.referencesReferencersDepth
+      ),
+      referencesDependenciesDepth: clampStoredInt(
+        rest.referencesDependenciesDepth,
+        REFERENCE_DEPTH_MIN,
+        REFERENCE_DEPTH_MAX,
+        DEFAULT_UI_PREFERENCES.referencesDependenciesDepth
+      ),
+      referencesBreadthLimit: clampStoredInt(
+        rest.referencesBreadthLimit,
+        REFERENCE_BREADTH_MIN,
+        REFERENCE_BREADTH_MAX,
+        DEFAULT_UI_PREFERENCES.referencesBreadthLimit
+      ),
     };
     return migrateLegacyDetailsPref(merged);
   } catch {

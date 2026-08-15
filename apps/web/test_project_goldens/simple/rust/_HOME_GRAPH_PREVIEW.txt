@@ -5,6 +5,11 @@ pub struct FirstGraph {
 }
 impl FirstGraph {
 
+    pub fn new() -> Self {
+        Self {
+            VisitorName: "",
+        }
+    }
     // (x) Declare SayHello
     pub fn SayHello(&mut self) {
         println!("{}", "Hello from SayHello!");

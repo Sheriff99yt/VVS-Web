@@ -5,6 +5,13 @@
 pub struct MainClass {
 
 }
+impl MainClass {
+
+    pub fn new() -> Self {
+        Self {
+        }
+    }
+}
 
     pub GlobalGreeting: String,
     // (x) Declare ProcessData

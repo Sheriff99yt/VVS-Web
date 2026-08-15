@@ -1,0 +1,14 @@
+// ===== src/InheritanceLab.py =====
+class Parent:
+    # (x) Declare Speak
+    def Speak(self):
+        print("parent")
+class Child(Parent):
+    # (x) Declare Speak
+    def Speak(self):
+        super().Speak()
+        print("child")
+    async def on_start(self):
+        await asyncio.sleep(1)
+        self.Speak()
+        print("done")

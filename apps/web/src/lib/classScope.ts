@@ -6,9 +6,23 @@ import type {
   ProjectEventDefinition,
   VariableSymbol,
 } from '@vvs/graph-types';
-import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId, classForHomeGraphId } from '@vvs/graph-types';
+import {
+  MAIN_CLASS_ID,
+  MAIN_GRAPH_CONTAINER_ID,
+  classHomeGraphId,
+  classForHomeGraphId,
+  classVisibleSymbols,
+  wouldCreateExtendsCycle,
+} from '@vvs/graph-types';
 
-export { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, classHomeGraphId, classForHomeGraphId };
+export {
+  MAIN_CLASS_ID,
+  MAIN_GRAPH_CONTAINER_ID,
+  classHomeGraphId,
+  classForHomeGraphId,
+  classVisibleSymbols,
+  wouldCreateExtendsCycle,
+};
 
 export function symbolClassId(item: { classId?: string }): string {
   return item.classId ?? MAIN_CLASS_ID;
@@ -82,4 +96,24 @@ export function containerMatchesFilter(
 ): boolean {
   if (matches(container.name, query)) return true;
   return classesForContainer(classes, container.id).some((cls) => matches(cls.name, query));
+}
+
+export function buildExtendsClassPickerOptions(
+  classes: ClassSymbol[],
+  currentClassId?: string
+): Array<{ value: string; label: string; description?: string; group?: string }> {
+  const options: Array<{ value: string; label: string; description?: string; group?: string }> = [
+    { value: '', label: 'None', description: 'No parent class', group: 'Extends' },
+  ];
+  for (const cls of classes) {
+    if (currentClassId && cls.id === currentClassId) continue;
+    if (currentClassId && wouldCreateExtendsCycle(classes, currentClassId, cls.name)) continue;
+    options.push({
+      value: cls.name,
+      label: cls.name,
+      description: 'Project class',
+      group: 'Classes',
+    });
+  }
+  return options;
 }

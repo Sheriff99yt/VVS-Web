@@ -7,7 +7,7 @@
 
 **Agent rule:** For C# work, open **this file only** (plus `SKILL.md` for workflow). Do not open other language docs.
 
-> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues (`CL-005`, `CL-006`).
+> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues (`CL-005`). CL-006 (`async Task`) is done.
 
 ## Declare / Define
 
@@ -25,7 +25,7 @@ public class Machine {
     }
     protected abstract void Diagnose();
     // (x) Declare Shutdown
-    public async void Shutdown() {
+    public async Task Shutdown() {
         this.Ready = false;
         Console.WriteLine("Shutdown");
     }
@@ -62,7 +62,7 @@ Coverage Lab also shows: `using System;` / `using System.Collections.Generic;`, 
 | **Namespaces** | `Namespace Define` Node | `namespace X` |
 | **Structs** | `Struct Define` Node | `struct X` |
 | **Destructor** | `Destructor Define` Node | `~X()` |
-| **Async Function** | `Function` Option: **Async** | `async void` today (void methods) — see CL-006 for `async Task` |
+| **Async Function** | `Function` Option: **Async** | `async Task` / `async Task<T>` (never `async void`) |
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if () {} else {}` |
 | **Switch/Match** | `Switch` Node | `switch() case:` |
@@ -160,7 +160,7 @@ public class FlowAndAsyncDemo {
     }
 
     // --- Async / Await ---
-    // Coverage Lab void+async methods emit `async void` today (CL-006), not Task.
+    // Coverage Lab void+async methods emit `async Task` (CL-006).
     public async Task FetchData() {
         await Task.Delay(1000);
     }

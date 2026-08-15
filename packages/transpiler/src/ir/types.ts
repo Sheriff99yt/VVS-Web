@@ -67,6 +67,8 @@ export interface IrLiteral extends IrExprBase {
 export interface IrInstanceRef extends IrExprBase {
   kind: 'InstanceRef';
   name: string;
+  /** Ancestor hops for Rust composition projection (`self.base.` / `self.base.base.`). */
+  inheritedDepth?: number;
 }
 
 export interface IrLocalRef extends IrExprBase {
@@ -124,6 +126,12 @@ export interface IrCallFunction extends IrBase {
   /** Owning class module name when calling across class boundaries. */
   targetClassName?: string;
   crossClass?: boolean;
+  /** Ancestor hops for Rust composition projection (`self.base.method()`). */
+  inheritedDepth?: number;
+  /** Call the parent implementation (`super.Foo` / `Parent::Foo` / `self.base.Foo`). */
+  isSuper?: boolean;
+  /** Parent class name for languages that qualify Super (`Parent::Foo`, `self.Parent.Foo`). */
+  parentClassName?: string;
 }
 
 export interface IrPrint extends IrBase {
@@ -145,6 +153,8 @@ export interface IrAssignVariable extends IrBase {
   assignKind: AssignKind;
   targetName: string;
   targetBinding: 'instance' | 'local';
+  /** Ancestor hops for Rust composition projection (`self.base.field =`). */
+  inheritedDepth?: number;
   value?: IrExpr;
   inputKind?: 'text' | 'number';
   prompt?: IrExpr;
@@ -215,6 +225,9 @@ export interface IrDispatchEvent extends IrBase {
   crossClass?: boolean;
   /** Module/class name for cross-class receiver construction. */
   targetClassName?: string;
+  /** Dispatch the parent handler (`super.on_Foo` / `Parent::on_Foo`). */
+  isSuper?: boolean;
+  parentClassName?: string;
 }
 
 export interface IrEmitEvent extends IrBase {

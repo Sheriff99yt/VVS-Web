@@ -62,6 +62,7 @@ import {
   classGraphTabId,
   classContainerId,
   classScopedSymbols,
+  classVisibleSymbols,
   symbolClassId,
 } from '@/lib/classScope';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
@@ -122,6 +123,15 @@ import { useProjectTranspileResult } from '@/hooks/useProjectTranspileResult';
 export interface ProjectTreeProps {
   /** Canvas: edit selection only. References: drives the reference graph focus. */
   mode?: ProjectTreeMode;
+}
+
+
+function InheritedChip({ from }: { from: string }) {
+  return (
+    <span className="text-[8px] px-1 py-0 font-mono uppercase tracking-wider rounded border border-zinc-700 text-zinc-500 shrink-0">
+      {from}
+    </span>
+  );
 }
 
 export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
@@ -185,12 +195,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     () => classScopedSymbols(activeClassId, { variables, functions, events }),
     [activeClassId, variables, functions, events]
   );
-  const classVariables = useMemo(
+  const visibleSymbols = useMemo(
+    () => classVisibleSymbols(activeClassId, classes, { variables, functions, events }),
+    [activeClassId, classes, variables, functions, events]
+  );
+  const inheritedById = visibleSymbols.inherited;
+  const ownClassVariables = useMemo(
     () => scopedSymbols.variables.filter((v) => !v.graphTabId && !v.scopedNodeId),
     [scopedSymbols.variables]
   );
-  const classFunctions = scopedSymbols.functions;
-  const classEvents = scopedSymbols.events;
+  const classVariables = visibleSymbols.variables;
+  const classFunctions = visibleSymbols.functions;
+  const classEvents = visibleSymbols.events;
 
   const activeClass = useMemo(
     () => classes.find((cls) => cls.id === activeClassId),
@@ -216,18 +232,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             documents,
             activeClass,
             classes,
-            classFunctions,
-            classEvents,
-            classVariables
+            scopedSymbols.functions,
+            scopedSymbols.events,
+            ownClassVariables
           ),
     [
       documents,
       isReferenceMode,
       activeClass,
       classes,
-      classFunctions,
-      classEvents,
-      classVariables,
+      scopedSymbols.functions,
+      scopedSymbols.events,
+      ownClassVariables,
     ]
   );
 
@@ -838,6 +854,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
 
   const requestDeleteSymbols = useCallback(
     (items: Array<{ kind: SymbolRefKind; symbolId: string }>) => {
+      items = items.filter((item) => !inheritedById.has(item.symbolId));
       if (items.length === 0) return;
       const symbols = { variables, functions, events, openTabs };
       setPendingDelete({
@@ -847,7 +864,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
         })),
       });
     },
-    [variables, functions, events, openTabs]
+    [variables, functions, events, openTabs, inheritedById]
   );
 
   const requestDeleteSymbol = useCallback(
@@ -877,19 +894,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             setRenamingClassId(cls.id);
             setRenameClassName(cls.name);
           }
-        } else if (selection.type === 'function' && selection.id) {
+        } else if (selection.type === 'function' && selection.id && !inheritedById.has(selection.id)) {
           const func = functions.find((f) => f.id === selection.id);
           if (func) {
             setRenamingFunctionId(func.id);
             setRenameFunctionName(func.name);
           }
-        } else if (selection.type === 'event' && selection.id) {
+        } else if (selection.type === 'event' && selection.id && !inheritedById.has(selection.id)) {
           const event = events.find((e) => e.id === selection.id);
           if (event) {
             setRenamingEventId(event.id);
             setRenameEventName(event.name);
           }
-        } else if (selection.type === 'variable' && selection.id) {
+        } else if (selection.type === 'variable' && selection.id && !inheritedById.has(selection.id)) {
           const variable = variables.find((v) => v.id === selection.id);
           if (variable) {
             setRenamingVariableId(variable.id);
@@ -1724,6 +1741,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 <React.Fragment key={f.id}>
                   <TreeRow
                     layout={sectionViewModes.functions}
+                    className={inheritedById.has(f.id) ? 'opacity-60' : undefined}
                     active={
                       isSymbolMultiSelected('function', f.id) ||
                       (selection.type === 'function' && selection.id === f.id)
@@ -1777,7 +1795,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                          : undefined
                      }
                      reorder={
-                       canReorderSymbols
+                       canReorderSymbols && !inheritedById.has(f.id)
                          ? {
                              enabled: true,
                              isDragging: draggingFunctionId === f.id,
@@ -1792,12 +1810,15 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                      }
                      suffix={
                        <div className="flex items-center gap-0.5 shrink-0">
+                         {inheritedById.has(f.id) ? (
+                           <InheritedChip from={inheritedById.get(f.id)!.inheritedFromClassName} />
+                         ) : null}
                          {isTabDirty(f.id) ? (
                            <Tooltip content="Uncompiled changes" placement="top">
                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1" />
                            </Tooltip>
                          ) : null}
-                         {!isReferenceMode && renamingFunctionId !== f.id
+                         {!isReferenceMode && renamingFunctionId !== f.id && !inheritedById.has(f.id)
                            ? renderFunctionCanvasStatus(
                                f,
                                selection.type === 'function' && selection.id === f.id,
@@ -1984,6 +2005,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                   <React.Fragment key={entry.id}>
                     <TreeRow
                       layout={sectionViewModes.events}
+                      className={inheritedById.has(entry.id) ? 'opacity-60' : undefined}
                       icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
                       label={
                         renamingEventId === entry.id ? (
@@ -2032,7 +2054,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                           : undefined
                       }
                       reorder={
-                        canReorderSymbols
+                        canReorderSymbols && !inheritedById.has(entry.id)
                           ? {
                               enabled: true,
                               isDragging: draggingEventId === entry.id,
@@ -2048,7 +2070,10 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                       suffix={
                         isReferenceMode ? undefined : (
                           <div className="flex items-center gap-0.5 shrink-0">
-                            {renamingEventId !== entry.id
+                            {inheritedById.has(entry.id) ? (
+                              <InheritedChip from={inheritedById.get(entry.id)!.inheritedFromClassName} />
+                            ) : null}
+                            {renamingEventId !== entry.id && !inheritedById.has(entry.id)
                               ? renderEventCanvasStatus(
                                   entry.id,
                                   rowSelected,
@@ -2171,7 +2196,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     variable={v}
                     isSelected={isVariableActive(v.id, v.name)}
                     color={getVariableColor(v.type)}
-                    canReorder={canReorderSymbols}
+                    dimmed={inheritedById.has(v.id)}
+                    inheritedFrom={inheritedById.get(v.id)?.inheritedFromClassName}
+                    canReorder={canReorderSymbols && !inheritedById.has(v.id)}
                     isDragging={draggingVariableId === v.id}
                     isDropTarget={dropVariableId === v.id}
                     onReorderDragStart={(e) => handleVariableDragStart(e, v.id)}
@@ -2180,7 +2207,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                     onReorderDrop={(e) => handleVariableDrop(e, v.id)}
                     onReorderDragLeave={() => handleVariableDragLeave(v.id)}
                     declareBadge={
-                      isReferenceMode
+                      isReferenceMode || inheritedById.has(v.id)
                         ? undefined
                         : renderVariableCanvasStatus(
                             v.id,
@@ -2201,11 +2228,13 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                           )
                     }
                     hint={
-                      isReferenceMode
-                        ? 'Click to focus references · Double-click to edit in inspector'
-                        : canReorderSymbols
-                          ? 'Hover for reorder grip · drag row to graph · double-click to focus Declare'
-                          : 'Drag row to graph · click to select · double-click to focus Declare'
+                      inheritedById.get(v.id)
+                        ? `from ${inheritedById.get(v.id)!.inheritedFromClassName} · drag Get / Set`
+                        : isReferenceMode
+                          ? 'Click to focus references · Double-click to edit in inspector'
+                          : canReorderSymbols
+                            ? 'Hover for reorder grip · drag row to graph · double-click to focus Declare'
+                            : 'Drag row to graph · click to select · double-click to focus Declare'
                     }
                     onSelect={(e) => selectVariable(v.id, v.name, e)}
                     onOpen={() =>

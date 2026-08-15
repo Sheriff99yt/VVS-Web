@@ -1,6 +1,6 @@
 # CL-014 / CL-015 — Verse GetInput + for-loop plan
 
-**Status:** plan only (no emit code in this slice)  
+**Status:** CL-015 done (Verse `for` shapes). CL-014 partial — honest `(x)` + prompt + typed local; no real string read on a plain class.  
 **Severity:** P0 · **Lang:** Verse · **Source:** `simple/verse`, `complex/verse`  
 **Canonical issues:** [SKILL.md Issues](./SKILL.md) `CL-014`, `CL-015`
 
@@ -62,10 +62,11 @@ C++-like header + braces; not Verse `for (val : Readings):` indent blocks. Unclo
 
 ## Acceptance
 
-- [ ] No `_vvs_input_… : float = 0.0` stub for text GetInput on Verse goldens
-- [ ] For-each golden uses Verse `for (… : …):` form; validates structurally vs teaching docs
-- [ ] CL-014 / CL-015 Issues log → `synced` / `fixed-in-cycle`
-- [ ] `validate_test_projects_folder.ts` green for verse simple+complex
+- [x] No `_vvs_input_… : float = 0.0` stub for text GetInput on Verse goldens (text uses `string = ""` after `# (x) Get User Input`)
+- [x] For-each golden uses Verse `for (… : …):` form; range-for uses `for (i := first..last):`
+- [ ] CL-014 remains **open** — Verse still cannot express real player/string input
+- [x] CL-015 Issues log → `fixed-in-cycle` / done
+- [ ] `validate_test_projects_folder.ts` green for verse simple+complex (run after emit)
 
 ## Related
 

@@ -7,7 +7,7 @@
 
 **Agent rule:** For Rust work, open **this file only** (plus `SKILL.md` for workflow). Do not open other language docs.
 
-> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues (`CL-007`–`CL-010`). Inheritance / `self.Power` / missing `use HashMap` need a system plan — docs below match **shipped** goldens.
+> **Issues:** See parent [`SKILL.md`](SKILL.md). CL-008 / CL-009 / CL-010 / CL-018 shipped — real `static` / associated `const`, `use HashMap`, composition inheritance, async chip dimmed (no Tokio).
 
 ## Declare / Define
 
@@ -18,13 +18,13 @@
 | **Define** `Boot` | in-`impl` `pub fn Boot(&mut self) { … }` — **no** out-of-line invent |
 
 ```rust
+pub static Serial: f32 = 0;
 pub struct Machine {
     Power: f32,
-    pub Serial: f32,
-    pub MaxPower: f32,
     pub Ready: bool,
 }
 impl Machine {
+    pub const MaxPower: f32 = 100;
     // (x) Declare Boot
     pub fn Boot(&mut self) {
         self.Ready = true;
@@ -32,13 +32,13 @@ impl Machine {
     }
     // (x) Declare Diagnose
     // (x) Declare Shutdown
-    pub async fn Shutdown(&mut self) {
+    pub fn Shutdown(&mut self) {
         self.Ready = false;
     }
 }
 ```
 
-Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Switch → `if/else if` cascade; GetInput uses `stdin().read_line`; for-each uses `for val in self.Readings.iter()`.
+Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial is module `static`; MaxPower is associated `const`; Tags uses `HashMap` after a generated `use std::collections::HashMap;`; Switch → `if/else if` cascade; GetInput uses `stdin().read_line`; for-each uses `for val in self.Readings.iter()`.
 
 ## Concept → emit
 
@@ -51,11 +51,12 @@ Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Switch
 | **Implements** | `Class Define` Option: **Implements** | `impl IDamageable for` |
 | **Variable** | `Variable Define` Node | `pub A: f32` |
 | **Private Var** | `Variable` Option: **Visibility** | `Power: f32` *(no `pub`)* |
-| **Constant Var** | `Variable` Option: **Constant** | plain field today *(CL-008)* |
-| **Static Var** | `Variable` Option: **Static** | plain field today *(CL-008)* |
+| **Constant Var** | `Variable` Option: **Constant** | associated `pub const Name: T = …` in `impl` |
+| **Static Var** | `Variable` Option: **Static** | module `pub static Name: T = …` (Rust has no associated static) |
 | **Array** | `Variable` Pin Type: **Array** | `Vec<T>` |
-| **Map/Dictionary** | `Variable` Pin Type: **Map** | `HashMap<K, V>` *(import gap: CL-009)* |
+| **Map/Dictionary** | `Variable` Pin Type: **Map** | `HashMap<K, V>` + generated `use std::collections::HashMap;` |
 | **Function** | `Function Declare` + `Function Define` | `// (x) Declare` + `fn Func` |
+| **Call Super** | `Call` Option: **Super** (not a node) | `self.base.Name(...)` (CL-010 composition) |
 | **Abstract Func** | Declare `isAbstract` (no Define body) | `// (x) Declare Func` |
 | **Virtual / Override** | Declare `isVirtual` / `isOverride` | *Implicit* |
 | **Free Function** | `Function` Option: **Not in Class** | `pub fn Func()` |
@@ -68,7 +69,7 @@ Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Switch
 | **Namespaces** | `Namespace Define` Node | `mod x` |
 | **Structs** | `Struct Define` Node | `struct X` |
 | **Destructor** | `Destructor Define` Node | `impl Drop` |
-| **Async Function** | `Function` Option: **Async** | `async fn` |
+| **Async Function** | `Function` Option: **Async** | *Ineffective* (no Tokio) — emit `fn`; Wait is `thread::sleep` |
 | **Await** | `Await` Node | `X.await` |
 | **If/Else** | `Branch (If)` Node | `if {} else {}` |
 | **Switch/Match** | `Switch` Node | `if/else if` cascade (`_vvs_sel`) — *not* `match` today |
@@ -102,12 +103,11 @@ pub struct AdvancedClass {
 }
 
 // --- Constants & Statics ---
-// Coverage Lab: const/static field modifiers currently emit plain struct fields (CL-008).
-// The shapes below are aspirational, not Code-panel emit today.
-pub const PI: f32 = 3.14159;
+// Coverage Lab: static Serial is a module item; const MaxPower is associated in impl.
+pub static Serial: f32 = 0;
 
-thread_local! {
-    pub static OpCount: std::cell::RefCell<f32> = std::cell::RefCell::new(0.0);
+impl Machine {
+    pub const MaxPower: f32 = 100;
 }
 
 // --- Interface Implementation ---

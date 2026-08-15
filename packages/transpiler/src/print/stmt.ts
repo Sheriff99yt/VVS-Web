@@ -23,7 +23,7 @@ import { resolveMethodBinding, substituteCallExpr } from '@vvs/environment-templ
 import { PackTemplateMissingError } from '@vvs/syntax-packs';
 import { offsetSpans } from '../codeExpr';
 import type { ExprPrinter } from './types';
-import { createDefaultExprPrinter, mergeArgs } from './expr';
+import { createDefaultExprPrinter, mergeArgs, rustInheritedBasePath } from './expr';
 import { builtBlockToText, buildForLoop, buildIfBranch, buildSequence, buildWhileLoop } from './blocks';
 import {
   commentPrefixFromPack,
@@ -31,6 +31,15 @@ import {
   printFromTemplate,
 } from './template';
 import type { PrintContext, PrintedStmt } from './types';
+
+
+function awaitWaitTemplateKey(ctx: PrintContext, isAsync: boolean): string {
+  const templates = ctx.profile?.templates ?? {};
+  if (isAsync && templates.AwaitWaitAsync) return 'AwaitWaitAsync';
+  if (!isAsync && templates.AwaitWaitSync) return 'AwaitWaitSync';
+  if (templates.AwaitWait) return 'AwaitWait';
+  return isAsync ? 'AwaitWaitAsync' : 'AwaitWaitSync';
+}
 
 export function createStmtPrinters(
   printExpr: ExprPrinter,
@@ -44,6 +53,14 @@ export function createStmtPrinters(
 
       const argsArray = (s.args ?? []).map((expr) => printExpr(expr, ctx));
       const argsStr = argsArray.map((a) => a.text).join(', ');
+
+      if (s.isSuper) {
+        return printFromTemplate(ctx, 'CallSuper', {
+          callee: s.calleeName,
+          args: argsStr,
+          parent: s.parentClassName ?? '',
+        });
+      }
 
       if (s.crossClass && s.targetClassName) {
         const classRef = s.targetClassName;
@@ -117,7 +134,8 @@ export function createStmtPrinters(
       }
 
       const key = s.instanceCall ? 'CallInstance' : 'CallFunction';
-      return printFromTemplate(ctx, key, { callee: s.calleeName, args: argsStr });
+      const basePath = family === 'rust' ? rustInheritedBasePath(s.inheritedDepth) : '';
+      return printFromTemplate(ctx, key, { callee: s.calleeName, args: argsStr, basePath });
     },
 
     Print: (stmt, ctx) => {
@@ -177,9 +195,11 @@ export function createStmtPrinters(
       if (!ctx.profile?.templates[key]) {
         throw new PackTemplateMissingError(key, family);
       }
+      const basePath = family === 'rust' ? rustInheritedBasePath(s.inheritedDepth) : '';
       return printFromTemplate(ctx, key, {
         target: s.targetName,
         value: { text: val.text, spans: val.spans },
+        basePath,
       });
     },
 
@@ -228,6 +248,19 @@ export function createStmtPrinters(
       const merged = mergeArgs(argExprs);
       const { family } = ctx;
 
+      if (s.isSuper) {
+        const printed = printFromTemplate(ctx, 'DispatchEventSuper', {
+          handler: s.handlerName,
+          args: { text: merged.text, spans: merged.spans },
+          parent: s.parentClassName ?? '',
+        });
+        const argsOffset = printed.text.indexOf(merged.text);
+        return {
+          text: printed.text,
+          expressionSpans: offsetSpans(merged.spans, argsOffset >= 0 ? argsOffset : printed.text.length),
+        };
+      }
+
       if (s.crossClass && s.targetClassName) {
         const classRef = s.targetClassName;
         let receiver = classRef;
@@ -264,15 +297,9 @@ export function createStmtPrinters(
     AwaitWait: (stmt, ctx) => {
       if (stmt.kind !== 'AwaitWait') return null;
       const s = stmt as IrAwaitWait;
-      const { family } = ctx;
       const duration = printExpr(s.seconds, ctx);
       const slot = { text: duration.text, spans: duration.spans };
-      const key =
-        family === 'python' || family === 'gdscript' || family === 'javascript' || family === 'csharp'
-          ? s.async
-            ? 'AwaitWaitAsync'
-            : 'AwaitWaitSync'
-          : 'AwaitWait';
+      const key = awaitWaitTemplateKey(ctx, s.async);
       const printed = printFromTemplate(ctx, key, { duration: slot });
       const durOffset = printed.text.indexOf(duration.text);
       return {

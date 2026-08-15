@@ -73,11 +73,14 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     expect(code).not.toContain('virtual');
   });
 
-  test('Rust — pub only for public members; async Shutdown', () => {
+  test('Rust — pub only for public members; isAsync is a no-op (no Tokio)', () => {
     const code = transpileMachine('rust');
-    expect(code).toContain('pub Serial: f32');
+    expect(code).toContain('pub static Serial: f32');
+    expect(code).toContain('pub const MaxPower: f32');
+    expect(code).not.toMatch(/^\s+pub Serial: f32,/m);
     expect(code).toMatch(/^\s+Power: f32,/m);
-    expect(code).toContain('pub async fn Shutdown');
+    expect(code).toContain('pub fn Shutdown');
+    expect(code).not.toContain('async fn');
   });
 
   test('GDScript — static var Serial; no async keyword', () => {
@@ -109,7 +112,7 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     const rs = transpileMachine('rust');
     expect(rs).not.toContain('impl Default');
     expect(rs).not.toContain('#include');
-    expect(rs).toContain('pub Serial');
+    expect(rs).toContain('pub static Serial');
     expect(rs).toMatch(/^\s+Power: f32,/m);
     expect(rs).not.toMatch(/^\s+pub Power:/m);
   });

@@ -14,12 +14,16 @@ import {
   buildReferenceTree,
   countTreeNodes,
   filterReferenceTreeByName,
+  filterReferenceTreeByType,
+  REFERENCE_BREADTH_DEFAULT,
   REFERENCE_DEPTH_DEFAULT,
   REFERENCE_DEPTH_MAX,
   REFERENCE_DEPTH_MIN,
+  type ReferenceGraphTypeFilter,
   type ReferenceTreeDirection,
   type ReferenceTreeNode,
 } from '@/lib/referenceTree';
+import { graphTypeFor } from '@/lib/referenceGraphLayout';
 
 interface ReferenceGraphTreeProps {
   rootGraphId: string;
@@ -35,6 +39,10 @@ interface ReferenceGraphTreeProps {
   hideControls?: boolean;
   /** Case-insensitive substring filter on graph display names (thin U89). */
   nameFilter?: string;
+  /** Max unique peers per node (U89). */
+  breadthLimit?: number;
+  /** Event Graph / Function / Macro visibility (same set as the canvas). */
+  typeFilters?: Set<ReferenceGraphTypeFilter>;
 }
 
 function edgeCaption(ref: GraphReference): string {
@@ -130,7 +138,7 @@ function TreeBranch({
             <div className="text-[9px] text-amber-600/90 italic mt-0.5 pl-3">Circular reference</div>
           )}
           {node.truncated && !hasChildren && (
-            <div className="text-[9px] text-zinc-600 italic mt-0.5 pl-3">Increase depth to see more</div>
+            <div className="text-[9px] text-zinc-600 italic mt-0.5 pl-3">Increase depth or breadth to see more</div>
           )}
         </button>
         </Tooltip>
@@ -160,7 +168,7 @@ function TreeBranch({
           className="text-[9px] text-zinc-600 italic py-0.5"
           style={{ paddingLeft: `${22 + (node.depth + 1) * 14}px` }}
         >
-          … more at greater depth
+          Increase breadth to see more
         </div>
       )}
     </div>
@@ -228,6 +236,8 @@ export function ReferenceGraphTree({
   onDirectionChange,
   hideControls = false,
   nameFilter = '',
+  breadthLimit = REFERENCE_BREADTH_DEFAULT,
+  typeFilters,
 }: ReferenceGraphTreeProps) {
   const [depthInternal, setDepthInternal] = useState(REFERENCE_DEPTH_DEFAULT);
   const [directionInternal, setDirectionInternal] = useState<ReferenceTreeDirection>('both');
@@ -238,8 +248,8 @@ export function ReferenceGraphTree({
   const setDirection = onDirectionChange ?? setDirectionInternal;
 
   const result = useMemo(
-    () => buildReferenceTree(rootGraphId, index, direction, depth),
-    [rootGraphId, index, direction, depth]
+    () => buildReferenceTree(rootGraphId, index, direction, depth, breadthLimit),
+    [rootGraphId, index, direction, depth, breadthLimit]
   );
 
   const labelFor = useCallback(
@@ -247,12 +257,35 @@ export function ReferenceGraphTree({
     [openTabs, functions]
   );
 
+  const typeFor = useCallback(
+    (graphId: string) => graphTypeFor(graphId, openTabs, functions),
+    [openTabs, functions]
+  );
+
   const filtered = useMemo(() => {
+    const applyType = (node: ReferenceTreeNode): ReferenceTreeNode | null => {
+      if (!typeFilters || typeFilters.size === 0) return node;
+      return filterReferenceTreeByType(node, typeFilters, typeFor);
+    };
+
+    const typedTree = applyType(result.tree);
+    const typedReferencers = result.referencersTree
+      ? applyType(result.referencersTree)
+      : undefined;
+
     const q = nameFilter.trim();
-    if (!q) return { ...result, emptyFilter: false as const };
-    const tree = filterReferenceTreeByName(result.tree, q, labelFor);
-    const referencersTree = result.referencersTree
-      ? filterReferenceTreeByName(result.referencersTree, q, labelFor)
+    if (!q) {
+      return {
+        ...result,
+        tree: typedTree ?? { ...result.tree, children: [] },
+        referencersTree: typedReferencers ?? undefined,
+        emptyFilter: false as const,
+      };
+    }
+
+    const tree = typedTree ? filterReferenceTreeByName(typedTree, q, labelFor) : null;
+    const referencersTree = typedReferencers
+      ? filterReferenceTreeByName(typedReferencers, q, labelFor)
       : undefined;
     const emptyFilter = !tree && !referencersTree;
     return {
@@ -261,7 +294,7 @@ export function ReferenceGraphTree({
       referencersTree: referencersTree ?? undefined,
       emptyFilter,
     };
-  }, [result, nameFilter, labelFor]);
+  }, [result, nameFilter, labelFor, typeFilters, typeFor]);
 
   const rootLabel = formatReferenceEndpoint(rootGraphId, openTabs, functions);
 

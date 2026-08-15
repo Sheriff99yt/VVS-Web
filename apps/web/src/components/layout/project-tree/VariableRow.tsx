@@ -32,6 +32,8 @@ export function VariableRow({
   onReorderDragOver,
   onReorderDrop,
   onReorderDragLeave,
+  dimmed,
+  inheritedFrom,
 }: {
   variable: {
     id: string;
@@ -64,6 +66,8 @@ export function VariableRow({
   onReorderDragOver?: (e: React.DragEvent) => void;
   onReorderDrop?: (e: React.DragEvent) => void;
   onReorderDragLeave?: () => void;
+  dimmed?: boolean;
+  inheritedFrom?: string;
 }) {
   const isGrid = layout === 'grid';
 
@@ -82,7 +86,7 @@ export function VariableRow({
     <TreeRow
       layout={layout}
       depth="l1"
-      className={layout === 'list' ? 'gap-2' : undefined}
+      className={`${layout === 'list' ? 'gap-2' : ''} ${dimmed ? 'opacity-60' : ''}`.trim()}
       active={isSelected}
       icon={
         <div
@@ -160,7 +164,14 @@ export function VariableRow({
             Save
           </button>
         ) : (
-          declareBadge
+          <>
+            {inheritedFrom ? (
+              <span className="text-[8px] px-1 py-0 font-mono uppercase tracking-wider rounded border border-zinc-700 text-zinc-500 shrink-0">
+                {inheritedFrom}
+              </span>
+            ) : null}
+            {declareBadge}
+          </>
         )
       }
       hoverActions={

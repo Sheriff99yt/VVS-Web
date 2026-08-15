@@ -3,13 +3,14 @@ import { createFirstGraphUsabilityTestSnapshot } from '@/lib/usabilityExampleTes
 import { createCoverageLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/coverageLabUsabilityTest';
 import { createBranchLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/branchLabUsabilityTest';
 import { createNewFeaturesUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/newFeaturesUsabilityTest';
+import { createInheritanceLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/inheritanceLabUsabilityTest';
 import {
   createProjectId,
   loadProjectFromStore,
   writeProjectPayload,
 } from '@/lib/projectStore';
 
-export type UsabilityTestLevel = 'simple' | 'complex' | 'branch' | 'new-features';
+export type UsabilityTestLevel = 'simple' | 'complex' | 'branch' | 'new-features' | 'inheritance';
 
 /** @deprecated Use `UsabilityTestLevel` */
 export type ExampleLevel = UsabilityTestLevel;
@@ -32,13 +33,17 @@ export interface UsabilityExampleTestDefinition {
 /** @deprecated Use `UsabilityExampleTestDefinition` */
 export type ExampleProjectDefinition = UsabilityExampleTestDefinition;
 
-export const USABILITY_TEST_FIXTURE_REVISION = 6;
+export const USABILITY_TEST_FIXTURE_REVISION = 9;
 
 /**
  * Curated graph fixtures for usability regression — not tutorial demos.
  * See `docs/design/language_capability_catalog.md` · U65 Test Project rethink.
  * Rev 3: Declare ≠ Define vocabulary (U81) — Call / Declare / Define; same-file bodies (U80).
  * Rev 6: Branch Lab (U92 thin) — Entry → Branch → True/False Print.
+ * Rev 7: Inheritance Lab (U92) — Extends + override + Call Super + Wait async; Go goldens asserted.
+ * Rev 8: Inheritance Lab Speak bodies use unique function tab names so disk save does not collide.
+ * Rev 9: Function graph files key by name+id so same-named methods (override) do not collide;
+ *        Inheritance Lab entry isAsync so python/js emit async on_start with await.
  */
 export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
   {
@@ -89,6 +94,17 @@ export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
       'Demonstrates Global Scope, Function Overloads with arguments, and Events with parameters.',
     highlights: ['Global Scope', 'Function Overloads', 'Event Parameters'],
     create: createNewFeaturesUsabilityTestSnapshot,
+  },
+  {
+    id: 'inheritance',
+    stableProjectId: 'vvs-test-inheritance-lab',
+    level: 'inheritance',
+    title: 'Inheritance Lab',
+    moduleName: 'InheritanceLab',
+    description:
+      'Extends + override + Call Super + Wait async across languages.',
+    highlights: ['Extends', 'Override', 'Call Super', 'Wait async'],
+    create: createInheritanceLabUsabilityTestSnapshot,
   },
 ];
 

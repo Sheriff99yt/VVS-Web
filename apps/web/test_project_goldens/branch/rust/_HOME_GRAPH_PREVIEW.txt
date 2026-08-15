@@ -4,6 +4,10 @@ pub struct BranchLab {
 }
 impl BranchLab {
 
+    pub fn new() -> Self {
+        Self {
+        }
+    }
     pub fn on_start(&mut self) {
         if false {
             println!("{}", "True path");

@@ -29,6 +29,7 @@
         Print(("Power=" + ToString(Power)))
     on_start() : void =
         Print("Operator name?")
+        # (x) Get User Input
         var _vvs_input_lab_get_input : string = ""
         Print(_vvs_input_lab_get_input)
         Boot()
@@ -45,7 +46,7 @@ SensorStatus := enum:
 <public>Sensor(Machine) := class:
     var Readings<public> : []float = array{}
     var Status<public> : SensorStatus = SensorStatus.OK
-    var Host<public> : Machine = false
+    var Host<public> : Machine = Machine{}
     var Tags<public> : [string]string = map{}
     # (x) Declare Sample
     Sample<public>() : void =
@@ -54,7 +55,7 @@ SensorStatus := enum:
     # (x) Declare Report
     Report<public><override>() : void =
         Print("--- Readings ---")
-        for (float val : Readings) {
+        for (val : Readings):
             Print(ToString(val))
     on_tick() : void =
         Print("Tick")

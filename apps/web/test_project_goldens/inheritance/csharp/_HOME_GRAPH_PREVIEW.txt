@@ -1,0 +1,19 @@
+// ===== src/InheritanceLab.cs =====
+public class Parent {
+    // (x) Declare Speak
+    public virtual void Speak() {
+        Console.WriteLine("parent");
+    }
+}
+public class Child : Parent {
+    // (x) Declare Speak
+    public override void Speak() {
+        base.Speak();
+        Console.WriteLine("child");
+    }
+    public async Task on_start() {
+        await Task.Delay((int)(1 * 1000));
+        this.Speak();
+        Console.WriteLine("done");
+    }
+}

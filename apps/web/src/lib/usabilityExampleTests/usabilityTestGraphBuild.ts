@@ -97,6 +97,24 @@ export function printStringNode(
   });
 }
 
+export function waitNode(
+  id: string,
+  position: { x: number; y: number },
+  options?: { seconds?: string | number; isAsync?: boolean }
+): VVSNode {
+  const seconds = options?.seconds ?? '1';
+  const isAsync = options?.isAsync ?? true;
+  return usabilityTestNode(id, position, {
+    label: 'Wait',
+    category: 'Action',
+    kindId: 'action_wait',
+    inputs: [EXEC_IN, { id: 'seconds', label: 'Seconds', type: 'data_number' }],
+    outputs: [EXEC_OUT],
+    inlineValues: { seconds },
+    properties: { isAsync },
+  });
+}
+
 export function returnNode(id: string, position: { x: number; y: number }): VVSNode {
   return usabilityTestNode(id, position, {
     label: 'Return',

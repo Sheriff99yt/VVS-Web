@@ -1,0 +1,21 @@
+// ===== src/InheritanceLab.cpp =====
+class Parent {
+public:
+    virtual void Speak();
+};
+void Parent::Speak() {
+    std::cout << "parent" << std::endl;
+}
+class Child : public Parent {
+public:
+    void Speak() override;
+    void on_start() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(1 * 1000)));
+        Speak();
+        std::cout << "done" << std::endl;
+    }
+};
+void Child::Speak() {
+    Parent::Speak();
+    std::cout << "child" << std::endl;
+}

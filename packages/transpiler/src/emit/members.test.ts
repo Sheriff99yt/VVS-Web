@@ -2,7 +2,7 @@ import { test, expect } from 'bun:test';
 import { CodeSink } from '../codeSink';
 import { appendIrMembersInOrder } from './members';
 import type { IrModule, IrMemberDecl } from '../ir/types';
-import type { FunctionSymbol, ProjectEnvironmentManifest } from '@vvs/graph-types';
+import type { FunctionSymbol, ProjectEnvironmentManifest, VariableSymbol } from '@vvs/graph-types';
 import { packCatalog } from '@vvs/syntax-registry';
 
 test('appendIrMembers > emits multiple overloads for a single FunctionDecl', () => {
@@ -70,4 +70,51 @@ test('appendIrMembers > emits multiple overloads for a single FunctionDecl', () 
   const code = sink.content;
   expect(code).toContain('public void MyFunction(float param1)');
   expect(code).toContain('public void MyFunction(string param1)');
+});
+
+test('appendIrMembers > Verse class-typed field default is Type{} not logic false (CL-016)', () => {
+  const variable: VariableSymbol = {
+    kind: 'variable',
+    id: 'var-host',
+    name: 'Host',
+    type: 'data_object',
+    typeRef: { kind: 'class', classId: 'main-class', name: 'Machine' },
+    binding: 'instance',
+    visibility: 'public',
+    defaultValue: null,
+  };
+
+  const decl: IrMemberDecl = {
+    kind: 'VariableDecl',
+    sourceGraphNodeId: 'node-host',
+    symbol: variable,
+    properties: { visibility: 'public' },
+  };
+
+  const ir: IrModule = {
+    targetLanguage: 'verse',
+    emitUnsupportedComments: true,
+    modules: [],
+    members: [decl],
+    functions: [],
+    variables: [variable],
+    functionBodies: {},
+    eventBodies: {},
+    environmentManifest: {
+      packages: {},
+      packLock: {
+        'vvs.core': '1.0.0',
+        'vvs.lang.verse': '1.0.0',
+      },
+    } as ProjectEnvironmentManifest,
+  };
+
+  const sink = new CodeSink('test.verse');
+  appendIrMembersInOrder(sink, ir, { cppVisibility: 'public' }, {});
+
+  const code = sink.content;
+  expect(code).toContain('var Host<public> : Machine = Machine{}');
+  expect(code).not.toContain('Host<public> : Machine = false');
+  expect(code).not.toContain('new Machine');
+  expect(code).not.toContain('Machine()');
 });

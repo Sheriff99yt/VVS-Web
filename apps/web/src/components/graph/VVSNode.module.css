@@ -203,6 +203,10 @@
   color: #a5b4fc;
 }
 
+.modifierChipActiveRose {
+  color: #fda4af;
+}
+
 .modifierChipDisabled {
   color: #a1a1aa;
   opacity: 0.55;

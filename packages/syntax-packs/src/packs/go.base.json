@@ -180,6 +180,12 @@
     },
     "Continue": {
       "quasi": "continue"
+    },
+    "CallSuper": {
+      "quasi": "self.{parent}.{callee}({args})"
+    },
+    "DispatchEventSuper": {
+      "quasi": "self.{parent}.on_{handler}({args})"
     }
   }
 }

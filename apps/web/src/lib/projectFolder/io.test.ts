@@ -8,6 +8,11 @@ import {
   MAIN_GRAPH_CONTAINER_ID,
 } from '@vvs/graph-types';
 import { createCoverageLabUsabilityTestSnapshot } from '../usabilityExampleTests/coverageLabUsabilityTest';
+import { createInheritanceLabUsabilityTestSnapshot } from '../usabilityExampleTests/inheritanceLabUsabilityTest';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { loadProjectSnapshotFromPath, saveProjectSnapshotToPath } from './nodeIo';
 
 describe('projectFolder graph manifest helpers', () => {
   test('sanitizeGraphFileStem strips Function prefix and unsafe chars', () => {
@@ -22,10 +27,26 @@ describe('projectFolder graph manifest helpers', () => {
     );
   });
 
-  test('functionGraphRelativePath uses functions subdirectory', () => {
+  test('functionGraphRelativePath uses functions subdirectory and includes id', () => {
     expect(functionGraphRelativePath({ id: 'fn-boot', type: 'function', name: 'Function: Boot' })).toBe(
-      'graphs/functions/Boot.graph.json'
+      'graphs/functions/Boot__fn-boot.graph.json'
     );
+  });
+
+  test('functionGraphRelativePath keeps same-named methods on distinct files', () => {
+    const parent = functionGraphRelativePath({
+      id: 'fn-parent-speak',
+      type: 'function',
+      name: 'Function: Speak',
+    });
+    const child = functionGraphRelativePath({
+      id: 'fn-child-speak',
+      type: 'function',
+      name: 'Function: Speak',
+    });
+    expect(parent).toBe('graphs/functions/Speak__fn-parent-speak.graph.json');
+    expect(child).toBe('graphs/functions/Speak__fn-child-speak.graph.json');
+    expect(parent).not.toBe(child);
   });
 
   test('buildFolderGraphManifest maps every container id for v2 layout', () => {
@@ -43,7 +64,22 @@ describe('projectFolder graph manifest helpers', () => {
     expect(Object.keys(graphs.functions)).toEqual(
       expect.arrayContaining(['fn-boot', 'fn-shutdown', 'fn-sample', 'fn-report'])
     );
-    expect(graphs.functions['fn-boot']).toBe('graphs/functions/Boot.graph.json');
+    expect(graphs.functions['fn-boot']).toBe('graphs/functions/Boot__fn-boot.graph.json');
+  });
+
+  test('Inheritance Lab same-named Speak bodies survive folder save/load', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vvs-speak-'));
+    try {
+      saveProjectSnapshotToPath(dir, createInheritanceLabUsabilityTestSnapshot());
+      const loaded = loadProjectSnapshotFromPath(dir);
+      if (!loaded) throw new Error('failed to load inheritance lab');
+      const parentPrint = loaded.documents['fn-parent-speak']?.nodes.find((n) => n.id === 'il-parent-print');
+      const childPrint = loaded.documents['fn-child-speak']?.nodes.find((n) => n.id === 'il-child-print');
+      expect(parentPrint?.data.inlineValues?.in_str).toBe('parent');
+      expect(childPrint?.data.inlineValues?.in_str).toBe('child');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test('normalized coverage lab has no documents.main key', () => {

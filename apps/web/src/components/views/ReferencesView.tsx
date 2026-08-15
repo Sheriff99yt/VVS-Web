@@ -15,13 +15,12 @@ import {
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useUiPreference } from '@/hooks/useUiPreference';
 import { formatReferenceEndpoint } from '@/lib/graphRelations';
 import { useGraphReferenceIndex } from '@/hooks/useGraphDocuments';
 import {
-  REFERENCE_DEPTH_DEFAULT,
   REFERENCE_DEPTH_MAX,
   REFERENCE_DEPTH_MIN,
-  REFERENCE_BREADTH_DEFAULT,
   REFERENCE_BREADTH_MAX,
   REFERENCE_BREADTH_MIN,
   type ReferenceGraphTypeFilter,
@@ -35,6 +34,7 @@ import { GraphExplorer } from '@/components/layout/GraphExplorer';
 import { ReferenceGraphTree } from '@/components/layout/ReferenceGraphTree';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ReferenceGraphCanvas } from './ReferenceGraphCanvas';
+import { graphTypeFor } from '@/lib/referenceGraphLayout';
 
 interface ReferencesViewProps {
   onSwitchToCanvas: () => void;
@@ -86,8 +86,6 @@ const TYPE_FILTER_OPTIONS: { id: ReferenceGraphTypeFilter; label: string; color:
 
 const ALL_TYPES: ReferenceGraphTypeFilter[] = ['main', 'function'];
 
-type ViewMode = 'graph' | 'flat';
-
 export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
   const {
     referenceRootGraphId,
@@ -101,15 +99,15 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
     setSelection,
   } = useProject();
 
-  const [referencersDepth, setReferencersDepth] = useState(REFERENCE_DEPTH_DEFAULT);
-  const [dependenciesDepth, setDependenciesDepth] = useState(REFERENCE_DEPTH_DEFAULT);
-  const [breadthLimit, setBreadthLimit] = useState(REFERENCE_BREADTH_DEFAULT);
+  const [referencersDepth, setReferencersDepth] = useUiPreference('referencesReferencersDepth');
+  const [dependenciesDepth, setDependenciesDepth] = useUiPreference('referencesDependenciesDepth');
+  const [breadthLimit, setBreadthLimit] = useUiPreference('referencesBreadthLimit');
+  const [viewMode, setViewMode] = useUiPreference('referencesViewMode');
   const [direction, setDirection] = useState<ReferenceTreeDirection>('both');
   const [typeFilters, setTypeFilters] = useState<Set<ReferenceGraphTypeFilter>>(
     () => new Set(ALL_TYPES)
   );
   const [treeQuery, setTreeQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('graph');
 
   const index = useGraphReferenceIndex(functions, []);
 
@@ -123,10 +121,6 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
   );
 
   const treeDepth = Math.max(referencersDepth, dependenciesDepth);
-
-  const focusPath = referenceVariableName
-    ? `${projectDetails.moduleName} / ${referenceVariableName}`
-    : `${projectDetails.moduleName} / ${formatReferenceEndpoint(referenceRootGraphId, openTabs, functions)}`;
 
   const rootLabel = referenceVariableName
     ? `${referenceVariableName} · ${formatReferenceEndpoint(referenceRootGraphId, openTabs, functions)}`
@@ -174,6 +168,21 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
   const dependenciesCount = rootEdges?.outgoing.length ?? 0;
   const totalGraphsCount = functions.length + 1;
 
+  const filteredIncoming = useMemo(
+    () =>
+      (rootEdges?.incoming ?? []).filter((ref) =>
+        typeFilters.has(graphTypeFor(ref.fromGraphId, openTabs, functions))
+      ),
+    [rootEdges, typeFilters, openTabs, functions]
+  );
+  const filteredOutgoing = useMemo(
+    () =>
+      (rootEdges?.outgoing ?? []).filter((ref) =>
+        typeFilters.has(graphTypeFor(ref.toGraphId, openTabs, functions))
+      ),
+    [rootEdges, typeFilters, openTabs, functions]
+  );
+
   return (
     <PanelGroup orientation="horizontal" className="w-full h-full bg-zinc-950 font-sans">
       <Panel id="ref-left" defaultSize={18} minSize={14}>
@@ -202,7 +211,13 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
                 <div className="flex items-center gap-1.5 text-[11px] text-zinc-300 font-mono truncate">
                   <span className="text-zinc-500">{projectDetails.moduleName}</span>
                   <span className="text-zinc-700">/</span>
-                  <span className="font-semibold text-zinc-100 truncate">{rootLabel}</span>
+                  <button
+                    type="button"
+                    className="font-semibold text-zinc-100 truncate hover:text-amber-300 transition-colors"
+                    onClick={() => selectReferenceGraph(referenceRootGraphId)}
+                  >
+                    {rootLabel}
+                  </button>
                 </div>
               </div>
 
@@ -336,12 +351,12 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
                   {/* Referencers list */}
                   <div className="bg-zinc-900/40 border border-zinc-900 rounded p-3 space-y-2">
                     <h4 className="text-[11px] font-medium text-emerald-400 flex items-center justify-between">
-                      <span>Referenced By ({referencersCount})</span>
+                      <span>Referenced By ({filteredIncoming.length})</span>
                       <ArrowRight size={12} className="rotate-180 text-zinc-500" />
                     </h4>
-                    {referencersCount > 0 ? (
+                    {filteredIncoming.length > 0 ? (
                       <div className="space-y-1">
-                        {rootEdges?.incoming.map((ref, i) => (
+                        {filteredIncoming.map((ref, i) => (
                           <div
                             key={`${ref.fromGraphId}:${ref.kind}:${i}`}
                             onClick={() => selectReferenceGraph(ref.fromGraphId)}
@@ -363,12 +378,12 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
                   {/* Dependencies list */}
                   <div className="bg-zinc-900/40 border border-zinc-900 rounded p-3 space-y-2">
                     <h4 className="text-[11px] font-medium text-indigo-400 flex items-center justify-between">
-                      <span>Depends On ({dependenciesCount})</span>
+                      <span>Depends On ({filteredOutgoing.length})</span>
                       <ArrowRight size={12} className="text-zinc-500" />
                     </h4>
-                    {dependenciesCount > 0 ? (
+                    {filteredOutgoing.length > 0 ? (
                       <div className="space-y-1">
-                        {rootEdges?.outgoing.map((ref, i) => (
+                        {filteredOutgoing.map((ref, i) => (
                           <div
                             key={`${ref.toGraphId}:${ref.kind}:${i}`}
                             onClick={() => selectReferenceGraph(ref.toGraphId)}
@@ -432,6 +447,8 @@ export function ReferencesView({ onSwitchToCanvas }: ReferencesViewProps) {
                 onDirectionChange={setDirection}
                 hideControls
                 nameFilter={treeQuery}
+                breadthLimit={breadthLimit}
+                typeFilters={typeFilters}
               />
             )}
           </div>

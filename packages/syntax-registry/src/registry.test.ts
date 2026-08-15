@@ -95,3 +95,26 @@ describe('list catalog grouping', () => {
     expect(pyDeclare?.items.some((i) => i.label === 'Declare Diagnose')).toBe(true);
   });
 });
+
+describe('expandProjectSymbols inheritance Get/Set (U106)', () => {
+  test('emits Get/Set rows for in-scope variables without changing Call/Dispatch', () => {
+    const categories = expandProjectSymbols({
+      currentGraphId: 'main',
+      functions: [{ id: 'fn-1', name: 'Add', binding: 'instance', overloads: [{ id: 'o1', returnType: 'void', parameters: [] }] }],
+      events: [{ id: 'evt-1', name: 'calculate' }],
+      variables: [
+        {
+          kind: 'variable',
+          id: 'var-power',
+          name: 'Power',
+          type: 'data_number',
+          binding: 'instance',
+          visibility: 'public',
+        },
+      ],
+    });
+    expect(categories.map((c) => c.name)).toEqual(['Call', 'Dispatch', 'Get', 'Set']);
+    const getPower = categories.find((c) => c.name === 'Get')?.items.find((i) => i.label === 'Get Power');
+    expect(getPower?.graphBinding).toEqual({ kind: 'variable_ref', symbolId: 'var-power' });
+  });
+});

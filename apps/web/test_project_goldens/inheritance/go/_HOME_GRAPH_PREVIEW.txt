@@ -1,0 +1,19 @@
+// ===== src/InheritanceLab.go =====
+type Parent struct {
+	// (x) Declare Speak
+func Speak() void {
+	fmt.Println("parent")
+}
+}
+type Child struct {
+	// (x) Declare Speak
+func Speak() void {
+	self.Parent.Speak()
+	fmt.Println("child")
+}
+func (self *Child) on_start() {
+	time.Sleep(time.Duration(1 * float64(time.Second)))
+	self.Speak()
+	fmt.Println("done")
+}
+}

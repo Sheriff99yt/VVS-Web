@@ -73,6 +73,15 @@
           "label": "",
           "type": "execution"
         }
+      ],
+      "propertySchema": [
+        {
+          "key": "isSuper",
+          "label": "Super",
+          "type": "boolean",
+          "default": false,
+          "description": "Call the parent implementation (super / base / Parent::). Only when the class Extends a parent."
+        }
       ]
     },
     {
@@ -670,8 +679,9 @@
         {
           "key": "extendsType",
           "label": "Extends",
-          "type": "string",
-          "default": ""
+          "type": "class",
+          "default": "",
+          "description": "Parent class from this project. Inherited fields and methods stay on the parent Declare chain \u2014 use Get / Set / Call."
         },
         {
           "key": "visibility",
@@ -905,6 +915,18 @@
           "default": "Function"
         },
         {
+          "key": "isVirtual",
+          "label": "Virtual",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "isOverride",
+          "label": "Override",
+          "type": "boolean",
+          "default": false
+        },
+        {
           "key": "graphTabId",
           "label": "Body graph tab",
           "type": "string",
@@ -1033,7 +1055,16 @@
           "type": "execution"
         }
       ],
-      "dynamic": true
+      "dynamic": true,
+      "propertySchema": [
+        {
+          "key": "isSuper",
+          "label": "Super",
+          "type": "boolean",
+          "default": false,
+          "description": "Call the parent implementation (super / base / Parent::). Only when the class Extends a parent."
+        }
+      ]
     },
     {
       "kindId": "vvs.project.import_module",
@@ -1067,9 +1098,13 @@
           "key": "importStyle",
           "label": "Import style",
           "type": "enum",
-          "enumValues": ["module", "from", "include_system"],
+          "enumValues": [
+            "module",
+            "from",
+            "include_system"
+          ],
           "default": "module",
-          "description": "module = pack ModuleImport; from = named import; include_system = #include <…>"
+          "description": "module = pack ModuleImport; from = named import; include_system = #include <\u2026>"
         },
         {
           "key": "importNames",

@@ -29,6 +29,7 @@ import {
   buildClaudeDesktopMcpConfig,
   buildCursorMcpConfig,
   buildLocalMcpCliHint,
+  buildVsCodeMcpConfig,
   buildWindsurfMcpConfig,
   defaultLocalMcpUrl,
   MCP_TOOL_SUMMARIES,
@@ -82,6 +83,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [mcpAllowDangerousTools, setMcpAllowDangerousTools] = useUiPreference('mcpAllowDangerousTools');
   const mcpUrl = defaultLocalMcpUrl();
   const cursorMcpConfig = buildCursorMcpConfig(mcpUrl);
+  const vsCodeMcpConfig = buildVsCodeMcpConfig(mcpUrl);
   const windsurfMcpConfig = buildWindsurfMcpConfig(mcpUrl);
   const claudeMcpConfig = buildClaudeDesktopMcpConfig(mcpUrl);
   const mcpCliHint = buildLocalMcpCliHint();
@@ -1098,7 +1100,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             </div>
             <div className="p-6 space-y-4 overflow-y-auto">
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Paste a config into your IDE (Cursor, Claude Desktop, Windsurf). Run the local Go MCP on{' '}
+                Paste a config into your IDE (Cursor, VS Code, Claude Desktop, Windsurf). Run the local Go MCP on{' '}
                 <span className="font-medium text-zinc-300">desktop</span> — no VVS account. Mobile AI is not supported yet.
               </p>
 
@@ -1117,17 +1119,26 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Cursor mcp.json</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Cursor / VS Code mcp.json</label>
                 <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
                   {cursorMcpConfig}
                 </pre>
-                <button
-                  type="button"
-                  onClick={() => void copyMcpText('cursor', cursorMcpConfig)}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
-                >
-                  {mcpCopiedKey === 'cursor' ? 'Copied' : 'Copy Cursor config'}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void copyMcpText('cursor', cursorMcpConfig)}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
+                  >
+                    {mcpCopiedKey === 'cursor' ? 'Copied' : 'Copy Cursor config'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void copyMcpText('vscode', vsCodeMcpConfig)}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
+                  >
+                    {mcpCopiedKey === 'vscode' ? 'Copied' : 'Copy VS Code config'}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1195,8 +1206,9 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                 />
                 <span>
                   Allow <span className="text-amber-300/90">write</span> MCP tools (add/remove nodes,
-                  connect pins, save). Off by default. This is an in-app preference — the local MCP
-                  server still needs matching enforcement (full U91).
+                  connect pins, save). Off by default. This checkbox is local editor intent —
+                  writes still require <span className="font-mono text-zinc-300">VVS_MCP_ALLOW_WRITE=1</span> on
+                  the Go server.
                 </span>
               </label>
 

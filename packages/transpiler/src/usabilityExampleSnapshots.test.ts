@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { analyzeProject, MAIN_GRAPH_CONTAINER_ID, type TargetLanguage } from '@vvs/graph-types';
-import { transpileGraph } from './generate';
+import { transpileGraph, transpileProject } from './generate';
 import { createFirstGraphUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/firstGraphUsabilityTest';
 import {
   createCoverageLabUsabilityTestSnapshot,
   MACHINE_CLASS,
 } from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
+import { createInheritanceLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/inheritanceLabUsabilityTest';
 import type { CodegenContext } from './generate';
 
 const COVERAGE_LANGS = [
@@ -111,7 +112,7 @@ const MACHINE_EXPECTS: Record<CoverageLang, string[]> = {
     'inline static',
   ],
   csharp: ['void Boot()', 'this.Boot()', 'if ', 'async Task Shutdown', 'on_pulse', 'on_start'],
-  rust: ['fn Boot(', 'self.Boot()', 'if ', 'async fn Shutdown', 'fn on_pulse', 'fn on_start'],
+  rust: ['fn Boot(', 'self.Boot()', 'if ', 'fn Shutdown', 'fn on_pulse', 'fn on_start'],
   gdscript: ['func Boot(', 'self.Boot()', 'if ', 'func Shutdown', 'func on_pulse', 'func on_start'],
   verse: ['Boot', 'if ', 'Shutdown', 'on_pulse', 'on_start'],
 };
@@ -187,6 +188,29 @@ describe('usability example test snapshots', () => {
       });
     }
   }
+
+  test('Inheritance Lab: two classes, same method name, distinct bodies', () => {
+    const snapshot = createInheritanceLabUsabilityTestSnapshot();
+    const result = transpileProject({
+      projectDetails: snapshot.projectDetails,
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      documents: snapshot.documents ?? {},
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+      openTabs: snapshot.openTabs,
+      integration: snapshot.integration,
+    });
+    const code = result.files.map((f) => f.content).join('\n');
+    expect(code).toContain('print("parent")');
+    expect(code).toContain('super().Speak()');
+    expect(code).toContain('print("child")');
+    const parentBlock = code.split('class Child')[0] ?? '';
+    expect(parentBlock).toContain('def Speak(self):');
+    expect(parentBlock).not.toContain('print("child")');
+  });
 
   test('coverage lab has no error-level analysis diagnostics', () => {
     const snapshot = createCoverageLabUsabilityTestSnapshot();

@@ -25,6 +25,11 @@ export function buildCursorMcpConfig(mcpUrl: string = defaultLocalMcpUrl()): str
   );
 }
 
+/** VS Code uses the same mcpServers URL shape as Cursor. */
+export function buildVsCodeMcpConfig(mcpUrl: string = defaultLocalMcpUrl()): string {
+  return buildCursorMcpConfig(mcpUrl);
+}
+
 /** Windsurf uses the same mcpServers URL shape as Cursor. */
 export function buildWindsurfMcpConfig(mcpUrl: string = defaultLocalMcpUrl()): string {
   return buildCursorMcpConfig(mcpUrl);

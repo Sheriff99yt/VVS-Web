@@ -165,7 +165,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Null / optional** | Optional type + nodes | type system + `optional_*` | cs, rs | planned | |
 | **Pattern matching** | Match node | `flow_match` (planned) | rs, py 3.10+, cs | planned | |
 | **Try / catch** | Try region | `flow_try` (planned) | most | planned | |
-| **Await** | Await node | `expr_await` (planned) | py, js, cs | planned | |
+| **Await** | Wait `isAsync` option (or function async flag) | `action_wait` | all 8 packs | shipped | No `expr_await` node; C++/Rust keep std thread sleep; Verse `Sleep` |
 | Generics / templates | Type params on Declare | `type_params[]` | cpp, cs, rs | planned | `template<typename T>` / `fn foo<T>()` |
 
 ### E — Modules & imports
@@ -307,15 +307,15 @@ Agent skills: `vvs_cross_language_mapping` (parent + one `<lang>.md` per target)
 
 **Policy:** Neutral `propertySchema` stays on define nodes for all targets. For the **current graph/project codegen language**, chips that do not affect generated code are **visible but disabled** (tooltip: not used for this language) — educational, not silent.
 
-| Modifier key | cpp | csharp | python | javascript | rust | gdscript | verse |
-|--------------|-----|--------|--------|------------|------|----------|-------|
-| `visibility` | effective | effective | ineffective | partial (`#` private) | effective (`pub`/omit) | ineffective | partial |
-| `binding` (static) | effective | effective | effective (`@staticmethod`) | effective | effective (no `self`) | effective | ineffective |
-| `isConst` | effective | effective | ineffective | ineffective | effective | ineffective | partial |
-| `isVirtual` | effective | effective | ineffective | ineffective | ineffective | ineffective | ineffective |
-| `isAbstract` | effective | effective | ineffective | ineffective | ineffective | ineffective | ineffective |
-| `isOverride` | effective | effective | ineffective | ineffective | ineffective | ineffective | effective |
-| `isAsync` | **ineffective** (coroutines planned) | effective | effective | effective | effective | ineffective | ineffective |
+| Modifier key | cpp | csharp | python | javascript | rust | gdscript | verse | go |
+|--------------|-----|--------|--------|------------|------|----------|-------|-----|
+| `visibility` | effective | effective | ineffective | partial (`#` private) | effective (`pub`/omit) | ineffective | partial | ineffective |
+| `binding` (static) | effective | effective | effective (`@staticmethod`) | effective | effective (no `self`) | effective | ineffective | ineffective |
+| `isConst` | effective | effective | ineffective | ineffective | effective | ineffective | partial | ineffective |
+| `isVirtual` | effective | effective | ineffective | ineffective | ineffective | ineffective | ineffective | ineffective |
+| `isAbstract` | effective | effective | ineffective | ineffective | ineffective | ineffective | ineffective | ineffective |
+| `isOverride` | effective | effective | ineffective | ineffective | ineffective | ineffective | effective | ineffective |
+| `isAsync` | **ineffective** (coroutines planned) | effective | effective | effective | effective | ineffective | ineffective | ineffective |
 
 **Policy (July 2026):** Show options that work for **≥1** language; disable for current language when ineffective. Remove schema/UI options that never change emit for any language (e.g. var virtual/abstract/override, event binding/abstract, get-input placeholder/required/password, function returnType until emit uses it).
 

@@ -1,6 +1,6 @@
 /** Inspector field schema for per-node settings (stored in node.data.properties). */
 
-export type PropertyFieldType = 'string' | 'number' | 'boolean' | 'enum';
+export type PropertyFieldType = 'string' | 'number' | 'boolean' | 'enum' | 'class';
 
 export interface PropertyFieldDefinition {
   key: string;
@@ -37,7 +37,7 @@ export function defaultPropertiesFromSchema(
   for (const field of fields) {
     if (field.default !== undefined) {
       props[field.key] = field.default;
-    } else if (field.type === 'string') {
+    } else if (field.type === 'string' || field.type === 'class') {
       props[field.key] = '';
     } else if (field.type === 'number') {
       props[field.key] = 0;

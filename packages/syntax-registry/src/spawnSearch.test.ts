@@ -77,3 +77,29 @@ describe('spawn catalog — U97 import module', () => {
     expect(concatHits.some((i) => i.kindId === 'string_concat')).toBe(true);
   });
 });
+
+describe('spawn catalog — U106 inherited Get/Set', () => {
+  test('search Get Power finds ancestor field when variables are in scope', () => {
+    const categories = list({
+      currentGraphId: 'sensor-graph',
+      functions: [],
+      events: [],
+      variables: [
+        {
+          kind: 'variable',
+          id: 'var-power',
+          name: 'Power',
+          type: 'data_number',
+          binding: 'instance',
+          visibility: 'public',
+          classId: 'main-class',
+        },
+      ],
+    });
+    const hits = categories.flatMap((c) =>
+      c.items.filter((item) => spawnItemMatchesQuery(item, 'get power', c.name))
+    );
+    expect(hits.some((i) => i.kindId === 'variable_get' && i.label === 'Get Power')).toBe(true);
+    expect(hits.some((i) => i.graphBinding?.symbolId === 'var-power')).toBe(true);
+  });
+});

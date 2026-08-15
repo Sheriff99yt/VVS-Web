@@ -20,13 +20,13 @@
       "quasi": "println!(\"{}\", {value});"
     },
     "AssignInstance": {
-      "quasi": "self.{target} = {value};"
+      "quasi": "self.{basePath}{target} = {value};"
     },
     "AssignLocal": {
       "quasi": "let mut {target} = {value};"
     },
     "CallInstance": {
-      "quasi": "self.{callee}({args});"
+      "quasi": "self.{basePath}{callee}({args});"
     },
     "CallFunction": {
       "quasi": "{callee}({args});"
@@ -85,6 +85,12 @@
     "AwaitWait": {
       "quasi": "std::thread::sleep(std::time::Duration::from_secs_f64({duration}));"
     },
+    "AwaitWaitAsync": {
+      "quasi": "std::thread::sleep(std::time::Duration::from_secs_f64({duration}));"
+    },
+    "AwaitWaitSync": {
+      "quasi": "std::thread::sleep(std::time::Duration::from_secs_f64({duration}));"
+    },
     "CallNative": {
       "quasi": "{call}"
     },
@@ -95,7 +101,7 @@
       "quasi": "{value}.parse::<f64>().unwrap()"
     },
     "InstanceRef": {
-      "quasi": "self.{name}"
+      "quasi": "self.{basePath}{name}"
     },
     "NullLiteral": {
       "quasi": "None"
@@ -108,6 +114,12 @@
     },
     "VarDefine": {
       "quasi": "{visibility}{name}: {type},"
+    },
+    "VarDefineStatic": {
+      "quasi": "{visibility}static {name}: {type} = {default};"
+    },
+    "VarDefineConst": {
+      "quasi": "{visibility}const {name}: {type} = {default};"
     },
     "DeclareLocal": {
       "quasi": "let mut {name}: {type};"
@@ -177,6 +189,12 @@
     },
     "Continue": {
       "quasi": "continue;"
+    },
+    "CallSuper": {
+      "quasi": "self.base.{callee}({args});"
+    },
+    "DispatchEventSuper": {
+      "quasi": "self.base.on_{handler}({args});"
     }
   }
 }

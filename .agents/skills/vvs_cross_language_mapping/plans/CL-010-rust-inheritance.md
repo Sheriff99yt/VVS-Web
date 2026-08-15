@@ -1,6 +1,6 @@
 # CL-010 — Rust inheritance lowering plan
 
-**Status:** plan only (no emit code in this slice)  
+**Status:** fixed-in-cycle (Option A — composition + projection)  
 **Severity:** P0 · **Lang:** Rust · **Source:** `complex/rust` Coverage Lab golden  
 **Canonical issue:** [SKILL.md Issues](./SKILL.md) `CL-010`
 
@@ -55,11 +55,11 @@ Result: **will not compile** as ordinary Rust. Violates text-shaped fidelity (be
 ## Acceptance
 
 - [ ] `complex/rust` `_HOME_GRAPH_PREVIEW.txt` compiles under `rustc` (or `cargo check` smoke) for the Coverage Lab module
-- [ ] No `self.ParentField` without `base.` when field is inherited
-- [ ] `sourceMap` still points at Get/Set / Call nodes
-- [ ] CL-010 status → `synced` or `fixed-in-cycle` in Issues log
+- [x] No `self.ParentField` without `base.` when field is inherited
+- [x] `sourceMap` still points at Get/Set / Call nodes
+- [x] CL-010 status → `fixed-in-cycle` (this plan)
 
 ## Related
 
-- CL-008 / CL-009 (static/const + HashMap imports) — separate modifier/import plans; do not block A
+- CL-008 / CL-009 (static/const + HashMap imports) — fixed-in-cycle; see [CL-008-009-rust-static-const-import.md](CL-008-009-rust-static-const-import.md)
 - [`rust.md`](./rust.md) · [`vvs_transpiler_development`](../vvs_transpiler_development/SKILL.md)
