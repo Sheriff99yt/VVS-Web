@@ -354,8 +354,8 @@ export function portabilityFeaturesForVariable(variable: VariableSymbol): Portab
   return features;
 }
 
-/** `entry` = program entry hook (emits `on_start`); `custom` or omitted = user event. */
-export type ProjectEventRole = 'entry' | 'custom';
+/** `entry` = program start (`on_start`); `tick` = per-frame (`on_update`); `custom` = user event. */
+export type ProjectEventRole = 'entry' | 'tick' | 'custom';
 
 export interface ProjectEventDefinition {
   id: string;
@@ -368,8 +368,23 @@ export interface ProjectEventDefinition {
 }
 
 /** Handler stem for generated `on_{name}` methods — entry always maps to `start`. */
+export function eventRoleFromUnknown(value: unknown): ProjectEventRole | undefined {
+  if (value === 'entry' || value === 'tick' || value === 'custom') return value;
+  return undefined;
+}
+
+/** Handler stem: node role wins, then symbol role, then the event name. */
+export function eventHandlerStem(
+  event: Pick<ProjectEventDefinition, 'name' | 'role'>,
+  nodeRole?: unknown
+): string {
+  const role = eventRoleFromUnknown(nodeRole) ?? event.role;
+  return eventCodegenHandlerName({ name: event.name, role });
+}
+
 export function eventCodegenHandlerName(event: Pick<ProjectEventDefinition, 'name' | 'role'>): string {
   if (event.role === 'entry') return 'start';
+  if (event.role === 'tick') return 'update';
   const stem = event.name
     .trim()
     .replace(/^on\s+/i, '')

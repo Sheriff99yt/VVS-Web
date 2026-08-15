@@ -265,15 +265,20 @@ export function createStmtPrinters(
       if (stmt.kind !== 'AwaitWait') return null;
       const s = stmt as IrAwaitWait;
       const { family } = ctx;
-      if (family === 'python' || family === 'gdscript') {
-        const key = s.async ? 'AwaitWaitAsync' : 'AwaitWaitSync';
-        return printFromTemplate(ctx, key, { duration: String(s.seconds) });
-      }
-      if (family === 'javascript' || family === 'csharp') {
-        const key = s.async ? 'AwaitWaitAsync' : 'AwaitWaitSync';
-        return printFromTemplate(ctx, key, { duration: String(s.seconds) });
-      }
-      return printFromTemplate(ctx, 'AwaitWait', { duration: String(s.seconds) });
+      const duration = printExpr(s.seconds, ctx);
+      const slot = { text: duration.text, spans: duration.spans };
+      const key =
+        family === 'python' || family === 'gdscript' || family === 'javascript' || family === 'csharp'
+          ? s.async
+            ? 'AwaitWaitAsync'
+            : 'AwaitWaitSync'
+          : 'AwaitWait';
+      const printed = printFromTemplate(ctx, key, { duration: slot });
+      const durOffset = printed.text.indexOf(duration.text);
+      return {
+        text: printed.text,
+        expressionSpans: offsetSpans(duration.spans, durOffset >= 0 ? durOffset : printed.text.length),
+      };
     },
 
     ModuleImport: (stmt, ctx) => {

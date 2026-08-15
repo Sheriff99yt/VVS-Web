@@ -28,12 +28,19 @@ describe('spawn catalog — U97 import module', () => {
     expect(hits.some((i) => i.kindId === 'vvs.project.import_module')).toBe(true);
   });
 
-  test('search "declare" matches function declare', () => {
+  test('search "declare" matches member declare; function declare only for C++', () => {
     const categories = list({ currentGraphId: 'main', functions: [], events: [] });
     const hits = categories.flatMap((c) =>
       c.items.filter((item) => spawnItemMatchesQuery(item, 'declare', c.name))
     );
-    expect(hits.some((i) => i.kindId === 'function_define')).toBe(true);
+    expect(hits.some((i) => i.kindId === 'class_define')).toBe(true);
+    expect(hits.some((i) => i.kindId === 'function_define')).toBe(false);
+
+    const cpp = list({ currentGraphId: 'main', functions: [], events: [], targetLanguage: 'cpp' });
+    const cppHits = cpp.flatMap((c) =>
+      c.items.filter((item) => spawnItemMatchesQuery(item, 'declare', c.name))
+    );
+    expect(cppHits.some((i) => i.kindId === 'function_define')).toBe(true);
   });
 
   test('search custom synonyms matches core-pack nodes', () => {
@@ -45,11 +52,17 @@ describe('spawn catalog — U97 import module', () => {
     );
     expect(plusHits.some((i) => i.kindId === 'math_add')).toBe(true);
 
-    // search 'tick' matches event_on_update
+    // search 'tick' matches On handler (role tick), not the folded event_on_update kind
     const tickHits = categories.flatMap((c) =>
       c.items.filter((item) => spawnItemMatchesQuery(item, 'tick', c.name))
     );
-    expect(tickHits.some((i) => i.kindId === 'event_on_update')).toBe(true);
+    expect(tickHits.some((i) => i.kindId === 'event_define')).toBe(true);
+    expect(tickHits.some((i) => i.kindId === 'event_on_update')).toBe(false);
+
+    const excluded = categories.flatMap((c) => c.items.map((i) => i.kindId));
+    for (const kindId of ['event_on_start', 'event_on_update', 'event_emit', 'event_subscribe', 'flow_sequence', 'action_await_wait', 'graph_ref']) {
+      expect(excluded).not.toContain(kindId);
+    }
 
     // search 'append' matches array_push
     const appendHits = categories.flatMap((c) =>

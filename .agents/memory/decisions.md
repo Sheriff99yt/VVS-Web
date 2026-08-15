@@ -27,7 +27,7 @@ Choices agents must not undo without explicit user approval.
 - **Reuse:** **Function + Call Function** — not Blueprint macro inline expansion
 - **Events:** **Declare** (member) + **On** (handler) + **Dispatch** → visible handler methods and direct call lines (`self.on_<name>(…)`); **program entry** (`role: 'entry'`) uses the same pattern and emits `on_start` only from canvas — no hidden lifecycle shortcut
 - **Event runtime (July 2026 — enforced):** `event_emit` / `event_subscribe` **blocked** (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe`; duplicate handlers without visible multicast → `MULTICAST_REQUIRES_SUBSCRIBE` error — no hidden callback lists
-- **Timing (future):** **Wait** / **Await Wait** nodes + async graph flag — explicit in text, not latent Delay
+- **Timing:** **Wait** node + async option (or function async flag). `action_await_wait` is a legacy kind -- do not spawn — explicit in text, not latent Delay
 - **Macro tabs / `use_macro`:** **Deprecated as codegen concept** — migrate to Function + Call (UI may linger until alignment plan ships)
 - **Rejected:** Blueprint-faithful semantics (macro expand, latent delay, VM-only behavior) — breaks visual↔text trust and third-party embedding
 - **UE6 plugin:** Same fidelity rules; emits **Verse text** — does **not** simulate Blueprint VM
@@ -46,7 +46,23 @@ Choices agents must not undo without explicit user approval.
 - **Program entry:** `events[]` with `role: 'entry'` — user declares start via `event_member_define` + `event_define` on the class graph (same pattern as custom events); transpiler emits `on_start` only from canvas; legacy `event_on_start` nodes error on load/analysis; **no** empty `on_start()` injection
 - **Do not undo:** No backward-compat fallback that emits from symbol arrays without define nodes
 
+## Node vs option vs pin (August 2026 -- locked)
+
+**Canonical:** `docs/visual_to_text_fidelity.md` Core principles; `.agents/skills/vvs_cross_language_mapping/shared/nodes-vs-settings.md`
+
+- **Node** -- something you would type as its own construct
+- **Option** -- only changes how that construct is written
+- **Pin** -- a value that could come from another expression
+- Two canvas positions, or existence without a body, are two nodes. Function Declare and Define stay separate. Do not fold Declare into an option.
+- Spawn **Define** for a normal function. Spawn **Declare** when the target has a prototype or the function is abstract / signature-only. Ineffective Declare is `(x)` + dim.
+- **On** is one handler kind. `role: entry` / `tick` / custom is an option. Do not spawn `event_on_start` or `event_on_update`.
+- **Wait** is one kind. Async is an option. Do not spawn `action_await_wait`.
+- Do not spawn `flow_sequence` (the exec chain is sequence), `event_emit` / `event_subscribe` (hidden runtime), or `graph_ref` (navigation, not a statement).
+- Wait **seconds** and Switch **case values** are pins, not inspector-only properties.
+- Keep Math Add/Subtract/Multiply/Divide and To String / To Number as separate nodes.
+
 ## Unified symbol model & COA (July 2026)
+
 
 **Canonical spec:** `docs/design/unified_symbol_model.md`
 

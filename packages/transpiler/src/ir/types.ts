@@ -231,7 +231,7 @@ export interface IrSubscribeEvent extends IrBase {
 
 export interface IrAwaitWait extends IrBase {
   kind: 'AwaitWait';
-  seconds: string;
+  seconds: IrExpr;
   async: boolean;
 }
 

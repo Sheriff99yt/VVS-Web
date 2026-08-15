@@ -690,7 +690,7 @@ Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. 
 |--------|----------|------|
 | `event_member_define` | Declare … | Member slot on define chain; `properties.eventId` |
 | `event_on_start` | On Start | **Deprecated** — use `role: 'entry'` event + define chain |
-| `event_on_update` | On Update | Lifecycle tick (engine hook) |
+| `event_on_update` | On Update | **Folded** -- use `event_define` + `role: tick`. Do not spawn |
 | `event_define` | On … | Handler entry; `properties.eventId` |
 | `event_dispatch` | Dispatch … | Direct handler call; `properties.eventId` — **supported** |
 | `event_emit` | Emit … | **Blocked** — hidden runtime helper; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` |

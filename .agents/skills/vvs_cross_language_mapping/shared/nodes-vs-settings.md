@@ -1,35 +1,99 @@
-# Node vs Setting Analysis
+# Node vs option vs pin
 
-Parent: [`../SKILL.md`](../SKILL.md).
+Parent: [../SKILL.md](../SKILL.md).
+Canonical concept: [docs/visual_to_text_fidelity.md](../../../../docs/visual_to_text_fidelity.md) → Core principles.
 
-Distinguish **structural nodes** (existence on the canvas) from **inspector modifiers** (how that node emits).
+## Locked test
 
-### Distinct nodes (structural)
+If it is something you would type as its own construct, it is a **node**.
+If it only changes how that construct is written, it is an **option**.
+If it is a value that could come from another expression, it is a **pin**.
 
-| UI label | Node kind | Role |
-|----------|-----------|------|
-| **Class Declare** | `class_define` | Class shell |
-| **Function Declare** | `function_define` | Existence / signature / modifiers — no body |
-| **Function Define** | `function_implement` | Body placement on the member chain (U81) |
-| **Event Declare** | `event_member_define` | Event slot; **On** + **Dispatch** for use |
-| **Variable Declare** | `var_define` | Property / variable |
-| **Enum Declare** | `enum_define` | Fixed set of constants (shipped) |
-| **Import Module** | `import_module` | Language import / include / from-import |
-| **Get Enum Member** | `expr_enum_member` | Read an enum case |
+Two canvas positions, or existence without a body, are two nodes. An option cannot have its own position.
 
-**Planned (not yet in registry):** Interface Define, Constructor Define, Try/Catch block — appear in Concept → emit tables as aspirational shapes only.
+## Catalog lock (August 2026)
 
-### Settings / options (modifiers)
+### Keep as nodes
 
-| Setting | On | Notes |
-|---------|-----|--------|
-| **Extends** / **Implements** | Class Declare | Parent / interface list |
-| **Visibility** | Variable / Function Declare | Public / private / protected |
-| **Is Static** (`binding`) | Variable / Function | Class-level emit |
-| **Is Constant** | Variable Declare | `const` / readonly |
-| **Is Virtual** / **Is Abstract** / **Is Override** | Function Declare | C++: `virtual` / `= 0` / `override`; see [`declare-define-rules.md`](declare-define-rules.md) |
-| **Enum Type** (`enumType`) | Variable / Switch | Case labels are **member names**; pack slot `EnumMemberAccess` |
-| **Import Module props** | Import Module | `modulePath`, `importStyle`, `importNames`, `targetLanguages`; optional `ownerClassId` |
-| **Data type** | Variable / pins | Float, Array, Map, Callable, … |
-| **Generic / Wildcard pin** | Function Declare | `<T>` / TypeVar |
-| **Is Free / Module Function** | Function | Not a class member |
+| UI label | kindId | Why it is a node |
+|----------|--------|------------------|
+| Declare Class | class_define | Class shell is its own construct |
+| Declare Variable | ar_define | Field / variable declaration |
+| Declare Function | unction_define | Signature / prototype / abstract — existence, no body |
+| Define Function | unction_implement | Body placement — may sit in a different place than Declare |
+| Declare Event | event_member_define | Event slot |
+| On (handler) | event_define | Handler method. **role** (entry / 	ick / custom) is an option, not a kind |
+| Dispatch | event_dispatch | Direct handler call |
+| Declare Enum | enum_define | Enum type |
+| Get Enum Member | expr_enum_member | Member access expression |
+| Import Module | vs.project.import_module | Import / include line |
+| Import Class | import_class | From-import / using type |
+| Get / Set Variable | ariable_get / ariable_set | Read / write |
+| Call Function | vs.project.call_function | Call site |
+| Branch / For / While / Switch / Return / Break / Continue | low_* | Control-flow constructs |
+| Print String | ction_print | Statement |
+| Wait | ction_wait | Sleep / wait call. **Async is an option** (or follows the function async flag) |
+| Get User Input | ction_get_input | Blocking read. **inputKind** is an option; **prompt** is a pin |
+| To String / To Number | convert_* | One conversion = one call. Do not collapse |
+| Math Add / Subtract / Multiply / Divide | math_* | One operator = one node. Do not collapse to a dropdown |
+| Concat Strings | string_concat | Operator / call |
+| Array Push | rray_push | Statement / call |
+| Function Entry | unction_entry | Flow start of a function body graph (not a second file) |
+| Call Native / Env handler | env.* | Environment-bound calls |
+
+**Declare vs Define stay two nodes.** C++ prototype vs out-of-line, and abstract / interface signatures, need two positions or existence without a body. When the current language has no separate declare, Declare is ineffective ((x) + dim). Do not fold Declare into an option on Define. Do not require both on every new function — spawn **Define** for a normal function; spawn **Declare** when the target has a prototype or the function is abstract / signature-only.
+
+### Options (inspector) — not nodes
+
+Visibility, binding (static), const / readonly, abstract, virtual, override, async, extends / implements, name, type, enum type, import path / style / names / target languages, Get User Input inputKind, Wait **async** flag.
+
+These only change how that node’s line is written.
+
+### Pins — not options
+
+| Value | On | Was wrong as |
+|-------|----|--------------|
+| Wait **seconds** | ction_wait | property |
+| Switch **case values** | low_switch | properties case0 / case1 |
+| Get User Input **prompt** | ction_get_input | already a pin — keep it a pin |
+
+If it can be wired from another expression, it is a pin.
+
+### Fold (legacy kinds — do not spawn)
+
+| kindId | Becomes |
+|--------|---------|
+| event_on_start | event_define + 
+ole: entry (already deprecated) |
+| event_on_update | event_define + 
+ole: tick |
+| ction_await_wait | ction_wait + async option |
+
+Old graphs may still contain these. Analyzer / migration keep working. Spawn catalog must not offer them.
+
+### Drop from spawn (not a typed construct)
+
+| kindId | Why |
+|--------|-----|
+| event_emit / event_subscribe | Hidden runtime — already blocked. Stay out of spawn |
+| low_sequence | Not a text construct. The exec chain already is sequence |
+| graph_ref | Navigation / project-map, not a statement. Must not appear in the spawn catalog |
+
+### Planned (not in registry yet)
+
+Interface Declare, Constructor Define, Try/Catch — only if each is its own typed construct.
+
+## Settings that stay on Declare / Import
+
+| Setting | On |
+|---------|-----|
+| Extends / Implements | Class Declare |
+| Visibility | Variable / Function / Event Declare |
+| Is Static (inding) | Variable / Function |
+| Is Constant | Variable Declare |
+| Is Virtual / Abstract / Override / Async | Function Declare |
+| Enum Type | Variable / Switch |
+| Import Module props | Import Module |
+| Data type | Variable / pins |
+| Generic / Wildcard pin | Function Declare |
+| Is Free / Module Function | Function |

@@ -11,6 +11,7 @@ import {
   classHomeGraphId,
   collectMemberDefineNodeIds,
   eventCodegenHandlerName,
+  eventHandlerStem,
   MAIN_CLASS_ID,
   resolveNodeKindId,
   type GraphDocument,
@@ -208,8 +209,8 @@ function memberDeclFromEntry(
     case 'event': {
       const symbol = events.find((e) => e.id === entry.symbolId);
       if (!symbol) return undefined;
-      const handlerName = eventCodegenHandlerName(symbol);
       const handlerNode = findEventHandlerNode(graphNodes, symbol);
+      const handlerName = eventHandlerStem(symbol, handlerNode?.data.properties?.role);
       return {
         kind: 'EventDecl',
         sourceGraphNodeId: entry.nodeId,

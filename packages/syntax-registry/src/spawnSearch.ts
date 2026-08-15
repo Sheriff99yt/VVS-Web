@@ -7,18 +7,16 @@ const SPAWN_SEARCH_ALIASES: Record<string, readonly string[]> = {
   class_define: ['declare', 'class', 'define class'],
   var_define: ['declare', 'variable', 'field', 'member'],
   event_member_define: ['declare', 'event', 'member'],
-  event_define: ['on', 'handler', 'event handler'],
+  event_define: ['on', 'handler', 'event handler', 'tick', 'update', 'frame', 'on update', 'on start', 'entry'],
   event_dispatch: ['dispatch', 'invoke', 'emit'],
   'vvs.project.call_function': ['call', 'invoke', 'function'],
   flow_branch: ['if', 'branch', 'condition'],
   flow_switch: ['switch', 'case', 'match'],
   flow_for: ['for', 'loop'],
   flow_while: ['while', 'loop'],
-  flow_sequence: ['sequence', 'then'],
   action_print: ['print', 'log', 'output'],
   action_get_input: ['input', 'read', 'prompt', 'stdin'],
-  action_wait: ['wait', 'delay', 'sleep'],
-  action_await_wait: ['await', 'async', 'wait'],
+  action_wait: ['wait', 'delay', 'sleep', 'await', 'async'],
   convert_to_string: ['string', 'cast', 'convert'],
   convert_to_number: ['number', 'cast', 'convert'],
   variable_get: ['get', 'read'],
@@ -31,7 +29,6 @@ const SPAWN_SEARCH_ALIASES: Record<string, readonly string[]> = {
   expr_enum_member: ['enum', 'member', 'access', 'dot', 'value'],
   array_push: ['array', 'push', 'add', 'append', 'insert', 'list'],
   string_concat: ['string', 'concat', 'combine', 'join', 'merge', 'add'],
-  event_on_update: ['tick', 'update', 'frame', 'on update'],
 };
 
 /** Lowercase haystack for spawn-menu filtering (label, kindId, category, aliases). */

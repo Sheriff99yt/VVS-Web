@@ -60,6 +60,14 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 
 ## Core principles
 
+### Node vs option vs pin (locked)
+
+If it is something you would type as its own construct, it is a **node**.
+If it only changes how that construct is written, it is an **option**.
+If it is a value that could come from another expression, it is a **pin**.
+
+Two canvas positions, or existence without a body, are two nodes. Function **Declare** and Function **Define** stay separate: a prototype or abstract signature can sit in a different place than the body, or exist with no body. An option cannot have its own position. When the current language has no separate declare, Declare is ineffective ((x) + dim). It is not folded into Define.
+
 ### 1. Text code is the integration layer
 
 - Generated output runs in **standard** Python, JS/TS, C++, Verse, etc. — no VVS runtime required.
@@ -102,11 +110,11 @@ Transpiler contract: walk `ir.members` from the define chain via `appendIrMember
 | **Event handler** | On handler node | `def on_event(self, ...):` |
 | **Program entry** | `role: 'entry'` event + define chain | `def on_start(self):` — **only** when user declared entry on the class graph |
 | **Event signal** | Dispatch node | `self.on_event(...)` — direct handler call; no hidden `emit` / `_emit` runtime |
-| **Lifecycle tick** | On Update node | `on_update` / tick handler — still a visible method when wired |
+| **Lifecycle tick** | On handler with role tick | `on_update` / tick handler — still a visible method when wired |
 
 Sync vs async rules follow **target language**, not a hidden VM:
 
-- **Wait** / **Await Wait** (future) emit explicit wait calls.
+- **Wait** emits an explicit wait/sleep. Async is an option on that node (or follows the function async flag) — not a second kind.
 - **Wait inside sync function** → analyzer error (same *user-visible* rule as Blueprint, but the **code shows the wait**).
 
 ### 5. Third-party integration is a first-class requirement
@@ -157,8 +165,8 @@ Need reusable logic?
   └─ Returns a value or void?     → Function + Call
   └─ React to a named signal?     → Event Declare + On + Dispatch (explicit line in code)
   └─ Program start (host calls)?  → Entry event (`role: 'entry'`) + event_member_define + event_define on class graph
-  └─ Per-frame / tick hook?       → On Update lifecycle node (when target supports it)
-  └─ Pause time?                  → Wait / Await Wait node (when shipped) — visible in text
+  └─ Per-frame / tick hook?       → On handler with role tick (when the target supports it)
+  └─ Pause time?                  → Wait node (async is an option) — visible in text
   └─ Copy-paste visual pattern?   → Extract to Function — NOT macro expand
 ```
 
@@ -235,7 +243,7 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 
 **Why sync-first is OK temporarily:** Simplest fidelity story; Dual Class Lab and tutorials ship now.
 
-**Where full model leads:** Explicit **async function** flag + **Await Wait** nodes — still text-shaped, not latent VM.
+**Where full model leads:** Explicit **async function** flag + **Wait** (async option) — still text-shaped, not latent VM.
 
 ---
 
@@ -261,7 +269,7 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 - No hidden event runtime — `event_emit` / `event_subscribe` blocked (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does not inject `_emit` / `_subscribe`
 - Import Module — emits at **canvas chain position** with `sourceMap`; place shared imports **once at file top** on the first class chain (`targetLanguages` gate). **Flow** Import Module inside branches for conditional imports (e.g. Python `import json`). Optional `ownerClassId` when scoping is required.
 - Member / event order — **primary:** connected exec chain = nest/emit order; **secondary:** canvas Y among **unconnected chain heads** (and event Declare peers — event→event wires do not force emit). When height and wires disagree, emit still follows these rules; **Compiler Log warnings** teach the fundamentals (`CHAIN_ORDER_Y_MISMATCH`, `EVENT_PEER_Y_ORDER`) without reordering.
-- Wait / Await Wait — explicit sleep/await in export; async function flag
+- Wait (async is an option) — explicit sleep/await in export; async function flag
 - Pin validation — graph shows type fixes via **Conversion** nodes
 - `sourceMap` selection highlight in code panel
 - IR pipeline — analyze → lower → emit in `packages/transpiler`

@@ -9,18 +9,20 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 ---
 
-## Now (July 2026)
+## Now (August 2026)
 
 ### Active
 
 | Focus | IDs | Status |
 |-------|-----|--------|
-| **Library backend API** | U90+ | **Shipped** — Go service, Postgres schema, TypeScript client, GitHub workflow |
-| Target-language emit fidelity plans | CL backlog | Open — plans before code |
-| References viewer redesign | U89 | Partial (name filter done) |
-| AI / MCP autonomy audit | U91 | Partial |
-| More examples (cross-lang + lang-specific) | U92 | Partial |
-| Catalog / functions / async / OOP | U97–U101, U103–U106 | Partial — U97 done; U102 done |
+| **Node vs option vs pin + catalog leftovers** | — | **Shipped** August 2026 — lock + spawn/pin/role/Declare spawn |
+| Target-language emit fidelity | CL-010 first | **Next** — Rust inheritance, then Verse GetInput / for |
+| Cross-language async | U101 | Partial — one Wait node; async is an option |
+| Inheritance on canvas | U106 | Open — pairs CL-010 |
+| Override | U105 | Partial — stays an option on Declare, not a node |
+| Components | U103 | Open — only if it is a real typed construct |
+| References / AI / examples | U89, U91, U92 | Frozen polish — not the core thread |
+| Library remaining (auth / upload) | U90 | Frozen — client-first; no accounts as product |
 
 ### Long-term
 
@@ -28,10 +30,11 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 |-------|-----|--------|
 | Code → visual (reverse of Generate) | U93 | Research — must keep canvas source of truth |
 
-### Just shipped (Library API, examples, catalog audit, library redesign, MCP safety, references redesign)
+### Just shipped (node catalog lock, Wait pin, On role, Declare spawn, Library API, U97–U99)
 
 | Focus | IDs |
 |-------|-----|
+| **Node vs option vs pin** locked; catalog leftovers (spawn excludes, Wait expression, On role, Declare spawn) | Aug 2026 |
 | **Function argument pins end-to-end** (define, implement, call, emit) | U98 |
 | **Function return with arguments** (Return node & value pin codegen) | U99 |
 | **Library backend API** (Go service) | U90+ |
@@ -55,8 +58,8 @@ CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ─────────────────────
 1  Web editor + 8 packs        6  Polish                          4  Session collab (P2P)
 2  Persistence (local)            CL emit plans                      5  UE6 Verse plugin
-   + local MCP paste              U89–U92 chrome · AI                3  Library (git · API done)
-   U77 Go pack done               U97–U106 graph / OOP                  vvs-library repo · web UI
+   + local MCP paste              CL-010 then U101 / U106                3  Library (git · API done)
+   U77 Go pack done               node leftovers shipped                  vvs-library repo · web UI
    U78 Pack manager done          U93 code→visual (long-term)          wiring & integration
    U83 virtualization done     3  Library backend                    
    **U90 Library API done**        Go service · Postgres schema
@@ -76,8 +79,10 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 
 | # | Item | Notes |
 |---|------|--------|
-| **CL** | Emit fidelity plans | See clusters below — plans before code |
-| **Library** | Web UI integration | Import dialog, share button, search page |
+| **CL-010** | Rust inheritance emit | Composition `base:` vs `self.Power` / `new` — next core thread |
+| **U101** | Async concept | Finish pack-complete await on the one Wait node |
+| **U106** | Inheritance on canvas | Authoring + per-language lowering; pairs CL-010 |
+| **CL-014/015** | Verse GetInput + for | After CL-010 |
 
 ### Editor & AI
 
@@ -123,13 +128,13 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U97** | Add-node menu audit | Done — Full catalog audit + naming convention integration |
 | **U98** | Function argument pins | Done — Define / implement / call / emit end-to-end; auto-sync across documents |
 | **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with value pin lowering across 8 target languages |
-| **U100** | Event listeners | Listen / subscribe visuals across targets |
-| **U101** | Cross-language async concept | Language-neutral model for all packs |
+| **U100** | Event listeners | **Cut** — subscribe/emit hidden runtime rejected; Dispatch only |
+| **U101** | Cross-language async concept | **Partial** — one Wait node; async is an option |
 | **U103** | Components | Visual concept + multi-lang Test Project proof |
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
-| **U105** | Overwriting (override) | Study vs current modifiers |
+| **U105** | Overwriting (override) | **Partial** — stays an option on Declare, not a node |
 | **U106** | Inheritance | Canvas authoring + per-language lowering (pairs CL-010) |
-| **Flow Control** | Generic Return, Break, Continue | Language-neutral control-flow nodes that lower across all syntax packs |
+| **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
 
 Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no** live run.
 
@@ -153,6 +158,7 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
+| **Node catalog (August 2026)** | Node vs option vs pin lock; spawn excludes; Wait seconds as wired expression; On role entry/tick emit; Function Declare spawn only for C++ / abstract |
 | **Library backend (this sprint)** | Go service, Postgres, TypeScript client, GitHub workflow scaffolding |
 | **Undo, settings & safety (U108–U119)** | Action history · File/Edit/View/Help · Settings (Shortcuts / Audio / About / Naming / Safety) · rebindable shortcuts · audio cues · **VVS Web** naming |
 | **Code panel** | Selection highlight · double-click → node · **hover → yellow node/tab outline** · error/warning toggles · Files pin · [code_panel.md](code_panel.md) |
@@ -170,7 +176,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U119 + U77 Go + U78 Packs done; next **U89–U92** + **U97–U106**; CL plans; **U93** long-term |
+| **6** Fidelity, canvas scale & polish | **Active** | U64–U88 / U94–U96 / U102 / U107–U119 + U77 Go + U78 Packs done; node leftovers shipped; next **CL-010** then **U101** / **U106**; **U93** long-term |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

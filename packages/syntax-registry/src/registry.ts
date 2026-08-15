@@ -92,7 +92,15 @@ export function resolve(kindId: string, _version?: number): NodeKindDefinition |
   return undefined;
 }
 
-const SPAWN_EXCLUDED_KINDS = new Set(['event_on_start', 'event_emit', 'event_subscribe']);
+const SPAWN_EXCLUDED_KINDS = new Set([
+  'event_on_start',
+  'event_on_update',
+  'event_emit',
+  'event_subscribe',
+  'flow_sequence',
+  'action_await_wait',
+  'graph_ref',
+]);
 
 /** Dynamic kinds that still need a generic spawn row (instances use prefixed kindIds). */
 const SPAWNABLE_DYNAMIC_KINDS = new Set(['vvs.project.import_module']);
@@ -309,6 +317,7 @@ function expandMissingDeclareRows(options: ListRegistryOptions): SpawnNodeTempla
   const { namingConvention, targetLanguage } = options;
 
   for (const fn of options.functionsMissingDeclare ?? []) {
+    if (!functionDeclareIsSpawnable(options.targetLanguage, fn)) continue;
     const prefix = namingConvention ? getSpawnNamingPrefix('Declare', namingConvention, targetLanguage) : 'Declare';
     const overload = fn.overloads[0];
     const paramInputs = overload?.parameters.map((p) => ({
@@ -398,11 +407,23 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
   return categories;
 }
 
+function functionDeclareIsSpawnable(
+  targetLanguage?: TargetLanguage,
+  fn?: FunctionSymbol
+): boolean {
+  if (targetLanguage === 'cpp') return true;
+  if (fn?.flags?.abstract) return true;
+  return false;
+}
+
 export function list(options: ListRegistryOptions): LibraryCategory[] {
   const coreByCategory = new Map<string, SpawnNodeTemplate[]>();
   const { namingConvention, targetLanguage } = options;
 
   for (const kind of listCoreKinds()) {
+    if (kind.kindId === 'function_define' && !functionDeclareIsSpawnable(targetLanguage)) {
+      continue;
+    }
     if (options.filterPin) {
       const hasMatch =
         kind.inputs.some((p) => pinsMatchFilter(p, options.filterPin)) ||

@@ -135,7 +135,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | Capability | Neutral UI | Node | Families | uiStatus | Notes |
 |------------|------------|------|----------|----------|-------|
 | Program entry | On Start | `event_define` + entry `events[]` | all | shipped | |
-| Per-frame | On Update | `event_on_update` | game targets | shipped | |
+| Per-frame | On Update | `event_define` + `role: tick` | game targets | shipped | Do not spawn `event_on_update` |
 | Custom event body | On `{name}` | `event_define` | all | shipped | |
 | **Async** handler | Async toggle on On / function | `properties.isAsync` | py, js, cs | planned | Emits `async def` / `async Task`; **C++ ineffective** until coroutines shipped — disable chip |
 | **Coroutine** / yield | Flow nodes | planned flow kinds | py, gd | planned | |
@@ -172,7 +172,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 
 | Capability | Neutral UI | Node | Families | uiStatus | Notes |
 |------------|------------|------|----------|----------|-------|
-| Graph reference | Graph Reference | `graph_ref` | all | shipped | Organizational + future cross-graph |
+| Graph reference | Graph Reference | `graph_ref` | all | shipped | Project-map navigation only -- not in the spawn catalog |
 | Import class | Import Class | `import_class` | multi-class | partial | |
 | **Using / import statements** | Import Module | `vvs.project.import_module` | py, js, cs, rs, cpp | **shipped** | `modulePath` + `importStyle` + `importNames` + **`targetLanguages`**; place **once at file top**; flow Import for conditional (Python `import json`); optional `ownerClassId`. Coverage Lab: iostream/string/vector/unordered_map (cpp), System + Collections.Generic (csharp), enum + conditional json (python) |
 | **Package visibility** | internal / pub | modifier on class | rs | planned | |

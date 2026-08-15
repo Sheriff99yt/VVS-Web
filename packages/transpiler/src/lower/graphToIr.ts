@@ -62,11 +62,30 @@ function isImportNode(node: GraphNode): boolean {
   );
 }
 
-function waitSeconds(node: GraphNode): string {
+function waitDurationExpr(node: GraphNode, ctx: LowerContext): IrExpr {
+  const edge = getDataEdgeToPin(ctx.edges, node.id, 'seconds');
+  if (edge) return resolvePinValueExpr(node, 'seconds', ctx);
+  const inline = node.data.inlineValues?.seconds;
+  if (typeof inline === 'number') return literalIr(node.id, inline, 'number');
+  if (typeof inline === 'string' && inline.trim()) {
+    const n = Number(inline);
+    return Number.isFinite(n)
+      ? literalIr(node.id, n, 'number')
+      : literalIr(node.id, inline, 'string');
+  }
   const s = node.data.properties?.seconds;
-  if (typeof s === 'number') return String(s);
-  if (typeof s === 'string' && s.trim()) return s;
-  return '1';
+  if (typeof s === 'number') return literalIr(node.id, s, 'number');
+  if (typeof s === 'string' && s.trim()) {
+    const n = Number(s);
+    return Number.isFinite(n) ? literalIr(node.id, n, 'number') : literalIr(node.id, s, 'string');
+  }
+  return literalIr(node.id, 1, 'number');
+}
+
+function waitIsAsync(node: GraphNode, kindId: string): boolean {
+  if (kindId === 'action_await_wait') return true;
+  const flag = node.data.properties?.isAsync;
+  return flag === true || flag === 'true';
 }
 
 function eventKeyForNode(
@@ -318,6 +337,9 @@ function flowForIsForEach(node: GraphNode): boolean {
 
 function switchCaseLabel(node: GraphNode, caseIndex: number): string {
   const key = `case${caseIndex}`;
+  const inline = node.data.inlineValues?.[key];
+  if (typeof inline === 'string' && inline.trim()) return inline;
+  if (typeof inline === 'number') return String(inline);
   const prop = node.data.properties?.[key];
   if (typeof prop === 'string' && prop.trim()) return prop;
   if (typeof prop === 'number') return String(prop);
@@ -551,8 +573,8 @@ function lowerStatement(
     return {
       kind: 'AwaitWait',
       sourceGraphNodeId: node.id,
-      seconds: waitSeconds(node),
-      async: kindId === 'action_await_wait',
+      seconds: waitDurationExpr(node, ctx),
+      async: waitIsAsync(node, kindId),
     };
   }
 
@@ -823,6 +845,9 @@ function eventLabelToHandlerName(label: string): string {
 function handlerNameFromEventNode(node: GraphNode, projectEvents: ProjectEventDefinition[]): string {
   const kindId = resolveNodeKindId(node.data);
   if (kindId === 'event_on_update') return 'update';
+  const nodeRole = node.data.properties?.role;
+  if (nodeRole === 'entry') return 'start';
+  if (nodeRole === 'tick') return 'update';
   const manifestEventId = node.data.properties?.manifestEventId ?? node.data.graphBinding?.manifestEventId;
   if (typeof manifestEventId === 'string') {
     const eventName = node.data.properties?.eventName;

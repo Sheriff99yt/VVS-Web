@@ -38,8 +38,8 @@ describe('list catalog grouping', () => {
     expect(declareSection?.items.some((i) => i.kindId === 'var_define')).toBe(true);
     expect(declareSection?.items.some((i) => i.kindId === 'class_define')).toBe(true);
     expect(declareSection?.items.some((i) => i.kindId === 'event_member_define')).toBe(true);
-    expect(declareSection?.items.some((i) => i.kindId === 'function_define')).toBe(true);
-    expect(declareSection?.items.some((i) => i.label === 'Declare Function')).toBe(true);
+    expect(declareSection?.items.some((i) => i.kindId === 'function_define')).toBe(false);
+    expect(declareSection?.items.some((i) => i.label === 'Declare Function')).toBe(false);
     expect(defineSection?.items.some((i) => i.kindId === 'function_implement')).toBe(true);
     expect(defineSection?.items.some((i) => i.label === 'Define Function')).toBe(true);
     const handlers = categories.find((c) => c.name === 'Handlers');
@@ -65,7 +65,33 @@ describe('list catalog grouping', () => {
     });
     const defineSection = categories.find((c) => c.name === 'Define');
     const declareSection = categories.find((c) => c.name === 'Declare');
-    expect(declareSection?.items.some((i) => i.label === 'Declare Add')).toBe(true);
+    expect(declareSection?.items.some((i) => i.label === 'Declare Add')).toBe(false);
     expect(declareSection?.items.some((i) => i.label === 'Declare calculate')).toBe(true);
+  });
+
+  test('spawns Function Declare for C++ and for abstract functions only', () => {
+    const cpp = list({ currentGraphId: 'main', functions: [], events: [], targetLanguage: 'cpp' });
+    const cppDeclare = cpp.find((c) => c.name === 'Declare');
+    expect(cppDeclare?.items.some((i) => i.kindId === 'function_define')).toBe(true);
+
+    const pythonMissing = list({
+      currentGraphId: 'main',
+      functions: [],
+      events: [],
+      targetLanguage: 'python',
+      functionsMissingDeclare: [
+        { id: 'fn-1', name: 'Add', binding: 'instance', overloads: [{ id: 'o1', returnType: 'void', parameters: [] }] },
+        {
+          id: 'fn-2',
+          name: 'Diagnose',
+          binding: 'instance',
+          flags: { abstract: true },
+          overloads: [{ id: 'o1', returnType: 'void', parameters: [] }],
+        },
+      ],
+    });
+    const pyDeclare = pythonMissing.find((c) => c.name === 'Declare');
+    expect(pyDeclare?.items.some((i) => i.label === 'Declare Add')).toBe(false);
+    expect(pyDeclare?.items.some((i) => i.label === 'Declare Diagnose')).toBe(true);
   });
 });

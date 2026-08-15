@@ -21,6 +21,16 @@ description: >-
 - **C++ (U82):** Declare → in-class prototype; Define → out-of-line `Class::Method` after `};` (or separate `.cpp` graph). Never auto-split one graph into `.h`+`.cpp`.
 - **Other langs:** non-abstract Function Declare is ineffective → U66 `(x) Declare Name` + U67 dim (same as gated imports). Abstract is native only on C++/C#; elsewhere also `(x)` + dim (e.g. Coverage Lab Declare Diagnose). Body stays on Define. **sourceMap:** Declare↔own emit only; Define↔header+body.
 
+## Node vs option vs pin (locked)
+
+Canonical: docs/visual_to_text_fidelity.md → Core principles.
+
+- **Node** — something you would type as its own construct
+- **Option** — only changes how that construct is written (visibility, static, const, async, extends, import style)
+- **Pin** — a value that could come from another expression (Wait seconds, Switch case, Get User Input prompt)
+
+Two positions or existence-without-body = two nodes. Do not fold Function Declare into an option on Define.
+
 ## Core Philosophy: No Hidden Magic
 
 Never inject hidden structural code (stdlib includes, async wrappers, class `abstract` from members, `impl Default`). Users place **Import Module**, **enumType**, modifiers, etc. on the canvas.

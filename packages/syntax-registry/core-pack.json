@@ -67,6 +67,20 @@
           "label": "",
           "type": "execution"
         }
+      ],
+      "propertySchema": [
+        {
+          "key": "role",
+          "label": "Role",
+          "type": "enum",
+          "enumValues": [
+            "custom",
+            "entry",
+            "tick"
+          ],
+          "default": "custom",
+          "description": "custom = On {name}. entry = program start. tick = per-frame. Not separate kinds."
+        }
       ]
     },
     {
@@ -252,6 +266,16 @@
           "id": "selector",
           "label": "Selector",
           "type": "data_any"
+        },
+        {
+          "id": "case0",
+          "label": "Case 0 value",
+          "type": "data_any"
+        },
+        {
+          "id": "case1",
+          "label": "Case 1 value",
+          "type": "data_any"
         }
       ],
       "outputs": [
@@ -283,18 +307,6 @@
           "type": "string",
           "default": "",
           "description": "When set, case values are member names (OK) and emit via EnumMemberAccess"
-        },
-        {
-          "key": "case0",
-          "label": "Case 0 value",
-          "type": "string",
-          "default": "0"
-        },
-        {
-          "key": "case1",
-          "label": "Case 1 value",
-          "type": "string",
-          "default": "1"
         }
       ]
     },
@@ -421,6 +433,11 @@
           "id": "exec_in",
           "label": "",
           "type": "execution"
+        },
+        {
+          "id": "seconds",
+          "label": "Seconds",
+          "type": "data_number"
         }
       ],
       "outputs": [
@@ -432,11 +449,11 @@
       ],
       "propertySchema": [
         {
-          "key": "seconds",
-          "label": "Seconds",
-          "type": "number",
-          "default": 1,
-          "description": "Duration to block execution."
+          "key": "isAsync",
+          "label": "Async",
+          "type": "boolean",
+          "default": false,
+          "description": "Emit await/async wait. Legacy Await Wait graphs keep action_await_wait."
         }
       ]
     },
@@ -1133,9 +1150,13 @@
           "key": "importStyle",
           "label": "Import style",
           "type": "enum",
-          "enumValues": ["module", "from", "include_system"],
+          "enumValues": [
+            "module",
+            "from",
+            "include_system"
+          ],
           "default": "module",
-          "description": "module = pack ModuleImport; from = named import; include_system = #include <…>"
+          "description": "module = pack ModuleImport; from = named import; include_system = #include <\u2026>"
         },
         {
           "key": "importNames",

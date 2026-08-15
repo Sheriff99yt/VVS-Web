@@ -122,7 +122,7 @@ Do not use `BP_` prefixes, `BeginPlay`, or `AActor` in defaults or examples unle
 | Category | Pattern | Examples |
 |----------|---------|----------|
 | Entry events | `On …` | On Start, On Update, Custom event |
-| Flow control | Plain English | Branch, Sequence, Loop |
+| Flow control | Plain English | Branch, Loop, Switch |
 | Data | Verb or noun | Get variable, Set variable, Add |
 | Actions | Verb phrase | Print message, Call function |
 

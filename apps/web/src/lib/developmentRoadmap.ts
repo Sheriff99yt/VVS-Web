@@ -356,7 +356,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'events',
         title: 'Custom & entry events',
         description:
-          'events[] with role entry | custom; event_member_define + event_define handlers + dispatch nodes (direct call); Emit/Subscribe blocked (HIDDEN_EVENT_RUNTIME_UNSUPPORTED); tree + New event hereâ€¦; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog.',
+          'events[] + On-node role entry | tick | custom; event_member_define + event_define handlers + dispatch nodes (direct call); Emit/Subscribe blocked (HIDDEN_EVENT_RUNTIME_UNSUPPORTED); tree + New event hereâ€¦; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog.',
         status: 'done',
       },
       {
@@ -499,6 +499,27 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Add-node menu catalog audit (U97)',
         description:
           'Synonym search (module, declare, call, event, var); Import Module spawn row; pin-compatibility filtering; list_available_nodes registry integration.',
+        status: 'done',
+      },
+      {
+        id: 'node-vs-option-pin',
+        title: 'Node vs option vs pin (locked)',
+        description:
+          'If it is something you would type as its own construct, it is a node. If it only changes how that construct is written, it is an option. If it is a value that could come from another expression, it is a pin. Two canvas positions or existence-without-body stay two nodes (Declare vs Define).',
+        status: 'done',
+      },
+      {
+        id: 'node-catalog-leftovers',
+        title: 'Catalog leftovers (spawn, Wait pin, On role)',
+        description:
+          'Spawn no longer offers Sequence, Await Wait, On Start/Update, Emit/Subscribe, or graph_ref. Wait seconds is a wired expression. On role entry/tick emits on_start/on_update. Function Declare spawns only for C++ or abstract functions.',
+        status: 'done',
+      },
+      {
+        id: 'flow-control-return-break-continue',
+        title: 'Generic flow control (Return, Break, Continue)',
+        description:
+          'flow_return / flow_break / flow_continue lower across all eight syntax packs.',
         status: 'done',
       },
       {
@@ -1220,15 +1241,15 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'event-listeners-u100',
         title: 'Event listeners (U100)',
         description:
-          'First-class listen / subscribe visuals that map to text across target languages (beyond entry/dispatch).',
-        status: 'planned',
+          'Cut — hidden subscribe/emit runtime is rejected. Dispatch is the invoke node. Do not spawn event_emit / event_subscribe.',
+        status: 'cut',
       },
       {
         id: 'cross-lang-async-u101',
         title: 'Cross-language async concept (U101)',
         description:
-          'Language-neutral async model (nodes, options, or hybrid) that all packs can map — not per-language one-offs.',
-        status: 'planned',
+          'Partial — one Wait node; async is an option (or follows the function async flag). Remaining: pack-complete await model, not a second Await Wait kind.',
+        status: 'partial',
       },
       {
         id: 'components-visual-u103',
@@ -1241,21 +1262,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'overwriting-study-u105',
         title: 'Overwriting (override) study (U105)',
         description:
-          'Study whether override needs custom visuals or is fully covered by the current modifier / define system.',
-        status: 'planned',
+          'Override stays an option on Function Declare, not a new node. Remaining: confirm emit coverage per language.',
+        status: 'partial',
       },
       {
         id: 'inheritance-design-u106',
         title: 'Inheritance design (U106)',
         description:
           'Design how inheritance is authored on the canvas and lowered per language (pairs with CL-010 Rust plan).',
-        status: 'planned',
-      },
-      {
-        id: 'flow-control-return-break-continue',
-        title: 'Generic flow control (Return, Break, Continue)',
-        description:
-          'Generic control-flow nodes (Return, Break, Continue) that lower to target-language statements across all syntax packs.',
         status: 'planned',
       },
     ],

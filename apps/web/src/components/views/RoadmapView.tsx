@@ -222,8 +222,7 @@ export function RoadmapView() {
         <header className="space-y-2">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            Client-first editor. Active: Go / pack versions / CL emit plans, then U89–U92 and
-            U97–U106. Full public notes in{' '}
+            Client-first editor. Next: CL-010 Rust inheritance, then U101 async and U106 inheritance. Node catalog leftovers shipped. Full public notes in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"

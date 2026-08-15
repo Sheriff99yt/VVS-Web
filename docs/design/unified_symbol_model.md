@@ -29,8 +29,8 @@ Member-slot **existence** uses **Declare** — including functions. Function **b
 | Symbol kind | UI label (canvas / spawn) | `kindId` (today) | Codegen role |
 |-------------|---------------------------|------------------|--------------|
 | **Variable** | **Declare** `{name}` | `var_define` | member initializer / field |
-| **Function (exists)** | **Declare** `{name}` | `function_define` *(declare role; U81 may split kinds)* | signature / “there is a function” |
-| **Function (body place)** | **Define** `{name}` | *(implement role — today folded into `function_define`; U81)* | insert body at this position |
+| **Function (exists)** | **Declare** `{name}` | `function_define` | signature / there is a function |
+| **Function (body place)** | **Define** `{name}` | `function_implement` | insert body at this position |
 | **Event (member)** | **Declare** `{name}` | `event_member_define` | handler signature slot in member order |
 | **Class** | **Declare** `{name}` / **Declare Class** | `class_define` | class declaration slot |
 | **Event (handler)** | **Define** `{name}` | `event_define` | handler body on class graph |
@@ -48,7 +48,7 @@ Release menus: variables **Get** / **Set** / **Declare**; functions & events **C
 | **Function** | **Declare** (existence) | **Define** (body place) + **Edit function body** tab | `call_function` (**Call**) |
 | **Event** | `event_member_define` (**Declare**) | `event_define` (**On** / handler) | `event_dispatch` (**Dispatch**) |
 
-Events already split declare and implement. Functions must match that split (**U81**). Until then emit may still fold signature + body into one `function_define` node.
+Events and functions both split declare and implement (**U81 shipped**). Declare and Define stay two nodes so a prototype / abstract signature can sit in a different place than the body.
 
 Program entry uses `events[]` with `role: 'entry'` and the same event pattern; codegen emits `on_start` only from canvas.
 
