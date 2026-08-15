@@ -177,7 +177,7 @@ Each conversion is **one graph node = one call in source**. The transpiler never
 | Keep events **parameterless** until param emit is uniform | Cross-language param naming edge cases |
 | Prefer inline string literals on Print when message is fixed | String concat nodes (not in core pack yet) |
 
-**Known gaps (no core node yet):** string concat, comparisons, loops, explicit **Wait** / async graphs. Use **Conversion** for type changes — never rely on transpiler casts.
+**Known gaps (no core node yet):** string concat, comparisons. Loops and Wait are shipped. Use **Conversion** for type changes — never rely on transpiler casts.
 
 ### 2.2c Text-shaped fidelity (locked)
 
@@ -677,7 +677,7 @@ interface ProjectEventDefinition {
   id: string;              // stable: "evt_on_damage"
   name: string;            // display stem: "damage" → UI "On damage"
   parameters: { id: string; label: string; type: PinType }[];
-  role?: 'entry' | 'custom'; // entry → codegen on_start; custom → on_{name}
+  role?: 'entry' | 'tick' | 'custom'; // entry → on_start; tick → on_update; custom → on_{name}
   classId?: string;        // owning class (multi-class projects)
 }
 ```

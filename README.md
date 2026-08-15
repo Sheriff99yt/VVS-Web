@@ -26,16 +26,16 @@ Details: [docs/setup.md](docs/setup.md) § GitHub Pages / Releases.
 
 ## Where we are now
 
-**Phase 1 — web editor & client transpiler** is in progress. The **editor shell is real and usable**; the **engine underneath is still mostly planned**.
+**Phase 1 — web editor + 8-language client transpiler ships** (Python, JavaScript, C++, C#, Rust, GDScript, Verse, Go). The canvas is the source of truth: **Generate** ordinary source. There is **no live Play**.
 
 | Layer | Today | Not yet |
 |-------|--------|---------|
-| **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, references view, wiring, variables/functions, local project save, **real** codegen preview (`@vvs/transpiler`), Hello World + **Calculator** examples | Cloud sync, MCP connect |
-| **Transpiler** (`packages/transpiler`) | Client-side codegen (Python, JS, C++, Verse, GDScript, Rust, C#, Go), conversion nodes, snapshot tests | Full analyze → IR → per-language emitter split |
-| **Backend** (`server/`) | Go skeleton — `GET /health` only | REST API, MCP server, WebSockets |
-| **UE6 plugin** (`plugins/`) | Roadmap doc only | In-engine canvas (reuses v1 Verse emitter) |
+| **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, References, wiring, local / folder / `.vvs/` persist, real codegen preview (`@vvs/transpiler`). Test projects: First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab. GitHub Pages showcase | U93 code → visual, session collab |
+| **Transpiler** (`packages/transpiler`) | Client-side codegen for all eight languages | — |
+| **Backend** (`server/`) | Local MCP + optional HTTP — **not** the product host. Paste config for Cursor / VS Code / Windsurf / Claude; writes gated by `VVS_MCP_ALLOW_WRITE` | Dedicated app server, accounts, library git repo / upload auth |
+| **UE6 plugin** (`plugins/`) | Roadmap only | In-engine canvas |
 
-**What you can do today:** run the app locally, create projects, edit graphs, explore multi-graph examples (e.g. **Calculator**), save to browser storage, and preview **real** generated code (Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go) via `@vvs/transpiler`. Status chrome is honest — **offline / disconnected**, not fake “synced” or “MCP connected.”
+**What you can do today:** run the app locally or on the live Pages site, create projects, edit graphs, save to browser storage / folder / `.vvs/`, and preview generated code. Status chrome is honest — **offline / local**, not fake “synced.”
 
 **Canonical detail:** [docs/current_state.md](docs/current_state.md) · **Direction:** [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md) · **Phases:** [docs/roadmap.md](docs/roadmap.md)
 
@@ -88,10 +88,10 @@ Read the full origin story: **[docs/history.md](docs/history.md)** · **[Vision 
 |-----------|----------------|
 | **Born open** | Started as a MIT graduation project; VVS Web continues as a public open platform |
 | **Real code out** | Export readable source files — no proprietary VM required |
-| **Logic ↔ syntax split** | One graph; v1 targets include **Verse**, Python, JS/TS, and C++ |
+| **Logic ↔ syntax split** | One graph; eight shipped targets (Python, JS, C++, C#, Rust, GDScript, Verse, Go) |
 | **Open visual scripting** | Portable graph schema aimed at **all engines and workflows** |
-| **Bring your own AI** | MCP server (planned) — connect Cursor, Claude, Codex; no bundled LLM |
-| **Offline-capable** | Client-side transpiler (planned) — edit and generate without a server |
+| **Bring your own AI** | Local MCP paste (Cursor / VS Code / Windsurf / Claude) — no bundled LLM |
+| **Offline-capable** | Client-side transpiler (`@vvs/transpiler`) — edit and generate without a host |
 | **Verse in v1** | Phase 1 transpiler + web editor — not deferred to UE plugin alone |
 | **UE6 plugin (roadmap)** | In-engine canvas reuses v1 Verse emitter; Blueprint-era transition workflows |
 
@@ -101,19 +101,19 @@ Read the full origin story: **[docs/history.md](docs/history.md)** · **[Vision 
 
 ```text
 vvs-web/
-├── apps/web/              # Next.js graph editor (implemented — UI-first skeleton)
-├── packages/              # Shared packages (planned)
+├── apps/web/              # Next.js graph editor (implemented)
+├── packages/              # graph-types, transpiler, syntax-registry, syntax-packs, language-profiles
 │   ├── transpiler/        # Pure TS: graph → IR → code
 │   ├── graph-types/       # Shared graph schema
 │   └── syntax-registry/   # Data-driven language profiles
-├── server/                # Go API + MCP + WebSockets (skeleton)
+├── server/                # Local MCP + optional HTTP (not the product host)
 ├── plugins/               # (future) UE6 editor plugin
 ├── docs/                  # Vision, roadmap, architecture
 ├── tools/                 # setup_env.ps1, start_app.ps1
 └── .agents/               # Public contributor agent skills & memory (kept in repo)
 ```
 
-Graph types currently live in `apps/web/src/types/` until `packages/graph-types` is extracted.
+Shared contracts live in `packages/graph-types`; the web app imports them.
 
 ---
 

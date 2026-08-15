@@ -152,8 +152,8 @@ Future **subscribe** nodes must emit one visible registration line per node (e.g
 |-------|--------|---------|
 | **A (done)** | Canvas source of truth, define chain, program entry, event dispatch | Coverage Lab / First Graph fidelity anchors |
 | **B (done)** | Defer COA UI; keep single-target portability | Honest product surface |
-| **C** | Node effectiveness resolver + catalog/canvas chrome | Show all nodes; dim ineffective |
-| **D (in progress)** | Unify spawn UX: **Declare** (all member slots) / **On** (handler) / **Call** / **Dispatch** | Same mental model in catalog, canvas, inspector, project tree |
+| **C (done)** | Node effectiveness resolver + catalog/canvas chrome | Show all nodes; dim ineffective (U66/U67 shipped) |
+| **D (done)** | Unify spawn UX: **Declare** (all member slots) / **On** (handler) / **Call** / **Dispatch** | Same mental model in catalog, canvas, inspector, project tree |
 | **E** | Registry `portabilityFeatures` on kinds; expand profiles for GDScript, C#, Rust | Data-driven indicators |
 | **F** | COA + multi-target export | Full cross-over |
 

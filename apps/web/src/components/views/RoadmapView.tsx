@@ -162,7 +162,7 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        <span className="text-zinc-300">Just shipped:</span> Rust inheritance emit (CL-010), inheritance on canvas (U106), Call Super as a Call option, override emit (U105), Wait async option (U101), C# async Task, Rust static/const + HashMap use, Verse for + Type{"{}"}.{' '}
+        <span className="text-zinc-300">Just shipped:</span> Rust inheritance emit (CL-010), inheritance on canvas (U106), Call Super as a Call option, override emit (U105), Wait async option (U101), C# async Task, Rust static/const + HashMap use, Verse for + Type{"{}"}, U89 References, U91 MCP audit, U92 Inheritance Lab.{' '}
         <span className="text-zinc-300">Open:</span> Verse GetInput stays an honest (x). Components only if a language has that construct. U93 code-to-visual is long-term.
       </p>
     </div>
@@ -226,7 +226,7 @@ export function RoadmapView() {
         <header className="space-y-2">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            Client-first editor. August emit and OOP wave is shipped. Next is leftover fidelity (Verse GetInput stays (x)) and frozen polish. Full public notes in{' '}
+            Client-first editor. August emit/OOP wave and U89–U92 are shipped. Next is leftover fidelity (Verse GetInput stays (x)) and long-term U93. Full public notes in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"

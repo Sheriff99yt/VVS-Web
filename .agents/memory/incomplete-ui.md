@@ -4,9 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-08-15  
-**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97 / U102 / U107 / U108–U119 done; U98–U101 / U103–U106 open. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 only-if-Component. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 / U98–U101 / U103–U106 open
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 long-term · U103 only-if-Component · U100 cut
 
 ## Status legend
 
@@ -149,7 +149,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§15–§18 priority:** **U89–U92** chrome · AI/examples → **U97–U106** graph/menu/OOP fidelity → **U93** long-term code→visual. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
+**§15–§18 remaining:** CL-014 honest `(x)` · U103 only-if-Component · U93 long-term · U90 frozen. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 
@@ -227,7 +227,7 @@ Canonical: [`docs/design/multi_class_symbols.md`](../../docs/design/multi_class_
 
 ---
 
-## 13. Editor UX, comments, highlight, Go (July 2026) — **Open**
+## 13. Editor UX, comments, highlight, Go (July 2026) — **Done**
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `editor-ux-next`.
 
@@ -246,7 +246,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 14. New app views & client-first updates (July 2026) — **Open**
+## 14. New app views & client-first updates (July 2026) — **Done**
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `new-views-client`.
 
@@ -262,7 +262,7 @@ Top-level **views** beyond canvas (Pack versions is the first named; more TBD).
 
 ---
 
-## 15. Canvas scale (July 2026) — **Priority / Open**
+## 15. Canvas scale (July 2026) — **Done**
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `canvas-virtualization-u83`.
 
@@ -274,7 +274,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 16. Editor chrome & scale UX (July 2026) — **Partial** (U84–U89 / U96 done; U90 open)
+## 16. Editor chrome & scale UX (July 2026) — **Done** (U84–U90 page / U96; Phase 3 library repo still later)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `editor-chrome-u84`.
 
@@ -293,7 +293,7 @@ Details, Compiler Log, tabs, References, Library, and **wire / connection** poli
 
 ---
 
-## 17. AI, examples, help & reverse import (July 2026) — **Partial** (U91/U94/U95 done)
+## 17. AI, examples, help & reverse import (July 2026) — **U91–U95 done; U93 long-term**
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `ai-examples-help-u91`.
 
@@ -307,7 +307,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 18. Graph catalog, functions, async & OOP (July 2026) — **Partial** (U97 · U102 · U107 · U108–U117 done)
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Done** except U100 cut + U103 only-if
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
 
@@ -318,12 +318,12 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U97 | **Add-node menu audit** (imports + all catalog nodes) | **Done** | Full catalog audit completed; naming convention prefixes integrated into spawn menu labels. All 38 nodes verified for correct spawnability, categorization, and dynamic handling. |
 | U98 | **Function argument pins** | **Done** | Parameter input pins populated on function_define and function_implement nodes end-to-end; syncs on parameter list changes. |
 | U99 | **Function return with arguments** | **Done** | Return statement node (`flow_return`) with value pin lowering to return statements across all 8 target languages. |
-| U100 | **Event listeners** | **Open** | Listen / subscribe visuals that map to text across languages (beyond entry/dispatch). |
-| U101 | **Cross-language async concept** | **Open** | Language-neutral async model (nodes, options, or hybrid) that packs can map — not one-off per language. |
+| U100 | **Event listeners** | **Cut** | Hidden subscribe/emit runtime rejected; Dispatch only. |
+| U101 | **Cross-language async concept** | **Done** | One Wait node; `isAsync` option; pack-complete await/sleep; CL-018 dim. |
 | U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chips on **hover** (pinned while menus open). Selection toolbar + right-click menus with shortcuts remain. |
-| U103 | **Components** (visual + examples) | **Open** | Design a component visual that works for **all** languages; add to multi-lang Test Project examples. |
+| U103 | **Components** (visual + examples) | **Open only if** | A language has a real Component construct. Do not add a fake Component node. |
 | U104 | **Overloading** revise & stress-test | **Done** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
-| U105 | **Overwriting (override)** study | **Open** | Decide if override needs custom visuals or is fully covered by current modifiers / defines. |
+| U105 | **Overwriting (override)** study | **Done** | Option on Function Declare/Define; emit + dim per language. |
 | U106 | **Inheritance** on canvas | **Done** | Extends picker on Declare Class; inherited members in Project tree + spawn Get/Set; EXTENDS_CLASS_MISSING analyzer. CL-010 owns Rust self.base. |
 | U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click selects one; Ctrl/⌘+click multi-selects; left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
 | U108 | **Action history window** | **Done** | Floating panel — graph undo restore + activity log (save/generate/import/export/delete/wire/copy/cut/paste/duplicate) |

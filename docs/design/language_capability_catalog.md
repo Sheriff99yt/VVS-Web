@@ -137,7 +137,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | Program entry | On Start | `event_define` + entry `events[]` | all | shipped | |
 | Per-frame | On Update | `event_define` + `role: tick` | game targets | shipped | Do not spawn `event_on_update` |
 | Custom event body | On `{name}` | `event_define` | all | shipped | |
-| **Async** handler | Async toggle on On / function | `properties.isAsync` | py, js, cs | planned | Emits `async def` / `async Task`; **C++ ineffective** until coroutines shipped — disable chip |
+| **Async** handler | `isAsync` option on On / function / Wait | `properties.isAsync` | py, js, cs | shipped | Emits `async def` / `async Task`; C++/Go/Verse/GDScript function async dimmed (CL-018) |
 | **Coroutine** / yield | Flow nodes | planned flow kinds | py, gd | planned | |
 
 ### C — Invoke (Call / Dispatch)
@@ -149,7 +149,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Static call** | Call on type name | call + `static` binding | cpp, cs | planned | |
 | **Cross-class call** | Call after Import Class | `import_class` + Call | multi-class | shipped | `CROSS_CLASS_CALL_WITHOUT_IMPORT` warning |
 | **Cross-class dispatch** | Dispatch after Import Class | `import_class` + Dispatch | multi-class | shipped | `CROSS_CLASS_DISPATCH_WITHOUT_IMPORT`; same-graph multi-class OK; inherited → `self` |
-| **Super** / base call | Call Super | `super_call` (planned) | cpp, cs, py, gd | planned | |
+| **Super** / base call | `isSuper` option on Call / Dispatch | `properties.isSuper` | cpp, cs, py, gd, rs, js, vs, go | shipped | Idiomatic super/base emit; chip only when Extends is set |
 
 ### D — Expressions & data flow
 

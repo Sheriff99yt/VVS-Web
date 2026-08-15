@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **July 2026** (text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped).
+Last aligned with codebase: **August 2026** (emit/OOP + **U89 / U91 / U92**; text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -49,8 +49,8 @@ Web types re-export from `@vvs/graph-types` (`apps/web/src/types/graph.ts`, `pro
 | View | Purpose |
 |------|---------|
 | **Canvas** | Primary graph editor (default) |
-| **References** | UE5-style reference viewer — focus center, referencers left, dependencies right |
-| **Library** | Community marketplace UI (Phase 3 feature — mock data only) |
+| **References** | UE5-style reference viewer — focus center, referencers left, dependencies right; huge-project breadth + persisted prefs |
+| **Library** | Client-first templates / git import; auth / upload frozen |
 | **Roadmap** | In-app development roadmap — shipped features vs coming soon |
 
 **Removed from product UI** (do not re-add as duplicate surfaces):
@@ -99,8 +99,10 @@ When **Library** is active, only TopNav + full-width `LibraryView` + StatusBar a
 
 Library sections:
 
-- **Discover** — browse/install community scripts (mock cards)
-- **Installed** — empty state placeholder
+- **Templates** — environment & OpenAPI/AsyncAPI spec imports
+- **Git Imports** — repo / pack import
+- **Installed** — installed extensions
+- Auth / upload remain frozen (client-first; no accounts as product)
 
 Local spawnable nodes are **not** listed in Library. They come from `nodeCatalog.ts` via the canvas **spawn catalog** (empty-pane right-click, keyboard spawn, dangling wire, or Node Actions → Add node…).
 
@@ -181,7 +183,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Sync code preview | Edit menu (Ctrl+Shift+S) | Refresh code preview from graph without full validation pipeline |
 | Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
 | Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
-| Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; dangerous-tools consent pref; URL + **Test connection** only when hosted |
+| Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; **dual consent** (UI intent + server write gate); URL + **Test connection** only when hosted |
 | Settings | TopNav gear + **Help** menu | Sidebar modal — **Project** · **Editor** · **Shortcuts** (rebind) · **Audio** · **About**. Replaces flat Project/App tabs |
 | Action history (U108 / U114–U117) | Edit menu · floating panel | Shared undo: graph + symbol/class CRUD; survives tab switch; lean canvas snapshots |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
@@ -221,7 +223,7 @@ Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go
 
 ### Graph editor features
 
-Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **48/48 done** (July 2026).
+Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **U84–U92, U94–U99, U101–U102, U104–U119 shipped** (August 2026). Remaining: U93 long-term, U103 only-if-Component, U100 cut.
 
 | Feature | Status |
 |---------|--------|
@@ -231,7 +233,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Get User Input node (`action_get_input`) | Done — registry kind, schema-driven Settings, Python/JS/C++/Verse emit |
 | Conversion nodes (`convert_to_string`, `convert_to_number`) | Done — explicit per-language calls, source-map highlights, no implicit casts |
 | Pin type validation on wires | Done — `PIN_TYPE_MISMATCH` in `@vvs/graph-types` analyze; shared with editor wiring |
-| Usability example tests (First Graph, Coverage Lab) | Done — `firstGraphUsabilityTest.ts`, `coverageLabUsabilityTest.ts` (+ tests); Async Fetcher / Dual Class Lab / calculators removed |
+| Usability example tests (all five labs: First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) | Done — `firstGraphUsabilityTest.ts`, `coverageLabUsabilityTest.ts` (+ tests); Async Fetcher / Dual Class Lab / calculators removed |
 | Usability test integrity | Done — analyze + wiring + multi-language codegen; drives UI gap discovery per `language_capability_catalog.md` |
 | Call Function nodes (`vvs.project.call_function` + `graphBinding`) | Done |
 | Dispatch event nodes (`event_dispatch` + `graphBinding.kind: dispatch_event`) | Done — per-event spawn in context menu / tree drag; canvas-first **New event here…** on class graph; emits direct handler call (`self.on_<name>(…)`) |
@@ -372,7 +374,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (July 2026):** Phase 6 — CL emit plans, **U89–U92**, queued **U97–U106**. **U77 Go**, **U78 Pack Manager**, **U83**, **U102**, **U107–U119** + code-panel hover shipped. Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
+**Active next (August 2026):** emit/OOP wave + **U89–U92** shipped. Open: CL-014 honest `(x)`, optional CL-017, U103 only if a real construct, U93 long-term, library Phase 3 (`vvs-library` repo + web UI). Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
@@ -395,7 +397,7 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 | HTTP project REST | `server/` Go | **Done** — `GET/PUT /api/projects`, `POST …/compile`; memory or Postgres via `DATABASE_URL` |
 | WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
 | PWA / offline sync | — | Not started |
-| Community library backend | Supabase + pgvector | UI skeleton only |
+| Community library backend | Separate library git repo | Library page redesign shipped (templates / git import); vvs-library repo + upload auth still Phase 3 |
 | **UE6 editor plugin (Verse)** | `plugins/` (planned) | Roadmap — [roadmap.md](roadmap.md) Phase 5 |
 
 ---

@@ -94,13 +94,14 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 | Python | [`python.md`](python.md) | 2026-07-17 | synced_with_open_issues |
 | JavaScript | [`javascript.md`](javascript.md) | 2026-07-17 | synced |
 | C# | [`csharp.md`](csharp.md) | 2026-08-15 | synced |
-| Rust | [`rust.md`](rust.md) | 2026-08-15 | synced_with_open_issues |
-| GDScript | [`gdscript.md`](gdscript.md) | 2026-07-17 | synced_with_open_issues |
+| Rust | [`rust.md`](rust.md) | 2026-08-15 | synced |
+| GDScript | [`gdscript.md`](gdscript.md) | 2026-08-15 | synced |
 | Verse | [`verse.md`](verse.md) | 2026-08-15 | synced_with_open_issues |
+| Go | [`go.md`](go.md) | 2026-08-15 | synced |
 
 Statuses: `pending` · `in_progress` · `synced` · `synced_with_open_issues`
 
-**Validate (2026-07-17):** `bun apps/web/scripts/validate_test_projects_folder.ts` — all 14 fixture×lang pairs **ok** (disk-loaded).
+**Validate (2026-08-15):** `bun apps/web/scripts/validate_test_projects_folder.ts` — 40 goldens (5 labs × 8 langs) **ok** (disk-loaded).
 
 ## Issues log (canonical)
 
@@ -117,7 +118,7 @@ All cross-language mapping findings live here (`CL-NNN`). Do **not** duplicate f
 | CL-007 | rust | P1 | `complex/rust` | Switch cell said `match {}`; Coverage Lab emits `if/else if` cascade (`_vvs_sel`). | fixed-in-cycle (`rust.md`, matrix) | done |
 | CL-008 | rust | P1 | `complex/rust` | **Static** Serial is module `pub static Serial: f32`; **Constant** MaxPower is associated `pub const MaxPower: f32` in `impl` (not struct fields, no `// static`). | fixed-in-cycle — [plans/CL-008-009-rust-static-const-import.md](plans/CL-008-009-rust-static-const-import.md) | done |
 | CL-009 | rust | P1 | `complex/rust` | Generated visible `use std::collections::HashMap;` at file top (Import Module emit), tagged to the map field. No VVS HashMap runtime. | fixed-in-cycle — [plans/CL-008-009-rust-static-const-import.md](plans/CL-008-009-rust-static-const-import.md) | done |
-| CL-010 | rust | P0 | `complex/rust` | Inheritance is `base: Machine` composition; Get/Set/Call now project `self.base.<name>` and rust subclasses emit `fn new()`. | fixed-in-cycle — [plans/CL-010-rust-inheritance.md](plans/CL-010-rust-inheritance.md) | open |
+| CL-010 | rust | P0 | `complex/rust` | Inheritance is `base: Machine` composition; Get/Set/Call now project `self.base.<name>` and rust subclasses emit `fn new()`. | fixed-in-cycle — [plans/CL-010-rust-inheritance.md](plans/CL-010-rust-inheritance.md) | done |
 | CL-011 | gdscript | P1 | `complex/gdscript` | Switch cell said `match:`; Coverage Lab emits `if/elif` cascade. | fixed-in-cycle (`gdscript.md`, matrix) | done |
 | CL-012 | gdscript | P1 | `complex/gdscript` | Switch temp `_vvs_sel = self.Status` omits `var` — invalid GDScript. | fixed-in-cycle (`gdscript.base.json`) | done |
 | CL-013 | gdscript | P1 | `simple/gdscript`, `complex/gdscript` | Get User Input uses `OS.read_string_from_stdin()` only — prompt string from the node is now printed. | fixed-in-cycle (`getInput.gdscript.ts`) | done |

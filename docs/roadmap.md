@@ -15,14 +15,9 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 | Focus | IDs | Status |
 |-------|-----|--------|
-| **Node vs option vs pin + catalog leftovers** | — | **Shipped** — lock + spawn/pin/role/Declare spawn |
-| Target-language emit fidelity | CL-006, CL-008–CL-010, CL-012–CL-013, CL-015–CL-016, CL-018 | **Shipped** — Rust inheritance / static / HashMap, C# `async Task`, Verse for + `Type{}`, async dim |
-| Inheritance + Super + override | U106, U105 | **Shipped** — Extends picker, inherited Get/Set/Call, Super option on Call, override option emit |
-| Cross-language async | U101 / CL-018 | **Shipped** — one Wait node; chips dim where await is a no-op |
 | Verse GetInput | CL-014 | **Open** — honest `(x)` + prompt; no invented player API |
+| Switch `match` | CL-017 | Optional — if-cascade is the shipped shape |
 | Components | U103 | Open — only if a language has a real Component construct |
-| References viewer (huge-project nav) | U89 | **Shipped** — breadth caps the tree; persisted prefs; type filter on list |
-| AI / examples | U91, U92 | Frozen polish — not the core thread |
 | Library remaining (auth / upload) | U90 | Frozen — client-first; no accounts as product |
 
 ### Long-term
@@ -40,6 +35,7 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 | **Function return with arguments** (Return node & value pin codegen) | U99 |
 | **Library backend API** (Go service) | U90+ |
 | **Multi-language test project examples** (5 fixtures × 8 langs = 40 goldens; Inheritance Lab + Go asserted) | U92 |
+| Function graph disk path uniqueness (`Name__{id}.graph.json`) so two `Speak` methods don't collide | U92 follow-on |
 | **Catalog & add-node menu audit** (synonyms, module import spawn) | U97 |
 | **Client-first Library** page redesign (Git repo import, OpenAPI/AsyncAPI templates) | U90 |
 | **AI / MCP Autonomy & Safety Guard** (dual consent, inventory audit, activity indicator) | U91 |
@@ -57,14 +53,11 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 ```text
 CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ─────────────────────
-1  Web editor + 8 packs        6  Polish                          4  Session collab (P2P)
-2  Persistence (local)            CL emit plans                      5  UE6 Verse plugin
-   + local MCP paste              emit/OOP wave shipped                3  Library (git · API done)
-   U77 Go pack done               CL-014 honest (x)                       vvs-library repo · web UI
-   U78 Pack manager done          U93 code→visual (long-term)          wiring & integration
-   U83 virtualization done     3  Library backend                    
-   **U90 Library API done**        Go service · Postgres schema
-                                  GitHub PR workflow · TZ types
+1  Web editor + 8 packs        6  Leftover fidelity                4  Session collab (P2P)
+2  Persistence + local MCP        CL-014 honest (x)                  5  UE6 Verse plugin
+   U77–U83 · U89–U92 shipped      optional CL-017                    3  Library repo + web UI
+   emit/OOP wave shipped          U93 code→visual (long-term)
+   U90 Library API done
 ```
 
 Not current focus: dedicated VPS / self-hosted auth-Postgres product; any live code execution / Play / interpreter / runner.
@@ -91,11 +84,7 @@ Shipped this wave (moved to Recently completed): CL-006, CL-008, CL-009, CL-010,
 | # | Item | Notes |
 |---|------|--------|
 | **U90** | **Library** API done → **web UI** | Wiring to browse/search/import; upload form; auth integration |
-| **U91** | **AI / MCP** audit | Partial — Windsurf paste + consent; full autonomy audit open |
-| **U92** | **New examples** | Done — five fixtures (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) × 8 langs (40 goldens); Go golden assertion |
 | **U93** | **Code → visual** | Long-term reverse import research |
-| **U118** | **Dynamic naming conventions** | Done — Settings to make node titles follow specific language keywords or auto-follow selected language |
-| **U119** | **Bad practices / safety settings** | Done — Settings toggles and Compiler Log warnings for multiple exec connections and dynamic/weak typing |
 
 ### Library backend (U90+)
 
@@ -133,10 +122,10 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U101** | Cross-language async concept | **Done** — one Wait node; `isAsync` option; pack-complete await/sleep |
 | **CL-018** | Dim ineffective async | **Done** — U66/U67 chips; Wait.isAsync does not flip the function |
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
-| **U103** | Components | Visual concept + multi-lang Test Project proof |
+| **U103** | Components | Open only if a language has a real Component construct |
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
 | **U105** | Overwriting (override) | **Done** — option on Declare/Define; emit + dim per language |
-| **U106** | Inheritance | Canvas authoring + per-language lowering (pairs CL-010) |
+| **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010) |
 | **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
 
 Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no** live run.
@@ -148,7 +137,7 @@ Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no
 | **P0** | CL-010 | Rust inheritance / lowering | **Done** — composition + `self.base` projection |
 | **P0** | CL-014 | Verse GetInput | No blocking string read on a plain class; `(x)` + prompt shipped |
 | **P1** | CL-008, CL-009 | Rust static/const + imports | **Done** — module `static` / associated `const`; generated `use std::collections::HashMap;` |
-| **P1** | CL-012, CL-013 | GDScript temps + GetInput | `var` on Switch temp; print prompt |
+| **P1** | CL-012, CL-013 | GDScript temps + GetInput | **Done** — Switch temp `var`; GetInput prints prompt |
 | **P1** | CL-016 | Verse field defaults | **Done** — class-typed `Host = Machine{}` (archetype value, not constructor) |
 | **P2** | CL-017 | Switch `match` | Optional native match — if-cascade is intentional ship shape |
 | **P2** | CL-018 | Async chips | **Done** — rust `isAsync` dimmed (no Tokio; Wait is `thread::sleep`); Call Super is a Call option |
@@ -184,7 +173,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Catalog lock + August emit/OOP wave shipped. Open: CL-014 honest `(x)`, optional CL-017 match, U103 only if real construct. **U93** long-term. |
+| **6** Fidelity, canvas scale & polish | **Active** | Catalog lock + August emit/OOP + U89–U92 shipped. Open: CL-014 honest `(x)`, optional CL-017, U103 only if real construct, U93 long-term. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

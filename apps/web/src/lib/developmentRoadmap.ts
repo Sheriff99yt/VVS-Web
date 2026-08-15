@@ -336,7 +336,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'text-shaped',
         title: 'Text-shaped graphs',
         description:
-          'Canvas is the codegen source of truth -- IR pipeline, ordered define-chain emit, hoisted imports, Wait/Await Wait, event Dispatch (direct call); every behavioral node maps to visible export text with sourceMap. Emit/Subscribe hidden-runtime nodes blocked.',
+          'Canvas is the codegen source of truth -- IR pipeline, ordered define-chain emit, hoisted imports, Wait (`isAsync` option), event Dispatch (direct call); every behavioral node maps to visible export text with sourceMap. Emit/Subscribe hidden-runtime nodes blocked.',
         status: 'done',
       },
       {
@@ -1253,9 +1253,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'priority-3-ai-and-examples',
-    title: 'Priority 3 -- AI Autonomy, Multi-Lang Examples & Reverse Codegen',
+    title: 'Long-term: code → visual (U93)',
     phase: 6,
-    emphasis: 'active',
     items: [
       {
         id: 'code-to-visual-u93',
@@ -1268,9 +1267,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'priority-4-catalog-and-oop',
-    title: 'Priority 4 -- Canvas Catalog, Function Pins, Async & OOP Fidelity',
+    title: 'Components (U103)',
     phase: 6,
-    emphasis: 'active',
     items: [
       {
         id: 'event-listeners-u100',
@@ -1280,46 +1278,11 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'cut',
       },
       {
-        id: 'cross-lang-async-u101',
-        title: 'Cross-language async concept (U101)',
-        description:
-          'Done -- one Wait node; async is an option (or follows the function async flag). Pack-complete await/sleep across the eight shipped languages; no second Await Wait kind. CL-018 dims chips where await/async does not emit; Wait.isAsync never flips the function.',
-        status: 'done',
-      },
-      {
-        id: 'async-chip-dim-cl018',
-        title: 'Dim ineffective async (CL-018)',
-        description:
-          'Done -- function isAsync vs Wait waitIsAsync. Dim C++/Go/Verse/GDScript function async. Dim rust/C++/Go/Verse Wait async (same-thread sleep / no Tokio / no <suspends>). GDScript Wait await timer stays live. No fake # async comments.',
-        status: 'done',
-      },
-      {
-        id: 'call-super-option',
-        title: 'Call Super as a Call option',
-        description:
-          'Done -- isSuper on Call Function and Dispatch (not a Super node). Chip interactive only when the class Extends a parent. Emit super().Foo / super.Foo / base.Foo / Parent::Foo / self.base.Foo / self.Parent.Foo / (super:)Foo. Get/Set/Call stay the constructs.',
-        status: 'done',
-      },
-      {
         id: 'components-visual-u103',
         title: 'Components visual + examples (U103)',
         description:
           'Open only if a language has a real Component construct. Python/JS/Go do not. Do not add a Component node to fake Unreal.',
         status: 'planned',
-      },
-      {
-        id: 'overwriting-study-u105',
-        title: 'Overwriting (override) study (U105)',
-        description:
-          'Override stays an option on Function Declare and Define -- not a new node. Emit virtual/override/abstract only where the language has the construct; dim (U66/U67) elsewhere. Parent-link validation stays on the separate overrides item.',
-        status: 'done',
-      },
-      {
-        id: 'inheritance-design-u106',
-        title: 'Inheritance design (U106)',
-        description:
-          'Extends is an option on Declare Class (project class picker). Child tree shows inherited members (dimmed / badged). Spawn search finds ancestor Get/Set. Missing Extends class is a compiler-log error; inherited Get/Set is valid. CL-010 owns Rust self.base projection. Super is an option on Call, not a new node.',
-        status: 'done',
       },
     ],
   },
@@ -1349,8 +1312,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'overrides',
         title: 'Function overrides (OOP)',
-        description: 'Subclass methods overriding a parent symbol -- distinct from overloads; parent link + validation.',
-        status: 'planned',
+        description: 'Shipped as U105 — override is an option on Function Declare/Define; emit + dim per language.',
+        status: 'done',
       },
       {
         id: 'profiles-json',

@@ -237,13 +237,11 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 
 ---
 
-### E. Sync-only forever — **rejected as permanent stance; accepted as Phase 1 scope**
+### E. Sync-only forever — **rejected; async model shipped**
 
-**What it is:** No Wait/Delay until async model is designed.
+**What it is:** One **Wait** node. Async is an option (`isAsync`) on Wait and on the function/event — not a second Await Wait kind.
 
-**Why sync-first is OK temporarily:** Simplest fidelity story; Dual Class Lab and tutorials ship now.
-
-**Where full model leads:** Explicit **async function** flag + **Wait** (async option) — still text-shaped, not latent VM.
+**Shipped:** Pack-complete sleep/await across the eight languages. CL-018 dims chips where await/async does not emit. Wait never flips the function async flag.
 
 ---
 
