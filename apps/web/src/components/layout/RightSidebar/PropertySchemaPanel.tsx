@@ -10,7 +10,7 @@ interface PropertySchemaPanelProps {
   values: Record<string, unknown>;
   onChange: (key: string, value: string | number | boolean) => void;
   /** Dynamic choices for class / enum-like fields (e.g. Declare Class Extends). */
-  fieldOptions?: Record<string, Array<{ value: string; label: string; description?: string; group?: string }>>;
+  fieldOptions?: Record<string, Array<{ value: string; label: string; description?: string; group?: string; dimmed?: boolean }>>;
 }
 
 /** Edited on the selected-node chip strip (`NodeModifiers`), not duplicated in Details. */

@@ -46,9 +46,23 @@ func ListAvailableNodes() ([]AvailableNode, error) {
 	if err := json.Unmarshal(corePackJSON, &pack); err != nil {
 		return nil, err
 	}
+	// Leftover kinds stay in the pack for LookupKind / old graphs, but must not
+	// appear in the MCP spawn catalog (parity with syntax-registry SPAWN_EXCLUDED_KINDS).
+	spawnExcluded := map[string]struct{}{
+		"event_on_start":    {},
+		"event_on_update":   {},
+		"event_emit":        {},
+		"event_subscribe":   {},
+		"flow_sequence":     {},
+		"action_await_wait": {},
+		"graph_ref":         {},
+	}
 	out := make([]AvailableNode, 0, len(pack.Kinds))
 	for _, kind := range pack.Kinds {
 		if kind.Dynamic {
+			continue
+		}
+		if _, skip := spawnExcluded[kind.KindID]; skip {
 			continue
 		}
 		out = append(out, AvailableNode{

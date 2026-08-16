@@ -661,6 +661,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'components-visual-u103-shipped',
+        title: 'Components locked as Class (U103)',
+        description:
+          'Locked: Component = Class (field or Extends). No Component node. Game-talk Health/Inventory is class_define plus a field or Extends. See language_capability_catalog.md § Component = Class.',
+        status: 'done',
+      },
+      {
         id: 'declare-implement-emit',
         title: '1:1 member-chain emit',
         description:
@@ -1267,7 +1274,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'priority-4-catalog-and-oop',
-    title: 'Components (U103)',
+    title: 'Catalog locks (U100 / U103)',
     phase: 6,
     items: [
       {
@@ -1279,10 +1286,10 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'components-visual-u103',
-        title: 'Components visual + examples (U103)',
+        title: 'Components locked as Class (U103)',
         description:
-          'Open only if a language has a real Component construct. Python/JS/Go do not. Do not add a Component node to fake Unreal.',
-        status: 'planned',
+          'Locked: Component = Class (field or Extends). No Component node. Game-talk Health/Inventory is class_define plus a field or Extends. See language_capability_catalog.md § Component = Class.',
+        status: 'done',
       },
     ],
   },

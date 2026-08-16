@@ -31,7 +31,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const INHERITANCE_LAB_FIXTURE_REVISION = 3;
+export const INHERITANCE_LAB_FIXTURE_REVISION = 4;
 
 export const PARENT_CLASS = createClassSymbol('Parent', {
   id: MAIN_CLASS_ID,
@@ -44,6 +44,12 @@ export const CHILD_CLASS = createClassSymbol('Child', {
   containerId: MAIN_GRAPH_CONTAINER_ID,
   extendsType: 'Parent',
 });
+
+const FN_PARENT_CTOR = createFunctionSymbol('Parent', {
+  id: 'fn-parent-ctor',
+  classId: MAIN_CLASS_ID,
+});
+FN_PARENT_CTOR.visibility = 'public';
 
 const FN_PARENT_SPEAK = createFunctionSymbol('Speak', {
   id: 'fn-parent-speak',
@@ -67,15 +73,24 @@ const EVT_CHILD_START = {
   classId: CHILD_CLASS_ID,
 };
 
+const PARENT_CTOR_DEF = functionDefineNode('il-parent-ctor-def', { x: 240, y: 0 }, FN_PARENT_CTOR);
+PARENT_CTOR_DEF.data.properties = { ...PARENT_CTOR_DEF.data.properties, role: 'constructor' };
+const PARENT_CTOR_IMPL = functionImplementNode('il-parent-ctor-impl', { x: 440, y: 0 }, FN_PARENT_CTOR);
+PARENT_CTOR_IMPL.data.properties = { ...PARENT_CTOR_IMPL.data.properties, role: 'constructor' };
+
 const PARENT_MEMBER_NODES: VVSNode[] = [
   classDefineNode('il-parent-class', { x: 40, y: 0 }, PARENT_CLASS),
-  functionDefineNode('il-parent-speak-def', { x: 240, y: 0 }, FN_PARENT_SPEAK),
-  functionImplementNode('il-parent-speak-impl', { x: 440, y: 0 }, FN_PARENT_SPEAK),
+  PARENT_CTOR_DEF,
+  PARENT_CTOR_IMPL,
+  functionDefineNode('il-parent-speak-def', { x: 640, y: 0 }, FN_PARENT_SPEAK),
+  functionImplementNode('il-parent-speak-impl', { x: 840, y: 0 }, FN_PARENT_SPEAK),
 ];
 
 const PARENT_MEMBER_EDGES: VVSEdge[] = [
-  execEdge('il-pm-0', 'il-parent-class', 'il-parent-speak-def'),
-  execEdge('il-pm-1', 'il-parent-speak-def', 'il-parent-speak-impl'),
+  execEdge('il-pm-0', 'il-parent-class', 'il-parent-ctor-def'),
+  execEdge('il-pm-1', 'il-parent-ctor-def', 'il-parent-ctor-impl'),
+  execEdge('il-pm-2', 'il-parent-ctor-impl', 'il-parent-speak-def'),
+  execEdge('il-pm-3', 'il-parent-speak-def', 'il-parent-speak-impl'),
 ];
 
 const CHILD_START_MEM = eventMemberDefineNode('il-child-start-mem', { x: 640, y: 200 }, EVT_CHILD_START);
@@ -164,14 +179,14 @@ export function createInheritanceLabUsabilityTestSnapshot(): ProjectSnapshot {
       description:
         'Inheritance Lab (rev ' +
         INHERITANCE_LAB_FIXTURE_REVISION +
-        ') — Extends + override + Call Super + Wait async. Parent.Speak (virtual) / Child.Speak (override) on one graph.',
+        ') — Extends + override + Call Super + Wait async + Parent constructor role. Parent.Speak (virtual) / Child.Speak (override) on one graph.',
     },
     classes: [PARENT_CLASS, CHILD_CLASS],
     activeClassId: MAIN_CLASS_ID,
     graphContainers: normalizeGraphContainers(undefined),
     variables: [],
     events: [EVT_CHILD_START],
-    functions: [FN_PARENT_SPEAK, FN_CHILD_SPEAK],
+    functions: [FN_PARENT_CTOR, FN_PARENT_SPEAK, FN_CHILD_SPEAK],
     openTabs: [
       { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: PROJECT_MAP_CONTAINER_NAME },
     ],
@@ -183,6 +198,13 @@ export function createInheritanceLabUsabilityTestSnapshot(): ProjectSnapshot {
       [MAIN_GRAPH_CONTAINER_ID]: {
         ...usabilityTestDocument(HOME_NODES, HOME_EDGES),
         metadata: defaultTabMetadata('container', 'InheritanceLab'),
+      },
+      'fn-parent-ctor': {
+        ...usabilityTestDocument(
+          [functionEntryNode('il-parent-ctor-entry', { x: 40, y: 80 }, FN_PARENT_CTOR)],
+          []
+        ),
+        metadata: defaultTabMetadata('function', 'Parent'),
       },
       'fn-parent-speak': {
         ...usabilityTestDocument(PARENT_SPEAK_NODES, PARENT_SPEAK_EDGES),

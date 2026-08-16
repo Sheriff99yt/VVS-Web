@@ -1,5 +1,7 @@
 // ===== src/InheritanceLab.go =====
 type Parent struct {
+	// (x) Declare Parent
+	// (x) Implement Parent
 	// (x) Declare Speak
 func Speak() void {
 	fmt.Println("parent")

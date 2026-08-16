@@ -3,10 +3,10 @@
 Tracked gaps between **what the shell shows** and **what the UI skill / product matrix requires**.  
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
-**Last updated:** 2026-08-15  
-**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 only-if-Component. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Last updated:** 2026-08-16  
+**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 locked (Component = Class). Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 long-term · U103 only-if-Component · U100 cut
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 long-term · U103 locked (Component = Class) · U100 cut
 
 ## Status legend
 
@@ -149,7 +149,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§15–§18 remaining:** CL-014 honest `(x)` · U103 only-if-Component · U93 long-term · U90 frozen. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
+**§15–§18 remaining:** CL-014 honest `(x)` · U103 locked (Component = Class) · U93 long-term · U90 frozen. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 
@@ -307,7 +307,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 18. Graph catalog, functions, async & OOP (July 2026) — **Done** except U100 cut + U103 only-if
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Done** except U100 cut; U103 locked (Component = Class)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
 
@@ -321,7 +321,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U100 | **Event listeners** | **Cut** | Hidden subscribe/emit runtime rejected; Dispatch only. |
 | U101 | **Cross-language async concept** | **Done** | One Wait node; `isAsync` option; pack-complete await/sleep; CL-018 dim. |
 | U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chips on **hover** (pinned while menus open). Selection toolbar + right-click menus with shortcuts remain. |
-| U103 | **Components** (visual + examples) | **Open only if** | A language has a real Component construct. Do not add a fake Component node. |
+| U103 | **Components** (visual + examples) | **Locked** | Component = Class (`class_define` + field or Extends). No Component node. See [language_capability_catalog.md](../../docs/design/language_capability_catalog.md#component--class). |
 | U104 | **Overloading** revise & stress-test | **Done** | Audit current overload UX/emit; fix or document gaps under real fixtures. |
 | U105 | **Overwriting (override)** study | **Done** | Option on Function Declare/Define; emit + dim per language. |
 | U106 | **Inheritance** on canvas | **Done** | Extends picker on Declare Class; inherited members in Project tree + spawn Get/Set; EXTENDS_CLASS_MISSING analyzer. CL-010 owns Rust self.base. |

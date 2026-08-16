@@ -106,6 +106,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | Capability | Neutral UI | Node / property | Families | uiStatus | Notes |
 |------------|------------|-----------------|----------|----------|-------|
 | Class / module shell | Declare Class `{name}` | `class_define` | all | shipped | `extendsType` on class + define node |
+| Component (game-talk) | same as Declare Class | `class_define` + field or Extends | all | **locked** | Not a second construct. See [Component = Class](#component--class). U103 closed. |
 | Variable field | Declare `{name}` | `var_define` | all | shipped | **TypeRef** (builtin / enum / class / array / map); legacy `enumType` migrates |
 | Function member | Declare `{name}` | existence / signature / abstract | all | **shipped (U81)** | `function_define` — no method without Define (except abstract) |
 | Function body place | Define `{name}` | body insert at chain position | all | **shipped (U81)** | `function_implement` on member chain + Edit function body tab |
@@ -119,16 +120,149 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Abstract** / pure virtual | Modifier on Declare function | `properties.isAbstract` | cpp, cs | **shipped** | C++ `virtual … = 0`; C# `abstract` prototype (no body); do **not** invent class `abstract` |
 | **Override** / `virtual` | Modifier on Declare function | `properties.isVirtual`, `isOverride` | cpp, cs, verse | **shipped** | Emit only when toggled on the node; ineffective langs omit keywords |
 | **Const** / **readonly** field | Modifier on Declare var | `properties.isConst` | cpp, rs, cs | **shipped** (cpp/cs/rs when set) | C++ `const`; C# `readonly`; Rust `const` — only when node property set |
-| **Property** (getter/setter) vs field | Declare Property `{name}` | `property_define` (planned) | cs, cpp, gd | planned | Distinct from `var_define` when language has property syntax |
+| **Property** (getter/setter) vs field | option on field / Function — not a node | property option on `var_define`; `@property` option on Function (py) | cs, gd; py `@property` on Function | planned | Not `property_define`. C# / GDScript `setget`: field written as property. Python `@property`: option on Function. C++ has no language property. |
 | **Function overload set** | One Declare node, N signatures in inspector | `function_define` + `overloads[]` on symbol | cpp, cs, rs | **partial** | Symbol model has `overloads[]`; UI does not expose multiple arities on one name yet |
 | **Default parameter values** | Function tab entry pins / inspector | function graph + symbol metadata | py, cpp, cs, gd | partial | |
 | **Return type** on Declare | Inspector | `returnType` | typed targets | **planned** | Stored on overloads for future emit; UI removed until signatures are non-void |
-| **Constructor** | Declare Constructor | `constructor_define` (planned) | cpp, cs, rs | planned | Separate from `on_start` entry |
-| **Destructor** | Declare Destructor | `destructor_define` (planned) | cpp | planned | |
-| **Interface / trait impl** | Declare Implements | `implements_define` (planned) | cs, rs | planned | |
+| **Constructor** | Function Define + `role: constructor` | `function_define` / `function_implement` + **role** option | cpp, cs, js, py, gd | shipped | Same pattern as On `role: entry\|tick`. Not `constructor_define`. Spawn only where you type one: C++ ctor, C# ctor, JS `constructor`, Python `__init__`, GDScript `_init`. Rust `new` is a normal function (do not invent `impl Default`). Go has none. Super/init call stays `isSuper` on Call. |
+| **Destructor** | Function Define + `role: destructor` | `function_define` / `function_implement` + **role** option | cpp (and langs that type one) | shipped | Not `destructor_define`. Spawn only where the language has a destructor. |
+| **Interface / trait** | Class + `form` option; Implements list | `class_define` + `form: class\|interface\|trait`; Implements option (list, like Extends) | cs, rs (form); implements where typed | planned | Not `implements_define`. C++ stays abstract Class + `isAbstract`. Python stays Class. JS emit has no interface. Rust `impl Trait for Type` is the only extra line, and only in Rust. |
 | **File extension per target** | Code panel **LanguageExtensionMenu** (hover submenu); graph settings defaults | `metadata.targetFileExtension` per graph; `targetFileExtensions` on snapshot for new graphs | all | **shipped** | Language-only click → first extension; hover submenu for `.cpp` / `.hpp` / etc. |
 | **Per-graph codegen language** | Code panel top bar + graph settings | `metadata.targetLanguage` per graph; snapshot `targetLanguage` = default for new graphs | all | **shipped** | Multi-language projects: Calculator in Python, helper fn in Rust, etc. |
 | **Generated files tree** | Output panel → **Files** tab | `useProjectTranspileResult` + `buildGeneratedFileTree` | all | **shipped** | Folder tree of all emitted paths; removed flat **Generated** list from project tree |
+
+
+### Component = Class (locked)
+
+Game-talk “component” is **not** a second VVS construct. A “Health / Inventory component” is a **Class**: **Declare Class** (`class_define`) plus either a **field** (composition) or **Extends**.
+
+Same **node vs option vs pin** test: you do not type `component` in Python / JavaScript / Go / Rust / C++ / C#. You type a class or struct and a member, or `extends`. Host-only types (Unreal `UActorComponent`, Unity `MonoBehaviour`) stay in that host pack later — do not leak them onto the language canvas.
+
+**Do not spawn a Component node.** There is no `component_define`. **U103 is closed** as this lock.
+
+#### Health on Enemy (all eight shipped languages)
+
+What you would type — `Health` composed onto `Enemy`.
+
+**Python**
+
+```python
+class Health:
+    hp: int = 100
+
+class Enemy:
+    def __init__(self):
+        self.health = Health()
+```
+
+**JavaScript**
+
+```javascript
+class Health {
+  hp = 100
+}
+class Enemy {
+  constructor() {
+    this.health = new Health()
+  }
+}
+```
+
+**C++**
+
+```cpp
+class Health { public: float hp = 100; };
+class Enemy { Health health; };
+```
+
+**C#**
+
+```csharp
+class Health { public float Hp = 100; }
+class Enemy { public Health health = new(); }
+```
+
+**Rust**
+
+```rust
+struct Health { hp: f32 }
+struct Enemy { health: Health }
+```
+
+**GDScript**
+
+```gdscript
+class_name Health
+var hp := 100
+
+class_name Enemy
+extends Node
+var health := Health.new()
+```
+
+**Verse** (class + class-typed field; no invented player/device APIs)
+
+```
+health := class:
+    hp: float = 100.0
+
+enemy := class:
+    Health: health
+```
+
+**Go**
+
+```go
+type Health struct{ HP int }
+type Enemy struct{ Health }
+```
+
+
+### Leftover constructs (locked roles)
+
+Node vs option vs pin still governs. Spawn a construct only where the language actually has it (same rule as Function Declare).
+
+1. **Constructor / destructor** — Function Define with a **role** option (`constructor` / `destructor`), same pattern as On `role: entry|tick`. Not `constructor_define` / `destructor_define`. Spawn Constructor only where you type one: C++ ctor, C# ctor, JS `constructor`, Python `__init__`, GDScript `_init`. Rust `new` is a normal function (do not invent `impl Default`). Go has none. Super/init call stays `isSuper` on Call. Locked model; emit shipped for python / javascript / cpp / csharp / gdscript constructors and C++ destructor. Rust, Go, and Verse constructor/destructor stay dim (no invented APIs).
+
+   Example: Python `def __init__(self):` is Function Define `role: constructor`, not a Constructor node.
+
+2. **Interface / trait** — Class symbol + **form** option (`class` | `interface` | `trait`). **Implements** is an option on Class, like Extends (list). Not `implements_define`. C++ stays abstract Class + `isAbstract`. Python stays Class. JS emit has no interface. Rust `impl Trait for Type` is the only extra line, and only in Rust.
+
+   Example: C# `interface IFoo` is Class `form: interface`; `class Bar : IFoo` is Implements on Class.
+
+3. **Lambda** — a **node** (expression). You type `lambda` / `=>` / `|x|`. Not a project symbol. Capture is an **option** on that node, not a second `closure_define`. One planned kind at most: `lambda_define` (or keep as planned node, drop `closure_define` as a separate kind).
+
+   Example: JS `x => x + 1` is a Lambda node with a capture option, not `closure_define`.
+
+4. **Try / catch** — a **flow node** like Branch. Catch / finally are exec pins. Not a symbol. Do **not** spawn in Go or Rust (no try). Catalog must not say “most” languages.
+
+   Example: Python `try` / `except` / `finally` is one Try node with catch and finally exec pins.
+
+5. **Property** — an **option**, not `property_define`. C# / GDScript `setget`: field written as property. Python `@property`: option on Function. C++ has no language property.
+
+   Example: C# `public int Hp { get; set; }` is a field with a property option.
+
+6. **Generics** — `type_params[]` **option** on Class or Function. Not a node.
+
+   Example: C++ `template<typename T>` is `type_params[]` on Class or Function.
+
+7. **Package visibility** — already a visibility option on Class. Not a node.
+
+   Example: Rust `pub(crate)` is Class visibility, not a Package node.
+
+8. **Static call** — existing Call + type-name callee + static binding. Not a new kind. Mark the planned “Static call” row as this model (shipped-as-Call or planned-as-option, not a new node).
+
+   Example: C# `Math.Abs(x)` is Call with a type-name callee + static binding.
+
+9. **Pattern matching** — Switch is the node. `match` is optional lowering (CL-017). Drop planned `flow_match` as a kind. Do not add a Match node.
+
+   Example: Rust `match x { ... }` lowers from Switch (CL-017), not `flow_match`.
+
+10. **GetInput** — already a node (`action_get_input`); Verse stays honest `(x)`. No new symbol/option.
+
+11. **Component** — already locked as Class. Do not reopen. See [Component = Class](#component--class).
+
+12. U93 / Library / UE / collab — not constructs. Do not add catalog rows.
 
 ### B — Handlers & flow (On / Implement)
 
@@ -138,7 +272,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | Per-frame | On Update | `event_define` + `role: tick` | game targets | shipped | Do not spawn `event_on_update` |
 | Custom event body | On `{name}` | `event_define` | all | shipped | |
 | **Async** handler | `isAsync` option on On / function / Wait | `properties.isAsync` | py, js, cs | shipped | Emits `async def` / `async Task`; C++/Go/Verse/GDScript function async dimmed (CL-018) |
-| **Coroutine** / yield | Flow nodes | planned flow kinds | py, gd | planned | |
+| **Coroutine** / yield | statement node later where you type `yield` | planned statement node (not a soup of flow kinds) | py, gd | planned | Yield would be a statement node later where you type `yield` (py, gd), not a soup of “planned flow kinds.” |
 
 ### C — Invoke (Call / Dispatch)
 
@@ -146,7 +280,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 |------------|------------|------|----------|----------|-------|
 | Function call | Call `{name}` | `vvs.project.call_function` | all | shipped | |
 | Event invoke | Dispatch `{name}` | `event_dispatch` | all | shipped | |
-| **Static call** | Call on type name | call + `static` binding | cpp, cs | planned | |
+| **Static call** | Call + type-name callee + static binding | existing Call (`vvs.project.call_function`) — shipped-as-Call / planned-as-option | cpp, cs | planned-as-option | Not a new kind. This row is the Call + static-binding model, not a new node. |
 | **Cross-class call** | Call after Import Class | `import_class` + Call | multi-class | shipped | `CROSS_CLASS_CALL_WITHOUT_IMPORT` warning |
 | **Cross-class dispatch** | Dispatch after Import Class | `import_class` + Dispatch | multi-class | shipped | `CROSS_CLASS_DISPATCH_WITHOUT_IMPORT`; same-graph multi-class OK; inherited → `self` |
 | **Super** / base call | `isSuper` option on Call / Dispatch | `properties.isSuper` | cpp, cs, py, gd, rs, js, vs, go | shipped | Idiomatic super/base emit; chip only when Extends is set |
@@ -156,17 +290,17 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | Capability | Neutral UI | Node | Families | uiStatus | Notes |
 |------------|------------|------|----------|----------|-------|
 | Explicit conversion | To String / To Number | `convert_*` | all | shipped | No implicit cast in Print/Set |
-| User input | Get User Input | `action_get_input` | all | shipped | |
+| User input | Get User Input | `action_get_input` | all | shipped | Already a node; Verse stays honest `(x)`. No new symbol/option. |
 | Branch | Branch | `flow_branch` | all | shipped | |
 | Switch | Switch | `flow_switch` | all | shipped | Enum type from canvas `enum_define`; member case labels → `EnumMemberAccess` |
 | **Get Enum Member** | Get Enum Member | `expr_enum_member` | all | **shipped** | properties `enumName` + `member`; pure data pin |
-| **Lambda / anonymous function** | Declare Lambda `{name}` or inline fn graph | `lambda_define` / `closure_define` (planned) | py, js, cs, rs | **planned** | Python `lambda x: x+1`; needs visible subgraph or pack-lowering from graph |
-| **Closure capture** | Inspector on lambda | binding metadata | py, js, rs | planned | |
+| **Lambda / anonymous function** | Lambda expression node | `lambda_define` (planned node) — not a project symbol | py, js, cs, rs, gd | **planned** | You type `lambda` / `=>` / `\|x\|`. Capture is an **option** on that node. One planned kind at most: `lambda_define`. Drop `closure_define` as a separate kind. |
+| **Closure capture** | option on the Lambda node | capture option on `lambda_define` | py, js, rs | planned | Not a second `closure_define` kind. |
 | **Null / optional** | Optional type + nodes | type system + `optional_*` | cs, rs | planned | |
-| **Pattern matching** | Match node | `flow_match` (planned) | rs, py 3.10+, cs | planned | |
-| **Try / catch** | Try region | `flow_try` (planned) | most | planned | |
+| **Pattern matching** | Switch is the node | `flow_switch` + optional `match` lowering (CL-017) | rs, py 3.10+, cs | planned | Drop planned `flow_match` as a kind. Do not add a Match node. |
+| **Try / catch** | Try flow node (like Branch) | planned flow node; catch / finally are exec pins | py, js, cpp, cs, gd | planned | Not a symbol. Do **not** spawn in Go or Rust (no try). Catalog must not say “most” languages. |
 | **Await** | Wait `isAsync` option (or function async flag) | `action_wait` | all 8 packs | shipped | No `expr_await` node; C++/Rust keep std thread sleep; Verse `Sleep` |
-| Generics / templates | Type params on Declare | `type_params[]` | cpp, cs, rs | planned | `template<typename T>` / `fn foo<T>()` |
+| Generics / templates | `type_params[]` **option** on Class or Function | option — not a node | cpp, cs, rs | planned | `template<typename T>` / `fn foo<T>()`. Not a node. |
 
 ### E — Modules & imports
 
@@ -175,7 +309,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | Graph reference | Graph Reference | `graph_ref` | all | shipped | Project-map navigation only -- not in the spawn catalog |
 | Import class | Import Class | `import_class` | multi-class | partial | |
 | **Using / import statements** | Import Module | `vvs.project.import_module` | py, js, cs, rs, cpp | **shipped** | `modulePath` + `importStyle` + `importNames` + **`targetLanguages`**; place **once at file top**; flow Import for conditional (Python `import json`); optional `ownerClassId`. Coverage Lab: iostream/string/vector/unordered_map (cpp), System + Collections.Generic (csharp), enum + conditional json (python) |
-| **Package visibility** | internal / pub | modifier on class | rs | planned | |
+| **Package visibility** | visibility option on Class | `properties.visibility` on `class_define` | rs | planned | Already a visibility option on Class. Not a node. |
 
 ### F — Engine / environment (data-driven)
 
@@ -201,8 +335,9 @@ Surface forms are owned by **syntax packs**; graph must still carry the decision
 | Async | `async def` | `async function` | coroutines (planned) | `async Task` | `async fn` | — | — |
 | Module import | `import` | `import` | `#include` / module | `using` | `use` | `preload` | — |
 | Inheritance | `class A(B)` | `extends` | `: public B` | `: B` | `impl Trait` | `extends` | — |
+| Component | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node |
 
-When adding a row to this table, add a matching **catalog §** entry with `uiStatus` and planned `kindId`.
+When adding a row to this table, add a matching **catalog §** entry with `uiStatus` and planned node or option (not a leftover-construct kind id). Go (8th family, not a column above): Component is the same lock — struct + field or embed; no Component node. Leftover constructs (constructor, interface, lambda, try, property, generics, package visibility, static call, pattern match) are locked roles — see [Leftover constructs](#leftover-constructs-locked-roles).
 
 ---
 
@@ -274,7 +409,7 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 |--------------|------------------|------------------|
 | Force class `abstract` because a member is abstract | `emit/classModule.ts` (C#) | Only `class_define.properties.isAbstract` |
 | Always emit opening `public:` | `ClassPublicSection` | Emit access section only when visibility **changes** |
-| Invent `impl Default` / hidden wrappers | `emit/classModule.ts` (Rust) | Constructor/Default **define node** or omit |
+| Invent `impl Default` / hidden wrappers | `emit/classModule.ts` (Rust) | Rust `new` is a normal function — do not invent `impl Default`. Constructor is Function `role`, only where the language types one; omit if none. |
 | Hardcode event `visibility: 'public'` | `emit/shell.ts` | Use `member.properties.visibility` |
 | Always emit Verse `<override>` on events | `emit/shell.ts` | Only when `isOverride` |
 | Inject `async` from body | `functionNeedsAsync` | **Removed** — async only from define-node `isAsync` |
@@ -343,6 +478,8 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 
 | Date | Change |
 |------|--------|
+| 2026-08-16 | **Leftover constructs locked** — constructor/destructor = Function `role`; interface/trait = Class `form` + Implements option; lambda = one expression node (`lambda_define`, drop `closure_define`); try/catch = flow node (not Go/Rust); property/generics/package visibility = options; static call = existing Call; pattern match = Switch (drop `flow_match`). See [Leftover constructs](#leftover-constructs-locked-roles). |
+| 2026-08-16 | **Component = Class locked (U103)** — game-talk component is `class_define` + field or Extends; no `component_define` node; Health-on-Enemy examples for all 8 families |
 | 2026-07-16 | **Imports once at top + conditional flow Import** — Coverage Lab shared import chain; Python `import {mod}` pack; event defines Y-ordered peers; roadmap **U68–U77** |
 | 2026-07-16 | **Graph = file locked** — one container graph → one module (all classes); no class-per-file split profile (user awareness / no hidden magic). U58 = migrate emit. |
 | 2026-07-16 | **Code panel verification locked** — validate Test Projects via `extract_test_project_outputs.ts` / `useProjectTranspileResult`; Import `targetLanguages` + `enumType` / `EnumMemberAccess` |

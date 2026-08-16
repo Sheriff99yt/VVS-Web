@@ -11,7 +11,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { GraphPropertiesPanel } from './RightSidebar/GraphPropertiesPanel';
+import { GraphPropertiesPanel, type GraphPropertiesSection } from './RightSidebar/GraphPropertiesPanel';
 import { GraphCodegenPanel, ProjectCodegenDefaultsPanel } from './CodegenTargetPanel';
 import { CrossOverArchitecturePanel } from './CrossOverArchitecturePanel';
 import { PortabilitySummaryPanel } from './PortabilitySummaryPanel';
@@ -21,10 +21,11 @@ import { ShortcutsSettingsPanel } from '@/components/settings/ShortcutsSettingsP
 import { AudioSettingsPanel } from '@/components/settings/AudioSettingsPanel';
 import { AboutSettingsPanel } from '@/components/settings/AboutSettingsPanel';
 import { PRODUCT_NAME } from '@/lib/productName';
+import { anySettingsMatch, settingsBlockMatches } from '@/lib/settingsSearch';
 
 export type SettingsSection = 'project' | 'editor' | 'shortcuts' | 'audio' | 'about';
 
-/** @deprecated use SettingsSection */
+/** @deprecated use SettingsSection. 'app' still opens Editor. */
 export type SettingsTab = 'project' | 'app';
 
 export const OPEN_SETTINGS_EVENT = 'vvs:open-settings';
@@ -51,6 +52,71 @@ export function dispatchOpenSettings(section: SettingsSection | SettingsTab = 'p
   );
 }
 
+function SearchGroup({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
+        {icon}
+        <span>{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ProjectSearchResults({ query }: { query: string }) {
+  const thisGraph = settingsBlockMatches(query, 'this-graph');
+  const defaults = settingsBlockMatches(query, 'project-defaults');
+  const environment = settingsBlockMatches(query, 'environment');
+  const exportPaths = settingsBlockMatches(query, 'export-paths');
+  const details = settingsBlockMatches(query, 'graph-details');
+  const packLock = settingsBlockMatches(query, 'pack-lock');
+  const portability = settingsBlockMatches(query, 'portability');
+  const coa = settingsBlockMatches(query, 'coa');
+  if (
+    !thisGraph &&
+    !defaults &&
+    !environment &&
+    !exportPaths &&
+    !details &&
+    !packLock &&
+    !portability &&
+    !coa
+  ) {
+    return null;
+  }
+
+  const propertySections: GraphPropertiesSection[] = [
+    ...(environment ? (['environment'] as const) : []),
+    ...(exportPaths ? (['exportPaths'] as const) : []),
+    ...(details ? (['details'] as const) : []),
+  ];
+
+  return (
+    <SearchGroup
+      icon={<FolderKanban size={13} className="text-indigo-400 shrink-0" />}
+      title="Project"
+    >
+      {thisGraph ? <GraphCodegenPanel /> : null}
+      {defaults ? <ProjectCodegenDefaultsPanel /> : null}
+      {propertySections.length > 0 ? (
+        <GraphPropertiesPanel sections={propertySections} />
+      ) : null}
+      {packLock ? <SyntaxPackLockPanel /> : null}
+      {portability ? <PortabilitySummaryPanel /> : null}
+      {coa ? <CrossOverArchitecturePanel /> : null}
+    </SearchGroup>
+  );
+}
+
 export function GraphSettingsModal() {
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SettingsSection>('project');
@@ -74,6 +140,8 @@ export function GraphSettingsModal() {
   }, []);
 
   if (!open) return null;
+
+  const query = searchQuery.trim();
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4">
@@ -155,68 +223,68 @@ export function GraphSettingsModal() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-5 py-5 min-h-0">
-            {searchQuery.trim() ? (
+            {query ? (
               <div className="space-y-6 max-w-2xl">
                 <div className="text-[10px] text-zinc-500 font-semibold uppercase tracking-widest pb-1 border-b border-zinc-800/80">
                   Search results across all tabs for &quot;{searchQuery}&quot;
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
-                    <SlidersHorizontal size={13} className="text-indigo-400 shrink-0" />
-                    <span>Editor & Preferences</span>
-                  </div>
-                  <AppSettingsPanel onCloseSettings={() => setOpen(false)} searchQuery={searchQuery} />
-                </div>
+                {anySettingsMatch(query) ? (
+                  <>
+                    {settingsBlockMatches(query, 'editor') ? (
+                      <SearchGroup
+                        icon={<SlidersHorizontal size={13} className="text-indigo-400 shrink-0" />}
+                        title="Editor"
+                      >
+                        <AppSettingsPanel onCloseSettings={() => setOpen(false)} searchQuery={searchQuery} />
+                      </SearchGroup>
+                    ) : null}
 
-                <div className="space-y-2 border-t border-zinc-800/80 pt-4">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
-                    <Keyboard size={13} className="text-indigo-400 shrink-0" />
-                    <span>Keyboard Shortcuts</span>
-                  </div>
-                  <ShortcutsSettingsPanel searchQuery={searchQuery} />
-                </div>
+                    {settingsBlockMatches(query, 'shortcuts') ? (
+                      <SearchGroup
+                        icon={<Keyboard size={13} className="text-indigo-400 shrink-0" />}
+                        title="Keyboard Shortcuts"
+                      >
+                        <ShortcutsSettingsPanel searchQuery={searchQuery} />
+                      </SearchGroup>
+                    ) : null}
 
-                {/audio|sound|volume|mute|buzz|feedback/i.test(searchQuery) ? (
-                  <div className="space-y-2 border-t border-zinc-800/80 pt-4">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
-                      <Volume2 size={13} className="text-indigo-400 shrink-0" />
-                      <span>Audio Settings</span>
-                    </div>
-                    <AudioSettingsPanel />
-                  </div>
-                ) : null}
+                    {settingsBlockMatches(query, 'audio') ? (
+                      <SearchGroup
+                        icon={<Volume2 size={13} className="text-indigo-400 shrink-0" />}
+                        title="Audio"
+                      >
+                        <AudioSettingsPanel searchQuery={searchQuery} />
+                      </SearchGroup>
+                    ) : null}
 
-                {/project|language|codegen|target|syntax|export|cross/i.test(searchQuery) ? (
-                  <div className="space-y-2 border-t border-zinc-800/80 pt-4">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300">
-                      <FolderKanban size={13} className="text-indigo-400 shrink-0" />
-                      <span>Project & Codegen</span>
-                    </div>
-                    <GraphCodegenPanel />
-                    <GraphPropertiesPanel />
-                  </div>
-                ) : null}
+                    <ProjectSearchResults query={query} />
+
+                    {settingsBlockMatches(query, 'about') ? (
+                      <SearchGroup
+                        icon={<Info size={13} className="text-indigo-400 shrink-0" />}
+                        title="About"
+                      >
+                        <AboutSettingsPanel />
+                      </SearchGroup>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="py-8 text-center text-zinc-500 text-[11px]">
+                    No settings match &quot;{searchQuery}&quot;
+                  </p>
+                )}
               </div>
             ) : (
               <>
                 {section === 'project' ? (
                   <div className="space-y-5 max-w-2xl">
-                    <section className="space-y-1">
-                      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-                        Active graph
-                      </p>
-                      <p className="text-[10px] text-zinc-600 leading-relaxed">
-                        Language and export for the graph you are editing. Other graphs keep their own
-                        overrides.
-                      </p>
-                    </section>
                     <GraphCodegenPanel />
                     <div className="border-t border-zinc-800/80 pt-4">
-                      <GraphPropertiesPanel />
+                      <ProjectCodegenDefaultsPanel />
                     </div>
                     <div className="border-t border-zinc-800/80 pt-4">
-                      <ProjectCodegenDefaultsPanel />
+                      <GraphPropertiesPanel />
                     </div>
                     <div className="border-t border-zinc-800/80 pt-4">
                       <SyntaxPackLockPanel />

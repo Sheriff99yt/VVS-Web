@@ -36,7 +36,7 @@ Coverage Lab also shows: `from enum import Enum`, `class SensorStatus(Enum):`, i
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `class Color(Enum):` (+ `from enum import Enum`) |
-| **Interface** *(planned)* | `Interface Define` Node | `class IDamageable:` |
+| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `class IDamageable:` |
 | **Class** | `Class Define` Node | `class MyClass:` |
 | **Inheritance** | `Class Define` Option: **Extends** | `(BaseClass)` |
 | **Implements** | `Class Define` Option: **Implements** | `(IDamageable)` |
@@ -53,12 +53,12 @@ Coverage Lab also shows: `from enum import Enum`, `class SensorStatus(Enum):`, i
 | **Static Function** | `Function` Option: **Static** | `@staticmethod` |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* |
 | **Generics** | `Function` Option: **Wildcard Pin** | `TypeVar('T')` |
-| **Constructor** *(planned)* | `Constructor Define` Node | `def __init__(self):` |
-| **Error (Try)** *(planned)* | `Try/Catch` Block Node | `try: / except:` |
+| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `def __init__(self):` |
+| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `try: / except:` |
 | **Lambda/Callback** | Pin Type: **Callable** | `callback()` |
 | **Namespaces** | `Namespace Define` Node | `module.py` |
 | **Structs** | `Struct Define` Node | `@dataclass` |
-| **Destructor** | `Destructor Define` Node | `__del__` |
+| **Destructor** | Function Define + `role: destructor` | `__del__` |
 | **Async Function** | `Function` Option: **Async** | `async def` |
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if: / else:` |

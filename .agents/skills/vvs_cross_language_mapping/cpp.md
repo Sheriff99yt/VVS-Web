@@ -124,7 +124,7 @@ int Machine::Add(int a, int b) {  // Define Add
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `enum class Color` |
-| **Interface** *(planned)* | `Interface Define` Node | `class IDamageable` |
+| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `class IDamageable` |
 | **Class** | `Class Define` Node | `class MyClass` |
 | **Inheritance** | `Class Define` Option: **Extends** | `: public BaseClass` |
 | **Implements** | `Class Define` Option: **Implements** | `, public IDamageable` |
@@ -141,12 +141,12 @@ int Machine::Add(int a, int b) {  // Define Add
 | **Static Function** | `Function` Option: **Static** | `static void Func()` |
 | **Virtual Func** | `Function` Option: **Virtual** | `virtual void Func()` |
 | **Generics** | `Function` Option: **Wildcard Pin** | `template <typename T>` |
-| **Constructor** *(planned)* | `Constructor Define` Node | `MyClass()` |
-| **Error (Try)** *(planned)* | `Try/Catch` Block Node | `try { } catch` |
+| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `MyClass()` |
+| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `try { } catch` |
 | **Lambda/Callback** | Pin Type: **Callable** | `std::function<void()>` |
 | **Namespaces** | `Namespace Define` Node | `namespace X` |
 | **Structs** | `Struct Define` Node | `struct X` |
-| **Destructor** | `Destructor Define` Node | `~X()` |
+| **Destructor** | Function Define + `role: destructor` | `~X()` |
 | **Async Function** | `Function` Option: **Async** | *(ineffective — disable chip)* |
 | **Await** | `Await` Node | *(ineffective with Async)* |
 | **If/Else** | `Branch (If)` Node | `if () {} else {}` |

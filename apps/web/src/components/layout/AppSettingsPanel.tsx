@@ -118,7 +118,9 @@ export function AppSettingsPanel({ onCloseSettings, searchQuery }: AppSettingsPa
             App preferences
           </p>
           <p className="text-[10px] text-zinc-600 leading-relaxed">
-            Stored in this browser. They apply across projects and do not change generated code.
+            Stored in this browser and apply across projects. Most prefs only change the editor;
+            Unsupported as (x) comments, Author comments, and Naming convention also change
+            generated comments and names.
           </p>
         </section>
       ) : null}

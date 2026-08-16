@@ -118,3 +118,35 @@ describe('expandProjectSymbols inheritance Get/Set (U106)', () => {
     expect(getPower?.graphBinding).toEqual({ kind: 'variable_ref', symbolId: 'var-power' });
   });
 });
+
+describe('function role spawn rows', () => {
+  test('Constructor row hidden for go and rust; shown for python/cpp', () => {
+    for (const lang of ['go', 'rust', 'verse'] as const) {
+      const cats = list({ currentGraphId: 'main', functions: [], events: [], targetLanguage: lang });
+      const define = cats.find((c) => c.name === 'Define');
+      expect(define?.items.some((i) => i.label === 'Constructor')).toBe(false);
+      expect(define?.items.some((i) => i.kindId === 'function_implement')).toBe(true);
+    }
+    for (const lang of ['python', 'javascript', 'cpp', 'csharp', 'gdscript'] as const) {
+      const cats = list({ currentGraphId: 'main', functions: [], events: [], targetLanguage: lang });
+      const define = cats.find((c) => c.name === 'Define');
+      const ctor = define?.items.find((i) => i.label === 'Constructor');
+      expect(ctor?.kindId).toBe('function_implement');
+      expect(ctor?.properties).toEqual({ role: 'constructor' });
+    }
+  });
+
+  test('Destructor row only for cpp and sets role', () => {
+    const cpp = list({ currentGraphId: 'main', functions: [], events: [], targetLanguage: 'cpp' });
+    const cppDefine = cpp.find((c) => c.name === 'Define');
+    const dtor = cppDefine?.items.find((i) => i.label === 'Destructor');
+    expect(dtor?.kindId).toBe('function_implement');
+    expect(dtor?.properties).toEqual({ role: 'destructor' });
+
+    for (const lang of ['python', 'javascript', 'csharp', 'gdscript', 'rust', 'go', 'verse'] as const) {
+      const cats = list({ currentGraphId: 'main', functions: [], events: [], targetLanguage: lang });
+      const define = cats.find((c) => c.name === 'Define');
+      expect(define?.items.some((i) => i.label === 'Destructor')).toBe(false);
+    }
+  });
+});

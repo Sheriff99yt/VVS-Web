@@ -16,6 +16,7 @@ export interface LibraryNodeTemplate {
   linkedGraphId?: string;
   linkKind?: GraphBinding['kind'];
   graphBinding?: GraphBinding;
+  properties?: Record<string, unknown>;
 }
 
 export interface CodePreviewState {

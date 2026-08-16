@@ -64,6 +64,8 @@ export interface SpawnNodeTemplate {
   linkedGraphId?: string;
   linkKind?: GraphBinding['kind'];
   graphBinding?: GraphBinding;
+  /** Seeded onto the new node (e.g. Function Define role=constructor). */
+  properties?: Record<string, unknown>;
 }
 
 export interface LibraryCategory {
@@ -257,7 +259,7 @@ function kindToSpawnTemplate(
     } else if (kind.kindId === 'vvs.project.call_function') {
       const prefix = getSpawnNamingPrefix('Call', namingConvention, targetLanguage);
       label = `${prefix} Function`;
-    } else if (kind.kindId === 'event_define' || kind.kindId === 'event_custom' || kind.kindId === 'event_on_update') {
+    } else if (kind.kindId === 'event_define' || kind.kindId === 'event_custom') {
       const prefix = getSpawnNamingPrefix('On', namingConvention, targetLanguage);
       label = `${prefix} Event`;
     } else if (kind.kindId === 'event_dispatch') {
@@ -284,7 +286,7 @@ const DECLARATION_KIND_IDS = new Set([
   'event_member_define',
 ]);
 
-const HANDLER_KIND_IDS = new Set(['event_define', 'event_on_update', 'function_implement']);
+const HANDLER_KIND_IDS = new Set(['event_define', 'function_implement']);
 
 function spawnCatalogCategory(kind: NodeKindDefinition): string {
   if (kind.kindId === 'function_define') return 'Declare';
@@ -443,6 +445,45 @@ export function expandProjectSymbols(options: ListRegistryOptions): LibraryCateg
   return categories;
 }
 
+function constructorRoleIsSpawnable(targetLanguage?: TargetLanguage): boolean {
+  return (
+    targetLanguage === 'python' ||
+    targetLanguage === 'javascript' ||
+    targetLanguage === 'cpp' ||
+    targetLanguage === 'csharp' ||
+    targetLanguage === 'gdscript'
+  );
+}
+
+function destructorRoleIsSpawnable(targetLanguage?: TargetLanguage): boolean {
+  return targetLanguage === 'cpp';
+}
+
+function extraFunctionRoleSpawnRows(
+  kind: NodeKindDefinition,
+  namingConvention?: string,
+  targetLanguage?: TargetLanguage
+): SpawnNodeTemplate[] {
+  if (kind.kindId !== 'function_implement') return [];
+  const base = kindToSpawnTemplate(kind, namingConvention, targetLanguage);
+  const rows: SpawnNodeTemplate[] = [];
+  if (constructorRoleIsSpawnable(targetLanguage)) {
+    rows.push({
+      ...base,
+      label: 'Constructor',
+      properties: { role: 'constructor' },
+    });
+  }
+  if (destructorRoleIsSpawnable(targetLanguage)) {
+    rows.push({
+      ...base,
+      label: 'Destructor',
+      properties: { role: 'destructor' },
+    });
+  }
+  return rows;
+}
+
 function functionDeclareIsSpawnable(
   targetLanguage?: TargetLanguage,
   fn?: FunctionSymbol
@@ -469,6 +510,7 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
     const categoryName = spawnCatalogCategory(kind);
     const items = coreByCategory.get(categoryName) ?? [];
     items.push(kindToSpawnTemplate(kind, namingConvention, targetLanguage));
+    items.push(...extraFunctionRoleSpawnRows(kind, namingConvention, targetLanguage));
     coreByCategory.set(categoryName, items);
   }
 

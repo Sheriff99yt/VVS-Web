@@ -116,7 +116,7 @@ export function expandEnvironmentSymbols(
 export function buildEnvironmentSpawnDetail(
   manifest: ProjectEnvironmentManifest,
   targetLanguage: TargetLanguage,
-  action: 'call_native' | 'event_handler' | 'event_subscribe',
+  action: 'call_native' | 'event_handler',
   symbolId: string
 ): SpawnNodeTemplate | null {
   const surface = resolveApiSurface(manifest, targetLanguage);
@@ -148,26 +148,5 @@ export function buildEnvironmentSpawnDetail(
       properties: { manifestMethodId: method.id, override: true },
     } as SpawnNodeTemplate & { properties?: Record<string, unknown> };
   }
-
-  if (action === 'event_subscribe') {
-    const event = surface.events.find((e) => e.id === symbolId);
-    if (!event) return null;
-    return {
-      type: 'event_subscribe',
-      kindId: 'event_subscribe',
-      kindVersion: 1,
-      label: `Subscribe ${event.name}`,
-      category: 'From environment',
-      inputs: [EXEC_IN, ...dataInputsFromParameters(event.parameters)],
-      outputs: [EXEC_OUT],
-      graphBinding: {
-        kind: 'env_event',
-        symbolId: event.id,
-        manifestEventId: event.id,
-      },
-      properties: { manifestEventId: event.id, eventName: event.name },
-    } as SpawnNodeTemplate & { properties?: Record<string, unknown> };
-  }
-
   return null;
 }

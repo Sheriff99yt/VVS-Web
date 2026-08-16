@@ -149,7 +149,7 @@ export const LIBRARY_GRAPH_FIXTURES: Record<string, GraphDocument> = {
   },
   '3': {
     nodes: [
-      baseEventNode('lib3-start', 'On Start', 80, 80),
+      baseEventNode('lib3-start', 'Inventory Ready', 80, 80),
       printNode('lib3-print', 'Inventory template loaded', 360, 80),
     ],
     edges: [

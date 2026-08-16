@@ -89,6 +89,8 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Community template | **Template** | — | Library filter |
 | AI connection | **Connect AI** | Integrations page | MCP URL modal only |
 
+A game-talk **component** is **Declare Class** plus a field or **Extends** — not a Component node ([catalog](design/language_capability_catalog.md#component--class)).
+
 ### Library categories (community)
 
 | Filter | Meaning |

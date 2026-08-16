@@ -191,6 +191,8 @@ Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — **C
 | `var_define`, `function_define`, `event_member_define`, `class_define` | Declaration on class home graph exec chain | **Yes** — ordered `ir.members` |
 | `variable_get` / `variable_set`, Call Function, dispatch | Usage where logic runs | **Yes** — statements / expressions |
 
+`class_define` also covers game-talk “components” (Health / Inventory): composition field or Extends — no `component_define` node ([catalog](design/language_capability_catalog.md#component--class)).
+
 Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push symbol rows without a canvas correlate.
 
 #### Strict analyzer codes (block Generate)

@@ -1,5 +1,9 @@
 // ===== src/InheritanceLab.cs =====
 public class Parent {
+    // (x) Declare Parent
+    public Parent() {
+        // empty
+    }
     // (x) Declare Speak
     public virtual void Speak() {
         Console.WriteLine("parent");

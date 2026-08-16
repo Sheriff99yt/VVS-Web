@@ -103,3 +103,15 @@ describe('spawn catalog — U106 inherited Get/Set', () => {
     expect(hits.some((i) => i.graphBinding?.symbolId === 'var-power')).toBe(true);
   });
 });
+
+describe('spawn catalog — function role aliases', () => {
+  test('search constructor/ctor/__init__/destructor/dtor hits function_implement', () => {
+    const categories = list({ currentGraphId: 'main', functions: [], events: [] });
+    for (const query of ['constructor', 'ctor', '__init__', 'destructor', 'dtor']) {
+      const hits = categories.flatMap((c) =>
+        c.items.filter((item) => spawnItemMatchesQuery(item, query, c.name))
+      );
+      expect(hits.some((i) => i.kindId === 'function_implement')).toBe(true);
+    }
+  });
+});

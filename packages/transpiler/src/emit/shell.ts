@@ -16,7 +16,7 @@ import type { IrEventHandler, IrModule } from '../ir/types';
 import { handlerBodyIndent } from '../lower/graphToIr';
 import { createPrintContext, type PrintContext } from '../print';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
-import { isModifierEffective } from '@vvs/language-profiles';
+import { isFunctionRoleEffective, isModifierEffective } from '@vvs/language-profiles';
 import { emptyHandlerBodyLine } from './layout';
 import { appendIrStatements } from './sinkStatements';
 import { typedParamFragment, typeNameForPin } from './emitTypes';
@@ -441,14 +441,73 @@ export function resolveModifierSlots(
   return { visibility, staticKw, abstractKw, virtualKw, overrideKw, constKw, asyncKw };
 }
 
+export function functionRoleOf(
+  properties?: Record<string, unknown>
+): 'function' | 'constructor' | 'destructor' {
+  const role = properties?.role;
+  if (role === 'constructor' || role === 'destructor') return role;
+  return 'function';
+}
+
+function emitClassName(
+  func: FunctionSymbol,
+  properties?: Record<string, unknown>,
+  className?: string
+): string {
+  if (className && className.trim()) return className.trim();
+  const fromProps = properties?.className;
+  if (typeof fromProps === 'string' && fromProps.trim()) return fromProps.trim();
+  return func.name;
+}
+
+function constructorParamSlots(
+  func: FunctionSymbol,
+  lang: TargetLanguage,
+  properties?: Record<string, unknown>
+): { paramList: string; comma_params: string } {
+  const params = overloadParamNames(func, properties);
+  const overloadId = properties?.overloadId;
+  const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0];
+  const overloadParams = overload?.parameters ?? [];
+  const typed =
+    lang === 'cpp' || lang === 'csharp' || lang === 'verse' || lang === 'rust'
+      ? params.map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
+      : params;
+  const paramList = typed.join(', ');
+  return { paramList, comma_params: paramList ? `, ${paramList}` : '' };
+}
+
 export function renderFunctionDefHeader(
   func: FunctionSymbol,
   lang: TargetLanguage,
   isAsync = false,
-  properties?: Record<string, unknown>
+  properties?: Record<string, unknown>,
+  className?: string
 ): string {
   const merged = functionModifierProperties(func, properties);
   const mods = resolveModifierSlots(lang, merged, func.visibility);
+  const role = functionRoleOf(merged);
+  const ctorClass = emitClassName(func, properties, className);
+  if (role === 'constructor' && isFunctionRoleEffective(lang, 'constructor')) {
+    const { paramList, comma_params } = constructorParamSlots(func, lang, properties);
+    return renderShell(lang, 'ConstructorOpen', {
+      ...mods,
+      linePrefix: '    ',
+      visibility: mods.visibility.trim(),
+      class: ctorClass,
+      paramList,
+      comma_params,
+    });
+  }
+  if (role === 'destructor' && isFunctionRoleEffective(lang, 'destructor')) {
+    const { paramList } = constructorParamSlots(func, lang, properties);
+    return renderShell(lang, 'DestructorOpen', {
+      linePrefix: '    ',
+      class: ctorClass,
+      paramList,
+      virtualKw: mods.virtualKw,
+    });
+  }
   // Async only when the modifier is effective for this language (single dim table).
   const wantAsync =
     (Boolean(merged.isAsync) || isAsync) && isModifierEffective(lang, 'isAsync');
@@ -483,6 +542,13 @@ export function renderFunctionDefOutOfLineHeader(
   _isAsync = false,
   properties?: Record<string, unknown>
 ): string {
+  const role = functionRoleOf(properties);
+  if (lang === 'cpp' && (role === 'constructor' || role === 'destructor')) {
+    const { paramList } = constructorParamSlots(func, lang, properties);
+    const template =
+      role === 'destructor' ? 'DestructorOutOfLineOpen' : 'ConstructorOutOfLineOpen';
+    return renderShell(lang, template, { class: className, paramList });
+  }
   return renderShell(lang, 'FunctionDefOutOfLineOpen', {
     visibility: '',
     staticKw: '',
@@ -502,7 +568,8 @@ export function renderFunctionDefOutOfLineHeader(
 export function renderFunctionDeclPrototype(
   func: FunctionSymbol,
   lang: TargetLanguage,
-  properties?: Record<string, unknown>
+  properties?: Record<string, unknown>,
+  className?: string
 ): string | null {
   if (lang !== 'cpp' && lang !== 'csharp') return null;
   const overloadId = properties?.overloadId;
@@ -517,6 +584,20 @@ export function renderFunctionDeclPrototype(
   const isAbstract = Boolean(merged.isAbstract);
   // overrideKw comes from resolveModifierSlots (C++ postfix); suffix is pure-virtual only.
   const pureSuffix = lang === 'cpp' && isAbstract ? ' = 0' : '';
+  const role = functionRoleOf(merged);
+  if (lang === 'cpp' && role === 'constructor') {
+    return renderShell(lang, 'ConstructorDeclPrototype', {
+      class: emitClassName(func, properties, className),
+      paramList: params,
+    });
+  }
+  if (lang === 'cpp' && role === 'destructor') {
+    return renderShell(lang, 'DestructorDeclPrototype', {
+      class: emitClassName(func, properties, className),
+      paramList: params,
+      virtualKw: Boolean(merged.isVirtual) ? 'virtual ' : '',
+    });
+  }
 
   return renderShell(lang, 'FunctionDeclPrototype', {
     visibility: mods.visibility,

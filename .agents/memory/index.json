@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-07-23",
+  "lastUpdated": "2026-08-16",
   "productDirection": "text-shaped-graphs",
   "canonicalDoc": "docs/visual_to_text_fidelity.md",
   "vocabularyDoc": "docs/design/language_neutral_vocabulary.md",
@@ -11,7 +11,7 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "coverageLabUsabilityTest",
-  "nextFunctionWork": "CL plans; U89–U92; U97–U101 / U103–U106 (U77 Go · U78 Packs · U102 · U107–U119 + code-panel hover done); U93 long-term; client-first",
+  "nextFunctionWork": "CL plans; U89–U92; U97–U102 / U104–U119 shipped; U103 locked Component=Class; U93 long-term; client-first",
   "crossLanguageMapping": ".agents/skills/vvs_cross_language_mapping/SKILL.md",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {
@@ -20,29 +20,57 @@
     "open": 8,
     "partial": [],
     "depthFirstSection": 18,
-    "sectionsComplete": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17],
-    "sectionsPartial": [15, 18],
+    "sectionsComplete": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      16,
+      17
+    ],
+    "sectionsPartial": [
+      15,
+      18
+    ],
     "openItems": [
       "U93",
       "U98",
       "U99",
       "U100",
       "U101",
-      "U103",
       "U104",
       "U105",
       "U106"
     ]
   },
   "files": {
-    "README.md": { "role": "hub", "mutable": false },
+    "README.md": {
+      "role": "hub",
+      "mutable": false
+    },
     "incomplete-ui.md": {
       "role": "ui-backlog",
       "refreshAfter": "each UI loop iteration or audit",
       "itemPrefix": "U",
       "openCount": 14
     },
-    "decisions.md": { "role": "locked-product-rules", "mutable": "append-or-revise-with-care" },
-    "workspace-facts.md": { "role": "canonical-paths-and-facts", "mutable": true }
+    "decisions.md": {
+      "role": "locked-product-rules",
+      "mutable": "append-or-revise-with-care"
+    },
+    "workspace-facts.md": {
+      "role": "canonical-paths-and-facts",
+      "mutable": true
+    }
   }
 }

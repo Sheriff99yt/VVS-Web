@@ -39,7 +39,7 @@ Coverage Lab also shows: `using System;` / `using System.Collections.Generic;`, 
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `public enum Color` |
-| **Interface** *(planned)* | `Interface Define` Node | `interface IDamageable` |
+| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `interface IDamageable` |
 | **Class** | `Class Define` Node | `public class MyClass` |
 | **Inheritance** | `Class Define` Option: **Extends** | `: BaseClass` |
 | **Implements** | `Class Define` Option: **Implements** | `, IDamageable` |
@@ -56,12 +56,12 @@ Coverage Lab also shows: `using System;` / `using System.Collections.Generic;`, 
 | **Static Function** | `Function` Option: **Static** | `public static void Func` |
 | **Virtual Func** | `Function` Option: **Virtual** | `public virtual void Func` |
 | **Generics** | `Function` Option: **Wildcard Pin** | `void Func<T>()` |
-| **Constructor** *(planned)* | `Constructor Define` Node | `public MyClass()` |
-| **Error (Try)** *(planned)* | `Try/Catch` Block Node | `try { } catch` |
+| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `public MyClass()` |
+| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `try { } catch` |
 | **Lambda/Callback** | Pin Type: **Callable** | `Action callback` |
 | **Namespaces** | `Namespace Define` Node | `namespace X` |
 | **Structs** | `Struct Define` Node | `struct X` |
-| **Destructor** | `Destructor Define` Node | `~X()` |
+| **Destructor** | Function Define + `role: destructor` | `~X()` |
 | **Async Function** | `Function` Option: **Async** | `async Task` / `async Task<T>` (never `async void`) |
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if () {} else {}` |

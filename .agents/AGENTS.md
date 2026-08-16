@@ -125,6 +125,7 @@ The Go `server/`, Postgres, and Auth code are **legacy experiments**. Keep them 
 
 **NEVER use Blueprint or engine-specific jargon in user-facing UI copy:**
 - ❌ "BeginPlay", "BP_", "ActorComponent", "Tick", "EventGraph"
+- ❌ Do not spawn a Component node. Game-talk “component” = Class (`class_define`) + field or Extends (U103). Host `UActorComponent` / `MonoBehaviour` stay in host packs.
 - ✅ Use language-neutral vocabulary from `docs/design/language_neutral_vocabulary.md`
 - ✅ Functions: **Declare** / **Define** / **Call**
 - ✅ Variables: **Declare** / **Get** / **Set**

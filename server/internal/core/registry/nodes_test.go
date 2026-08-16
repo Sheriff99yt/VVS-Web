@@ -23,14 +23,24 @@ func TestListAvailableNodes(t *testing.T) {
 	if len(nodes) == 0 {
 		t.Fatal("expected core pack kinds")
 	}
-	found := false
+	ids := map[string]struct{}{}
 	for _, n := range nodes {
-		if n.KindID == "event_on_start" {
-			found = true
-			break
-		}
+		ids[n.KindID] = struct{}{}
 	}
-	if !found {
-		t.Fatal("expected event_on_start in registry")
+	if _, ok := ids["event_define"]; !ok {
+		t.Fatal("expected event_define in spawn catalog")
+	}
+	for _, leftover := range []string{
+		"event_on_start",
+		"event_on_update",
+		"event_emit",
+		"event_subscribe",
+		"flow_sequence",
+		"action_await_wait",
+		"graph_ref",
+	} {
+		if _, ok := ids[leftover]; ok {
+			t.Fatalf("leftover kind %s must not be in spawn catalog", leftover)
+		}
 	}
 }

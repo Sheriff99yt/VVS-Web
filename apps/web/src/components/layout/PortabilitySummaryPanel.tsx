@@ -25,8 +25,11 @@ export function PortabilitySummaryPanel() {
   return (
     <div className="space-y-3">
       <div>
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">
-          Cross-language status
+        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-1">
+          Portability
+        </p>
+        <p className="text-[10px] text-zinc-600 leading-relaxed mb-2">
+          Warnings and type notes for the current target language.
         </p>
         <div className="flex flex-wrap gap-1.5 text-[10px]">
           <span className="px-1.5 py-0.5 rounded border border-zinc-800 bg-zinc-900 text-zinc-400">

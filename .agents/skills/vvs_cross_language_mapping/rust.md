@@ -45,7 +45,7 @@ Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `pub enum Color` |
-| **Interface** *(planned)* | `Interface Define` Node | `pub trait IDamageable` |
+| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `pub trait IDamageable` |
 | **Class** | `Class Define` Node | `pub struct MyClass` + `impl` |
 | **Inheritance** | `Class Define` Option: **Extends** | `base: BaseClass` *(composition — see CL-010)* |
 | **Implements** | `Class Define` Option: **Implements** | `impl IDamageable for` |
@@ -63,12 +63,12 @@ Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial
 | **Static Function** | `Function` Option: **Static** | `pub fn Func()` *(no self)* |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* |
 | **Generics** | `Function` Option: **Wildcard Pin** | `pub fn Func<T>()` |
-| **Constructor** *(planned)* | `Constructor Define` Node | `pub fn new() -> Self` |
-| **Error (Try)** *(planned)* | `Try/Catch` Block Node | `Result<T, E>` *(impl)* |
+| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `pub fn new() -> Self` |
+| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `Result<T, E>` *(impl)* |
 | **Lambda/Callback** | Pin Type: **Callable** | `F: FnOnce()` |
 | **Namespaces** | `Namespace Define` Node | `mod x` |
 | **Structs** | `Struct Define` Node | `struct X` |
-| **Destructor** | `Destructor Define` Node | `impl Drop` |
+| **Destructor** | Function Define + `role: destructor` | `impl Drop` |
 | **Async Function** | `Function` Option: **Async** | *Ineffective* (no Tokio) — emit `fn`; Wait is `thread::sleep` |
 | **Await** | `Await` Node | `X.await` |
 | **If/Else** | `Branch (If)` Node | `if {} else {}` |

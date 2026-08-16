@@ -1,8 +1,12 @@
 // ===== src/InheritanceLab.cpp =====
 class Parent {
 public:
+    Parent();
     virtual void Speak();
 };
+Parent::Parent() {
+    // empty
+}
 void Parent::Speak() {
     std::cout << "parent" << std::endl;
 }

@@ -17,7 +17,6 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 |-------|-----|--------|
 | Verse GetInput | CL-014 | **Open** — honest `(x)` + prompt; no invented player API |
 | Switch `match` | CL-017 | Optional — if-cascade is the shipped shape |
-| Components | U103 | Open — only if a language has a real Component construct |
 | Library remaining (auth / upload) | U90 | Frozen — client-first; no accounts as product |
 
 ### Long-term
@@ -30,6 +29,7 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 
 | Focus | IDs |
 |-------|-----|
+| **Component = Class** (U103 locked — no Component node) | Aug 2026 |
 | **Node vs option vs pin** locked; catalog leftovers (spawn excludes, Wait expression, On role, Declare spawn) | Aug 2026 |
 | **Function argument pins end-to-end** (define, implement, call, emit) | U98 |
 | **Function return with arguments** (Return node & value pin codegen) | U99 |
@@ -75,7 +75,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 |---|------|--------|
 | **CL-014** | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API — do not invent one. |
 | **CL-017** | Switch `match` | Optional native match. If-cascade is the shipped shape. |
-| **U103** | Components | Only if a language has a real Component construct. |
+| **U103** | Components | **Locked:** Component = Class (field or Extends). No Component node. See [language_capability_catalog.md](design/language_capability_catalog.md#component--class). |
 
 Shipped this wave (moved to Recently completed): CL-006, CL-008, CL-009, CL-010, CL-015, CL-016, CL-018, U101, U105, U106, Call Super.
 
@@ -122,7 +122,7 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U101** | Cross-language async concept | **Done** — one Wait node; `isAsync` option; pack-complete await/sleep |
 | **CL-018** | Dim ineffective async | **Done** — U66/U67 chips; Wait.isAsync does not flip the function |
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
-| **U103** | Components | Open only if a language has a real Component construct |
+| **U103** | Components | **Locked:** Component = Class (field or Extends). No Component node. See [language_capability_catalog.md](design/language_capability_catalog.md#component--class). |
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
 | **U105** | Overwriting (override) | **Done** — option on Declare/Define; emit + dim per language |
 | **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010) |
@@ -173,7 +173,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Catalog lock + August emit/OOP + U89–U92 shipped. Open: CL-014 honest `(x)`, optional CL-017, U103 only if real construct, U93 long-term. |
+| **6** Fidelity, canvas scale & polish | **Active** | Catalog lock + August emit/OOP + U89–U92 shipped. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, optional CL-017, U93 long-term. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

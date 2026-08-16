@@ -364,6 +364,11 @@
           "id": "exec_in",
           "label": "",
           "type": "execution"
+        },
+        {
+          "id": "seconds",
+          "label": "Seconds",
+          "type": "data_number"
         }
       ],
       "outputs": [
@@ -375,11 +380,11 @@
       ],
       "propertySchema": [
         {
-          "key": "seconds",
-          "label": "Seconds",
-          "type": "number",
-          "default": 1,
-          "description": "Duration to block execution."
+          "key": "isAsync",
+          "label": "Async",
+          "type": "boolean",
+          "default": false,
+          "description": "When on, emit the language async wait. Dimmed where the language has no async wait."
         }
       ]
     },
@@ -827,6 +832,18 @@
           "default": "Function"
         },
         {
+          "key": "role",
+          "label": "Role",
+          "type": "enum",
+          "enumValues": [
+            "function",
+            "constructor",
+            "destructor"
+          ],
+          "default": "function",
+          "description": "function = named method. constructor / destructor = how that language writes init/teardown. Not separate kinds."
+        },
+        {
           "key": "visibility",
           "label": "Visibility",
           "type": "enum",
@@ -913,6 +930,18 @@
           "label": "Name",
           "type": "string",
           "default": "Function"
+        },
+        {
+          "key": "role",
+          "label": "Role",
+          "type": "enum",
+          "enumValues": [
+            "function",
+            "constructor",
+            "destructor"
+          ],
+          "default": "function",
+          "description": "function = named method. constructor / destructor = how that language writes init/teardown. Not separate kinds."
         },
         {
           "key": "isVirtual",

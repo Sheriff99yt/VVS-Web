@@ -189,6 +189,21 @@
     },
     "DispatchEventSuper": {
       "quasi": "{parent}::on_{handler}({args});"
+    },
+    "DestructorOpen": {
+      "quasi": "{linePrefix}~{class}({paramList}) {"
+    },
+    "DestructorOutOfLineOpen": {
+      "quasi": "{class}::~{class}({paramList}) {"
+    },
+    "ConstructorOutOfLineOpen": {
+      "quasi": "{class}::{class}({paramList}) {"
+    },
+    "ConstructorDeclPrototype": {
+      "quasi": "    {class}({paramList});"
+    },
+    "DestructorDeclPrototype": {
+      "quasi": "    {virtualKw}~{class}({paramList});"
     }
   }
 }

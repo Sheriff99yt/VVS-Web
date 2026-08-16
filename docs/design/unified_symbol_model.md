@@ -48,6 +48,8 @@ Release menus: variables **Get** / **Set** / **Declare**; functions & events **C
 | **Function** | **Declare** (existence) | **Define** (body place) + **Edit function body** tab | `call_function` (**Call**) |
 | **Event** | `event_member_define` (**Declare**) | `event_define` (**On** / handler) | `event_dispatch` (**Dispatch**) |
 
+**Component** is not a kind: game-talk components are **Class** (`class_define`) used as a field or via Extends ([catalog](language_capability_catalog.md#component--class)).
+
 Events and functions both split declare and implement (**U81 shipped**). Declare and Define stay two nodes so a prototype / abstract signature can sit in a different place than the body.
 
 Program entry uses `events[]` with `role: 'entry'` and the same event pattern; codegen emits `on_start` only from canvas.
@@ -79,7 +81,7 @@ Canvas nodes  →  analyze (fidelity + portability)  →  graphToIr  →  IrModu
 - **Language profiles** — native / emulated / unsupported per `PortabilityFeature`
 - **Syntax packs** — print templates (`self.foo` vs `this.foo`)
 
-Symbol **flags** (static, async, virtual, readonly, overloads) ride on `FunctionSymbol` / `VariableSymbol` and map to profile features — not separate node kinds unless fidelity requires a visible line.
+Symbol **flags** (static, async, virtual, readonly, overloads, constructor/destructor **role**) ride on `FunctionSymbol` / `VariableSymbol` and map to profile features — not separate node kinds unless fidelity requires a visible line. Constructor is a function role, not a kind ([catalog leftover lock](language_capability_catalog.md#leftover-constructs-locked-roles)).
 
 ---
 

@@ -123,3 +123,52 @@ export function modifierIneffectiveTooltip(lang: TargetLanguage, key: ModifierKe
     key === 'binding' ? 'Binding' : key === 'waitIsAsync' ? 'Async' : key.replace(/^is/, '');
   return `Not used in ${lang} output — changing ${label} has no effect`;
 }
+
+export type FunctionRole = 'function' | 'constructor' | 'destructor';
+
+const CONSTRUCTOR_EFFECTIVE = new Set<TargetLanguage>([
+  'python',
+  'javascript',
+  'cpp',
+  'csharp',
+  'gdscript',
+]);
+
+/** Whether Function Define `role` affects codegen for this language. */
+export function functionRoleEffectiveness(
+  lang: TargetLanguage,
+  role: FunctionRole
+): ModifierEffectiveness {
+  if (role === 'function') return 'effective';
+  if (role === 'constructor') {
+    return CONSTRUCTOR_EFFECTIVE.has(lang) ? 'effective' : 'ineffective';
+  }
+  if (role === 'destructor') {
+    return lang === 'cpp' ? 'effective' : 'ineffective';
+  }
+  return 'ineffective';
+}
+
+export function isFunctionRoleEffective(lang: TargetLanguage, role: FunctionRole): boolean {
+  return functionRoleEffectiveness(lang, role) === 'effective';
+}
+
+export function functionRoleIneffectiveTooltip(lang: TargetLanguage, role: FunctionRole): string {
+  if (functionRoleEffectiveness(lang, role) === 'effective') return '';
+  return `Not used in ${lang} output`;
+}
+
+export function functionRoleFieldOptions(
+  lang: TargetLanguage
+): Array<{ value: string; label: string; description?: string; dimmed?: boolean }> {
+  const roles: FunctionRole[] = ['function', 'constructor', 'destructor'];
+  return roles.map((role) => {
+    const effective = isFunctionRoleEffective(lang, role);
+    return {
+      value: role,
+      label: role,
+      description: effective ? undefined : functionRoleIneffectiveTooltip(lang, role),
+      dimmed: !effective,
+    };
+  });
+}

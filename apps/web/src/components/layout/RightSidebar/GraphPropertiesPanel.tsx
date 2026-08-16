@@ -18,11 +18,20 @@ import { formatEmitPreview } from '@vvs/graph-types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { buildExtendsClassPickerOptions } from '@/lib/classScope';
 
+export type GraphPropertiesSection = 'environment' | 'exportPaths' | 'details';
+
+const DEFAULT_SECTIONS: GraphPropertiesSection[] = ['environment', 'exportPaths', 'details'];
+
 interface GraphPropertiesPanelProps {
   onClose?: () => void;
+  /** Which blocks to render. Default: Environment, Export paths, Graph details. */
+  sections?: GraphPropertiesSection[];
 }
 
-export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
+export function GraphPropertiesPanel({
+  onClose,
+  sections = DEFAULT_SECTIONS,
+}: GraphPropertiesPanelProps) {
   const {
     activeGraphTab,
     openTabs,
@@ -44,6 +53,7 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
   const isMain = activeGraphTab === 'main';
   const activeTab = openTabs.find((t) => t.id === activeGraphTab);
   const [, bumpMetadata] = useReducer((n: number) => n + 1, 0);
+  const visible = new Set(sections);
 
   useEffect(() => {
     if (isMain) return;
@@ -120,6 +130,10 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
     setEnvironmentLink(environmentId, versionDrift.currentVersion);
   };
 
+  const showEnvironment = visible.has('environment') && isMain;
+  const showExportPaths = visible.has('exportPaths') && isMain;
+  const showDetails = visible.has('details');
+
   return (
     <div className="text-sm text-zinc-300 space-y-5">
       {onClose && (
@@ -133,16 +147,19 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
           </button>
         </Tooltip>
       )}
-      {!isMain && activeTab && (
+      {!isMain && activeTab && showDetails ? (
         <p className="text-[10px] text-zinc-500">
           Settings for <span className="text-zinc-300">{activeTab.name}</span>
         </p>
-      )}
+      ) : null}
 
-      {isMain ? (
+      {showEnvironment ? (
         <div>
-          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">
-            Project environment
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-1">
+            Environment
+          </p>
+          <p className="text-[10px] text-zinc-600 leading-relaxed mb-2">
+            Linked template for APIs and host files. Saved with the project.
           </p>
           <div className="space-y-2">
             <SearchableSelect
@@ -204,10 +221,13 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
         </div>
       ) : null}
 
-      {isMain ? (
+      {showExportPaths ? (
         <div>
-          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">
-            Code generation
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-1">
+            Export paths
+          </p>
+          <p className="text-[10px] text-zinc-600 leading-relaxed mb-2">
+            Where this project writes generated files for the current language.
           </p>
           <div className="space-y-2">
             <div className="space-y-1">
@@ -248,62 +268,66 @@ export function GraphPropertiesPanel({ onClose }: GraphPropertiesPanelProps) {
         </div>
       ) : null}
 
-      <div>
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">Graph details</p>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-zinc-400">Module name</label>
-            <input
-              type="text"
-              value={tabDetails.moduleName}
-              onChange={(e) => handleChange('moduleName', e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
-              placeholder="e.g. PlayerController"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-zinc-400">Extends (optional)</label>
-            <SearchableSelect
-              value={derivedExtends ?? ''}
-              disabled={Boolean(environmentId && isMain)}
-              onChange={(value) => {
-                handleChange('extendsType', value);
-                const cls = classes.find((item) => item.id === activeClassId);
-                if (cls) {
-                  setClasses((prev) =>
-                    prev.map((item) =>
-                      item.id === cls.id ? { ...item, extendsType: value.trim() || undefined } : item
-                    )
-                  );
-                }
-              }}
-              options={(() => {
-                const options = buildExtendsClassPickerOptions(classes, activeClassId);
-                const current = derivedExtends ?? '';
-                if (current && !options.some((option) => option.value === current)) {
-                  return [{ value: current, label: current, description: 'Current value' }, ...options];
-                }
-                return options;
-              })()}
-              placeholder="Parent class…"
-              searchable
-            />
-            {environmentId && isMain ? (
-              <p className="text-[9px] text-zinc-600">Derived from linked environment for {targetLanguage}</p>
-            ) : null}
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-zinc-400">Description</label>
-            <textarea
-              value={tabDetails.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              rows={3}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors resize-none"
-              placeholder="What this graph does..."
-            />
+      {showDetails ? (
+        <div>
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">
+            Graph details
+          </p>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-zinc-400">Module name</label>
+              <input
+                type="text"
+                value={tabDetails.moduleName}
+                onChange={(e) => handleChange('moduleName', e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                placeholder="e.g. PlayerController"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-zinc-400">Extends (optional)</label>
+              <SearchableSelect
+                value={derivedExtends ?? ''}
+                disabled={Boolean(environmentId && isMain)}
+                onChange={(value) => {
+                  handleChange('extendsType', value);
+                  const cls = classes.find((item) => item.id === activeClassId);
+                  if (cls) {
+                    setClasses((prev) =>
+                      prev.map((item) =>
+                        item.id === cls.id ? { ...item, extendsType: value.trim() || undefined } : item
+                      )
+                    );
+                  }
+                }}
+                options={(() => {
+                  const options = buildExtendsClassPickerOptions(classes, activeClassId);
+                  const current = derivedExtends ?? '';
+                  if (current && !options.some((option) => option.value === current)) {
+                    return [{ value: current, label: current, description: 'Current value' }, ...options];
+                  }
+                  return options;
+                })()}
+                placeholder="Parent class…"
+                searchable
+              />
+              {environmentId && isMain ? (
+                <p className="text-[9px] text-zinc-600">Derived from linked environment for {targetLanguage}</p>
+              ) : null}
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-zinc-400">Description</label>
+              <textarea
+                value={tabDetails.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                rows={3}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors resize-none"
+                placeholder="What this graph does..."
+              />
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

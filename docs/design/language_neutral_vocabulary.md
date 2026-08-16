@@ -71,6 +71,8 @@ Variables: **Get** / **Set** / **Declare**. Functions: **Call** / **Declare** / 
 | Class / module shell | Declare Class `{name}` (`class_define`) | — | — |
 | Nested graph reference | Graph Reference (`graph_ref`) | — | — |
 
+Game-talk **component** (Health / Inventory) is **Declare Class** plus a **field** or **Extends** — not a separate node ([catalog](language_capability_catalog.md#component--class)).
+
 Function graph tabs are **Edit function body** only (author the body). **Define** on the host graph is where that body is **placed** in generated code (same file per U80). **Declare** does not place the body.
 ### Workspace & graph chrome
 
@@ -85,7 +87,7 @@ Function graph tabs are **Edit function body** only (author the body). **Define*
 | Data wire | **Data** connection | — | typed pins | |
 | Build → text | **Generate** / **Generate code** | Compile (toolbar shorthand OK) | `generate`, transpile pipeline | Logs: “generation” |
 | Export name | **Module name** | Class name (as primary), `BP_*` | `moduleName` | Maps to class/module per target |
-| Optional base | **Extends** | Parent, Super | `extendsType` | OOP targets only |
+| Optional base | **Extends** | Parent, Super | `extendsType` | OOP targets only. A “component” attaches this way or as a class-typed field (U103). |
 | Community full graph | **Script** | Blueprint | Library filter | |
 | Community nodes | **Node pack** | — | — | |
 | AI hookup | **Connect AI** | Integrations | MCP modal | |

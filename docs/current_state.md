@@ -223,7 +223,7 @@ Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go
 
 ### Graph editor features
 
-Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **U84–U92, U94–U99, U101–U102, U104–U119 shipped** (August 2026). Remaining: U93 long-term, U103 only-if-Component, U100 cut.
+Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **U84–U92, U94–U99, U101–U102, U104–U119 shipped** (August 2026). Remaining: U93 long-term, U100 cut. **U103 locked** as Class (field or Extends; no Component node).
 
 | Feature | Status |
 |---------|--------|
@@ -374,7 +374,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (August 2026):** emit/OOP wave + **U89–U92** shipped. Open: CL-014 honest `(x)`, optional CL-017, U103 only if a real construct, U93 long-term, library Phase 3 (`vvs-library` repo + web UI). Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
+**Active next (August 2026):** emit/OOP wave + **U89–U92** shipped. Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, library Phase 3 (`vvs-library` repo + web UI). **U103 locked** as Class (field or Extends; no Component node). Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.

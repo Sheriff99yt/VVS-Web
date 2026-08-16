@@ -8,6 +8,7 @@ export interface SearchableSelectOption {
   label: string;
   description?: string;
   group?: string;
+  dimmed?: boolean;
 }
 
 export interface SearchableSelectProps {
@@ -150,7 +151,7 @@ export function SearchableSelect({
                       onClick={() => pick(option.value)}
                       className={`w-full text-left px-2.5 py-1.5 text-[11px] hover:bg-zinc-900 ${
                         option.value === value ? 'bg-indigo-500/10 text-indigo-200' : 'text-zinc-200'
-                      }`}
+                      } ${option.dimmed ? 'opacity-45' : ''}`}
                     >
                       <span className="block truncate">{option.label}</span>
                       {option.description ? (

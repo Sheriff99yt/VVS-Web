@@ -47,7 +47,7 @@ func (self *Machine) Shutdown() {
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `type Color int` + `const (...)` |
-| **Interface** | `Interface Define` Node | `type IDamageable interface` |
+| **Interface** | Class `form: interface\|trait` + Implements option | `type IDamageable interface` |
 | **Class / Struct** | `Class Define` Node | `type MyClass struct` + methods |
 | **Inheritance** | `Class Define` Option: **Extends** | Anonymous struct embedding |
 | **Variable** | `Variable Define` Node | `VarName float64` |

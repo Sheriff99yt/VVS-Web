@@ -37,9 +37,10 @@ export function formatFunctionDefHeader(
   func: FunctionSymbol,
   targetLanguage: TargetLanguage,
   isAsync = false,
-  properties?: Record<string, unknown>
+  properties?: Record<string, unknown>,
+  className?: string
 ): string {
-  return renderFunctionDefHeader(func, targetLanguage, isAsync, properties);
+  return renderFunctionDefHeader(func, targetLanguage, isAsync, properties, className);
 }
 
 /** C++ out-of-line `void Class::Name(...) {` — requires FunctionDefOutOfLineOpen pack slot. */
@@ -63,9 +64,10 @@ export function formatFunctionDefOutOfLineHeader(
 export function formatFunctionDeclPrototype(
   func: FunctionSymbol,
   targetLanguage: TargetLanguage,
-  properties?: Record<string, unknown>
+  properties?: Record<string, unknown>,
+  className?: string
 ): string | null {
-  return renderFunctionDeclPrototype(func, targetLanguage, properties);
+  return renderFunctionDeclPrototype(func, targetLanguage, properties, className);
 }
 
 export function printContextForIr(

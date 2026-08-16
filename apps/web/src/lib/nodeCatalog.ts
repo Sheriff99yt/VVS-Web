@@ -50,6 +50,7 @@ export function buildCoreCategories(
       linkedGraphId: item.linkedGraphId,
       linkKind: item.linkKind,
       graphBinding: item.graphBinding,
+      properties: item.properties,
     })),
   }));
 }

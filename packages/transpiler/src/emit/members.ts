@@ -1,5 +1,5 @@
 import { type VariableSymbol, parseTypeRef, resolveTypeRef, targetLanguageToFamily } from '@vvs/graph-types';
-import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
+import { isFunctionRoleEffective, isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrMemberDecl, IrModule, IrModuleImport } from '../ir/types';
@@ -15,6 +15,7 @@ import {
 import { emptyFunctionBodyLine } from './layout';
 import {
   appendEventHandlerDefinition,
+  functionRoleOf,
   renderFunctionOutOfLineClose,
   renderFunctionTabClose,
   resolveModifierSlots,
@@ -427,6 +428,21 @@ function appendEventDefinition(
   });
 }
 
+function irClassName(ir: IrModule): string {
+  const classDecl = ir.members.find(
+    (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
+  );
+  if (classDecl?.name?.trim()) return classDecl.name.trim();
+  if (ir.activeClass?.name?.trim()) return ir.activeClass.name.trim();
+  return ir.moduleName;
+}
+
+function functionRoleShouldSkip(ir: IrModule, properties?: Record<string, unknown>): boolean {
+  const role = functionRoleOf(properties);
+  if (role === 'function') return false;
+  return !isFunctionRoleEffective(ir.targetLanguage, role);
+}
+
 function appendFunctionDeclare(
   sink: CodeSink,
   ir: IrModule,
@@ -456,15 +472,14 @@ function appendFunctionDeclare(
     });
   };
 
-  // Ineffective (non-C++ non-abstract, or gated away) → U66 (x) or omit.
-  if (!effective) {
+  if (functionRoleShouldSkip(ir, member.properties) || !effective) {
     emitXComment();
     return;
   }
 
   for (const overload of member.overloads) {
     const props = { ...member.properties, overloadId: overload.id };
-    const proto = formatFunctionDeclPrototype(symbol, ir.targetLanguage, props);
+    const proto = formatFunctionDeclPrototype(symbol, ir.targetLanguage, props, irClassName(ir));
     if (proto) {
       const headerStartLine = sink.lineCount + 1;
       sink.appendRaw(proto);
@@ -510,6 +525,20 @@ function appendFunctionDefinition(
     return;
   }
 
+  if (functionRoleShouldSkip(ir, member.properties)) {
+    if (ir.emitUnsupportedComments !== false) {
+      const ctx = printContextForIr(ir, '', ir.environmentManifest);
+      const indent = memberChainIndentFor(ctx);
+      const prefix = commentPrefixFromPack(ctx);
+      const label = (typeof member.properties?.name === 'string' && member.properties.name.trim()) || symbol.name;
+      sink.appendTagged({
+        nodeId: member.implementSourceGraphNodeId ?? member.sourceGraphNodeId,
+        text: `${indent}${prefix}(x) Implement ${label}`,
+      });
+    }
+    return;
+  }
+
   const effective = isNodeEffectiveForLanguage(
     'function_implement',
     member.properties,
@@ -537,7 +566,8 @@ function appendFunctionDefinition(
       symbol,
       ir.targetLanguage,
       functionNeedsAsync(ir, symbol.id),
-      props
+      props,
+      irClassName(ir)
     );
 
     const headerStartLine = sink.lineCount + 1;
@@ -572,6 +602,9 @@ export function appendCppOutOfLineFunction(
   onBeforeFlowNode?: (sourceGraphNodeId: string, indent: string) => void
 ): void {
   const { symbol } = member;
+  if (functionRoleShouldSkip(ir, member.properties)) {
+    return;
+  }
   if (sink.lineCount > 0) sink.appendRaw('');
 
   const header = formatFunctionDefOutOfLineHeader(

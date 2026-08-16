@@ -37,9 +37,9 @@ Before marking a feature supported, confirm all five:
 | Function **Define** | `function_implement` | ✅ | Body placement; inherits Declare modifiers |
 | Event (Custom) | `event_member_define`, Symbols Panel | ✅ | Handler + dispatch pattern |
 | Enum Define | `enum_define` | ✅ | Shipped; Coverage Lab / Dual Class Lab |
-| Interface Define | ❌ Not in registry | ❌ | Planned (`implements_define`) |
-| Constructor Define | ❌ Not in registry | ❌ | Use `on_init` / entry pattern today |
-| Try/Catch | ❌ Not in registry | ❌ | Planned flow node |
+| Interface / trait | Class `form` + Implements option | — | Locked: not `implements_define`. C++ stays abstract Class + `isAbstract`. |
+| Constructor | Function Define + `role: constructor` | — | Locked: not `constructor_define`. Spawn only where the language types one. Rust `new` is a normal function. |
+| Try/Catch | planned flow node; catch/finally exec pins | — | Like Branch. Do not spawn in Go or Rust. Not a symbol. |
 
 ### Node settings / modifiers
 

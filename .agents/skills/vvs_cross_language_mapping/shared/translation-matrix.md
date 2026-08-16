@@ -9,7 +9,7 @@ Each language doc embeds **only its own Emit column** under Concept → emit. Ro
 | Concept | Representation in VVS | Python | C++ | JavaScript | C# | Rust | GDScript | Verse |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `class Color(Enum):` | `enum class Color` | `Object.freeze({...})` | `public enum Color` | `pub enum Color` | `enum Color` | `Color := enum:` |
-| **Interface** *(planned)* | `Interface Define` Node | `class IDamageable:` | `class IDamageable` | *Implicit/JSDoc* | `interface IDamageable` | `pub trait IDamageable` | *Implicit* | `IDamageable := interface:` |
+| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `class IDamageable:` | `class IDamageable` | *Implicit/JSDoc* | `interface IDamageable` | `pub trait IDamageable` | *Implicit* | `IDamageable := interface:` |
 | **Class** | `Class Define` Node | `class MyClass:` | `class MyClass` | `class MyClass` | `public class MyClass` | `pub struct MyClass` + `impl` | `class_name MyClass` | `<public>MyClass := class:` |
 | **Inheritance** | `Class Define` Option: **Extends** | `(BaseClass)` | `: public BaseClass` | `extends BaseClass` | `: BaseClass` | `base: BaseClass` *(comp)* | `extends BaseClass` | `<public>Child(Base) := class:` |
 | **Implements** | `Class Define` Option: **Implements** | `(IDamageable)` | `, public IDamageable` | *Implicit* | `, IDamageable` | `impl IDamageable for` | *Implicit* | `, IDamageable` |
@@ -26,12 +26,12 @@ Each language doc embeds **only its own Emit column** under Concept → emit. Ro
 | **Static Function** | `Function` Option: **Static** | `@staticmethod` | `static void Func()` | `static Func()` | `public static void Func` | `pub fn Func()` *(no self)* | `static func Func():` | *(Module function)* |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* | `virtual void Func()` | *Implicit* | `public virtual void Func` | *Implicit* | *Implicit* | `Func<override>()` |
 | **Generics** | `Function` Option: **Wildcard Pin** | `TypeVar('T')` | `template <typename T>` | *Implicit* | `void Func<T>()` | `pub fn Func<T>()` | *Implicit* | `Func(t: type)` |
-| **Constructor** *(planned)* | `Constructor Define` Node | `def __init__(self):` | `MyClass()` | `constructor()` | `public MyClass()` | `pub fn new() -> Self` | `func _init():` | `MakeMyClass()` |
-| **Error (Try)** *(planned)* | `Try/Catch` Block Node | `try: / except:` | `try { } catch` | `try { } catch` | `try { } catch` | `Result<T, E>` *(impl)* | *Implicit/Asserts* | *(Failure Context)* |
+| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `def __init__(self):` | `MyClass()` | `constructor()` | `public MyClass()` | `pub fn new() -> Self` | `func _init():` | `MakeMyClass()` |
+| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `try: / except:` | `try { } catch` | `try { } catch` | `try { } catch` | `Result<T, E>` *(impl)* | *Implicit/Asserts* | *(Failure Context)* |
 | **Lambda/Callback** | Pin Type: **Callable** | `callback()` | `std::function<void()>` | `callback()` | `Action callback` | `F: FnOnce()` | `Callable` | `type {() : void}` |
 | **Namespaces** | `Namespace Define` Node | `module.py` | `namespace X` | `namespace X` | `namespace X` | `mod x` | `class_name` | `x := module:` |
 | **Structs** | `Struct Define` Node | `@dataclass` | `struct X` | `interface X` | `struct X` | `struct X` | *Dictionary* | `X := struct:` |
-| **Destructor** | `Destructor Define` Node | `__del__` | `~X()` | *(None)* | `~X()` | `impl Drop` | `NOTIFICATION_PREDELETE` | *(None)* |
+| **Destructor** | Function Define + `role: destructor` | `__del__` | `~X()` | *(None)* | `~X()` | `impl Drop` | `NOTIFICATION_PREDELETE` | *(None)* |
 | **Async Function** | `Function` Option: **Async** | `async def` | *(ineffective — disable chip)* | `async Func()` | `async Task` / `async Task<T>` | `async fn` | *(ineffective today)* | *(ineffective today)* |
 | **Await** | `Await` Node | `await X` | *(ineffective with Async)* | `await X` | `await X` | `X.await` | `await X` | `X()` *(implicit)* |
 | **If/Else** | `Branch (If)` Node | `if: / else:` | `if () {} else {}` | `if () {} else {}` | `if () {} else {}` | `if {} else {}` | `if: / else:` | `if (): / else:` |

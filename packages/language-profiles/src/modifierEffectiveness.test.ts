@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  functionRoleEffectiveness,
+  functionRoleFieldOptions,
+  functionRoleIneffectiveTooltip,
+  isFunctionRoleEffective,
   isModifierEffective,
   isModifierInteractive,
   modifierEffectiveness,
@@ -103,4 +107,41 @@ describe('modifierEffectiveness', () => {
     expect(modifierIneffectiveTooltip('rust', 'waitIsAsync')).toContain('no effect');
   });
 
+  test('constructor role is effective only where the language types a ctor', () => {
+    for (const lang of ['python', 'javascript', 'cpp', 'csharp', 'gdscript'] as const) {
+      expect(functionRoleEffectiveness(lang, 'constructor')).toBe('effective');
+      expect(isFunctionRoleEffective(lang, 'constructor')).toBe(true);
+    }
+    for (const lang of ['rust', 'go', 'verse'] as const) {
+      expect(functionRoleEffectiveness(lang, 'constructor')).toBe('ineffective');
+      expect(isFunctionRoleEffective(lang, 'constructor')).toBe(false);
+      expect(functionRoleIneffectiveTooltip(lang, 'constructor')).toBe(
+        `Not used in ${lang} output`
+      );
+    }
+    expect(functionRoleEffectiveness('python', 'function')).toBe('effective');
+  });
+
+  test('destructor role is effective only in C++', () => {
+    expect(functionRoleEffectiveness('cpp', 'destructor')).toBe('effective');
+    expect(isFunctionRoleEffective('cpp', 'destructor')).toBe(true);
+    for (const lang of ['python', 'javascript', 'csharp', 'gdscript', 'rust', 'go', 'verse'] as const) {
+      expect(functionRoleEffectiveness(lang, 'destructor')).toBe('ineffective');
+      expect(isFunctionRoleEffective(lang, 'destructor')).toBe(false);
+      expect(functionRoleIneffectiveTooltip(lang, 'destructor')).toContain('Not used in');
+    }
+  });
+
+  test('role field options dim ineffective constructor/destructor values', () => {
+    const rust = functionRoleFieldOptions('rust');
+    expect(rust.find((o) => o.value === 'constructor')?.dimmed).toBe(true);
+    expect(rust.find((o) => o.value === 'destructor')?.dimmed).toBe(true);
+    expect(rust.find((o) => o.value === 'function')?.dimmed).toBe(false);
+    const cpp = functionRoleFieldOptions('cpp');
+    expect(cpp.find((o) => o.value === 'constructor')?.dimmed).toBe(false);
+    expect(cpp.find((o) => o.value === 'destructor')?.dimmed).toBe(false);
+    const cs = functionRoleFieldOptions('csharp');
+    expect(cs.find((o) => o.value === 'destructor')?.dimmed).toBe(true);
+    expect(cs.find((o) => o.value === 'destructor')?.description).toContain('Not used in csharp output');
+  });
 });

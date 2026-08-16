@@ -45,6 +45,7 @@ import {
   hasHandlerNodeForEvent,
 } from '@/lib/defineNodeSync';
 import { paneMenuPosition } from '@/lib/paneMenuPosition';
+import { functionRoleFieldOptions } from '@vvs/language-profiles';
 
 export const SPAWN_EVENT_NODE_EVENT = 'vvs:spawn-event-node';
 export const SPAWN_EVENT_DECLARE_MEMBER_EVENT = 'vvs:spawn-event-declare-member';
@@ -106,6 +107,7 @@ function GraphFloatingDetailsPanel() {
     classes,
     activeClassId,
     graphContainers,
+    targetLanguage,
   } = useProject();
   const graphDocuments = useGraphDocuments();
   const {
@@ -747,8 +749,8 @@ function GraphFloatingDetailsPanel() {
               fields={filteredPropertySchema}
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}
-              fieldOptions={
-                nodeKindId === 'class_define'
+              fieldOptions={{
+                ...(nodeKindId === 'class_define'
                   ? {
                       extendsType: buildExtendsClassPickerOptions(
                         classes,
@@ -759,8 +761,11 @@ function GraphFloatingDetailsPanel() {
                             : undefined
                       ),
                     }
-                  : undefined
-              }
+                  : {}),
+                ...(nodeKindId === 'function_implement' || nodeKindId === 'function_define'
+                  ? { role: functionRoleFieldOptions(targetLanguage) }
+                  : {}),
+              }}
             />
           ) : null}
 

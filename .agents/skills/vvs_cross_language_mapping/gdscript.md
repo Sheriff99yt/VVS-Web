@@ -39,7 +39,7 @@ Coverage Lab: `enum SensorStatus { OK, WARN, FAIL }`, second `class_name Sensor`
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `enum Color { … }` |
-| **Interface** *(planned)* | `Interface Define` Node | *Implicit* |
+| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | *Implicit* |
 | **Class** | `Class Define` Node | `class_name MyClass` |
 | **Inheritance** | `Class Define` Option: **Extends** | `extends BaseClass` |
 | **Implements** | `Class Define` Option: **Implements** | *Implicit* |
@@ -56,12 +56,12 @@ Coverage Lab: `enum SensorStatus { OK, WARN, FAIL }`, second `class_name Sensor`
 | **Static Function** | `Function` Option: **Static** | `static func Func():` |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* |
 | **Generics** | `Function` Option: **Wildcard Pin** | *Implicit* |
-| **Constructor** *(planned)* | `Constructor Define` Node | `func _init():` |
-| **Error (Try)** *(planned)* | `Try/Catch` Block Node | *Implicit/Asserts* |
+| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `func _init():` |
+| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | *Implicit/Asserts* |
 | **Lambda/Callback** | Pin Type: **Callable** | `Callable` |
 | **Namespaces** | `Namespace Define` Node | `class_name` |
 | **Structs** | `Struct Define` Node | *Dictionary* |
-| **Destructor** | `Destructor Define` Node | `NOTIFICATION_PREDELETE` |
+| **Destructor** | Function Define + `role: destructor` | `NOTIFICATION_PREDELETE` |
 | **Async Function** | `Function` Option: **Async** | *(ineffective today — CL-018)* |
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if: / else:` |

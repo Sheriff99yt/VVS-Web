@@ -39,7 +39,7 @@ Coverage Lab also shows: `const SensorStatus = Object.freeze({…})`, `class Sen
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `const X = Object.freeze({…})` |
-| **Interface** *(planned)* | `Interface Define` Node | *Implicit/JSDoc* |
+| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | *Implicit/JSDoc* |
 | **Class** | `Class Define` Node | `class MyClass` |
 | **Inheritance** | `Class Define` Option: **Extends** | `extends BaseClass` |
 | **Implements** | `Class Define` Option: **Implements** | *Implicit* |
@@ -56,12 +56,12 @@ Coverage Lab also shows: `const SensorStatus = Object.freeze({…})`, `class Sen
 | **Static Function** | `Function` Option: **Static** | `static Func()` |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* |
 | **Generics** | `Function` Option: **Wildcard Pin** | *Implicit* |
-| **Constructor** *(planned)* | `Constructor Define` Node | `constructor()` |
-| **Error (Try)** *(planned)* | `Try/Catch` Block Node | `try { } catch` |
+| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `constructor()` |
+| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `try { } catch` |
 | **Lambda/Callback** | Pin Type: **Callable** | `callback()` |
 | **Namespaces** | `Namespace Define` Node | `namespace X` |
 | **Structs** | `Struct Define` Node | `interface X` |
-| **Destructor** | `Destructor Define` Node | *(None)* |
+| **Destructor** | Function Define + `role: destructor` | *(None)* |
 | **Async Function** | `Function` Option: **Async** | `async Func()` |
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if () {} else {}` |

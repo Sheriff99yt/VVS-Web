@@ -81,7 +81,7 @@ Old graphs may still contain these. Analyzer / migration keep working. Spawn cat
 
 ### Planned (not in registry yet)
 
-Interface Declare, Constructor Define, Try/Catch — only if each is its own typed construct.
+Do **not** add `constructor_define` / `implements_define` / `property_define` / `closure_define` / `flow_match`. Constructor is Function `role`. Interface/trait is Class `form` + Implements option. Try/catch is a planned flow node (catch/finally pins) — not in Go or Rust. Lambda is one planned expression node (`lambda_define`); capture is an option. See catalog leftover-constructs lock.
 
 ## Settings that stay on Declare / Import
 

@@ -1,5 +1,8 @@
 // ===== src/InheritanceLab.py =====
 class Parent:
+    # (x) Declare Parent
+    def __init__(self):
+        pass
     # (x) Declare Speak
     def Speak(self):
         print("parent")

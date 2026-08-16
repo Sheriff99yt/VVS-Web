@@ -1097,7 +1097,7 @@ function GraphCanvasInner() {
         inlineValues: defaultInlineValues,
         kindId: template.type,
         kindVersion: template.kindVersion ?? kindDef?.kindVersion,
-        properties: defaultProps,
+        properties: { ...defaultProps, ...(template.properties ?? {}) },
       });
 
       const newNode: VVSNodeType = {

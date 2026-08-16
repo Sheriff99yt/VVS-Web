@@ -1,5 +1,8 @@
 // ===== src/InheritanceLab.gd =====
 class_name Parent
+    # (x) Declare Parent
+    func _init():
+        pass
     # (x) Declare Speak
     func Speak() -> void:
         print("parent")

@@ -3,7 +3,7 @@ const SPAWN_SEARCH_ALIASES: Record<string, readonly string[]> = {
   'vvs.project.import_module': ['import', 'module', 'stdlib', 'include', 'utils', 'iostream', 'enum'],
   import_class: ['import', 'class', 'reference'],
   function_define: ['declare', 'signature', 'prototype'],
-  function_implement: ['define', 'body', 'implement'],
+  function_implement: ['define', 'body', 'implement', 'constructor', 'ctor', '__init__', 'destructor', 'dtor'],
   class_define: ['declare', 'class', 'define class'],
   var_define: ['declare', 'variable', 'field', 'member'],
   event_member_define: ['declare', 'event', 'member'],
