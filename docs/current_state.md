@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **August 2026** (ctor/dtor Function role + leftover-construct catalog locks + settings search audit + emit/OOP + **U89 / U91 / U92**; text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped).
+Last aligned with codebase: **August 2026** (ctor/dtor Function role + leftover-construct catalog locks + settings search audit + emit/OOP + **in-page TypeScript agent** + **U89 / U92**; U91 dual-consent / MCP Ready **not** the product chrome; text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -16,7 +16,7 @@ Last aligned with codebase: **August 2026** (ctor/dtor Function role + leftover-
 
 **UI-first** with **shared analysis packages** and **text-shaped codegen fidelity** ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)).
 
-- Mock persistence: `apps/web/src/lib/api-mock.ts` (localStorage).
+- Mock persistence: `apps/web/src/lib/api/mock.ts` (localStorage / fixtures).
 - Status chrome must be **honest**: show offline/disconnected, not fake “connected” states.
 
 ---
@@ -55,7 +55,7 @@ Web types re-export from `@vvs/graph-types` (`apps/web/src/types/graph.ts`, `pro
 
 **Removed from product UI** (do not re-add as duplicate surfaces):
 
-- ~~Integrations~~ (MCP connection is via **Connect AI** modal in TopNav)
+- ~~Integrations~~ / ~~Connect AI~~ (hosted agent is the in-page TS **Agent** panel; optional Go sidecar paste lives in a collapsed section)
 
 ### Canvas layout mode
 
@@ -71,7 +71,7 @@ When **Canvas** is active, the full editor chrome is visible:
 │ Symbols  │ + floating compiler log (br)  │                   │
 │ API tabs │                               │                   │
 ├──────────┴───────────────────────────────┴───────────────────┤
-│ StatusBar: Local (client-first) or MCP+API when hosted · Log · compile │
+│ StatusBar: Local (client-first) · Agent ready/error · Log · compile     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -183,7 +183,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Sync code preview | Edit menu (Ctrl+Shift+S) | Refresh code preview from graph without full validation pipeline |
 | Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
 | Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
-| Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; **dual consent** (UI intent + server write gate); URL + **Test connection** only when hosted |
+| **Agent** | TopNav Bot button (tooltip **Agent**) | In-page TypeScript agent. `EditorLayout` mounts `AgentHost` (Worker starts with the editor). `AgentPanel`: prompt, optional local LLM key/base/model in `localStorage` `vvs:agent-llm` (default `https://api.openai.com/v1` + `gpt-4o-mini`). `/tool name json` works without a key. Writes gated by `agentAllowWrites` (default **false**). `window.vvs.agent` / `window.vvs.tools`: `listTools()`, `callTool(name, args)`. StatusBar **Agent ready** / **Agent error** / **Agent…** from `agentStatusStore` (not fake MCP Ready). Collapsed sidecar pastes optional local Go MCP config — not the hosted path. |
 | Settings | TopNav gear + **Help** menu | Sidebar modal — **Project** · **Editor** · **Shortcuts** (rebind) · **Audio** · **About**. Search catalogs every section (honest Editor blurb, Project grouping, Audio cards). Replaces flat Project/App tabs |
 | Action history (U108 / U114–U117) | Edit menu · floating panel | Shared undo: graph + symbol/class CRUD; survives tab switch; lean canvas snapshots |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
@@ -192,6 +192,24 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Tooltips (U94) | Editor chrome | App-default `Tooltip` (`components/ui/Tooltip.tsx`) — portal tips with Esc dismiss + viewport clamp; native `title=` replaced on left panel, TopNav, status, toolbars, panels, nodes, start screen (section/popover heading `title` props remain) |
 | Selection / modifiers chrome | Hover + select | **Quick Actions** strip above selection (disconnect / duplicate / comment / delete + ⋯ More). Full **Node Actions** on node right-click (S / S S / A, wires, clipboard, extract, Add node…). Spawn catalog on empty-pane right-click. Modifier chips on hover overlay. U102: Open Graph removed from symbol tree/Details |
 | Mouse Back / Forward | Editor navigation | Restores tab / view / selection / **camera viewport** (dwell ~2s after pan/zoom; coalesced unless a graph edit or node-options change intervened). **Not** graph undo — that is Ctrl+Z and Log → History |
+
+### In-page agent (hosted path)
+
+Hosted app (GitHub Pages / editor) uses an **in-page TypeScript agent**. Live canvas is the source of truth. No Cursor, Go, or extra install. `EditorLayout` mounts `AgentHost` — the Worker starts with the editor. Spec: [design/mcp_autonomy_audit.md](design/mcp_autonomy_audit.md).
+
+| Piece | Location | Notes |
+|-------|----------|-------|
+| **Agent** (Bot button) | TopNav | Tooltip **Agent** opens `AgentPanel` |
+| LLM settings | `localStorage` `vvs:agent-llm` | Optional key / base / model; default `https://api.openai.com/v1` + `gpt-4o-mini` |
+| `/tool name json` | Agent panel | Runs a named tool without an LLM key |
+| Write gate | `uiPreferences.agentAllowWrites` | Default **false**. Gates `add_class`, `add_node`, `remove_node`, `connect_pins` |
+| Bridge | `window.vvs.agent` / `window.vvs.tools` | `listTools()`, `callTool(name, args)` |
+| Status | StatusBar | **Agent ready** / **Agent error** / **Agent…** from `agentStatusStore` — not fake **MCP Ready** |
+| Tools (safe) | `lib/agent/toolDefs.ts` | `list_available_nodes`, `list_syntax_packs`, `list_classes`, `get_graph`, `generate_code` |
+| Tools (write) | same | `add_class`, `add_node`, `remove_node`, `connect_pins`. `add_node` refuses leftover kinds (`SPAWN_EXCLUDED_KINDS`) |
+| Sidecar (optional) | Agent panel collapsed section | Localhost Go MCP paste-config for Cursor / VS Code / Claude Desktop. **Not** the hosted path. `mcpAllowDangerousTools` does **not** reach Go (`VVS_MCP_ALLOW_WRITE` does) |
+
+**Deferred (do not implement as if shipped):** MCP wrapper for other apps over the same TS package; `save_project` / rosetta / `validate_generated_parse` / `propose_syntax_delta` in the TS runtime; streamable HTTP; live-tab control without the editor open; Chrome DevTools bridge; in-page chat on StartScreen; product accounts.
 
 **Floating panels** (canvas overlay, shared `FloatingPanelShell`):
 
@@ -215,7 +233,7 @@ Context-aware (`ProjectContext.selection`), shown on graph canvas when something
 | Function | `FunctionPropertiesPanel` — name, binding, visibility, overloads, return type, flags |
 | Node | `PropertySchemaPanel` (when kind defines `propertySchema`) + `NodePinsPanel` — pins, inline values, linked graph; event define/dispatch binding plugin |
 
-Graph-level and project settings → TopNav **Settings** (gear, right of Connect AI) / View → **Project settings** (`GraphSettingsModal` Project tab: active-graph codegen, properties, project defaults, syntax packs). **App settings** (same modal App tab): browser UI prefs — dim unsupported, panel defaults, reset floating layouts.
+Graph-level and project settings → TopNav **Settings** (gear, right of Agent) / View → **Project settings** (`GraphSettingsModal` Project tab: active-graph codegen, properties, project defaults, syntax packs). **App settings** (same modal App tab): browser UI prefs — dim unsupported, panel defaults, reset floating layouts.
 
 **Codegen model:** `documents[tabId].metadata.targetLanguage` and `targetFileExtension` override project-level `targetLanguage` / `targetFileExtensions` for that graph. Unset fields inherit project defaults at emit time (`resolveGraphCodegenSettings` in `@vvs/graph-types`). New graphs seed metadata from project defaults when first opened (`useGraphTabSync`).
 
@@ -240,7 +258,7 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Event emit/subscribe nodes (`event_emit`, `event_subscribe`) | **Blocked** — excluded from spawn catalog; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` blocks Generate; no `_emit` / `_subscribe` injection in transpiler |
 | Program entry (`events[]` `role: 'entry'`) | Done — `event_member_define` + `event_define` on class graph; `on_start` only from canvas; legacy `event_on_start` deprecated; new class/project bootstraps entry via `createClassHomeBootstrap` |
 | Function symbols + overloads (`FunctionSymbol`, snapshot v3) | Done — tree, inspector, pin sync; symbols carry optional `classId` |
-| Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Folders** section in ProjectTree **Structure** tab (click folder/class to select; double-click to open graph), class-scoped symbol lists on **Symbols** tab, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. **Class declare fidelity:** `class_define` required when class has symbols or any member define on home graph; `DEFINE_NODE_MISSING` / `ORPHAN_DEFINE_NODE` for class; panel `addClassWithDefine` + tree Declare badge + restore; deleting `class_define` blocks Generate but preview still shows member body in chain order (no phantom `class Name:` shell). Go/MCP: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
+| Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Folders** section in ProjectTree **Structure** tab (click folder/class to select; double-click to open graph), class-scoped symbol lists on **Symbols** tab, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. **Class declare fidelity:** `class_define` required when class has symbols or any member define on home graph; `DEFINE_NODE_MISSING` / `ORPHAN_DEFINE_NODE` for class; panel `addClassWithDefine` + tree Declare badge + restore; deleting `class_define` blocks Generate but preview still shows member body in chain order (no phantom `class Name:` shell). In-page agent + optional Go sidecar: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
 | Pin type validation on connect | Done |
 | Wire / cross-graph cycle prevention | Done — `graphCycles.ts`, `graphRelations.ts` |
 | Linear flow chains (break on middle rewire) | Done — `graphWiring.ts` + editor warning |
@@ -268,7 +286,8 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Editor focus | Done — `useEditorFocus` + `editorFocus.ts` + `projectSelection.ts` + `symbolCodegenLink.ts`; tree opens pass explicit `selection` through `navigate()`; compiler log variable jumps open class home graph; function overload preview respects active tab |
 | Error navigation | Done — validator log / status bar → canvas node |
 | Library install flow | Done — install, detail panel, open in project |
-| Connect AI / health chrome | Done — `useApiHealth`, `VvsApi.probeMcp` (HTTP `/mcp` + health fallback), Phase 1 local MCP copy |
+| In-page agent | Done — `AgentHost` + `lib/agent/` Worker; tools against the live canvas; writes via `agentAllowWrites` (default false); leftover kinds refused on `add_node` |
+| Health chrome (optional HTTP / sidecar) | Done — `useApiHealth`; `VvsApi.probeMcp` only for the optional Go sidecar, not the hosted path |
 | Call overload picker | Done — `CallNodeOverloadPanel` in floating details when `func.overloads.length > 1` |
 | Syntax pack lock UI | Done — `SyntaxPackLockPanel` in graph settings → `.vvs/project.json` |
 | OpenAPI / AsyncAPI import UI | Done — `EnvironmentImportModal` (Library + graph settings); `VvsApi.importEnvironment` |
@@ -354,7 +373,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | CodegenTarget | `packages/graph-types/src/codegenTarget.ts` | Done — family + capabilities + syntaxPackLock |
 | Graph codegen settings | `packages/graph-types/src/graphCodegen.ts` | Done — `resolveGraphCodegenSettings`, `codegenMetadataSeed` for new graphs |
 | Tree-sitter parse CI | `packages/syntax-packs/src/parseValidation.ts` | Done — python/javascript on Linux CI (`validate:parse --strict`); skips gracefully on dev machines without native prebuild |
-| Syntax pack MCP tools | `server/internal/transport/mcp/` | Done (local) — `list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse` |
+| Syntax pack MCP tools | `server/internal/transport/mcp/` | Optional Go sidecar only — `list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse`. Not in the in-page TS runtime (deferred) |
 
 ### Codegen fidelity (strict)
 
@@ -374,7 +393,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (August 2026):** ctor/dtor Function role + leftover-construct catalog locks + settings search audit + emit/OOP + **U89–U92** shipped. Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, U90/library Phase 3 (`vvs-library` repo + web UI). **U103 locked** as Class (field or Extends; no Component node). Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
+**Active next (August 2026):** ctor/dtor Function role + leftover-construct catalog locks + settings search audit + emit/OOP + **in-page TypeScript agent** + **U89 / U92** shipped. U91 dual-consent / MCP Ready are **not** product chrome (`agentAllowWrites` is the real in-page write gate). Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, U90/library Phase 3 (`vvs-library` repo + web UI). **U103 locked** as Class (field or Extends; no Component node). Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md) · [design/mcp_autonomy_audit.md](design/mcp_autonomy_audit.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.
@@ -387,13 +406,13 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 | Full IR pipeline (lower/emit split) | **Done** — structured IR v2 + `print/` + `emit/`; see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
 | Label-free legacy migration | apps/web + graph-types load | **Partial** — `kindId` backfill on load; binding-first `normalizeNodeData` |
 | Ambiguous overload resolver UI | Call node details | **Done** — overload dropdown in floating details |
-| Syntax pack MCP tools | `server/` Go | **Done (local)** — `list_syntax_packs`, `propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse` via thin MCP wrappers over services |
+| Syntax pack MCP tools | `server/` Go | **Optional sidecar** — same tools via thin MCP wrappers. Hosted path is the in-page TS agent (no rosetta / validate_parse / propose_syntax_delta there yet) |
 | Tree-sitter parse validation | CI | **Done (Python/JS)** — validator-only check on Rosetta outputs; unsupported local runtimes skip gracefully |
 | GDScript language profile | `packages/language-profiles/src/profiles.ts` | Done — native static func, extends; overload unsupported |
 | Godot environment template | `env.gdscript.godot-game` | Done — Node extends, `_ready` / `_process`, `project.godot` stub |
 | `language-profiles/profiles/*.json` | packages | Profiles in TypeScript today; JSON packs optional |
 | Supabase auth / persistence | Go + self-hosted Supabase (`pgx`) | **In repo / not product** — foundation exists for local experiments; **no dedicated server hosting** as product direction ([roadmap.md](roadmap.md)) |
-| MCP server transport | `server/` Go | **Done (local)** — SSE at `/mcp`; production JWT + HTTPS deploy TBD |
+| MCP server transport | `server/` Go | **Optional local sidecar** — SSE at `/mcp`. No remote hosted MCP URL. Streamable HTTP deferred. Later: thin MCP wrapper over the same TS package for other apps |
 | HTTP project REST | `server/` Go | **Done** — `GET/PUT /api/projects`, `POST …/compile`; memory or Postgres via `DATABASE_URL` |
 | WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
 | PWA / offline sync | — | Not started |
@@ -402,7 +421,7 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 
 ---
 
-## Backend (`server/`) — API, registry, local MCP
+## Backend (`server/`) — API, registry, optional local MCP sidecar
 
 **Phase 2 (redirected):** Client-first local / folder / `.vvs/` is the product path. Self-hosted Postgres + GoTrue code remains in `server/` for reference — **not** an open VPS deploy track. See [roadmap.md](roadmap.md) § No dedicated server · [deployment.md](deployment.md) (legacy banner).
 
@@ -419,7 +438,7 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 - `migrations/` — embedded SQL for Postgres bootstrap
 
 **Local dev defaults:** no `DATABASE_URL` → memory store; `AUTH_REQUIRED=false` → `DevUserID`.  
-**Frontend:** `NEXT_PUBLIC_API_MODE=http` + `apps/web/src/lib/api/client.ts` sends Bearer token on project APIs; `session.ts` holds access token; `AuthButton` (TopNav + StartScreen) signs in via Supabase GoTrue when env set; `cloudPersistence.ts` prefers Go API save/load when authenticated; **Auto save** toggle debounces full snapshot persist (local + cloud).
+**Frontend:** `NEXT_PUBLIC_API_MODE=http` + `apps/web/src/lib/api/client.ts` sends Bearer token on project APIs; `session.ts` holds access token; `AuthButton` (TopNav) signs in via Supabase GoTrue when env set; `cloudPersistence.ts` prefers Go API save/load when authenticated; **Auto save** toggle debounces full snapshot persist (local + cloud).
 
 ---
 
@@ -455,7 +474,7 @@ Coverage Lab and First Graph pass strict analysis. Environment templates and lib
 
 These were intentionally removed or relocated during the July 2026 UI revision:
 
-1. **Integrations tab** → Connect AI modal only
+1. **Integrations tab** / **Connect AI** → in-page **Agent** panel (hosted path); optional Go sidecar paste in a collapsed section
 2. **Library local node browser** → context menu + `nodeCatalog.ts`
 3. **GraphToolbar** → compile/simulation in TopNav; save in File menu
 4. **Fake connected status** → honest offline/disconnected chrome

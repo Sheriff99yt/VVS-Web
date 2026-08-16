@@ -155,11 +155,6 @@ function listLegacyEventDispatchers(
   return entries.sort((a, b) => a.label.localeCompare(b.label));
 }
 
-export interface MacroEntry {
-  id: string;
-  name: string;
-}
-
 export interface GeneratedExportEntry {
   graphId: string;
   graphLabel: string;
@@ -192,11 +187,6 @@ export function listGeneratedExports(
         ),
       };
     });
-}
-
-/** @deprecated Macro authoring removed — always returns []. */
-export function listMacroEntries(_openTabs: GraphTab[]): MacroEntry[] {
-  return [];
 }
 
 export function listAllGraphTabs(

@@ -2,7 +2,6 @@ import type {
   ClassSymbol,
   FunctionSymbol,
   GraphContainer,
-  GraphTab,
   ProjectEventDefinition,
   VariableSymbol,
 } from '@vvs/graph-types';
@@ -78,14 +77,6 @@ export function isOnClassHomeGraph(
   cls: ClassSymbol | undefined
 ): boolean {
   return cls != null && activeGraphTab === classHomeGraphId(cls);
-}
-
-/** @deprecated Use isOnClassHomeGraph */
-export function isActiveClassGraphTab(
-  activeGraphTab: string,
-  cls: ClassSymbol | undefined
-): boolean {
-  return isOnClassHomeGraph(activeGraphTab, cls);
 }
 
 export function containerMatchesFilter(

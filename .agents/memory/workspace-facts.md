@@ -6,12 +6,12 @@ Stable facts agents should assume without re-exploring the tree.
 
 - Monorepo root: `VVS Web/` — **public MIT repo** (see `CONTRIBUTING.md`)
 - Implemented packages: `packages/graph-types`, `packages/syntax-registry`, `packages/language-profiles`, `packages/syntax-packs`, `packages/transpiler`, `packages/environment-templates`
-- Go server: `server/` — registry HTTP, project REST, compile, local MCP SSE; **Phase 2:** `ProjectStore` (`MemoryStore` | `PostgresStore` via `pgx`), JWT middleware ([deployment.md](../../docs/deployment.md))
+- Go server: `server/` — registry HTTP, project REST, compile, **optional** local MCP sidecar SSE. Hosted agent is `apps/web/src/lib/agent/`. **Phase 2 experiments:** `ProjectStore` (`MemoryStore` | `PostgresStore` via `pgx`), JWT middleware ([deployment.md](../../docs/deployment.md))
 
 ## Frontend entry points
 
-- App shell: `apps/web/src/components/layout/EditorLayout.tsx` — mounts `GraphWorkspaceHost`, `EnvironmentImportModal`
-- Start screen: `apps/web/src/components/start/StartScreen.tsx` — examples, explore, recents, `AuthButton`
+- App shell: `apps/web/src/components/layout/EditorLayout.tsx` — mounts `GraphWorkspaceHost`, `EnvironmentImportModal`, `AgentHost` (in-page agent Worker starts with the editor)
+- Start screen: `apps/web/src/components/start/StartScreen.tsx` — usability tests, explore (`/library` `/roadmap`), recents. Auth is TopNav only.
 - Graph edit canvas: `apps/web/src/components/graph/GraphCanvas.tsx` — includes `GraphSelectionToolbar`
 - Floating inspector: `apps/web/src/components/layout/GraphFloatingDetails.tsx` — includes `CallNodeOverloadPanel`
 - Project tree: function **double-click / open icon = Edit function body**; badges **Declare** (exists) / **Define** (body place) per locked vocab; docs survive tab close (`shouldRetainGraphDocument`); same-file emit = U80; Declare≠Define split = **U81**
@@ -63,10 +63,12 @@ Stable facts agents should assume without re-exploring the tree.
 - **Member declare:** `VarDefine` template + pack `layout.varDeclIndent` for python/cpp variable declarations.
 - **Indent:** `bodyIndent` / `handlerBodyIndent` read from pack `layout` (with JS/Verse fallbacks in `graphToIr.ts`).
 
-## MCP & HTTP (local experiments — not product hosting)
+## Agent, MCP & HTTP
 
-- Product default: **client-only** editor; **no dedicated server**
-- Local MCP on the user’s machine (desktop) is allowed — paste config in Connect AI
+- **Hosted path:** in-page TypeScript agent (`apps/web/src/lib/agent/`, `AgentHost`, `AgentPanel`). Live canvas is source of truth. No extra install.
+- **Write gate:** `agentAllowWrites` (default false). StatusBar from `agentStatusStore` (**Agent ready** / **Agent error** / **Agent…**).
+- **Other apps / Cursor:** later thin MCP wrapper over the same package. Today: optional localhost Go sidecar — paste config in the Agent panel collapsed sidecar section, not Connect AI.
+- Product default: **client-only** editor; **no dedicated server**; **no remote hosted MCP URL**
 - `server/` Go + Postgres/Auth remain in-repo for experiments; hide HTTP/cloud chrome by default
 - Persistence product path: folder / `.vvs/` / git — **not** `pgx` on a VPS
 - Optional local experiment env (not product): `NEXT_PUBLIC_API_MODE=http`, `DATABASE_URL`, GoTrue — see legacy [deployment.md](../../docs/deployment.md)

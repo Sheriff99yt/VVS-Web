@@ -124,7 +124,7 @@ Choices agents must not undo without explicit user approval.
 
 ## Product UI (July 2026 revision)
 
-- **No in-app Roadmap or Integrations tabs** — planning lives in `docs/`; MCP via Connect AI modal only
+- **No in-app Roadmap or Integrations tabs** — planning lives in `docs/`; hosted agent is the TopNav **Agent** panel (in-page TS), not Connect AI
 - **Library** is community scripts only — local spawnable nodes use `nodeCatalog.ts` + canvas context menu
 - **No GraphToolbar** — Generate/Play in TopNav; Save in File menu
 - **Honest offline chrome** — StatusBar shows disconnected/offline; no fake CPU/sync metrics
@@ -218,8 +218,8 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 **Canonical:** `docs/roadmap.md` § Client-first direction
 
 - **Default experience:** no VVS accounts, **no dedicated server**, no required backend; browser edit + Generate; local/folder / `.vvs/` save; GitHub for pack/library / static Pages
-- **Do not remove** Auth, cloud save, HTTP API mode, hosted MCP probe, Library backend hooks, `server/` — keep code for reference/local experiments; **disable / hide / inactive** in the product default — **not** a roadmap to re-enable on a VPS
-- **AI / MCP:** desktop **local** MCP + paste config; **mobile: no AI for now**
+- **Do not remove** Auth, cloud save, HTTP API mode, sidecar MCP probe, Library backend hooks, `server/` — keep code for reference/local experiments; **disable / hide / inactive** in the product default — **not** a roadmap to re-enable on a VPS
+- **AI / agent:** hosted path is the **in-page TypeScript agent** (starts with the editor). Other apps / Cursor = later thin MCP wrapper over the same package; today optional localhost Go sidecar. Do not claim U91 activity store or `mcpAllowDangerousTools` as working dual consent.
 - **Library:** separate public git repo + links; private repos denied
 - **Collab (later):** session client/host (P2P / lobby), not account cloud as default
 
@@ -284,3 +284,11 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 - **Canonical API**: `useEditorNavigation().navigate(partial, { history: 'push' | 'replace' | 'none' })` or `dispatchEditorNavigate()` from non-React code
 - **Sanitize on restore** — closed graph tabs fall back to `main`; legacy v0 history entries auto-upgrade
 - **Do not push history manually** from feature code — use `navigate()` or let the provider's reactive sync record unmigrated `setActiveGraphTab` calls
+
+## In-page TypeScript agent (August 2026 — locked)
+
+- **Hosted path:** in-page TS agent (`apps/web/src/lib/agent/`). Live canvas is source of truth. `EditorLayout` mounts `AgentHost`. No Cursor/Go required.
+- **Write gate:** `agentAllowWrites` (default false). `mcpAllowDangerousTools` does **not** reach Go; `VVS_MCP_ALLOW_WRITE` gates the optional sidecar.
+- **StatusBar:** `agentStatusStore` — **Agent ready** / **Agent error** / **Agent…**. Not fake MCP Ready.
+- **Tools shipped:** safe `list_available_nodes`, `list_syntax_packs`, `list_classes`, `get_graph`, `generate_code`; write `add_class`, `add_node`, `remove_node`, `connect_pins`. `add_node` refuses leftover kinds.
+- **Deferred:** MCP wrapper for other apps; `save_project` / rosetta / validate_parse / propose_syntax_delta in TS; streamable HTTP; live-tab control without the editor; Chrome DevTools bridge; StartScreen chat; product accounts.

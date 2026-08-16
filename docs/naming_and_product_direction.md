@@ -87,7 +87,7 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Community item (full graph) | **Script** | Blueprint | Library filter category |
 | Community item (single node) | **Node pack** | — | Library filter |
 | Community template | **Template** | — | Library filter |
-| AI connection | **Connect AI** | Integrations page | MCP URL modal only |
+| AI / agent | **Agent** | Connect AI, Integrations page | In-page TS agent panel. Optional sidecar paste is not the hosted path |
 
 A game-talk **component** is **Declare Class** plus a field or **Extends** — not a Component node ([catalog](design/language_capability_catalog.md#component--class)).
 
@@ -178,4 +178,4 @@ Before adding UI or docs:
 - [ ] Generated code examples use normal language idioms
 - [ ] No Blueprint VM semantics (macro expand, latent delay without text) in transpiler or docs
 - [ ] New nodes pass fidelity checklist in [visual_to_text_fidelity.md](visual_to_text_fidelity.md)
-- [ ] AI features framed as **Connect AI (MCP)**, not built-in chatbot
+- [ ] Hosted AI is the in-page **Agent** panel (optional local key). Do not frame localhost Go MCP / Connect AI as the product path. A later MCP wrapper for other apps is fine to mention as deferred

@@ -5,8 +5,10 @@ import { Ban, CheckCircle2, Circle, CircleDashed, ExternalLink } from 'lucide-re
 import {
   FUTURE_FEATURE_SECTIONS,
   SHIPPED_FEATURE_SECTIONS,
+  resolveRoadmapLayer,
   type RoadmapItem,
   type RoadmapItemStatus,
+  type RoadmapLayer,
   type RoadmapSection,
 } from '@/lib/developmentRoadmap';
 
@@ -42,16 +44,19 @@ function isOpenStatus(status: RoadmapItemStatus | undefined): boolean {
   return status === 'planned' || status === 'partial' || status == null;
 }
 
-function sectionHasOpenItems(section: RoadmapSection): boolean {
-  return section.items.some((item) => isOpenStatus(item.status));
-}
-
-function openItems(section: RoadmapSection): RoadmapItem[] {
-  return section.items.filter((item) => isOpenStatus(item.status));
-}
-
-function cutItems(section: RoadmapSection): RoadmapItem[] {
-  return section.items.filter((item) => item.status === 'cut');
+function collectByLayer(
+  sections: RoadmapSection[],
+  predicate: (item: RoadmapItem) => boolean,
+): Record<RoadmapLayer, RoadmapItem[]> {
+  const out: Record<RoadmapLayer, RoadmapItem[]> = { frontend: [], backend: [] };
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (predicate(item)) {
+        out[resolveRoadmapLayer(item, section)].push(item);
+      }
+    }
+  }
+  return out;
 }
 
 function RoadmapItemRow({
@@ -92,67 +97,60 @@ function RoadmapItemRow({
   );
 }
 
-function RoadmapSectionBlock({
-  section,
+function ItemList({
+  items,
   showStatus,
   defaultStatus,
-  items,
 }: {
-  section: RoadmapSection;
+  items: RoadmapItem[];
   showStatus: boolean;
   defaultStatus: RoadmapItemStatus;
-  items?: RoadmapItem[];
 }) {
-  const list = items ?? section.items;
-  if (list.length === 0) return null;
-
-  const isActive = section.emphasis === 'active';
-  const isShipped = section.emphasis === 'shipped';
+  if (items.length === 0) {
+    return <p className="text-[11px] text-zinc-600 px-1">None</p>;
+  }
 
   return (
-    <section
-      className={`bg-zinc-950 border rounded-lg overflow-hidden ${
-        isActive
-          ? 'border-indigo-500/35 shadow-[0_0_0_1px_rgba(99,102,241,0.08)]'
-          : isShipped
-            ? 'border-emerald-500/25 shadow-[0_0_0_1px_rgba(16,185,129,0.06)]'
-            : 'border-zinc-800'
-      }`}
-    >
-      <h3 className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/80 bg-zinc-900/40 flex items-center gap-2 flex-wrap">
-        <span
-          className={
-            isActive ? 'text-indigo-300/90' : isShipped ? 'text-emerald-300/90' : undefined
-          }
-        >
-          {section.title}
-        </span>
-        {section.phase ? (
-          <span className="text-[9px] font-normal normal-case tracking-normal text-zinc-600">
-            Phase {section.phase}
-          </span>
-        ) : null}
-        {isActive ? (
-          <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border text-indigo-300/90 bg-indigo-500/10 border-indigo-500/30">
-            Current focus
-          </span>
-        ) : null}
-        {isShipped ? (
-          <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border text-emerald-400/90 bg-emerald-500/10 border-emerald-500/25">
-            Done
-          </span>
-        ) : null}
-      </h3>
+    <div className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
       <ul className="px-4">
-        {list.map((item) => (
+        {items.map((item, index) => (
           <RoadmapItemRow
-            key={item.id}
+            key={`${item.id}:${index}`}
             item={item}
             showStatus={showStatus}
             defaultStatus={defaultStatus}
           />
         ))}
       </ul>
+    </div>
+  );
+}
+
+function LayerBlock({
+  title,
+  items,
+  showStatus,
+  defaultStatus,
+  cutItems,
+}: {
+  title: string;
+  items: RoadmapItem[];
+  showStatus: boolean;
+  defaultStatus: RoadmapItemStatus;
+  cutItems?: RoadmapItem[];
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-[13px] font-semibold text-zinc-200 tracking-tight">{title}</h2>
+      <ItemList items={items} showStatus={showStatus} defaultStatus={defaultStatus} />
+      {cutItems && cutItems.length > 0 ? (
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+            Out of scope
+          </h3>
+          <ItemList items={cutItems} showStatus defaultStatus="cut" />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -162,8 +160,8 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        <span className="text-zinc-300">Just shipped:</span> Function constructor/destructor role (py __init__, js constructor(), cpp ctor/dtor, cs ctor, gd _init; rust/go/verse dim), Component = Class lock (U103), leftover-construct roles (no constructor_define / property_define / implements_define / flow_match), settings search/structure audit, Rust inheritance emit (CL-010), inheritance on canvas (U106), Call Super as a Call option, override emit (U105), Wait async option (U101), C# async Task, Rust static/const + HashMap use, Verse for + Type{"{}"}, U89 References, U91 MCP audit, U92 Inheritance Lab.{' '}
-        <span className="text-zinc-300">Open:</span> Verse GetInput stays an honest (x) (CL-014). Switch match is optional (CL-017; if-cascade is ship shape). U93 code-to-visual is long-term. U90 Library auth/upload is frozen.
+        Function constructor/destructor role, leftover-construct locks, and the August emit/OOP wave (U89–U92) just shipped.
+        Open leftover fidelity is Verse GetInput (honest (x)) and optional Switch match; U93 is long-term and Library auth/upload stays frozen.
       </p>
     </div>
   );
@@ -203,26 +201,21 @@ function DirectionCallout() {
 export function RoadmapView() {
   const [tab, setTab] = useState<RoadmapTab>('open');
 
-  const openSections = useMemo(
-    () => FUTURE_FEATURE_SECTIONS.filter(sectionHasOpenItems),
-    []
+  const openByLayer = useMemo(
+    () => collectByLayer(FUTURE_FEATURE_SECTIONS, (item) => isOpenStatus(item.status)),
+    [],
   );
-  const cutFlat = useMemo(
-    () =>
-      FUTURE_FEATURE_SECTIONS.flatMap((section) =>
-        cutItems(section).map((item) => ({ section, item }))
-      ),
-    []
+  const cutByLayer = useMemo(
+    () => collectByLayer(FUTURE_FEATURE_SECTIONS, (item) => item.status === 'cut'),
+    [],
+  );
+  const doneByLayer = useMemo(
+    () => collectByLayer(SHIPPED_FEATURE_SECTIONS, () => true),
+    [],
   );
 
-  const openCount = useMemo(
-    () => openSections.reduce((n, s) => n + openItems(s).length, 0),
-    [openSections]
-  );
-  const doneCount = useMemo(
-    () => SHIPPED_FEATURE_SECTIONS.reduce((n, s) => n + s.items.length, 0),
-    []
-  );
+  const openCount = openByLayer.frontend.length + openByLayer.backend.length;
+  const doneCount = doneByLayer.frontend.length + doneByLayer.backend.length;
 
   return (
     <div className="h-full overflow-y-auto bg-zinc-950">
@@ -230,7 +223,8 @@ export function RoadmapView() {
         <header className="space-y-2">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            Client-first editor. Function constructor/destructor role and leftover-construct catalog locks shipped, plus settings search audit and August emit/OOP + U89–U92. Next is leftover fidelity (Verse GetInput stays (x); optional Switch match) and long-term U93. Library auth/upload remains frozen. Full public notes in{' '}
+            Client-first editor. Open and Done are grouped frontend (canvas, chrome, client codegen) vs
+            backend (Go, MCP sidecar, hosting). Full public notes in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"
@@ -252,9 +246,7 @@ export function RoadmapView() {
             type="button"
             onClick={() => setTab('open')}
             className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
-              tab === 'open'
-                ? 'bg-zinc-800 text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-300'
+              tab === 'open' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             Open ({openCount})
@@ -263,52 +255,47 @@ export function RoadmapView() {
             type="button"
             onClick={() => setTab('done')}
             className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
-              tab === 'done'
-                ? 'bg-zinc-800 text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-300'
+              tab === 'done' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             Done ({doneCount})
           </button>
         </div>
 
-        <div className="space-y-4">
-          {tab === 'done'
-            ? SHIPPED_FEATURE_SECTIONS.map((section) => (
-                <RoadmapSectionBlock
-                  key={section.id}
-                  section={section}
-                  showStatus={false}
-                  defaultStatus="done"
-                />
-              ))
-            : openSections.map((section) => (
-                <RoadmapSectionBlock
-                  key={section.id}
-                  section={section}
-                  showStatus
-                  defaultStatus="planned"
-                  items={openItems(section)}
-                />
-              ))}
-
-          {tab === 'open' && cutFlat.length > 0 ? (
-            <section className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden opacity-90">
-              <h3 className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 border-b border-zinc-800/80 bg-zinc-900/40">
-                Out of scope (locked)
-              </h3>
-              <ul className="px-4">
-                {cutFlat.map(({ section, item }) => (
-                  <RoadmapItemRow
-                    key={`${section.id}:${item.id}`}
-                    item={item}
-                    showStatus
-                    defaultStatus="cut"
-                  />
-                ))}
-              </ul>
-            </section>
-          ) : null}
+        <div className="space-y-8">
+          {tab === 'open' ? (
+            <>
+              <LayerBlock
+                title="Frontend"
+                items={openByLayer.frontend}
+                showStatus
+                defaultStatus="planned"
+                cutItems={cutByLayer.frontend}
+              />
+              <LayerBlock
+                title="Backend"
+                items={openByLayer.backend}
+                showStatus
+                defaultStatus="planned"
+                cutItems={cutByLayer.backend}
+              />
+            </>
+          ) : (
+            <>
+              <LayerBlock
+                title="Frontend"
+                items={doneByLayer.frontend}
+                showStatus={false}
+                defaultStatus="done"
+              />
+              <LayerBlock
+                title="Backend"
+                items={doneByLayer.backend}
+                showStatus={false}
+                defaultStatus="done"
+              />
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -90,7 +90,7 @@ Function graph tabs are **Edit function body** only (author the body). **Define*
 | Optional base | **Extends** | Parent, Super | `extendsType` | OOP targets only. A “component” attaches this way or as a class-typed field (U103). |
 | Community full graph | **Script** | Blueprint | Library filter | |
 | Community nodes | **Node pack** | — | — | |
-| AI hookup | **Connect AI** | Integrations | MCP modal | |
+| AI / agent | **Agent** | Connect AI, Integrations | In-page TS agent panel | |
 
 ### Flow & data nodes (stable — audit only)
 

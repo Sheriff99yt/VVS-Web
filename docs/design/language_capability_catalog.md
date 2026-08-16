@@ -399,7 +399,7 @@ Users ask agents to change projects in natural language. Requirements:
 | **Pack changes** | `propose_syntax_delta` + `run_rosetta_suite` — not ad hoc string templates in transpiler |
 | **Discover gaps** | Failing usability test = missing node or inspector field, not a one-off emit hack |
 
-**Connect AI** modal exposes MCP URL; server tools must stay thin wrappers over pure functions (`vvs_backend_development` skill).
+Hosted agent is the in-page TS **Agent** panel (live canvas). Optional Go sidecar tools must stay thin wrappers over pure functions (`vvs_backend_development` skill).
 
 ---
 

@@ -185,11 +185,6 @@ export function nodesInsideCommentBody(nodes: VVSNode[], commentId: string): VVS
   });
 }
 
-/** @deprecated Prefer nodesInsideCommentBody — kept for callers expecting overlap. */
-export function nodesOverlappingComment(nodes: VVSNode[], commentId: string): VVSNode[] {
-  return nodesInsideCommentBody(nodes, commentId);
-}
-
 /**
  * Lock capture: **replace** membership with nodes currently inside the comment body.
  * Soft memberIds that have left the box are dropped; newcomers inside are included.
@@ -254,9 +249,6 @@ export function resizeCommentToFitMembers(nodes: VVSNode[], commentId: string): 
     );
   });
 }
-
-/** @deprecated Use resizeCommentToFitMembers — snap is now on-demand resize. */
-export const snapCommentToMembers = resizeCommentToFitMembers;
 
 /**
  * Lock: parent whatever nodes are currently inside the comment body.

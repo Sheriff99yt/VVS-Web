@@ -11,7 +11,7 @@
   "activePilot": "docs/design/fidelity_streamline.md",
   "activePilotSecondary": "docs/design/multi_class_symbols.md#many-classes-per-graph",
   "primaryGolden": "coverageLabUsabilityTest",
-  "nextFunctionWork": "CL plans; U89–U92; U97–U102 / U104–U119 shipped; U103 locked Component=Class; U93 long-term; client-first",
+  "nextFunctionWork": "CL plans; in-page TS agent shipped; U91 dual-consent/MCP Ready downgraded; U89 / U92 / U97–U102 / U104–U119 shipped; U103 locked Component=Class; U93 long-term; client-first",
   "crossLanguageMapping": ".agents/skills/vvs_cross_language_mapping/SKILL.md",
   "description": "Registry for .agents/memory — agents update lastUpdated when editing any memory file",
   "uiBacklog": {

@@ -62,7 +62,7 @@ Contributions must respect monorepo separation:
 | `apps/web` | Next.js UI, React Flow editor | No transpiler logic embedded in components — call packages |
 | `packages/transpiler` | Pure TS code generation | Zero React deps; snapshot tests for output |
 | `packages/graph-types` | Shared graph schema | No UI or server imports |
-| `server/` | Go API, MCP, WebSockets | Hexagonal architecture; MCP tools wrap pure functions |
+| `server/` | Go API, optional MCP sidecar, WebSockets | Hexagonal architecture; sidecar tools wrap pure functions. Hosted agent is `apps/web/src/lib/agent/` |
 
 See **[.agents/AGENTS.md](.agents/AGENTS.md)** and **[docs/vvs_2_0_tech_stack.md](docs/vvs_2_0_tech_stack.md)**.
 
@@ -78,7 +78,7 @@ See **[.agents/AGENTS.md](.agents/AGENTS.md)** and **[docs/vvs_2_0_tech_stack.md
 
 The editor follows a **UI-first skeleton** phase: mock data and honest offline chrome until backend contracts land. See **[docs/ui_api_delivery_loop.md](docs/ui_api_delivery_loop.md)** for wiring UI to APIs incrementally.
 
-**Do not re-add** in-app Roadmap or Integrations tabs — roadmap lives in `docs/roadmap.md`; MCP is **Connect AI** in TopNav only.
+**Do not re-add** in-app Roadmap or Integrations tabs — roadmap lives in `docs/roadmap.md`; the hosted agent is the TopNav **Agent** panel, not Connect AI / localhost MCP.
 
 ## Questions
 

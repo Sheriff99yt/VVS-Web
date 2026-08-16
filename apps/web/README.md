@@ -41,12 +41,12 @@ src/
 ├── app/              # Next.js App Router (start screen + editor)
 ├── components/
 │   ├── graph/        # React Flow nodes, edges, context menu
-│   ├── layout/       # Editor shell (TopNav, sidebars, console)
+│   ├── layout/       # Editor shell (TopNav, AgentHost, AgentPanel, sidebars)
 │   ├── start/        # Project start screen
 │   └── views/        # LibraryView, ReferencesView
 ├── contexts/         # Project, graph edit, navigation, panels
-├── hooks/            # Graph state, documents, tab sync
-├── lib/              # nodeCatalog, graphWiring, api, examples
+├── hooks/            # Graph state, documents, tab sync, useAgentHost
+├── lib/              # nodeCatalog, graphWiring, api, examples, agent/
 ├── styles/           # graph design tokens
 └── types/            # graph, project, UI types (until packages/graph-types)
 ```
@@ -55,7 +55,8 @@ src/
 
 - **Canvas** — graph editor (default)
 - **References** — read-only cross-graph reference viewer
-- **Library** — community marketplace skeleton (mock data)
+- **Library** — templates, environments, and git imports (`/library` browse; editor Library tab on an open project)
+- **Agent** — in-page TypeScript agent (`AgentHost` starts with the editor; TopNav Bot button opens `AgentPanel`). Live canvas is source of truth. Writes gated by `agentAllowWrites` (default false). Optional Go MCP sidecar paste is a collapsed section — not the hosted path.
 - Persistence: `lib/api/` → `localStorage` (mock mode by default)
 
 Agent rules: `AGENTS.md` and `../../.agents/skills/vvs_ui_development/SKILL.md`.

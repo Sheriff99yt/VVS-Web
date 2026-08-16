@@ -1,8 +1,6 @@
-import type { Dispatch, SetStateAction } from 'react';
-import type { ClassSymbol, GraphContainer, GraphTab } from '@vvs/graph-types';
+import type { ClassSymbol } from '@vvs/graph-types';
 import type { VVSNodeData } from '@/types/graph';
-import { classGraphTabId, classContainerId } from '@/lib/classScope';
-import { openGraphContainerTab } from '@/lib/graphTabs';
+import { classGraphTabId } from '@/lib/classScope';
 import { resolveNodeKindId } from '@/lib/nodeKind';
 
 export type GraphRefTarget =
@@ -79,51 +77,4 @@ export function resolveGraphRefTarget(
   }
 
   return null;
-}
-
-export interface OpenGraphRefContext {
-  classes: ClassSymbol[];
-  graphContainers: GraphContainer[];
-  setActiveClassId: (id: string) => void;
-  setActiveGraphTab: Dispatch<SetStateAction<string>>;
-  setOpenTabs: Dispatch<SetStateAction<GraphTab[]>>;
-  containerName?: (containerId: string) => string | undefined;
-}
-
-export function openGraphRefTarget(
-  data: VVSNodeData,
-  ctx: OpenGraphRefContext
-): boolean {
-  const target = resolveGraphRefTarget(
-    data,
-    ctx.classes,
-    data.properties?.containerId
-      ? ctx.containerName?.(String(data.properties.containerId))
-      : undefined
-  );
-  if (!target) return false;
-
-  if (target.type === 'container') {
-    const container = ctx.graphContainers.find((c) => c.id === target.containerId);
-    if (!container) return false;
-    openGraphContainerTab(container, ctx.setOpenTabs, ctx.setActiveGraphTab);
-    return true;
-  }
-
-  if (target.type === 'class') {
-    const cls = ctx.classes.find((c) => c.id === target.classId);
-    if (!cls) return false;
-    ctx.setActiveClassId(cls.id);
-    const containerId = classContainerId(cls);
-    const container = ctx.graphContainers.find((c) => c.id === containerId);
-    if (container) {
-      openGraphContainerTab(container, ctx.setOpenTabs, ctx.setActiveGraphTab);
-    } else {
-      ctx.setActiveGraphTab(target.graphTabId);
-    }
-    return true;
-  }
-
-  ctx.setActiveGraphTab(target.graphTabId);
-  return true;
 }

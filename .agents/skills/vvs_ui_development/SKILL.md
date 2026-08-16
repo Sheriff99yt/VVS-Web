@@ -66,7 +66,7 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 - **Edit:** Undo, Redo, Validate & compile (Ctrl+G), Extract to function
 - **View:** Zoom to Fit, panel toggles
 - **Auto Generate** / **Auto Save** toggles — debounced compile / code sync when on; manual **Generate** / **Save** when off
-- **Connect AI** modal — MCP URL + **Test connection** via `VvsApi.probeMcp`
+- **Agent** panel — in-page TS agent (prompt, `/tool`, optional LLM key). Collapsed sidecar paste is optional local Go MCP, not the hosted path
 - **AuthButton** — sign-in when `NEXT_PUBLIC_SUPABASE_*` configured
 
 **Removed:** Play/Pause/Stop simulation toolbar (mock stepping exists elsewhere). **Do not re-add** `GraphToolbar`.
@@ -74,10 +74,10 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 ### StartScreen (`components/start/StartScreen.tsx`)
 
 - **Start:** New blank, Open file, folder picker buttons (gated by `useFolderPickerSupported`)
-- **Usability tests:** `USABILITY_EXAMPLE_TESTS` from `lib/usabilityExampleProjects.ts` — First Graph + Coverage Lab; verify via Code panel extract (`vvs_usability_example_tests`); see `docs/design/language_capability_catalog.md`
-- **Explore:** shortcuts to Library and Roadmap views in editor
+- **Usability tests:** `USABILITY_EXAMPLE_TESTS` from `lib/usabilityExampleProjects.ts` — First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab; verify via Code panel extract (`vvs_usability_example_tests`); see `docs/design/language_capability_catalog.md`
+- **Explore:** dedicated browse routes `/library` and `/roadmap` via `startExplore.ts` (not editor `?view=` without a project)
 - **Recent:** via `useRecentProjects()` — deferred localStorage hydration (see below)
-- **AuthButton** when Supabase configured
+- Auth is **TopNav `AuthButton`** when Supabase configured — not on StartScreen
 
 ### Canvas selection toolbar
 
@@ -153,7 +153,7 @@ Whenever building or evaluating the UI panels, ensure the following professional
 
 ### 4. Top Navigation Bar
 - **Generate/Validation Pipeline**: Auto Generate toggle + manual Generate; dirty/compiling/success/error states
-- **Connect AI**: MCP modal — not a separate Integrations page
+- **Agent**: TopNav Bot button opens `AgentPanel` — not a separate Integrations page; not Connect AI / localhost as the product path
 - **AuthButton** when cloud auth configured
 
 ### 5. Code Preview Panel

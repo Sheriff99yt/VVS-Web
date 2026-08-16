@@ -85,6 +85,11 @@ export interface UiPreferences {
   stepAnimateChainLayoutSpeed: 'slow' | 'normal' | 'fast';
   /** U70: allow MCP tools that can mutate/delete graphs (default off). */
   mcpAllowDangerousTools: boolean;
+  /**
+   * In-page TypeScript agent writes (add_class / add_node / remove_node / connect_pins).
+   * Default off. This actually gates the TS tool runtime, including /tool.
+   */
+  agentAllowWrites: boolean;
   /** U84: node search includes every graph document (default on). */
   nodeSearchAllGraphs: boolean;
   /**
@@ -163,6 +168,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   stepAnimateChainLayout: true,
   stepAnimateChainLayoutSpeed: 'normal',
   mcpAllowDangerousTools: false,
+  agentAllowWrites: false,
   nodeSearchAllGraphs: false,
   compilerLogLanguageScoped: true,
   logPanelTabLog: true,
@@ -251,8 +257,6 @@ export function clampFloatingPanelTopOffsets(
 export const RESET_COMPILER_LOG_LAYOUT_EVENT = 'vvs:reset-compiler-log-layout';
 export const RESET_DETAILS_PANEL_LAYOUT_EVENT = 'vvs:reset-details-panel-layout';
 export const TOGGLE_COMPILER_LOG_PIN_EVENT = 'vvs:toggle-compiler-log-pin';
-/** @deprecated Prefer TOGGLE_COMPILER_LOG_PIN_EVENT — `` ` `` cycles all Output tabs. */
-export const CYCLE_LOG_HISTORY_EVENT = 'vvs:cycle-log-history';
 export const TOGGLE_GRAPH_CHROME_EVENT = 'vvs:toggle-graph-chrome';
 export const FOCUS_GRAPH_NODE_SEARCH_EVENT = 'vvs:focus-graph-node-search';
 /** Ask TopNav to run Generate (validate + emit) — used by log language-scope toggle. */
@@ -343,11 +347,6 @@ export function dispatchToggleCompilerLogPin(): void {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(TOGGLE_COMPILER_LOG_PIN_EVENT));
   }
-}
-
-/** @deprecated Use dispatchToggleCompilerLogPin — `` ` `` cycles Log → History → Activity → off. */
-export function dispatchCycleLogHistory(): void {
-  dispatchToggleCompilerLogPin();
 }
 
 export function dispatchToggleGraphChrome(): void {
@@ -478,6 +477,10 @@ export function readUiPreferences(): UiPreferences {
         rest.namingConvention === 'auto'
           ? rest.namingConvention
           : DEFAULT_UI_PREFERENCES.namingConvention,
+      agentAllowWrites:
+        typeof rest.agentAllowWrites === 'boolean'
+          ? rest.agentAllowWrites
+          : DEFAULT_UI_PREFERENCES.agentAllowWrites,
       allowMultipleExecToInput:
         typeof rest.allowMultipleExecToInput === 'boolean'
           ? rest.allowMultipleExecToInput

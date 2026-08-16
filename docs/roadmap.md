@@ -5,7 +5,7 @@ Directional phases — not schedule commitments.
 
 **Product default (locked):** client-first editor — **no VVS accounts**, **no dedicated app server**, **no live code execution**. Edit graphs, **Generate** ordinary source, run **logical checks** / import from existing code.
 
-In-app: **Development roadmap** → Open / Done (mirrors this doc).
+In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mirrors this doc).
 
 ---
 
@@ -42,7 +42,7 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 | Function graph disk path uniqueness (`Name__{id}.graph.json`) so two `Speak` methods don't collide | U92 follow-on |
 | **Catalog & add-node menu audit** (synonyms, module import spawn) | U97 |
 | **Client-first Library** page redesign (Git repo import, OpenAPI/AsyncAPI templates) | U90 |
-| **AI / MCP Autonomy & Safety Guard** (dual consent, inventory audit, activity indicator) | U91 |
+| **In-page TypeScript agent** (hosted path; live canvas; `agentAllowWrites` write gate). U91 dual-consent / MCP Ready are **not** product chrome | U91 |
 | **References** viewer redesign (huge-project metrics & flat tree mode) | U89 |
 | Target-language emit + OOP | CL-006, CL-008–CL-010, CL-012–CL-013, CL-015–CL-016, CL-018, U101, U105, U106, Call Super |
 | **Pack versions** manager view | U78 |
@@ -58,7 +58,7 @@ In-app: **Development roadmap** → Open / Done (mirrors this doc).
 CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ─────────────────────
 1  Web editor + 8 packs        6  Leftover fidelity                4  Session collab (P2P)
-2  Persistence + local MCP        CL-014 honest (x)                  5  UE6 Verse plugin
+2  Persistence + in-page agent    CL-014 honest (x)                  5  UE6 Verse plugin
    U77–U83 · U89–U92 shipped      optional CL-017                    3  Library repo + web UI
    emit/OOP + ctor role shipped   U93 code→visual (long-term)
    U103 locked (Component=Class)  U90 Library auth/upload frozen
@@ -176,8 +176,8 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 | Phase | Status | One-liner |
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
-| **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; local MCP paste; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + U89–U92 shipped. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, U90 frozen. |
+| **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; packs via GitHub; **no dedicated server** as product |
+| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, U90 frozen. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |
@@ -188,7 +188,7 @@ Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md) · backlo
 
 ## Non-goals (for now)
 
-- Bundled LLM — bring your own via MCP  
+- Bundled LLM — bring your own via the in-page agent (optional local key) or a later MCP wrapper  
 - Proprietary runtime / Blueprint VM  
 - Hidden transforms or invented emit without canvas nodes  
 - **Live code execution** — no Play, interpreter, runner, or "run from VVS"  
@@ -213,7 +213,7 @@ Product default: **no VVS accounts, no dedicated app server**. Browser/editor + 
 | **Canvas scale** | Virtualization (U83) shipped — keep measuring large graphs |
 | **Pack updates** | Fetch from GitHub; versions **accumulate**; Pack versions view (U78) |
 | **Library** | Separate official **library git repo**; public links only; API for search/browse/upload |
-| **MCP / AI** | Paste config; user runs **local MCP**; **desktop only** — **mobile: no AI** |
+| **MCP / AI** | Hosted app = **in-page TS agent** (starts with the editor, no extra install). Other apps / Cursor = later thin MCP wrapper over the same package; today optional localhost Go sidecar |
 | **Collab** | Session **client/host**, not account cloud multiplayer |
 
 ---

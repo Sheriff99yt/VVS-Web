@@ -22,6 +22,7 @@ Index for the public Vision Visual Scripting documentation set.
 | [naming_and_product_direction.md](naming_and_product_direction.md) | Web UI vocabulary; engine-neutral copy rules |
 | [project_requirements.md](project_requirements.md) | Full functional & non-functional requirements |
 | [ui_api_delivery_loop.md](ui_api_delivery_loop.md) | Contract-first UI ↔ API integration workflow |
+| [design/mcp_autonomy_audit.md](design/mcp_autonomy_audit.md) | In-page TS agent (hosted path) vs optional Go sidecar |
 
 ## Architecture & technology
 

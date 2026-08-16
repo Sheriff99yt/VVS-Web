@@ -254,9 +254,9 @@ flowchart TB
 | **Community pack** | Movement templates | Pack manifest + definitions |
 | **Engine pack** | Verse API nodes | Separate pack; web UI stays engine-neutral |
 
-`NodeContextMenu` becomes **`registry.list({ graphId, filterPin })`** — not hardcoded `MOCK_CATEGORIES`.
+`NodeContextMenu` uses **`registry.list({ graphId, filterPin })`** — not a hardcoded category table.
 
-MCP `ListAvailableNodes` returns the **same registry view** so AI cannot hallucinate nodes ([project_requirements.md](project_requirements.md) §3.4).
+In-page agent `list_available_nodes` (and optional Go sidecar) returns the **same registry view** so AI cannot hallucinate nodes ([project_requirements.md](project_requirements.md) §3.4).
 
 **Dynamic nodes:** one kind `vvs.project.call_function` + `graphBinding` (not one kindId per function).
 

@@ -148,27 +148,6 @@ export function requestHistoryEditGate(newerCount: number, proceed: ProceedFn): 
   return false;
 }
 
-/**
- * @deprecated Prefer requestHistoryEditGate — kept for call sites that only need a boolean.
- * Always returns false when a prompt is shown (edit must be pending via requestHistoryEditGate).
- */
-export function confirmDiscardNewerHistory(newerCount: number): boolean {
-  if (typeof window === 'undefined') return true;
-  if (newerCount <= 0) return true;
-  if (isApplyingHistory()) return true;
-  if (!historyBrowsePreview) {
-    clearFuturesFn?.();
-    return true;
-  }
-  if (suppressUntilGestureEnd) return false;
-  if (gateState.open) return false;
-  gateState = { open: true, newerCount };
-  dispatchOpenLogHistoryTab();
-  dispatchHighlightLogHistory(5000);
-  notify();
-  return false;
-}
-
 /** Discard newer states and run the pending edit once. */
 export function acceptHistoryDiscard(): void {
   historyBrowsePreview = false;

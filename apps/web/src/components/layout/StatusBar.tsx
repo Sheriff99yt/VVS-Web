@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Loader2, Terminal, FileCode2, FolderTree, Map, WifiOff, CheckCircle2, CircleDashed } from 'lucide-react';
 import { isCoaAuthoringActive } from '@/lib/coaPolicy';
 import { useProject } from '@/contexts/ProjectContext';
@@ -17,6 +17,7 @@ import { shortcutKeys } from '@/lib/graphShortcuts';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { GraphBreadcrumb } from './GraphBreadcrumb';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
+import { getAgentSession, subscribeAgentSession } from '@/lib/agent/agentStatusStore';
 import {
   CompilerLogDiagChips,
   LOG_CHIP_BUSY,
@@ -60,12 +61,13 @@ function apiModeShort(
 export function StatusBar() {
   const { compileState, validationErrors, validationWarnings, lastSavedAt, crossOverMode } = useProject();
   const { isFolderProject } = useProjectFolder();
-  const { consoleOpen, codeOpen, graphNavOpen, graphChromeMode, graphChromeOpen, toggleConsole, toggleCode, toggleGraphNav, toggleGraphChrome, setCompilerLogOpen } =
+  const { compilerLogOpen, codeOpen, graphNavOpen, graphChromeMode, graphChromeOpen, toggleCompilerLog, toggleCode, toggleGraphNav, toggleGraphChrome, setCompilerLogOpen } =
     useEditorPanels();
   const { isCanvasActive } = useEditorView();
   const { apiMode, healthState, serviceName, storeMode, authMode, userId } = useApiHealth();
   const folderPickerReady = useFolderPickerSupported();
   const hosted = isHostedFeaturesEnabled();
+  const agentSession = useSyncExternalStore(subscribeAgentSession, getAgentSession, getAgentSession);
   const [logMenu, setLogMenu] = useState<{ x: number; y: number } | null>(null);
   const logMenuRef = useRef<HTMLDivElement>(null);
 
@@ -116,32 +118,51 @@ export function StatusBar() {
       <div className="flex items-center gap-2 shrink-0 min-w-0 max-w-[55%]">
         <GraphBreadcrumb compact showModeBadge />
         <div className="w-px h-3 bg-zinc-800 shrink-0" />
-        {hosted ? (
-          <>
-            <Tooltip content="MCP connection (Connect AI)" placement="top">
-              <div className="flex items-center gap-1 px-1.5 text-zinc-600">
-                <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
-                <span>MCP</span>
-              </div>
-            </Tooltip>
-            <Tooltip content={api.title ?? api.label} placement="top">
-              <span className={`flex items-center gap-1 ${api.className ?? ''}`}>
-                {apiMode === 'mock' ? <WifiOff size={10} /> : null}
-                {api.label}
-              </span>
-            </Tooltip>
-          </>
-        ) : (
-          <Tooltip
-            content="Client-first — edit and Generate offline; Connect AI (MCP) for Cursor, Windsurf, or Claude Desktop"
-            placement="top"
+        <Tooltip
+          content={
+            agentSession.ready === 'ready'
+              ? 'In-page agent worker is up. Tools run against the live canvas.'
+              : agentSession.ready === 'error'
+                ? agentSession.readyError ?? 'Agent worker failed'
+                : 'Starting in-page agent worker'
+          }
+          placement="top"
+        >
+          <div
+            className={`flex items-center gap-1.5 px-1.5 ${
+              agentSession.ready === 'ready'
+                ? 'text-zinc-400'
+                : agentSession.ready === 'error'
+                  ? 'text-amber-500/90'
+                  : 'text-zinc-600'
+            }`}
           >
-            <div className="flex items-center gap-1.5 px-1.5 text-zinc-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-300">MCP Ready</span>
-            </div>
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                agentSession.ready === 'ready'
+                  ? 'bg-emerald-400'
+                  : agentSession.ready === 'error'
+                    ? 'bg-amber-500'
+                    : 'bg-zinc-500 animate-pulse'
+              }`}
+            />
+            <span className="font-mono text-[9px] uppercase tracking-wider">
+              {agentSession.ready === 'ready'
+                ? 'Agent ready'
+                : agentSession.ready === 'error'
+                  ? 'Agent error'
+                  : 'Agent…'}
+            </span>
+          </div>
+        </Tooltip>
+        {hosted ? (
+          <Tooltip content={api.title ?? api.label} placement="top">
+            <span className={`flex items-center gap-1 ${api.className ?? ''}`}>
+              {apiMode === 'mock' ? <WifiOff size={10} /> : null}
+              {api.label}
+            </span>
           </Tooltip>
-        )}
+        ) : null}
         {isCoaAuthoringActive(crossOverMode) ? (
           <Tooltip
             content={`Cross Over Architecture: ${crossOverMode.allowedLanguages.join(', ')}`}
@@ -223,13 +244,13 @@ export function StatusBar() {
         >
           <button
             type="button"
-            onClick={toggleConsole}
+            onClick={toggleCompilerLog}
             onContextMenu={(e) => {
               e.preventDefault();
               setLogMenu(paneMenuPosition(e.clientX, e.clientY, 180, 40));
             }}
             className={`p-1 rounded transition-colors ${
-              consoleOpen ? 'text-zinc-200 bg-zinc-800' : 'text-zinc-600 hover:text-zinc-400'
+              compilerLogOpen ? 'text-zinc-200 bg-zinc-800' : 'text-zinc-600 hover:text-zinc-400'
             }`}
             aria-label="Cycle Output panel"
           >

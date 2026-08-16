@@ -9,12 +9,3 @@ export function clearEdgeSelectionFlags(edges: VVSEdge[]): VVSEdge[] {
   return edges.map((edge) => (edge.selected ? { ...edge, selected: false } : edge));
 }
 
-export function clearGraphSelectionState(
-  nodes: VVSNode[],
-  edges: VVSEdge[]
-): { nodes: VVSNode[]; edges: VVSEdge[] } {
-  return {
-    nodes: clearNodeSelectionFlags(nodes),
-    edges: clearEdgeSelectionFlags(edges),
-  };
-}

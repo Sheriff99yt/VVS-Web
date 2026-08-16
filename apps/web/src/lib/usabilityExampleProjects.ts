@@ -12,9 +12,6 @@ import {
 
 export type UsabilityTestLevel = 'simple' | 'complex' | 'branch' | 'new-features' | 'inheritance';
 
-/** @deprecated Use `UsabilityTestLevel` */
-export type ExampleLevel = UsabilityTestLevel;
-
 export interface UsabilityExampleTestDefinition {
   id: UsabilityTestLevel;
   /**
@@ -29,11 +26,6 @@ export interface UsabilityExampleTestDefinition {
   highlights: string[];
   create: () => ProjectSnapshot;
 }
-
-/** @deprecated Use `UsabilityExampleTestDefinition` */
-export type ExampleProjectDefinition = UsabilityExampleTestDefinition;
-
-export const USABILITY_TEST_FIXTURE_REVISION = 9;
 
 /**
  * Curated graph fixtures for usability regression — not tutorial demos.
@@ -107,20 +99,6 @@ export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
     create: createInheritanceLabUsabilityTestSnapshot,
   },
 ];
-
-/** @deprecated Use `USABILITY_EXAMPLE_TESTS` */
-export const EXAMPLE_PROJECTS = USABILITY_EXAMPLE_TESTS;
-
-export function createUsabilityExampleTestSnapshot(level: UsabilityTestLevel): ProjectSnapshot {
-  const def = USABILITY_EXAMPLE_TESTS.find((e) => e.level === level);
-  if (!def) throw new Error(`Unknown usability test level: ${level}`);
-  return def.create();
-}
-
-/** @deprecated Use `createUsabilityExampleTestSnapshot` */
-export function createExampleSnapshot(level: UsabilityTestLevel): ProjectSnapshot {
-  return createUsabilityExampleTestSnapshot(level);
-}
 
 /**
  * Warm stable fixture cache slots for CI extract scripts.

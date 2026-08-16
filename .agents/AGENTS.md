@@ -25,12 +25,13 @@ If a relevant skill exists in `.agents/skills/`, read its `SKILL.md` before star
 
 - `packages/transpiler` = Pure TypeScript. NEVER import React, Next.js, or Go types here.
 - `apps/web` = Next.js frontend + React Flow UI.
-- `server/` = Go backend: REST API, MCP server, optional Postgres.
+- `server/` = Go backend: REST API, **optional** MCP sidecar, optional Postgres. Hosted agent is `apps/web/src/lib/agent/`.
 - NEVER mix these. Transpiler has zero React dependencies. UI has zero Go dependencies.
 
-## 2. MCP Tool Pure Functions
+## 2. Agent tools (in-page first; Go MCP is a sidecar)
 
-- MCP tools in Go MUST be thin wrappers around pure functions in `internal/core/services/`.
+- Hosted path: in-page TypeScript tools in `apps/web/src/lib/agent/` against the live canvas. Do not treat localhost Go MCP as the product agent.
+- Optional Go MCP tools MUST be thin wrappers around pure functions in `internal/core/services/`.
 - Business logic MUST be testable without the MCP protocol layer.
 
 ## 3. Fidelity Guardrails — Canvas Is the Source of Truth
@@ -117,7 +118,8 @@ Execution is the user's job — they use their own IDE, Godot, compilers, or CI.
 - ✅ Browser edit + Generate
 - ✅ Local folder / `.vvs/` file save
 - ✅ GitHub for packs/library
-- ✅ Desktop local MCP + paste config
+- ✅ In-page TypeScript agent (starts with the editor; no extra install)
+- ✅ Optional local Go MCP sidecar for other apps — not the hosted path
 
 The Go `server/`, Postgres, and Auth code are **legacy experiments**. Keep them in the repo but do NOT treat them as product features.
 
@@ -131,7 +133,7 @@ The Go `server/`, Postgres, and Auth code are **legacy experiments**. Keep them 
 - ✅ Variables: **Declare** / **Get** / **Set**
 - ✅ Events: **Declare** / **On** / **Dispatch**
 
-**DO NOT add** in-app Roadmap or Integrations tabs. Planning lives in `docs/`. MCP is exposed via the Connect AI modal only.
+**DO NOT add** in-app Roadmap or Integrations tabs. Planning lives in `docs/`. The hosted agent is the TopNav **Agent** panel (`AgentHost` / `AgentPanel`), not Connect AI / localhost MCP.
 
 ---
 

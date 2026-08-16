@@ -10,7 +10,7 @@ One-time machine setup for developing VVS Web locally. For day-to-day commands a
 |------|----------|---------|
 | [Bun](https://bun.sh) | Yes | Frontend package manager & dev server |
 | [Git](https://git-scm.com/) | Yes | Clone, commit, contribute |
-| [Go](https://go.dev/) 1.22+ | Optional | `server/` — project API, compile, registry, local MCP (`/mcp`) |
+| [Go](https://go.dev/) 1.22+ | Optional | `server/` — project API, compile, registry, **optional** local MCP sidecar (`/mcp`). Hosted agent is in-page TypeScript — Go is not required |
 
 **OS:** Windows scripts live in `tools/`; macOS/Linux users can run the equivalent `bun` commands from `apps/web` (see [Quick start](#manual-setup-all-platforms)).
 
@@ -30,7 +30,7 @@ The script will:
 
 1. Install or verify **Bun**, **Go** (optional), and **Git**
 2. Run **`bun install`** at the **repository root** (Bun workspaces: `apps/web` + `packages/*`)
-3. Create **`apps/web/.env.local`** from `.env.example` if missing (includes `NEXT_PUBLIC_API_MODE=http` for Go + MCP)
+3. Create **`apps/web/.env.local`** from `.env.example` if missing (includes optional `NEXT_PUBLIC_API_MODE=http` for Go sidecar experiments)
 4. Auto-detect your **LAN IPv4** and set `DEV_ALLOWED_ORIGIN` (for phone/tablet testing)
 5. Run **`go mod download`** in `server/` when Go is available
 
@@ -48,11 +48,11 @@ cd VVS-Web
 # 2. Install JS dependencies (root workspaces — web + packages)
 bun install
 
-# 3. Local env (gitignored — copy template; includes http API + MCP defaults)
+# 3. Local env (gitignored — copy template; includes optional http API + sidecar defaults)
 cp apps/web/.env.example apps/web/.env.local
 # Edit DEV_ALLOWED_ORIGIN in .env.local if you use http://192.168.x.x:3000 on LAN
 
-# 4. Go server (API + MCP — start_app.ps1 launches this on Windows)
+# 4. Optional Go sidecar (API + local MCP — start_app.ps1 launches this on Windows)
 cd server
 go mod download
 ```
@@ -258,18 +258,33 @@ In `apps/web/.env.local`: `NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=true`
 
 Without GitHub env vars, **email/password auth works** for v1.
 
-Frontend: set `NEXT_PUBLIC_API_MODE=http` in `apps/web/.env.local`. Sign in via **AuthButton** (TopNav); the access token is stored in `session.ts` and sent as `Authorization: Bearer …` on project APIs and MCP probe. When signed in, the editor loads/saves via Go API first (Postgres) with localStorage as cache.
+### In-page agent (hosted path — no Go required)
 
-Production MCP: set `NEXT_PUBLIC_MCP_URL=https://api.your-domain/mcp` and pass the same Bearer token in your IDE MCP config when `AUTH_REQUIRED=true`.
+The GitHub Pages / editor agent is the **in-page TypeScript** runtime. Open a project (Worker starts with the editor), then TopNav Bot button (tooltip **Agent**).
 
-### Connect Cursor (or Claude) to local MCP
+- Prompt + optional local LLM key / base / model in `localStorage` key `vvs:agent-llm` (default `https://api.openai.com/v1` + `gpt-4o-mini`)
+- `/tool name json` works without a key
+- Writes gated by **Allow agent writes** (`agentAllowWrites`, default **false**)
+- StatusBar: **Agent ready** / **Agent error** / **Agent…**
+- Tools: `list_available_nodes`, `list_syntax_packs`, `list_classes`, `get_graph`, `generate_code`, `add_class`, `add_node`, `remove_node`, `connect_pins` (`add_node` refuses leftover kinds)
+- `window.vvs.agent` / `window.vvs.tools`: `listTools()`, `callTool(name, args)`
 
-1. Start the Go server: `.\tools\start_app.ps1` (or `go run ./cmd/vvs-server` from `server/`)
+No remote hosted MCP URL. No Chrome DevTools bridge. No in-page chat on the start screen.
+
+### Optional Go MCP sidecar (other apps / Cursor)
+
+Not the hosted path. Agent panel keeps a collapsed sidecar section for paste-config. The in-page `mcpAllowDangerousTools` checkbox does **not** reach the Go server — set `VVS_MCP_ALLOW_WRITE` on the process.
+
+Frontend HTTP experiments: set `NEXT_PUBLIC_API_MODE=http` in `apps/web/.env.local`. Sign in via **AuthButton** (TopNav, only when Supabase env is set — not a product account). Token is stored in `session.ts` and sent as `Authorization: Bearer …` on project APIs and the sidecar probe.
+
+There is **no** product `NEXT_PUBLIC_MCP_URL` hosted endpoint.
+
+1. Start the optional sidecar: `.\tools\start_app.ps1` (or `go run ./cmd/vvs-server` from `server/`)
 2. Copy `tools/mcp.cursor.example.json` to `.cursor/mcp.json` in the repo root (or merge the `VVS` entry into `%USERPROFILE%\.cursor\mcp.json`)
 3. Reload Cursor (**Settings → MCP** or restart the IDE)
-4. MCP URL: `http://localhost:8080/mcp` — no auth token for local Phase 1 dev
+4. Sidecar URL: `http://localhost:8080/mcp` — local experiment only
 
-Available tools: `list_available_nodes`, `list_syntax_packs`, `get_graph`, `add_node`, `remove_node`, `connect_pins`, `generate_code`, `save_project`.
+Sidecar tools (Go): `list_available_nodes`, `list_syntax_packs`, `list_classes`, `add_class`, `get_graph`, `add_node`, `remove_node`, `connect_pins`, `generate_code`, `save_project`, plus pack tools not in the TS runtime (`propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse`).
 
 ---
 

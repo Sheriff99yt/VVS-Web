@@ -496,20 +496,13 @@ export function EditorNavigationProvider({
       navigate(frame, { history: 'push' });
     };
 
-    const onSwitchEditorView = (event: Event) => {
-      const view = (event as CustomEvent<{ view: EditorViewTab }>).detail.view;
-      navigate({ editorView: view });
-    };
-
     window.addEventListener('vvs:editor-navigate', onEditorNavigate);
     window.addEventListener('vvs:navigate-to-node', onNavigateToNode);
     window.addEventListener('vvs:navigate-to-variable', onNavigateToVariable);
-    window.addEventListener('vvs:switch-editor-view', onSwitchEditorView);
     return () => {
       window.removeEventListener('vvs:editor-navigate', onEditorNavigate);
       window.removeEventListener('vvs:navigate-to-node', onNavigateToNode);
       window.removeEventListener('vvs:navigate-to-variable', onNavigateToVariable);
-      window.removeEventListener('vvs:switch-editor-view', onSwitchEditorView);
     };
   }, [classes, graphContainers, navigate, setActiveClassId, variables]);
 
@@ -547,7 +540,3 @@ export function useEditorNavigation() {
   return context;
 }
 
-/** Safe hook for components that may render outside the provider during transitions. */
-export function useEditorNavigationOptional() {
-  return useContext(EditorNavigationContext);
-}

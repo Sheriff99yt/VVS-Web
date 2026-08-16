@@ -253,28 +253,3 @@ export function useListReorderDrop(input: {
   };
 }
 
-/** @deprecated Use useListReorderDrop */
-export function useFunctionReorderDrop(input: {
-  canReorder: boolean;
-  draggingFunctionId: string | null;
-  setDraggingFunctionId: (id: string | null) => void;
-  dropFunctionId: string | null;
-  setDropFunctionId: (id: string | null) => void;
-  reorderFunctions: (fromId: string, toId: string) => void;
-}) {
-  const handlers = useListReorderDrop({
-    canReorder: input.canReorder,
-    mimeType: TREE_DRAG_MIME.functionReorder,
-    draggingId: input.draggingFunctionId,
-    setDraggingId: input.setDraggingFunctionId,
-    dropId: input.dropFunctionId,
-    setDropId: input.setDropFunctionId,
-    onReorder: input.reorderFunctions,
-  });
-  return {
-    dropFunctionId: input.dropFunctionId,
-    handleFunctionDragOver: handlers.handleDragOver,
-    handleFunctionDrop: handlers.handleDrop,
-    handleFunctionDragLeave: handlers.handleDragLeave,
-  };
-}

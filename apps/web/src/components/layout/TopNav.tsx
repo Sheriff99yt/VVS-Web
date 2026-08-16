@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Layers, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings, HelpCircle, History, Search, FilePlus, Keyboard } from 'lucide-react';
+import { Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Layers, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings, HelpCircle, History, Search, FilePlus, Keyboard } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
@@ -23,17 +23,8 @@ import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDial
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { AuthButton } from '@/components/auth/AuthButton';
-import { getAccessToken } from '@/lib/auth/session';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
-import {
-  buildClaudeDesktopMcpConfig,
-  buildCursorMcpConfig,
-  buildLocalMcpCliHint,
-  buildVsCodeMcpConfig,
-  buildWindsurfMcpConfig,
-  defaultLocalMcpUrl,
-  MCP_TOOL_SUMMARIES,
-} from '@/lib/mcpPasteConfig';
+import { AgentPanel } from '@/components/layout/AgentPanel';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
 import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
@@ -76,26 +67,7 @@ export interface TopNavProps {
 
 export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const { navigate } = useEditorNavigation();
-  const [showMCPModal, setShowMCPModal] = useState(false);
-  const [mcpProbeState, setMcpProbeState] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
-  const [mcpProbeMessage, setMcpProbeMessage] = useState<string | null>(null);
-  const [mcpCopiedKey, setMcpCopiedKey] = useState<string | null>(null);
-  const [mcpAllowDangerousTools, setMcpAllowDangerousTools] = useUiPreference('mcpAllowDangerousTools');
-  const mcpUrl = defaultLocalMcpUrl();
-  const cursorMcpConfig = buildCursorMcpConfig(mcpUrl);
-  const vsCodeMcpConfig = buildVsCodeMcpConfig(mcpUrl);
-  const windsurfMcpConfig = buildWindsurfMcpConfig(mcpUrl);
-  const claudeMcpConfig = buildClaudeDesktopMcpConfig(mcpUrl);
-  const mcpCliHint = buildLocalMcpCliHint();
-  const copyMcpText = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setMcpCopiedKey(key);
-      window.setTimeout(() => setMcpCopiedKey((prev) => (prev === key ? null : prev)), 1600);
-    } catch {
-      setMcpCopiedKey(null);
-    }
-  }, []);
+  const [showAgentPanel, setShowAgentPanel] = useState(false);
   const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | 'help' | null>(null);
   const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
   const [saveOnDiskPromptMode, setSaveOnDiskPromptMode] = useState<'close' | 'manual'>('close');
@@ -221,25 +193,6 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     },
     [isFolderProject, folderHandle, folderLabel, projectId, projectSource]
   );
-
-  const handleMcpProbe = async () => {
-    setMcpProbeState('testing');
-    setMcpProbeMessage(null);
-    try {
-      const result = await VvsApi.probeMcp(mcpUrl);
-      setMcpProbeState(result.ok ? 'ok' : 'fail');
-      setMcpProbeMessage(result.message);
-    } catch {
-      setMcpProbeState('fail');
-      setMcpProbeMessage('Connection test failed.');
-    }
-  };
-
-  const openMcpModal = () => {
-    setMcpProbeState('idle');
-    setMcpProbeMessage(null);
-    setShowMCPModal(true);
-  };
 
   const confirmDiscardDirty = useCallback((): boolean => {
     const anyDirty = openTabs.some((t) => isTabDirty(t.id));
@@ -1071,8 +1024,8 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             />
           )}
 
-          <Tooltip content="Connect AI (MCP)" placement="bottom">
-            <button type="button" onClick={openMcpModal} className={TOPNAV_ICON_BTN}>
+          <Tooltip content="Agent" placement="bottom">
+            <button type="button" onClick={() => setShowAgentPanel(true)} className={TOPNAV_ICON_BTN}>
               <Bot size={14} />
             </button>
           </Tooltip>
@@ -1089,201 +1042,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         </div>
       </header>
 
-      {showMCPModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-lg w-[min(520px,calc(100%-2rem))] max-h-[min(90vh,640px)] overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-              <h3 className="text-zinc-100 font-semibold text-sm">Connect AI (MCP)</h3>
-              <button type="button" onClick={() => setShowMCPModal(false)} className="text-zinc-500 hover:text-zinc-300">
-                ✕
-              </button>
-            </div>
-            <div className="p-6 space-y-4 overflow-y-auto">
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Paste a config into your IDE (Cursor, VS Code, Claude Desktop, Windsurf). Run the local Go MCP on{' '}
-                <span className="font-medium text-zinc-300">desktop</span> — no VVS account. Mobile AI is not supported yet.
-              </p>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Start local MCP</label>
-                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-400 font-mono whitespace-pre-wrap leading-relaxed">
-                  {mcpCliHint}
-                </pre>
-                <button
-                  type="button"
-                  onClick={() => void copyMcpText('cli', mcpCliHint)}
-                  className="text-[11px] text-zinc-400 hover:text-zinc-200"
-                >
-                  {mcpCopiedKey === 'cli' ? 'Copied' : 'Copy hint'}
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Cursor / VS Code mcp.json</label>
-                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
-                  {cursorMcpConfig}
-                </pre>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void copyMcpText('cursor', cursorMcpConfig)}
-                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
-                  >
-                    {mcpCopiedKey === 'cursor' ? 'Copied' : 'Copy Cursor config'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void copyMcpText('vscode', vsCodeMcpConfig)}
-                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
-                  >
-                    {mcpCopiedKey === 'vscode' ? 'Copied' : 'Copy VS Code config'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Windsurf mcp.json</label>
-                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
-                  {windsurfMcpConfig}
-                </pre>
-                <button
-                  type="button"
-                  onClick={() => void copyMcpText('windsurf', windsurfMcpConfig)}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
-                >
-                  {mcpCopiedKey === 'windsurf' ? 'Copied' : 'Copy Windsurf config'}
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Claude Desktop</label>
-                <pre className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 font-mono whitespace-pre-wrap max-h-28 overflow-auto">
-                  {claudeMcpConfig}
-                </pre>
-                <button
-                  type="button"
-                  onClick={() => void copyMcpText('claude', claudeMcpConfig)}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded font-medium transition-colors"
-                >
-                  {mcpCopiedKey === 'claude' ? 'Copied' : 'Copy Claude config'}
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                  What agents can call
-                </label>
-                <ul className="max-h-32 overflow-y-auto space-y-1 rounded border border-zinc-800 bg-zinc-900/80 px-2 py-1.5">
-                  {MCP_TOOL_SUMMARIES.map((tool) => (
-                    <li
-                      key={tool.name}
-                      className="flex items-start gap-2 text-[10px] leading-snug"
-                    >
-                      <span
-                        className={`shrink-0 mt-0.5 px-1 rounded ${
-                          tool.safety === 'dangerous'
-                            ? 'bg-amber-500/15 text-amber-300'
-                            : 'bg-zinc-800 text-zinc-500'
-                        }`}
-                      >
-                        {tool.safety === 'dangerous' ? 'write' : 'read'}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="font-mono text-zinc-300">{tool.name}</span>
-                        <span className="text-zinc-600"> — {tool.summary}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <label className="flex items-start gap-2 text-[11px] text-zinc-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 rounded border-zinc-700 bg-zinc-900"
-                  checked={mcpAllowDangerousTools}
-                  onChange={(e) => setMcpAllowDangerousTools(e.target.checked)}
-                />
-                <span>
-                  Allow <span className="text-amber-300/90">write</span> MCP tools (add/remove nodes,
-                  connect pins, save). Off by default. This checkbox is local editor intent —
-                  writes still require <span className="font-mono text-zinc-300">VVS_MCP_ALLOW_WRITE=1</span> on
-                  the Go server.
-                </span>
-              </label>
-
-              {!hosted ? (
-                <div className="flex items-start gap-2 pt-2 border-t border-zinc-800 text-xs">
-                  <div className="w-2 h-2 rounded-full mt-0.5 shrink-0 bg-zinc-500" />
-                  <span className="text-zinc-400">
-                    Hosted probe inactive — use local MCP above. Enable{' '}
-                    <span className="font-mono text-zinc-500">NEXT_PUBLIC_API_MODE=http</span> for remote Test connection.
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <div className="pt-2 border-t border-zinc-800 space-y-3">
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">
-                      Hosted mode — optional probe against the URL below (Bearer token when signed in).
-                    </p>
-                    {getAccessToken() ? (
-                      <p className="text-[11px] text-emerald-400/90">Signed in — MCP probe includes your access token.</p>
-                    ) : null}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">MCP Server URL</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          readOnly
-                          value={mcpUrl}
-                          className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void copyMcpText('url', mcpUrl)}
-                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-4 py-2 rounded font-medium transition-colors"
-                        >
-                          {mcpCopiedKey === 'url' ? 'Copied' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleMcpProbe()}
-                      disabled={mcpProbeState === 'testing'}
-                      className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-60 disabled:cursor-not-allowed text-zinc-100 text-xs px-4 py-2 rounded font-medium border border-zinc-700 transition-colors"
-                    >
-                      {mcpProbeState === 'testing' ? (
-                        <>
-                          <Loader2 size={12} className="animate-spin" />
-                          Testing connection…
-                        </>
-                      ) : (
-                        'Test connection'
-                      )}
-                    </button>
-                    <div className="flex items-start gap-2 text-xs">
-                      <div
-                        className={`w-2 h-2 rounded-full mt-0.5 shrink-0 ${
-                          mcpProbeState === 'ok'
-                            ? 'bg-emerald-500'
-                            : mcpProbeState === 'fail'
-                              ? 'bg-red-500'
-                              : 'bg-zinc-500'
-                        }`}
-                      />
-                      <span className="text-zinc-400">
-                        {mcpProbeState === 'idle'
-                          ? 'Not connected — start the Go server and use Test connection.'
-                          : mcpProbeMessage}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <AgentPanel open={showAgentPanel} onClose={() => setShowAgentPanel(false)} />
       <SaveOnDiskPromptDialog
         open={saveOnDiskPromptOpen}
         projectName={projectDetails.moduleName || 'Untitled'}

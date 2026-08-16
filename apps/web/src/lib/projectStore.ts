@@ -18,19 +18,6 @@ function draftKey(id: string): string {
   return `vvs_draft_${id}`;
 }
 
-/** Session-only project payload — not listed in recents until promoted via saveProjectToStore. */
-export function saveProjectDraft(projectId: string, snapshot: ProjectSnapshot): void {
-  if (typeof window === 'undefined') return;
-  try {
-    sessionStorage.setItem(
-      draftKey(projectId),
-      JSON.stringify({ ...snapshot, projectId, savedAt: new Date().toISOString() })
-    );
-  } catch {
-    // Draft is optional — library browse still works until session storage fills
-  }
-}
-
 export function loadProjectDraft(projectId: string): ProjectSnapshot | null {
   if (typeof window === 'undefined') return null;
   const raw = sessionStorage.getItem(draftKey(projectId));
@@ -188,15 +175,6 @@ export function pruneStableTestProjectsFromRecent(): void {
   if (next.length === before.length) return;
   writeRecent(next);
   notifyRecentProjectsChanged();
-}
-
-export function registerProjectIfNew(
-  projectId: string,
-  snapshot: ProjectSnapshot,
-  source: ProjectSource
-): void {
-  if (source === 'recent') return;
-  saveProjectToStore(projectId, snapshot, source);
 }
 
 /** Migrate legacy single-slot save into the registry on first load */

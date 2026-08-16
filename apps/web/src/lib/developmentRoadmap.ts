@@ -1,10 +1,13 @@
 export type RoadmapItemStatus = 'done' | 'partial' | 'planned' | 'cut';
 
+export type RoadmapLayer = 'frontend' | 'backend';
+
 export interface RoadmapItem {
   id: string;
   title: string;
   description: string;
   status?: RoadmapItemStatus;
+  layer?: RoadmapLayer;
 }
 
 export interface RoadmapSection {
@@ -15,12 +18,19 @@ export interface RoadmapSection {
   phase?: number;
   /** Visual emphasis in the Roadmap view */
   emphasis?: 'active' | 'shipped';
+  layer?: RoadmapLayer;
+}
+
+/** item.layer ?? section.layer ?? 'frontend' */
+export function resolveRoadmapLayer(item: RoadmapItem, section?: RoadmapSection): RoadmapLayer {
+  return item.layer ?? section?.layer ?? 'frontend';
 }
 
 /** Shipped editor and platform capabilities (aligned with docs/current_state.md). */
 export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'phase-2-foundation',
+    layer: 'backend',
     title: 'Legacy server experiments (in repo)',
     phase: 2,
     emphasis: 'shipped',
@@ -57,7 +67,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'phase2-auth-button-ui',
         title: 'Minimal Supabase login UI',
         description:
-          'AuthButton in TopNav + StartScreen -- email/password sign-in via Supabase client when NEXT_PUBLIC_SUPABASE_URL and ANON_KEY are set.',
+          'AuthButton in TopNav -- email/password sign-in via Supabase client when NEXT_PUBLIC_SUPABASE_URL and ANON_KEY are set.',
         status: 'done',
       },
       {
@@ -76,15 +86,16 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'phase2-mcp-prod',
-        title: 'MCP auth path (local / legacy)',
+        title: 'Go MCP sidecar (local / legacy)',
         description:
-          'Desktop local MCP paste config is the product path. Hosted MCP probe stays inactive by default.',
+          'Optional localhost Go SSE /mcp. Not the hosted product path. Hosted app uses the in-page TS agent. No remote hosted MCP URL.',
         status: 'done',
       },
     ],
   },
   {
     id: 'shell',
+    layer: 'frontend',
     title: 'App shell & navigation',
     items: [
       {
@@ -96,7 +107,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen -- new/open folder (.vvs/ overlay), recent projects, import JSON, First Graph & Coverage Lab Test Project cards, Library and Roadmap explore shortcuts. SSR hydration-safe; library browse uses session drafts (no spurious recents).',
+          'Start screen -- new/open folder (.vvs/ overlay), recent projects, import JSON, five usability test cards (First Graph featured, plus Branch / Coverage / New Features / Inheritance Lab), Library and Roadmap explore shortcuts. SSR hydration-safe; Library and Roadmap browse via /library and /roadmap without creating a stored project.',
       },
       {
         id: 'nav-history',
@@ -113,7 +124,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'status-bar',
         title: 'Status bar chrome',
         description:
-          'API/offline indicator with HealthResponse store, auth mode, and userId (HTTP mode); saved time, graph nav & minimap toggles, code & log toggles, error jump.',
+          'Local/offline indicator; **Agent ready** / **Agent error** / **Agent…** from agentStatusStore (not fake MCP Ready); saved time, graph nav & minimap toggles, code & log toggles, error jump.',
       },
       {
         id: 'panel-layout',
@@ -127,9 +138,10 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'auth-button',
+        layer: 'backend',
         title: 'Sign in (Supabase GoTrue)',
         description:
-          'AuthButton in TopNav + StartScreen -- email/password when NEXT_PUBLIC_SUPABASE_URL is set; GitHub OAuth optional via env flag.',
+          'AuthButton in TopNav -- email/password when NEXT_PUBLIC_SUPABASE_URL is set; GitHub OAuth optional via env flag.',
       },
       {
         id: 'auto-workflow',
@@ -141,6 +153,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'editor',
+    layer: 'frontend',
     title: 'Graph editor',
     items: [
       {
@@ -275,8 +288,9 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'mcp-ui',
-        title: 'Connect AI (Phase 1 MCP)',
-        description: 'TopNav modal -- local MCP at localhost:8080/mcp; probe detects endpoint when server runs.',
+        title: 'In-page TypeScript agent',
+        description:
+          'AgentHost Worker starts with the editor. TopNav Bot button (tooltip Agent) opens AgentPanel: prompt, vvs:agent-llm, /tool. Writes gated by agentAllowWrites (default false). window.vvs.agent / window.vvs.tools. Optional Go sidecar paste is collapsed -- not the hosted path.',
       },
       {
         id: 'label-free',
@@ -319,6 +333,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'symbols',
+    layer: 'frontend',
     title: 'Symbols & codegen',
     items: [
       {
@@ -482,16 +497,16 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'ai-mcp-autonomy-u91',
-        title: 'AI / MCP autonomy & safety guard (U91)',
+        title: 'In-page TypeScript agent (U91 follow-on)',
         description:
-          'Dual consent: UI mcpAllowDangerousTools (editor intent) + server VVS_MCP_ALLOW_WRITE (real write gate); audit doc docs/design/mcp_autonomy_audit.md; inventory lock vs tools.go; EnsureWritePermission + consent_test.go; mcpActivityStore; MCP Ready in StatusBar.',
+          'Shipped: AgentHost + AgentPanel; live canvas source of truth; agentAllowWrites write gate (default false); leftover-kind refuse on add_node; window.vvs.agent/tools; StatusBar from agentStatusStore. Not working dual consent: mcpAllowDangerousTools does not reach Go; mcpActivityStore / MCP Ready are not product chrome. Go MCP on :8080 is an optional local sidecar.',
         status: 'done',
       },
       {
         id: 'cross-and-lang-examples-u92',
         title: 'New cross-language & language-specific examples (U92)',
         description:
-          'Five multi-language test projects (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) across 8 target languages (40 goldens total); StartScreen starters for all 8 languages; validate_test_projects_folder.ts.',
+          'Five multi-language test projects (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) across 8 target languages (40 goldens total); validate_test_projects_folder.ts.',
         status: 'done',
       },
       {
@@ -622,6 +637,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'multi-class',
+    layer: 'frontend',
     title: 'Multi-class & canvas-defined symbols',
     emphasis: 'shipped',
     items: [
@@ -725,9 +741,10 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'go-mcp-classes',
-        title: 'Go v3 + MCP class tools',
+        layer: 'backend',
+        title: 'Go v3 + MCP class tools (sidecar)',
         description:
-          'Domain v3 normalize; list_classes / add_class MCP tools; optional class_id on get_graph and add_node.',
+          'Optional Go sidecar: domain v3 normalize; list_classes / add_class; optional class_id on get_graph and add_node. Hosted path uses the same names in the in-page TS runtime.',
         status: 'done',
       },
       {
@@ -776,7 +793,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'test-project-rethink-u65',
         title: 'Test Project goldens (U65)',
         description:
-          'Stable vvs-test-* seeds; First Graph + Coverage Lab; test_project_goldens/ + usabilityExampleGoldens.test.ts; extract --update-goldens.',
+          'Stable vvs-test-* seeds; five labs (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab); test_project_goldens/ + usabilityExampleGoldens.test.ts; extract --update-goldens.',
         status: 'done',
       },
       {
@@ -797,6 +814,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'workflow',
+    layer: 'frontend',
     title: 'Project workflow',
     items: [
       {
@@ -837,15 +855,15 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'mcp-modal',
-        title: 'Connect AI modal',
+        title: 'Agent panel',
         description:
-          'MCP URL copy, live probe against Go /mcp, honest offline messaging; tools/mcp.cursor.example.json for Cursor.',
+          'TopNav Agent panel -- in-page prompt + tools. Collapsed sidecar section pastes optional local Go MCP config (tools/mcp.cursor.example.json). Not a hosted MCP URL.',
       },
       {
         id: 'mcp-paste-u70',
-        title: 'Local MCP paste config (U70)',
+        title: 'Optional Go MCP sidecar paste (U70)',
         description:
-          'AI panel paste Cursor/Claude + CLI config; dangerous-tools consent; hosted probe gated. No VVS account required.',
+          'Collapsed Agent panel sidecar for Cursor/Claude + CLI paste-config. Optional local Go process -- not the hosted path. mcpAllowDangerousTools is sidecar intent only and does not reach Go.',
         status: 'done',
       },
       {
@@ -928,6 +946,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'platform',
+    layer: 'frontend',
     title: 'Monorepo & backend',
     items: [
       {
@@ -967,30 +986,35 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'server-registry',
+        layer: 'backend',
         title: 'Go registry API',
         description:
           'Health, core-pack nodes, environments, syntax-packs catalog; domain snapshot v3 mirror; ListAvailableNodes + ListSyntaxPacks tests.',
       },
       {
         id: 'server-http',
+        layer: 'backend',
         title: 'Go project HTTP API',
         description:
           'ProjectStore port -- MemoryStore (default) or PostgresStore (DATABASE_URL); GET/PUT /api/projects, list, POST â€¦/compile; CORS + Authorization header.',
       },
       {
         id: 'server-auth',
+        layer: 'backend',
         title: 'JWT auth middleware',
         description:
           'Go middleware -- AUTH_REQUIRED + SUPABASE_JWT_SECRET; DevUserID when auth off; user_id scoping on HTTP + MCP services.',
       },
       {
         id: 'server-mcp',
-        title: 'MCP server (local + JWT)',
+        layer: 'backend',
+        title: 'Go MCP sidecar (local + JWT)',
         description:
-          'SSE at /mcp -- list_available_nodes, list_syntax_packs, list_classes, add_class, get_graph, add_node, remove_node, connect_pins, generate_code, save_project; class_id scoping; session auth when Bearer set.',
+          'Optional SSE at /mcp -- same tool names as the in-page agent plus save_project and pack tools. Not the hosted path. Writes require VVS_MCP_ALLOW_WRITE (the in-page checkbox does not set it).',
       },
       {
         id: 'dev-startup',
+        layer: 'backend',
         title: 'One-command dev startup',
         description:
           'tools/start_app.ps1 launches Next.js (HTTP API mode) + Go server; setup_env.ps1 seeds NEXT_PUBLIC_API_MODE=http in .env.local.',
@@ -999,6 +1023,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   },
   {
     id: 'language-platform',
+    layer: 'frontend',
     title: 'Language platform (seven families)',
     phase: 6,
     emphasis: 'shipped',
@@ -1035,7 +1060,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'usability-example-tests',
         title: 'Usability Test Projects',
         description:
-          'First Graph + Coverage Lab on StartScreen; verify codegen via Code panel extract (extract_test_project_outputs.ts). Calculator/Async Fetcher/Dual Class Lab retired as StartScreen fixtures.',
+          'Five usability test cards on StartScreen (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab); verify codegen via Code panel extract (extract_test_project_outputs.ts). Calculator/Async Fetcher/Dual Class Lab retired as StartScreen fixtures.',
         status: 'done',
       },
       {
@@ -1280,6 +1305,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'extends-list-mi-locked-visual',
+        layer: 'frontend',
         title: 'Extends list (multiple inheritance visual)',
         description:
           'Locked visual, not started: Extends is a list on Declare Class; + Add base is a second row (Python/C++ only). Implements stays a second list. Emit today is still one extendsType string — multi-base emit not shipped. Not an Inherit node. See language_capability_catalog.md § Multiple inheritance.',
@@ -1295,6 +1321,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'verse-getinput-cl014',
+        layer: 'frontend',
         title: 'Verse GetInput (CL-014)',
         description:
           'Honest (x) + prompt. Real player/string read is not a plain-class API — do not invent one.',
@@ -1302,6 +1329,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'switch-match-cl017',
+        layer: 'frontend',
         title: 'Switch match (CL-017, optional)',
         description:
           'Optional native match lowering. If-cascade is the shipped shape.',
@@ -1316,6 +1344,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'code-to-visual-u93',
+        layer: 'frontend',
         title: 'Long-term: code → visual (U93)',
         description:
           'Research track: read raw source and produce text-shaped graphs (reverse of Generate). Must preserve canvas source of truth and fidelity -- not near-term polish.',
@@ -1330,6 +1359,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'lambda-expression-node',
+        layer: 'frontend',
         title: 'Lambda expression node',
         description:
           'Planned expression node (lambda / => / |x|). Capture is an option. One kind at most (lambda_define); drop closure_define. Not a project symbol.',
@@ -1337,6 +1367,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'try-flow-node',
+        layer: 'frontend',
         title: 'Try / catch flow node',
         description:
           'Planned flow node like Branch; catch / finally are exec pins. Do not spawn in Go or Rust. Not a symbol.',
@@ -1344,6 +1375,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'yield-statement-later',
+        layer: 'frontend',
         title: 'Yield statement (later)',
         description:
           'Later statement node where you type yield (Python, GDScript). Not a soup of planned flow kinds.',
@@ -1358,6 +1390,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'event-listeners-u100',
+        layer: 'frontend',
         title: 'Event listeners (U100)',
         description:
           'Cut -- hidden subscribe/emit runtime is rejected. Dispatch is the invoke node. Do not spawn event_emit / event_subscribe.',
@@ -1371,6 +1404,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'coa-deferred',
+        layer: 'backend',
         title: 'Cross Over Architecture (COA)',
         description:
           'Deferred -- COA_SHIPPED false. Prerequisites: multi-target export, documented compile policy. Single-target portability warnings + U66/U67 available today.',
@@ -1384,6 +1418,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'overload-codegen',
+        layer: 'frontend',
         title: 'Multi-overload codegen',
         description: 'Emit every overload signature, per-overload graph bodies, and call-site arguments.',
         status: 'planned',
@@ -1396,12 +1431,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'profiles-json',
+        layer: 'frontend',
         title: 'Language profiles as JSON packs',
         description: 'Move portability matrices from TypeScript to data-driven profile files.',
         status: 'planned',
       },
       {
         id: 'transpile-worker',
+        layer: 'frontend',
         title: 'Worker-based transpile',
         description: 'Off-main-thread codegen for large projects and graphs.',
         status: 'planned',
@@ -1414,6 +1451,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'env-typespec-emitter',
+        layer: 'frontend',
         title: 'TypeSpec → manifest emitter',
         description:
           'Custom TypeSpec emitter producing ProjectEnvironmentManifest JSON as a single API authoring source.',
@@ -1421,6 +1459,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'env-backstage-compat',
+        layer: 'frontend',
         title: 'Backstage template compatibility',
         description:
           'Import template.yaml + skeleton/ as hostFiles; Nunjucks → {moduleName}; env-import CLI.',
@@ -1428,6 +1467,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'env-devcontainer',
+        layer: 'frontend',
         title: 'Dev Container linkage',
         description:
           'Optional devcontainer.json reference in manifests for tooling/runtime (containers.dev) alongside VVS host files.',
@@ -1435,6 +1475,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'env-template-upgrade',
+        layer: 'frontend',
         title: 'Non-destructive template upgrade',
         description:
           'One-click refresh from linked environment version; preserve user graph divergence with drift indicators (version drift UI done; full merge TBD).',
@@ -1442,6 +1483,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'env-engine-packs',
+        layer: 'frontend',
         title: 'Engine environment packs',
         description:
           'UE/Verse and other engine API manifests as installable Library environments -- portability-gated natives.',
@@ -1449,6 +1491,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'env-host-editable',
+        layer: 'frontend',
         title: 'Host file integration policies',
         description:
           'Skip vs emit host entry files when adopting existing repos (integration.json); custom emit paths per target. Full in-editor host editing/merge still planned.',
@@ -1462,6 +1505,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'self-hosted-deploy',
+        layer: 'backend',
         title: 'Full Supabase Docker on VPS',
         description:
           'Out of scope as product. No dedicated VPS / self-hosted Supabase track. Client-first: local/.vvs/git + static Pages. Legacy notes in docs/deployment.md only.',
@@ -1469,6 +1513,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'github-oauth',
+        layer: 'backend',
         title: 'GitHub OAuth + email auth (hosted)',
         description:
           'Out of scope as product default. No VVS accounts required. Code may remain hidden/disabled for experiments.',
@@ -1476,12 +1521,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'ops-backups',
+        layer: 'backend',
         title: 'VPS ops & backups',
         description: 'Out of scope -- no dedicated server product to operate.',
         status: 'cut',
       },
       {
         id: 'pwa',
+        layer: 'frontend',
         title: 'PWA offline sync to Postgres',
         description:
           'Out of scope as product. Prefer folder/.vvs + git; do not invent a VVS sync server.',
@@ -1496,6 +1543,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'library-backend',
+        layer: 'backend',
         title: 'Library remaining (U90 auth / upload)',
         description:
           'Library page redesign shipped (templates / git import). Auth / upload frozen (client-first; no accounts as product). Remaining Phase 3: vvs-library repo, CI, web UI wiring.',
@@ -1503,6 +1551,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'search',
+        layer: 'frontend',
         title: 'Semantic library search',
         description:
           'Intent search across shared scripts and templates (client-first catalog; search backend TBD).',
@@ -1517,6 +1566,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'collab',
+        layer: 'backend',
         title: 'Session client / host',
         description:
           'Game-lobby style session sync -- not account cloud multiplayer. Transport TBD (Go WS candidate).',
@@ -1524,6 +1574,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'graph-doc-split',
+        layer: 'frontend',
         title: 'Per-tab document rows',
         description:
           'Split large projects into graph_documents rows when snapshots grow or collab needs partial updates.',
@@ -1538,18 +1589,21 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'ue-plugin',
+        layer: 'backend',
         title: 'In-engine graph editor',
         description: 'UE6-embedded canvas on the same graph schema with Verse emitter integration.',
         status: 'planned',
       },
       {
         id: 'verse-parity',
+        layer: 'backend',
         title: 'Web ↔ engine round-trip',
         description: 'Import/export graphs between browser editor and in-engine sessions.',
         status: 'planned',
       },
       {
         id: 'ue-nodes',
+        layer: 'frontend',
         title: 'UE API environment packs',
         description:
           'Engine environment manifests and data-driven nodes atop @vvs/environment-templates (not Blueprint VM).',
@@ -1557,6 +1611,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'blueprint-bridge',
+        layer: 'frontend',
         title: 'Blueprint transition tooling',
         description: 'Workflows helping teams migrate Blueprint habits to Verse-first authoring.',
         status: 'planned',
@@ -1570,6 +1625,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'rust-console-env',
+        layer: 'frontend',
         title: 'Rust console environment pack',
         description:
           'env.rust.console-app manifest (main.rs stub, std I/O natives); optional Tree-sitter validation when grammar available.',
@@ -1577,12 +1633,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'mobile',
+        layer: 'frontend',
         title: 'Touch & mobile UX',
         description: 'Gestures, radial menus, magnetic pin snap for tablet workflows. Mobile: no AI panel for now.',
         status: 'planned',
       },
       {
         id: 'enterprise',
+        layer: 'backend',
         title: 'Enterprise deploy',
         description:
           'Out of scope as product. No dedicated enterprise VPS. Client-first local/.vvs/git. Legacy self-host notes may remain in docs/deployment.md.',
@@ -1590,6 +1648,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'templates',
+        layer: 'frontend',
         title: 'Richer project templates',
         description:
           'Curated environment packs with categories (console, web, data, api, game); community catalog and Backstage-style scaffolds still expanding.',
@@ -1597,6 +1656,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'folder-os-path',
+        layer: 'frontend',
         title: 'Reveal in Explorer / Finder',
         description:
           'Native “open containing folder” from the editor -- blocked today by browser File System Access API (no absolute path exposure).',

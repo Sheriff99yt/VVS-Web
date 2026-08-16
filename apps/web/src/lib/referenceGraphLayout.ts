@@ -288,27 +288,3 @@ export function buildReferenceFlowGraph({
   return { nodes, edges };
 }
 
-/** @deprecated Use buildReferenceFlowGraph with ReferenceViewerDepths */
-export function buildReferenceFlowGraphLegacy(
-  rootId: string,
-  index: Map<string, GraphReferenceEdges>,
-  direction: ReferenceTreeDirection,
-  maxDepth: number,
-  openTabs: GraphTab[],
-  functions: { id: string; name: string }[],
-  variableFilter?: string | null
-): { nodes: Node<ReferenceGraphNodeData>[]; edges: Edge[] } {
-  return buildReferenceFlowGraph({
-    rootId,
-    index,
-    direction,
-    depths: {
-      referencers: maxDepth,
-      dependencies: maxDepth,
-      breadthLimit: 20,
-    },
-    openTabs,
-    functions,
-    variableFilter,
-  });
-}

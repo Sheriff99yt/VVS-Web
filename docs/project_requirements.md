@@ -10,7 +10,7 @@ This document captures functional and non-functional requirements for Vision Vis
 
 **Origin:** The project [started as a university graduation prototype](https://github.com/Sheriff99yt/Vision_Visual_Scripting) — a Python desktop app where visual nodes translate into **any programming language the user selects**. That core idea persists in **VVS Web**. See [history.md](history.md).
 
-**Product direction:** VVS builds on traditional coding — it does not replace it. It is beginner-friendly, integration-first, and works with **your existing AI subscriptions** via MCP (no bundled LLM). The web editor uses common software terms (graph, project, variable), not engine jargon — see [naming_and_product_direction.md](naming_and_product_direction.md).
+**Product direction:** VVS builds on traditional coding — it does not replace it. It is beginner-friendly, integration-first, and ships an **in-page TypeScript agent** on the live canvas (optional local LLM key; no bundled LLM). A thin MCP wrapper for other apps over the same package is later; today an optional localhost Go sidecar exists. The web editor uses common software terms (graph, project, variable), not engine jargon — see [naming_and_product_direction.md](naming_and_product_direction.md).
 
 **Open visual scripting for all workflows:** The long-term goal is a **portable graph language and transpiler** usable across browsers, repos, AI agents, and engines — not a single-host visual tool. **VVS Web** is the open codebase where that platform is being built today.
 
@@ -92,17 +92,19 @@ This document captures functional and non-functional requirements for Vision Vis
 - [ ] Post-generation formatting pass (server-side Prettier/Clang-Format for v1; optional WASM formatters for later phases)
 - [ ] Display generated code in a live preview panel that updates as the graph changes
 
-### 3.4 AI Integration (Bring-Your-Own-AI via MCP)
-- [ ] VVS does **not** run its own AI — users connect their existing AI tools (Cursor, Claude, Codex, etc.)
-- [ ] Go backend includes an **MCP server** exposing VVS operations as tools
-- [ ] MCP tools include: `ListAvailableNodes`, `GetGraph`, `AddNode`, `ConnectPins`, `RemoveNode`, `GenerateCode`, `SearchLibrary`, `ImportScript`
-- [ ] MCP transport: HTTP/SSE (streamable HTTP transport) for remote connectivity
-- [ ] The web app provides a **Connect AI** modal in TopNav — user copies a connection URL into their AI tool's MCP settings
-- [ ] External AI tools can stream node placements to the graph in real-time
-- [ ] The engine validates every AI-generated connection for type safety before rendering
-- [ ] The AI picks from a predefined set of available nodes (cannot hallucinate nodes that don't exist)
-- [ ] MCP server authenticates external connections and scopes them to the user's projects
-- [ ] Works with **any** MCP-compatible AI tool — no provider lock-in
+### 3.4 AI Integration (in-page agent now; MCP wrapper later)
+- [x] Hosted path is an **in-page TypeScript agent** on the live canvas — no Cursor/Go required; Worker starts with the editor
+- [x] In-page tools (same names as Go MCP where they map): `list_available_nodes`, `list_syntax_packs`, `list_classes`, `get_graph`, `generate_code`, `add_class`, `add_node`, `remove_node`, `connect_pins`
+- [x] `/tool name json` works without an LLM key; optional chat uses a local key in `localStorage` `vvs:agent-llm` (default `https://api.openai.com/v1` + `gpt-4o-mini`)
+- [x] Writes gated by `agentAllowWrites` (default **false**); `add_node` refuses leftover kinds
+- [x] `window.vvs.agent` / `window.vvs.tools`: `listTools()`, `callTool(name, args)`
+- [x] StatusBar **Agent ready** / **Agent error** / **Agent…** from `agentStatusStore` (not fake MCP Ready)
+- [ ] Thin **MCP wrapper** for other apps (Cursor, Claude Desktop, etc.) over the same TS package — deferred
+- [ ] Streamable HTTP transport — **not shipped** (do not treat as done)
+- [ ] `SearchLibrary` / `ImportScript` as agent tools — **not shipped**
+- [ ] `save_project` / rosetta / `validate_generated_parse` / `propose_syntax_delta` in the TS runtime — deferred
+- [ ] Live-tab control without the editor open; Chrome DevTools bridge; in-page chat on StartScreen — out of scope
+- Optional local Go sidecar (`go run ./cmd/vvs-server`, `:8080`) still exists; it is **not** the hosted agent. `mcpAllowDangerousTools` does **not** reach Go (`VVS_MCP_ALLOW_WRITE` does)
 
 ### 3.5 Community Library
 - [ ] Users can **upload** visual scripts (graph JSON + metadata) to a shared library
@@ -180,7 +182,7 @@ These decisions have been evaluated against all requirements and are confirmed.
 | **CSS Strategy** | Hybrid: Tailwind (app shell) + CSS Modules (graph editor) | Tailwind is fast for standard UI; CSS Modules give full control for custom node/wire rendering |
 | **Transpiler Runtime** | TypeScript (browser) | Lego emitter is lightweight string assembly; runs in single-digit ms; enables full offline code generation |
 | **Backend Language** | Go (Golang) | REST API, MCP server, WebSocket collaboration; zero-pain concurrency via Goroutines |
-| **AI Strategy** | Bring-Your-Own-AI via MCP server | Zero AI cost; no provider lock-in; users connect existing tools (Cursor, Claude, Codex) |
+| **AI Strategy** | In-page TS agent (hosted) + later MCP wrapper | No bundled LLM; optional local key; other apps via later wrapper / today's optional Go sidecar |
 | **Communication** | REST (OpenAPI) + WebSocket | Type safety via generated TS clients from OpenAPI spec; no gRPC proxy overhead |
 | **Database** | Self-hosted **Supabase Postgres** + JSONB via Go **`pgx`** | Relational ownership + document snapshots; pgvector on same DB |
 | **Vector Search** | pgvector (Postgres extension) | Semantic search in Phase 3 — no separate vector DB |

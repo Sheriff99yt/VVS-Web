@@ -54,6 +54,3 @@ export function buildCoreCategories(
     })),
   }));
 }
-
-/** @deprecated Use buildCoreCategories */
-export const MOCK_CATEGORIES = buildCoreCategories('main', []);

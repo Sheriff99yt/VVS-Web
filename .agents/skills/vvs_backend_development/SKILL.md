@@ -5,7 +5,7 @@ description: Triggers when writing Go code, API handlers, or MCP tools in the se
 
 # Current State
 
-**Phase 2 (partial, July 2026):** REST project API, registry HTTP, local MCP SSE, optional Postgres persistence, JWT auth middleware. Canonical snapshot: [`docs/current_state.md`](../../../docs/current_state.md). Deploy topology: [`docs/deployment.md`](../../../docs/deployment.md).
+**Phase 2 (partial, optional sidecar):** REST project API, registry HTTP, optional local MCP SSE. Hosted agent is the in-page TS runtime — Go MCP is not the product path. Canonical snapshot: [`docs/current_state.md`](../../../docs/current_state.md). Deploy topology: [`docs/deployment.md`](../../../docs/deployment.md).
 
 **Shipped:**
 

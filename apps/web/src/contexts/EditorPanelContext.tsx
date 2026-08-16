@@ -42,12 +42,6 @@ interface EditorPanelContextValue {
   setCompilerLogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   toggleCompilerLog: () => void;
   expandCompilerLog: () => void;
-  /** @deprecated use compilerLogOpen */
-  consoleOpen: boolean;
-  /** @deprecated use toggleCompilerLog */
-  toggleConsole: () => void;
-  /** @deprecated use expandCompilerLog */
-  expandConsole: () => void;
 }
 
 const EditorPanelContext = createContext<EditorPanelContextValue | null>(null);
@@ -186,9 +180,6 @@ export function EditorPanelProvider({ children }: { children: ReactNode }) {
         setCompilerLogOpen,
         toggleCompilerLog,
         expandCompilerLog,
-        consoleOpen: compilerLogOpen,
-        toggleConsole: toggleCompilerLog,
-        expandConsole: expandCompilerLog,
       }}
     >
       {children}

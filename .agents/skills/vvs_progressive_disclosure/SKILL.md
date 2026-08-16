@@ -75,7 +75,7 @@ Before adding visible UI, answer:
 - **Expanded:** full inspector body; **2D resize** from bottom-left corner; top drag handle to move; size/position persist (`detailsPanelExpandedWidth/Height`, `detailsPanelOffsetRight/Top`).
 - **Right-click:** Reset size & position.
 - Auto-collapse paused during move/resize until pointer release.
-- **Graph / project settings:** TopNav gear (**Settings**, right of Connect AI) → Settings modal **Project** tab; View → Project settings… / App settings…
+- **Graph / project settings:** TopNav gear (**Settings**, right of Agent) → Settings modal **Project** tab; View → Project settings… / App settings…
 - **App settings:** browser prefs (dim unsupported, panel defaults, reset floating layouts, shortcuts).
 - Modifiers live on the selected-node chip strip (`NodeModifiers`); Details owns structure (TypeRef, pins, switch, overloads). Open Graph removed from symbol tree (U102).
 

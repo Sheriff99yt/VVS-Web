@@ -2,7 +2,7 @@
 
 > **Early public development** — try the live editor below, or run locally. See [Where we are now](#where-we-are-now) · **Origin:** [Vision Visual Scripting (2021)](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
 
-**Visual programming that generates real code** — compose logic on a graph, export ordinary source, and integrate with the tools you already use: your IDE, git, CI, and AI assistants (via MCP). **Canvas is the source of truth for generated code** — every export line maps to a graph node; symbol tables index only.
+**Visual programming that generates real code** — compose logic on a graph, export ordinary source, and integrate with the tools you already use: your IDE, git, CI, and the in-page agent (later MCP wrapper for other apps). **Canvas is the source of truth for generated code** — every export line maps to a graph node; symbol tables index only.
 
 VVS builds **on top of traditional development**, not instead of it. The graph is the authoring view; **text code stays the integration layer** — with **text-shaped fidelity** (what you draw is what you could type). See [docs/visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md).
 
@@ -32,7 +32,7 @@ Details: [docs/setup.md](docs/setup.md) § GitHub Pages / Releases.
 |-------|--------|---------|
 | **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, References, wiring, local / folder / `.vvs/` persist, real codegen preview (`@vvs/transpiler`). Test projects: First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab. GitHub Pages showcase | U93 code → visual, session collab |
 | **Transpiler** (`packages/transpiler`) | Client-side codegen for all eight languages | — |
-| **Backend** (`server/`) | Local MCP + optional HTTP — **not** the product host. Paste config for Cursor / VS Code / Windsurf / Claude; writes gated by `VVS_MCP_ALLOW_WRITE` | Dedicated app server, accounts, library git repo / upload auth |
+| **Backend** (`server/`) | Optional local MCP sidecar + optional HTTP — **not** the product host or the hosted agent. Writes gated by `VVS_MCP_ALLOW_WRITE` (the in-page checkbox does not set it) | Dedicated app server, accounts, library git repo / upload auth |
 | **UE6 plugin** (`plugins/`) | Roadmap only | In-engine canvas |
 
 **What you can do today:** run the app locally or on the live Pages site, create projects, edit graphs, save to browser storage / folder / `.vvs/`, and preview generated code. Status chrome is honest — **offline / local**, not fake “synced.”
@@ -49,13 +49,13 @@ VVS does **not** simulate Unreal Blueprint (macro expansion, latent delays, VM-o
 
 ## UI-first approach (why we build this way)
 
-We are deliberately building the **visual editor and data contracts first**, with **mock persistence** (localStorage) while the **client transpiler** (`@vvs/transpiler`) matures in parallel. Cloud database and MCP server remain planned. This is not “UI only forever” — it is how we **de-risk** a system that spans a browser editor, a codegen engine, AI tools, and eventually an Unreal plugin.
+We are deliberately building the **visual editor and data contracts first**, with **mock persistence** (localStorage) while the **client transpiler** (`@vvs/transpiler`) matures in parallel. Cloud database remains out of product scope. The hosted agent is in-page TypeScript (already shipped); a thin MCP wrapper for other apps is later. This is not “UI only forever” — it is how we **de-risk** a system that spans a browser editor, a codegen engine, AI tools, and eventually an Unreal plugin.
 
 **What UI-first means here**
 
 1. **Shape the product in the canvas** — tabs, references, wiring rules, project tree, properties, and navigation must feel right before we lock backend APIs.
 2. **Define interfaces while building UI** — `ProjectSnapshot`, graph documents, `VvsApi`, validation messages, and target-language selection are **contracts** the transpiler and server will implement later, not afterthoughts.
-3. **Mock honestly** — `localStorage` save/load stands in for cloud sync; codegen uses **`@vvs/transpiler`** (facade: `mockCodegen.ts`); the UI says **offline** until MCP and cloud sync exist.
+3. **Mock honestly** — `localStorage` save/load stands in for cloud sync; codegen uses **`@vvs/transpiler`** (facade: `mockCodegen.ts`); the UI says **offline** / **Agent ready** honestly — no fake connected or MCP Ready chrome.
 4. **Wire one vertical slice at a time** — when backend work starts, UI → facade → API → Go handler → storage, without rewriting the shell. See [docs/ui_api_delivery_loop.md](docs/ui_api_delivery_loop.md).
 
 **What this helps us avoid**
@@ -64,11 +64,11 @@ We are deliberately building the **visual editor and data contracts first**, wit
 |--------------|-------------------|
 | Transpiler or API designed without a proven graph UX | Editor and graph schema come first; emitters target a stable IR |
 | UI coupled to unfinished backend | Components call **`VvsApi`**, not raw `fetch` or ad-hoc mocks scattered in views |
-| Fake “connected” or “synced” states | Status bar and Connect AI show **disconnected** until real endpoints exist |
+| Fake “connected” or “synced” states | Status bar shows **offline** / **Agent ready** / **Agent error** from `agentStatusStore` — not fake MCP Ready |
 | Big-bang integration | One feature slice per iteration (save, health, compile, …) with shared types |
 | Engine jargon leaking into a portable web product | Web copy stays engine-neutral; Verse/UE integration is a **target**, not the whole identity |
 
-**Rule of thumb for contributors:** if it is not in [current_state.md](docs/current_state.md), treat it as **planned** — local MCP and Go HTTP API work in dev; cloud persistence is Phase 2 ([deployment.md](docs/deployment.md)). Extend the UI and types first; plug in `PostgresStore` when the contract is clear.
+**Rule of thumb for contributors:** if it is not in [current_state.md](docs/current_state.md), treat it as **planned** — the hosted agent is in-page TS; optional local Go MCP sidecar and HTTP API exist for experiments; cloud persistence is not a product track ([deployment.md](docs/deployment.md)). Extend the UI and types first; plug in `PostgresStore` when the contract is clear.
 
 ---
 
@@ -76,7 +76,7 @@ We are deliberately building the **visual editor and data contracts first**, wit
 
 Vision Visual Scripting began as a **[university graduation project](https://github.com/Sheriff99yt/Vision_Visual_Scripting)** (2021): an open-source Python desktop app where anyone could **hop in and program with visual nodes**, and the graph would **translate into whatever programming language syntax you selected** — the same logic/syntax split that defines VVS today.
 
-**VVS Web** is the next chapter: a browser-native, open monorepo built for the **AI era** (MCP, bring-your-own assistants) and a long-term goal — an **open visual scripting language** portable across **all engines and all workflows**, not locked to one tool or runtime.
+**VVS Web** is the next chapter: a browser-native, open monorepo built for the **AI era** (in-page agent, bring-your-own key, later MCP wrapper) and a long-term goal — an **open visual scripting language** portable across **all engines and all workflows**, not locked to one tool or runtime.
 
 Read the full origin story: **[docs/history.md](docs/history.md)** · **[Vision & philosophy](docs/vision.md)** · **[Public roadmap](docs/roadmap.md)**
 
@@ -90,7 +90,7 @@ Read the full origin story: **[docs/history.md](docs/history.md)** · **[Vision 
 | **Real code out** | Export readable source files — no proprietary VM required |
 | **Logic ↔ syntax split** | One graph; eight shipped targets (Python, JS, C++, C#, Rust, GDScript, Verse, Go) |
 | **Open visual scripting** | Portable graph schema aimed at **all engines and workflows** |
-| **Bring your own AI** | Local MCP paste (Cursor / VS Code / Windsurf / Claude) — no bundled LLM |
+| **Bring your own AI** | In-page TS agent (optional local LLM key) — no bundled LLM. Other apps: later MCP wrapper; today optional Go sidecar |
 | **Offline-capable** | Client-side transpiler (`@vvs/transpiler`) — edit and generate without a host |
 | **Verse in v1** | Phase 1 transpiler + web editor — not deferred to UE plugin alone |
 | **UE6 plugin (roadmap)** | In-engine canvas reuses v1 Verse emitter; Blueprint-era transition workflows |
@@ -106,7 +106,7 @@ vvs-web/
 │   ├── transpiler/        # Pure TS: graph → IR → code
 │   ├── graph-types/       # Shared graph schema
 │   └── syntax-registry/   # Data-driven language profiles
-├── server/                # Local MCP + optional HTTP (not the product host)
+├── server/                # Optional local MCP sidecar + HTTP (not the product host or hosted agent)
 ├── plugins/               # (future) UE6 editor plugin
 ├── docs/                  # Vision, roadmap, architecture
 ├── tools/                 # setup_env.ps1, start_app.ps1
@@ -154,7 +154,7 @@ cd server && go build ./...
 
 1. **Transpiler** — pure TypeScript, zero React deps; three-stage pipeline (analyze → IR → emit).
 2. **Syntax registry** — data-driven language constructs (JSON), not hardcoded per-language hacks.
-3. **MCP tools** — thin Go wrappers over testable pure functions.
+3. **Agent tools** — in-page TypeScript runtime against the live canvas; optional Go MCP sidecar is thin wrappers over testable pure functions.
 4. **Monorepo boundaries** — UI, transpiler, and server communicate only via typed contracts.
 
 Contributor rules: **[CONTRIBUTING.md](CONTRIBUTING.md)** · **[.agents/AGENTS.md](.agents/AGENTS.md)**

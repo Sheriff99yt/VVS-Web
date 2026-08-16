@@ -21,6 +21,7 @@ import { EditorNavigationProvider } from '@/contexts/EditorNavigationContext';
 import { GraphWorkspaceHost } from '@/components/graph/GraphWorkspaceHost';
 import GraphCanvas from '@/components/graph/GraphCanvas';
 import { GraphSettingsModal } from '@/components/layout/GraphSettingsModal';
+import { AgentHost } from '@/components/layout/AgentHost';
 import {
   EnvironmentImportModal,
   useEnvironmentImportModal,
@@ -168,6 +169,7 @@ export function EditorLayout({
               </div>
               <GraphSettingsModal />
               <EnvImportHost />
+              <AgentHost />
             </EditorPanelProvider>
             </EditorNavigationProvider>
           </EditorViewProvider>

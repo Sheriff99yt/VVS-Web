@@ -79,9 +79,6 @@ export const COMMUNITY_LIBRARY_CATALOG: LibraryAsset[] = [
   },
 ];
 
-/** @deprecated Use getLibraryCatalog() for the full merged catalog. */
-export const LIBRARY_CATALOG = COMMUNITY_LIBRARY_CATALOG;
-
 export function getLibraryCatalog(
   environmentAssets: LibraryAsset[] = []
 ): LibraryAsset[] {

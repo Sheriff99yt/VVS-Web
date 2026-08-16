@@ -4,9 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-08-16  
-**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 locked (Component = Class — not remaining). Function constructor/destructor role + leftover-role locks + settings search audit shipped. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — in-page TS agent + U92 / U94 / U95 done; U91 dual-consent / MCP Ready **not** product chrome; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 locked (Component = Class — not remaining). Function constructor/destructor role + leftover-role locks + settings search audit shipped. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 long-term · U103 locked (not remaining) · U100 cut · ctor/dtor role shipped
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U90 / U92 / U94–U97 / U102 / U107 / U108–U119 done** · in-page TS agent shipped · U91 dual-consent / MCP Ready downgraded · U93 long-term · U103 locked (not remaining) · U100 cut · ctor/dtor role shipped
 
 ## Status legend
 
@@ -99,11 +99,11 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ---
 
-## 7. Status chrome & Connect AI — **Done**
+## 7. Status chrome & Agent — **Done**
 
 | # | Item | Status | Key files |
 |---|------|--------|-----------|
-| U29 | MCP connection test | **Done** | `TopNav.tsx`, `VvsApi.probeMcp()` — mock honest fail + http probe |
+| U29 | Agent status + optional sidecar probe | **Done** | StatusBar from `agentStatusStore` (**Agent ready** / **Agent error** / **Agent…**). `VvsApi.probeMcp()` remains for the optional Go sidecar only |
 | U30 | Health-aware status bar | **Done** | `StatusBar.tsx`, `useApiHealth.ts` — mock offline / http poll |
 | U31 | Sync / autosave indicator | **Done** | `lastSavedAt` in `ProjectContext`; `formatSavedAt.ts` |
 
@@ -235,7 +235,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 |---|------|--------|------|
 | U68 | Comment **[C]** on selection; soft `memberIds`; **create locks by default**; **lock** = move-comment-moves-members (+ overlap recapture); **unlock** = free peers + AABB follow + snap; dashed vs solid | **Done** | `graphCommentMembership.ts`, `VVSCommentNode`; pack prefix; never `(x)` |
 | U69 | Code panel toggle for **user-added comments** (separate from `(x)` unsupported) | **Done** | `showUserComments` / `emitUserComments` next to `(x)` |
-| U70 | AI / MCP panel — paste IDE/CLI config; **local MCP** on device; dangerous-tools consent | **Done** (stub) | Paste Cursor/Claude + CLI hint; `mcpAllowDangerousTools` pref; hosted probe gated |
+| U70 | Optional Go MCP sidecar paste | **Done** (sidecar, not hosted path) | Collapsed Agent panel section; `mcpAllowDangerousTools` is sidecar intent only and does **not** reach Go |
 | U71 | Highlight system rethink + **reverse select** (double-click Code panel text → canvas node) | **Done** | Reverse select; generic `sourceMap` UI (no per-kindId highlight); Switch structured sink (U71a); smooth auto-scroll; CI gate + Coverage Lab completeness test. Print-path switch printers remain string-join (not live emit) |
 | U72 | Unify **TopNav right** button cluster styles | **Done** | Shared zinc border icon buttons (Bot / Settings) |
 | U73 | Revise **Code panel top bar** usage / UI / UX | **Done** (light) | Action cluster + Format JSON affordance |
@@ -293,13 +293,13 @@ Details, Compiler Log, tabs, References, Library, and **wire / connection** poli
 
 ---
 
-## 17. AI, examples, help & reverse import (July 2026) — **U91–U95 done; U93 long-term**
+## 17. AI, examples, help & reverse import (July 2026) — **in-page agent + U92 / U94 / U95 done; U91 dual-consent downgraded; U93 long-term**
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `ai-examples-help-u91`.
 
 | # | Item | Status | Spec |
 |---|------|--------|------|
-| U91 | **AI / MCP audit & agent autonomy** | **Done** | Dual consent (UI `mcpAllowDangerousTools` intent + server `VVS_MCP_ALLOW_WRITE` gate); audit doc `docs/design/mcp_autonomy_audit.md`; inventory lock test `mcpPasteConfig.test.ts` vs `tools.go`; EnsureWritePermission + consent_test.go; mcpActivityStore; MCP Ready in StatusBar |
+| U91 | **In-page TypeScript agent** | **Done** (hosted path) | `AgentHost` + `AgentPanel`; `agentAllowWrites` (default false); leftover-kind refuse; `window.vvs.agent` / `tools`; StatusBar from `agentStatusStore`. **Not** working dual consent: `mcpAllowDangerousTools` does not reach Go; `mcpActivityStore` / MCP Ready are not product chrome. Go MCP = optional sidecar. Audit: `docs/design/mcp_autonomy_audit.md` |
 | U92 | **New examples** (cross-lang + lang-specific) | **Done** | Five fixtures (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) × 8 langs (40 goldens); Go golden assertion + StartScreen + validate_test_projects_folder.ts |
 | U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; left panel + chrome migrated off native `title=` (section/popover `title` props remain) |
 | U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |

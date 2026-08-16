@@ -44,7 +44,7 @@ apps/web/src/lib/api/
 When Supabase env is set (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`):
 
 - `hooks/useAuthSession.ts` — GoTrue sign-in/up/out; syncs JWT to `sessionStorage` via `setAccessToken`
-- `components/auth/AuthButton.tsx` — TopNav + StartScreen login UI
+- `components/auth/AuthButton.tsx` — TopNav login UI
 - `lib/auth/session.ts` — `authHeaders()` adds `Bearer` on project API calls
 - Go middleware validates JWT; `PostgresStore` scopes rows by `user_id`
 
@@ -67,7 +67,7 @@ When Supabase env is set (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON
 
 | Phase | Status | Remaining |
 |-------|--------|-----------|
-| A — Facade, health, MCP probe | **Done** | Production MCP JWT + HTTPS |
+| A — Facade, health, sidecar probe | **Done** | Optional Go sidecar only; hosted agent is in-page TS. No production hosted MCP URL |
 | B — Save/load/list/compile | **Done** | Cloud autosave debounce polish; list UI for multi-project |
 | C — Library backend | Open | UI skeleton only; no real search/install API |
 | D — WebSocket collab | Not started | Phase 4 — Go WS, not Supabase Realtime |

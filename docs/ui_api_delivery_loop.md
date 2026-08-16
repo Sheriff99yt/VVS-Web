@@ -20,11 +20,11 @@ Every feature slice shares a single typed contract:
                             │
         ┌───────────────────┼───────────────────┐
         ▼                   ▼                   ▼
-  api-mock.ts         api-client.ts      server/handlers
+  lib/api/mock.ts     lib/api/client.ts  server/handlers
   (localStorage)      (fetch → Go)       (Go + DB later)
 ```
 
-**UI components never import `MockApi` or `fetch` directly.** They call `VvsApi.*` only.
+**UI components never import mock internals or `fetch` directly.** They call `VvsApi.*` only.
 
 Target file layout (create incrementally):
 
@@ -140,7 +140,7 @@ Work top to bottom. **Phase A** = infrastructure; **Phase B** = editor persisten
 | C2 | **Install asset** | Install button | `POST /api/library/:id/install` | Mock installed list | Not started |
 | C3 | **Installed list** | Library Installed tab | `GET /api/projects/:id/installed` | — | Empty state |
 | D1 | **Compile / validate** | Compile button, console | `POST /api/projects/:id/compile` OR client-only transpiler | Prefer client transpiler later | Mock logs |
-| D2 | **MCP session** | Connect AI modal | MCP on Go (separate protocol) | Phase 2 | Not started |
+| D2 | **MCP session** | Optional Go sidecar (Agent panel collapsed section) | Later thin MCP wrapper over the TS package. Hosted path is already the in-page agent | Deferred | Not the hosted path |
 
 ---
 

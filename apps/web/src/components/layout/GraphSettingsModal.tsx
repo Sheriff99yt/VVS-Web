@@ -29,8 +29,6 @@ export type SettingsSection = 'project' | 'editor' | 'shortcuts' | 'audio' | 'ab
 export type SettingsTab = 'project' | 'app';
 
 export const OPEN_SETTINGS_EVENT = 'vvs:open-settings';
-/** @deprecated use OPEN_SETTINGS_EVENT / dispatchOpenSettings */
-export const GRAPH_SETTINGS_EVENT = OPEN_SETTINGS_EVENT;
 
 const SECTIONS: {
   id: SettingsSection;

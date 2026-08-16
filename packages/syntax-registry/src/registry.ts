@@ -94,7 +94,8 @@ export function resolve(kindId: string, _version?: number): NodeKindDefinition |
   return undefined;
 }
 
-const SPAWN_EXCLUDED_KINDS = new Set([
+/** Leftover kinds stay in the pack for old graphs but must not spawn. */
+export const SPAWN_EXCLUDED_KINDS = new Set([
   'event_on_start',
   'event_on_update',
   'event_emit',
@@ -103,6 +104,10 @@ const SPAWN_EXCLUDED_KINDS = new Set([
   'action_await_wait',
   'graph_ref',
 ]);
+
+export function isLeftoverUnspawnableKind(kindId: string): boolean {
+  return SPAWN_EXCLUDED_KINDS.has(kindId);
+}
 
 /** Dynamic kinds that still need a generic spawn row (instances use prefixed kindIds). */
 const SPAWNABLE_DYNAMIC_KINDS = new Set(['vvs.project.import_module']);

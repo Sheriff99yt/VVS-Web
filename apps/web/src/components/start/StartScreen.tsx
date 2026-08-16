@@ -31,9 +31,9 @@ import {
   removeProjectFromStore,
   saveProjectToStore,
   upsertRecentProject,
-  saveProjectDraft,
   pruneStableTestProjectsFromRecent,
 } from '@/lib/projectStore';
+import { openExploreView } from '@/lib/startExplore';
 import {
   initRecentProjects,
   notifyRecentProjectsChanged,
@@ -83,18 +83,6 @@ function openFolderInEditor(
   if (query) {
     for (const [key, value] of Object.entries(query)) params.set(key, value);
   }
-  router.push(`/editor?${params.toString()}`);
-}
-
-function openEditorView(
-  router: ReturnType<typeof useRouter>,
-  view: 'library' | 'roadmap',
-  section?: string
-) {
-  const id = createProjectId();
-  saveProjectDraft(id, createEmptyProjectSnapshot());
-  const params = new URLSearchParams({ id, view });
-  if (section) params.set('section', section);
   router.push(`/editor?${params.toString()}`);
 }
 
@@ -370,13 +358,15 @@ export function StartScreen() {
             <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
               <BookOpen size={14} /> Usability tests
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {USABILITY_EXAMPLE_TESTS.map((fixture) => (
                 <button
                   key={fixture.id}
                   type="button"
                   onClick={() => handleOpenUsabilityTest(fixture.level)}
-                  className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group"
+                  className={`rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group h-full ${
+                    fixture.id === 'simple' ? 'md:col-span-2' : 'min-h-[10.5rem]'
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
@@ -422,7 +412,7 @@ export function StartScreen() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => openEditorView(router, 'library', 'templates')}
+                onClick={() => openExploreView(router, 'library', 'templates')}
                 className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-indigo-500/40 transition-colors text-left group"
               >
                 <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
@@ -431,7 +421,7 @@ export function StartScreen() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-zinc-100">Library</div>
                   <div className="text-xs text-zinc-500 mt-0.5">
-                    Project templates, environments, and community assets
+                    Templates, environments, and git imports
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-indigo-400 transition-colors" />
@@ -439,7 +429,7 @@ export function StartScreen() {
 
               <button
                 type="button"
-                onClick={() => openEditorView(router, 'roadmap')}
+                onClick={() => openExploreView(router, 'roadmap')}
                 className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-500/40 transition-colors text-left group"
               >
                 <div className="p-2 rounded bg-zinc-500/10 text-zinc-300 group-hover:bg-zinc-500/20 transition-colors">
@@ -468,7 +458,7 @@ export function StartScreen() {
                   onClick={() => handleOpenUsabilityTest('simple')}
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
-                  Open Hello World usability test →
+                  Open First Graph →
                 </button>
               </div>
             ) : (

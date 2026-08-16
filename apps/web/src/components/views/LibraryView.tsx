@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Globe,
   Search,
@@ -30,13 +30,15 @@ import { dispatchEnvironmentImportModal } from '@/components/environments/Enviro
 import { createProjectFromEnvironment } from '@vvs/environment-templates';
 import { applyProjectSnapshot } from '@/lib/applyProjectSnapshot';
 import { saveProjectToStore } from '@/lib/projectStore';
+import { editorHrefForProject, persistBrowseTemplateProject } from '@/lib/startExplore';
 import type { EnvironmentCategory } from '@vvs/environment-templates';
 import { useGitCatalog } from '@/hooks/useGitCatalog';
 import { GitPackImportModal } from './GitPackImportModal';
 
 type LibrarySection = 'templates' | 'git_catalogs' | 'installed';
 
-export function LibraryView() {
+export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {}) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialSection = searchParams.get('section');
   const {
@@ -140,6 +142,11 @@ export function LibraryView() {
   const handleStartFromEnvironment = (environmentId: string) => {
     const snapshot = createProjectFromEnvironment(environmentId);
     if (!snapshot) return;
+    if (browseMode) {
+      const projectId = persistBrowseTemplateProject(snapshot);
+      router.push(editorHrefForProject(projectId));
+      return;
+    }
     applySnapshotToProject(snapshot);
     setSelectedEnvironmentId(null);
     dispatchSwitchToCanvas();

@@ -146,7 +146,7 @@ projects
 2. SQL migrations + `PostgresStore` replacing `MemoryStore`
 3. JWT middleware on Go HTTP + MCP
 4. Web login flow; `VvsApi` sends Bearer token; cloud save/load as source of truth when authenticated
-5. Backups (`pg_dump` or volume snapshots), prod VPS, MCP URL + auth in Connect AI modal
+5. Backups (`pg_dump` or volume snapshots), prod VPS — legacy experiment only. Hosted agent is in-page TS; there is no product hosted MCP URL
 
 Phase 3 adds **pgvector** on the same Postgres. Phase 4 adds **Go WebSocket** collab with an operation log on top of document storage.
 
