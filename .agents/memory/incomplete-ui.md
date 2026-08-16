@@ -4,9 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-08-16  
-**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 locked (Component = Class). Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — U91 / U92 / U94 / U95 done; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 locked (Component = Class — not remaining). Function constructor/destructor role + leftover-role locks + settings search audit shipped. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 long-term · U103 locked (Component = Class) · U100 cut
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U92 / U94–U97 / U102 / U107 / U108–U119 done** · U93 long-term · U103 locked (not remaining) · U100 cut · ctor/dtor role shipped
 
 ## Status legend
 
@@ -149,7 +149,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§15–§18 remaining:** CL-014 honest `(x)` · U103 locked (Component = Class) · U93 long-term · U90 frozen. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
+**§15–§18 remaining:** CL-014 honest `(x)` · optional CL-017 Switch match · U93 long-term · U90 frozen. **U103 locked** (Component = Class) is not remaining work. Function constructor/destructor role shipped. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 
@@ -307,7 +307,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 18. Graph catalog, functions, async & OOP (July 2026) — **Done** except U100 cut; U103 locked (Component = Class)
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Done** except U100 cut; U103 locked (not remaining)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
 
@@ -328,7 +328,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U107 | **Canvas pan / select gestures** | **Done** | Right-drag pans; left-click selects one; Ctrl/⌘+click multi-selects; left-drag box-select; middle-drag pans; right-click (no drag) spawn menu |
 | U108 | **Action history window** | **Done** | Floating panel — graph undo restore + activity log (save/generate/import/export/delete/wire/copy/cut/paste/duplicate) |
 | U109 | **Top bar menus** | **Done** | File · Edit · View · Help — shortcuts, history, settings |
-| U110 | **Settings redesign** | **Done** | Sidebar: Project · Editor · Shortcuts · Audio · About |
+| U110 | **Settings redesign** | **Done** | Sidebar: Project · Editor · Shortcuts · Audio · About. Search catalogs every section (U110 follow-on): honest Editor blurb, Project grouping, Audio cards. |
 | U111 | **Shortcut reassignment** | **Done** | Settings → Shortcuts — record chords; conflict block; browser prefs |
 | U112 | **Audio feedback** | **Done** | Web Audio cues for save / generate / undo / delete / wire / errors (off by default) |
 | U113 | **VVS Web naming** | **Done** | User-facing rename from VVS 2.0 (UI + primary docs) |
@@ -338,6 +338,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U117 | **Undo: lean canvas snapshots** | **Done** | Canvas edits = nodes+edges+tab; pushHistory = full project slice (true op-deltas deferred) |
 | U118 | **Dynamic naming conventions** | **Done** | Settings options to follow default VVS global naming or specific language. |
 | U119 | **Bad practices / Not recommended settings** | **Done** | Settings to toggle: (1) allow multiple exec outputs to one input (warns/prevents code redundancy), and (2) Dynamic/Weak typing warnings. |
+| — | **Function constructor/destructor role** | **Done** | Function Define `role` constructor/destructor — py `__init__`, js `constructor()`, cpp ctor/dtor, cs ctor (no finalizer), gd `_init`; rust/go/verse dim. Leftover-construct roles lock (no `constructor_define` / `property_define` / `implements_define` / `flow_match`). |
 
 ---
 

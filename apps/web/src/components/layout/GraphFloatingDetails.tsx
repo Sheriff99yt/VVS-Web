@@ -23,7 +23,7 @@ import {
   resolveEventForNode,
 } from '@/lib/eventHelpers';
 import type { FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
-import { LOGICAL_DATA_TYPE_DESCRIPTORS, buildProjectSymbolIndex, isUnresolvedSymbolRef } from '@vvs/graph-types';
+import { buildProjectSymbolIndex, isUnresolvedSymbolRef } from '@vvs/graph-types';
 import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel';
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
 import { EventNodeBindingPanel } from './RightSidebar/EventNodeBindingPanel';
@@ -90,10 +90,6 @@ function NodeRoleChip({ role }: { role: string }) {
 
 const BROKEN_PANEL_MIN_HEIGHT = 280;
 
-function CompactSummary({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
-
 function GraphFloatingDetailsPanel() {
   const {
     selection,
@@ -123,6 +119,7 @@ function GraphFloatingDetailsPanel() {
 
   const [pinned, setPinned] = useUiPreference('detailsPanelPinned');
   const [hoverExpanded, setHoverExpanded] = useState(false);
+  const [selectionExpanded, setSelectionExpanded] = useState(true);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gestureActiveRef = useRef(false);
   const hoverInsideRef = useRef(false);
@@ -141,13 +138,14 @@ function GraphFloatingDetailsPanel() {
   const nodeData = useNodesData<VVSNode>(selectedNodeId || '');
   const { updateNodeData } = useReactFlow();
 
-  // New selection → drop transient hover expand (pin still wins).
+  // New selection → show editors immediately (no hover wait). Pin still wins after leave.
   useEffect(() => {
     if (hoverTimerRef.current) {
       clearTimeout(hoverTimerRef.current);
       hoverTimerRef.current = null;
     }
     setHoverExpanded(false);
+    setSelectionExpanded(true);
   }, [selection.type, selection.id]);
 
   const selectedVariable =
@@ -174,7 +172,7 @@ function GraphFloatingDetailsPanel() {
   }, [selection.type, selectedNodeId, nodeData, variables, functions, events]);
 
   const isBrokenRefSelection = brokenRef !== null;
-  const effectiveExpanded = pinned || hoverExpanded || isBrokenRefSelection;
+  const effectiveExpanded = pinned || hoverExpanded || selectionExpanded || isBrokenRefSelection;
 
   if (isBrokenRefSelection && expandedHeight < BROKEN_PANEL_MIN_HEIGHT) {
     setExpandedHeight(clampDetailsPanelHeight(BROKEN_PANEL_MIN_HEIGHT));
@@ -286,6 +284,7 @@ function GraphFloatingDetailsPanel() {
       }
       if (!pinned) {
         setHoverExpanded(false);
+        setSelectionExpanded(false);
       }
     },
     [pinned]
@@ -304,6 +303,7 @@ function GraphFloatingDetailsPanel() {
       }
       if (!hoverInsideRef.current && !pinned) {
         setHoverExpanded(false);
+        setSelectionExpanded(false);
       }
     },
     [pinned]
@@ -511,9 +511,6 @@ function GraphFloatingDetailsPanel() {
 
   if (!visible) return null;
 
-  const inputCount = nodeData?.data.inputs?.length ?? 0;
-  const outputCount = nodeData?.data.outputs?.length ?? 0;
-
   const baseTitle =
     selection.type === 'node'
       ? nodeData?.data.label ?? 'Node'
@@ -560,84 +557,6 @@ function GraphFloatingDetailsPanel() {
         onSpawnDispatch: () => spawnEventNodeFor(inspectorEvent, 'dispatch'),
       }
     : {};
-
-  const renderCompactSubtitle = (): React.ReactNode => {
-    if (isBrokenRefSelection) {
-      return <span className="text-amber-400/90">Unresolved — hover or pin to repair</span>;
-    }
-
-    if (selection.type === 'variable' && selectedVariable) {
-      const typeLabel =
-        LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === selectedVariable.type)?.shortLabel ??
-        selectedVariable.type.replace(/^data_/, '');
-      return (
-        <CompactSummary>
-          <span className="text-zinc-400">{typeLabel}</span>
-          {selectedVariable.binding !== 'instance' ? ` · ${selectedVariable.binding}` : ''}
-        </CompactSummary>
-      );
-    }
-    if (selection.type === 'function' && selectedFunction) {
-      return (
-        <CompactSummary>
-          <span className="text-zinc-400">{selectedFunction.binding}</span>
-          {selectedFunction.overloads.length > 1
-            ? ` · ${selectedFunction.overloads.length} overloads`
-            : ''}
-        </CompactSummary>
-      );
-    }
-    if (selection.type === 'event' && selectedEvent) {
-      return (
-        <CompactSummary>
-          {selectedEvent.parameters.length} param
-          {selectedEvent.parameters.length === 1 ? '' : 's'}
-        </CompactSummary>
-      );
-    }
-    if (selection.type === 'node' && nodeData) {
-      if (eventNodeRole) {
-        return (
-          <CompactSummary>
-            {boundEvent ? eventDisplayName(boundEvent.name) : '—'} · {inputCount + outputCount} pins
-          </CompactSummary>
-        );
-      }
-      if (nestedGraphIdForNode(nodeData.data)) {
-        return <CompactSummary>→ {linkedGraphName ?? 'graph'}</CompactSummary>;
-      }
-      const kindHint =
-        nodeRoleChip ??
-        (typeof nodeData.data.category === 'string' && nodeData.data.category
-          ? nodeData.data.category
-          : null);
-      const pinHint =
-        inputCount + outputCount > 0 ? `${inputCount}↓ ${outputCount}↑` : 'no pins';
-      return (
-        <CompactSummary>
-          {kindHint ? <span className="text-zinc-400">{kindHint}</span> : null}
-          {kindHint ? ' · ' : null}
-          {pinHint}
-          {boundVariable ? (
-            <>
-              {' · '}
-              <span className="text-zinc-400">{boundVariable.name}</span>
-            </>
-          ) : null}
-          {boundFunction && !nodeRoleChip ? (
-            <>
-              {' · '}
-              <span className="text-zinc-400">{boundFunction.name}</span>
-            </>
-          ) : null}
-        </CompactSummary>
-      );
-    }
-    if (selection.type === 'code') {
-      return <CompactSummary>Emit target · language options</CompactSummary>;
-    }
-    return null;
-  };
 
   const renderExpanded = () => (
     <>
@@ -789,7 +708,6 @@ function GraphFloatingDetailsPanel() {
     <>
       <FloatingPanelShell
         title={title}
-        subtitle={effectiveExpanded ? undefined : renderCompactSubtitle()}
         titleIcon={isBrokenRefSelection ? <AlertTriangle size={13} className="text-amber-400" /> : undefined}
         headerExtra={nodeRoleChip ? <NodeRoleChip role={nodeRoleChip} /> : undefined}
         corner="top-right"

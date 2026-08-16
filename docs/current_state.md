@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **August 2026** (emit/OOP + **U89 / U91 / U92**; text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped).
+Last aligned with codebase: **August 2026** (ctor/dtor Function role + leftover-construct catalog locks + settings search audit + emit/OOP + **U89 / U91 / U92**; text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped).
 
 **Product direction:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — every behavioral node maps to honest generated text; no Blueprint VM semantics.
 
@@ -184,7 +184,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
 | Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
 | Connect AI | TopNav modal | Paste Cursor/Claude MCP config + local start hint; **dual consent** (UI intent + server write gate); URL + **Test connection** only when hosted |
-| Settings | TopNav gear + **Help** menu | Sidebar modal — **Project** · **Editor** · **Shortcuts** (rebind) · **Audio** · **About**. Replaces flat Project/App tabs |
+| Settings | TopNav gear + **Help** menu | Sidebar modal — **Project** · **Editor** · **Shortcuts** (rebind) · **Audio** · **About**. Search catalogs every section (honest Editor blurb, Project grouping, Audio cards). Replaces flat Project/App tabs |
 | Action history (U108 / U114–U117) | Edit menu · floating panel | Shared undo: graph + symbol/class CRUD; survives tab switch; lean canvas snapshots |
 | Extract to function | View menu (Ctrl+Shift+E) | Selected nodes → new function graph + Call node |
 | Chain select / layout (U75) | Canvas shortcuts | **S** = forward exec + data attrs; **A** = full undirected chain; **S S** = layout (`lane-topo-v1`). Attribute direction in Settings (above / below / below-extended). Head-anchored; multi-chain Y-separate; works inside locked comments |
@@ -223,7 +223,7 @@ Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go
 
 ### Graph editor features
 
-Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **U84–U92, U94–U99, U101–U102, U104–U119 shipped** (August 2026). Remaining: U93 long-term, U100 cut. **U103 locked** as Class (field or Extends; no Component node).
+Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **U84–U92, U94–U99, U101–U102, U104–U119 shipped** (August 2026); Function constructor/destructor role + leftover-role locks + settings search audit shipped. Remaining: CL-014 honest (x), optional CL-017, U93 long-term, U90/library Phase 3. U100 cut. **U103 locked** as Class (field or Extends; no Component node) — not remaining work.
 
 | Feature | Status |
 |---------|--------|
@@ -374,7 +374,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | **Imports** | Shared Import Module once at file top on first class chain; flow Import Module for conditional imports; `targetLanguages` gate; optional `ownerClassId` |
 | **Event peer order** | Event defines order by canvas **Y** (event→event exec does not force sequence) |
 
-**Active next (August 2026):** emit/OOP wave + **U89–U92** shipped. Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, library Phase 3 (`vvs-library` repo + web UI). **U103 locked** as Class (field or Extends; no Component node). Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
+**Active next (August 2026):** ctor/dtor Function role + leftover-construct catalog locks + settings search audit + emit/OOP + **U89–U92** shipped. Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, U90/library Phase 3 (`vvs-library` repo + web UI). **U103 locked** as Class (field or Extends; no Component node). Client-first: **no dedicated server**, **no live code execution**. See [roadmap.md](roadmap.md) · [code_panel.md](code_panel.md).
 
 
 Coverage Lab and First Graph pass strict analysis. Environment templates and library import must spawn define nodes or fail analysis.

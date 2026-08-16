@@ -526,7 +526,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'inheritance-canvas-u106-shipped',
         title: 'Inheritance on canvas (U106)',
         description:
-          'Extends is an option on Declare Class (class picker). Inherited members show in the tree and spawn as Get / Set / Call. Missing parent is an analyzer error.',
+          'Extends is an option on Declare Class (class picker). Inherited members show in the tree and spawn as Get / Set / Call. Missing parent is an analyzer error. One parent today (extendsType string). List-shaped multi-base is the approved visual — not started; multi-base emit not shipped.',
         status: 'done',
       },
       {
@@ -665,6 +665,20 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Components locked as Class (U103)',
         description:
           'Locked: Component = Class (field or Extends). No Component node. Game-talk Health/Inventory is class_define plus a field or Extends. See language_capability_catalog.md § Component = Class.',
+        status: 'done',
+      },
+      {
+        id: 'function-ctor-dtor-role',
+        title: 'Function constructor/destructor role',
+        description:
+          'Function Define role constructor/destructor (same pattern as On role entry|tick). Emit: Python __init__, JavaScript constructor(), C++ ctor/dtor, C# ctor (no finalizer), GDScript _init. Rust, Go, and Verse stay dim. Not constructor_define / destructor_define.',
+        status: 'done',
+      },
+      {
+        id: 'leftover-construct-roles-lock',
+        title: 'Leftover-construct roles lock',
+        description:
+          'Locked: no constructor_define, property_define, implements_define, inherit/multiple-inheritance node, or flow_match kinds. Constructor/destructor is Function role; property and Implements are options; extra bases are Extends rows (locked visual; emit still one extendsType string); Switch is the match node (CL-017 optional lowering).',
         status: 'done',
       },
       {
@@ -1124,7 +1138,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'settings-redesign-u110',
         title: 'Settings redesign (U110)',
-        description: 'Sidebar shell -- Project · Editor · Shortcuts · Audio · About; Output panel tab toggles.',
+        description:
+          'Sidebar shell -- Project · Editor · Shortcuts · Audio · About. Search catalogs every section (U110 follow-on): honest Editor blurb, Project grouping (this graph / defaults / environment / export / details / packs), Audio cards. Output panel tab toggles.',
         status: 'done',
       },
       {
@@ -1259,6 +1274,42 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
 /** Open / partial only -- shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
+    id: 'graph-model-locked-visual',
+    title: 'Graph model (locked visual)',
+    phase: 6,
+    items: [
+      {
+        id: 'extends-list-mi-locked-visual',
+        title: 'Extends list (multiple inheritance visual)',
+        description:
+          'Locked visual, not started: Extends is a list on Declare Class; + Add base is a second row (Python/C++ only). Implements stays a second list. Emit today is still one extendsType string — multi-base emit not shipped. Not an Inherit node. See language_capability_catalog.md § Multiple inheritance.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
+    id: 'leftover-fidelity-open',
+    title: 'Leftover fidelity',
+    phase: 6,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'verse-getinput-cl014',
+        title: 'Verse GetInput (CL-014)',
+        description:
+          'Honest (x) + prompt. Real player/string read is not a plain-class API — do not invent one.',
+        status: 'planned',
+      },
+      {
+        id: 'switch-match-cl017',
+        title: 'Switch match (CL-017, optional)',
+        description:
+          'Optional native match lowering. If-cascade is the shipped shape.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
     id: 'priority-3-ai-and-examples',
     title: 'Long-term: code → visual (U93)',
     phase: 6,
@@ -1273,8 +1324,36 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     ],
   },
   {
+    id: 'leftover-constructs-planned',
+    title: 'Leftover constructs (planned nodes)',
+    phase: 6,
+    items: [
+      {
+        id: 'lambda-expression-node',
+        title: 'Lambda expression node',
+        description:
+          'Planned expression node (lambda / => / |x|). Capture is an option. One kind at most (lambda_define); drop closure_define. Not a project symbol.',
+        status: 'planned',
+      },
+      {
+        id: 'try-flow-node',
+        title: 'Try / catch flow node',
+        description:
+          'Planned flow node like Branch; catch / finally are exec pins. Do not spawn in Go or Rust. Not a symbol.',
+        status: 'planned',
+      },
+      {
+        id: 'yield-statement-later',
+        title: 'Yield statement (later)',
+        description:
+          'Later statement node where you type yield (Python, GDScript). Not a soup of planned flow kinds.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
     id: 'priority-4-catalog-and-oop',
-    title: 'Catalog locks (U100 / U103)',
+    title: 'Catalog locks (U100)',
     phase: 6,
     items: [
       {
@@ -1283,13 +1362,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Cut -- hidden subscribe/emit runtime is rejected. Dispatch is the invoke node. Do not spawn event_emit / event_subscribe.',
         status: 'cut',
-      },
-      {
-        id: 'components-visual-u103',
-        title: 'Components locked as Class (U103)',
-        description:
-          'Locked: Component = Class (field or Extends). No Component node. Game-talk Health/Inventory is class_define plus a field or Extends. See language_capability_catalog.md § Component = Class.',
-        status: 'done',
       },
     ],
   },
@@ -1424,9 +1496,9 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     items: [
       {
         id: 'library-backend',
-        title: 'Library backend',
+        title: 'Library remaining (U90 auth / upload)',
         description:
-          'Separate library git repo; public links only; PR/submit workflow -- not hosted blob storage. UI shell exists; catalog backend TBD.',
+          'Library page redesign shipped (templates / git import). Auth / upload frozen (client-first; no accounts as product). Remaining Phase 3: vvs-library repo, CI, web UI wiring.',
         status: 'partial',
       },
       {

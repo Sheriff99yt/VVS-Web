@@ -193,6 +193,8 @@ Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — **C
 
 `class_define` also covers game-talk “components” (Health / Inventory): composition field or Extends — no `component_define` node ([catalog](design/language_capability_catalog.md#component--class)).
 
+Extends on `class_define` is a **list** (locked visual; emit today is still one `extendsType` string). Extra bases are more Extends rows, not an Inherit node ([catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual)).
+
 Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push symbol rows without a canvas correlate.
 
 #### Strict analyzer codes (block Generate)

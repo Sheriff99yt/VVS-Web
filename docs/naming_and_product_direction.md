@@ -83,7 +83,7 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Macro (legacy UI tab) | **Function** *(migrate)* | Macro | Deprecated as codegen concept — see [visual_to_text_fidelity.md](visual_to_text_fidelity.md) |
 | Build graph → code | **Generate code** | Compile (OK in toolbar shorthand) | Button may say **Generate**; logs say "generation" |
 | Generated artifact name | **Module name** | Class name, BP_* | Maps to class/module in target language |
-| Optional base type | **Extends** | Parent class, Super | Optional; OOP languages only |
+| Optional base type | **Extends** | Parent class, Super | List on Declare Class (one row today; `+ Add base` = MI, Python/C++ only). Emit today is still one `extendsType` string. |
 | Community item (full graph) | **Script** | Blueprint | Library filter category |
 | Community item (single node) | **Node pack** | — | Library filter |
 | Community template | **Template** | — | Library filter |
@@ -109,7 +109,7 @@ Use language-neutral names in project metadata:
 | Field | Type | UI label |
 |-------|------|----------|
 | `moduleName` | string | Module name |
-| `extendsType` | string | Extends (optional) |
+| `extendsType` | string | Extends (optional; one parent today — list-shaped visual locked, multi-base emit not shipped) |
 | `description` | string | Description |
 | `targetLanguage` | enum | Target language |
 

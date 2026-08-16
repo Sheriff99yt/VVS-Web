@@ -162,8 +162,8 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        <span className="text-zinc-300">Just shipped:</span> Rust inheritance emit (CL-010), inheritance on canvas (U106), Call Super as a Call option, override emit (U105), Wait async option (U101), C# async Task, Rust static/const + HashMap use, Verse for + Type{"{}"}, U89 References, U91 MCP audit, U92 Inheritance Lab.{' '}
-        <span className="text-zinc-300">Open:</span> Verse GetInput stays an honest (x). Component = Class (field or Extends — see catalog). U93 code-to-visual is long-term.
+        <span className="text-zinc-300">Just shipped:</span> Function constructor/destructor role (py __init__, js constructor(), cpp ctor/dtor, cs ctor, gd _init; rust/go/verse dim), Component = Class lock (U103), leftover-construct roles (no constructor_define / property_define / implements_define / flow_match), settings search/structure audit, Rust inheritance emit (CL-010), inheritance on canvas (U106), Call Super as a Call option, override emit (U105), Wait async option (U101), C# async Task, Rust static/const + HashMap use, Verse for + Type{"{}"}, U89 References, U91 MCP audit, U92 Inheritance Lab.{' '}
+        <span className="text-zinc-300">Open:</span> Verse GetInput stays an honest (x) (CL-014). Switch match is optional (CL-017; if-cascade is ship shape). U93 code-to-visual is long-term. U90 Library auth/upload is frozen.
       </p>
     </div>
   );
@@ -190,6 +190,10 @@ function DirectionCallout() {
         <li>
           <span className="text-zinc-400">Node vs option vs pin</span> — own construct, how it is
           written, or a value from another expression
+        </li>
+        <li>
+          <span className="text-zinc-400">Extends is a list</span> — locked visual on Declare Class;
+          extra bases are more rows (Python/C++ only). Multi-base emit not started.
         </li>
       </ul>
     </div>
@@ -226,7 +230,7 @@ export function RoadmapView() {
         <header className="space-y-2">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            Client-first editor. August emit/OOP wave and U89–U92 are shipped. Next is leftover fidelity (Verse GetInput stays (x)) and long-term U93. Full public notes in{' '}
+            Client-first editor. Function constructor/destructor role and leftover-construct catalog locks shipped, plus settings search audit and August emit/OOP + U89–U92. Next is leftover fidelity (Verse GetInput stays (x); optional Switch match) and long-term U93. Library auth/upload remains frozen. Full public notes in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
               target="_blank"

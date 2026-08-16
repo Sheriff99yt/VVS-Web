@@ -86,6 +86,8 @@ Two canvas positions, or existence without a body, are two nodes. Function **Dec
 
 A “component” is not its own construct — it is a class/struct plus a member or `extends` (U103). Do not add a Component node to mimic Blueprint ActorComponent.
 
+Multiple inheritance is the same construct: extra Extends rows on one Declare Class (`class Child(Parent, Mixin)` / `class Child : public Parent, public Mixin`), not an Inherit node. Generate reads the Extends list, not a type-tree picture. Emit today is still one `extendsType` string.
+
 **Anti-patterns (forbidden in transpiler):**
 
 - Folding `str()` into Print when the graph has **To String**
