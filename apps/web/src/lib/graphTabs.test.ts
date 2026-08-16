@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { GraphTab } from '@vvs/graph-types';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
-import { closeGraphTab, selectionForGraphTab } from './graphTabs';
+import { closeGraphTab, graphDisplayName, selectionForGraphTab } from './graphTabs';
 
 const mainTab: GraphTab = { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: 'Main graph' };
 const fnA: GraphTab = { id: 'fn-a', type: 'function', name: 'Function: A' };
@@ -63,5 +63,14 @@ describe('selectionForGraphTab', () => {
 
   test('keeps function tab id', () => {
     expect(selectionForGraphTab('fn-fetch')).toEqual({ type: 'graph', id: 'fn-fetch' });
+  });
+});
+
+describe('graphDisplayName', () => {
+  test('shows Overview for main and project-map tabs', () => {
+    expect(graphDisplayName({ id: 'main', type: 'main', name: 'Main graph' })).toBe('Overview');
+    expect(
+      graphDisplayName({ id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: 'Project map' })
+    ).toBe('Overview');
   });
 });

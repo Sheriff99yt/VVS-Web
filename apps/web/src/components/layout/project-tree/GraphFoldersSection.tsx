@@ -8,9 +8,8 @@ import { CategorySection } from './CategorySection';
 import { SymbolCreatePopover } from './SymbolCreatePopover';
 import { TreeRow } from './TreeRow';
 import { ReorderGrip } from './ReorderGrip';
-import { TreeRenameRow } from './TreeRenameRow';
 import { graphContainerClassMeta, graphContainerLabel } from './graphContainerLabels';
-import { INDENT, type SectionViewMode } from './constants';
+import { INDENT } from './constants';
 import { RowActionsMenu } from './RowActionsMenu';
 
 export function GraphFoldersSection({
@@ -48,8 +47,6 @@ export function GraphFoldersSection({
   canDelete,
   onDelete,
   emptyHint,
-  viewMode = 'list',
-  onViewModeChange,
 }: {
   containers: GraphContainer[];
   classes: ClassSymbol[];
@@ -85,8 +82,6 @@ export function GraphFoldersSection({
   canDelete: (container: GraphContainer) => boolean;
   onDelete: (containerId: string) => void;
   emptyHint: React.ReactNode;
-  viewMode?: SectionViewMode;
-  onViewModeChange?: (mode: SectionViewMode) => void;
 }) {
   return (
     <CategorySection
@@ -97,11 +92,9 @@ export function GraphFoldersSection({
       onToggle={onToggleExpanded}
       onAdd={isReferenceMode ? undefined : onStartAdd}
       addLabel="New graph"
-      viewMode={viewMode}
-      onViewModeChange={onViewModeChange}
     >
       {isAdding ? (
-        <div className={viewMode === 'grid' ? 'col-span-full' : undefined}>
+        <div>
         <SymbolCreatePopover open title="New graph" onClose={onCancelAdd} anchorClassName={INDENT.l1}>
           <input
             type="text"
@@ -140,7 +133,6 @@ export function GraphFoldersSection({
         return (
           <React.Fragment key={container.id}>
             <TreeRow
-              layout={viewMode}
               leading={
                 !isReferenceMode ? (
                   <span className="inline-flex shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
@@ -235,7 +227,7 @@ export function GraphFoldersSection({
       })}
 
       {containers.length === 0 && !isAdding ? (
-        <div className={viewMode === 'grid' ? 'col-span-full' : undefined}>{emptyHint}</div>
+        <div>{emptyHint}</div>
       ) : null}
     </CategorySection>
   );

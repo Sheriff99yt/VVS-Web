@@ -3,8 +3,7 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { INDENT, type SectionViewMode } from './constants';
-import { SectionViewToggle } from './SectionViewToggle';
+import { INDENT } from './constants';
 import { sectionBodyClass } from './explorerStyles';
 
 export function CategorySection({
@@ -16,8 +15,6 @@ export function CategorySection({
   onToggle,
   onAdd,
   addLabel,
-  viewMode = 'list',
-  onViewModeChange,
   children,
 }: {
   title: string;
@@ -28,8 +25,6 @@ export function CategorySection({
   onToggle: () => void;
   onAdd?: () => void;
   addLabel?: string;
-  viewMode?: SectionViewMode;
-  onViewModeChange?: (mode: SectionViewMode) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -53,16 +48,11 @@ export function CategorySection({
           </Tooltip>
         ) : null}
         <span className="text-[10px] text-zinc-600 tabular-nums shrink-0">{count}</span>
-        {expanded && onViewModeChange ? (
-          <SectionViewToggle value={viewMode} onChange={onViewModeChange} />
-        ) : onViewModeChange ? (
-          <span className="w-6 shrink-0" aria-hidden />
-        ) : null}
         {onAdd ? (
           <Tooltip content={addLabel} placement="top">
             <button
               type="button"
-              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200 shrink-0"
+              className="p-1 hover:bg-zinc-700 rounded text-zinc-400 hover:text-zinc-200 shrink-0"
               aria-label={addLabel}
               onClick={(e) => {
                 e.stopPropagation();
@@ -76,9 +66,7 @@ export function CategorySection({
           <span className="w-6 shrink-0" />
         )}
       </div>
-      {expanded ? (
-        <div className={sectionBodyClass(viewMode)}>{children}</div>
-      ) : null}
+      {expanded ? <div className={sectionBodyClass('list')}>{children}</div> : null}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { INDENT, type SectionViewMode } from './constants';
+import { INDENT, type ExplorerTab, type SectionViewMode } from './constants';
 
 export function matchesExplorerFilter(text: string, query: string): boolean {
   if (!query) return true;
@@ -45,4 +45,21 @@ export function getVariableColor(type: string): string {
     default:
       return '#71717a';
   }
+}
+
+export function explorerTabOrder(showApiTab: boolean): ExplorerTab[] {
+  return showApiTab ? ['symbols', 'output', 'api'] : ['symbols', 'output'];
+}
+
+/** Child rows under a function: extras only. Parent row stays the primary. */
+export function extraFunctionOverloads<T>(overloads: T[]): T[] {
+  return overloads.length > 1 ? overloads.slice(1) : [];
+}
+
+export function isOutputPathOpenable(kind: string): boolean {
+  return kind === 'generated';
+}
+
+export function outputExplorerEmptyCopy(): string {
+  return 'Generate from the canvas to list outputs here.';
 }

@@ -1,8 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import {
   eventRowMeta,
+  explorerTabOrder,
+  extraFunctionOverloads,
   getVariableColor,
+  isOutputPathOpenable,
   matchesExplorerFilter,
+  outputExplorerEmptyCopy,
   sectionVisible,
 } from '@/components/layout/project-tree/explorerUtils';
 import { countSymbolCategoryIssues } from '@/components/layout/project-tree/symbolCategoryIssues';
@@ -32,6 +36,26 @@ describe('explorerUtils', () => {
   test('getVariableColor maps logical types', () => {
     expect(getVariableColor('data_string')).toBe('#38bdf8');
     expect(getVariableColor('unknown')).toBe('#71717a');
+  });
+
+  test('explorerTabOrder shows API only when environment is linked', () => {
+    expect(explorerTabOrder(false)).toEqual(['symbols', 'output']);
+    expect(explorerTabOrder(true)).toEqual(['symbols', 'output', 'api']);
+  });
+
+  test('extraFunctionOverloads omits the primary when more than one exists', () => {
+    expect(extraFunctionOverloads([{ id: 'a' }])).toEqual([]);
+    expect(extraFunctionOverloads([{ id: 'a' }, { id: 'b' }, { id: 'c' }])).toEqual([
+      { id: 'b' },
+      { id: 'c' },
+    ]);
+  });
+
+  test('output rows are openable only when generated', () => {
+    expect(isOutputPathOpenable('generated')).toBe(true);
+    expect(isOutputPathOpenable('vvs')).toBe(false);
+    expect(isOutputPathOpenable('host')).toBe(false);
+    expect(outputExplorerEmptyCopy().toLowerCase()).not.toContain('click');
   });
 });
 

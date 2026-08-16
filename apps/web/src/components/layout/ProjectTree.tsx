@@ -115,6 +115,7 @@ import { countSymbolCategoryIssues } from './project-tree/symbolCategoryIssues';
 import { graphContainerLabel } from './project-tree/graphContainerLabels';
 import {
   eventRowMeta,
+  extraFunctionOverloads,
   getVariableColor,
 } from './project-tree/explorerUtils';
 import { useProjectFolderPaths } from '@/hooks/useProjectFolderPaths';
@@ -379,8 +380,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
     panelTab,
     foldersExpanded,
     setFoldersExpanded,
-    sectionViewModes,
-    setSectionView,
     expanded,
     setExpanded,
     toggleCategory,
@@ -1412,8 +1411,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             environmentVersion={environmentVersion}
             environmentSurface={environmentSurface}
             filterQuery={filterQuery}
-            viewMode={sectionViewModes.api}
-            onViewModeChange={(mode) => setSectionView('api', mode)}
             isReferenceMode={isReferenceMode}
           />
         ) : null}
@@ -1469,10 +1466,8 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             canDelete={canDeleteContainer}
             onDelete={deleteContainer}
             emptyHint={
-              <ExplorerEmptyHint viewMode={sectionViewModes.graphs}>No graphs yet.</ExplorerEmptyHint>
+              <ExplorerEmptyHint>No graphs yet.</ExplorerEmptyHint>
             }
-            viewMode={sectionViewModes.graphs}
-            onViewModeChange={(mode) => setSectionView('graphs', mode)}
           />
         ) : null}
 
@@ -1484,17 +1479,19 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           icon={<Boxes size={12} className="text-violet-400/80 shrink-0" />}
           expanded={expanded.classes}
           onToggle={() => toggleCategory('classes')}
-          viewMode={sectionViewModes.classes}
-          onViewModeChange={(mode) => setSectionView('classes', mode)}
-          onAdd={() => {
-            setIsAddingClass(true);
-            setNewClassContainerId(defaultClassContainerId());
-            setExpanded((s) => ({ ...s, classes: true }));
-          }}
+          onAdd={
+            isReferenceMode
+              ? undefined
+              : () => {
+                  setIsAddingClass(true);
+                  setNewClassContainerId(defaultClassContainerId());
+                  setExpanded((s) => ({ ...s, classes: true }));
+                }
+          }
           addLabel="New class"
         >
           {isAddingClass && (
-            <SectionPopoverAnchor viewMode={sectionViewModes.classes}>
+            <SectionPopoverAnchor>
             <SymbolCreatePopover
               open={isAddingClass}
               title="New class"
@@ -1544,8 +1541,12 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             </SectionPopoverAnchor>
           )}
           {filteredClasses.length === 0 && !isAddingClass ? (
-            <ExplorerEmptyHint viewMode={sectionViewModes.classes}>
-              {classes.length === 0 ? 'No classes — use + to add' : 'No match.'}
+            <ExplorerEmptyHint>
+              {classes.length === 0
+                ? isReferenceMode
+                  ? 'No classes.'
+                  : 'No classes — use + to add'
+                : 'No match.'}
             </ExplorerEmptyHint>
           ) : (
             filteredClasses.map((cls) => {
@@ -1562,7 +1563,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 return (
                   <React.Fragment key={cls.id}>
                     <TreeRow
-                      layout={sectionViewModes.classes}
+
                       active={
                         (isActive && activeGraphTab === mainTabId) ||
                         isSymbolMultiSelected('class', cls.id) ||
@@ -1702,16 +1703,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           icon={<PlaySquare size={12} className="text-indigo-400/80 shrink-0" />}
           expanded={expanded.functions}
           onToggle={() => toggleCategory('functions')}
-          viewMode={sectionViewModes.functions}
-          onViewModeChange={(mode) => setSectionView('functions', mode)}
-          onAdd={() => {
-            setIsAddingFunction(true);
-            setExpanded((s) => ({ ...s, functions: true }));
-          }}
+          onAdd={
+            isReferenceMode
+              ? undefined
+              : () => {
+                  setIsAddingFunction(true);
+                  setExpanded((s) => ({ ...s, functions: true }));
+                }
+          }
           addLabel="New function"
         >
           {isAddingFunction && (
-            <SectionPopoverAnchor viewMode={sectionViewModes.functions}>
+            <SectionPopoverAnchor>
             <SymbolCreatePopover
               open={isAddingFunction}
               title="New function"
@@ -1727,8 +1730,12 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             </SectionPopoverAnchor>
           )}
           {filteredFunctions.length === 0 && !isAddingFunction ? (
-            <ExplorerEmptyHint viewMode={sectionViewModes.functions}>
-              {classFunctions.length === 0 ? 'Empty — use + to add' : '—'}
+            <ExplorerEmptyHint>
+              {classFunctions.length === 0
+                ? isReferenceMode
+                  ? 'Empty.'
+                  : 'Empty — use + to add'
+                : '—'}
             </ExplorerEmptyHint>
           ) : (
             filteredFunctions.map((f) => {
@@ -1740,7 +1747,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 return (
                 <React.Fragment key={f.id}>
                   <TreeRow
-                    layout={sectionViewModes.functions}
+
                     className={inheritedById.has(f.id) ? 'opacity-60' : undefined}
                     active={
                       isSymbolMultiSelected('function', f.id) ||
@@ -1849,7 +1856,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleAddOverload(f.id);
+                                  setAddingOverloadForId(f.id);
                                 }}
                                 className="px-1 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 shrink-0 flex items-center gap-0.5 transition-colors"
                               >
@@ -1872,14 +1879,14 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                         ) : undefined
                       }
                   />
-                  {f.overloads.length > 1 &&
-                    f.overloads.map((overload, index) => {
+                  {extraFunctionOverloads(f.overloads).map((overload, index) => {
                       const dragPayload: FunctionOverloadDragPayload = {
                         functionId: f.id,
                         overloadId: overload.id,
                       };
                       const overloadTab = overload.graphTabId ?? f.id;
                       const isOverloadActive = activeGraphTab === overloadTab;
+                      const overloadNumber = index + 2;
                       return (
                         <TreeRow
                           key={overload.id}
@@ -1888,13 +1895,13 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                           icon={<GitBranch size={10} className="text-indigo-400 shrink-0 ml-1" />}
                           label={
                             <span className="flex items-center gap-1.5 min-w-0">
-                              <span className="text-[9px] font-mono text-zinc-500 shrink-0">#{index + 1}</span>
+                              <span className="text-[9px] font-mono text-zinc-500 shrink-0">#{overloadNumber}</span>
                               <span className="truncate text-zinc-300 font-mono text-[10px]">
                                 {overloadTreeLabel(overload)}
                               </span>
                             </span>
                           }
-                          hint={`Overload #${index + 1} · Drag to canvas to spawn Call node · Click to open graph`}
+                          hint={`Overload #${overloadNumber} · Drag to canvas to spawn Call node · Click to open graph`}
                           canvasDrag={{
                             mimeType: FUNCTION_OVERLOAD_DRAG_MIME,
                             payload: JSON.stringify(dragPayload),
@@ -1945,16 +1952,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           icon={<Radio size={12} className="text-violet-400/80 shrink-0" />}
           expanded={expanded.events}
           onToggle={() => toggleCategory('events')}
-          viewMode={sectionViewModes.events}
-          onViewModeChange={(mode) => setSectionView('events', mode)}
-          onAdd={() => {
-            setIsAddingEvent(true);
-            setExpanded((s) => ({ ...s, events: true }));
-          }}
+          onAdd={
+            isReferenceMode
+              ? undefined
+              : () => {
+                  setIsAddingEvent(true);
+                  setExpanded((s) => ({ ...s, events: true }));
+                }
+          }
           addLabel="New event"
         >
           {isAddingEvent && (
-            <SectionPopoverAnchor viewMode={sectionViewModes.events}>
+            <SectionPopoverAnchor>
             <SymbolCreatePopover
               open={isAddingEvent}
               title="New event"
@@ -1987,9 +1996,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             </SectionPopoverAnchor>
           )}
           {filteredEvents.length === 0 && !isAddingEvent ? (
-            <ExplorerEmptyHint viewMode={sectionViewModes.events}>
+            <ExplorerEmptyHint>
               {classEvents.length === 0
-                ? 'No events yet — use + to add, then drag rows to graph.'
+                ? isReferenceMode
+                  ? 'No events yet.'
+                  : 'No events yet — use + to add, then drag rows to graph.'
                 : 'No match.'}
             </ExplorerEmptyHint>
           ) : (
@@ -2004,7 +2015,7 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
                 return (
                   <React.Fragment key={entry.id}>
                     <TreeRow
-                      layout={sectionViewModes.events}
+
                       className={inheritedById.has(entry.id) ? 'opacity-60' : undefined}
                       icon={<Radio size={10} className="text-violet-400/70 shrink-0" />}
                       label={
@@ -2121,16 +2132,18 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           icon={<Variable size={12} className="text-sky-400/80 shrink-0" />}
           expanded={expanded.variables}
           onToggle={() => toggleCategory('variables')}
-          viewMode={sectionViewModes.variables}
-          onViewModeChange={(mode) => setSectionView('variables', mode)}
-          onAdd={() => {
-            setIsAddingVariable(true);
-            setExpanded((s) => ({ ...s, variables: true }));
-          }}
+          onAdd={
+            isReferenceMode
+              ? undefined
+              : () => {
+                  setIsAddingVariable(true);
+                  setExpanded((s) => ({ ...s, variables: true }));
+                }
+          }
           addLabel="New variable"
         >
           {isAddingVariable && (
-            <SectionPopoverAnchor viewMode={sectionViewModes.variables}>
+            <SectionPopoverAnchor>
             <SymbolCreatePopover
               open={isAddingVariable}
               title="New variable"
@@ -2185,14 +2198,14 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             </SectionPopoverAnchor>
           )}
           {filteredVariables.length === 0 && !isAddingVariable ? (
-            <ExplorerEmptyHint viewMode={sectionViewModes.variables}>
+            <ExplorerEmptyHint>
               {classVariables.length === 0 ? 'No variables yet.' : 'No match.'}
             </ExplorerEmptyHint>
           ) : (
             filteredVariables.map((v) => (
                 <React.Fragment key={v.id}>
                   <VariableRow
-                    layout={sectionViewModes.variables}
+
                     variable={v}
                     isSelected={isVariableActive(v.id, v.name)}
                     color={getVariableColor(v.type)}
@@ -2272,13 +2285,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
           icon={<Variable size={12} className="text-teal-400/80 shrink-0" />}
           expanded={true}
           onToggle={() => {}}
-          viewMode={sectionViewModes.variables}
-          onViewModeChange={(mode) => setSectionView('variables', mode)}
-          onAdd={() => setIsAddingLocalVariable(true)}
+          onAdd={isReferenceMode ? undefined : () => setIsAddingLocalVariable(true)}
           addLabel="New local variable"
         >
           {isAddingLocalVariable && (
-            <SectionPopoverAnchor viewMode={sectionViewModes.variables}>
+            <SectionPopoverAnchor>
             <SymbolCreatePopover
               open={isAddingLocalVariable}
               title="New local variable"
@@ -2319,14 +2330,14 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             </SectionPopoverAnchor>
           )}
           {filteredLocalVariables.length === 0 && !isAddingLocalVariable ? (
-            <ExplorerEmptyHint viewMode={sectionViewModes.variables}>
+            <ExplorerEmptyHint>
               {activeScopeVariables.length === 0 ? 'No local variables.' : 'No match.'}
             </ExplorerEmptyHint>
           ) : (
             filteredLocalVariables.map((v) => (
                 <React.Fragment key={v.id}>
                   <VariableRow
-                    layout={sectionViewModes.variables}
+
                     variable={v}
                     isSelected={isVariableActive(v.id, v.name)}
                     color={getVariableColor(v.type)}
@@ -2403,8 +2414,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
             icon={<FolderOutput size={12} className="text-zinc-500 shrink-0" />}
             expanded
             onToggle={() => {}}
-            viewMode={sectionViewModes.projectFiles}
-            onViewModeChange={(mode) => setSectionView('projectFiles', mode)}
           >
             <ProjectFilesExplorer
               entries={projectFolderPaths}
@@ -2414,7 +2423,6 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
               classes={classes}
               functions={functions}
               filterQuery={q}
-              viewMode={sectionViewModes.projectFiles}
             />
           </CategorySection>
         ) : null}

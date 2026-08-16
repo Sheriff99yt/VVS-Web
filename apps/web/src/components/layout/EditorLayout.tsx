@@ -51,7 +51,7 @@ function CanvasWorkspace() {
       <Panel
         id="left"
         defaultSize={20}
-        minSize={15}
+        minSize={18}
         collapsible
         collapsedSize={0}
         panelRef={graphNavPanelRef}

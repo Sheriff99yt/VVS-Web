@@ -20,8 +20,8 @@ import type { GeneratedFileTreeNode } from '@/lib/generatedFileTree';
 import { dispatchSelectGeneratedFile } from '@/lib/generatedFileNavigation';
 import { rootOrphanEntries, vvsDisplayTree, vvsFolderEntries } from '@/lib/mergedStructureTree';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { INDENT, type SectionViewMode } from './constants';
-import { gridTileClass } from './explorerStyles';
+import { INDENT } from './constants';
+import { isOutputPathOpenable, outputExplorerEmptyCopy } from './explorerUtils';
 
 function plainFileIcon(kind: ProjectFolderPathKind) {
   switch (kind) {
@@ -38,58 +38,44 @@ function PlainFileRow({
   path,
   kind,
   depth,
-  layout = 'list',
 }: {
   path: string;
   kind: ProjectFolderPathKind;
   depth: number;
-  layout?: SectionViewMode;
 }) {
   const name = path.split('/').pop() ?? path;
-  const isGenerated = kind === 'generated';
+  const canOpen = isOutputPathOpenable(kind);
+  const rowClass = canOpen
+    ? 'group w-full flex items-center gap-1 py-0.5 pr-2 rounded text-left hover:bg-zinc-900/60 cursor-pointer'
+    : 'w-full flex items-center gap-1 py-0.5 pr-2 rounded text-left cursor-default';
+  const nameClass = canOpen
+    ? 'truncate text-[10px] font-mono flex-1 text-zinc-400 group-hover:text-emerald-200'
+    : 'truncate text-[10px] font-mono flex-1 text-zinc-500';
+  const pad = { paddingLeft: depth * 12 + 20 };
 
-  if (layout === 'grid') {
-    return (
-      <Tooltip content={path} placement="right" className="block w-full min-w-0">
-        <button
-          type="button"
-          className={`${gridTileClass(false)} text-left w-full`}
-          onClick={() => {
-            if (isGenerated) dispatchSelectGeneratedFile(path);
-          }}
-        >
-          {plainFileIcon(kind)}
-          <span
-            className={`truncate text-[9px] font-mono text-left flex-1 min-w-0 ${
-              isGenerated ? 'text-zinc-400 group-hover:text-emerald-200' : 'text-zinc-500'
-            }`}
-          >
-            {name}
-          </span>
-        </button>
-      </Tooltip>
-    );
-  }
+  const inner = (
+    <>
+      {plainFileIcon(kind)}
+      <span className={nameClass}>{name}</span>
+    </>
+  );
 
   return (
     <Tooltip content={path} placement="right" className="block w-full min-w-0">
-      <button
-        type="button"
-        className="group w-full flex items-center gap-1 py-0.5 pr-2 rounded text-left hover:bg-zinc-900/60"
-        style={{ paddingLeft: depth * 12 + 20 }}
-        onClick={() => {
-          if (isGenerated) dispatchSelectGeneratedFile(path);
-        }}
-      >
-        {plainFileIcon(kind)}
-        <span
-          className={`truncate text-[10px] font-mono flex-1 ${
-            isGenerated ? 'text-zinc-400 group-hover:text-emerald-200' : 'text-zinc-500'
-          }`}
+      {canOpen ? (
+        <button
+          type="button"
+          className={rowClass}
+          style={pad}
+          onClick={() => dispatchSelectGeneratedFile(path)}
         >
-          {name}
-        </span>
-      </button>
+          {inner}
+        </button>
+      ) : (
+        <div className={rowClass} style={pad}>
+          {inner}
+        </div>
+      )}
     </Tooltip>
   );
 }
@@ -217,7 +203,6 @@ export function ProjectFilesExplorer({
   classes,
   functions,
   filterQuery = '',
-  viewMode = 'list',
 }: {
   entries: ProjectFolderPathEntry[];
   fileOwners: Record<string, string>;
@@ -226,7 +211,6 @@ export function ProjectFilesExplorer({
   classes: ClassSymbol[];
   functions: FunctionSymbol[];
   filterQuery?: string;
-  viewMode?: SectionViewMode;
 }) {
   const q = filterQuery.trim().toLowerCase();
   const filteredEntries = useMemo(() => {
@@ -241,53 +225,33 @@ export function ProjectFilesExplorer({
   );
 
   return (
-    <div className={viewMode === 'grid' ? 'contents' : 'pb-1'}>
+    <div className="pb-1">
       {vvsEntries.length === 0 && orphans.length === 0 && !q ? (
-        <div
-          className={`${INDENT.l1} text-[10px] text-zinc-600 py-2 pr-2 space-y-1 ${viewMode === 'grid' ? 'col-span-full' : ''}`}
-        >
+        <div className={`${INDENT.l1} text-[10px] text-zinc-600 py-2 pr-2 space-y-1`}>
           <p>No generated files yet.</p>
-          <p className="text-zinc-700">Generate from the canvas to list outputs here. Click a path to open it in Code.</p>
+          <p className="text-zinc-700">{outputExplorerEmptyCopy()}</p>
         </div>
       ) : null}
 
       {vvsEntries.length > 0 ? (
-        viewMode === 'grid' ? (
-          vvsEntries.map((entry) => (
-            <PlainFileRow
-              key={entry.path}
-              path={entry.path}
-              kind={pathKinds.get(entry.path) ?? 'vvs'}
-              depth={0}
-              layout="grid"
-            />
-          ))
-        ) : (
-          <VvsSubtree paths={vvsEntries.map((e) => e.path)} pathKinds={pathKinds} />
-        )
+        <VvsSubtree paths={vvsEntries.map((e) => e.path)} pathKinds={pathKinds} />
       ) : q ? (
-        <div className={`${INDENT.l1} text-[10px] text-zinc-600 italic py-1 pr-2 ${viewMode === 'grid' ? 'col-span-full' : ''}`}>
+        <div className={`${INDENT.l1} text-[10px] text-zinc-600 italic py-1 pr-2`}>
           No matching files.
         </div>
       ) : null}
 
       {orphans.length > 0 ? (
-        viewMode === 'grid' ? (
-          orphans.map((entry) => (
-            <PlainFileRow key={entry.path} path={entry.path} kind={entry.kind} depth={0} layout="grid" />
-          ))
-        ) : (
-          <div className="pt-1 border-t border-zinc-800/40 mt-1">
-            <div
-              className={`${INDENT.l1} text-[9px] font-semibold uppercase tracking-wide text-zinc-600 py-1`}
-            >
-              Workspace & host files
-            </div>
-            {orphans.map((entry) => (
-              <PlainFileRow key={entry.path} path={entry.path} kind={entry.kind} depth={0} />
-            ))}
+        <div className="pt-1 border-t border-zinc-800/40 mt-1">
+          <div
+            className={`${INDENT.l1} text-[9px] font-semibold uppercase tracking-wide text-zinc-600 py-1`}
+          >
+            Workspace & host files
           </div>
-        )
+          {orphans.map((entry) => (
+            <PlainFileRow key={entry.path} path={entry.path} kind={entry.kind} depth={0} />
+          ))}
+        </div>
       ) : null}
     </div>
   );

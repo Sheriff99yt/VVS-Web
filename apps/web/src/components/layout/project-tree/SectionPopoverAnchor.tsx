@@ -4,12 +4,12 @@ import React from 'react';
 import type { SectionViewMode } from './constants';
 import { sectionGridSpan } from './explorerUtils';
 
-/** Full-width anchor for create popovers inside a grid section body. */
+/** Full-width anchor for create popovers inside a section body. */
 export function SectionPopoverAnchor({
-  viewMode,
+  viewMode = 'list',
   children,
 }: {
-  viewMode: SectionViewMode;
+  viewMode?: SectionViewMode;
   children: React.ReactNode;
 }) {
   return <div className={sectionGridSpan(viewMode)}>{children}</div>;

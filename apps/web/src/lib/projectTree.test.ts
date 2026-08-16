@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { listEventDispatchers } from '@/lib/projectTree';
+import { buildGraphBreadcrumb, listEventDispatchers } from '@/lib/projectTree';
 import type { ClassSymbol } from '@vvs/graph-types';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import type { ProjectEventDefinition } from '@/types/graph';
@@ -60,5 +60,29 @@ describe('listEventDispatchers', () => {
     const entries = listEventDispatchers([symbolEvent], docs, classes);
     expect(entries.filter((entry) => entry.label === 'Calculate')).toHaveLength(1);
     expect(entries[0]?.id).toBe('evt-calc');
+  });
+});
+
+describe('buildGraphBreadcrumb', () => {
+  test('labels leftover main / project-map tabs as Overview', () => {
+    const mainSegs = buildGraphBreadcrumb(
+      'App',
+      'main',
+      [{ id: 'main', type: 'main', name: 'Main graph' }],
+      [],
+      'cls'
+    );
+    expect(mainSegs.map((s) => s.label)).toContain('Overview');
+    expect(mainSegs.map((s) => s.label)).not.toContain('Main graph');
+
+    const mapSegs = buildGraphBreadcrumb(
+      'App',
+      'main-graph',
+      [{ id: 'main-graph', type: 'container', name: 'Project map' }],
+      [],
+      'cls'
+    );
+    expect(mapSegs.map((s) => s.label)).toContain('Overview');
+    expect(mapSegs.map((s) => s.label)).not.toContain('Project map');
   });
 });

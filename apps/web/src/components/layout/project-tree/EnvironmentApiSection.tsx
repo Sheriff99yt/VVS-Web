@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { GitBranch, Layers, PlaySquare, Radio } from 'lucide-react';
-import type { ClassSymbol, FunctionSymbol, ProjectEventDefinition, VariableSymbol } from '@vvs/graph-types';
 import type { ResolvedApiSurface } from '@vvs/environment-templates';
 import {
   dispatchSpawnEnvironmentNode,
@@ -11,24 +10,20 @@ import {
 import { Tooltip } from '@/components/ui/Tooltip';
 import { CategorySection } from './CategorySection';
 import { TreeRow } from './TreeRow';
-import { INDENT, type SectionViewMode } from './constants';
-import { matchesExplorerFilter, sectionGridSpan } from './explorerUtils';
+import { INDENT } from './constants';
+import { matchesExplorerFilter } from './explorerUtils';
 
 export function EnvironmentApiSection({
   environmentManifest,
   environmentVersion,
   environmentSurface,
   filterQuery,
-  viewMode = 'list',
-  onViewModeChange,
   isReferenceMode,
 }: {
   environmentManifest: NonNullable<ReturnType<typeof import('@/lib/environmentContext').getLinkedEnvironmentManifest>>;
   environmentVersion: string | null | undefined;
   environmentSurface: ResolvedApiSurface;
   filterQuery: string;
-  viewMode?: SectionViewMode;
-  onViewModeChange?: (mode: SectionViewMode) => void;
   isReferenceMode: boolean;
 }) {
   const q = filterQuery.trim().toLowerCase();
@@ -44,11 +39,9 @@ export function EnvironmentApiSection({
       icon={<Layers size={12} className="text-indigo-400/80 shrink-0" />}
       expanded
       onToggle={() => {}}
-      viewMode={viewMode}
-      onViewModeChange={onViewModeChange}
     >
       <div
-        className={`${INDENT.l1} text-[9px] text-indigo-400/80 truncate pr-2 pb-1 ${sectionGridSpan(viewMode) ?? ''}`}
+        className={`${INDENT.l1} text-[9px] text-indigo-400/80 truncate pr-2 pb-1`}
       >
         {environmentManifest.displayName}
         {environmentVersion ? (
@@ -60,7 +53,7 @@ export function EnvironmentApiSection({
         .map((event) => (
           <TreeRow
             key={event.id}
-            layout={viewMode}
+
             icon={<Radio size={10} className="text-indigo-400/70 shrink-0" />}
             label={event.name}
             meta="event"
@@ -90,7 +83,7 @@ export function EnvironmentApiSection({
         .map((method) => (
           <TreeRow
             key={method.id}
-            layout={viewMode}
+
             icon={<PlaySquare size={10} className="text-sky-400/70 shrink-0" />}
             label={`${method.name}()`}
             meta="native"
@@ -118,7 +111,7 @@ export function EnvironmentApiSection({
         .map((method) => (
           <TreeRow
             key={method.id}
-            layout={viewMode}
+
             icon={<GitBranch size={10} className="text-amber-400/70 shrink-0" />}
             label={`${method.name}()`}
             meta="override"

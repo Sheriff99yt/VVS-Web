@@ -29,7 +29,7 @@ function graphLabel(
   openTabs: GraphTab[],
   functions: { id: string; name: string }[]
 ): string {
-  if (graphId === 'main') return 'Main graph';
+  if (graphId === 'main') return 'Overview';
   const tab = openTabs.find((t) => t.id === graphId);
   if (tab) return graphDisplayName(tab);
   const func = functions.find((f) => f.id === graphId);
@@ -121,7 +121,7 @@ export function detectGraphReferences(
         const macro = macros.find((m) => m.id === targetId);
         const moduleName =
           targetId === 'main'
-            ? 'Main graph'
+            ? 'Overview'
             : func?.name ?? macro?.name ?? targetId;
         addRef(
           refs,

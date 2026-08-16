@@ -46,8 +46,8 @@ export function openFunctionGraphTab(
 }
 
 export function graphDisplayName(tab: GraphTab): string {
+  if (tab.id === MAIN_GRAPH_CONTAINER_ID || tab.type === 'main') return 'Overview';
   if (tab.type === 'container') return tab.name;
-  if (tab.type === 'main') return 'Main graph';
   if (tab.type === 'class') return tab.name;
   if (tab.type === 'graph') return tab.name;
   return tab.name.replace(/^Function:\s*/, '');

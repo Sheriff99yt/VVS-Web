@@ -209,7 +209,7 @@ export function listAllGraphTabs(
 
   const usesProjectMap = openTabs.some((t) => t.id === MAIN_GRAPH_CONTAINER_ID);
   if (!usesProjectMap) {
-    byId.set('main', { id: 'main', type: 'main', name: 'Main graph' });
+    byId.set('main', { id: 'main', type: 'main', name: 'Overview' });
   }
 
   for (const cls of classes ?? []) {
@@ -261,13 +261,13 @@ export function buildGraphBreadcrumb(
   const tab = openTabs.find((t) => t.id === activeGraphTab) ?? {
     id: 'main',
     type: 'main' as const,
-    name: 'Main graph',
+    name: 'Overview',
   };
 
   const segments: BreadcrumbSegment[] = [{ label: projectName || 'Untitled' }];
 
   if (tab.type === 'container') {
-    segments.push({ label: tab.name, graphId: tab.id });
+    segments.push({ label: graphDisplayName(tab), graphId: tab.id });
     return segments;
   }
 
@@ -283,7 +283,7 @@ export function buildGraphBreadcrumb(
 
   if (tab.type === 'main' || tab.type === 'class') {
     segments.push({
-      label: tab.type === 'class' ? tab.name : 'Main graph',
+      label: tab.type === 'class' ? tab.name : 'Overview',
       graphId: tab.id,
     });
     return segments;

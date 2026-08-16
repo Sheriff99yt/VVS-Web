@@ -22,7 +22,7 @@ import {
   eventDisplayName,
   resolveEventForNode,
 } from '@/lib/eventHelpers';
-import type { FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
+import type { ClassSymbol, FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
 import { buildProjectSymbolIndex, isUnresolvedSymbolRef } from '@vvs/graph-types';
 import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel';
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
@@ -32,6 +32,7 @@ import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import { PropertySchemaPanel } from './RightSidebar/PropertySchemaPanel';
 import { ImportGraphTargetPanel } from './RightSidebar/ImportGraphTargetPanel';
 import { FunctionPropertiesPanel } from './RightSidebar/FunctionPropertiesPanel';
+import { ClassPropertiesPanel } from './RightSidebar/ClassPropertiesPanel';
 import { BrokenRefRepairPanel } from './RightSidebar/BrokenRefRepairPanel';
 import { CodePreviewPropertiesPanel } from './RightSidebar/CodePreviewPropertiesPanel';
 import { FloatingPanelShell } from './FloatingPanelShell';
@@ -154,6 +155,8 @@ function GraphFloatingDetailsPanel() {
     selection.type === 'function' ? functions.find((f) => f.id === selection.id) : null;
   const selectedEvent =
     selection.type === 'event' ? events.find((e) => e.id === selection.id) : null;
+  const selectedClass =
+    selection.type === 'class' ? classes.find((c) => c.id === selection.id) : null;
 
   const brokenRef = useMemo(() => {
     if (selection.type !== 'node' || !selectedNodeId || !nodeData) return null;
@@ -252,6 +255,10 @@ function GraphFloatingDetailsPanel() {
 
   const handleFunctionChange = (next: FunctionSymbol) => {
     renameFunction(next);
+  };
+
+  const handleClassChange = (next: ClassSymbol) => {
+    renameClass(next);
   };
 
   const togglePinned = useCallback(() => {
@@ -507,6 +514,7 @@ function GraphFloatingDetailsPanel() {
     selection.type === 'variable' ||
     selection.type === 'event' ||
     selection.type === 'function' ||
+    selection.type === 'class' ||
     selection.type === 'code';
 
   if (!visible) return null;
@@ -520,9 +528,11 @@ function GraphFloatingDetailsPanel() {
           ? eventDisplayName(selectedEvent?.name ?? 'Event')
           : selection.type === 'function'
             ? selectedFunction?.name ?? 'Function'
-            : selection.type === 'code'
-              ? 'Code preview'
-              : 'Details';
+            : selection.type === 'class'
+              ? selectedClass?.name ?? 'Class'
+              : selection.type === 'code'
+                ? 'Code preview'
+                : 'Details';
 
   const title = isBrokenRefSelection ? `Broken reference — ${baseTitle}` : baseTitle;
 
@@ -578,6 +588,14 @@ function GraphFloatingDetailsPanel() {
         <FunctionPropertiesPanel
           func={selectedFunction}
           onChange={handleFunctionChange}
+        />
+      )}
+
+      {selection.type === 'class' && selectedClass && (
+        <ClassPropertiesPanel
+          cls={selectedClass}
+          classes={classes}
+          onChange={handleClassChange}
         />
       )}
 

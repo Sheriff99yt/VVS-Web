@@ -33,7 +33,7 @@ export function resolveImportableGraphName(
   functions: FunctionSymbol[],
   openTabs: GraphTab[]
 ): string | undefined {
-  if (graphId === 'main') return 'Main graph';
+  if (graphId === 'main') return 'Overview';
   const func = functions.find((f) => f.id === graphId);
   if (func) return func.name;
   const tab = openTabs.find((t) => t.id === graphId);
