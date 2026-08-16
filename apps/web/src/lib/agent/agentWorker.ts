@@ -65,9 +65,16 @@ interface ChatMessage {
   }>;
 }
 
-async function runChat(requestId: string, prompt: string, history: AgentChatMessage[], settings: { baseUrl: string; apiKey: string; model: string }): Promise<void> {
+async function runChat(
+  requestId: string,
+  prompt: string,
+  history: AgentChatMessage[],
+  settings: { baseUrl: string; apiKey: string; model: string },
+  canvasContext?: string
+): Promise<void> {
   const messages: ChatMessage[] = [
     { role: 'system', content: AGENT_SYSTEM_PROMPT },
+    ...(canvasContext?.trim() ? [{ role: 'system' as const, content: canvasContext.trim() }] : []),
     ...history.map((item) => ({
       role: item.role,
       content: item.content,
@@ -178,7 +185,7 @@ ctx.onmessage = (event: MessageEvent<AgentWorkerInbound>) => {
   if (message.type === 'run') {
     activeRequestId = message.requestId;
     pendingTools.clear();
-    void runChat(message.requestId, message.prompt, message.history, message.settings)
+    void runChat(message.requestId, message.prompt, message.history, message.settings, message.canvasContext)
       .catch((err: unknown) => {
         if (activeRequestId !== message.requestId) return;
         post({

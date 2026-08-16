@@ -204,6 +204,15 @@
     },
     "DestructorDeclPrototype": {
       "quasi": "    {virtualKw}~{class}({paramList});"
+    },
+    "TryHeader": {
+      "quasi": "try {"
+    },
+    "TryCatchHeader": {
+      "quasi": "{catchClause}"
+    },
+    "TryClose": {
+      "quasi": "}"
     }
   }
 }

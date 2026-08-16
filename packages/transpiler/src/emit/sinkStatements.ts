@@ -8,6 +8,7 @@ import type {
   IrSequence,
   IrStatement,
   IrSwitch,
+  IrTry,
   IrWhileLoop,
 } from '../ir/types';
 import {
@@ -17,6 +18,7 @@ import {
   formatSwitchCaseLabel,
   ifElseLine,
   innerIndentCtx,
+  tryCatchClause,
 } from '../print/blocks';
 import { createDefaultExprPrinter } from '../print/expr';
 import { printStatement } from '../print';
@@ -35,7 +37,7 @@ import type { TargetLanguage } from '@vvs/graph-types';
 import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import type { IrModuleImport } from '../ir/types';
 
-const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'ForEach', 'WhileLoop', 'Switch', 'Sequence']);
+const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'ForEach', 'WhileLoop', 'Switch', 'Sequence', 'Try']);
 const IMPORT_MODULE_KIND = 'vvs.project.import_module';
 
 export type AppendIrStatementsOptions = {
@@ -492,6 +494,42 @@ function appendSequence(
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'sequence');
 }
 
+function appendTry(
+  sink: CodeSink,
+  stmt: IrTry,
+  ctx: PrintContext,
+  options?: AppendIrStatementsOptions
+): void {
+  const inner = innerIndentCtx(ctx);
+  const startLine = sink.lineCount + 1;
+  const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
+  const finallyBody = stmt.finallyBody ?? [];
+
+  if (isPackDrivenFamily(ctx.family)) {
+    sink.appendRaw(printFromTemplate(ctx, 'TryHeader', {}).text);
+    appendBodyOrPlaceholder(sink, stmt.tryBody, inner, placeholder, options);
+    const printCatch = stmt.catchBody.length > 0 || finallyBody.length === 0;
+    if (printCatch) {
+      sink.appendRaw(
+        printFromTemplate(ctx, 'TryCatchHeader', {
+          catchClause: tryCatchClause(ctx.family, stmt.catchType, stmt.catchName),
+        }).text
+      );
+      appendBodyOrPlaceholder(sink, stmt.catchBody, inner, placeholder, options);
+    }
+    if (finallyBody.length > 0 && ctx.profile?.templates.TryFinallyHeader) {
+      sink.appendRaw(printFromTemplate(ctx, 'TryFinallyHeader', {}).text);
+      appendBodyOrPlaceholder(sink, finallyBody, inner, placeholder, options);
+    }
+    if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'csharp') {
+      sink.appendRaw(blockCloseLine(ctx, 'TryClose'));
+    }
+  } else {
+    sink.appendRaw(`${ctx.indent}// try`);
+  }
+  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'try');
+}
+
 function appendIrStatement(
   sink: CodeSink,
   stmt: IrStatement,
@@ -524,6 +562,10 @@ function appendIrStatement(
   }
   if (stmt.kind === 'Sequence') {
     appendSequence(sink, stmt as IrSequence, ctx, options);
+    return;
+  }
+  if (stmt.kind === 'Try') {
+    appendTry(sink, stmt as IrTry, ctx, options);
     return;
   }
   appendLeafStatement(sink, stmt, ctx);

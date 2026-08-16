@@ -4,6 +4,7 @@ import type {
   IrIfBranch,
   IrSequence,
   IrStatement,
+  IrTry,
   IrWhileLoop,
 } from '../ir/types';
 import { formatEnumCaseLabel } from '../emit/enumAccess';
@@ -202,6 +203,75 @@ export function buildSequence(
 
 /** Switch uses registered TS printers — re-export case label helper for printers. */
 export { caseLabelLiteral };
+
+export function tryCatchClause(
+  family: string,
+  catchType?: string,
+  catchName?: string
+): string {
+  const typ = catchType?.trim() ?? '';
+  const name = catchName?.trim() ?? '';
+  if (family === 'python' || family === 'gdscript') {
+    if (typ && name) return `except ${typ} as ${name}:`;
+    if (typ) return `except ${typ}:`;
+    if (name) return `except Exception as ${name}:`;
+    return 'except:';
+  }
+  if (family === 'javascript') {
+    return name ? `} catch (${name}) {` : '} catch {';
+  }
+  if (family === 'csharp') {
+    if (typ && name) return `} catch (${typ} ${name}) {`;
+    if (typ) return `} catch (${typ}) {`;
+    if (name) return `} catch (Exception ${name}) {`;
+    return '} catch {';
+  }
+  if (family === 'cpp') {
+    if (typ && name) return `} catch (${typ}& ${name}) {`;
+    if (typ) return `} catch (${typ}&) {`;
+    return '} catch (...) {';
+  }
+  return name ? `} catch (${name}) {` : '} catch {';
+}
+
+export function buildTry(
+  stmt: IrTry,
+  ctx: PrintContext,
+  printBody: (stmts: IrStatement[], innerCtx: PrintContext) => string[]
+): BuiltBlock {
+  const inner = { ...ctx, indent: nestedIndent(ctx) };
+  const tryStmts = bodyLines(stmt.tryBody, inner, printBody);
+  const catchStmts = bodyLines(stmt.catchBody, inner, printBody);
+  const finallyStmts =
+    stmt.finallyBody && stmt.finallyBody.length > 0
+      ? bodyLines(stmt.finallyBody, inner, printBody)
+      : [];
+
+  if (!isPackDrivenFamily(ctx.family)) {
+    return { lines: [{ text: `${ctx.indent}// try` }] };
+  }
+
+  const lines: BlockLineMeta[] = [];
+  lines.push({ text: printFromTemplate(ctx, 'TryHeader', {}).text });
+  lines.push(...tryStmts.map((text) => ({ text })));
+  const printCatch = stmt.catchBody.length > 0 || finallyStmts.length === 0;
+  if (printCatch) {
+    lines.push({
+      text: printFromTemplate(ctx, 'TryCatchHeader', {
+        catchClause: tryCatchClause(ctx.family, stmt.catchType, stmt.catchName),
+      }).text,
+    });
+    lines.push(...catchStmts.map((text) => ({ text })));
+  }
+  if (finallyStmts.length > 0 && ctx.profile?.templates.TryFinallyHeader) {
+    lines.push({ text: printFromTemplate(ctx, 'TryFinallyHeader', {}).text });
+    lines.push(...finallyStmts.map((text) => ({ text })));
+  }
+  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'csharp') {
+    lines.push({ text: blockCloseLine(ctx, 'TryClose') });
+  }
+  return { lines };
+}
 
 export function builtBlockToText(block: BuiltBlock): string {
   return block.lines.map((l) => l.text).join('\n');

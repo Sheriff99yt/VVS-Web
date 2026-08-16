@@ -3,10 +3,16 @@ import { listAgentTools, callTool } from './toolRuntime';
 import type { AgentToolDef } from './toolDefs';
 import type { VvsAgentBridge } from './protocol';
 
+export interface AgentApplyExtras {
+  selectNodeId?: string;
+  dirtyTabId?: string;
+}
+
 export interface AgentBridgeHost {
   getSnapshot(): ProjectSnapshot | null;
-  applySnapshot(snapshot: ProjectSnapshot, label: string): void;
+  applySnapshot(snapshot: ProjectSnapshot, label: string, extras?: AgentApplyExtras): void;
   getAllowWrites(): boolean;
+  expandCode?: () => void;
 }
 
 let host: AgentBridgeHost | null = null;
@@ -35,7 +41,16 @@ export async function invokeAgentTool(
     allowWrites: host.getAllowWrites(),
   });
   if (result.snapshot) {
-    host.applySnapshot(result.snapshot, `Agent ${name}`);
+    const extras: AgentApplyExtras = {};
+    if (result.affectedTabId) extras.dirtyTabId = result.affectedTabId;
+    if (name === 'add_node') {
+      const node = (result.data as { node?: { id?: string } } | undefined)?.node;
+      if (node?.id) extras.selectNodeId = node.id;
+    }
+    host.applySnapshot(result.snapshot, `Agent ${name}`, extras);
+  }
+  if (result.ok && name === 'generate_code') {
+    host.expandCode?.();
   }
   if (!result.ok) {
     throw new Error(result.error ?? 'tool failed');

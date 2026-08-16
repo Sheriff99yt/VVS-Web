@@ -82,6 +82,11 @@ export function collectIrEmitNodeIds(parts: {
           walkStatements(stmt.trueBody);
           walkStatements(stmt.falseBody);
           break;
+        case 'Try':
+          walkStatements(stmt.tryBody);
+          walkStatements(stmt.catchBody);
+          if (stmt.finallyBody) walkStatements(stmt.finallyBody);
+          break;
         case 'ForLoop':
         case 'ForEach':
         case 'WhileLoop':

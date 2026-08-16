@@ -132,6 +132,22 @@ export function printEnumMemberExpr(expr: IrExpr, ctx: PrintContext): PrintedExp
   );
 }
 
+export function printLambdaExpr(expr: IrExpr, ctx: PrintContext, printExpr: ExprPrinter): PrintedExpr {
+  if (expr.kind !== 'Lambda') throw new Error('expected Lambda');
+  const body = printExpr(expr.body, ctx);
+  const params = expr.params.join(', ');
+  const key = ctx.family === 'rust' && expr.capture ? 'LambdaMove' : 'Lambda';
+  return renderExprTemplate(
+    ctx,
+    key,
+    {
+      params: { text: params, spans: [] },
+      body: { text: body.text, spans: body.spans },
+    },
+    expr.sourceGraphNodeId
+  );
+}
+
 export function createDefaultExprPrinter(): ExprPrinter {
   const printExpr: ExprPrinter = (expr, ctx) => {
     switch (expr.kind) {
@@ -151,6 +167,8 @@ export function createDefaultExprPrinter(): ExprPrinter {
         return printGetInputTempExpr(expr);
       case 'EnumMember':
         return printEnumMemberExpr(expr, ctx);
+      case 'Lambda':
+        return printLambdaExpr(expr, ctx, printExpr);
       default:
         if (isPackDrivenFamily(ctx.family)) {
           throw new PackTemplateMissingError((expr as any).kind, ctx.family);

@@ -28,8 +28,8 @@ import {
 } from './defineNodes';
 import { analyzeClassMembers } from './classMembers';
 import { validateCanvasOrderYHints } from './canvasOrderY';
-import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryEvent } from './symbols';
-import { classExtendsTargetMissing, extendsTypeIsSet, resolveExtendsClass } from './inheritance';
+import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryEvent, syncClassExtendsFields } from './symbols';
+import { classExtendsMissingNames, classExtendsTargetMissing, resolveExtendsClass } from './inheritance';
 
 export interface AnalyzeProjectInput {
   documents: Record<string, GraphDocument>;
@@ -1073,6 +1073,10 @@ function classDefineExtendsType(node: import('./nodes').GraphNode): string | und
   return typeof raw === 'string' ? raw : undefined;
 }
 
+function classDefineExtendsNames(node: import('./nodes').GraphNode): string[] {
+  return syncClassExtendsFields(classDefineExtendsType(node), node.data.properties?.extendsTypes).extendsTypes ?? [];
+}
+
 function validateExtendsTargets(input: AnalyzeProjectInput): Diagnostic[] {
   const classes = input.classes ?? [];
   if (classes.length === 0) return [];
@@ -1105,22 +1109,24 @@ function validateExtendsTargets(input: AnalyzeProjectInput): Diagnostic[] {
       const tabId = classHomeGraphId(cls);
       const doc = input.documents[tabId];
       const node = doc?.nodes.find((n) => resolveNodeKindId(n.data) === 'class_define');
-      reportMissing({
-        className: cls.name,
-        extendsType: (cls.extendsType ?? '').trim(),
-        classId: cls.id,
-        tabId,
-        nodeId: node?.id,
-      });
+      for (const parentName of classExtendsMissingNames(classes, cls)) {
+        reportMissing({
+          className: cls.name,
+          extendsType: parentName,
+          classId: cls.id,
+          tabId,
+          nodeId: node?.id,
+        });
+      }
     }
   }
 
   for (const [tabId, doc] of Object.entries(input.documents)) {
     for (const node of doc.nodes) {
       if (resolveNodeKindId(node.data) !== 'class_define') continue;
-      const extendsType = classDefineExtendsType(node);
-      if (!extendsTypeIsSet(extendsType)) continue;
-      if (resolveExtendsClass(classes, extendsType)) continue;
+      const parentNames = classDefineExtendsNames(node);
+      const missingParents = parentNames.filter((name) => !resolveExtendsClass(classes, name));
+      if (missingParents.length === 0) continue;
       const className =
         (typeof node.data.properties?.name === 'string' && node.data.properties.name.trim()) ||
         node.data.label.replace(/^Declare\s+/, '').trim() ||
@@ -1129,13 +1135,15 @@ function validateExtendsTargets(input: AnalyzeProjectInput): Diagnostic[] {
         (typeof node.data.properties?.classId === 'string' && node.data.properties.classId) ||
         (typeof node.data.properties?.symbolId === 'string' && node.data.properties.symbolId) ||
         undefined;
-      reportMissing({
-        className,
-        extendsType: (extendsType ?? '').trim(),
-        classId,
-        tabId,
-        nodeId: node.id,
-      });
+      for (const parentName of missingParents) {
+        reportMissing({
+          className,
+          extendsType: parentName,
+          classId,
+          tabId,
+          nodeId: node.id,
+        });
+      }
     }
   }
 

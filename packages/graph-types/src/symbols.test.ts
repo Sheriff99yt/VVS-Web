@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import {
   createDefaultOverload,
+  createClassSymbol,
   overloadReturnParameters,
+  syncClassExtendsFields,
   type FunctionOverload,
 } from './symbols';
 
@@ -63,5 +65,16 @@ describe('overloadReturnParameters helper', () => {
     const overload = createDefaultOverload();
     expect(overload.returnParameters).toEqual([]);
     expect(overloadReturnParameters(overload)).toEqual([]);
+  });
+});
+
+describe('syncClassExtendsFields', () => {
+  test('keeps extendsTypes[0] equal to extendsType and de-dupes', () => {
+    const fields = syncClassExtendsFields('Parent', ['Mixin', 'Parent']);
+    expect(fields.extendsType).toBe('Parent');
+    expect(fields.extendsTypes).toEqual(['Parent', 'Mixin']);
+    const cls = createClassSymbol('Child', { extendsType: 'Parent', extendsTypes: ['Mixin'] });
+    expect(cls.extendsType).toBe('Parent');
+    expect(cls.extendsTypes).toEqual(['Parent', 'Mixin']);
   });
 });

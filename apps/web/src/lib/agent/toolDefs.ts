@@ -75,6 +75,16 @@ export const AGENT_TOOLS: readonly AgentToolDef[] = [
         type: 'string',
         description: 'Class id — targets the class home graph when tab_id is omitted',
       },
+      {
+        name: 'message',
+        type: 'string',
+        description: 'Convenience text for Print String — sets inlineValues.in_str when present',
+      },
+      {
+        name: 'inline_values',
+        type: 'object',
+        description: 'Pin id to inline value (e.g. { "in_str": "hello" })',
+      },
     ],
   },
   {

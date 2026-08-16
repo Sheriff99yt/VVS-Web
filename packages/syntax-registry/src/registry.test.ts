@@ -150,3 +150,58 @@ describe('function role spawn rows', () => {
     }
   });
 });
+
+function catalogHasKind(targetLanguage: Parameters<typeof list>[0]['targetLanguage'], kindId: string): boolean {
+  return list({ currentGraphId: 'main', functions: [], events: [], targetLanguage })
+    .some((category) => category.items.some((item) => item.kindId === kindId));
+}
+
+describe('lambda and try spawn gates', () => {
+  test('lambda_define spawns only python/javascript/csharp/rust/gdscript', () => {
+    for (const lang of ['python', 'javascript', 'csharp', 'rust', 'gdscript'] as const) {
+      expect(catalogHasKind(lang, 'lambda_define')).toBe(true);
+    }
+    for (const lang of ['cpp', 'go', 'verse'] as const) {
+      expect(catalogHasKind(lang, 'lambda_define')).toBe(false);
+    }
+  });
+
+  test('flow_try spawns only python/javascript/cpp/csharp/gdscript', () => {
+    for (const lang of ['python', 'javascript', 'cpp', 'csharp', 'gdscript'] as const) {
+      expect(catalogHasKind(lang, 'flow_try')).toBe(true);
+    }
+    for (const lang of ['go', 'rust', 'verse'] as const) {
+      expect(catalogHasKind(lang, 'flow_try')).toBe(false);
+    }
+  });
+
+  test('inferKindIdFromLabel maps Lambda and Try', () => {
+    expect(inferKindIdFromLabel('Lambda', 'Expressions')).toBe('lambda_define');
+    expect(inferKindIdFromLabel('Try', 'Flow Control')).toBe('flow_try');
+  });
+});
+
+describe('lambda_define and flow_try spawn gates', () => {
+  function kindShown(lang: 'python' | 'javascript' | 'cpp' | 'csharp' | 'rust' | 'gdscript' | 'verse' | 'go', kindId: string): boolean {
+    const cats = list({ currentGraphId: 'main', functions: [], events: [], targetLanguage: lang });
+    return cats.some((c) => c.items.some((i) => i.kindId === kindId));
+  }
+
+  test('lambda_define hidden for cpp/go/verse; shown for python/js/cs/rust/gd', () => {
+    for (const lang of ['cpp', 'go', 'verse'] as const) {
+      expect(kindShown(lang, 'lambda_define')).toBe(false);
+    }
+    for (const lang of ['python', 'javascript', 'csharp', 'rust', 'gdscript'] as const) {
+      expect(kindShown(lang, 'lambda_define')).toBe(true);
+    }
+  });
+
+  test('flow_try hidden for go/rust; shown for python/js/cpp/cs/gd', () => {
+    for (const lang of ['go', 'rust'] as const) {
+      expect(kindShown(lang, 'flow_try')).toBe(false);
+    }
+    for (const lang of ['python', 'javascript', 'cpp', 'csharp', 'gdscript'] as const) {
+      expect(kindShown(lang, 'flow_try')).toBe(true);
+    }
+  });
+});

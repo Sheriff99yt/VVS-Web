@@ -74,6 +74,33 @@ export function overloadReturnParameters(overload: FunctionOverload): SymbolPara
   return [];
 }
 
+
+/** Keep extendsType as first parent; extendsTypes[0] always mirrors it. */
+export function syncClassExtendsFields(
+  extendsType?: string | null,
+  extendsTypes?: unknown
+): { extendsType?: string; extendsTypes?: string[] } {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  const push = (raw: unknown) => {
+    if (typeof raw !== 'string') return;
+    const t = raw.trim();
+    if (!t || seen.has(t)) return;
+    seen.add(t);
+    names.push(t);
+  };
+  push(extendsType);
+  if (Array.isArray(extendsTypes)) {
+    for (const item of extendsTypes) push(item);
+  }
+  if (names.length === 0) return {};
+  return { extendsType: names[0], extendsTypes: names };
+}
+
+export function classExtendsNames(cls: Pick<ClassSymbol, 'extendsType' | 'extendsTypes'>): string[] {
+  return syncClassExtendsFields(cls.extendsType, cls.extendsTypes).extendsTypes ?? [];
+}
+
 /** Default class id for v2→v3 migration and single-class projects. */
 export const MAIN_CLASS_ID = 'main-class';
 
@@ -142,6 +169,8 @@ export interface ClassSymbol {
   id: string;
   name: string;
   extendsType?: string;
+  /** Extra bases after [0]. [0] always mirrors extendsType. Stored; emit still first only. */
+  extendsTypes?: string[];
   description?: string;
   /** @deprecated Legacy canvas key — use containerId as the class home graph document. */
   graphTabId?: string;
@@ -176,6 +205,7 @@ export function createClassSymbol(
   options?: {
     id?: string;
     extendsType?: string;
+    extendsTypes?: string[];
     description?: string;
     graphTabId?: string;
     containerId?: string;
@@ -184,11 +214,12 @@ export function createClassSymbol(
   }
 ): ClassSymbol {
   const id = options?.id ?? createClassId();
+  const extendsFields = syncClassExtendsFields(options?.extendsType, options?.extendsTypes);
   return {
     kind: 'class',
     id,
     name,
-    extendsType: options?.extendsType,
+    ...extendsFields,
     description: options?.description,
     graphTabId: options?.graphTabId,
     containerId: options?.containerId ?? MAIN_GRAPH_CONTAINER_ID,
@@ -203,11 +234,15 @@ export function normalizeClassSymbols(raw: unknown): ClassSymbol[] {
     if (item && typeof item === 'object' && (item as ClassSymbol).kind === 'class') {
       const cls = item as ClassSymbol;
       const id = typeof cls.id === 'string' ? cls.id : createClassId();
+      const extendsFields = syncClassExtendsFields(
+        typeof cls.extendsType === 'string' ? cls.extendsType : undefined,
+        (cls as ClassSymbol).extendsTypes
+      );
       return {
         kind: 'class' as const,
         id,
         name: typeof cls.name === 'string' ? cls.name : 'Untitled',
-        extendsType: typeof cls.extendsType === 'string' ? cls.extendsType : undefined,
+        ...extendsFields,
         description: typeof cls.description === 'string' ? cls.description : undefined,
         graphTabId: typeof cls.graphTabId === 'string' ? cls.graphTabId : undefined,
         containerId:
@@ -520,12 +555,16 @@ export function normalizeFunctionSymbols(
 
 export function collectPortabilityFeatures(snapshot: {
   projectDetails: { extendsType: string };
+  classes?: ClassSymbol[];
   functions: FunctionSymbol[];
   variables?: VariableSymbol[];
 }): PortabilityFeature[] {
   const features = new Set<PortabilityFeature>();
   if (snapshot.projectDetails.extendsType) {
     features.add('class.inheritance');
+  }
+  for (const cls of snapshot.classes ?? []) {
+    if (classExtendsNames(cls).length > 0) features.add('class.inheritance');
   }
   for (const fn of snapshot.functions) {
     if (fn.binding === 'static') features.add('function.static');

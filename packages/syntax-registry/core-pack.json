@@ -406,6 +406,58 @@
       "outputs": []
     },
     {
+      "kindId": "flow_try",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Try",
+      "semantics": "flow.try",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "try_exec",
+          "label": "Try",
+          "type": "execution"
+        },
+        {
+          "id": "catch_exec",
+          "label": "Catch",
+          "type": "execution"
+        },
+        {
+          "id": "finally_exec",
+          "label": "Finally",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "catchType",
+          "label": "Catch type",
+          "type": "string",
+          "default": "",
+          "description": "Optional exception type."
+        },
+        {
+          "key": "catchName",
+          "label": "Catch name",
+          "type": "string",
+          "default": "",
+          "description": "Optional catch binding name."
+        }
+      ]
+    },
+    {
       "kindId": "action_print",
       "kindVersion": 1,
       "category": "Action",
@@ -579,6 +631,43 @@
           "id": "result",
           "label": "Number",
           "type": "data_number"
+        }
+      ]
+    },
+    {
+      "kindId": "lambda_define",
+      "kindVersion": 1,
+      "category": "Expressions",
+      "title": "Lambda",
+      "semantics": "expr.lambda",
+      "inputs": [
+        {
+          "id": "body",
+          "label": "Body",
+          "type": "data_any"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Result",
+          "type": "data_any"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "params",
+          "label": "Parameters",
+          "type": "string",
+          "default": "",
+          "description": "Comma-separated parameter names."
+        },
+        {
+          "key": "capture",
+          "label": "Capture",
+          "type": "boolean",
+          "default": false,
+          "description": "Capture enclosing values. Rust emit uses move when set."
         }
       ]
     },

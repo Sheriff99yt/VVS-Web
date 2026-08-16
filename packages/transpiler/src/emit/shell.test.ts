@@ -33,6 +33,13 @@ describe('emit shell pack templates', () => {
     expect(classExtendsSuffix('cpp', 'Widget')).toBe(' : public Widget');
   });
 
+  test('emit still prints first parent only (extras stored, not generated)', () => {
+    expect(renderClassModuleOpen('python', 'Child', 'Parent')).toBe('class Child(Parent):');
+    expect(renderClassModuleOpen('python', 'Child', 'Parent')).not.toContain('Mixin');
+    expect(classExtendsSuffix('cpp', 'Parent')).toBe(' : public Parent');
+    expect(classExtendsSuffix('cpp', 'Parent')).not.toContain('Mixin');
+  });
+
   test('function def header from pack', () => {
     expect(
       renderFunctionDefHeader(

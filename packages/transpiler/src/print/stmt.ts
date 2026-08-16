@@ -14,6 +14,7 @@ import type {
   IrDeclareLocal,
   IrSwitch,
   IrWhileLoop,
+  IrTry,
   IrPrint,
   IrReturn,
   IrBreak,
@@ -24,7 +25,7 @@ import { PackTemplateMissingError } from '@vvs/syntax-packs';
 import { offsetSpans } from '../codeExpr';
 import type { ExprPrinter } from './types';
 import { createDefaultExprPrinter, mergeArgs, rustInheritedBasePath } from './expr';
-import { builtBlockToText, buildForLoop, buildIfBranch, buildSequence, buildWhileLoop } from './blocks';
+import { builtBlockToText, buildForLoop, buildIfBranch, buildSequence, buildTry, buildWhileLoop } from './blocks';
 import {
   commentPrefixFromPack,
   isPackDrivenFamily,
@@ -236,6 +237,14 @@ export function createStmtPrinters(
     Sequence: (stmt, ctx) => {
       if (stmt.kind !== 'Sequence') return null;
       const block = buildSequence(stmt as IrSequence, ctx, (body, c) =>
+        printStatements(body, c).map((p) => p.text)
+      );
+      return { text: builtBlockToText(block), expressionSpans: [] };
+    },
+
+    Try: (stmt, ctx) => {
+      if (stmt.kind !== 'Try') return null;
+      const block = buildTry(stmt as IrTry, ctx, (body, c) =>
         printStatements(body, c).map((p) => p.text)
       );
       return { text: builtBlockToText(block), expressionSpans: [] };

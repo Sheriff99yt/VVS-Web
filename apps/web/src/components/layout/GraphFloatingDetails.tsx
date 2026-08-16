@@ -23,7 +23,7 @@ import {
   resolveEventForNode,
 } from '@/lib/eventHelpers';
 import type { ClassSymbol, FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
-import { buildProjectSymbolIndex, isUnresolvedSymbolRef } from '@vvs/graph-types';
+import { buildProjectSymbolIndex, isUnresolvedSymbolRef, syncClassExtendsFields } from '@vvs/graph-types';
 import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel';
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
 import { EventNodeBindingPanel } from './RightSidebar/EventNodeBindingPanel';
@@ -33,6 +33,7 @@ import { PropertySchemaPanel } from './RightSidebar/PropertySchemaPanel';
 import { ImportGraphTargetPanel } from './RightSidebar/ImportGraphTargetPanel';
 import { FunctionPropertiesPanel } from './RightSidebar/FunctionPropertiesPanel';
 import { ClassPropertiesPanel } from './RightSidebar/ClassPropertiesPanel';
+import { ExtendsListEditor } from './ExtendsListEditor';
 import { BrokenRefRepairPanel } from './RightSidebar/BrokenRefRepairPanel';
 import { CodePreviewPropertiesPanel } from './RightSidebar/CodePreviewPropertiesPanel';
 import { FloatingPanelShell } from './FloatingPanelShell';
@@ -155,8 +156,18 @@ function GraphFloatingDetailsPanel() {
     selection.type === 'function' ? functions.find((f) => f.id === selection.id) : null;
   const selectedEvent =
     selection.type === 'event' ? events.find((e) => e.id === selection.id) : null;
+  const classIdFromNode =
+    nodeData && typeof nodeData.data.properties?.classId === 'string'
+      ? nodeData.data.properties.classId
+      : nodeData && typeof nodeData.data.properties?.symbolId === 'string'
+        ? nodeData.data.properties.symbolId
+        : undefined;
   const selectedClass =
-    selection.type === 'class' ? classes.find((c) => c.id === selection.id) : null;
+    selection.type === 'class'
+      ? classes.find((c) => c.id === selection.id)
+      : nodeData?.data.kindId === 'class_define' && classIdFromNode
+        ? classes.find((c) => c.id === classIdFromNode)
+        : null;
 
   const brokenRef = useMemo(() => {
     if (selection.type !== 'node' || !selectedNodeId || !nodeData) return null;
@@ -380,11 +391,12 @@ function GraphFloatingDetailsPanel() {
         (typeof symbolId === 'string' ? symbolId : undefined);
       const cls = classId ? classes.find((item) => item.id === classId) : undefined;
       if (cls) {
-        const nextValue = key === 'extendsType' ? String(value).trim() : value;
-        renameClass({
-          ...cls,
-          [key]: key === 'extendsType' ? (nextValue || undefined) : nextValue,
-        });
+        if (key === 'extendsType') {
+          const nextValue = String(value).trim();
+          renameClass({ ...cls, ...syncClassExtendsFields(nextValue, cls.extendsTypes) });
+        } else {
+          renameClass({ ...cls, [key]: value });
+        }
       }
     }
   };
@@ -481,6 +493,10 @@ function GraphFloatingDetailsPanel() {
     hidden.add('eventId');
     if (nodeKindId === 'function_define') {
       hidden.add('graphTabId');
+    }
+    if (nodeKindId === 'class_define') {
+      hidden.add('extendsType');
+      hidden.add('extendsTypes');
     }
     return nodeKindDef.propertySchema.filter((field) => !hidden.has(field.key));
   }, [nodeKindDef?.propertySchema, nodeKindId]);
@@ -593,8 +609,10 @@ function GraphFloatingDetailsPanel() {
 
       {selection.type === 'class' && selectedClass && (
         <ClassPropertiesPanel
+          key={selectedClass.id}
           cls={selectedClass}
           classes={classes}
+          targetLanguage={targetLanguage}
           onChange={handleClassChange}
         />
       )}
@@ -681,9 +699,21 @@ function GraphFloatingDetailsPanel() {
             />
           )}
 
-          {filteredPropertySchema.length > 0 ? (
+          {nodeKindId === 'class_define' && selectedClass ? (
+            <div className="mb-2">
+              <ExtendsListEditor
+                key={selectedClass.id}
+                cls={selectedClass}
+                classes={classes}
+                targetLanguage={targetLanguage}
+                onChange={handleClassChange}
+              />
+            </div>
+          ) : null}
+
+          {filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes'))).length > 0 ? (
             <PropertySchemaPanel
-              fields={filteredPropertySchema}
+              fields={filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes')))}
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}
               fieldOptions={{

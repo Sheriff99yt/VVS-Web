@@ -241,7 +241,7 @@ Target languages in UI: **Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go
 
 ### Graph editor features
 
-Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **U84–U92, U94–U99, U101–U102, U104–U119 shipped** (August 2026); Function constructor/destructor role + leftover-role locks + settings search audit shipped. Remaining: CL-014 honest (x), optional CL-017, U93 long-term, U90/library Phase 3. U100 cut. **U103 locked** as Class (field or Extends; no Component node) — not remaining work.
+Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incomplete-ui.md`](../.agents/memory/incomplete-ui.md) — **U84–U92, U94–U99, U101–U102, U104–U119 shipped** (August 2026); Function constructor/destructor role + leftover-role locks + settings search audit shipped. Remaining: CL-014 honest (x), optional CL-017, U93 long-term, U90/library Phase 3. U100 cut. **U103 locked** as Class (field or Extends; no Component node) — not remaining work. **Extends list UI shipped** (extras stored; generate first parent only). `lambda_define` and `flow_try` shipped. Yield and CL-017 stay planned.
 
 | Feature | Status |
 |---------|--------|
@@ -258,6 +258,9 @@ Shell and core interactions are in place. **UI backlog:** [`.agents/memory/incom
 | Event emit/subscribe nodes (`event_emit`, `event_subscribe`) | **Blocked** — excluded from spawn catalog; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` blocks Generate; no `_emit` / `_subscribe` injection in transpiler |
 | Program entry (`events[]` `role: 'entry'`) | Done — `event_member_define` + `event_define` on class graph; `on_start` only from canvas; legacy `event_on_start` deprecated; new class/project bootstraps entry via `createClassHomeBootstrap` |
 | Function symbols + overloads (`FunctionSymbol`, snapshot v3) | Done — tree, inspector, pin sync; symbols carry optional `classId` |
+| Extends list (MI visual) | **Partial** — list UI on Declare Class (`extendsTypes`, `[0]===extendsType`); emit still first parent only |
+| Lambda expression (`lambda_define`) | Done — spawn py/js/cs/rs/gd; capture option; 5-lang pack templates |
+| Try / catch (`flow_try`) | Done — spawn py/js/cpp/cs/gd; empty finally omitted; hidden go/rust |
 | Multi-class projects | Done — `ClassSymbol`, `classes[]`, `activeClassId`, `graphContainers[]` (each container is a real canvas at `documents[container.id]`; default **Project map** at `main-graph`), v2→v3 loader, **Folders** section in ProjectTree **Structure** tab (click folder/class to select; double-click to open graph), class-scoped symbol lists on **Symbols** tab, drag Get/Set/Call/Declare on class graphs only, `graph_ref` on project-map graphs. **Class declare fidelity:** `class_define` required when class has symbols or any member define on home graph; `DEFINE_NODE_MISSING` / `ORPHAN_DEFINE_NODE` for class; panel `addClassWithDefine` + tree Declare badge + restore; deleting `class_define` blocks Generate but preview still shows member body in chain order (no phantom `class Name:` shell). In-page agent + optional Go sidecar: `list_classes`/`add_class`, `class_id` on graph tools. Design: [design/multi_class_symbols.md](design/multi_class_symbols.md) |
 | Pin type validation on connect | Done |
 | Wire / cross-graph cycle prevention | Done — `graphCycles.ts`, `graphRelations.ts` |

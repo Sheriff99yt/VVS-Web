@@ -698,6 +698,20 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'lambda-expression-node',
+        title: 'Lambda expression node',
+        description:
+          'Expression node lambda_define (no exec). Capture option. Body is one data in; result data out; params comma string. Spawn python/javascript/csharp/rust/gdscript only. Pack templates for those 5 langs. Not a project symbol.',
+        status: 'done',
+      },
+      {
+        id: 'try-flow-node',
+        title: 'Try / catch flow node',
+        description:
+          'flow_try like Branch: try/catch/finally exec pins + exec_out. Optional catchType/catchName. Empty finally omitted. Spawn python/javascript/cpp/csharp/gdscript; hidden go/rust. No Result/panic fiction.',
+        status: 'done',
+      },
+      {
         id: 'declare-implement-emit',
         title: '1:1 member-chain emit',
         description:
@@ -1308,8 +1322,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Extends list (multiple inheritance visual)',
         description:
-          'Locked visual, not started: Extends is a list on Declare Class; + Add base is a second row (Python/C++ only). Implements stays a second list. Emit today is still one extendsType string — multi-base emit not shipped. Not an Inherit node. See language_capability_catalog.md § Multiple inheritance.',
-        status: 'planned',
+          'Visual shipped: Extends is a list on Declare Class; + Add base is a second row (Python/C++ only). Persist keeps extendsTypes with [0]===extendsType on renameClass / defineNodeSync / snapshot. Generate still prints the first parent only. Multi-base emit not shipped. Not an Inherit node. See language_capability_catalog.md § Multiple inheritance.',
+        status: 'partial',
       },
     ],
   },
@@ -1357,22 +1371,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Leftover constructs (planned nodes)',
     phase: 6,
     items: [
-      {
-        id: 'lambda-expression-node',
-        layer: 'frontend',
-        title: 'Lambda expression node',
-        description:
-          'Planned expression node (lambda / => / |x|). Capture is an option. One kind at most (lambda_define); drop closure_define. Not a project symbol.',
-        status: 'planned',
-      },
-      {
-        id: 'try-flow-node',
-        layer: 'frontend',
-        title: 'Try / catch flow node',
-        description:
-          'Planned flow node like Branch; catch / finally are exec pins. Do not spawn in Go or Rust. Not a symbol.',
-        status: 'planned',
-      },
       {
         id: 'yield-statement-later',
         layer: 'frontend',

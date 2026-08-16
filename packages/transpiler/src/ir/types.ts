@@ -34,7 +34,8 @@ export type IrStmtKind =
   | 'EmitEvent'
   | 'CallNative'
   | 'ArrayPush'
-  | 'CommentFallback';
+  | 'CommentFallback'
+  | 'Try';
 
 export interface IrBase {
   kind: IrStmtKind;
@@ -51,7 +52,8 @@ export type IrExprKind =
   | 'ConvertToString'
   | 'ConvertToNumber'
   | 'GetInputTemp'
-  | 'EnumMember';
+  | 'EnumMember'
+  | 'Lambda';
 
 export interface IrExprBase {
   kind: IrExprKind;
@@ -105,6 +107,13 @@ export interface IrEnumMember extends IrExprBase {
   member: string;
 }
 
+export interface IrLambda extends IrExprBase {
+  kind: 'Lambda';
+  params: string[];
+  body: IrExpr;
+  capture: boolean;
+}
+
 export type IrExpr =
   | IrLiteral
   | IrInstanceRef
@@ -113,7 +122,8 @@ export type IrExpr =
   | IrConvertToString
   | IrConvertToNumber
   | IrGetInputTemp
-  | IrEnumMember;
+  | IrEnumMember
+  | IrLambda;
 
 // ── Structured statement IR ─────────────────────────────────────────────────
 
@@ -299,6 +309,16 @@ export interface IrCommentFallback extends IrBase {
   comment: string;
 }
 
+export interface IrTry extends IrBase {
+  kind: 'Try';
+  tryBody: IrStatement[];
+  catchBody: IrStatement[];
+  catchType?: string;
+  catchName?: string;
+  /** Omitted when the finally pin is unwired. */
+  finallyBody?: IrStatement[];
+}
+
 export type IrStructuredStatement =
   | IrCallFunction
   | IrAssignVariable
@@ -321,7 +341,8 @@ export type IrStructuredStatement =
   | IrCallNative
   | IrArrayPush
   | IrCommentFallback
-  | IrDeclareLocal;
+  | IrDeclareLocal
+  | IrTry;
 
 export type IrStatement = IrStructuredStatement;
 

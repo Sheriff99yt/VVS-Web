@@ -1,27 +1,21 @@
 'use client';
 
 import React from 'react';
-import type { ClassSymbol } from '@vvs/graph-types';
-import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { buildExtendsClassPickerOptions } from '@/lib/classScope';
+import type { ClassSymbol, TargetLanguage } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
+import { ExtendsListEditor } from '@/components/layout/ExtendsListEditor';
 
 export function ClassPropertiesPanel({
   cls,
   classes,
+  targetLanguage,
   onChange,
 }: {
   cls: ClassSymbol;
   classes: ClassSymbol[];
+  targetLanguage?: TargetLanguage | string;
   onChange: (next: ClassSymbol) => void;
 }) {
-  const options = buildExtendsClassPickerOptions(classes, cls.id);
-  const current = cls.extendsType ?? '';
-  const extendsOptions =
-    current && !options.some((option) => option.value === current)
-      ? [{ value: current, label: current, description: 'Current value' }, ...options]
-      : options;
-
   return (
     <div className="space-y-3 text-xs text-zinc-300">
       <div className="space-y-1">
@@ -34,16 +28,12 @@ export function ClassPropertiesPanel({
           {...graphInlineFieldProps}
         />
       </div>
-      <div className="space-y-1">
-        <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Extends</label>
-        <SearchableSelect
-          value={current}
-          onChange={(value) => onChange({ ...cls, extendsType: value.trim() || undefined })}
-          options={extendsOptions}
-          placeholder="Parent class…"
-          searchable
-        />
-      </div>
+      <ExtendsListEditor
+        cls={cls}
+        classes={classes}
+        targetLanguage={targetLanguage}
+        onChange={onChange}
+      />
     </div>
   );
 }

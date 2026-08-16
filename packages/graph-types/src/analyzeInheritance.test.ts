@@ -128,3 +128,33 @@ describe('analyzeProject inheritance (U106)', () => {
     expect(result.diagnostics.some((d) => d.code === 'EXTENDS_CLASS_MISSING')).toBe(false);
   });
 });
+
+describe('analyzeProject extends list', () => {
+  test('errors when an extra stored base is missing', () => {
+    const machine = createClassSymbol('Machine', { id: MAIN_CLASS_ID, containerId: HOME });
+    const sensor = createClassSymbol('Sensor', {
+      id: 'class-sensor',
+      containerId: HOME,
+      extendsType: 'Machine',
+      extendsTypes: ['Machine', 'NoSuchMixin'],
+    });
+
+    const result = analyzeProject({
+      documents: {
+        [HOME]: {
+          nodes: [classDefineNode('n-machine', machine), classDefineNode('n-sensor', sensor)],
+          edges: [],
+        },
+      },
+      functions: [],
+      events: [],
+      variables: [],
+      classes: [machine, sensor],
+      projectDetails: { extendsType: '' },
+      targetLanguage: 'python',
+    });
+
+    const missing = result.diagnostics.filter((d) => d.code === 'EXTENDS_CLASS_MISSING');
+    expect(missing.some((d) => d.message.includes('NoSuchMixin'))).toBe(true);
+  });
+});

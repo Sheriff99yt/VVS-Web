@@ -93,7 +93,7 @@ export function AgentPanel({
           <div>
             <h3 className="text-zinc-100 font-semibold text-sm">Agent</h3>
             <p className="text-[11px] text-zinc-500 mt-0.5">
-              Hosted path is this in-page agent on the live canvas. No Cursor required.
+              Tools run on the live canvas. Enable writes to edit.
             </p>
           </div>
           <button type="button" onClick={onClose} className="text-zinc-500 hover:text-zinc-300">

@@ -152,6 +152,18 @@
     },
     "DispatchEventSuper": {
       "quasi": "super.on_{handler}({args})"
+    },
+    "Lambda": {
+      "quasi": "func({params}): return {body}"
+    },
+    "TryHeader": {
+      "quasi": "try:"
+    },
+    "TryCatchHeader": {
+      "quasi": "{catchClause}"
+    },
+    "TryFinallyHeader": {
+      "quasi": "finally:"
     }
   }
 }

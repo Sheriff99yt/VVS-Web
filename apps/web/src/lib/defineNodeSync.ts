@@ -19,7 +19,7 @@ import {
 } from '@vvs/graph-types';
 import { normalizeNodeData } from '@/lib/nodeKind';
 import { resolve as resolveKind } from '@/lib/nodeRegistry';
-import { classHomeGraphId, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+import { classHomeGraphId, syncClassExtendsFields, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { resolveOverloadForCall, buildFunctionImplementData, applyFunctionDefineBinding, applyFunctionImplementBinding } from '@/lib/functionHelpers';
@@ -141,6 +141,7 @@ function buildEventDefineData(event: ProjectEventDefinition, existingProperties?
 
 function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
   const def = resolveKind('class_define');
+  const extendsFields = syncClassExtendsFields(cls.extendsType, cls.extendsTypes);
   return normalizeNodeData({
     label: `Declare ${cls.name}`,
     category: 'Project',
@@ -152,7 +153,8 @@ function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
       symbolId: cls.id,
       classId: cls.id,
       name: cls.name,
-      extendsType: cls.extendsType ?? '',
+      extendsType: extendsFields.extendsType ?? '',
+      extendsTypes: extendsFields.extendsTypes ?? [],
       visibility: cls.visibility ?? 'public',
     },
   });

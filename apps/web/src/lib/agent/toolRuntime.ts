@@ -18,6 +18,8 @@ import { listSyntaxPacks } from '@vvs/syntax-packs';
 import { bootstrapClassHomeDocuments } from '@/lib/defineNodeSync';
 import { emitProjectLikeCodePanel } from '@/lib/emitProjectCode';
 import { normalizeNodeData } from '@/lib/nodeKind';
+import { coerceInlineValue } from '@/lib/pinInlineWidget';
+import type { PinDefinition } from '@/types/graph';
 import { isLeftoverUnspawnableKind } from './leftoverKinds';
 import { AGENT_TOOLS, getAgentTool, type AgentToolDef } from './toolDefs';
 
@@ -32,6 +34,7 @@ export interface ToolCallResult {
   error?: string;
   data?: unknown;
   snapshot?: ProjectSnapshot;
+  affectedTabId?: string;
 }
 
 function asString(value: unknown): string | undefined {
@@ -60,10 +63,7 @@ function resolveTabId(snapshot: ProjectSnapshot, args: Record<string, unknown>):
   return snapshot.activeGraphTab || Object.keys(snapshot.documents)[0] || '';
 }
 
-function documentForTab(
-  snapshot: ProjectSnapshot,
-  tabId: string
-): GraphDocument {
+function documentForTab(snapshot: ProjectSnapshot, tabId: string): GraphDocument {
   const doc = snapshot.documents[tabId];
   if (!doc) throw new Error(`graph tab not found: ${tabId}`);
   return doc;
@@ -108,7 +108,60 @@ function listPacks() {
   }));
 }
 
-function addNode(snapshot: ProjectSnapshot, args: Record<string, unknown>): { snapshot: ProjectSnapshot; node: GraphNode } {
+function asInlineScalar(value: unknown): string | number | boolean | undefined {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'boolean') return value;
+  return undefined;
+}
+
+function applyInlineOverrides(
+  inlineValues: Record<string, string | number | boolean>,
+  inputs: PinDefinition[],
+  overrides: Record<string, unknown>
+): void {
+  for (const [pinId, raw] of Object.entries(overrides)) {
+    const value = asInlineScalar(raw);
+    if (value === undefined) continue;
+    const pin = inputs.find((p) => p.id === pinId);
+    if (!pin || pin.type === 'execution') continue;
+    inlineValues[pinId] = coerceInlineValue(pin, value);
+  }
+}
+
+function isEntryHandlerNode(node: GraphNode): boolean {
+  return node.data.kindId === 'event_define';
+}
+
+function entryHandlerScore(node: GraphNode): number {
+  const eventName = String(node.data.properties?.eventName ?? '').toLowerCase();
+  const label = String(node.data.label ?? '').toLowerCase();
+  if (eventName === 'start' || eventName === 'on start' || label === 'on start') return 0;
+  if (node.id.startsWith('entry-handler-')) return 1;
+  return 2;
+}
+
+/** Free event_define / On start exec_out — do not invent Event Listeners. */
+function findFreeEntryExecOut(doc: GraphDocument): { node: GraphNode; handle: string } | null {
+  const handlers = doc.nodes.filter(isEntryHandlerNode).sort((a, b) => entryHandlerScore(a) - entryHandlerScore(b));
+  for (const node of handlers) {
+    const execOut = node.data.outputs?.find((pin) => pin.id === 'exec_out' && pin.type === 'execution');
+    if (!execOut) continue;
+    const taken = doc.edges.some((edge) => edge.source === node.id && edge.sourceHandle === 'exec_out');
+    if (!taken) return { node, handle: execOut.id };
+  }
+  return null;
+}
+
+function addNode(
+  snapshot: ProjectSnapshot,
+  args: Record<string, unknown>
+): {
+  snapshot: ProjectSnapshot;
+  node: GraphNode;
+  tabId: string;
+  wiredFrom?: { nodeId: string; handle: string };
+} {
   const kindId = requireString(args, 'kind_id');
   if (isLeftoverUnspawnableKind(kindId)) {
     throw new Error(
@@ -128,6 +181,14 @@ function addNode(snapshot: ProjectSnapshot, args: Record<string, unknown>): { sn
     if (input.type === 'data_string' || input.type === 'data_any') inlineValues[input.id] = '';
     if (input.type === 'data_number') inlineValues[input.id] = 0;
     if (input.type === 'data_boolean') inlineValues[input.id] = false;
+  }
+
+  if (typeof args.message === 'string') {
+    inlineValues.in_str = args.message;
+  }
+  const rawInline = args.inline_values;
+  if (rawInline && typeof rawInline === 'object' && !Array.isArray(rawInline)) {
+    applyInlineOverrides(inlineValues, kind.inputs as PinDefinition[], rawInline as Record<string, unknown>);
   }
 
   const data = normalizeNodeData({
@@ -151,33 +212,56 @@ function addNode(snapshot: ProjectSnapshot, args: Record<string, unknown>): { sn
     },
   };
 
-  return {
-    node,
-    snapshot: patchDocument(snapshot, tabId, {
-      ...doc,
-      nodes: [...doc.nodes, node],
-    }),
-  };
+  let next = patchDocument(snapshot, tabId, {
+    ...doc,
+    nodes: [...doc.nodes, node],
+  });
+  let wiredFrom: { nodeId: string; handle: string } | undefined;
+
+  const execIn = node.data.inputs?.find((pin) => pin.id === 'exec_in' && pin.type === 'execution');
+  if (execIn) {
+    const entry = findFreeEntryExecOut(doc);
+    if (entry) {
+      try {
+        const connected = connectPins(next, {
+          source: entry.node.id,
+          target: node.id,
+          source_handle: entry.handle,
+          target_handle: execIn.id,
+          tab_id: tabId,
+        });
+        next = connected.snapshot;
+        wiredFrom = { nodeId: entry.node.id, handle: entry.handle };
+      } catch {
+        // Compatibility failed — leave the new node unwired.
+      }
+    }
+  }
+
+  return { node, snapshot: next, tabId, wiredFrom };
 }
 
-function removeNode(snapshot: ProjectSnapshot, args: Record<string, unknown>): ProjectSnapshot {
+function removeNode(snapshot: ProjectSnapshot, args: Record<string, unknown>): { snapshot: ProjectSnapshot; tabId: string } {
   const nodeId = requireString(args, 'node_id');
   const tabId = resolveTabId(snapshot, args);
   const doc = documentForTab(snapshot, tabId);
   if (!doc.nodes.some((n) => n.id === nodeId)) {
     throw new Error(`node not found: ${nodeId}`);
   }
-  return patchDocument(snapshot, tabId, {
-    ...doc,
-    nodes: doc.nodes.filter((n) => n.id !== nodeId),
-    edges: doc.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
-  });
+  return {
+    tabId,
+    snapshot: patchDocument(snapshot, tabId, {
+      ...doc,
+      nodes: doc.nodes.filter((n) => n.id !== nodeId),
+      edges: doc.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
+    }),
+  };
 }
 
 function connectPins(
   snapshot: ProjectSnapshot,
   args: Record<string, unknown>
-): { snapshot: ProjectSnapshot; edge: GraphEdge } {
+): { snapshot: ProjectSnapshot; edge: GraphEdge; tabId: string } {
   const sourceId = requireString(args, 'source');
   const targetId = requireString(args, 'target');
   const sourceHandle = requireString(args, 'source_handle');
@@ -213,6 +297,7 @@ function connectPins(
   };
   return {
     edge,
+    tabId,
     snapshot: patchDocument(snapshot, tabId, {
       ...doc,
       edges: [...doc.edges, edge],
@@ -220,7 +305,7 @@ function connectPins(
   };
 }
 
-function addClass(snapshot: ProjectSnapshot, args: Record<string, unknown>): { snapshot: ProjectSnapshot; class: unknown } {
+function addClass(snapshot: ProjectSnapshot, args: Record<string, unknown>): { snapshot: ProjectSnapshot; class: { id: string }; tabId: string } {
   const name = requireString(args, 'name');
   const cls = createClassSymbol(name);
   const entry = createProgramEntryEvent({ id: `evt-start-${cls.id}`, classId: cls.id });
@@ -232,6 +317,7 @@ function addClass(snapshot: ProjectSnapshot, args: Record<string, unknown>): { s
   );
   return {
     class: cls,
+    tabId: classHomeGraphId(cls),
     snapshot: {
       ...snapshot,
       classes: [...snapshot.classes, cls],
@@ -303,17 +389,37 @@ export function callTool(
         return { ok: true, write: false, data: emitProjectLikeCodePanel(snapshot) };
       case 'add_class': {
         const result = addClass(snapshot, safeArgs);
-        return { ok: true, write: true, data: { class: result.class }, snapshot: result.snapshot };
+        return {
+          ok: true,
+          write: true,
+          data: { class: result.class },
+          snapshot: result.snapshot,
+          affectedTabId: result.tabId,
+        };
       }
       case 'add_node': {
         const result = addNode(snapshot, safeArgs);
-        return { ok: true, write: true, data: { node: result.node }, snapshot: result.snapshot };
+        return {
+          ok: true,
+          write: true,
+          data: { node: result.node, tabId: result.tabId, wiredFrom: result.wiredFrom },
+          snapshot: result.snapshot,
+          affectedTabId: result.tabId,
+        };
       }
-      case 'remove_node':
-        return { ok: true, write: true, data: { ok: true }, snapshot: removeNode(snapshot, safeArgs) };
+      case 'remove_node': {
+        const result = removeNode(snapshot, safeArgs);
+        return { ok: true, write: true, data: { ok: true }, snapshot: result.snapshot, affectedTabId: result.tabId };
+      }
       case 'connect_pins': {
         const result = connectPins(snapshot, safeArgs);
-        return { ok: true, write: true, data: { edge: result.edge }, snapshot: result.snapshot };
+        return {
+          ok: true,
+          write: true,
+          data: { edge: result.edge },
+          snapshot: result.snapshot,
+          affectedTabId: result.tabId,
+        };
       }
       default:
         return { ok: false, write, error: `unknown tool: ${name}` };
@@ -326,4 +432,3 @@ export function callTool(
     };
   }
 }
-

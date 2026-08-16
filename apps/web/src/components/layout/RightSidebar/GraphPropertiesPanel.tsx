@@ -17,6 +17,8 @@ import { useEnvironmentCatalog } from '@/hooks/useEnvironmentCatalog';
 import { formatEmitPreview } from '@vvs/graph-types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { buildExtendsClassPickerOptions } from '@/lib/classScope';
+import { ExtendsListEditor } from '@/components/layout/ExtendsListEditor';
+import { extendsListUiMode, syncClassExtendsFields } from '@vvs/graph-types';
 
 export type GraphPropertiesSection = 'environment' | 'exportPaths' | 'details';
 
@@ -284,37 +286,51 @@ export function GraphPropertiesPanel({
                 placeholder="e.g. PlayerController"
               />
             </div>
+            {extendsListUiMode(targetLanguage) === 'hidden' ? null : (
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-zinc-400">Extends (optional)</label>
-              <SearchableSelect
-                value={derivedExtends ?? ''}
-                disabled={Boolean(environmentId && isMain)}
-                onChange={(value) => {
-                  handleChange('extendsType', value);
-                  const cls = classes.find((item) => item.id === activeClassId);
-                  if (cls) {
-                    setClasses((prev) =>
-                      prev.map((item) =>
-                        item.id === cls.id ? { ...item, extendsType: value.trim() || undefined } : item
-                      )
-                    );
-                  }
-                }}
-                options={(() => {
-                  const options = buildExtendsClassPickerOptions(classes, activeClassId);
-                  const current = derivedExtends ?? '';
-                  if (current && !options.some((option) => option.value === current)) {
-                    return [{ value: current, label: current, description: 'Current value' }, ...options];
-                  }
-                  return options;
-                })()}
-                placeholder="Parent class…"
-                searchable
-              />
               {environmentId && isMain ? (
-                <p className="text-[9px] text-zinc-600">Derived from linked environment for {targetLanguage}</p>
-              ) : null}
+                <>
+                  <label className="text-[11px] font-medium text-zinc-400">Extends (optional)</label>
+                  <SearchableSelect
+                    value={derivedExtends ?? ''}
+                    disabled
+                    onChange={() => undefined}
+                    options={(() => {
+                      const options = buildExtendsClassPickerOptions(classes, activeClassId);
+                      const current = derivedExtends ?? '';
+                      if (current && !options.some((option) => option.value === current)) {
+                        return [{ value: current, label: current, description: 'Current value' }, ...options];
+                      }
+                      return options;
+                    })()}
+                    placeholder="Parent class…"
+                    searchable
+                  />
+                  <p className="text-[9px] text-zinc-600">Derived from linked environment for {targetLanguage}</p>
+                </>
+              ) : (
+                <ExtendsListEditor
+                  cls={
+                    classes.find((item) => item.id === activeClassId) ?? {
+                      kind: 'class',
+                      id: activeClassId ?? 'main-class',
+                      name: tabDetails.moduleName || 'Class',
+                      extendsType: tabDetails.extendsType || undefined,
+                    }
+                  }
+                  classes={classes}
+                  targetLanguage={targetLanguage}
+                  onChange={(next) => {
+                    const synced = syncClassExtendsFields(next.extendsType, next.extendsTypes);
+                    handleChange('extendsType', synced.extendsType ?? '');
+                    setClasses((prev) =>
+                      prev.map((item) => (item.id === next.id ? { ...item, ...synced } : item))
+                    );
+                  }}
+                />
+              )}
             </div>
+            )}
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium text-zinc-400">Description</label>
               <textarea

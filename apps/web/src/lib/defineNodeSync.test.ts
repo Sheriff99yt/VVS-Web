@@ -238,4 +238,21 @@ describe('defineNodeSync', () => {
     expect(syncedDef?.data.inputs).toHaveLength(1); // just exec_in
     expect(syncedImpl?.data.inputs).toHaveLength(1); // just exec_in
   });
+
+  it('syncs class_define extendsTypes with [0]===extendsType', () => {
+    const cls = createClassSymbol('Child', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+      extendsType: 'Parent',
+      extendsTypes: ['Mixin'],
+    });
+    const inserted = insertClassDefineNode(
+      { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } },
+      cls
+    );
+    const synced = syncDefineNodesForClass(inserted, cls);
+    const node = synced[MAIN_GRAPH_CONTAINER_ID]!.nodes.find((n) => n.data.kindId === 'class_define');
+    expect(node?.data.properties?.extendsType).toBe('Parent');
+    expect(node?.data.properties?.extendsTypes).toEqual(['Parent', 'Mixin']);
+  });
 });

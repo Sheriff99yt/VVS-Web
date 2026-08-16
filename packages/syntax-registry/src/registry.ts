@@ -16,6 +16,8 @@ export type NodeSemantics =
   | 'flow.while'
   | 'flow.switch'
   | 'flow.sequence'
+  | 'flow.try'
+  | 'expr.lambda'
   | 'action.print'
   | 'action.input.blocking'
   | 'action.wait.sync'
@@ -460,6 +462,26 @@ function constructorRoleIsSpawnable(targetLanguage?: TargetLanguage): boolean {
   );
 }
 
+function lambdaDefineIsSpawnable(targetLanguage?: TargetLanguage): boolean {
+  return (
+    targetLanguage === 'python' ||
+    targetLanguage === 'javascript' ||
+    targetLanguage === 'csharp' ||
+    targetLanguage === 'rust' ||
+    targetLanguage === 'gdscript'
+  );
+}
+
+function tryFlowIsSpawnable(targetLanguage?: TargetLanguage): boolean {
+  return (
+    targetLanguage === 'python' ||
+    targetLanguage === 'javascript' ||
+    targetLanguage === 'cpp' ||
+    targetLanguage === 'csharp' ||
+    targetLanguage === 'gdscript'
+  );
+}
+
 function destructorRoleIsSpawnable(targetLanguage?: TargetLanguage): boolean {
   return targetLanguage === 'cpp';
 }
@@ -504,6 +526,12 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
 
   for (const kind of listCoreKinds()) {
     if (kind.kindId === 'function_define' && !functionDeclareIsSpawnable(targetLanguage)) {
+      continue;
+    }
+    if (kind.kindId === 'lambda_define' && !lambdaDefineIsSpawnable(targetLanguage)) {
+      continue;
+    }
+    if (kind.kindId === 'flow_try' && !tryFlowIsSpawnable(targetLanguage)) {
       continue;
     }
     if (options.filterPin) {
@@ -571,6 +599,8 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'While Loop') return 'flow_while';
   if (label === 'Switch') return 'flow_switch';
   if (label === 'Sequence') return 'flow_sequence';
+  if (label === 'Try') return 'flow_try';
+  if (label === 'Lambda') return 'lambda_define';
   if (label === 'Print String') return 'action_print';
   if (label === 'Get User Input') return 'action_get_input';
   if (label === 'Wait') return 'action_wait';

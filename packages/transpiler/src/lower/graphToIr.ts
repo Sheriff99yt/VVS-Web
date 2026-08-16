@@ -229,6 +229,24 @@ function resolveNodeOutputExpr(
     return toNumberIrExpr(node.id, inner);
   }
 
+  if (kindId === 'lambda_define' && (pinId === 'result' || pinId === 'val' || !pinId)) {
+    const rawParams = node.data.properties?.params;
+    const params =
+      Array.isArray(rawParams)
+        ? rawParams.map((item) => String(item).trim()).filter(Boolean)
+        : typeof rawParams === 'string'
+          ? rawParams.split(',').map((item) => item.trim()).filter(Boolean)
+          : [];
+    const body = resolvePinValueExpr(node, 'body', ctx, depth + 1);
+    return {
+      kind: 'Lambda',
+      sourceGraphNodeId: node.id,
+      params,
+      body,
+      capture: node.data.properties?.capture === true || node.data.properties?.capture === 'true',
+    };
+  }
+
   if (kindId === 'expr_enum_member' && (pinId === 'val' || pinId === 'result' || !pinId)) {
     const enumName =
       typeof node.data.properties?.enumName === 'string' ? node.data.properties.enumName.trim() : '';
@@ -450,6 +468,7 @@ const CONTROL_FLOW_KINDS = new Set([
   'flow_while',
   'flow_switch',
   'flow_sequence',
+  'flow_try',
 ]);
 
 function collectBranchDescendantIds(branchNodeId: string, nodes: GraphNode[], edges: GraphEdge[]): Set<string> {
@@ -459,7 +478,7 @@ function collectBranchDescendantIds(branchNodeId: string, nodes: GraphNode[], ed
   const ids = new Set<string>();
   
   const branchHandles = (node.data.outputs || [])
-    .filter(p => p.type === 'execution' && p.id !== 'exec')
+    .filter((p) => p.type === 'execution' && p.id !== 'exec' && p.id !== 'exec_out')
     .map(p => p.id);
 
   for (const handle of branchHandles) {
@@ -490,6 +509,7 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   if (kindId === 'flow_while') return 'WhileLoop';
   if (kindId === 'flow_switch') return 'Switch';
   if (kindId === 'flow_sequence') return 'Sequence';
+  if (kindId === 'flow_try') return 'Try';
   if (kindId === 'action_print') return 'Print';
   if (kindId === 'flow_return' || kindId === 'action_return') return 'Return';
   if (kindId === 'flow_break' || kindId === 'action_break') return 'Break';
@@ -731,6 +751,27 @@ function lowerStatement(
       condition,
       trueBody,
       falseBody,
+    };
+  }
+
+  if (kindId === 'flow_try') {
+    const tryOrder = followExecFromHandle(node.id, 'try_exec', nodes, edges);
+    const catchOrder = followExecFromHandle(node.id, 'catch_exec', nodes, edges);
+    const finallyOrder = followExecFromHandle(node.id, 'finally_exec', nodes, edges);
+    const catchTypeRaw = node.data.properties?.catchType;
+    const catchNameRaw = node.data.properties?.catchName;
+    const catchType = typeof catchTypeRaw === 'string' && catchTypeRaw.trim() ? catchTypeRaw.trim() : undefined;
+    const catchName = typeof catchNameRaw === 'string' && catchNameRaw.trim() ? catchNameRaw.trim() : undefined;
+    return {
+      kind: 'Try',
+      sourceGraphNodeId: node.id,
+      tryBody: buildIrStatements(tryOrder, ctx, new Set()),
+      catchBody: buildIrStatements(catchOrder, ctx, new Set()),
+      catchType,
+      catchName,
+      ...(finallyOrder.length > 0
+        ? { finallyBody: buildIrStatements(finallyOrder, ctx, new Set()) }
+        : {}),
     };
   }
 
@@ -1093,6 +1134,10 @@ function collectAwaitWaits(stmts: IrStatement[], out: IrAwaitWait[]): void {
     if (stmt.kind === 'IfBranch') {
       collectAwaitWaits(stmt.trueBody, out);
       collectAwaitWaits(stmt.falseBody, out);
+    } else if (stmt.kind === 'Try') {
+      collectAwaitWaits(stmt.tryBody, out);
+      collectAwaitWaits(stmt.catchBody, out);
+      if (stmt.finallyBody) collectAwaitWaits(stmt.finallyBody, out);
     } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
       collectAwaitWaits(stmt.body, out);
     } else if (stmt.kind === 'Switch') {
@@ -1315,6 +1360,10 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
       if (stmt.kind === 'IfBranch') {
         collectFlowImportIds(stmt.trueBody);
         collectFlowImportIds(stmt.falseBody);
+      } else if (stmt.kind === 'Try') {
+        collectFlowImportIds(stmt.tryBody);
+        collectFlowImportIds(stmt.catchBody);
+        if (stmt.finallyBody) collectFlowImportIds(stmt.finallyBody);
       } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
         collectFlowImportIds(stmt.body);
       } else if (stmt.kind === 'Switch') {

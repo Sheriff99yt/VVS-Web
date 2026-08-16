@@ -2,7 +2,7 @@ import type { LanguageFamily } from '@vvs/graph-types';
 import type { PrintContext } from './types';
 import { printFromTemplate } from './template';
 
-export type BlockCloseKey = 'IfBranchClose' | 'ForLoopClose' | 'WhileLoopClose';
+export type BlockCloseKey = 'IfBranchClose' | 'ForLoopClose' | 'WhileLoopClose' | 'TryClose';
 
 /** Column offset for condition expression spans inside `if (` / `while (` headers. */
 export function condSpanOffset(

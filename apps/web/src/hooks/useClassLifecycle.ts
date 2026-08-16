@@ -9,6 +9,7 @@ import {
   MAIN_CLASS_ID,
   MAIN_GRAPH_CONTAINER_ID,
   createProgramEntryEvent,
+  syncClassExtendsFields,
 } from '@vvs/graph-types';
 import { classGraphTabId, classContainerId, symbolsForClass } from '@/lib/classScope';
 import { openGraphContainerTab } from '@/lib/graphTabs';
@@ -87,15 +88,21 @@ export function useClassLifecycle() {
       } else {
         pushHistory(`Update class ${cls.name}`);
       }
-      setClasses((list) => list.map((c) => (c.id === cls.id ? cls : c)));
-      if (cls.id === MAIN_CLASS_ID) {
+      const extendsFields = syncClassExtendsFields(cls.extendsType, cls.extendsTypes);
+      const next = {
+        ...cls,
+        extendsType: extendsFields.extendsType,
+        extendsTypes: extendsFields.extendsTypes,
+      };
+      setClasses((list) => list.map((c) => (c.id === cls.id ? next : c)));
+      if (next.id === MAIN_CLASS_ID) {
         setProjectDetails((d) => ({
           ...d,
-          moduleName: cls.name,
-          extendsType: cls.extendsType ?? '',
+          moduleName: next.name,
+          extendsType: next.extendsType ?? '',
         }));
       }
-      patchAllDocuments(() => applyClassUpdateToDocuments(documents, cls), {
+      patchAllDocuments(() => applyClassUpdateToDocuments(documents, next), {
         preserveHistory: true,
       });
     },

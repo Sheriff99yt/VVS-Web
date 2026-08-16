@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { createClassSymbol, createVariableSymbol, MAIN_CLASS_ID } from './symbols';
+import { createClassSymbol, createVariableSymbol, MAIN_CLASS_ID, syncClassExtendsFields, classExtendsNames } from './symbols';
 import {
+  classExtendsMissingNames,
   classExtendsTargetMissing,
   classVisibleSymbols,
+  extendsListUiMode,
   inheritedVariables,
   listClassAncestors,
   resolveExtendsClass,
@@ -71,5 +73,77 @@ describe('inheritance helpers', () => {
     expect(classExtendsTargetMissing([machine, sensor], sensor)).toBe(false);
     const broken = createClassSymbol('Ghost', { id: 'g', extendsType: 'NoSuchClass' });
     expect(classExtendsTargetMissing([machine, broken], broken)).toBe(true);
+  });
+});
+
+describe('extends list (locked visual)', () => {
+  test('syncClassExtendsFields mirrors [0] to extendsType', () => {
+    expect(syncClassExtendsFields('Parent', ['Parent', 'Mixin'])).toEqual({
+      extendsType: 'Parent',
+      extendsTypes: ['Parent', 'Mixin'],
+    });
+    expect(syncClassExtendsFields(undefined, ['Alpha', 'Beta'])).toEqual({
+      extendsType: 'Alpha',
+      extendsTypes: ['Alpha', 'Beta'],
+    });
+    expect(syncClassExtendsFields('Solo', undefined)).toEqual({
+      extendsType: 'Solo',
+      extendsTypes: ['Solo'],
+    });
+    expect(syncClassExtendsFields('  ', [])).toEqual({});
+  });
+
+  test('createClassSymbol and normalize keep [0] === extendsType', () => {
+    const cls = createClassSymbol('Child', { extendsType: 'Parent', extendsTypes: ['Mixin'] });
+    expect(cls.extendsType).toBe('Parent');
+    expect(cls.extendsTypes).toEqual(['Parent', 'Mixin']);
+    expect(classExtendsNames(cls)[0]).toBe(cls.extendsType);
+  });
+
+  test('go/rust hide the Extends list; python/cpp can add; others single', () => {
+    expect(extendsListUiMode('go')).toBe('hidden');
+    expect(extendsListUiMode('rust')).toBe('hidden');
+    expect(extendsListUiMode('python')).toBe('multi');
+    expect(extendsListUiMode('cpp')).toBe('multi');
+    expect(extendsListUiMode('javascript')).toBe('single');
+    expect(extendsListUiMode('gdscript')).toBe('single');
+    expect(extendsListUiMode('verse')).toBe('single');
+    expect(extendsListUiMode('csharp')).toBe('single');
+  });
+
+  test('cycle check walks extra stored bases', () => {
+    const parent = createClassSymbol('Parent', { id: 'p' });
+    const mixin = createClassSymbol('Mixin', { id: 'm', extendsType: 'Child' });
+    const child = createClassSymbol('Child', {
+      id: 'c',
+      extendsType: 'Parent',
+      extendsTypes: ['Parent', 'Mixin'],
+    });
+    expect(wouldCreateExtendsCycle([parent, mixin, child], 'c', 'Mixin')).toBe(true);
+  });
+
+  test('classExtendsMissingNames reports extra unknown bases', () => {
+    const parent = createClassSymbol('Parent', { id: 'p' });
+    const child = createClassSymbol('Child', {
+      id: 'c',
+      extendsType: 'Parent',
+      extendsTypes: ['Parent', 'Ghost'],
+    });
+    expect(classExtendsMissingNames([parent, child], child)).toEqual(['Ghost']);
+    expect(classExtendsTargetMissing([parent, child], child)).toBe(true);
+  });
+
+  test('inherited members still follow first parent only', () => {
+    const parent = createClassSymbol('Parent', { id: 'p' });
+    const mixin = createClassSymbol('Mixin', { id: 'm' });
+    const child = createClassSymbol('Child', {
+      id: 'c',
+      extendsType: 'Parent',
+      extendsTypes: ['Parent', 'Mixin'],
+    });
+    const mixinField = createVariableSymbol('FromMixin', { id: 'var-mix', classId: 'm' });
+    const parentField = createVariableSymbol('FromParent', { id: 'var-p', classId: 'p' });
+    const inherited = inheritedVariables([parent, mixin, child], 'c', [mixinField, parentField]);
+    expect(inherited.map((entry) => entry.symbol.name)).toEqual(['FromParent']);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { migrateLegacyFunction, MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME } from './symbols';
+import { migrateLegacyFunction, MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME, createClassSymbol } from './symbols';
 import { normalizeProjectSnapshot, createEmptyProjectSnapshot } from './snapshot';
 import { analyzeProject } from './analyze';
 
@@ -124,6 +124,23 @@ describe('normalizeProjectSnapshot', () => {
     expect(globalClass).toBeDefined();
     expect(globalClass?.id).toBe(`global-${MAIN_GRAPH_CONTAINER_ID}`);
     expect(globalClass?.name).toBe('Global');
+  });
+
+  test('preserves class extendsTypes and keeps [0]===extendsType', () => {
+    const child = createClassSymbol('Child', {
+      id: 'cls-child',
+      extendsType: 'Parent',
+      extendsTypes: ['Mixin'],
+    });
+    const snap = normalizeProjectSnapshot({
+      ...createEmptyProjectSnapshot(),
+      classes: [child],
+      activeClassId: child.id,
+    });
+    const loaded = snap?.classes.find((c) => c.id === child.id);
+    expect(loaded?.extendsType).toBe('Parent');
+    expect(loaded?.extendsTypes).toEqual(['Parent', 'Mixin']);
+    expect(loaded?.extendsTypes?.[0]).toBe(loaded?.extendsType);
   });
 });
 

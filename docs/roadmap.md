@@ -129,8 +129,10 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
 | **U105** | Overwriting (override) | **Done** — option on Declare/Define; emit + dim per language |
 | **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010). One parent today (`extendsType` string). |
-| **Extends list** | Multiple inheritance visual | **Locked visual (not started)** — Extends is a list on Declare Class; `+ Add base` is a second row (Python/C++ only). Multi-base emit not shipped. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
+| **Extends list** | Multiple inheritance visual | **Partial** — list UI shipped on Declare Class; extras stored on `extendsTypes`; generate still prints the first parent only. Multi-base emit not shipped. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
 | **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
+| **Lambda** | Expression node | **Done** — `lambda_define` (python / javascript / csharp / rust / gdscript). Capture option. |
+| **Try** | Flow node | **Done** — `flow_try` (python / javascript / cpp / csharp / gdscript). Empty finally omitted. Hidden in Go/Rust. |
 
 Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no** live run.
 

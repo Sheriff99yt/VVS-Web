@@ -195,6 +195,12 @@
     },
     "DispatchEventSuper": {
       "quasi": "self.base.on_{handler}({args});"
+    },
+    "Lambda": {
+      "quasi": "|{params}| {body}"
+    },
+    "LambdaMove": {
+      "quasi": "move |{params}| {body}"
     }
   }
 }

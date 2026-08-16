@@ -3,23 +3,29 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
+import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { applyProjectSnapshot } from '@/lib/applyProjectSnapshot';
 import { readUiPreference } from '@/lib/uiPreferences';
 import type { ProjectSnapshot } from '@/types/projectSnapshot';
 import { readAgentLlmSettings } from '@/lib/agent/agentSettings';
 import {
   appendAgentTranscript,
+  getAgentSession,
   patchAgentTranscript,
   setAgentReady,
   setAgentRunning,
 } from '@/lib/agent/agentStatusStore';
+import { buildAgentHistory, buildCanvasContext } from '@/lib/agent/canvasContext';
 import { parseToolCommand } from '@/lib/agent/parseToolCommand';
 import type { AgentWorkerInbound, AgentWorkerOutbound } from '@/lib/agent/protocol';
+import { formatAgentToolResult } from '@/lib/agent/transcriptFormat';
 import {
   invokeAgentTool,
+  getAgentBridgeHost,
   installWindowAgentBridge,
   setAgentBridgeHost,
   uninstallWindowAgentBridge,
+  type AgentApplyExtras,
 } from '@/lib/agent/windowBridge';
 
 let workerInstance: Worker | null = null;
@@ -36,6 +42,8 @@ export function getAgentWorker(): Worker | null {
 export async function runAgentPrompt(prompt: string): Promise<void> {
   const trimmed = prompt.trim();
   if (!trimmed) return;
+
+  const history = buildAgentHistory(getAgentSession().items);
 
   appendAgentTranscript({ role: 'user', text: trimmed });
 
@@ -54,7 +62,7 @@ export async function runAgentPrompt(prompt: string): Promise<void> {
     try {
       const result = await invokeAgentTool(parsed.name, parsed.args);
       patchAgentTranscript(item.id, {
-        text: `${parsed.name}\n${JSON.stringify(result, null, 2)}`,
+        text: formatAgentToolResult(parsed.name, result),
         toolOk: true,
       });
     } catch (err) {
@@ -78,11 +86,19 @@ export async function runAgentPrompt(prompt: string): Promise<void> {
   const requestId = newRequestId();
   activeRequestId = requestId;
   setAgentRunning(true);
+  const host = getAgentBridgeHost();
+  const snapshot = host?.getSnapshot() ?? null;
+  const allowWrites = host?.getAllowWrites() ?? false;
+  const canvasContext = snapshot
+    ? buildCanvasContext(snapshot, { allowWrites })
+    : `writes: ${allowWrites ? 'on' : 'off'}`;
+
   workerInstance.postMessage({
     type: 'run',
     requestId,
     prompt: trimmed,
-    history: [],
+    history,
+    canvasContext,
     settings,
   } satisfies AgentWorkerInbound);
 }
@@ -97,12 +113,15 @@ export function cancelAgentRun(): void {
 export function useAgentHost(): void {
   const project = useProject();
   const workspace = useGraphWorkspace();
+  const { expandCode } = useEditorPanels();
   const projectRef = useRef(project);
   const workspaceRef = useRef(workspace);
+  const expandCodeRef = useRef(expandCode);
   useEffect(() => {
     projectRef.current = project;
     workspaceRef.current = workspace;
-  }, [project, workspace]);
+    expandCodeRef.current = expandCode;
+  }, [project, workspace, expandCode]);
 
   const buildSnapshot = useCallback((): ProjectSnapshot | null => {
     const documents = workspaceRef.current.getDocuments();
@@ -136,7 +155,7 @@ export function useAgentHost(): void {
     };
   }, []);
 
-  const applySnapshot = useCallback((snapshot: ProjectSnapshot, label: string) => {
+  const applySnapshot = useCallback((snapshot: ProjectSnapshot, label: string, extras?: AgentApplyExtras) => {
     const p = projectRef.current;
     const w = workspaceRef.current;
     w.pushHistory(label);
@@ -162,8 +181,18 @@ export function useAgentHost(): void {
       setSyntaxPackLock: p.setSyntaxPackLock,
       setCodegenCapabilities: p.setCodegenCapabilities,
     });
-    p.markTabDirty(snapshot.activeGraphTab);
+    const dirtyTabId = extras?.dirtyTabId ?? snapshot.activeGraphTab;
+    p.markTabDirty(dirtyTabId);
     p.setCompileState('dirty');
+    if (extras?.selectNodeId) {
+      const nodeId = extras.selectNodeId;
+      const select = () => {
+        p.setSelection({ type: 'node', id: nodeId });
+        p.setSelectedNodeIds([nodeId]);
+      };
+      select();
+      queueMicrotask(select);
+    }
   }, []);
 
   useEffect(() => {
@@ -171,6 +200,7 @@ export function useAgentHost(): void {
       getSnapshot: buildSnapshot,
       applySnapshot,
       getAllowWrites: () => readUiPreference('agentAllowWrites'),
+      expandCode: () => expandCodeRef.current(),
     });
     installWindowAgentBridge();
     return () => {
@@ -203,7 +233,7 @@ export function useAgentHost(): void {
         void invokeAgentTool(message.name, message.args)
           .then((result) => {
             patchAgentTranscript(item.id, {
-              text: `${message.name}\n${JSON.stringify(result, null, 2)}`,
+              text: formatAgentToolResult(message.name, result),
               toolOk: true,
             });
             worker.postMessage({

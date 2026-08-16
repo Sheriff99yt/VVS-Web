@@ -13,6 +13,8 @@ export type {
   IrForEach,
   IrForLoop,
   IrIfBranch,
+  IrLambda,
+  IrTry,
   IrClass,
   IrMemberDecl,
   IrProject,

@@ -2,9 +2,10 @@ import type {
   ClassSymbol,
   FunctionSymbol,
   ProjectEventDefinition,
+  TargetLanguage,
   VariableSymbol,
 } from './symbols';
-import { MAIN_CLASS_ID } from './symbols';
+import { MAIN_CLASS_ID, classExtendsNames } from './symbols';
 
 /** Depth 1 = direct parent. Reusable for emit projection (CL-010) and canvas listing. */
 export interface InheritedMember<T> {
@@ -73,6 +74,19 @@ export function listClassAncestors(
   return ancestors;
 }
 
+export type ExtendsListUiMode = 'hidden' | 'single' | 'multi';
+
+/** Go/Rust hide the list. Python/C++ can add extra bases. Others: one row. */
+export function extendsListUiMode(lang?: TargetLanguage | string): ExtendsListUiMode {
+  if (lang === 'go' || lang === 'rust') return 'hidden';
+  if (lang === 'python' || lang === 'cpp') return 'multi';
+  return 'single';
+}
+
+/**
+ * Walk every stored Extends name (first + extras) as a directed graph.
+ * Used for cycle checks only — Super / inherited members still use first parent.
+ */
 export function wouldCreateExtendsCycle(
   classes: ClassSymbol[],
   childClassId: string,
@@ -81,7 +95,21 @@ export function wouldCreateExtendsCycle(
   const parent = resolveExtendsClass(classes, parentRef);
   if (!parent) return false;
   if (parent.id === childClassId) return true;
-  return listClassAncestors(classes, parent.id).some((entry) => entry.symbol.id === childClassId);
+  const visited = new Set<string>();
+  const stack = [parent.id];
+  while (stack.length > 0) {
+    const id = stack.pop()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    if (id === childClassId) return true;
+    const cls = classes.find((item) => item.id === id);
+    if (!cls) continue;
+    for (const ref of classExtendsNames(cls)) {
+      const next = resolveExtendsClass(classes, ref);
+      if (next && !visited.has(next.id)) stack.push(next.id);
+    }
+  }
+  return false;
 }
 
 function isClassFieldSymbol(item: { graphTabId?: string; scopedNodeId?: string }): boolean {
@@ -193,9 +221,16 @@ export function classVisibleSymbols(
   };
 }
 
+export function classExtendsMissingNames(
+  classes: ClassSymbol[],
+  cls: ClassSymbol
+): string[] {
+  return classExtendsNames(cls).filter((ref) => resolveExtendsClass(classes, ref) == null);
+}
+
 export function classExtendsTargetMissing(
   classes: ClassSymbol[],
   cls: ClassSymbol
 ): boolean {
-  return extendsTypeIsSet(cls.extendsType) && resolveExtendsClass(classes, cls.extendsType) == null;
+  return classExtendsMissingNames(classes, cls).length > 0;
 }

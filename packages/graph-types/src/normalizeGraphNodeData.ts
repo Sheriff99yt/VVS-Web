@@ -13,6 +13,8 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'While Loop') return 'flow_while';
   if (label === 'Switch') return 'flow_switch';
   if (label === 'Sequence') return 'flow_sequence';
+  if (label === 'Try') return 'flow_try';
+  if (label === 'Lambda') return 'lambda_define';
   if (label === 'Print String') return 'action_print';
   if (label === 'Get User Input') return 'action_get_input';
   if (label === 'Wait') return 'action_wait';
