@@ -48,7 +48,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const COVERAGE_LAB_FIXTURE_REVISION = 9;
+export const COVERAGE_LAB_FIXTURE_REVISION = 10;
 
 /** Primary class - Machine (entry / modifiers / abstract). */
 export const MACHINE_CLASS = createClassSymbol('Machine', {
@@ -328,6 +328,7 @@ const MACHINE_START_NODES: VVSNode[] = [
   }),
   printStringNode('lab-print-boot', { x: 520, y: 40 }),
   boundCallFunction('lab-call-boot', { x: 760, y: 40 }, FN_BOOT),
+  boundCallFunction('lab-call-diagnose', { x: 900, y: 40 }, FN_DIAGNOSE),
   boundCallFunction('lab-call-calculate', { x: 760, y: 140 }, FN_CALCULATE),
   boundVariableGet('lab-calc-get-power', { x: 520, y: 140 }, VAR_POWER),
   boundVariableGet('lab-calc-get-max', { x: 520, y: 220 }, VAR_MAX),
@@ -350,7 +351,8 @@ const MACHINE_START_EDGES: VVSEdge[] = [
   execEdge('lab-ms-0', 'lab-on-machine-start', 'lab-get-input'),
   execEdge('lab-ms-0b', 'lab-get-input', 'lab-print-boot'),
   execEdge('lab-ms-1', 'lab-print-boot', 'lab-call-boot'),
-  execEdge('lab-ms-2', 'lab-call-boot', 'lab-call-calculate'),
+  execEdge('lab-ms-1b', 'lab-call-boot', 'lab-call-diagnose'),
+  execEdge('lab-ms-2', 'lab-call-diagnose', 'lab-call-calculate'),
   execEdge('lab-ms-2b', 'lab-call-calculate', 'lab-print-calc'),
   execEdge('lab-ms-2c', 'lab-print-calc', 'lab-branch-ready'),
   dataEdge('lab-ms-3', 'lab-get-ready', 'lab-branch-ready', 'val', 'condition', 'data_boolean'),

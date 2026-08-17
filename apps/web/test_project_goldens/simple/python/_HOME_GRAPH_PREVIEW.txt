@@ -5,6 +5,7 @@ class FirstGraph:
         print("Hello from SayHello!")
     def on_start(self):
         _vvs_input_fg_get_input = input("What is your name?")
+        self.VisitorName = _vvs_input_fg_get_input
         print(_vvs_input_fg_get_input)
         self.SayHello()
         print("Done.")

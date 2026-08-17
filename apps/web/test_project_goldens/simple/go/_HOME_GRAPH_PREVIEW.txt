@@ -12,6 +12,7 @@ func (self *FirstGraph) on_start() {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	_vvs_input_fg_get_input := scanner.Text()
+	self.VisitorName = _vvs_input_fg_get_input
 	fmt.Println(_vvs_input_fg_get_input)
 	self.SayHello()
 	fmt.Println("Done.")

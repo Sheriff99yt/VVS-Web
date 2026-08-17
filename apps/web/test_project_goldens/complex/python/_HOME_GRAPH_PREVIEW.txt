@@ -24,6 +24,7 @@ class Machine:
         _vvs_input_lab_get_input = input("Operator name?")
         print(_vvs_input_lab_get_input)
         self.Boot()
+        self.Diagnose()
         print(str(self.Calculate(self.Power, self.MaxPower)))
         if self.Ready:
             self.on_pulse()

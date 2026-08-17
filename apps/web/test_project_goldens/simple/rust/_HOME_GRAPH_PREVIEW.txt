@@ -19,6 +19,7 @@ impl FirstGraph {
         let mut _vvs_input_fg_get_input = String::new();
         std::io::stdin().read_line(&mut _vvs_input_fg_get_input).unwrap();
         _vvs_input_fg_get_input = _vvs_input_fg_get_input.trim_end().to_string();
+        self.VisitorName = _vvs_input_fg_get_input;
         println!("{}", _vvs_input_fg_get_input);
         self.SayHello();
         println!("{}", "Done.");

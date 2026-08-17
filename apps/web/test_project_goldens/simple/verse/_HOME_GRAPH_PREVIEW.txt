@@ -7,6 +7,7 @@
         Print("What is your name?")
         # (x) Get User Input
         var _vvs_input_fg_get_input : string = ""
+        set VisitorName = _vvs_input_fg_get_input
         Print(_vvs_input_fg_get_input)
         SayHello()
         Print("Done.")

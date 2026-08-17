@@ -31,13 +31,14 @@ import {
   functionImplementNode,
   varDefineNode,
   boundCallFunction,
+  boundVariableSet,
   functionEntryNode,
   dataEdge,
   getUserInputNode,
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const FIRST_GRAPH_FIXTURE_REVISION = 5;
+export const FIRST_GRAPH_FIXTURE_REVISION = 6;
 
 const MAIN_CLASS = createClassSymbol('FirstGraph', {
   id: MAIN_CLASS_ID,
@@ -76,6 +77,7 @@ export function createFirstGraphUsabilityTestSnapshot(): ProjectSnapshot {
       prompt: 'What is your name?',
       inputKind: 'text',
     }),
+    boundVariableSet('fg-set-visitor', { x: 360, y: 160 }, VAR_VISITOR),
     printStringNode('fg-print-got', { x: 480, y: 160 }),
     boundCallFunction('fg-call-hello', { x: 700, y: 160 }, FN_SAY_HELLO),
     printStringNode('fg-print-done', { x: 920, y: 160 }, 'Done.'),
@@ -88,9 +90,11 @@ export function createFirstGraphUsabilityTestSnapshot(): ProjectSnapshot {
     execEdge('fg-impl-start-member', 'fg-fn-hello-impl', 'fg-start-member'),
 
     execEdge('fg-start-input', 'fg-start-handler', 'fg-get-input'),
-    execEdge('fg-input-print', 'fg-get-input', 'fg-print-got'),
+    execEdge('fg-input-set', 'fg-get-input', 'fg-set-visitor'),
+    execEdge('fg-set-print', 'fg-set-visitor', 'fg-print-got'),
     execEdge('fg-print-call', 'fg-print-got', 'fg-call-hello'),
     execEdge('fg-call-done', 'fg-call-hello', 'fg-print-done'),
+    dataEdge('fg-input-set-val', 'fg-get-input', 'fg-set-visitor', 'value', 'val', 'data_string'),
     dataEdge('fg-input-print-val', 'fg-get-input', 'fg-print-got', 'value', 'in_str', 'data_string'),
   ];
 

@@ -4,6 +4,7 @@ import { createNewFeaturesUsabilityTestSnapshot } from '../../../apps/web/src/li
 import { createCoverageLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
 import { createInheritanceLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/inheritanceLabUsabilityTest';
 import { createBranchLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/branchLabUsabilityTest';
+import { createFirstGraphUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/firstGraphUsabilityTest';
 import type { ProjectSnapshot, TargetLanguage } from '@vvs/graph-types';
 
 function emit(snapshot: ProjectSnapshot, lang: TargetLanguage): string {
@@ -109,5 +110,28 @@ describe('lab completeness pass (no leftover fakes)', () => {
   test('Inheritance / New Features Go include fmt when Print is used', () => {
     expect(emit(createInheritanceLabUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');
     expect(emit(createNewFeaturesUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');
+  });
+
+  test('First Graph: GetInput result is stored in VisitorName', () => {
+    const snapshot = createFirstGraphUsabilityTestSnapshot();
+    const py = emit(snapshot, 'python');
+    expect(py).toContain('self.VisitorName = _vvs_input_fg_get_input');
+    const cpp = emit(snapshot, 'cpp');
+    expect(cpp).toContain('VisitorName = _vvs_input_fg_get_input');
+  });
+
+  test('Coverage: Diagnose is called from on_start after Boot', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const py = emit(snapshot, 'python');
+    expect(py).toContain('self.Diagnose()');
+    expect(py).not.toContain('self.Shutdown()');
+    const boot = py.indexOf('self.Boot()');
+    const diagnose = py.indexOf('self.Diagnose()');
+    const calculate = py.indexOf('self.Calculate(');
+    expect(boot).toBeGreaterThan(-1);
+    expect(diagnose).toBeGreaterThan(boot);
+    expect(calculate).toBeGreaterThan(diagnose);
+    const cpp = emit(snapshot, 'cpp');
+    expect(cpp).toMatch(/Boot\(\);\s*\n\s*Diagnose\(\);/);
   });
 });

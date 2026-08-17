@@ -43,6 +43,7 @@ impl Machine {
         _vvs_input_lab_get_input = _vvs_input_lab_get_input.trim_end().to_string();
         println!("{}", _vvs_input_lab_get_input);
         self.Boot();
+        self.Diagnose();
         println!("{}", self.Calculate(self.Power, self.MaxPower).to_string());
         if self.Ready {
             self.on_pulse();
