@@ -481,10 +481,15 @@ export function buildIrMembers(
 
   const members: IrMemberDecl[] = [];
   const memberEventIds = new Set<string>();
+  const implementedSymbols = new Set<string>();
 
   for (const entry of analysis.members) {
     const node = nodeById.get(entry.nodeId);
     if (!node) continue;
+    if (entry.kind === 'function_implement' && entry.symbolId) {
+      if (implementedSymbols.has(entry.symbolId)) continue;
+      implementedSymbols.add(entry.symbolId);
+    }
     const decl = memberDeclFromEntry(
       entry,
       node,

@@ -90,13 +90,17 @@ export function buildFolderGraphManifest(snapshot: ProjectSnapshot): VvsProjectG
   }
   // U80: keep function body documents on disk even when Edit-body tabs are closed.
   for (const fn of snapshot.functions ?? []) {
-    const tabId = fn.overloads[0]?.graphTabId ?? fn.id;
-    if (functions[tabId] || !snapshot.documents[tabId]) continue;
-    functions[tabId] = functionGraphRelativePath({
-      id: tabId,
-      type: 'function',
-      name: fn.name.startsWith('Function:') ? fn.name : `Function: ${fn.name}`,
-    });
+    const tabIds = fn.overloads.length
+      ? fn.overloads.map((o) => o.graphTabId ?? fn.id)
+      : [fn.id];
+    for (const tabId of [...new Set(tabIds)]) {
+      if (functions[tabId] || !snapshot.documents[tabId]) continue;
+      functions[tabId] = functionGraphRelativePath({
+        id: tabId,
+        type: 'function',
+        name: fn.name.startsWith('Function:') ? fn.name : `Function: ${fn.name}`,
+      });
+    }
   }
 
   // Legacy class home graphs not represented as graphContainers entries.

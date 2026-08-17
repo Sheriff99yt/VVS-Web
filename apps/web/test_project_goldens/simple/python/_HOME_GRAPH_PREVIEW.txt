@@ -1,7 +1,6 @@
 // ===== src/FirstGraph.py =====
 class FirstGraph:
     VisitorName = ""
-    # (x) Declare SayHello
     def SayHello(self):
         print("Hello from SayHello!")
     def on_start(self):

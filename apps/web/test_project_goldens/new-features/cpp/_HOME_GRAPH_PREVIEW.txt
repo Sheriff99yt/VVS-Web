@@ -1,10 +1,5 @@
 // ===== src/NewFeaturesLab.cpp =====
-public:
-    void on_start() {
-        Global().on_ondatareceived(("Hello from Global: " + GlobalGreeting));
-    }
 class MainClass {
-};
 public:
     std::string GlobalGreeting = "World";
     float ProcessData(float a, float b);
@@ -13,15 +8,14 @@ public:
         ProcessData(payload, payload);
         std::cout << "/* Call ProcessData.return_val */" << std::endl;
     }
-float Global::ProcessData(float a, float b) {
-    ProcessData(nullptr, nullptr);
+    void on_start() {
+        on_ondatareceived(("Hello from Global: " + GlobalGreeting));
+    }
+};
+float MainClass::ProcessData(float a, float b) {
+    return (a + b);
 }
-std::string Global::ProcessData(std::string a, std::string b) {
-    // empty
-}
-float Global::ProcessData(float a, float b) {
-    ProcessData(nullptr, nullptr);
-}
-std::string Global::ProcessData(std::string a, std::string b) {
-    // empty
+std::string MainClass::ProcessData(std::string a, std::string b) {
+    return (a + b);
+    // Concat Strings
 }

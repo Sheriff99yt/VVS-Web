@@ -1,27 +1,20 @@
 // ===== src/CoverageLab.py =====
-# (x) Import iostream
-# (x) Import System
-# (x) Import string
 from enum import Enum
-# (x) Import vector
-# (x) Import unordered_map
-# (x) Import Collections.Generic
 class Machine:
     Power = 0
     Serial = 0
     MaxPower = 100
     Ready = False
-    # (x) Declare Boot
     def Boot(self):
         self.Ready = True
         print("Booted")
         Sensor().on_tick()
-    # (x) Declare Diagnose
-    # (x) Declare Shutdown
+    def Diagnose(self):
+        print("Diagnose")
+        return
     async def Shutdown(self):
         self.Ready = False
         print("Shutdown")
-    # (x) Declare Calculate
     def Calculate(self, a, b):
         print("Calculating")
         return
@@ -46,11 +39,9 @@ class Sensor(Machine):
     Status = SensorStatus.OK
     Host = None
     Tags = {}
-    # (x) Declare Sample
     async def Sample(self):
         self.Readings.append(self.Power)
         print("Sampled")
-    # (x) Declare Report
     def Report(self):
         print("--- Readings ---")
         for val in self.Readings:

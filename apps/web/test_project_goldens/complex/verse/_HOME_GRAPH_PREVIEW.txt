@@ -1,27 +1,19 @@
 // ===== src/CoverageLab.verse =====
-# (x) Import iostream
-# (x) Import System
-# (x) Import string
-# (x) Import Enum
-# (x) Import vector
-# (x) Import unordered_map
-# (x) Import Collections.Generic
 <public>Machine := class:
     var Power : float = 0
     var Serial<public> : float = 0
     var MaxPower<public> : float = 100
     var Ready<public> : logic = false
-    # (x) Declare Boot
     Boot<public>() : void =
         set Ready = true
         Print("Booted")
         Sensor.on_tick()
-    # (x) Declare Diagnose
-    # (x) Declare Shutdown
+    Diagnose() : void =
+        Print("Diagnose")
+        return
     Shutdown<public>() : void =
         set Ready = false
         Print("Shutdown")
-    # (x) Declare Calculate
     Calculate<public>(a : float, b : float) : void =
         Print("Calculating")
         return
@@ -48,11 +40,9 @@ SensorStatus := enum:
     var Status<public> : SensorStatus = SensorStatus.OK
     var Host<public> : Machine = Machine{}
     var Tags<public> : [string]string = map{}
-    # (x) Declare Sample
     Sample<public>() : void =
         set Readings += array{Power}
         Print("Sampled")
-    # (x) Declare Report
     Report<public><override>() : void =
         Print("--- Readings ---")
         for (val : Readings):

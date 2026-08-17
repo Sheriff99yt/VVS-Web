@@ -1,7 +1,6 @@
 // ===== src/FirstGraph.gd =====
 class_name FirstGraph
     var VisitorName = ""
-    # (x) Declare SayHello
     func SayHello() -> void:
         print("Hello from SayHello!")
     func on_start() -> void:

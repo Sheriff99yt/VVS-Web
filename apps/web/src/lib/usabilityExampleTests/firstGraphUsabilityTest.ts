@@ -37,7 +37,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const FIRST_GRAPH_FIXTURE_REVISION = 4;
+export const FIRST_GRAPH_FIXTURE_REVISION = 5;
 
 const MAIN_CLASS = createClassSymbol('FirstGraph', {
   id: MAIN_CLASS_ID,

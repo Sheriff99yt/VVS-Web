@@ -512,11 +512,20 @@ function callFunctionArgExprs(
   return paramIds.map((pinId) => resolvePinValueExpr(node, pinId, ctx, 0));
 }
 
-function stmtKindForNode(node: GraphNode): IrStmtKind | null {
-  const kindId = resolveNodeKindId(node.data);
+/** Define / Implement / entry / Return reuse call_function binding for symbol link only. */
+function isCallBindingAnchorKind(kindId: string): boolean {
+  return (
+    kindId === 'function_define' ||
+    kindId === 'function_implement' ||
+    kindId === 'function_entry' ||
+    kindId === 'flow_return' ||
+    kindId === 'action_return'
+  );
+}
 
-  if (isImportNode(node)) return 'ModuleImport';
-  if (
+function isCallFunctionNode(node: GraphNode, kindId: string): boolean {
+  if (isCallBindingAnchorKind(kindId)) return false;
+  return (
     kindId === 'vvs.project.call_function' ||
     kindId.startsWith('call_function_') ||
     node.data.linkKind === 'call_function' ||
@@ -524,7 +533,14 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
     kindId.startsWith('use_macro_') ||
     node.data.linkKind === 'use_macro' ||
     kindId === 'vvs.project.use_macro'
-  ) {
+  );
+}
+
+function stmtKindForNode(node: GraphNode): IrStmtKind | null {
+  const kindId = resolveNodeKindId(node.data);
+
+  if (isImportNode(node)) return 'ModuleImport';
+  if (isCallFunctionNode(node, kindId)) {
     return 'CallFunction';
   }
   if (kindId === 'event_dispatch' || kindId === 'event_emit') return 'DispatchEvent';
@@ -612,15 +628,7 @@ function lowerStatement(
     return null;
   }
 
-  if (
-    kindId === 'vvs.project.call_function' ||
-    kindId.startsWith('call_function_') ||
-    node.data.linkKind === 'call_function' ||
-    node.data.graphBinding?.kind === 'call_function' ||
-    kindId.startsWith('use_macro_') ||
-    node.data.linkKind === 'use_macro' ||
-    kindId === 'vvs.project.use_macro'
-  ) {
+  if (isCallFunctionNode(node, kindId)) {
     if (!node.data.linkedGraphId && !node.data.graphBinding?.symbolId) {
       return commentFallback(node.id, 'CallFunction', 'call (unlinked)');
     }

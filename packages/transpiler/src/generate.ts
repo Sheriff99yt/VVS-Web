@@ -386,9 +386,55 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
   const language = classIrs[0]!.targetLanguage;
   const mergedIrs = withRustHashMapImportAtFileTop(classIrs);
 
+  const memberImportSlugs = new Set<string>();
+  const waitNodeIds = new Set<string>();
+  const collectWaitIds = (stmts: IrModule['onStartBody']) => {
+    for (const stmt of stmts) {
+      if (stmt.kind === 'AwaitWait') waitNodeIds.add(stmt.sourceGraphNodeId);
+      if (stmt.kind === 'IfBranch') {
+        collectWaitIds(stmt.trueBody);
+        collectWaitIds(stmt.falseBody);
+      } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+        collectWaitIds(stmt.body);
+      } else if (stmt.kind === 'Switch') {
+        for (const c of stmt.cases) collectWaitIds(c.body);
+        collectWaitIds(stmt.defaultBody);
+      } else if (stmt.kind === 'Sequence') {
+        for (const step of stmt.steps) collectWaitIds(step);
+      } else if (stmt.kind === 'Try') {
+        collectWaitIds(stmt.tryBody);
+        collectWaitIds(stmt.catchBody);
+        if (stmt.finallyBody) collectWaitIds(stmt.finallyBody);
+      }
+    }
+  };
+  for (const classIr of mergedIrs) {
+    for (const member of classIr.members) {
+      if (member.kind === 'ModuleImport') memberImportSlugs.add(member.moduleSlug);
+      if (member.kind === 'EventDecl') collectWaitIds(member.body);
+    }
+    collectWaitIds(classIr.onStartBody);
+    for (const handler of classIr.eventHandlers) collectWaitIds(handler.body);
+    for (const body of Object.values(classIr.functionBodies)) collectWaitIds(body);
+  }
+  const seenImportSlugs = new Set<string>();
+  const hoistedImports: (typeof mergedIrs)[number]['imports'] = [];
+  for (const classIr of mergedIrs) {
+    for (const stmt of classIr.imports) {
+      if (stmt.kind === 'ModuleImport') {
+        // Only file-top leftover wait stdlib (asyncio/time/...). Never hoist
+        // another class's gated or flow Import Module (e.g. branch `json`).
+        if (!waitNodeIds.has(stmt.sourceGraphNodeId)) continue;
+        if (seenImportSlugs.has(stmt.moduleSlug) || memberImportSlugs.has(stmt.moduleSlug)) continue;
+        seenImportSlugs.add(stmt.moduleSlug);
+      }
+      hoistedImports.push(stmt);
+    }
+  }
+
   for (let i = 0; i < mergedIrs.length; i++) {
     if (i > 0 && sink.lineCount > 0) sink.appendRaw('');
-    const ir = { ...mergedIrs[i]!, filePath, imports: [] };
+    const ir = { ...mergedIrs[i]!, filePath, imports: i === 0 ? hoistedImports : [] };
     // Orphan Comment [C] (no attach target) emit once on the first class only.
     if (i > 0) {
       ir.userComments = (ir.userComments ?? []).filter((c) => Boolean(c.beforeNodeId));

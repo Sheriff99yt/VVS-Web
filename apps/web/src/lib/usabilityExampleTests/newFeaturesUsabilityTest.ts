@@ -39,7 +39,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 import { applyFunctionDefineBinding, applyFunctionImplementBinding, applyFunctionCallBinding } from '@/lib/functionHelpers';
 
-export const NEW_FEATURES_FIXTURE_REVISION = 1;
+export const NEW_FEATURES_FIXTURE_REVISION = 2;
 
 const MAIN_CLASS = createClassSymbol('MainClass', {
   id: MAIN_CLASS_ID,
@@ -52,11 +52,11 @@ const GLOBAL_VAR = createVariableSymbol('GlobalGreeting', {
   type: 'data_string',
 });
 GLOBAL_VAR.defaultValue = 'World';
-GLOBAL_VAR.classId = `global-${MAIN_GRAPH_CONTAINER_ID}`;
+GLOBAL_VAR.classId = MAIN_CLASS_ID;
 
 // 2. Overloaded Function (in Global Scope)
 const FN_PROCESS_DATA = createFunctionSymbol('ProcessData', { id: 'fn-process-data' });
-FN_PROCESS_DATA.classId = `global-${MAIN_GRAPH_CONTAINER_ID}`;
+FN_PROCESS_DATA.classId = MAIN_CLASS_ID;
 FN_PROCESS_DATA.overloads = [
   {
     id: 'fn-process-data-ov1',
@@ -84,7 +84,7 @@ const EVT_ON_DATA: ProjectEventDefinition = {
   name: 'OnDataReceived',
   role: 'custom',
   parameters: [{ id: 'p1', label: 'payload', type: 'data_string' }],
-  classId: `global-${MAIN_GRAPH_CONTAINER_ID}`,
+  classId: MAIN_CLASS_ID,
 };
 
 // Start event for triggering
@@ -217,7 +217,7 @@ export function createNewFeaturesUsabilityTestSnapshot(): ProjectSnapshot {
     projectDetails: {
       moduleName: 'NewFeaturesLab',
       extendsType: '',
-      description: `New Features Test Project (rev ${NEW_FEATURES_FIXTURE_REVISION}) — Global Scope, Function Overloads, Event Args.`,
+      description: `New Features Test Project (rev ${NEW_FEATURES_FIXTURE_REVISION}) — Function Overloads, Event Args, and class entry.`,
     },
     classes: [MAIN_CLASS],
     activeClassId: MAIN_CLASS_ID,

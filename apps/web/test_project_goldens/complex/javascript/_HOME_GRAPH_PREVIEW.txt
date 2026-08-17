@@ -1,29 +1,22 @@
 // ===== src/CoverageLab.js =====
-// (x) Import iostream
-// (x) Import System
-// (x) Import string
-// (x) Import Enum
-// (x) Import vector
-// (x) Import unordered_map
-// (x) Import Collections.Generic
 class Machine {
     Power = 0;
     static Serial = 0;
     MaxPower = 100;
     Ready = false;
-    // (x) Declare Boot
     Boot() {
         this.Ready = true;
         console.log("Booted");
         new Sensor().on_tick();
     }
-    // (x) Declare Diagnose
-    // (x) Declare Shutdown
+    Diagnose() {
+        console.log("Diagnose");
+        return;
+    }
     async Shutdown() {
         this.Ready = false;
         console.log("Shutdown");
     }
-    // (x) Declare Calculate
     Calculate(a, b) {
         console.log("Calculating");
         return;
@@ -54,12 +47,10 @@ class Sensor extends Machine {
     Status = SensorStatus.OK;
     Host = null;
     Tags = new Map();
-    // (x) Declare Sample
     async Sample() {
         this.Readings.push(this.Power);
         console.log("Sampled");
     }
-    // (x) Declare Report
     Report() {
         console.log("--- Readings ---");
         for (const val of this.Readings) {

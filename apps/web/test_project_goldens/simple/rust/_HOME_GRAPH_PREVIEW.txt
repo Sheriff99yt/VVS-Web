@@ -10,7 +10,6 @@ impl FirstGraph {
             VisitorName: "",
         }
     }
-    // (x) Declare SayHello
     pub fn SayHello(&mut self) {
         println!("{}", "Hello from SayHello!");
     }

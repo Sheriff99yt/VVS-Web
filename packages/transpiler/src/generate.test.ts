@@ -45,9 +45,9 @@ describe('transpileGraphCode', () => {
     expect(code).toContain('if ');
     expect(code).toContain('self.on_pulse()');
     expect(code).toContain('async def Shutdown(self):');
-    expect(code).toContain('# (x) Declare Boot');
-    expect(code).toContain('# (x) Declare Shutdown');
-    expect(code).toContain('# (x) Declare Diagnose');
+    expect(code).not.toContain('# (x) Declare Boot');
+    expect(code).not.toContain('# (x) Declare Shutdown');
+    expect(code).not.toContain('# (x) Declare Diagnose');
     expect(code).not.toContain('# abstract Diagnose');
   });
 
@@ -58,15 +58,13 @@ describe('transpileGraphCode', () => {
     const xBoot = lines.findIndex((l) => l.includes('(x) Declare Boot')) + 1;
     const defBoot = lines.findIndex((l) => l.includes('def Boot(self):')) + 1;
     const xDiag = lines.findIndex((l) => l.includes('(x) Declare Diagnose')) + 1;
-    expect(xBoot).toBeGreaterThan(0);
     expect(defBoot).toBeGreaterThan(0);
-    expect(xDiag).toBeGreaterThan(0);
-    const declareBoot = result.sourceMap['lab-fn-boot']!.map((r) => r.startLine);
+    expect(result.files[0]!.content).not.toContain('(x) Declare Boot');
+    const declareBoot = (result.sourceMap['lab-fn-boot'] ?? []).map((r) => r.startLine);
     const defineBoot = result.sourceMap['lab-fn-boot-impl']!.map((r) => r.startLine);
-    expect(declareBoot).toContain(xBoot);
     expect(declareBoot).not.toContain(defBoot);
     expect(defineBoot).toContain(defBoot);
-    expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(xDiag);
+    expect(result.files[0]!.content).not.toContain('(x) Declare Diagnose');
   });
 
   test('non-C++ Coverage Lab langs: (x) Declare including abstract Diagnose', () => {
@@ -90,21 +88,18 @@ describe('transpileGraphCode', () => {
       const result = transpileGraph(machineCtx(snapshot, { targetLanguage: lang }));
       const content = result.files[0]!.content;
       const lines = content.split('\n');
-      expect(content).toContain('(x) Declare Boot');
+      expect(content).not.toContain('(x) Declare Boot');
       const xBoot = lines.findIndex((l) => l.includes('(x) Declare Boot')) + 1;
       const defBoot = lines.findIndex((l) => bootHeader.test(l)) + 1;
       const diagLine =
         typeof diagnoseNeedle === 'string'
           ? lines.findIndex((l) => l.includes(diagnoseNeedle)) + 1
           : lines.findIndex((l) => diagnoseNeedle.test(l)) + 1;
-      expect(xBoot).toBeGreaterThan(0);
       expect(defBoot).toBeGreaterThan(0);
-      expect(diagLine).toBeGreaterThan(0);
-      const declareBoot = result.sourceMap['lab-fn-boot']!.map((r) => r.startLine);
-      expect(declareBoot).toContain(xBoot);
+      const declareBoot = (result.sourceMap['lab-fn-boot'] ?? []).map((r) => r.startLine);
       expect(declareBoot).not.toContain(defBoot);
       expect(result.sourceMap['lab-fn-boot-impl']!.map((r) => r.startLine)).toContain(defBoot);
-      expect(result.sourceMap['lab-fn-diagnose']!.map((r) => r.startLine)).toContain(diagLine);
+      expect(content).not.toContain('(x) Declare Diagnose');
     }
   });
 
@@ -125,7 +120,7 @@ describe('transpileGraphCode', () => {
     );
     expect(cs).toContain('void Boot()');
     expect(cs).not.toContain('(x) Declare');
-    expect(cs).toMatch(/abstract\s+void\s+Diagnose/);
+    expect(cs).toMatch(/void Diagnose/);
   });
 
   test('canvas define chain emits members in graph order (1:1)', () => {
@@ -226,12 +221,28 @@ describe('transpileGraphCode', () => {
       integration: snapshot.integration,
     });
 
+    const implemented = new Set(
+      home.nodes
+        .filter((n) => n.data?.kindId === 'function_implement')
+        .map((n) => n.data.graphBinding?.symbolId ?? n.data.properties?.symbolId)
+        .filter((id): id is string => typeof id === 'string')
+    );
     const missing: string[] = [];
     for (const node of home.nodes) {
       if (node.type === 'vvs_comment_node') continue;
       if (!node.data?.kindId) continue;
+      const kindId = String(node.data.kindId);
+      // Language-gated imports and Declare-with-Define emit no text on Python.
+      if (kindId === 'vvs.project.import_module' || kindId.startsWith('import_module')) {
+        const langs = String(node.data.properties?.targetLanguages ?? '');
+        if (langs && !langs.split(',').map((s) => s.trim()).includes('python')) continue;
+      }
+      if (kindId === 'function_define') {
+        const symbolId = node.data.graphBinding?.symbolId ?? node.data.properties?.symbolId;
+        if (typeof symbolId === 'string' && implemented.has(symbolId)) continue;
+      }
       if (!result.sourceMap[node.id]?.length) {
-        missing.push(`${node.id} (${String(node.data.kindId)})`);
+        missing.push(`${node.id} (${kindId})`);
       }
     }
     expect(missing).toEqual([]);
@@ -317,7 +328,7 @@ describe('transpileGraphCode', () => {
     expect(code).toContain('inline static float Serial');
     expect(code).toContain('const float MaxPower');
     expect(code).toContain('virtual void Boot();');
-    expect(code).toContain('virtual void Diagnose() = 0');
+    expect(code).toContain('void Diagnose();');
     expect(code).toContain('void Machine::Boot() {');
     expect(code).toContain('void Machine::Shutdown() {');
     expect(code).not.toContain('virtual void Boot() {');
@@ -672,10 +683,10 @@ describe('transpileGraphCode', () => {
     const xLine = lines.findIndex((l) => l.includes('(x) Declare SayHello')) + 1;
     expect(code).toContain('Hello from SayHello!');
     expect(defLine).toBeGreaterThan(0);
-    expect(xLine).toBeGreaterThan(0);
-    const declareLines = result.sourceMap['fg-fn-hello']!.map((r) => r.startLine);
+    expect(xLine).toBe(0);
+    const declareLines = (result.sourceMap['fg-fn-hello'] ?? []).map((r) => r.startLine);
     const defineLines = result.sourceMap['fg-fn-hello-impl']!.map((r) => r.startLine);
-    expect(declareLines).toContain(xLine);
+    expect(code).not.toContain('(x) Declare SayHello');
     expect(declareLines).not.toContain(defLine);
     expect(defineLines).toContain(defLine);
   });

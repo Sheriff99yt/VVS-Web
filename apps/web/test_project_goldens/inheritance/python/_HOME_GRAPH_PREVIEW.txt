@@ -1,13 +1,11 @@
 // ===== src/InheritanceLab.py =====
+import asyncio
 class Parent:
-    # (x) Declare Parent
     def __init__(self):
         pass
-    # (x) Declare Speak
     def Speak(self):
         print("parent")
 class Child(Parent):
-    # (x) Declare Speak
     def Speak(self):
         super().Speak()
         print("child")

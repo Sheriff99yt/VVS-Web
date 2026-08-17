@@ -47,7 +47,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const COVERAGE_LAB_FIXTURE_REVISION = 6;
+export const COVERAGE_LAB_FIXTURE_REVISION = 7;
 
 /** Primary class - Machine (entry / modifiers / abstract). */
 export const MACHINE_CLASS = createClassSymbol('Machine', {
@@ -102,7 +102,6 @@ FN_BOOT.flags = { virtual: true };
 FN_BOOT.visibility = 'public';
 
 const FN_DIAGNOSE = createFunctionSymbol('Diagnose', { id: 'fn-diagnose', classId: MAIN_CLASS_ID });
-FN_DIAGNOSE.flags = { abstract: true };
 FN_DIAGNOSE.visibility = 'protected';
 
 const FN_SHUTDOWN = createFunctionSymbol('Shutdown', { id: 'fn-shutdown', classId: MAIN_CLASS_ID });
@@ -254,6 +253,7 @@ const MACHINE_MEMBER_NODES: VVSNode[] = [
   functionDefineNode('lab-fn-boot', { x: 2440, y: -200 }, FN_BOOT),
   functionImplementNode('lab-fn-boot-impl', { x: 2540, y: -200 }, FN_BOOT),
   functionDefineNode('lab-fn-diagnose', { x: 2640, y: -200 }, FN_DIAGNOSE),
+  functionImplementNode('lab-fn-diagnose-impl', { x: 2740, y: -200 }, FN_DIAGNOSE),
   functionDefineNode('lab-fn-shutdown', { x: 2840, y: -200 }, FN_SHUTDOWN),
   functionImplementNode('lab-fn-shutdown-impl', { x: 2940, y: -200 }, FN_SHUTDOWN),
   functionDefineNode('lab-fn-calculate', { x: 3040, y: -200 }, FN_CALCULATE),
@@ -278,7 +278,8 @@ const MACHINE_MEMBER_EDGES: VVSEdge[] = [
   execEdge('lab-mm-4', 'lab-var-ready', 'lab-fn-boot'),
   execEdge('lab-mm-4b', 'lab-fn-boot', 'lab-fn-boot-impl'),
   execEdge('lab-mm-5', 'lab-fn-boot-impl', 'lab-fn-diagnose'),
-  execEdge('lab-mm-6', 'lab-fn-diagnose', 'lab-fn-shutdown'),
+  execEdge('lab-mm-5c', 'lab-fn-diagnose', 'lab-fn-diagnose-impl'),
+  execEdge('lab-mm-6', 'lab-fn-diagnose-impl', 'lab-fn-shutdown'),
   execEdge('lab-mm-6b', 'lab-fn-shutdown', 'lab-fn-shutdown-impl'),
   execEdge('lab-mm-7', 'lab-fn-shutdown-impl', 'lab-fn-calculate'),
   execEdge('lab-mm-7b', 'lab-fn-calculate', 'lab-fn-calculate-impl'),
@@ -366,6 +367,17 @@ const PULSE_EDGES: VVSEdge[] = [
   dataEdge('lab-p-1', 'lab-get-power', 'lab-power-str', 'val', 'value'),
   dataEdge('lab-p-2', 'lab-power-str', 'lab-power-msg', 'result', 'b'),
   dataEdge('lab-p-3', 'lab-power-msg', 'lab-print-pulse', 'result', 'in_str'),
+];
+
+const DIAGNOSE_NODES: VVSNode[] = [
+  functionEntryNode('lab-diagnose-entry', { x: 40, y: 680 }, FN_DIAGNOSE),
+  printStringNode('lab-diagnose-print', { x: 280, y: 680 }, 'Diagnose'),
+  returnNode('lab-diagnose-return', { x: 520, y: 680 }),
+];
+
+const DIAGNOSE_EDGES: VVSEdge[] = [
+  execEdge('lab-d-0', 'lab-diagnose-entry', 'lab-diagnose-print'),
+  execEdge('lab-d-1', 'lab-diagnose-print', 'lab-diagnose-return'),
 ];
 
 const BOOT_NODES: VVSNode[] = [
@@ -536,6 +548,10 @@ export function createCoverageLabUsabilityTestSnapshot(): ProjectSnapshot {
       'fn-boot': {
         ...usabilityTestDocument(BOOT_NODES, BOOT_EDGES),
         metadata: defaultTabMetadata('function', 'Boot'),
+      },
+      'fn-diagnose': {
+        ...usabilityTestDocument(DIAGNOSE_NODES, DIAGNOSE_EDGES),
+        metadata: defaultTabMetadata('function', 'Diagnose'),
       },
       'fn-shutdown': {
         ...usabilityTestDocument(SHUTDOWN_NODES, SHUTDOWN_EDGES),

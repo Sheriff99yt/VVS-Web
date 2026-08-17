@@ -96,17 +96,21 @@ export function saveProjectSnapshotToPath(projectDir: string, snapshot: ProjectS
     writtenFn.add(tabId);
   }
   for (const func of enriched.functions) {
-    const tabId = func.overloads[0]?.graphTabId ?? func.id;
-    if (writtenFn.has(tabId)) continue;
-    const doc = enriched.documents[tabId];
-    if (!doc) continue;
-    const rel = functionGraphRelativePath({
-      id: tabId,
-      type: 'function',
-      name: func.name,
-    });
-    writeJson(join(projectDir, VVS_DIR, rel), doc);
-    writtenFn.add(tabId);
+    const tabIds = func.overloads.length
+      ? func.overloads.map((o) => o.graphTabId ?? func.id)
+      : [func.id];
+    for (const tabId of [...new Set(tabIds)]) {
+      if (writtenFn.has(tabId)) continue;
+      const doc = enriched.documents[tabId];
+      if (!doc) continue;
+      const rel = functionGraphRelativePath({
+        id: tabId,
+        type: 'function',
+        name: func.name,
+      });
+      writeJson(join(projectDir, VVS_DIR, rel), doc);
+      writtenFn.add(tabId);
+    }
   }
 
   for (const tab of enriched.openTabs) {

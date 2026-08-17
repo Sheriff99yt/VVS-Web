@@ -161,8 +161,14 @@ export function emitClassModule(
 
   appendIrMembersInOrder(sink, ir, state, {
     onClassDecl: openClassShell,
-    // Rust layout only — never invent a class shell from fields/methods without ClassDecl.
+    // Open an existing ClassDecl before fields/methods so entry/methods cannot
+    // emit above the class when canvas order ties ClassDecl with later members.
+    // Never invent a class shell from fields/methods without ClassDecl.
+    onBeforeField: () => {
+      openClassShell();
+    },
     onBeforeMethod: () => {
+      openClassShell();
       ensureRustImpl();
     },
     onBeforeMemberNode: beforeUserComment,

@@ -1,11 +1,18 @@
 // ===== src/NewFeaturesLab.cs =====
-    public void on_start() {
-        new Global().on_ondatareceived(("Hello from Global: " + this.GlobalGreeting));
-    }
 public class MainClass {
+    public string GlobalGreeting = "World";
+    public float ProcessData(float a, float b) {
+        return (a + b);
+    }
+    public string ProcessData(string a, string b) {
+        return (a + b);
+        // Concat Strings
+    }
+    public void on_ondatareceived(string payload) {
+        this.ProcessData(payload, payload);
+        Console.WriteLine("/* Call ProcessData.return_val */");
+    }
+    public void on_start() {
+        this.on_ondatareceived(("Hello from Global: " + this.GlobalGreeting));
+    }
 }
-    // (x) Declare GlobalGreeting
-    // (x) Declare ProcessData
-    // (x) Implement ProcessData
-    // (x) Implement ProcessData
-    // (x) Declare OnDataReceived

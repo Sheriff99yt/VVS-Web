@@ -54,8 +54,8 @@ describe('coverage lab usability example', () => {
     // pulse Declare is visually higher on canvas → emits before start
     expect(onPulse).toBeGreaterThan(boot);
     expect(onStart).toBeGreaterThan(onPulse);
-    expect(code).toContain('# (x) Declare Boot');
-    expect(code).toContain('# (x) Declare Diagnose');
+    expect(code).not.toContain('# (x) Declare Boot');
+    expect(code).not.toContain('# (x) Declare Diagnose');
     expect(code).not.toContain('# abstract Diagnose');
   });
 
@@ -130,7 +130,7 @@ describe('coverage lab usability example', () => {
     expect(code).not.toMatch(/^\s*# abstract /m);
     expect(code).not.toMatch(/^\s*\/\/ abstract /m);
     for (const name of ['Boot', 'Diagnose', 'Shutdown']) {
-      expect(code).toContain(`# (x) Declare ${name}`);
+      expect(code).not.toContain(`# (x) Declare ${name}`);
     }
   });
 
@@ -242,7 +242,7 @@ describe('coverage lab usability example', () => {
     expect(code).toContain('inline static float Serial');
     expect(code).toContain('const float MaxPower');
     expect(code).toContain('virtual void Boot(');
-    expect(code).toContain('virtual void Diagnose() = 0');
+    expect(code).toContain('void Diagnose();');
     expect(code).toContain('void Shutdown(');
     // Declare+Define: body starts with statements — no function_entry `// Boot` noise.
     expect(code).not.toContain('// Boot');

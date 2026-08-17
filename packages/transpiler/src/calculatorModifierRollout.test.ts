@@ -37,7 +37,7 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     expect(code).toContain('public readonly float MaxPower');
     expect(code).toContain('public virtual void Boot()');
     expect(code).toContain('public async Task Shutdown()');
-    expect(code).toContain('protected abstract void Diagnose();');
+    expect(code).toContain('protected void Diagnose()');
     expect(code).not.toContain('protected abstract void Diagnose() {');
   });
 
@@ -45,7 +45,7 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     const code = transpileMachine('cpp');
     expect(code).toContain('virtual void Boot();');
     expect(code).toContain('void Machine::Boot() {');
-    expect(code).toContain('virtual void Diagnose() = 0');
+    expect(code).toContain('void Diagnose();');
     expect(code).toContain('void Shutdown();');
     expect(code).toContain('void Machine::Shutdown() {');
     expect(code).not.toContain('virtual void Boot() {');
@@ -55,9 +55,8 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     const code = transpileMachine('python');
     expect(code).toContain('async def Shutdown(self):');
     expect(code).toContain('def Boot(self):');
-    expect(code).toContain('# (x) Declare Diagnose');
+    expect(code).toContain('def Diagnose(self):');
     expect(code).not.toContain('# abstract Diagnose');
-    expect(code).not.toContain('def Diagnose(self):');
     expect(code).not.toContain('virtual');
     expect(code).not.toContain('protected');
     // Shared imports (incl. enum) live on the Machine chain at file top in Coverage Lab.
@@ -68,7 +67,7 @@ describe('Coverage Lab modifier rollout (U52)', () => {
     const code = transpileMachine('javascript');
     expect(code).toContain('static Serial = 0');
     expect(code).toContain('async Shutdown()');
-    expect(code).toContain('// (x) Declare Diagnose');
+    expect(code).toContain('Diagnose(');
     expect(code).not.toContain('// abstract Diagnose');
     expect(code).not.toContain('virtual');
   });

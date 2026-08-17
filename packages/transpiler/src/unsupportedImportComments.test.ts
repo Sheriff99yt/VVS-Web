@@ -20,11 +20,11 @@ describe('unsupported import comments (U66)', () => {
     const home = result.files.find((f) => f.content.includes('class Machine'));
     expect(home).toBeTruthy();
     const code = home!.content;
-    expect(code).toContain('# (x) Import iostream');
-    expect(code).toContain('# (x) Import System');
+    expect(code).not.toContain('# (x) Import iostream');
+    expect(code).not.toContain('# (x) Import System');
     expect(code).toContain('from enum import Enum');
     expect(code).not.toContain('#include');
-    expect(result.sourceMap['lab-import-iostream']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['lab-import-iostream'] ?? []).toEqual([]);
   });
 
   test('python with comments off omits gated imports (silent skip)', () => {
@@ -65,7 +65,7 @@ describe('unsupported import comments (U66)', () => {
     expect(home).toBeTruthy();
     const code = home!.content;
     expect(code).toContain('#include <iostream>');
-    expect(code).toContain('// (x) Import Enum');
+    expect(code).not.toContain('// (x) Import Enum');
     expect(code).not.toContain('from enum import');
   });
 
@@ -86,6 +86,6 @@ describe('unsupported import comments (U66)', () => {
       classes: snapshot.classes,
       activeClassId: snapshot.classes![0]!.id,
     });
-    expect(result.files[0]!.content).toContain('# (x) Import iostream');
+    expect(result.files[0]!.content).not.toContain('# (x) Import iostream');
   });
 });

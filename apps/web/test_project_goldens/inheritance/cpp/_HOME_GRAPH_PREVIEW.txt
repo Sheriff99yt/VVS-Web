@@ -1,4 +1,6 @@
 // ===== src/InheritanceLab.cpp =====
+#include <thread>
+#include <chrono>
 class Parent {
 public:
     Parent();

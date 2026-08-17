@@ -1,29 +1,22 @@
 // ===== src/CoverageLab.go =====
-// (x) Import iostream
-// (x) Import System
-// (x) Import string
-// (x) Import Enum
-// (x) Import vector
-// (x) Import unordered_map
-// (x) Import Collections.Generic
 type Machine struct {
 	var Power float64 = 0
 	var Serial float64 = 0
 	var MaxPower float64 = 100
 	var Ready bool = false
-	// (x) Declare Boot
 func Boot() void {
 	self.Ready = true
 	fmt.Println("Booted")
 	Sensor.on_tick()
 }
-	// (x) Declare Diagnose
-	// (x) Declare Shutdown
+func Diagnose() void {
+	fmt.Println("Diagnose")
+	return
+}
 func Shutdown() void {
 	self.Ready = false
 	fmt.Println("Shutdown")
 }
-	// (x) Declare Calculate
 func Calculate(a, b) data_number {
 	fmt.Println("Calculating")
 	return
@@ -53,12 +46,10 @@ type Sensor struct {
 	var Status SensorStatus = SensorStatus_OK
 	var Host Machine = null
 	var Tags map[string]string = {}
-	// (x) Declare Sample
 func Sample() void {
 	// push self.Power
 	fmt.Println("Sampled")
 }
-	// (x) Declare Report
 func Report() void {
 	fmt.Println("--- Readings ---")
 	// foreach val

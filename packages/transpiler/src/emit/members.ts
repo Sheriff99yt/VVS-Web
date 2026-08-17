@@ -472,7 +472,14 @@ function appendFunctionDeclare(
     });
   };
 
+  const hasDefineBody = ir.members.some(
+    (m) => m.kind === 'FunctionDecl' && m.symbol.id === symbol.id && m.emitBody
+  );
+
   if (functionRoleShouldSkip(ir, member.properties) || !effective) {
+    // Declare-only (x) is for a function with no Define/body. When a body exists,
+    // the Define owns the method — do not print leftover (x) next to it.
+    if (hasDefineBody) return;
     emitXComment();
     return;
   }
@@ -602,11 +609,10 @@ function appendFunctionDefinition(
     appendFunctionBody(sink, ir, overload.tabId, emptyLine, ir.environmentManifest, defineNodeId, undefined, {
       onBeforeNode: onBeforeFlowNode,
     });
-  }
-
-  const tabClose = renderFunctionTabClose(ir.targetLanguage);
-  if (tabClose) {
-    sink.appendRaw(tabClose);
+    const tabClose = renderFunctionTabClose(ir.targetLanguage);
+    if (tabClose) {
+      sink.appendRaw(tabClose);
+    }
   }
 }
 
@@ -743,7 +749,8 @@ export function appendRustNewConstructor(sink: CodeSink, ir: IrModule): void {
 /**
  * Emit members in canvas define-chain order (1:1 visual → text).
  * C++ Defers FunctionDecl with emitBody to after class close (out-of-line).
- * Non-C++ non-abstract Declare → U66 `(x) Declare …` (or omit when comments off).
+ * Non-C++ Declare without a Define/body -> U66 (x) Declare (or omit when comments off).
+ * When a Define/body exists, skip the leftover (x) — the method is the Define.
  */
 export function appendIrMembersInOrder(
   sink: CodeSink,

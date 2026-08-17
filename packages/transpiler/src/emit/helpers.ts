@@ -4,7 +4,6 @@ import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrModule, IrModuleImport, IrStatement } from '../ir/types';
 import { createPrintContext, type PrintContext } from '../print';
-import { commentPrefixFromPack } from '../print/template';
 import { bodyIndent } from '../lower/graphToIr';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import {
@@ -108,9 +107,7 @@ export function appendImportStatement(
   stmt: IrStatement,
   environmentManifest?: ProjectEnvironmentManifest
 ): boolean {
-  const emitComments = ir.emitUnsupportedComments !== false;
   const ctx = printContextForIr(ir, '', environmentManifest ?? ir.environmentManifest);
-  const prefix = commentPrefixFromPack(ctx);
 
   if (stmt.kind !== 'ModuleImport') {
     appendIrStatements(sink, [stmt], ctx);
@@ -126,14 +123,8 @@ export function appendImportStatement(
     appendIrStatements(sink, [stmt], ctx);
     return true;
   }
-  if (!emitComments) return false;
-
-  const label = (stmt.displayLabel?.trim() || stmt.moduleSlug).trim();
-  sink.appendTagged({
-    nodeId: stmt.sourceGraphNodeId,
-    text: `${prefix}(x) ${label}`,
-  });
-  return true;
+  // Language-gated Import Module: omit. Do not pile other-language (x) Import lines.
+  return false;
 }
 
 /**

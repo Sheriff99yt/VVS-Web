@@ -1,22 +1,18 @@
 // ===== src/NewFeaturesLab.js =====
-    on_start() {
-        new Global().on_ondatareceived(("Hello from Global: " + this.GlobalGreeting));
-    }
 class MainClass {
-}
     GlobalGreeting = "World";
-    // (x) Declare ProcessData
     ProcessData(a, b) {
-        this.ProcessData(null, null);
-    ProcessData(a, b) {
-        // empty
+        return (a + b);
     }
     ProcessData(a, b) {
-        this.ProcessData(null, null);
-    ProcessData(a, b) {
-        // empty
+        return (a + b);
+        // Concat Strings
     }
     on_ondatareceived(payload) {
         this.ProcessData(payload, payload);
         console.log("/* Call ProcessData.return_val */");
     }
+    on_start() {
+        this.on_ondatareceived(("Hello from Global: " + this.GlobalGreeting));
+    }
+}

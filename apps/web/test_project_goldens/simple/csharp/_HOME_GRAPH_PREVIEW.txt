@@ -1,7 +1,6 @@
 // ===== src/FirstGraph.cs =====
 public class FirstGraph {
     public string VisitorName = "";
-    // (x) Declare SayHello
     public void SayHello() {
         Console.WriteLine("Hello from SayHello!");
     }

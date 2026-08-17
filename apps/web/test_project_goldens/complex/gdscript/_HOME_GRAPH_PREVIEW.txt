@@ -1,27 +1,19 @@
 // ===== src/CoverageLab.gd =====
-# (x) Import iostream
-# (x) Import System
-# (x) Import string
-# (x) Import Enum
-# (x) Import vector
-# (x) Import unordered_map
-# (x) Import Collections.Generic
 class_name Machine
     var Power = 0
     static var Serial = 0
     var MaxPower = 100
     var Ready = false
-    # (x) Declare Boot
     func Boot() -> void:
         self.Ready = true
         print("Booted")
         Sensor.new().on_tick()
-    # (x) Declare Diagnose
-    # (x) Declare Shutdown
+    func Diagnose() -> void:
+        print("Diagnose")
+        return
     func Shutdown() -> void:
         self.Ready = false
         print("Shutdown")
-    # (x) Declare Calculate
     func Calculate(a, b) -> void:
         print("Calculating")
         return
@@ -45,11 +37,9 @@ extends Machine
     var Status = SensorStatus.OK
     var Host = null
     var Tags = {}
-    # (x) Declare Sample
     func Sample() -> void:
         self.Readings.append(self.Power)
         print("Sampled")
-    # (x) Declare Report
     func Report() -> void:
         print("--- Readings ---")
         for val in self.Readings:

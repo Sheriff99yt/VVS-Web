@@ -1,7 +1,6 @@
 // ===== src/FirstGraph.js =====
 class FirstGraph {
     VisitorName = "";
-    // (x) Declare SayHello
     SayHello() {
         console.log("Hello from SayHello!");
     }

@@ -8,9 +8,7 @@ impl Parent {
         Self {
         }
     }
-    // (x) Declare Parent
     // (x) Implement Parent
-    // (x) Declare Speak
     pub fn Speak(&mut self) {
         println!("{}", "parent");
     }
@@ -27,7 +25,6 @@ impl Child {
             base: Parent::new(),
         }
     }
-    // (x) Declare Speak
     pub fn Speak(&mut self) {
         self.base.Speak();
         println!("{}", "child");

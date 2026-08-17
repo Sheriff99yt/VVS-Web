@@ -1,11 +1,8 @@
 // ===== src/CoverageLab.cpp =====
 #include <iostream>
-// (x) Import System
 #include <string>
-// (x) Import Enum
 #include <vector>
 #include <unordered_map>
-// (x) Import Collections.Generic
 class Machine {
 protected:
     float Power = 0;
@@ -15,7 +12,7 @@ public:
     bool Ready = false;
     virtual void Boot();
 protected:
-    virtual void Diagnose() = 0;
+    void Diagnose();
 public:
     void Shutdown();
     float Calculate(float a, float b);
@@ -41,6 +38,10 @@ void Machine::Boot() {
     Ready = true;
     std::cout << "Booted" << std::endl;
     Sensor().on_tick();
+}
+void Machine::Diagnose() {
+    std::cout << "Diagnose" << std::endl;
+    return;
 }
 void Machine::Shutdown() {
     Ready = false;

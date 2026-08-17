@@ -1,12 +1,9 @@
 // ===== src/InheritanceLab.verse =====
 <public>Parent := class:
-    # (x) Declare Parent
     # (x) Implement Parent
-    # (x) Declare Speak
     Speak<public>() : void =
         Print("parent")
 <public>Child(Parent) := class:
-    # (x) Declare Speak
     Speak<public><override>() : void =
         (super:)Speak()
         Print("child")

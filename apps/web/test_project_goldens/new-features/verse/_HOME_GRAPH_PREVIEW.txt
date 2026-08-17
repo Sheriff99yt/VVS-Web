@@ -1,17 +1,13 @@
 // ===== src/NewFeaturesLab.verse =====
-    on_start() : void =
-        Global.on_ondatareceived(("Hello from Global: " + GlobalGreeting))
 <public>MainClass := class:
     var GlobalGreeting<public> : string = "World"
-    # (x) Declare ProcessData
     ProcessData<public>(a : float, b : float) : void =
-        ProcessData("", "")
+        return (a + b)
     ProcessData<public>(a : string, b : string) : void =
-        # empty
-    ProcessData<public>(a : float, b : float) : void =
-        ProcessData("", "")
-    ProcessData<public>(a : string, b : string) : void =
-        # empty
+        return (a + b)
+        # Concat Strings
     on_ondatareceived(payload : string) : void =
         ProcessData(payload, payload)
         Print("/* Call ProcessData.return_val */")
+    on_start() : void =
+        on_ondatareceived(("Hello from Global: " + GlobalGreeting))

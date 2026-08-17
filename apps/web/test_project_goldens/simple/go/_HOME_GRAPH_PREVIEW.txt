@@ -1,7 +1,6 @@
 // ===== src/FirstGraph.go =====
 type FirstGraph struct {
 	var VisitorName string = ""
-	// (x) Declare SayHello
 func SayHello() void {
 	fmt.Println("Hello from SayHello!")
 }

@@ -31,7 +31,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const INHERITANCE_LAB_FIXTURE_REVISION = 4;
+export const INHERITANCE_LAB_FIXTURE_REVISION = 5;
 
 export const PARENT_CLASS = createClassSymbol('Parent', {
   id: MAIN_CLASS_ID,

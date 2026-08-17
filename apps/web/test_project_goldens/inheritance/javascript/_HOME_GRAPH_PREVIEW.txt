@@ -1,16 +1,13 @@
 // ===== src/InheritanceLab.js =====
 class Parent {
-    // (x) Declare Parent
     constructor() {
         // empty
     }
-    // (x) Declare Speak
     Speak() {
         console.log("parent");
     }
 }
 class Child extends Parent {
-    // (x) Declare Speak
     Speak() {
         super.Speak();
         console.log("child");

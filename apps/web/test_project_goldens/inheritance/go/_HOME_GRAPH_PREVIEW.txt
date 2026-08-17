@@ -1,14 +1,12 @@
 // ===== src/InheritanceLab.go =====
+import "time"
 type Parent struct {
-	// (x) Declare Parent
 	// (x) Implement Parent
-	// (x) Declare Speak
 func Speak() void {
 	fmt.Println("parent")
 }
 }
 type Child struct {
-	// (x) Declare Speak
 func Speak() void {
 	self.Parent.Speak()
 	fmt.Println("child")
