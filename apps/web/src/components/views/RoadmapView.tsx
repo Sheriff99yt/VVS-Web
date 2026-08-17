@@ -160,7 +160,7 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        August emit/OOP plus Extends multi-base (py/cpp), Yield, Switch match, TypeSpec CLI, overload codegen, and host skip/emit UI just shipped.
+        August emit/OOP plus Extends multi-base (py/cpp), Implements list + Class form (cs/rs), Yield, Switch match, TypeSpec CLI, overload codegen, host skip/emit UI, Library language chips, and two env packs just shipped.
         Open leftover fidelity is Verse GetInput (honest (x)); U93 is long-term and Library auth/upload stays frozen.
       </p>
     </div>
@@ -192,7 +192,8 @@ function DirectionCallout() {
         <li>
           <span className="text-zinc-400">Extends is a list</span> — locked visual on Declare Class;
           extra bases are more rows (Python/C++ only). Generate prints all Extends rows for
-          python/cpp; js/gd/verse/cs still first parent.
+          python/cpp; js/gd/verse/cs still first parent. Implements list + Class form shipped
+          for csharp/rust only. Super stays first Extends parent.
         </li>
       </ul>
     </div>

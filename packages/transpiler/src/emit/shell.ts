@@ -2,7 +2,9 @@ import type { FunctionSymbol, PinType, TargetLanguage } from '@vvs/graph-types';
 import {
   defaultCodegenTarget,
   eventCodegenHandlerName,
+  normalizeClassForm,
   syncClassExtendsFields,
+  syncClassImplementsFields,
   targetLanguageToFamily,
 } from '@vvs/graph-types';
 import {
@@ -90,6 +92,14 @@ function printedExtendsNames(
   return names.slice(0, 1);
 }
 
+export function classImplementsNamesFromProps(properties?: Record<string, unknown>): string[] {
+  return syncClassImplementsFields(properties?.implementsTypes).implementsTypes ?? [];
+}
+
+export function classFormFromProps(properties?: Record<string, unknown>) {
+  return normalizeClassForm(properties?.form) ?? 'class';
+}
+
 export function classExtendsSuffix(
   lang: TargetLanguage,
   extendsType?: string,
@@ -97,6 +107,11 @@ export function classExtendsSuffix(
   properties?: Record<string, unknown>
 ): string {
   const names = printedExtendsNames(lang, extendsType, extendsTypes);
+  const implementsNames = lang === 'csharp' ? classImplementsNamesFromProps(properties) : [];
+  if (lang === 'csharp') {
+    const heritage = [...names.slice(0, 1), ...implementsNames];
+    return heritage.length > 0 ? ` : ${heritage.join(', ')}` : '';
+  }
   if (names.length === 0) return '';
   switch (lang) {
     case 'python':
@@ -113,8 +128,6 @@ export function classExtendsSuffix(
       return `\nextends ${names[0]}`;
     case 'rust':
       return '';
-    case 'csharp':
-      return ` : ${names[0]}`;
     default:
       return '';
   }
@@ -127,19 +140,34 @@ export function renderClassModuleOpen(
   properties?: Record<string, unknown>
 ): string {
   // Unset visibility omits keyword -- do not invent `public`.
-  const mods = resolveModifierSlots(lang, properties);
+  const form = classFormFromProps(properties);
+  const mods = resolveModifierSlots(
+    lang,
+    form === 'interface' || form === 'trait' ? { ...properties, isAbstract: false } : properties
+  );
   const extendsField =
-    lang === 'rust' && extendsType?.trim()
+    lang === 'rust' && form !== 'trait' && extendsType?.trim()
       ? `    base: ${extendsType.trim()},\n`
       : '';
-  return renderShell(lang, 'ClassModuleOpen', {
+  const templateKey =
+    lang === 'csharp' && form === 'interface'
+      ? 'InterfaceModuleOpen'
+      : lang === 'rust' && form === 'trait'
+        ? 'TraitModuleOpen'
+        : 'ClassModuleOpen';
+  return renderShell(lang, templateKey, {
     visibility: mods.visibility,
-    abstractKw: mods.abstractKw,
-    prefix: mods.visibility + mods.abstractKw,
+    abstractKw: form === 'interface' || form === 'trait' ? '' : mods.abstractKw,
+    prefix: mods.visibility + (form === 'interface' || form === 'trait' ? '' : mods.abstractKw),
     name,
     extendsSuffix: classExtendsSuffix(lang, extendsType, properties?.extendsTypes, properties),
     extendsField,
   });
+}
+
+export function renderImplTraitFor(lang: TargetLanguage, typeName: string, traitName: string): string | null {
+  if (lang !== 'rust') return null;
+  return optionalShell(lang, 'ImplTraitFor', { name: typeName, trait: traitName });
 }
 
 export function renderClassModuleClose(lang: TargetLanguage): string | null {

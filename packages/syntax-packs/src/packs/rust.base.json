@@ -136,6 +136,12 @@
     "ClassModuleOpen": {
       "quasi": "pub struct {name} {\n{extendsField}"
     },
+    "TraitModuleOpen": {
+      "quasi": "pub trait {name} {\n"
+    },
+    "ImplTraitFor": {
+      "quasi": "impl {trait} for {name} {\n}\n"
+    },
     "ClassImplOpen": {
       "quasi": "impl {name} {\n"
     },

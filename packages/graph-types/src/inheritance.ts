@@ -5,7 +5,8 @@ import type {
   TargetLanguage,
   VariableSymbol,
 } from './symbols';
-import { MAIN_CLASS_ID, classExtendsNames } from './symbols';
+import { MAIN_CLASS_ID, classExtendsNames, classImplementsNames } from './symbols';
+import type { ClassForm } from './symbols';
 
 /** Depth 1 = direct parent. Reusable for emit projection (CL-010) and canvas listing. */
 export interface InheritedMember<T> {
@@ -81,6 +82,23 @@ export function extendsListUiMode(lang?: TargetLanguage | string): ExtendsListUi
   if (lang === 'go' || lang === 'rust') return 'hidden';
   if (lang === 'python' || lang === 'cpp') return 'multi';
   return 'single';
+}
+
+export type ImplementsListUiMode = 'hidden' | 'single' | 'multi';
+
+/** C# interfaces and Rust traits show + Add. Others store-not-printed / hidden. */
+export function implementsListUiMode(lang?: TargetLanguage | string): ImplementsListUiMode {
+  if (lang === 'csharp' || lang === 'rust') return 'multi';
+  return 'hidden';
+}
+
+export type ClassFormUiOption = ClassForm;
+
+/** C# can be class|interface. Rust class|trait. Others stay Class (no form control). */
+export function classFormUiOptions(lang?: TargetLanguage | string): ClassFormUiOption[] {
+  if (lang === 'csharp') return ['class', 'interface'];
+  if (lang === 'rust') return ['class', 'trait'];
+  return [];
 }
 
 /**
@@ -219,6 +237,53 @@ export function classVisibleSymbols(
     events: [...ownEvents, ...inheritedEvts.map((entry) => entry.symbol)],
     inherited,
   };
+}
+
+/** Resolve Implements by class name or id. Target may be class, interface, or trait. */
+export function resolveImplementsClass(
+  classes: ClassSymbol[],
+  implementsType: string | undefined | null
+): ClassSymbol | undefined {
+  return resolveExtendsClass(classes, implementsType);
+}
+
+export function wouldCreateImplementsCycle(
+  classes: ClassSymbol[],
+  childClassId: string,
+  parentRef: string
+): boolean {
+  const parent = resolveImplementsClass(classes, parentRef);
+  if (!parent) return false;
+  if (parent.id === childClassId) return true;
+  const visited = new Set<string>();
+  const stack = [parent.id];
+  while (stack.length > 0) {
+    const id = stack.pop()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    if (id === childClassId) return true;
+    const cls = classes.find((item) => item.id === id);
+    if (!cls) continue;
+    for (const ref of classImplementsNames(cls)) {
+      const next = resolveImplementsClass(classes, ref);
+      if (next && !visited.has(next.id)) stack.push(next.id);
+    }
+  }
+  return false;
+}
+
+export function classImplementsMissingNames(
+  classes: ClassSymbol[],
+  cls: ClassSymbol
+): string[] {
+  return classImplementsNames(cls).filter((ref) => resolveImplementsClass(classes, ref) == null);
+}
+
+export function classImplementsTargetMissing(
+  classes: ClassSymbol[],
+  cls: ClassSymbol
+): boolean {
+  return classImplementsMissingNames(classes, cls).length > 0;
 }
 
 export function classExtendsMissingNames(

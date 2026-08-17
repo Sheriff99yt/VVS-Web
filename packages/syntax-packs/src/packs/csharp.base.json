@@ -130,6 +130,9 @@
     "ClassModuleOpen": {
       "quasi": "{visibility}{abstractKw}class {name}{extendsSuffix} {"
     },
+    "InterfaceModuleOpen": {
+      "quasi": "{visibility}interface {name}{extendsSuffix} {"
+    },
     "ClassModuleClose": {
       "quasi": "}"
     },

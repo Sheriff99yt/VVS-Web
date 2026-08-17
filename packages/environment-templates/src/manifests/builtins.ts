@@ -13,7 +13,9 @@ import envCppGameLoop from './env.cpp.game-loop.json';
 import envGdscriptGodotGame from './env.gdscript.godot-game.json';
 import envRustConsoleApp from './env.rust.console-app.json';
 import envCsharpConsoleApp from './env.csharp.console-app.json';
+import envCsharpDataScript from './env.csharp.data-script.json';
 import envGoConsoleApp from './env.go.console-app.json';
+import envGoHttpService from './env.go.http-service.json';
 
 /** Explicit built-in manifests — add new JSON imports here (also auto-discovered at bundle time). */
 export const BUILTIN_MANIFEST_SOURCES: ProjectEnvironmentManifest[] = [
@@ -31,5 +33,7 @@ export const BUILTIN_MANIFEST_SOURCES: ProjectEnvironmentManifest[] = [
   envGdscriptGodotGame,
   envRustConsoleApp,
   envCsharpConsoleApp,
+  envCsharpDataScript,
   envGoConsoleApp,
+  envGoHttpService,
 ] as ProjectEnvironmentManifest[];

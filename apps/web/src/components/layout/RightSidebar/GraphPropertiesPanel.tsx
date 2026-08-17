@@ -26,7 +26,9 @@ import { SegmentedControl } from '@/components/settings/SettingsControls';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { buildExtendsClassPickerOptions } from '@/lib/classScope';
 import { ExtendsListEditor } from '@/components/layout/ExtendsListEditor';
-import { extendsListUiMode, syncClassExtendsFields } from '@vvs/graph-types';
+import { ImplementsListEditor } from '@/components/layout/ImplementsListEditor';
+import { ClassFormEditor } from '@/components/layout/ClassFormEditor';
+import { extendsListUiMode, implementsListUiMode, classFormUiOptions, syncClassExtendsFields, syncClassImplementsFields, normalizeClassForm } from '@vvs/graph-types';
 
 export type GraphPropertiesSection = 'environment' | 'exportPaths' | 'details';
 
@@ -471,6 +473,50 @@ export function GraphPropertiesPanel({
               )}
             </div>
             )}
+            {classFormUiOptions(targetLanguage).length > 0 || implementsListUiMode(targetLanguage) !== 'hidden' ? (
+              <div className="space-y-2">
+                <ClassFormEditor
+                  cls={
+                    classes.find((item) => item.id === activeClassId) ?? {
+                      kind: 'class',
+                      id: activeClassId ?? 'main-class',
+                      name: tabDetails.moduleName || 'Class',
+                    }
+                  }
+                  targetLanguage={targetLanguage}
+                  onChange={(next) => {
+                    const form = normalizeClassForm(next.form);
+                    setClasses((prev) =>
+                      prev.map((item) =>
+                        item.id === next.id
+                          ? { ...item, form: form && form !== 'class' ? form : undefined }
+                          : item
+                      )
+                    );
+                  }}
+                />
+                <ImplementsListEditor
+                  cls={
+                    classes.find((item) => item.id === activeClassId) ?? {
+                      kind: 'class',
+                      id: activeClassId ?? 'main-class',
+                      name: tabDetails.moduleName || 'Class',
+                      implementsTypes: [],
+                    }
+                  }
+                  classes={classes}
+                  targetLanguage={targetLanguage}
+                  onChange={(next) => {
+                    const synced = syncClassImplementsFields(next.implementsTypes);
+                    setClasses((prev) =>
+                      prev.map((item) =>
+                        item.id === next.id ? { ...item, implementsTypes: synced.implementsTypes } : item
+                      )
+                    );
+                  }}
+                />
+              </div>
+            ) : null}
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium text-zinc-400">Description</label>
               <textarea

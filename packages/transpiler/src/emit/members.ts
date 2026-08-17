@@ -706,6 +706,8 @@ export function appendRustNewConstructor(sink: CodeSink, ir: IrModule): void {
     (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'
   );
   if (!classDecl) return;
+  const form = classDecl.properties?.form;
+  if (form === 'trait') return;
 
   const extendsType = (classDecl.extendsType || ir.extendsType || '').trim();
   const fields = ir.members.filter(

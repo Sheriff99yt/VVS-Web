@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  collectEnvironmentLanguages,
+  filterEnvironmentsByLanguage,
   filterEnvironmentsBySearch,
   filterGitReposBySearch,
   filterLibraryAssetsBySearch,
@@ -95,5 +97,50 @@ describe('librarySearch', () => {
     expect(filterLibraryAssetsBySearch(assets, 'vectors').map((a) => a.title)).toEqual([
       'Math Utilities Pack',
     ]);
+  });
+});
+
+describe('library language chips', () => {
+  const envs = [
+    {
+      id: 'env.rust.console-app',
+      displayName: 'Rust Console App',
+      description: 'Native Rust binary',
+      category: 'console',
+      defaultTarget: 'rust',
+      supportedTargets: ['rust', 'python'],
+    },
+    {
+      id: 'env.javascript.http-service',
+      displayName: 'Node HTTP Service',
+      description: 'Node http.createServer skeleton',
+      category: 'api',
+      defaultTarget: 'javascript',
+      supportedTargets: ['javascript', 'python'],
+    },
+  ];
+
+  test('collects languages from default + supported targets', () => {
+    expect(collectEnvironmentLanguages(envs)).toEqual(['rust', 'python', 'javascript']);
+  });
+
+  test('filters by language chip without using embeddings', () => {
+    expect(filterEnvironmentsByLanguage(envs, 'rust').map((e) => e.id)).toEqual([
+      'env.rust.console-app',
+    ]);
+    expect(filterEnvironmentsByLanguage(envs, 'python').map((e) => e.id)).toEqual([
+      'env.rust.console-app',
+      'env.javascript.http-service',
+    ]);
+    expect(filterEnvironmentsByLanguage(envs, 'all')).toHaveLength(2);
+    expect(filterEnvironmentsByLanguage(envs, 'verse')).toEqual([]);
+  });
+
+  test('language chip stacks with token search', () => {
+    const searched = filterEnvironmentsBySearch(envs, 'http');
+    expect(filterEnvironmentsByLanguage(searched, 'javascript').map((e) => e.id)).toEqual([
+      'env.javascript.http-service',
+    ]);
+    expect(filterEnvironmentsByLanguage(searched, 'rust')).toEqual([]);
   });
 });

@@ -37,6 +37,9 @@ In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mir
 | **Off-thread transpile worker** | Aug 2026 |
 | **Rust + Go console packs** (`env.rust.console-app`, `env.go.console-app`) + optional `devcontainer` host file | Aug 2026 |
 | **Library client token search** | Aug 2026 |
+| **Implements list + Class form** (cs/rs UI + emit; python does not print Implements; Super stays first Extends parent) | Aug 2026 |
+| **Library language chips** (filter templates by default/supported target; token search stays, no embeddings) | Aug 2026 |
+| **C# data-script + Go HTTP service packs** (`env.csharp.data-script`, `env.go.http-service`) | Aug 2026 |
 | **Mobile agent-hide + coarse pin snap + hit targets** (gestures still planned) | Aug 2026 |
 | **Host skip/emit UI** in Graph settings | Aug 2026 |
 | **Per-tab folder graph files** (`graph-doc-split`) | Aug 2026 |
@@ -141,8 +144,9 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
 | **U105** | Overwriting (override) | **Done** — option on Declare/Define; emit + dim per language |
-| **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010). Generate prints all Extends rows for python/cpp; js/gd/verse/cs still first parent. Super still first parent. |
-| **Extends list** | Multiple inheritance visual | **Done** — list UI + generate. Python `class Child(Parent, Mixin):`. C++ `class Child : public Parent, public Mixin`. js/gd/verse/cs still first parent (extras stored; C# extras are Implements, not built). go/rust list hidden. Super still first parent. No Inherit node. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
+| **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010). Generate prints all Extends rows for python/cpp; js/gd/verse/cs still first parent. Super still first Extends parent. Implements list + Class form shipped for cs/rs. |
+| **Extends list** | Multiple inheritance visual | **Done** — list UI + generate. Python `class Child(Parent, Mixin):`. C++ `class Child : public Parent, public Mixin`. js/gd/verse/cs still first parent (extras stored; C# Extends extras are not auto-migrated to Implements). go/rust list hidden. Super still first Extends parent. No Inherit node. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
+| **Implements list + Class form** | Interface / trait | **Done** — `form` + `implementsTypes` on Class / `class_define`. UI + emit for csharp/rust only. C# `class Child : Base, IFoo` or `interface IFoo`. Rust `pub trait` + `impl Trait for Type` when Implements has names. Python does not print Implements. Super stays first Extends parent. No `implements_define`. |
 | **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
 | **Lambda** | Expression node | **Done** — `lambda_define` (python / javascript / csharp / rust / gdscript). Capture option. |
 | **Try** | Flow node | **Done** — `flow_try` (python / javascript / cpp / csharp / gdscript). Empty finally omitted. Hidden in Go/Rust. |
@@ -171,6 +175,7 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
+| **Implements / form / language chips / env packs** | Implements list + Class form (cs/rs); Library language chips (no embeddings); `env.csharp.data-script` + `env.go.http-service`. Search stays partial. Templates stay partial (no community catalog). |
 | **U65 goldens + roadmap sync** | Home-preview goldens for Coverage Lab Switch `match` (python/rust) and New Features Lab overload emit; public/in-app roadmap Open vs Done aligned to HEAD `1fcf4a3` era |
 | **Multi-base / Yield / Switch match / TypeSpec** | Extends list generate for python/cpp; `yield_stmt` py/gd; Switch → Python/Rust `match`; TypeSpec CLI → apiSurface |
 | **Overload codegen + profiles + worker** | C++ out-of-line overload loop; call-site selected args; language profile JSON packs; off-thread transpile worker |

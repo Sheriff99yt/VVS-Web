@@ -101,6 +101,40 @@ export function classExtendsNames(cls: Pick<ClassSymbol, 'extendsType' | 'extend
   return syncClassExtendsFields(cls.extendsType, cls.extendsTypes).extendsTypes ?? [];
 }
 
+export type ClassForm = 'class' | 'interface' | 'trait';
+
+export function normalizeClassForm(raw: unknown): ClassForm | undefined {
+  if (raw === 'interface' || raw === 'trait' || raw === 'class') return raw;
+  return undefined;
+}
+
+/** Persist interface/trait only; unset or class means ordinary Class. */
+export function classFormOf(cls: Pick<ClassSymbol, 'form'> | undefined | null): ClassForm {
+  return normalizeClassForm(cls?.form) ?? 'class';
+}
+
+export function syncClassImplementsFields(
+  implementsTypes?: unknown
+): { implementsTypes?: string[] } {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  if (Array.isArray(implementsTypes)) {
+    for (const item of implementsTypes) {
+      if (typeof item !== 'string') continue;
+      const t = item.trim();
+      if (!t || seen.has(t)) continue;
+      seen.add(t);
+      names.push(t);
+    }
+  }
+  if (names.length === 0) return {};
+  return { implementsTypes: names };
+}
+
+export function classImplementsNames(cls: Pick<ClassSymbol, 'implementsTypes'>): string[] {
+  return syncClassImplementsFields(cls.implementsTypes).implementsTypes ?? [];
+}
+
 /** Default class id for v2→v3 migration and single-class projects. */
 export const MAIN_CLASS_ID = 'main-class';
 
@@ -171,6 +205,10 @@ export interface ClassSymbol {
   extendsType?: string;
   /** Extra bases after [0]. [0] always mirrors extendsType. python/cpp generate prints all rows. */
   extendsTypes?: string[];
+  /** Interface/trait names. Separate from Extends. Not auto-migrated from extendsTypes. */
+  implementsTypes?: string[];
+  /** class (default) | interface (C#) | trait (Rust). Hidden elsewhere. */
+  form?: ClassForm;
   description?: string;
   /** @deprecated Legacy canvas key — use containerId as the class home graph document. */
   graphTabId?: string;
@@ -206,6 +244,8 @@ export function createClassSymbol(
     id?: string;
     extendsType?: string;
     extendsTypes?: string[];
+    implementsTypes?: string[];
+    form?: ClassForm;
     description?: string;
     graphTabId?: string;
     containerId?: string;
@@ -215,11 +255,15 @@ export function createClassSymbol(
 ): ClassSymbol {
   const id = options?.id ?? createClassId();
   const extendsFields = syncClassExtendsFields(options?.extendsType, options?.extendsTypes);
+  const implementsFields = syncClassImplementsFields(options?.implementsTypes);
+  const form = normalizeClassForm(options?.form);
   return {
     kind: 'class',
     id,
     name,
     ...extendsFields,
+    ...implementsFields,
+    ...(form && form !== 'class' ? { form } : {}),
     description: options?.description,
     graphTabId: options?.graphTabId,
     containerId: options?.containerId ?? MAIN_GRAPH_CONTAINER_ID,
@@ -238,11 +282,15 @@ export function normalizeClassSymbols(raw: unknown): ClassSymbol[] {
         typeof cls.extendsType === 'string' ? cls.extendsType : undefined,
         (cls as ClassSymbol).extendsTypes
       );
+      const implementsFields = syncClassImplementsFields((cls as ClassSymbol).implementsTypes);
+      const form = normalizeClassForm((cls as ClassSymbol).form);
       return {
         kind: 'class' as const,
         id,
         name: typeof cls.name === 'string' ? cls.name : 'Untitled',
         ...extendsFields,
+        ...implementsFields,
+        ...(form && form !== 'class' ? { form } : {}),
         description: typeof cls.description === 'string' ? cls.description : undefined,
         graphTabId: typeof cls.graphTabId === 'string' ? cls.graphTabId : undefined,
         containerId:

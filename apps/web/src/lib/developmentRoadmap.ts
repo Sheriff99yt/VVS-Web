@@ -850,7 +850,15 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Extends list (multiple inheritance visual)',
         description:
-          'Extends list UI + generate. Python `class Child(Parent, Mixin):`. C++ `class Child : public Parent, public Mixin`. js/gd/verse/cs still first parent only (extras stored). go/rust list hidden. Super still first parent. No Inherit node. No Implements.',
+          'Extends list UI + generate. Python `class Child(Parent, Mixin):`. C++ `class Child : public Parent, public Mixin`. js/gd/verse/cs still first parent only (extras stored; C# extras are not auto-migrated to Implements). go/rust list hidden. Super still first Extends parent. No Inherit node.',
+        status: 'done',
+      },
+      {
+        id: 'implements-list-class-form',
+        layer: 'frontend',
+        title: 'Implements list + Class form',
+        description:
+          'form (class/interface/trait) + implementsTypes on Class / class_define. UI + emit for csharp/rust only. C# `class Child : Base, IFoo` or `interface IFoo`. Rust `pub trait` + `impl Trait for Type` when Implements has names. Python does not print Implements. Super stays first Extends parent. No implements_define.',
         status: 'done',
       },
       {
@@ -1547,7 +1555,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Semantic library search',
         description:
-          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Not embeddings; semantic search backend TBD.',
+          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Language chips filter templates by default/supported target. Not embeddings; semantic search backend TBD.',
         status: 'partial',
       },
     ],
@@ -1629,7 +1637,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Richer project templates',
         description:
-          'Added `env.csharp.console-app`, `env.javascript.data-script`, `env.javascript.http-service`, rust console, and Go console pack (`env.go.console-app`). Community catalog still not a product.',
+          'Added `env.csharp.console-app`, `env.csharp.data-script`, `env.javascript.data-script`, `env.javascript.http-service`, rust console, Go console (`env.go.console-app`), and `env.go.http-service`. Community catalog still not a product.',
         status: 'partial',
       },
       {

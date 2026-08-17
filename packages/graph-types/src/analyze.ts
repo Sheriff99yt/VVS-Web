@@ -28,8 +28,8 @@ import {
 } from './defineNodes';
 import { analyzeClassMembers } from './classMembers';
 import { validateCanvasOrderYHints } from './canvasOrderY';
-import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryEvent, syncClassExtendsFields } from './symbols';
-import { classExtendsMissingNames, classExtendsTargetMissing, resolveExtendsClass } from './inheritance';
+import { MAIN_CLASS_ID, classHomeGraphId, classForHomeGraphId, findProgramEntryEvent, syncClassExtendsFields, syncClassImplementsFields } from './symbols';
+import { classExtendsMissingNames, classExtendsTargetMissing, resolveExtendsClass, classImplementsMissingNames, classImplementsTargetMissing, resolveImplementsClass } from './inheritance';
 
 export interface AnalyzeProjectInput {
   documents: Record<string, GraphDocument>;
@@ -1077,6 +1077,10 @@ function classDefineExtendsNames(node: import('./nodes').GraphNode): string[] {
   return syncClassExtendsFields(classDefineExtendsType(node), node.data.properties?.extendsTypes).extendsTypes ?? [];
 }
 
+function classDefineImplementsNames(node: import('./nodes').GraphNode): string[] {
+  return syncClassImplementsFields(node.data.properties?.implementsTypes).implementsTypes ?? [];
+}
+
 function validateExtendsTargets(input: AnalyzeProjectInput): Diagnostic[] {
   const classes = input.classes ?? [];
   if (classes.length === 0) return [];
@@ -1150,6 +1154,80 @@ function validateExtendsTargets(input: AnalyzeProjectInput): Diagnostic[] {
   return messages;
 }
 
+
+function validateImplementsTargets(input: AnalyzeProjectInput): Diagnostic[] {
+  const classes = input.classes ?? [];
+  if (classes.length === 0) return [];
+  const messages: Diagnostic[] = [];
+  const reported = new Set<string>();
+
+  const reportMissing = (options: {
+    className: string;
+    implementsType: string;
+    classId?: string;
+    tabId?: string;
+    nodeId?: string;
+  }) => {
+    const key = `${options.classId ?? options.className}:${options.implementsType}:${options.nodeId ?? ''}`;
+    if (reported.has(key)) return;
+    reported.add(key);
+    messages.push({
+      level: 'error',
+      source: 'semantic',
+      code: 'IMPLEMENTS_CLASS_MISSING',
+      message: `Class "${options.className}" implements "${options.implementsType}" but that class is not in the project.`,
+      symbolId: options.classId,
+      tabId: options.tabId,
+      nodeId: options.nodeId,
+    });
+  };
+
+  for (const cls of classes) {
+    if (classImplementsTargetMissing(classes, cls)) {
+      const tabId = classHomeGraphId(cls);
+      const doc = input.documents[tabId];
+      const node = doc?.nodes.find((n) => resolveNodeKindId(n.data) === 'class_define');
+      for (const parentName of classImplementsMissingNames(classes, cls)) {
+        reportMissing({
+          className: cls.name,
+          implementsType: parentName,
+          classId: cls.id,
+          tabId,
+          nodeId: node?.id,
+        });
+      }
+    }
+  }
+
+  for (const [tabId, doc] of Object.entries(input.documents)) {
+    for (const node of doc.nodes) {
+      if (resolveNodeKindId(node.data) !== 'class_define') continue;
+      const implNames = classDefineImplementsNames(node);
+      const missing = implNames.filter((name) => !resolveImplementsClass(classes, name));
+      if (missing.length === 0) continue;
+      const className =
+        (typeof node.data.properties?.name === 'string' && node.data.properties.name.trim()) ||
+        node.data.label.replace(/^Declare\s+/, '').trim() ||
+        'Class';
+      const classId =
+        (typeof node.data.properties?.classId === 'string' && node.data.properties.classId) ||
+        (typeof node.data.properties?.symbolId === 'string' && node.data.properties.symbolId) ||
+        undefined;
+      for (const parentName of missing) {
+        reportMissing({
+          className,
+          implementsType: parentName,
+          classId,
+          tabId,
+          nodeId: node.id,
+        });
+      }
+    }
+  }
+
+  return messages;
+}
+
 export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   const diagnostics: Diagnostic[] = [];
   const containerTabIds = new Set(
@@ -1178,6 +1256,7 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   diagnostics.push(...validateCrossClassCalls(input));
   diagnostics.push(...validateCrossClassDispatches(input));
   diagnostics.push(...validateExtendsTargets(input));
+  diagnostics.push(...validateImplementsTargets(input));
   diagnostics.push(...validateVirtualFunctionFlags(input));
   diagnostics.push(...validateCanvasOrderYHints(input.documents));
 

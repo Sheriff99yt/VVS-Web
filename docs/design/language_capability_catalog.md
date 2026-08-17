@@ -107,7 +107,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 |------------|------------|-----------------|----------|----------|-------|
 | Class / module shell | Declare Class `{name}` | `class_define` | all | shipped | `extendsType` on class + define node; extras on `extendsTypes`. Generate prints all Extends rows for python/cpp; others first parent. Extends is a **list** (locked visual). See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Component (game-talk) | same as Declare Class | `class_define` + field or Extends | all | **locked** | Not a second construct. See [Component = Class](#component--class). U103 closed. |
-| Inheritance / Extends | Extends list on Declare Class | `class_define` Extends rows | py, cpp (two class rows); cs one class + Implements; js/gd/verse one; go/rs hidden | **partial** | List UI shipped. Generate prints all Extends rows for python/cpp; others still first parent / stored only. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
+| Inheritance / Extends | Extends list on Declare Class | `class_define` Extends rows | py, cpp (two class rows); cs one class + Implements; js/gd/verse one; go/rs hidden | **partial** | List UI shipped. Generate prints all Extends rows for python/cpp; others first parent / stored only. C# extra types belong on Implements (shipped); Extends extras are not auto-moved. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Variable field | Declare `{name}` | `var_define` | all | shipped | **TypeRef** (builtin / enum / class / array / map); legacy `enumType` migrates |
 | Function member | Declare `{name}` | existence / signature / abstract | all | **shipped (U81)** | `function_define` — no method without Define (except abstract) |
 | Function body place | Define `{name}` | body insert at chain position | all | **shipped (U81)** | `function_implement` on member chain + Edit function body tab |
@@ -127,7 +127,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Return type** on Declare | Inspector | `returnType` | typed targets | **planned** | Stored on overloads for future emit; UI removed until signatures are non-void |
 | **Constructor** | Function Define + `role: constructor` | `function_define` / `function_implement` + **role** option | cpp, cs, js, py, gd | shipped | Same pattern as On `role: entry\|tick`. Not `constructor_define`. Spawn only where you type one: C++ ctor, C# ctor, JS `constructor`, Python `__init__`, GDScript `_init`. Rust `new` is a normal function (do not invent `impl Default`). Go has none. Super/init call stays `isSuper` on Call. |
 | **Destructor** | Function Define + `role: destructor` | `function_define` / `function_implement` + **role** option | cpp (and langs that type one) | shipped | Not `destructor_define`. Spawn only where the language has a destructor. |
-| **Interface / trait** | Class + `form` option; Implements list | `class_define` + `form: class\|interface\|trait`; Implements option (list, like Extends) | cs, rs (form); implements where typed | planned | Not `implements_define`. C++ stays abstract Class + `isAbstract`. Python stays Class. JS emit has no interface. Rust `impl Trait for Type` is the only extra line, and only in Rust. |
+| **Interface / trait** | Class + `form` option; Implements list | `class_define` + `form: class\|interface\|trait`; `implementsTypes` on class + define node | cs, rs (form + Implements); others hidden / stored-not-printed | **shipped** | Not `implements_define`. C# `class Child : Base, IFoo` (Extends first parent, then Implements) or `interface IFoo`. Rust `pub trait` when form=trait; `impl Trait for Type` only when Implements has names (no invented `impl Default`). C++ stays abstract Class + `isAbstract`. Python/JS stay Class; Implements not printed. Extends extras are not auto-migrated to Implements. |
 | **File extension per target** | Code panel **LanguageExtensionMenu** (hover submenu); graph settings defaults | `metadata.targetFileExtension` per graph; `targetFileExtensions` on snapshot for new graphs | all | **shipped** | Language-only click → first extension; hover submenu for `.cpp` / `.hpp` / etc. |
 | **Per-graph codegen language** | Code panel top bar + graph settings | `metadata.targetLanguage` per graph; snapshot `targetLanguage` = default for new graphs | all | **shipped** | Multi-language projects: Calculator in Python, helper fn in Rust, etc. |
 | **Generated files tree** | Output panel → **Files** tab | `useProjectTranspileResult` + `buildGeneratedFileTree` | all | **shipped** | Folder tree of all emitted paths; removed flat **Generated** list from project tree |
@@ -243,7 +243,7 @@ Text-shaped: you type `class Child(Parent, Mixin)` / `class Child : public Paren
 
 **Do not add:** Inherit node, Multiple Inheritance node, Blueprint parent wires as source of truth, `implements_define` kind.
 
-**Honesty:** extras are stored on `extendsTypes` (`[0]` mirrors `extendsType`). Generate now prints all Extends rows for **python** (`class Child(Parent, Mixin):`) and **cpp** (`class Child : public Parent, public Mixin`). javascript / gdscript / verse / csharp still print the first parent only — C# extras are not class bases (Implements is not built). go / rust Extends list stays hidden. Super / inherited Get-Set-Call stay first-parent only. No which-base picker.
+**Honesty:** extras are stored on `extendsTypes` (`[0]` mirrors `extendsType`). Generate now prints all Extends rows for **python** (`class Child(Parent, Mixin):`) and **cpp** (`class Child : public Parent, public Mixin`). javascript / gdscript / verse / csharp still print the first parent only — C# Extends stays first parent; Implements names print after it (`class Child : Base, IFoo`). C# extras already stored on `extendsTypes` are not auto-migrated to Implements. go / rust Extends list stays hidden. Super / inherited Get-Set-Call stay first-parent only. No which-base picker.
 
 #### Child(Parent, Mixin) — Python and C++ only
 
@@ -270,7 +270,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 
    Example: Python `def __init__(self):` is Function Define `role: constructor`, not a Constructor node.
 
-2. **Interface / trait** — Class symbol + **form** option (`class` | `interface` | `trait`). **Implements** is an option on Class, like Extends (list). Not `implements_define`. C++ stays abstract Class + `isAbstract`. Python stays Class. JS emit has no interface. Rust `impl Trait for Type` is the only extra line, and only in Rust.
+2. **Interface / trait** — Class symbol + **form** option (`class` | `interface` | `trait`). **Implements** is an option on Class, like Extends (list). Not `implements_define`. **Shipped:** C# form + Implements emit; Rust form=trait + `impl Trait for Type` when Implements has names. C++ stays abstract Class + `isAbstract`. Python stays Class. JS emit has no interface.
 
    Example: C# `interface IFoo` is Class `form: interface`; `class Bar : IFoo` is Implements on Class.
 
@@ -524,6 +524,7 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 
 | Date | Change |
 |------|--------|
+| 2026-08-17 | **Implements list + Class form shipped** -- `form` (`class`/`interface`/`trait`) + `implementsTypes` on Class / `class_define`. C# `class Child : Base, IFoo` or `interface IFoo`; Rust `pub trait` + `impl Trait for Type` when Implements has names. Analyzer missing-target + cycle (picker). Extends extras not auto-migrated. Super stays first Extends parent. |
 | 2026-08-17 | **Multi-base emit + Yield + Switch match** — generate prints all Extends rows for python/cpp; `yield_stmt` (py/gd); Switch lowers to Python `match` and Rust `match` (value-equality cases). C# extras still not printed. Super stays first-parent. |
 | 2026-08-16 | **Extends list UI shipped (partial)** — list on Declare Class; extras stored; generate first parent only. Multi-base emit not shipped. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | 2026-08-16 | **Lambda + Try nodes shipped** — `lambda_define` (py/js/cs/rs/gd) and `flow_try` (py/js/cpp/cs/gd). Empty finally omitted. Yield and CL-017 stay planned. |

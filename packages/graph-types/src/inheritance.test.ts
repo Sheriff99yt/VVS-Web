@@ -1,14 +1,18 @@
 import { describe, expect, test } from 'bun:test';
-import { createClassSymbol, createVariableSymbol, MAIN_CLASS_ID, syncClassExtendsFields, classExtendsNames } from './symbols';
+import { createClassSymbol, createVariableSymbol, MAIN_CLASS_ID, syncClassExtendsFields, classExtendsNames, syncClassImplementsFields, classImplementsNames } from './symbols';
 import {
   classExtendsMissingNames,
   classExtendsTargetMissing,
+  classFormUiOptions,
+  classImplementsMissingNames,
   classVisibleSymbols,
   extendsListUiMode,
+  implementsListUiMode,
   inheritedVariables,
   listClassAncestors,
   resolveExtendsClass,
   wouldCreateExtendsCycle,
+  wouldCreateImplementsCycle,
 } from './inheritance';
 
 const machine = createClassSymbol('Machine', { id: MAIN_CLASS_ID });
@@ -145,5 +149,60 @@ describe('extends list (locked visual)', () => {
     const parentField = createVariableSymbol('FromParent', { id: 'var-p', classId: 'p' });
     const inherited = inheritedVariables([parent, mixin, child], 'c', [mixinField, parentField]);
     expect(inherited.map((entry) => entry.symbol.name)).toEqual(['FromParent']);
+  });
+});
+
+describe('implements list + class form', () => {
+  test('syncClassImplementsFields de-dupes and drops blanks', () => {
+    expect(syncClassImplementsFields(['IFoo', 'IBar', 'IFoo', '  '])).toEqual({
+      implementsTypes: ['IFoo', 'IBar'],
+    });
+    expect(syncClassImplementsFields([])).toEqual({});
+    expect(syncClassImplementsFields(undefined)).toEqual({});
+  });
+
+  test('createClassSymbol keeps form and implementsTypes without rewriting Extends', () => {
+    const cls = createClassSymbol('Child', {
+      extendsType: 'Base',
+      extendsTypes: ['Base', 'IFoo'],
+      implementsTypes: ['IBar'],
+      form: 'class',
+    });
+    expect(cls.extendsTypes).toEqual(['Base', 'IFoo']);
+    expect(cls.implementsTypes).toEqual(['IBar']);
+    expect(cls.form).toBeUndefined();
+    const iface = createClassSymbol('IFoo', { form: 'interface' });
+    expect(iface.form).toBe('interface');
+    const trait = createClassSymbol('Drawable', { form: 'trait' });
+    expect(trait.form).toBe('trait');
+  });
+
+  test('csharp/rust show Implements + Add; others hide', () => {
+    expect(implementsListUiMode('csharp')).toBe('multi');
+    expect(implementsListUiMode('rust')).toBe('multi');
+    expect(implementsListUiMode('python')).toBe('hidden');
+    expect(implementsListUiMode('javascript')).toBe('hidden');
+    expect(implementsListUiMode('cpp')).toBe('hidden');
+    expect(implementsListUiMode('go')).toBe('hidden');
+    expect(classFormUiOptions('csharp')).toEqual(['class', 'interface']);
+    expect(classFormUiOptions('rust')).toEqual(['class', 'trait']);
+    expect(classFormUiOptions('python')).toEqual([]);
+    expect(classFormUiOptions('cpp')).toEqual([]);
+  });
+
+  test('cycle check walks Implements names', () => {
+    const a = createClassSymbol('A', { id: 'a', implementsTypes: ['B'] });
+    const b = createClassSymbol('B', { id: 'b', implementsTypes: ['A'] });
+    expect(wouldCreateImplementsCycle([a, b], 'a', 'B')).toBe(true);
+    expect(wouldCreateImplementsCycle([a, b], 'a', 'A')).toBe(true);
+    const ifoo = createClassSymbol('IFoo', { id: 'i', form: 'interface' });
+    const child = createClassSymbol('Child', { id: 'c', implementsTypes: ['IFoo'] });
+    expect(wouldCreateImplementsCycle([ifoo, child], 'c', 'IFoo')).toBe(false);
+  });
+
+  test('missing Implements names report unknown targets', () => {
+    const child = createClassSymbol('Child', { id: 'c', implementsTypes: ['IGhost'] });
+    expect(classImplementsNames(child)).toEqual(['IGhost']);
+    expect(classImplementsMissingNames([child], child)).toEqual(['IGhost']);
   });
 });

@@ -143,6 +143,8 @@ describe('new curated environment packs', () => {
     ['env.go.console-app', 'go', 'console', 'main.go'],
     ['env.javascript.data-script', 'javascript', 'data', 'main.js'],
     ['env.javascript.http-service', 'javascript', 'api', 'main.js'],
+    ['env.csharp.data-script', 'csharp', 'data', 'Program.cs'],
+    ['env.go.http-service', 'go', 'api', 'main.go'],
   ] as const)('%s loads, validates, and expands', (id, target, category, entryPath) => {
     const manifest = loadEnvironmentManifest(id);
     expect(manifest).toBeDefined();

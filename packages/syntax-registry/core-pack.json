@@ -875,6 +875,18 @@
           "default": "MyClass"
         },
         {
+          "key": "form",
+          "label": "Form",
+          "type": "enum",
+          "enumValues": [
+            "class",
+            "interface",
+            "trait"
+          ],
+          "default": "class",
+          "description": "Class, C# interface, or Rust trait. Not a new node. Hidden where the language has no interface/trait."
+        },
+        {
           "key": "extendsType",
           "label": "Extends",
           "type": "class",

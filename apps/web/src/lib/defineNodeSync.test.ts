@@ -255,4 +255,21 @@ describe('defineNodeSync', () => {
     expect(node?.data.properties?.extendsType).toBe('Parent');
     expect(node?.data.properties?.extendsTypes).toEqual(['Parent', 'Mixin']);
   });
+
+  it('syncs class_define implementsTypes and form', () => {
+    const cls = createClassSymbol('Child', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+      implementsTypes: ['IFoo', 'IBar'],
+      form: 'interface',
+    });
+    const inserted = insertClassDefineNode(
+      { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } },
+      cls
+    );
+    const synced = syncDefineNodesForClass(inserted, cls);
+    const node = synced[MAIN_GRAPH_CONTAINER_ID]!.nodes.find((n) => n.data.kindId === 'class_define');
+    expect(node?.data.properties?.implementsTypes).toEqual(['IFoo', 'IBar']);
+    expect(node?.data.properties?.form).toBe('interface');
+  });
 });

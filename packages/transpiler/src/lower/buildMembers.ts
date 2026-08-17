@@ -13,7 +13,9 @@ import {
   eventCodegenHandlerName,
   eventHandlerStem,
   MAIN_CLASS_ID,
+  normalizeClassForm,
   resolveNodeKindId,
+  syncClassImplementsFields,
   type GraphDocument,
 } from '@vvs/graph-types';
 import { analyzeClassMembers, type ClassMemberEntry } from '../analyze/classMembers';
@@ -154,14 +156,22 @@ function memberDeclFromEntry(
   documents?: Record<string, GraphDocument>
 ): IrMemberDecl | undefined {
   switch (entry.kind) {
-    case 'class':
+    case 'class': {
+      const nodeProps = { ...(node.data.properties ?? {}) };
+      const nodeImplements = syncClassImplementsFields(nodeProps.implementsTypes).implementsTypes;
+      const symbolImplements = syncClassImplementsFields(cls.implementsTypes).implementsTypes;
+      if (!nodeImplements && symbolImplements) nodeProps.implementsTypes = symbolImplements;
+      const nodeForm = normalizeClassForm(nodeProps.form);
+      const symbolForm = normalizeClassForm(cls.form);
+      if (!nodeForm && symbolForm && symbolForm !== 'class') nodeProps.form = symbolForm;
       return {
         kind: 'ClassDecl',
         sourceGraphNodeId: entry.nodeId,
         name: classNameFromNode(node, cls.name),
         extendsType: extendsFromNode(node, cls.extendsType ?? ''),
-        properties: node.data.properties,
+        properties: nodeProps,
       };
+    }
     case 'variable': {
       const symbol = variables.find((v) => v.id === entry.symbolId);
       if (!symbol) return undefined;

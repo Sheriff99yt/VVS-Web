@@ -2,7 +2,7 @@ import type { GraphDocument, GraphTab, VariableSymbol, ProjectEventDefinition, F
 import type { ProjectIntegrationConfig } from './integration';
 import { normalizeIntegrationConfig } from './integration';
 import type { SyntaxPackLock, CodegenCapabilities } from './codegenTarget';
-import { normalizeFunctionSymbols, normalizeVariableSymbols, createClassSymbol, normalizeClassSymbols, MAIN_CLASS_ID, normalizeGraphContainers, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME, containerTabFor, ensureContainerDocuments, classHomeGraphId, createProgramEntryEvent, syncClassExtendsFields } from './symbols';
+import { normalizeFunctionSymbols, normalizeVariableSymbols, createClassSymbol, normalizeClassSymbols, MAIN_CLASS_ID, normalizeGraphContainers, MAIN_GRAPH_CONTAINER_ID, PROJECT_MAP_CONTAINER_NAME, containerTabFor, ensureContainerDocuments, classHomeGraphId, createProgramEntryEvent, syncClassExtendsFields, syncClassImplementsFields, normalizeClassForm } from './symbols';
 import type { GraphContainer } from './symbols';
 import type { GraphNode } from './nodes';
 import { migrateTextShapedAlignment } from './fidelityMigration';
@@ -190,6 +190,8 @@ function createStarterClassDefineNode(cls: ClassSymbol): GraphNode {
   const execIn = { id: 'exec_in', label: '', type: 'execution' as const };
   const execOut = { id: 'exec_out', label: '', type: 'execution' as const };
   const extendsFields = syncClassExtendsFields(cls.extendsType, cls.extendsTypes);
+  const implementsFields = syncClassImplementsFields(cls.implementsTypes);
+  const form = normalizeClassForm(cls.form);
   return {
     id: `class-define-${cls.id}`,
     type: 'vvs_standard_node',
@@ -207,6 +209,8 @@ function createStarterClassDefineNode(cls: ClassSymbol): GraphNode {
         name: cls.name,
         extendsType: extendsFields.extendsType ?? '',
         extendsTypes: extendsFields.extendsTypes ?? [],
+        implementsTypes: implementsFields.implementsTypes ?? [],
+        ...(form && form !== 'class' ? { form } : {}),
         visibility: cls.visibility ?? 'public',
       },
     },

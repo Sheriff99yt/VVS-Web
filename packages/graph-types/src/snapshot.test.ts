@@ -151,3 +151,25 @@ describe('migrateLegacyFunction', () => {
     expect(fn.binding).toBe('instance');
   });
 });
+
+
+describe('snapshot implements + form', () => {
+  test('preserves implementsTypes and form without migrating Extends extras', () => {
+    const child = createClassSymbol('Child', {
+      id: 'cls-child',
+      extendsType: 'Parent',
+      extendsTypes: ['Parent', 'IFoo'],
+      implementsTypes: ['IBar'],
+      form: 'interface',
+    });
+    const snap = normalizeProjectSnapshot({
+      ...createEmptyProjectSnapshot(),
+      classes: [child],
+      activeClassId: child.id,
+    });
+    const loaded = snap?.classes.find((c) => c.id === child.id);
+    expect(loaded?.extendsTypes).toEqual(['Parent', 'IFoo']);
+    expect(loaded?.implementsTypes).toEqual(['IBar']);
+    expect(loaded?.form).toBe('interface');
+  });
+});

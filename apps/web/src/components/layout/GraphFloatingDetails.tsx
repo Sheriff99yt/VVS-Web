@@ -34,6 +34,8 @@ import { ImportGraphTargetPanel } from './RightSidebar/ImportGraphTargetPanel';
 import { FunctionPropertiesPanel } from './RightSidebar/FunctionPropertiesPanel';
 import { ClassPropertiesPanel } from './RightSidebar/ClassPropertiesPanel';
 import { ExtendsListEditor } from './ExtendsListEditor';
+import { ImplementsListEditor } from './ImplementsListEditor';
+import { ClassFormEditor } from './ClassFormEditor';
 import { BrokenRefRepairPanel } from './RightSidebar/BrokenRefRepairPanel';
 import { CodePreviewPropertiesPanel } from './RightSidebar/CodePreviewPropertiesPanel';
 import { FloatingPanelShell } from './FloatingPanelShell';
@@ -385,7 +387,7 @@ function GraphFloatingDetailsPanel() {
       }
     }
 
-    if (nodeData.data.kindId === 'class_define' && (key === 'name' || key === 'extendsType' || key === 'visibility')) {
+    if (nodeData.data.kindId === 'class_define' && (key === 'name' || key === 'extendsType' || key === 'visibility' || key === 'form')) {
       const classId =
         (typeof nodeData.data.properties?.classId === 'string' && nodeData.data.properties.classId) ||
         (typeof symbolId === 'string' ? symbolId : undefined);
@@ -497,6 +499,8 @@ function GraphFloatingDetailsPanel() {
     if (nodeKindId === 'class_define') {
       hidden.add('extendsType');
       hidden.add('extendsTypes');
+      hidden.add('implementsTypes');
+      hidden.add('form');
     }
     return nodeKindDef.propertySchema.filter((field) => !hidden.has(field.key));
   }, [nodeKindDef?.propertySchema, nodeKindId]);
@@ -700,9 +704,22 @@ function GraphFloatingDetailsPanel() {
           )}
 
           {nodeKindId === 'class_define' && selectedClass ? (
-            <div className="mb-2">
+            <div className="mb-2 space-y-2">
+              <ClassFormEditor
+                key={`${selectedClass.id}-form`}
+                cls={selectedClass}
+                targetLanguage={targetLanguage}
+                onChange={handleClassChange}
+              />
               <ExtendsListEditor
                 key={selectedClass.id}
+                cls={selectedClass}
+                classes={classes}
+                targetLanguage={targetLanguage}
+                onChange={handleClassChange}
+              />
+              <ImplementsListEditor
+                key={`${selectedClass.id}-implements`}
                 cls={selectedClass}
                 classes={classes}
                 targetLanguage={targetLanguage}
@@ -711,9 +728,9 @@ function GraphFloatingDetailsPanel() {
             </div>
           ) : null}
 
-          {filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes'))).length > 0 ? (
+          {filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes' || field.key === 'implementsTypes' || field.key === 'form'))).length > 0 ? (
             <PropertySchemaPanel
-              fields={filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes')))}
+              fields={filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes' || field.key === 'implementsTypes' || field.key === 'form')))}
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}
               fieldOptions={{

@@ -33,6 +33,9 @@ import {
   renderClassModuleOpen,
   renderClassImplOpen,
   renderFunctionTabClose,
+  renderImplTraitFor,
+  classFormFromProps,
+  classImplementsNamesFromProps,
 } from './shell';
 import { appendIrStatements } from './sinkStatements';
 import { collectIrEmitNodeIds } from '../lower/userComments';
@@ -136,6 +139,10 @@ export function emitClassModule(
   /** Rust: close struct fields and open `impl` before the first method. */
   const ensureRustImpl = () => {
     if (lang !== 'rust' || !state.classOpened || state.rustImplOpened) return;
+    if (classFormFromProps(classDecl?.properties) === 'trait') {
+      state.rustImplOpened = true;
+      return;
+    }
     if (sink.lineCount > 0) sink.appendRaw('}');
     const implOpen = renderClassImplOpen(lang, ir.moduleName);
     if (implOpen) sink.appendRaw(implOpen);
@@ -202,6 +209,13 @@ export function emitClassModule(
       const closeLine = sink.lineCount + 1;
       sink.appendRaw(classClose);
       if (lang === 'cpp') tagClassStructuralLine(sink, ir, closeLine);
+    }
+    if (lang === 'rust' && classFormFromProps(classDecl?.properties) !== 'trait') {
+      const typeName = ir.moduleName;
+      for (const traitName of classImplementsNamesFromProps(classDecl?.properties)) {
+        const line = renderImplTraitFor(lang, typeName, traitName);
+        if (line) sink.appendRaw(line);
+      }
     }
   }
 

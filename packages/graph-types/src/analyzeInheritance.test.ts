@@ -158,3 +158,61 @@ describe('analyzeProject extends list', () => {
     expect(missing.some((d) => d.message.includes('NoSuchMixin'))).toBe(true);
   });
 });
+
+describe('analyzeProject implements list', () => {
+  test('errors when Implements points at a missing class', () => {
+    const machine = createClassSymbol('Machine', { id: MAIN_CLASS_ID, containerId: HOME });
+    const sensor = createClassSymbol('Sensor', {
+      id: 'class-sensor',
+      containerId: HOME,
+      implementsTypes: ['INoSuch'],
+    });
+
+    const result = analyzeProject({
+      documents: {
+        [HOME]: {
+          nodes: [classDefineNode('n-machine', machine), classDefineNode('n-sensor', sensor)],
+          edges: [],
+        },
+      },
+      functions: [],
+      events: [],
+      variables: [],
+      classes: [machine, sensor],
+      projectDetails: { extendsType: '' },
+      targetLanguage: 'csharp',
+    });
+
+    const missing = result.diagnostics.filter((d) => d.code === 'IMPLEMENTS_CLASS_MISSING');
+    expect(missing.length).toBeGreaterThanOrEqual(1);
+    expect(missing[0]?.message).toContain('Sensor');
+    expect(missing[0]?.message).toContain('INoSuch');
+    expect(result.ok).toBe(false);
+  });
+
+  test('accepts Implements of a form=interface class', () => {
+    const ifoo = createClassSymbol('IFoo', { id: 'class-ifoo', containerId: HOME, form: 'interface' });
+    const child = createClassSymbol('Child', {
+      id: 'class-child',
+      containerId: HOME,
+      implementsTypes: ['IFoo'],
+    });
+
+    const result = analyzeProject({
+      documents: {
+        [HOME]: {
+          nodes: [classDefineNode('n-ifoo', ifoo), classDefineNode('n-child', child)],
+          edges: [],
+        },
+      },
+      functions: [],
+      events: [],
+      variables: [],
+      classes: [ifoo, child],
+      projectDetails: { extendsType: '' },
+      targetLanguage: 'csharp',
+    });
+
+    expect(result.diagnostics.some((d) => d.code === 'IMPLEMENTS_CLASS_MISSING')).toBe(false);
+  });
+});

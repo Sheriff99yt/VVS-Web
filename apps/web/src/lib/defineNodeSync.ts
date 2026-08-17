@@ -18,7 +18,7 @@ import {
 } from '@vvs/graph-types';
 import { normalizeNodeData } from '@/lib/nodeKind';
 import { resolve as resolveKind } from '@/lib/nodeRegistry';
-import { classHomeGraphId, syncClassExtendsFields, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+import { classHomeGraphId, syncClassExtendsFields, syncClassImplementsFields, normalizeClassForm, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import { buildFunctionImplementData, applyFunctionDefineBinding, applyFunctionImplementBinding } from '@/lib/functionHelpers';
@@ -142,6 +142,8 @@ function buildEventDefineData(event: ProjectEventDefinition, existingProperties?
 function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
   const def = resolveKind('class_define');
   const extendsFields = syncClassExtendsFields(cls.extendsType, cls.extendsTypes);
+  const implementsFields = syncClassImplementsFields(cls.implementsTypes);
+  const form = normalizeClassForm(cls.form);
   return normalizeNodeData({
     label: `Declare ${cls.name}`,
     category: 'Project',
@@ -155,6 +157,8 @@ function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
       name: cls.name,
       extendsType: extendsFields.extendsType ?? '',
       extendsTypes: extendsFields.extendsTypes ?? [],
+      implementsTypes: implementsFields.implementsTypes ?? [],
+      ...(form && form !== 'class' ? { form } : {}),
       visibility: cls.visibility ?? 'public',
     },
   });

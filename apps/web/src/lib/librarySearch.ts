@@ -88,3 +88,50 @@ export function filterLibraryAssetsBySearch<T extends LibrarySearchAsset>(
   if (tokenizeLibrarySearch(query).length === 0) return assets;
   return assets.filter((asset) => matchesLibrarySearch(libraryAssetSearchHaystack(asset), query));
 }
+
+export const LIBRARY_LANGUAGE_LABELS: Record<string, string> = {
+  python: 'Python',
+  javascript: 'JavaScript',
+  cpp: 'C++',
+  verse: 'Verse',
+  gdscript: 'GDScript',
+  rust: 'Rust',
+  csharp: 'C#',
+  go: 'Go',
+  json: 'JSON',
+};
+
+export function environmentLanguageIds(env: LibrarySearchEnvironment): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of [env.defaultTarget, ...env.supportedTargets]) {
+    const id = String(raw ?? '').trim().toLowerCase();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
+
+export function collectEnvironmentLanguages<T extends LibrarySearchEnvironment>(environments: T[]): string[] {
+  const seen = new Set<string>();
+  const ids: string[] = [];
+  for (const env of environments) {
+    for (const id of environmentLanguageIds(env)) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+/** Chip filter: match default or supported target. `all` returns the list unchanged. */
+export function filterEnvironmentsByLanguage<T extends LibrarySearchEnvironment>(
+  environments: T[],
+  language: string | 'all'
+): T[] {
+  const lang = language.trim().toLowerCase();
+  if (!lang || lang === 'all') return environments;
+  return environments.filter((env) => environmentLanguageIds(env).includes(lang));
+}

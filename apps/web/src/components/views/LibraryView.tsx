@@ -73,6 +73,7 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [activeEnvCategory, setActiveEnvCategory] = useState<EnvironmentCategory | 'all'>('all');
+  const [activeEnvLanguage, setActiveEnvLanguage] = useState<string | 'all'>('all');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
   const [isGitImportModalOpen, setIsGitImportModalOpen] = useState(false);
@@ -262,6 +263,7 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                 onClick={() => {
                   setActiveSection(id);
                   setSearchQuery('');
+                  setActiveEnvLanguage('all');
                   setSelectedAssetId(null);
                   setSelectedEnvironmentId(null);
                 }}
@@ -344,6 +346,8 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                     environments={filteredEnvironments}
                     activeCategory={activeEnvCategory}
                     onCategoryChange={setActiveEnvCategory}
+                    activeLanguage={activeEnvLanguage}
+                    onLanguageChange={setActiveEnvLanguage}
                     onSelect={(id) => {
                       setSelectedAssetId(null);
                       setSelectedEnvironmentId(id);

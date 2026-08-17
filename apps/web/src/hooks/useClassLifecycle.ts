@@ -10,6 +10,8 @@ import {
   MAIN_GRAPH_CONTAINER_ID,
   createProgramEntryEvent,
   syncClassExtendsFields,
+  syncClassImplementsFields,
+  normalizeClassForm,
 } from '@vvs/graph-types';
 import { classGraphTabId, classContainerId, symbolsForClass } from '@/lib/classScope';
 import { openGraphContainerTab } from '@/lib/graphTabs';
@@ -89,10 +91,14 @@ export function useClassLifecycle() {
         pushHistory(`Update class ${cls.name}`);
       }
       const extendsFields = syncClassExtendsFields(cls.extendsType, cls.extendsTypes);
+      const implementsFields = syncClassImplementsFields(cls.implementsTypes);
+      const form = normalizeClassForm(cls.form);
       const next = {
         ...cls,
         extendsType: extendsFields.extendsType,
         extendsTypes: extendsFields.extendsTypes,
+        implementsTypes: implementsFields.implementsTypes,
+        form: form && form !== 'class' ? form : undefined,
       };
       setClasses((list) => list.map((c) => (c.id === cls.id ? next : c)));
       if (next.id === MAIN_CLASS_ID) {

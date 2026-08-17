@@ -4,6 +4,8 @@ import React from 'react';
 import type { ClassSymbol, TargetLanguage } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { ExtendsListEditor } from '@/components/layout/ExtendsListEditor';
+import { ImplementsListEditor } from '@/components/layout/ImplementsListEditor';
+import { ClassFormEditor } from '@/components/layout/ClassFormEditor';
 
 export function ClassPropertiesPanel({
   cls,
@@ -28,7 +30,14 @@ export function ClassPropertiesPanel({
           {...graphInlineFieldProps}
         />
       </div>
+      <ClassFormEditor cls={cls} targetLanguage={targetLanguage} onChange={onChange} />
       <ExtendsListEditor
+        cls={cls}
+        classes={classes}
+        targetLanguage={targetLanguage}
+        onChange={onChange}
+      />
+      <ImplementsListEditor
         cls={cls}
         classes={classes}
         targetLanguage={targetLanguage}

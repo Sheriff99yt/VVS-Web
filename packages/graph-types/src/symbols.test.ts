@@ -4,6 +4,8 @@ import {
   createClassSymbol,
   overloadReturnParameters,
   syncClassExtendsFields,
+  syncClassImplementsFields,
+  normalizeClassForm,
   type FunctionOverload,
 } from './symbols';
 
@@ -76,5 +78,19 @@ describe('syncClassExtendsFields', () => {
     const cls = createClassSymbol('Child', { extendsType: 'Parent', extendsTypes: ['Mixin'] });
     expect(cls.extendsType).toBe('Parent');
     expect(cls.extendsTypes).toEqual(['Parent', 'Mixin']);
+  });
+});
+
+
+describe('class form + implements persist', () => {
+  test('normalizeClassForm accepts class/interface/trait only', () => {
+    expect(normalizeClassForm('interface')).toBe('interface');
+    expect(normalizeClassForm('trait')).toBe('trait');
+    expect(normalizeClassForm('class')).toBe('class');
+    expect(normalizeClassForm('struct')).toBeUndefined();
+  });
+
+  test('syncClassImplementsFields does not touch Extends extras', () => {
+    expect(syncClassImplementsFields(['IFoo', 'IFoo'])).toEqual({ implementsTypes: ['IFoo'] });
   });
 });

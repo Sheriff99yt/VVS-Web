@@ -33,5 +33,7 @@ describe('environment categories', () => {
     expect(ids).toContain('env.go.console-app');
     expect(ids).toContain('env.javascript.data-script');
     expect(ids).toContain('env.javascript.http-service');
+    expect(ids).toContain('env.csharp.data-script');
+    expect(ids).toContain('env.go.http-service');
   });
 });

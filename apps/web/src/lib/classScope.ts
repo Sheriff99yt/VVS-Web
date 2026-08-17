@@ -12,6 +12,7 @@ import {
   classForHomeGraphId,
   classVisibleSymbols,
   wouldCreateExtendsCycle,
+  wouldCreateImplementsCycle,
 } from '@vvs/graph-types';
 
 export {
@@ -21,6 +22,7 @@ export {
   classForHomeGraphId,
   classVisibleSymbols,
   wouldCreateExtendsCycle,
+  wouldCreateImplementsCycle,
 };
 
 export function symbolClassId(item: { classId?: string }): string {
@@ -104,6 +106,27 @@ export function buildExtendsClassPickerOptions(
       label: cls.name,
       description: 'Project class',
       group: 'Classes',
+    });
+  }
+  return options;
+}
+
+export function buildImplementsClassPickerOptions(
+  classes: ClassSymbol[],
+  currentClassId?: string
+): Array<{ value: string; label: string; description?: string; group?: string }> {
+  const options: Array<{ value: string; label: string; description?: string; group?: string }> = [
+    { value: '', label: 'None', description: 'No interface or trait', group: 'Implements' },
+  ];
+  for (const cls of classes) {
+    if (currentClassId && cls.id === currentClassId) continue;
+    if (currentClassId && wouldCreateImplementsCycle(classes, currentClassId, cls.name)) continue;
+    const form = cls.form === 'interface' || cls.form === 'trait' ? cls.form : 'class';
+    options.push({
+      value: cls.name,
+      label: cls.name,
+      description: form === 'class' ? 'Project class' : `Project ${form}`,
+      group: form === 'interface' ? 'Interfaces' : form === 'trait' ? 'Traits' : 'Classes',
     });
   }
   return options;
