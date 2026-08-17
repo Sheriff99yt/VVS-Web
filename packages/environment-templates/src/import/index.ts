@@ -18,6 +18,17 @@ export {
   type BackstageTemplateMeta,
 } from './fromBackstageSkeleton';
 export {
+  importApiSurfaceFromTypeSpec,
+  suggestedTypeSpecEnvId,
+  typeSpecTypeId,
+  type TypeSpecImportDocument,
+  type TypeSpecImportedModel,
+  type TypeSpecImportedOperation,
+  type TypeSpecImportedParameter,
+  type TypeSpecImportedProperty,
+  type ImportTypeSpecOptions,
+} from './fromTypeSpec';
+export {
   buildEnvironmentManifest,
   type BuildEnvironmentManifestInput,
 } from './buildEnvironmentManifest';

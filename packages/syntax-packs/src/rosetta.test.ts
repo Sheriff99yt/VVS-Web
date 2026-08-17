@@ -48,7 +48,7 @@ const SPAN_EXPECTATIONS: Record<string, { sourceMapIds: string[]; contentAnchors
   call: { sourceMapIds: ['call-greet'], contentAnchors: ['Greet'] },
   for: { sourceMapIds: ['for-loop'], contentAnchors: ['for ', 'print('] },
   while: { sourceMapIds: ['while-loop'], contentAnchors: ['while ', 'loop'] },
-  switch: { sourceMapIds: ['switch-node'], contentAnchors: ['_vvs_sel', 'one'] },
+  switch: { sourceMapIds: ['switch-node'], contentAnchors: ['match ', 'one'] },
   sequence: { sourceMapIds: ['seq'], contentAnchors: ['sequence', 'first', 'second'] },
   await_wait: { sourceMapIds: ['await-2s'], contentAnchors: ['await', 'sleep'] },
   import_module: { sourceMapIds: ['import-utils'], contentAnchors: ['utils'] },

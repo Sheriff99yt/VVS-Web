@@ -108,6 +108,7 @@ function buildFunctionDefineData(
       binding: func.binding,
       visibility: func.visibility,
       isAsync: func.flags?.async,
+      isGenerator: func.flags?.generator,
       isStatic: func.binding === 'static',
       isVirtual: func.flags?.virtual,
       isOverride: func.flags?.override,

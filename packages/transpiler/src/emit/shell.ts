@@ -2,6 +2,7 @@ import type { FunctionSymbol, PinType, TargetLanguage } from '@vvs/graph-types';
 import {
   defaultCodegenTarget,
   eventCodegenHandlerName,
+  syncClassExtendsFields,
   targetLanguageToFamily,
 } from '@vvs/graph-types';
 import {
@@ -69,23 +70,51 @@ function optionalShell(
   return renderTemplate(row, slots, profile.layout).text;
 }
 
-export function classExtendsSuffix(lang: TargetLanguage, extendsType?: string): string {
-  if (!extendsType) return '';
+function cppBaseAccess(index: number, properties?: Record<string, unknown>): string {
+  const raw = properties?.extendsAccess;
+  if (Array.isArray(raw) && typeof raw[index] === 'string') {
+    const access = raw[index].trim();
+    if (access === 'public' || access === 'protected' || access === 'private') return access;
+  }
+  return 'public';
+}
+
+/** Names to print: python/cpp use every stored Extends row; others stay first-parent only. */
+function printedExtendsNames(
+  lang: TargetLanguage,
+  extendsType?: string,
+  extendsTypes?: unknown
+): string[] {
+  const names = syncClassExtendsFields(extendsType, extendsTypes).extendsTypes ?? [];
+  if (lang === 'python' || lang === 'cpp') return names;
+  return names.slice(0, 1);
+}
+
+export function classExtendsSuffix(
+  lang: TargetLanguage,
+  extendsType?: string,
+  extendsTypes?: unknown,
+  properties?: Record<string, unknown>
+): string {
+  const names = printedExtendsNames(lang, extendsType, extendsTypes);
+  if (names.length === 0) return '';
   switch (lang) {
     case 'python':
-      return `(${extendsType})`;
+      return `(${names.join(', ')})`;
     case 'javascript':
-      return ` extends ${extendsType}`;
+      return ` extends ${names[0]}`;
     case 'cpp':
-      return ` : public ${extendsType}`;
+      return ` : ${names
+        .map((name, i) => `${cppBaseAccess(i, properties)} ${name}`)
+        .join(', ')}`;
     case 'verse':
-      return `(${extendsType})`;
+      return `(${names[0]})`;
     case 'gdscript':
-      return `\nextends ${extendsType}`;
+      return `\nextends ${names[0]}`;
     case 'rust':
       return '';
     case 'csharp':
-      return extendsType ? ` : ${extendsType}` : '';
+      return ` : ${names[0]}`;
     default:
       return '';
   }
@@ -108,7 +137,7 @@ export function renderClassModuleOpen(
     abstractKw: mods.abstractKw,
     prefix: mods.visibility + mods.abstractKw,
     name,
-    extendsSuffix: classExtendsSuffix(lang, extendsType),
+    extendsSuffix: classExtendsSuffix(lang, extendsType, properties?.extendsTypes, properties),
     extendsField,
   });
 }

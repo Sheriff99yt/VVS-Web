@@ -5,6 +5,8 @@ import type { AsyncApiDocument } from './fromAsyncApi';
 import { importEventsFromAsyncApi } from './fromAsyncApi';
 import type { OpenApiDocument } from './fromOpenApi';
 import { importMethodsFromOpenApi } from './fromOpenApi';
+import type { TypeSpecImportDocument } from './fromTypeSpec';
+import { importApiSurfaceFromTypeSpec } from './fromTypeSpec';
 
 export interface BuildEnvironmentManifestInput {
   id: string;
@@ -17,12 +19,16 @@ export interface BuildEnvironmentManifestInput {
   extendsTypeId?: string;
   openapi?: OpenApiDocument;
   asyncapi?: AsyncApiDocument;
+  /** Compiler-free TypeSpec snapshot (from `loadTypeSpecDocument` on Node). */
+  typespec?: TypeSpecImportDocument;
   hostFiles?: ProjectEnvironmentManifest['hostFiles'];
   /** Merge with generated methods/events (generated first, then manual overrides by id). */
   extraMethods?: ProjectEnvironmentManifest['apiSurface']['methods'];
   extraEvents?: ProjectEnvironmentManifest['apiSurface']['events'];
+  extraTypes?: ProjectEnvironmentManifest['apiSurface']['types'];
   openapiOptions?: Parameters<typeof importMethodsFromOpenApi>[1];
   asyncapiOptions?: Parameters<typeof importEventsFromAsyncApi>[1];
+  typespecOptions?: Parameters<typeof importApiSurfaceFromTypeSpec>[1];
 }
 
 export function buildEnvironmentManifest(
@@ -34,11 +40,29 @@ export function buildEnvironmentManifest(
   const asyncEvents = input.asyncapi
     ? importEventsFromAsyncApi(input.asyncapi, input.asyncapiOptions)
     : [];
+  const typespecSurface = input.typespec
+    ? importApiSurfaceFromTypeSpec(input.typespec, input.typespecOptions)
+    : { types: [], methods: [] };
 
-  const methods = mergeById(openapiMethods, input.extraMethods ?? []);
+  const methods = mergeById(
+    [...typespecSurface.methods, ...openapiMethods],
+    input.extraMethods ?? []
+  );
   const events = mergeById(asyncEvents, input.extraEvents ?? []);
 
   const extendsId = input.extendsTypeId ?? 'object';
+
+  const types = mergeById(
+    [
+      {
+        id: extendsId,
+        displayName: extendsId.charAt(0).toUpperCase() + extendsId.slice(1),
+        targets: buildDefaultTypeTargets(extendsId, input.supportedTargets),
+      },
+      ...typespecSurface.types,
+    ],
+    input.extraTypes ?? []
+  );
 
   const manifest: ProjectEnvironmentManifest = {
     id: input.id,
@@ -52,13 +76,7 @@ export function buildEnvironmentManifest(
       extends: { id: extendsId },
     },
     apiSurface: {
-      types: [
-        {
-          id: extendsId,
-          displayName: extendsId.charAt(0).toUpperCase() + extendsId.slice(1),
-          targets: buildDefaultTypeTargets(extendsId, input.supportedTargets),
-        },
-      ],
+      types,
       methods,
       events,
     },

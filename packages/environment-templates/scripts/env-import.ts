@@ -5,6 +5,7 @@
  * Usage:
  *   bun run scripts/env-import.ts --id env.custom.my-app --out ./out/manifest.json \
  *     --openapi ./api.openapi.json --asyncapi ./events.asyncapi.json \
+ *     --typespec ./api.tsp \
  *     --backstage ./path/to/backstage-template-pack
  */
 import { existsSync } from 'node:fs';
@@ -13,8 +14,10 @@ import { dirname, resolve } from 'node:path';
 import {
   buildEnvironmentManifest,
   importBackstagePack,
+  loadTypeSpecDocument,
   type OpenApiDocument,
   type AsyncApiDocument,
+  type TypeSpecImportDocument,
 } from '../src/node';
 import { isEnvironmentManifest } from '../src/loader';
 import { mergeImportedManifest } from '../src/hostFiles';
@@ -35,6 +38,7 @@ async function main(): Promise<void> {
   const openapiPath = argValue('--openapi');
   const asyncapiPath = argValue('--asyncapi');
   const backstagePath = argValue('--backstage');
+  const typespecPath = argValue('--typespec') ?? argValue('--tsp');
   const displayName = argValue('--title');
   const version = argValue('--version') ?? '1.0.0';
   const defaultTarget = (argValue('--target') ?? 'python') as 'python' | 'javascript';
@@ -45,8 +49,10 @@ async function main(): Promise<void> {
 Options:
   --openapi <path>     OpenAPI 3.x JSON (methods/natives → apiSurface.methods)
   --asyncapi <path>    AsyncAPI 2.x JSON (channels → apiSurface.events)
+  --typespec <path>    TypeSpec .tsp (models + ops → apiSurface.types/methods)
+  --tsp <path>         Alias for --typespec
   --backstage <dir>    Backstage template pack (template.yaml + skeleton/)
-  --title <string>     Display name (default from Backstage or id)
+  --title <string>     Display name (default from spec or id)
   --version <semver>   Manifest version (default 1.0.0)
   --target <lang>      defaultTarget: python | javascript (default python)
 `);
@@ -54,38 +60,72 @@ Options:
   }
 
   let manifest;
+  const supportedTargets = defaultTarget === 'javascript' ? ['javascript' as const] : ['python' as const, 'javascript' as const];
+  const openapi = openapiPath ? await readJsonFile<OpenApiDocument>(openapiPath) : undefined;
+  const asyncapi = asyncapiPath ? await readJsonFile<AsyncApiDocument>(asyncapiPath) : undefined;
+  const typespec: TypeSpecImportDocument | undefined = typespecPath
+    ? await loadTypeSpecDocument(resolve(typespecPath))
+    : undefined;
 
   if (backstagePath) {
-    const openapi = openapiPath ? await readJsonFile<OpenApiDocument>(openapiPath) : undefined;
-    const asyncapi = asyncapiPath ? await readJsonFile<AsyncApiDocument>(asyncapiPath) : undefined;
     manifest = await importBackstagePack({
       packDir: resolve(backstagePath),
       id,
       version,
       defaultTarget,
-      supportedTargets: defaultTarget === 'javascript' ? ['javascript'] : ['python', 'javascript'],
+      supportedTargets,
       openapi,
       asyncapi,
     });
+    if (typespec) {
+      const fromTsp = buildEnvironmentManifest({
+        id,
+        version,
+        displayName: displayName ?? typespec.serviceTitle ?? manifest.displayName,
+        description: typespec.description ?? manifest.description,
+        defaultTarget,
+        supportedTargets,
+        moduleDefaultName: typespec.serviceNamespace ?? manifest.module.defaultName,
+        typespec,
+        hostFiles: manifest.hostFiles,
+        extraMethods: manifest.apiSurface.methods,
+        extraEvents: manifest.apiSurface.events,
+        extraTypes: manifest.apiSurface.types,
+      });
+      manifest = fromTsp;
+    }
     if (displayName) manifest.displayName = displayName;
   } else {
-    const openapi = openapiPath ? await readJsonFile<OpenApiDocument>(openapiPath) : undefined;
-    const asyncapi = asyncapiPath ? await readJsonFile<AsyncApiDocument>(asyncapiPath) : undefined;
-    if (!openapi && !asyncapi) {
-      console.error('Provide --openapi, --asyncapi, and/or --backstage');
+    if (!openapi && !asyncapi && !typespec) {
+      console.error('Provide --openapi, --asyncapi, --typespec/--tsp, and/or --backstage');
       process.exit(1);
     }
+    const titleFromSpec =
+      displayName ??
+      typespec?.serviceTitle ??
+      (openapi?.info?.title || asyncapi?.info?.title) ??
+      id;
+    const descriptionFromSpec =
+      typespec?.description ??
+      openapi?.info?.description ??
+      asyncapi?.info?.description ??
+      (typespec
+        ? `Generated from TypeSpec${typespec.serviceNamespace ? ` (${typespec.serviceNamespace})` : ''}`
+        : 'Generated from OpenAPI/AsyncAPI import');
     manifest = buildEnvironmentManifest({
       id,
       version,
-      displayName: displayName ?? id,
-      description: `Generated from OpenAPI/AsyncAPI import`,
+      displayName: titleFromSpec,
+      description: descriptionFromSpec,
       defaultTarget,
-      supportedTargets: defaultTarget === 'javascript' ? ['javascript'] : ['python', 'javascript'],
+      supportedTargets,
+      moduleDefaultName: typespec?.serviceNamespace,
       openapi,
       asyncapi,
+      typespec,
       hostFiles: [],
     });
+    if (typespec) manifest.category = 'api';
   }
 
   const outPath = resolve(out);
@@ -107,6 +147,7 @@ Options:
   console.log(`Wrote ${outPath}`);
   console.log(`  methods: ${manifest.apiSurface.methods.length}`);
   console.log(`  events: ${manifest.apiSurface.events.length}`);
+  console.log(`  types: ${manifest.apiSurface.types.length}`);
   console.log(`  hostFiles: ${manifest.hostFiles.length}`);
 }
 

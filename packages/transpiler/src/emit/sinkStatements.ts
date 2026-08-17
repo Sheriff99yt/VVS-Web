@@ -343,7 +343,27 @@ function appendSwitch(
   const inner = innerIndentCtx(ctx);
   const printExpr = createDefaultExprPrinter();
 
-  if (family === 'python' || family === 'gdscript') {
+  if (family === 'python') {
+    const selector = printExpr(stmt.selector, ctx);
+    const matchPrefix = `${ctx.indent}match `;
+    appendRawWithExprSpans(
+      sink,
+      `${matchPrefix}${selector.text}:`,
+      selector.spans,
+      matchPrefix.length
+    );
+    const caseCtx = inner;
+    const bodyCtx = innerIndentCtx(caseCtx);
+    const placeholder = `${bodyCtx.indent}${blockPlaceholder(ctx)}`;
+    for (const c of stmt.cases) {
+      sink.appendRaw(`${caseCtx.indent}case ${formatSwitchCaseLabel(c, family)}:`);
+      appendSwitchBody(sink, c.body, bodyCtx, placeholder, options);
+    }
+    if (stmt.defaultBody.length > 0) {
+      sink.appendRaw(`${caseCtx.indent}case _:`);
+      appendSwitchBody(sink, stmt.defaultBody, bodyCtx, placeholder, options);
+    }
+  } else if (family === 'gdscript') {
     const bind = printSwitchSelectBind(stmt, ctx);
     const bindLine = sink.lineCount + 1;
     sink.appendRaw(bind.text);
@@ -363,28 +383,28 @@ function appendSwitch(
       appendSwitchBody(sink, stmt.defaultBody, inner, placeholder, options);
     }
   } else if (family === 'rust') {
-    const bind = printSwitchSelectBind(stmt, ctx);
-    const bindLine = sink.lineCount + 1;
-    sink.appendRaw(bind.text);
-    if (bind.expressionSpans?.length) {
-      sink.registerExpressionSpans(bindLine, [bind.text], bind.expressionSpans);
+    const selector = printExpr(stmt.selector, ctx);
+    const matchPrefix = `${ctx.indent}match `;
+    appendRawWithExprSpans(
+      sink,
+      `${matchPrefix}${selector.text} {`,
+      selector.spans,
+      matchPrefix.length
+    );
+    const caseCtx = inner;
+    const bodyCtx = innerIndentCtx(caseCtx);
+    const placeholder = `${bodyCtx.indent}${blockPlaceholder(ctx)}`;
+    for (const c of stmt.cases) {
+      sink.appendRaw(`${caseCtx.indent}${formatSwitchCaseLabel(c, family)} => {`);
+      appendSwitchBody(sink, c.body, bodyCtx, placeholder, options);
+      sink.appendRaw(`${caseCtx.indent}}`);
     }
-    const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
-    stmt.cases.forEach((c, i) => {
-      const header =
-        i === 0
-          ? `${ctx.indent}if ${SWITCH_SEL_TEMP} == ${formatSwitchCaseLabel(c, family)} {`
-          : `${ctx.indent}} else if ${SWITCH_SEL_TEMP} == ${formatSwitchCaseLabel(c, family)} {`;
-      sink.appendRaw(header);
-      appendSwitchBody(sink, c.body, inner, placeholder, options);
-    });
     if (stmt.defaultBody.length > 0) {
-      sink.appendRaw(`${ctx.indent}} else {`);
-      appendSwitchBody(sink, stmt.defaultBody, inner, placeholder, options);
-      sink.appendRaw(`${ctx.indent}}`);
-    } else if (stmt.cases.length > 0) {
-      sink.appendRaw(`${ctx.indent}}`);
+      sink.appendRaw(`${caseCtx.indent}_ => {`);
+      appendSwitchBody(sink, stmt.defaultBody, bodyCtx, placeholder, options);
+      sink.appendRaw(`${caseCtx.indent}}`);
     }
+    sink.appendRaw(`${ctx.indent}}`);
   } else if (family === 'verse') {
     const selector = printExpr(stmt.selector, ctx);
     const headerPrefix = `${ctx.indent}# switch (`;

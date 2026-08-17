@@ -406,6 +406,32 @@
       "outputs": []
     },
     {
+      "kindId": "yield_stmt",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Yield",
+      "semantics": "flow.yield",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "value",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ]
+    },
+    {
       "kindId": "flow_try",
       "kindVersion": 1,
       "category": "Flow Control",
@@ -1057,6 +1083,13 @@
           "default": false
         },
         {
+          "key": "isGenerator",
+          "label": "Generator",
+          "type": "boolean",
+          "default": false,
+          "description": "Marks the function as a generator. Python def is enough; yield in the body also makes it a generator."
+        },
+        {
           "key": "graphTabId",
           "label": "Body graph tab",
           "type": "string",
@@ -1121,6 +1154,13 @@
           "label": "Override",
           "type": "boolean",
           "default": false
+        },
+        {
+          "key": "isGenerator",
+          "label": "Generator",
+          "type": "boolean",
+          "default": false,
+          "description": "Marks the function as a generator. Python def is enough; yield in the body also makes it a generator."
         },
         {
           "key": "graphTabId",

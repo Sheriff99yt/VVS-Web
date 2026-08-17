@@ -191,6 +191,19 @@ export function FunctionPropertiesPanel({
             />
             Async
           </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={Boolean(func.flags?.generator)}
+              onChange={(e) =>
+                onChange({
+                  ...func,
+                  flags: { ...func.flags, generator: e.target.checked || undefined },
+                })
+              }
+            />
+            Generator
+          </label>
         </div>
       </details>
     </div>

@@ -40,6 +40,7 @@ export function nodeHasModifierChrome(data: VVSNodeData): boolean {
       f.key === 'isVirtual' ||
       f.key === 'isOverride' ||
       f.key === 'isAsync' ||
+      f.key === 'isGenerator' ||
       f.key === 'isSuper'
   );
 }
@@ -270,7 +271,7 @@ export function NodeModifiers({
 
     const symbolId = data.properties?.symbolId;
     if (symbolId && typeof symbolId === 'string') {
-      const isFlag = ['isConst', 'isAbstract', 'isVirtual', 'isOverride', 'isAsync'].includes(key);
+      const isFlag = ['isConst', 'isAbstract', 'isVirtual', 'isOverride', 'isAsync', 'isGenerator'].includes(key);
       const flagKey = key === 'isConst' ? 'readonly' : isFlag ? key.slice(2).toLowerCase() : null;
 
       if (kindId === 'var_define') {

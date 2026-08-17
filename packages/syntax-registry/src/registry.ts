@@ -482,6 +482,10 @@ function tryFlowIsSpawnable(targetLanguage?: TargetLanguage): boolean {
   );
 }
 
+function yieldStmtIsSpawnable(targetLanguage?: TargetLanguage): boolean {
+  return targetLanguage === 'python' || targetLanguage === 'gdscript';
+}
+
 function destructorRoleIsSpawnable(targetLanguage?: TargetLanguage): boolean {
   return targetLanguage === 'cpp';
 }
@@ -532,6 +536,9 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
       continue;
     }
     if (kind.kindId === 'flow_try' && !tryFlowIsSpawnable(targetLanguage)) {
+      continue;
+    }
+    if (kind.kindId === 'yield_stmt' && !yieldStmtIsSpawnable(targetLanguage)) {
       continue;
     }
     if (options.filterPin) {
@@ -600,6 +607,7 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'Switch') return 'flow_switch';
   if (label === 'Sequence') return 'flow_sequence';
   if (label === 'Try') return 'flow_try';
+  if (label === 'Yield') return 'yield_stmt';
   if (label === 'Lambda') return 'lambda_define';
   if (label === 'Print String') return 'action_print';
   if (label === 'Get User Input') return 'action_get_input';

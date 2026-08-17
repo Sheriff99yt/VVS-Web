@@ -107,7 +107,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 |------------|------------|-----------------|----------|----------|-------|
 | Class / module shell | Declare Class `{name}` | `class_define` | all | shipped | `extendsType` on class + define node (emit today: one string). Extends is a **list** (locked visual). See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Component (game-talk) | same as Declare Class | `class_define` + field or Extends | all | **locked** | Not a second construct. See [Component = Class](#component--class). U103 closed. |
-| Inheritance / Extends | Extends list on Declare Class | `class_define` Extends rows | py, cpp (two class rows); cs one class + Implements; js/gd/verse one; go/rs hidden | **partial** | List UI shipped. Extra names stored on `extendsTypes`; generate first parent only. Multi-base emit not shipped. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
+| Inheritance / Extends | Extends list on Declare Class | `class_define` Extends rows | py, cpp (two class rows); cs one class + Implements; js/gd/verse one; go/rs hidden | **partial** | List UI shipped. Generate prints all Extends rows for python/cpp; others still first parent / stored only. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Variable field | Declare `{name}` | `var_define` | all | shipped | **TypeRef** (builtin / enum / class / array / map); legacy `enumType` migrates |
 | Function member | Declare `{name}` | existence / signature / abstract | all | **shipped (U81)** | `function_define` — no method without Define (except abstract) |
 | Function body place | Define `{name}` | body insert at chain position | all | **shipped (U81)** | `function_implement` on member chain + Edit function body tab |
@@ -225,7 +225,7 @@ Text-shaped: you type `class Child(Parent, Mixin)` / `class Child : public Paren
 
 **Visual**
 
-- Declare Class card: Extends is a **list** (UI shipped). Multiple inheritance = a second row (`+ Add base`, Python/C++ only). Extra names are stored; generate still prints the first parent only.
+- Declare Class card: Extends is a **list** (UI shipped). Multiple inheritance = a second row (`+ Add base`, Python/C++ only). Generate prints all Extends rows for python/cpp; other languages still print the first parent only (extras stay stored).
 - Each row: type picker. C++ also: public/protected/private + virtual on that row.
 - **Implements** is a **second list** (interfaces/traits), already locked as a Class option. C# extra types go here, not as a second class Extends.
 - Member chain / Project tree: inherited members from **every** base, dimmed, `from {Class}` chip, Get/Set/Call (U106 pattern).
@@ -243,7 +243,7 @@ Text-shaped: you type `class Child(Parent, Mixin)` / `class Child : public Paren
 
 **Do not add:** Inherit node, Multiple Inheritance node, Blueprint parent wires as source of truth, `implements_define` kind.
 
-**Honesty:** extras are stored on `extendsTypes` (`[0]` mirrors `extendsType`). Generate still prints the first parent only. Multi-base emit is **not shipped**.
+**Honesty:** extras are stored on `extendsTypes` (`[0]` mirrors `extendsType`). Generate now prints all Extends rows for **python** (`class Child(Parent, Mixin):`) and **cpp** (`class Child : public Parent, public Mixin`). javascript / gdscript / verse / csharp still print the first parent only — C# extras are not class bases (Implements is not built). go / rust Extends list stays hidden. Super / inherited Get-Set-Call stay first-parent only. No which-base picker.
 
 #### Child(Parent, Mixin) — Python and C++ only
 
@@ -298,7 +298,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 
    Example: C# `Math.Abs(x)` is Call with a type-name callee + static binding.
 
-9. **Pattern matching** — Switch is the node. `match` is optional lowering (CL-017). Drop planned `flow_match` as a kind. Do not add a Match node.
+9. **Pattern matching** — Switch is the node. Native match/switch lowering is shipped where the language has it: Python `match` / `case` / `case _`; Rust `match` on value-equality cases; C# / JS / C++ already emit `switch`. GDScript / Go / Verse keep the shipped if-cascade (or comment). Drop planned `flow_match` as a kind. Do not add a Match node.
 
    Example: Rust `match x { ... }` lowers from Switch (CL-017), not `flow_match`.
 
@@ -318,7 +318,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 | Per-frame | On Update | `event_define` + `role: tick` | game targets | shipped | Do not spawn `event_on_update` |
 | Custom event body | On `{name}` | `event_define` | all | shipped | |
 | **Async** handler | `isAsync` option on On / function / Wait | `properties.isAsync` | py, js, cs | shipped | Emits `async def` / `async Task`; C++/Go/Verse/GDScript function async dimmed (CL-018) |
-| **Coroutine** / yield | statement node later where you type `yield` | planned statement node (not a soup of flow kinds) | py, gd | planned | Yield would be a statement node later where you type `yield` (py, gd), not a soup of “planned flow kinds.” |
+| **Coroutine** / yield | Yield | `yield_stmt` | py, gd | shipped | Statement node where you type `yield`. Spawn python / gdscript. Hidden on cpp / js / cs / go / rust / verse. Optional empty value = bare `yield`. Function Define `isGenerator` is stored; Python `def` is enough. |
 
 ### C — Invoke (Call / Dispatch)
 
@@ -383,7 +383,7 @@ Surface forms are owned by **syntax packs**; graph must still carry the decision
 | Inheritance | `class A(B)` | `extends` | `: public B` | `: B` | `impl Trait` | `extends` | — |
 | Component | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node |
 
-When adding a row to this table, add a matching **catalog §** entry with `uiStatus` and planned node or option (not a leftover-construct kind id). Go (8th family, not a column above): Component is the same lock — struct + field or embed; no Component node. Leftover constructs (constructor, interface, lambda, try, property, generics, package visibility, static call, pattern match) are locked roles — see [Leftover constructs](#leftover-constructs-locked-roles). Inheritance / Extends is list-shaped (locked visual): two class Extends rows for Python and C++ only; C# extra types are Implements; emit today is still one `extendsType` string — see [Multiple inheritance](#multiple-inheritance-locked-visual).
+When adding a row to this table, add a matching **catalog §** entry with `uiStatus` and planned node or option (not a leftover-construct kind id). Go (8th family, not a column above): Component is the same lock — struct + field or embed; no Component node. Leftover constructs (constructor, interface, lambda, try, property, generics, package visibility, static call, pattern match) are locked roles — see [Leftover constructs](#leftover-constructs-locked-roles). Inheritance / Extends is list-shaped (locked visual): two class Extends rows for Python and C++ only; C# extra types are Implements; generate prints all Extends rows for python/cpp and first parent elsewhere — see [Multiple inheritance](#multiple-inheritance-locked-visual).
 
 ---
 
@@ -524,6 +524,7 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 
 | Date | Change |
 |------|--------|
+| 2026-08-17 | **Multi-base emit + Yield + Switch match** — generate prints all Extends rows for python/cpp; `yield_stmt` (py/gd); Switch lowers to Python `match` and Rust `match` (value-equality cases). C# extras still not printed. Super stays first-parent. |
 | 2026-08-16 | **Extends list UI shipped (partial)** — list on Declare Class; extras stored; generate first parent only. Multi-base emit not shipped. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | 2026-08-16 | **Lambda + Try nodes shipped** — `lambda_define` (py/js/cs/rs/gd) and `flow_try` (py/js/cpp/cs/gd). Empty finally omitted. Yield and CL-017 stay planned. |
 | 2026-08-16 | **Leftover constructs locked** — constructor/destructor = Function `role`; interface/trait = Class `form` + Implements option; lambda = one expression node (`lambda_define`, drop `closure_define`); try/catch = flow node (not Go/Rust); property/generics/package visibility = options; static call = existing Call; pattern match = Switch (drop `flow_match`). See [Leftover constructs](#leftover-constructs-locked-roles). |

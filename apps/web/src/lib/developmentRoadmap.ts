@@ -555,7 +555,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'inheritance-canvas-u106-shipped',
         title: 'Inheritance on canvas (U106)',
         description:
-          'Extends is an option on Declare Class (class picker). Inherited members show in the tree and spawn as Get / Set / Call. Missing parent is an analyzer error. One parent today (extendsType string). List-shaped multi-base is the approved visual — not started; multi-base emit not shipped.',
+          'Extends is an option on Declare Class (class picker). Inherited members show in the tree and spawn as Get / Set / Call. Missing parent is an analyzer error. List-shaped multi-base visual + emit for py/cpp. js/gd/verse/cs still first parent only (extras stored).',
         status: 'done',
       },
       {
@@ -715,7 +715,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'leftover-construct-roles-lock',
         title: 'Leftover-construct roles lock',
         description:
-          'Locked: no constructor_define, property_define, implements_define, inherit/multiple-inheritance node, or flow_match kinds. Constructor/destructor is Function role; property and Implements are options; extra bases are Extends rows (locked visual; emit still one extendsType string); Switch is the match node (CL-017 optional lowering).',
+          'Locked: no constructor_define, property_define, implements_define, inherit/multiple-inheritance node, or flow_match kinds. Constructor/destructor is Function role; property and Implements are options; extra bases are Extends rows (locked visual; multi-base emit for py/cpp); Switch is the match node (match on py/rust).',
         status: 'done',
       },
       {
@@ -843,6 +843,30 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Same-file function emit (U80)',
         description:
           'Function tabs = Edit function body only; no per-function output files. Define places the body in the host graph file.',
+        status: 'done',
+      },
+      {
+        id: 'extends-list-mi-locked-visual',
+        layer: 'frontend',
+        title: 'Extends list (multiple inheritance visual)',
+        description:
+          'Extends list UI + generate. Python `class Child(Parent, Mixin):`. C++ `class Child : public Parent, public Mixin`. js/gd/verse/cs still first parent only (extras stored). go/rust list hidden. Super still first parent. No Inherit node. No Implements.',
+        status: 'done',
+      },
+      {
+        id: 'yield-statement-later',
+        layer: 'frontend',
+        title: 'Yield statement',
+        description:
+          '`yield_stmt` node, python + gdscript. Optional value pin. `isGenerator` option on Function. Hidden on cpp/js/cs/go/rust/verse (`(x) Yield`). No invented rust/cpp generators.',
+        status: 'done',
+      },
+      {
+        id: 'switch-match-cl017',
+        layer: 'frontend',
+        title: 'Switch match (CL-017)',
+        description:
+          'Same Switch node. Python `match`/`case`. Rust `match`. C#/JS/C++ keep native switch. GDScript/Verse/Go keep shipped if-cascade. No Match node.',
         status: 'done',
       },
     ],
@@ -1357,27 +1381,20 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           'Mouse/browser Back·Forward restore editor navigation frames (tab, view, selection, focus) -- not graph undo. Graph History lives in Log → History.',
         status: 'done',
       },
+      {
+        id: 'env-typespec-emitter',
+        layer: 'frontend',
+        title: 'TypeSpec → manifest emitter',
+        description:
+          'TypeSpec → ProjectEnvironmentManifest via `@typespec/compiler` on Node/CLI (`--typespec` / `--tsp`). Models/ops → apiSurface. Not in the Pages bundle. No in-app TypeSpec editor.',
+        status: 'done',
+      },
     ],
   },
 ];
 
 /** Open / partial only -- shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
-  {
-    id: 'graph-model-locked-visual',
-    title: 'Graph model (locked visual)',
-    phase: 6,
-    items: [
-      {
-        id: 'extends-list-mi-locked-visual',
-        layer: 'frontend',
-        title: 'Extends list (multiple inheritance visual)',
-        description:
-          'Visual shipped: Extends is a list on Declare Class; + Add base is a second row (Python/C++ only). Persist keeps extendsTypes with [0]===extendsType on renameClass / defineNodeSync / snapshot. Generate still prints the first parent only. Multi-base emit not shipped. Not an Inherit node. See language_capability_catalog.md § Multiple inheritance.',
-        status: 'partial',
-      },
-    ],
-  },
   {
     id: 'leftover-fidelity-open',
     title: 'Leftover fidelity',
@@ -1390,14 +1407,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Verse GetInput (CL-014)',
         description:
           'Honest (x) + prompt. Real player/string read is not a plain-class API — do not invent one.',
-        status: 'planned',
-      },
-      {
-        id: 'switch-match-cl017',
-        layer: 'frontend',
-        title: 'Switch match (CL-017, optional)',
-        description:
-          'Optional native match lowering. If-cascade is the shipped shape.',
         status: 'planned',
       },
     ],
@@ -1413,21 +1422,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Long-term: code → visual (U93)',
         description:
           'Research track: read raw source and produce text-shaped graphs (reverse of Generate). Must preserve canvas source of truth and fidelity -- not near-term polish.',
-        status: 'planned',
-      },
-    ],
-  },
-  {
-    id: 'leftover-constructs-planned',
-    title: 'Leftover constructs (planned nodes)',
-    phase: 6,
-    items: [
-      {
-        id: 'yield-statement-later',
-        layer: 'frontend',
-        title: 'Yield statement (later)',
-        description:
-          'Later statement node where you type yield (Python, GDScript). Not a soup of planned flow kinds.',
         status: 'planned',
       },
     ],
@@ -1477,14 +1471,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     id: 'environment-standards',
     title: 'Environment templates & standards',
     items: [
-      {
-        id: 'env-typespec-emitter',
-        layer: 'frontend',
-        title: 'TypeSpec → manifest emitter',
-        description:
-          'Custom TypeSpec emitter producing ProjectEnvironmentManifest JSON as a single API authoring source.',
-        status: 'planned',
-      },
       {
         id: 'env-template-upgrade',
         layer: 'frontend',

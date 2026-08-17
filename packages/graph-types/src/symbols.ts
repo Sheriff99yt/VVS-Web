@@ -169,7 +169,7 @@ export interface ClassSymbol {
   id: string;
   name: string;
   extendsType?: string;
-  /** Extra bases after [0]. [0] always mirrors extendsType. Stored; emit still first only. */
+  /** Extra bases after [0]. [0] always mirrors extendsType. python/cpp generate prints all rows. */
   extendsTypes?: string[];
   description?: string;
   /** @deprecated Legacy canvas key — use containerId as the class home graph document. */
@@ -262,7 +262,7 @@ export interface FunctionSymbol {
   binding: FunctionBinding;
   visibility: SymbolVisibility;
   overloads: FunctionOverload[];
-  flags?: { abstract?: boolean; virtual?: boolean; override?: boolean; async?: boolean };
+  flags?: { abstract?: boolean; virtual?: boolean; override?: boolean; async?: boolean; generator?: boolean };
   /** Planned: owning class — see ClassSymbol and docs/design/multi_class_symbols.md */
   classId?: string;
 }

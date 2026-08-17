@@ -35,7 +35,8 @@ export type IrStmtKind =
   | 'CallNative'
   | 'ArrayPush'
   | 'CommentFallback'
-  | 'Try';
+  | 'Try'
+  | 'Yield';
 
 export interface IrBase {
   kind: IrStmtKind;
@@ -319,6 +320,11 @@ export interface IrTry extends IrBase {
   finallyBody?: IrStatement[];
 }
 
+export interface IrYield extends IrBase {
+  kind: 'Yield';
+  value?: IrExpr;
+}
+
 export type IrStructuredStatement =
   | IrCallFunction
   | IrAssignVariable
@@ -342,7 +348,8 @@ export type IrStructuredStatement =
   | IrArrayPush
   | IrCommentFallback
   | IrDeclareLocal
-  | IrTry;
+  | IrTry
+  | IrYield;
 
 export type IrStatement = IrStructuredStatement;
 

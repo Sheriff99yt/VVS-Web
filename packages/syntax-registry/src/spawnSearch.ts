@@ -15,6 +15,7 @@ const SPAWN_SEARCH_ALIASES: Record<string, readonly string[]> = {
   flow_for: ['for', 'loop'],
   flow_while: ['while', 'loop'],
   flow_try: ['try', 'catch', 'except', 'finally'],
+  yield_stmt: ['yield', 'generator'],
   lambda_define: ['lambda', 'arrow', 'closure', 'anonymous'],
   action_print: ['print', 'log', 'output'],
   action_get_input: ['input', 'read', 'prompt', 'stdin'],

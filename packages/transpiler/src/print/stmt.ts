@@ -19,6 +19,7 @@ import type {
   IrReturn,
   IrBreak,
   IrContinue,
+  IrYield,
 } from '../ir/types';
 import { resolveMethodBinding, substituteCallExpr } from '@vvs/environment-templates';
 import { PackTemplateMissingError } from '@vvs/syntax-packs';
@@ -178,6 +179,25 @@ export function createStmtPrinters(
     Continue: (stmt, ctx) => {
       if (stmt.kind !== 'Continue') return null;
       return printFromTemplate(ctx, 'Continue', {});
+    },
+
+    Yield: (stmt, ctx) => {
+      if (stmt.kind !== 'Yield') return null;
+      const s = stmt as IrYield;
+      if (ctx.family !== 'python' && ctx.family !== 'gdscript') {
+        const prefix = commentPrefixFromPack(ctx);
+        return { text: `${ctx.indent}${prefix}(x) Yield`, expressionSpans: [] };
+      }
+      if (s.value) {
+        const val = printExpr(s.value, ctx);
+        const printed = printFromTemplate(ctx, 'YieldVal', { value: { text: val.text, spans: val.spans } });
+        const valOffset = printed.text.indexOf(val.text);
+        return {
+          text: printed.text,
+          expressionSpans: offsetSpans(val.spans, valOffset >= 0 ? valOffset : printed.text.length),
+        };
+      }
+      return printFromTemplate(ctx, 'YieldVoid', {});
     },
 
     AssignVariable: (stmt, ctx) => {

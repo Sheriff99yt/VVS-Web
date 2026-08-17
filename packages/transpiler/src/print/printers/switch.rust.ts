@@ -1,8 +1,8 @@
 import type { IrStatement, IrSwitch } from '../../ir/types';
 import { blockPlaceholder, nestedIndent } from '../template';
 import { formatSwitchCaseLabel } from '../blocks';
+import { createDefaultExprPrinter } from '../expr';
 import type { PrintContext, PrintedStmt, StmtPrinter } from '../types';
-import { printSwitchSelectBind, SWITCH_SEL_TEMP } from './switchSelectBind';
 
 export function createRustSwitchPrinter(
   printStatements: (stmts: IrStatement[], ctx: PrintContext) => PrintedStmt[]
@@ -10,30 +10,36 @@ export function createRustSwitchPrinter(
   return (stmt, ctx) => {
     if (stmt.kind !== 'Switch') return null;
     const s = stmt as IrSwitch;
-    const bind = printSwitchSelectBind(s, ctx);
-    const inner = { ...ctx, indent: nestedIndent(ctx) };
-    const lines = [bind.text];
-    s.cases.forEach((c, i) => {
-      const header =
-        i === 0
-          ? `${ctx.indent}if ${SWITCH_SEL_TEMP} == ${formatSwitchCaseLabel(c, ctx.family)} {`
-          : `${ctx.indent}} else if ${SWITCH_SEL_TEMP} == ${formatSwitchCaseLabel(c, ctx.family)} {`;
-      lines.push(header);
-      const body = printStatements(c.body, inner);
+    const printExpr = createDefaultExprPrinter();
+    const selector = printExpr(s.selector, ctx);
+    const caseIndent = nestedIndent(ctx);
+    const bodyCtx = { ...ctx, indent: nestedIndent({ ...ctx, indent: caseIndent }) };
+    const lines = [`${ctx.indent}match ${selector.text} {`];
+    for (const c of s.cases) {
+      lines.push(`${caseIndent}${formatSwitchCaseLabel(c, ctx.family)} => {`);
+      const body = printStatements(c.body, bodyCtx);
       lines.push(
         body.length > 0
           ? body.map((p) => p.text).join('\n')
-          : `${inner.indent}${blockPlaceholder(ctx)}`
+          : `${bodyCtx.indent}${blockPlaceholder(ctx)}`
       );
-    });
-    if (s.defaultBody.length > 0) {
-      lines.push(`${ctx.indent}} else {`);
-      const body = printStatements(s.defaultBody, inner);
-      lines.push(body.map((p) => p.text).join('\n'));
-      lines.push(`${ctx.indent}}`);
-    } else if (s.cases.length > 0) {
-      lines.push(`${ctx.indent}}`);
+      lines.push(`${caseIndent}}`);
     }
-    return { text: lines.join('\n'), expressionSpans: bind.expressionSpans };
+    if (s.defaultBody.length > 0) {
+      lines.push(`${caseIndent}_ => {`);
+      const body = printStatements(s.defaultBody, bodyCtx);
+      lines.push(body.map((p) => p.text).join('\n'));
+      lines.push(`${caseIndent}}`);
+    }
+    lines.push(`${ctx.indent}}`);
+    const matchPrefix = `${ctx.indent}match `;
+    return {
+      text: lines.join('\n'),
+      expressionSpans: selector.spans.map((span) => ({
+        ...span,
+        start: span.start + matchPrefix.length,
+        end: span.end + matchPrefix.length,
+      })),
+    };
   };
 }

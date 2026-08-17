@@ -7,13 +7,15 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./node": "./src/node.ts"
+    "./node": "./src/node.ts",
+    "./emitter": "./src/import/fromTypeSpec.node.ts"
   },
   "scripts": {
     "test": "bun test",
     "import:env": "bun run scripts/env-import.ts"
   },
   "dependencies": {
+    "@typespec/compiler": "^1.15.0",
     "@vvs/graph-types": "workspace:*",
     "@vvs/syntax-registry": "workspace:*"
   }

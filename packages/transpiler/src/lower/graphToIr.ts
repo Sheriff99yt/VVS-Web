@@ -535,6 +535,7 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   if (kindId === 'flow_switch') return 'Switch';
   if (kindId === 'flow_sequence') return 'Sequence';
   if (kindId === 'flow_try') return 'Try';
+  if (kindId === 'yield_stmt') return 'Yield';
   if (kindId === 'action_print') return 'Print';
   if (kindId === 'flow_return' || kindId === 'action_return') return 'Return';
   if (kindId === 'flow_break' || kindId === 'action_break') return 'Break';
@@ -757,6 +758,24 @@ function lowerStatement(
     return {
       kind: 'Continue',
       sourceGraphNodeId: node.id,
+    };
+  }
+
+  if (kindId === 'yield_stmt') {
+    const valEdge =
+      getDataEdgeToPin(edges, node.id, 'value') ??
+      getDataEdgeToPin(edges, node.id, 'val');
+    let valueExpr: IrExpr | undefined;
+    if (valEdge) {
+      const sourceNode = nodes.find((n) => n.id === valEdge.source);
+      if (sourceNode) {
+        valueExpr = resolveNodeOutputExpr(sourceNode, valEdge.sourceHandle ?? '', ctx, 0);
+      }
+    }
+    return {
+      kind: 'Yield',
+      sourceGraphNodeId: node.id,
+      ...(valueExpr ? { value: valueExpr } : {}),
     };
   }
 

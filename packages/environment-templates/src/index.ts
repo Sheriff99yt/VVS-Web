@@ -40,6 +40,12 @@ export {
   type ImportAsyncApiOptions,
   type BackstageTemplateMeta,
   type BuildEnvironmentManifestInput,
+  importApiSurfaceFromTypeSpec,
+  suggestedTypeSpecEnvId,
+  type TypeSpecImportDocument,
+  type TypeSpecImportedModel,
+  type TypeSpecImportedOperation,
+  type ImportTypeSpecOptions,
 } from './import';
 
 export {

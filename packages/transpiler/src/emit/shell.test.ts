@@ -33,11 +33,29 @@ describe('emit shell pack templates', () => {
     expect(classExtendsSuffix('cpp', 'Widget')).toBe(' : public Widget');
   });
 
-  test('emit still prints first parent only (extras stored, not generated)', () => {
+  test('one parent still prints a single base', () => {
     expect(renderClassModuleOpen('python', 'Child', 'Parent')).toBe('class Child(Parent):');
-    expect(renderClassModuleOpen('python', 'Child', 'Parent')).not.toContain('Mixin');
     expect(classExtendsSuffix('cpp', 'Parent')).toBe(' : public Parent');
-    expect(classExtendsSuffix('cpp', 'Parent')).not.toContain('Mixin');
+  });
+
+  test('python/cpp print every Extends row; others stay first parent', () => {
+    const extras = ['Parent', 'Mixin'];
+    expect(classExtendsSuffix('python', 'Parent', extras)).toBe('(Parent, Mixin)');
+    expect(renderClassModuleOpen('python', 'Child', 'Parent', { extendsTypes: extras })).toBe(
+      'class Child(Parent, Mixin):'
+    );
+    expect(classExtendsSuffix('cpp', 'Parent', extras)).toBe(' : public Parent, public Mixin');
+    expect(renderClassModuleOpen('cpp', 'Child', 'Parent', { extendsTypes: extras })).toBe(
+      'class Child : public Parent, public Mixin {'
+    );
+    expect(classExtendsSuffix('javascript', 'Parent', extras)).toBe(' extends Parent');
+    expect(classExtendsSuffix('javascript', 'Parent', extras)).not.toContain('Mixin');
+    expect(classExtendsSuffix('csharp', 'Parent', extras)).toBe(' : Parent');
+    expect(classExtendsSuffix('csharp', 'Parent', extras)).not.toContain('Mixin');
+    expect(classExtendsSuffix('gdscript', 'Parent', extras)).toBe('\nextends Parent');
+    expect(classExtendsSuffix('verse', 'Parent', extras)).toBe('(Parent)');
+    expect(classExtendsSuffix('rust', 'Parent', extras)).toBe('');
+    expect(classExtendsSuffix('go', 'Parent', extras)).toBe('');
   });
 
   test('function def header from pack', () => {

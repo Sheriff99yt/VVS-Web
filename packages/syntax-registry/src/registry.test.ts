@@ -179,6 +179,16 @@ describe('lambda and try spawn gates', () => {
     expect(inferKindIdFromLabel('Lambda', 'Expressions')).toBe('lambda_define');
     expect(inferKindIdFromLabel('Try', 'Flow Control')).toBe('flow_try');
   });
+
+  test('yield_stmt spawns only python/gdscript; hidden on cpp/js/cs/go/rust/verse', () => {
+    for (const lang of ['python', 'gdscript'] as const) {
+      expect(catalogHasKind(lang, 'yield_stmt')).toBe(true);
+    }
+    for (const lang of ['cpp', 'javascript', 'csharp', 'go', 'rust', 'verse'] as const) {
+      expect(catalogHasKind(lang, 'yield_stmt')).toBe(false);
+    }
+    expect(inferKindIdFromLabel('Yield', 'Flow Control')).toBe('yield_stmt');
+  });
 });
 
 describe('lambda_define and flow_try spawn gates', () => {

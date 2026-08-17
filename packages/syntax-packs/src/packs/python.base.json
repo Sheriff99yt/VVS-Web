@@ -138,6 +138,12 @@
     "ReturnVoid": {
       "quasi": "return"
     },
+    "YieldVal": {
+      "quasi": "yield {value}"
+    },
+    "YieldVoid": {
+      "quasi": "yield"
+    },
     "Break": {
       "quasi": "break"
     },
