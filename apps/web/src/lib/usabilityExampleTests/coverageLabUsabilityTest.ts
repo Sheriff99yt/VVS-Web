@@ -48,7 +48,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const COVERAGE_LAB_FIXTURE_REVISION = 8;
+export const COVERAGE_LAB_FIXTURE_REVISION = 9;
 
 /** Primary class - Machine (entry / modifiers / abstract). */
 export const MACHINE_CLASS = createClassSymbol('Machine', {
@@ -329,6 +329,10 @@ const MACHINE_START_NODES: VVSNode[] = [
   printStringNode('lab-print-boot', { x: 520, y: 40 }),
   boundCallFunction('lab-call-boot', { x: 760, y: 40 }, FN_BOOT),
   boundCallFunction('lab-call-calculate', { x: 760, y: 140 }, FN_CALCULATE),
+  boundVariableGet('lab-calc-get-power', { x: 520, y: 140 }, VAR_POWER),
+  boundVariableGet('lab-calc-get-max', { x: 520, y: 220 }, VAR_MAX),
+  convertToStringNode('lab-calc-str', { x: 1000, y: 140 }),
+  printStringNode('lab-print-calc', { x: 1240, y: 180 }),
   boundVariableGet('lab-get-ready', { x: 760, y: 260 }, VAR_READY),
   branchNode('lab-branch-ready', { x: 1000, y: 40 }),
   boundEventDispatch('lab-dispatch-pulse', { x: 1240, y: 0 }, EVT_PULSE),
@@ -347,9 +351,14 @@ const MACHINE_START_EDGES: VVSEdge[] = [
   execEdge('lab-ms-0b', 'lab-get-input', 'lab-print-boot'),
   execEdge('lab-ms-1', 'lab-print-boot', 'lab-call-boot'),
   execEdge('lab-ms-2', 'lab-call-boot', 'lab-call-calculate'),
-  execEdge('lab-ms-2b', 'lab-call-calculate', 'lab-branch-ready'),
+  execEdge('lab-ms-2b', 'lab-call-calculate', 'lab-print-calc'),
+  execEdge('lab-ms-2c', 'lab-print-calc', 'lab-branch-ready'),
   dataEdge('lab-ms-3', 'lab-get-ready', 'lab-branch-ready', 'val', 'condition', 'data_boolean'),
   dataEdge('lab-ms-input-print', 'lab-get-input', 'lab-print-boot', 'value', 'in_str', 'data_string'),
+  dataEdge('lab-ms-calc-a', 'lab-calc-get-power', 'lab-call-calculate', 'val', 'p-a', 'data_number'),
+  dataEdge('lab-ms-calc-b', 'lab-calc-get-max', 'lab-call-calculate', 'val', 'p-b', 'data_number'),
+  dataEdge('lab-ms-calc-ret', 'lab-call-calculate', 'lab-calc-str', 'return_val', 'value', 'data_number'),
+  dataEdge('lab-ms-calc-print', 'lab-calc-str', 'lab-print-calc', 'result', 'in_str', 'data_string'),
   execEdge('lab-ms-4', 'lab-branch-ready', 'lab-dispatch-pulse', 'true_exec', 'exec_in'),
   execEdge('lab-ms-5', 'lab-branch-ready', 'lab-import-json-cond', 'false_exec', 'exec_in'),
   execEdge('lab-ms-5b', 'lab-import-json-cond', 'lab-print-not-ready'),

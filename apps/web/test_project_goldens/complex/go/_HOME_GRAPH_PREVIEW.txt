@@ -34,7 +34,7 @@ func (self *Machine) on_start() {
 	_vvs_input_lab_get_input := scanner.Text()
 	fmt.Println(_vvs_input_lab_get_input)
 	self.Boot()
-	self.Calculate(0, 0)
+	fmt.Println(fmt.Sprintf("%v", self.Calculate(self.Power, self.MaxPower)))
 	if self.Ready {
 		self.on_pulse()
 	} else {

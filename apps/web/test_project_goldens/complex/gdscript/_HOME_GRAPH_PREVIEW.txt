@@ -24,7 +24,7 @@ class_name Machine
         var _vvs_input_lab_get_input = OS.read_string_from_stdin()
         print(_vvs_input_lab_get_input)
         self.Boot()
-        self.Calculate(0, 0)
+        print(str(self.Calculate(self.Power, self.MaxPower)))
         if self.Ready:
             self.on_pulse()
         else:

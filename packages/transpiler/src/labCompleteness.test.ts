@@ -96,6 +96,16 @@ describe('lab completeness pass (no leftover fakes)', () => {
     expect(py).toMatch(/def Calculate\(self, a, b\):[\s\S]*?return \(a \+ b\)/);
   });
 
+  test('Coverage: Calculate call site uses Power/MaxPower and prints the return', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const py = emit(snapshot, 'python');
+    expect(py).not.toContain('Calculate(0, 0)');
+    expect(py).toContain('self.Calculate(self.Power, self.MaxPower)');
+    const cpp = emit(snapshot, 'cpp');
+    expect(cpp).not.toContain('Calculate(0, 0)');
+    expect(cpp).toContain('Calculate(Power, MaxPower)');
+  });
+
   test('Inheritance / New Features Go include fmt when Print is used', () => {
     expect(emit(createInheritanceLabUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');
     expect(emit(createNewFeaturesUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');

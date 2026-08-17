@@ -25,7 +25,7 @@
         var _vvs_input_lab_get_input : string = ""
         Print(_vvs_input_lab_get_input)
         Boot()
-        Calculate(0, 0)
+        Print(ToString(Calculate(Power, MaxPower)))
         if (Ready?):
             on_pulse()
         else:
