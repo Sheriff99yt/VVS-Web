@@ -28,7 +28,6 @@ class_name Machine
         if self.Ready:
             self.on_pulse()
         else:
-            # (x) Import json
             print("Not ready")
 enum SensorStatus { OK, WARN, FAIL }
 class_name Sensor

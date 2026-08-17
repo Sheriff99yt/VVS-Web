@@ -314,8 +314,9 @@ describe('coverage lab usability example', () => {
     expect(homeCpp).not.toContain('from enum import');
     // Shared Import iostream once at file top (no per-class duplicate).
     expect(homeCpp.split('#include <iostream>').length - 1).toBe(1);
-    // Conditional Import json is Python-gated — inactive comment in C++ branch body.
-    expect(homeCpp).toMatch(/else \{\s*\n\s*\/\/ \(x\) Import json/);
+    // Conditional Import json is Python-gated — silent-skip on other langs (no leftover (x)).
+    expect(homeCpp).not.toContain('(x) Import json');
+    expect(homeCpp).toMatch(/else \{\s*\n\s*std::cout << "Not ready"/);
 
     const cs = transpileProject({
       projectDetails: snapshot.projectDetails,

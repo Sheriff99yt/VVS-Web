@@ -7,7 +7,6 @@
         return (a + b)
         # Concat Strings
     on_ondatareceived(payload : string) : void =
-        ProcessData(payload, payload)
-        Print("/* Call ProcessData.return_val */")
+        Print(ProcessData(payload, payload))
     on_start() : void =
         on_ondatareceived(("Hello from Global: " + GlobalGreeting))

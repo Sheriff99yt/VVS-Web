@@ -1,8 +1,8 @@
 import { PackTemplateMissingError, renderTemplate, requireTemplate } from '@vvs/syntax-packs';
 import { offsetSpans } from '../codeExpr';
-import type { IrExpr } from '../ir/types';
+import type { IrCallExpr, IrExpr } from '../ir/types';
 import type { ExprPrinter, PrintContext, PrintedExpr } from './types';
-import { isPackDrivenFamily } from './template';
+import { isPackDrivenFamily, printFromTemplate } from './template';
 
 function mergeArgs(args: PrintedExpr[]): { text: string; spans: import('../codeExpr').ExprSpan[] } {
   const spans: import('../codeExpr').ExprSpan[] = [];
@@ -148,6 +148,132 @@ export function printLambdaExpr(expr: IrExpr, ctx: PrintContext, printExpr: Expr
   );
 }
 
+export type CallInvocation = {
+  sourceGraphNodeId: string;
+  calleeName: string;
+  args?: IrExpr[];
+  instanceCall: boolean;
+  targetClassName?: string;
+  crossClass?: boolean;
+  inheritedDepth?: number;
+  isSuper?: boolean;
+  parentClassName?: string;
+};
+
+/** Call text without a trailing statement semicolon — safe inside Print({value}). */
+function stripStmtSemi(text: string): string {
+  return text.endsWith(';') ? text.slice(0, -1) : text;
+}
+
+/** Shared CallFunction / CallExpr printer (pack CallInstance / CallSuper / cross-class). */
+export function printCallInvocation(
+  s: CallInvocation,
+  ctx: PrintContext,
+  printExpr: ExprPrinter
+): PrintedExpr {
+  const argsArray = (s.args ?? []).map((expr) => printExpr(expr, ctx));
+  const argsStr = argsArray.map((a) => a.text).join(', ');
+  const { family } = ctx;
+
+  const fromTemplate = (key: string, slots: Record<string, string>): PrintedExpr => {
+    const printed = printFromTemplate(ctx, key, slots, { noIndent: true });
+    const text = stripStmtSemi(printed.text);
+    return {
+      text,
+      spans: [
+        { nodeId: s.sourceGraphNodeId, start: 0, end: text.length },
+        ...(printed.expressionSpans ?? []),
+      ],
+    };
+  };
+
+  if (s.isSuper) {
+    return fromTemplate('CallSuper', {
+      callee: s.calleeName,
+      args: argsStr,
+      parent: s.parentClassName ?? '',
+    });
+  }
+
+  if (s.crossClass && s.targetClassName) {
+    const classRef = s.targetClassName;
+    if (family === 'python') {
+      const receiver = s.instanceCall ? `${classRef}()` : classRef;
+      return fromTemplate('CallCrossClass', {
+        receiver,
+        callee: s.calleeName,
+        args: argsStr,
+      });
+    }
+    if (family === 'cpp') {
+      if (s.instanceCall) {
+        return fromTemplate('CallCrossClass', {
+          receiver: `${classRef}()`,
+          callee: s.calleeName,
+          args: argsStr,
+        });
+      }
+      return fromTemplate('CallCrossClassStatic', {
+        class: classRef,
+        callee: s.calleeName,
+        args: argsStr,
+      });
+    }
+    if (family === 'javascript' || family === 'csharp') {
+      if (s.instanceCall) {
+        return fromTemplate('CallCrossClass', {
+          receiver: `new ${classRef}()`,
+          callee: s.calleeName,
+          args: argsStr,
+        });
+      }
+      return fromTemplate('CallCrossClassStatic', {
+        class: classRef,
+        callee: s.calleeName,
+        args: argsStr,
+      });
+    }
+    if (family === 'verse') {
+      return fromTemplate('CallCrossClass', {
+        receiver: classRef,
+        callee: s.calleeName,
+        args: argsStr,
+      });
+    }
+    if (family === 'gdscript') {
+      const receiver = s.instanceCall ? `${classRef}.new()` : classRef;
+      return fromTemplate('CallCrossClass', {
+        receiver,
+        callee: s.calleeName,
+        args: argsStr,
+      });
+    }
+    if (family === 'rust') {
+      if (s.instanceCall) {
+        return fromTemplate('CallCrossClass', {
+          receiver: `${classRef}::new()`,
+          callee: s.calleeName,
+          args: argsStr,
+        });
+      }
+      return fromTemplate('CallCrossClassStatic', {
+        class: classRef,
+        callee: s.calleeName,
+        args: argsStr,
+      });
+    }
+  }
+
+  const key = s.instanceCall ? 'CallInstance' : 'CallFunction';
+  const basePath = family === 'rust' ? rustInheritedBasePath(s.inheritedDepth) : '';
+  return fromTemplate(key, { callee: s.calleeName, args: argsStr, basePath });
+}
+
+export function printCallExpr(expr: IrExpr, ctx: PrintContext, printExpr: ExprPrinter): PrintedExpr {
+  if (expr.kind !== 'CallExpr') throw new Error('expected CallExpr');
+  return printCallInvocation(expr as IrCallExpr, ctx, printExpr);
+}
+
 export function createDefaultExprPrinter(): ExprPrinter {
   const printExpr: ExprPrinter = (expr, ctx) => {
     switch (expr.kind) {
@@ -169,6 +295,8 @@ export function createDefaultExprPrinter(): ExprPrinter {
         return printEnumMemberExpr(expr, ctx);
       case 'Lambda':
         return printLambdaExpr(expr, ctx, printExpr);
+      case 'CallExpr':
+        return printCallExpr(expr, ctx, printExpr);
       default:
         if (isPackDrivenFamily(ctx.family)) {
           throw new PackTemplateMissingError((expr as any).kind, ctx.family);

@@ -1,4 +1,7 @@
 // ===== src/CoverageLab.go =====
+import "fmt"
+import "bufio"
+import "os"
 type Machine struct {
 	var Power float64 = 0
 	var Serial float64 = 0
@@ -32,7 +35,11 @@ func (self *Machine) on_start() {
 	fmt.Println(_vvs_input_lab_get_input)
 	self.Boot()
 	self.Calculate(0, 0)
-	// if (self.Ready)
+	if self.Ready {
+		self.on_pulse()
+	} else {
+		fmt.Println("Not ready")
+	}
 }
 }
 type SensorStatus int
@@ -47,17 +54,29 @@ type Sensor struct {
 	var Host Machine = null
 	var Tags map[string]string = {}
 func Sample() void {
-	// push self.Power
+	self.Readings = append(self.Readings, self.Power)
 	fmt.Println("Sampled")
 }
 func Report() void {
 	fmt.Println("--- Readings ---")
-	// foreach val
+	for _, val := range self.Readings {
+		fmt.Println(fmt.Sprintf("%v", val))
+	}
 }
 func (self *Sensor) on_tick() {
 	fmt.Println("Tick")
 }
 func (self *Sensor) on_start() {
-	// switch
+	switch self.Status {
+	case SensorStatus_OK:
+		self.Sample()
+		self.Report()
+	case SensorStatus_WARN:
+		fmt.Println("Warn")
+		self.Report()
+	case SensorStatus_FAIL:
+		fmt.Println("Fail")
+		self.Report()
+	}
 }
 }

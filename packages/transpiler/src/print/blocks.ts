@@ -104,7 +104,7 @@ export function buildIfBranch(
     lines.push({ text: ifElseLine(ctx) });
     lines.push(...falseStmts.map((t) => ({ text: t })));
   }
-  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'rust' || ctx.family === 'csharp') {
+  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'rust' || ctx.family === 'csharp' || ctx.family === 'go') {
     lines.push({ text: blockCloseLine(ctx, 'IfBranchClose') });
   }
   return { lines };
@@ -267,7 +267,7 @@ export function buildTry(
     lines.push({ text: printFromTemplate(ctx, 'TryFinallyHeader', {}).text });
     lines.push(...finallyStmts.map((text) => ({ text })));
   }
-  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'csharp') {
+  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'csharp' || ctx.family === 'go') {
     lines.push({ text: blockCloseLine(ctx, 'TryClose') });
   }
   return { lines };

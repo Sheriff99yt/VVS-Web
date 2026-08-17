@@ -47,7 +47,6 @@ impl Machine {
         if self.Ready {
             self.on_pulse();
         } else {
-            // (x) Import json
             println!("{}", "Not ready");
         }
     }

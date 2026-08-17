@@ -17,6 +17,7 @@ import {
   appendRustNewConstructor,
   tagClassDeclLine,
   tagClassStructuralLine,
+  withGoStdlibImports,
   withRustHashMapImport,
   type MemberState,
 } from './members';
@@ -67,7 +68,7 @@ export function emitClassModule(
   }
 ): void {
   if (!options?.skipGeneratedImports) {
-    ir = withRustHashMapImport(ir);
+    ir = withGoStdlibImports(withRustHashMapImport(ir));
   }
   const classDecl = ir.members.find(
     (m): m is Extract<IrMemberDecl, { kind: 'ClassDecl' }> => m.kind === 'ClassDecl'

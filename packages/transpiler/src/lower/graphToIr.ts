@@ -274,6 +274,13 @@ function resolveNodeOutputExpr(
     return literalIr(node.id, text, 'raw');
   }
 
+  if (isCallFunctionNode(node, kindId)) {
+    const fields = lowerCallFields(node, ctx);
+    if (fields) {
+      return { kind: 'CallExpr', ...fields };
+    }
+  }
+
   return literalIr(node.id, `/* ${node.data.label}.${pinId} */`, 'string');
 }
 
@@ -536,6 +543,66 @@ function isCallFunctionNode(node: GraphNode, kindId: string): boolean {
   );
 }
 
+function callReturnPinIds(node: GraphNode): string[] {
+  const outs = (node.data.outputs ?? [])
+    .filter((p) => p.type !== 'execution')
+    .map((p) => p.id);
+  return outs.length > 0 ? outs : ['return_val', 'result', 'val'];
+}
+
+function callReturnIsConsumed(node: GraphNode, edges: GraphEdge[]): boolean {
+  const pins = new Set(callReturnPinIds(node));
+  return edges.some(
+    (e) =>
+      e.source === node.id &&
+      pins.has(e.sourceHandle ?? '') &&
+      e.data?.pinType !== 'execution'
+  );
+}
+
+type CallFields = {
+  sourceGraphNodeId: string;
+  calleeName: string;
+  args: IrExpr[];
+  instanceCall: boolean;
+  crossClass: boolean;
+  targetClassName?: string;
+  inheritedDepth?: number;
+  isSuper?: boolean;
+  parentClassName?: string;
+};
+
+function lowerCallFields(node: GraphNode, ctx: LowerContext): CallFields | null {
+  if (!node.data.linkedGraphId && !node.data.graphBinding?.symbolId) return null;
+  const { functions } = ctx;
+  const graphId = node.data.graphBinding?.symbolId ?? node.data.linkedGraphId ?? '';
+  const fn = functions.find((f) => f.id === graphId);
+  const name = fn?.name ?? resolveFunctionName(graphId, functions);
+  const fnClassId = fn?.classId ?? MAIN_CLASS_ID;
+  const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
+  const crossClass = fnClassId !== activeClassId;
+  const targetClass = crossClass ? ctx.classes?.find((c) => c.id === fnClassId) : undefined;
+  const targetClassName = targetClass
+    ? resolveClassModuleName(targetClass, ctx.projectModuleName)
+    : undefined;
+  const inheritedDepth = inheritedMemberDepth(fn?.classId, ctx);
+  const inheritedCall = inheritedDepth > 0;
+  const staticCall = fn?.binding === 'static' || fn?.binding === 'module';
+  const args = callFunctionArgExprs(node, fn, ctx);
+  const isSuper = nodeWantsSuper(node) && Boolean(activeParentClassName(ctx));
+  return {
+    sourceGraphNodeId: node.id,
+    calleeName: name,
+    args,
+    instanceCall: !staticCall,
+    crossClass: crossClass && !inheritedCall && !isSuper,
+    targetClassName,
+    inheritedDepth: inheritedDepth || undefined,
+    isSuper: isSuper || undefined,
+    parentClassName: isSuper ? activeParentClassName(ctx) : undefined,
+  };
+}
+
 function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   const kindId = resolveNodeKindId(node.data);
 
@@ -629,36 +696,17 @@ function lowerStatement(
   }
 
   if (isCallFunctionNode(node, kindId)) {
-    if (!node.data.linkedGraphId && !node.data.graphBinding?.symbolId) {
+    if (callReturnIsConsumed(node, edges)) {
+      // Return pin is an expression (e.g. Print) — do not also emit a bare call statement.
+      return null;
+    }
+    const fields = lowerCallFields(node, ctx);
+    if (!fields) {
       return commentFallback(node.id, 'CallFunction', 'call (unlinked)');
     }
-    const graphId = node.data.graphBinding?.symbolId ?? node.data.linkedGraphId ?? '';
-    const fn = functions.find((f) => f.id === graphId);
-    const name = fn?.name ?? resolveFunctionName(graphId, functions);
-    const fnClassId = fn?.classId ?? MAIN_CLASS_ID;
-    const activeClassId = ctx.activeClassId ?? MAIN_CLASS_ID;
-    const crossClass = fnClassId !== activeClassId;
-    const targetClass = crossClass ? ctx.classes?.find((c) => c.id === fnClassId) : undefined;
-    const targetClassName = targetClass
-      ? resolveClassModuleName(targetClass, ctx.projectModuleName)
-      : undefined;
-    // Inherited methods on the same instance — project through `base`, do not instantiate.
-    const inheritedDepth = inheritedMemberDepth(fn?.classId, ctx);
-    const inheritedCall = inheritedDepth > 0;
-    const staticCall = fn?.binding === 'static' || fn?.binding === 'module';
-    const args = callFunctionArgExprs(node, fn, ctx);
-    const isSuper = nodeWantsSuper(node) && Boolean(activeParentClassName(ctx));
     return {
       kind: 'CallFunction',
-      sourceGraphNodeId: node.id,
-      calleeName: name,
-      args,
-      instanceCall: !staticCall,
-      crossClass: crossClass && !inheritedCall && !isSuper,
-      targetClassName,
-      inheritedDepth: inheritedDepth || undefined,
-      isSuper: isSuper || undefined,
-      parentClassName: isSuper ? activeParentClassName(ctx) : undefined,
+      ...fields,
     };
   }
 

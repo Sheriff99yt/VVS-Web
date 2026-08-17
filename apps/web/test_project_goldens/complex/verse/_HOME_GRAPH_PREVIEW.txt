@@ -29,7 +29,6 @@
         if (Ready?):
             on_pulse()
         else:
-            # (x) Import json
             Print("Not ready")
 SensorStatus := enum:
     OK

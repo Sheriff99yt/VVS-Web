@@ -2,7 +2,7 @@ import { type VariableSymbol, parseTypeRef, resolveTypeRef, targetLanguageToFami
 import { isFeatureUnsupportedForLanguage, isFunctionRoleEffective, isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
 import { CodeSink } from '../codeSink';
-import type { IrEventHandler, IrMemberDecl, IrModule, IrModuleImport } from '../ir/types';
+import type { IrEventHandler, IrMemberDecl, IrModule, IrModuleImport, IrStatement } from '../ir/types';
 import {
   appendFunctionBody,
   appendImportStatement,
@@ -115,6 +115,114 @@ function markRustItemEmitted(state: MemberState, nodeId: string): void {
 function rustItemAlreadyEmitted(state: MemberState, nodeId: string): boolean {
   return Boolean(state.rustEmittedItemNodeIds?.has(nodeId));
 }
+
+function walkIrStatements(stmts: IrStatement[] | undefined, visit: (s: IrStatement) => void): void {
+  if (!stmts) return;
+  for (const stmt of stmts) {
+    visit(stmt);
+    if (stmt.kind === 'IfBranch') {
+      walkIrStatements(stmt.trueBody, visit);
+      walkIrStatements(stmt.falseBody, visit);
+    } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+      walkIrStatements(stmt.body, visit);
+    } else if (stmt.kind === 'Switch') {
+      for (const c of stmt.cases) walkIrStatements(c.body, visit);
+      walkIrStatements(stmt.defaultBody, visit);
+    } else if (stmt.kind === 'Sequence') {
+      for (const step of stmt.steps) walkIrStatements(step, visit);
+    } else if (stmt.kind === 'Try') {
+      walkIrStatements(stmt.tryBody, visit);
+      walkIrStatements(stmt.catchBody, visit);
+      if (stmt.finallyBody) walkIrStatements(stmt.finallyBody, visit);
+    }
+  }
+}
+
+function goStdlibNeeds(ir: IrModule): { fmt: boolean; bufio: boolean; os: boolean } {
+  const need = { fmt: false, bufio: false, os: false };
+  const visit = (stmt: IrStatement) => {
+    if (stmt.kind === 'Print') need.fmt = true;
+    if (stmt.kind === 'AssignVariable' && stmt.assignKind === 'get_input') {
+      need.fmt = true;
+      need.bufio = true;
+      need.os = true;
+    }
+  };
+  walkIrStatements(ir.onStartBody, visit);
+  for (const handler of ir.eventHandlers) walkIrStatements(handler.body, visit);
+  for (const body of Object.values(ir.functionBodies)) walkIrStatements(body, visit);
+  for (const member of ir.members) {
+    if (member.kind === 'EventDecl') walkIrStatements(member.body, visit);
+  }
+  return need;
+}
+
+function goStdlibImportMember(slug: string, anchorNodeId: string): IrModuleImport {
+  return {
+    kind: 'ModuleImport',
+    sourceGraphNodeId: anchorNodeId,
+    moduleSlug: slug,
+    displayLabel: slug,
+    importStyle: 'module',
+  };
+}
+
+function goStdlibAnchor(ir: IrModule): string {
+  const classDecl = ir.members.find((m) => m.kind === 'ClassDecl');
+  if (classDecl && 'sourceGraphNodeId' in classDecl) return classDecl.sourceGraphNodeId;
+  return ir.members[0] && 'sourceGraphNodeId' in ir.members[0]
+    ? String((ir.members[0] as { sourceGraphNodeId: string }).sourceGraphNodeId)
+    : 'go-stdlib';
+}
+
+/** Compiler-required `import "fmt"` / bufio / os when Go emit uses them. */
+export function withGoStdlibImports(ir: IrModule): IrModule {
+  if (ir.targetLanguage !== 'go') return ir;
+  const need = goStdlibNeeds(ir);
+  const have = new Set(
+    ir.members.filter((m) => m.kind === 'ModuleImport').map((m) => m.moduleSlug)
+  );
+  for (const stmt of ir.imports) {
+    if (stmt.kind === 'ModuleImport') have.add(stmt.moduleSlug);
+  }
+  const extra: IrModuleImport[] = [];
+  const anchor = goStdlibAnchor(ir);
+  for (const slug of ['fmt', 'bufio', 'os'] as const) {
+    if (!need[slug] || have.has(slug)) continue;
+    have.add(slug);
+    extra.push(goStdlibImportMember(slug, anchor));
+  }
+  if (extra.length === 0) return ir;
+  return { ...ir, members: [...extra, ...ir.members] };
+}
+
+export function withGoStdlibImportsAtFileTop(irs: IrModule[]): IrModule[] {
+  if (irs.length === 0 || irs[0]!.targetLanguage !== 'go') return irs;
+  const mergedNeed = { fmt: false, bufio: false, os: false };
+  for (const ir of irs) {
+    const n = goStdlibNeeds(ir);
+    mergedNeed.fmt = mergedNeed.fmt || n.fmt;
+    mergedNeed.bufio = mergedNeed.bufio || n.bufio;
+    mergedNeed.os = mergedNeed.os || n.os;
+  }
+  const first = irs[0]!;
+  const have = new Set(
+    first.members.filter((m) => m.kind === 'ModuleImport').map((m) => m.moduleSlug)
+  );
+  for (const stmt of first.imports) {
+    if (stmt.kind === 'ModuleImport') have.add(stmt.moduleSlug);
+  }
+  const extra: IrModuleImport[] = [];
+  const anchor = goStdlibAnchor(first);
+  for (const slug of ['fmt', 'bufio', 'os'] as const) {
+    if (!mergedNeed[slug] || have.has(slug)) continue;
+    have.add(slug);
+    extra.push(goStdlibImportMember(slug, anchor));
+  }
+  if (extra.length === 0) return irs;
+  return [{ ...first, members: [...extra, ...first.members] }, ...irs.slice(1)];
+}
+
 
 export interface MemberEmitHooks {
   /** Fired when walking a ClassDecl — open the class shell. */
@@ -533,6 +641,15 @@ function appendFunctionDefinition(
   }
 
   if (functionRoleShouldSkip(ir, member.properties)) {
+    const role = functionRoleOf(member.properties);
+    const emptyBody =
+      member.overloads.length === 0
+        ? !(ir.functionBodies[symbol.id] && ir.functionBodies[symbol.id]!.length > 0)
+        : member.overloads.every((o) => !(ir.functionBodies[o.tabId] && ir.functionBodies[o.tabId]!.length > 0));
+    // Empty ctor/dtor on langs that generate new() / have no ctor form — no leftover (x).
+    if ((role === 'constructor' || role === 'destructor') && emptyBody) {
+      return;
+    }
     if (ir.emitUnsupportedComments !== false) {
       const ctx = printContextForIr(ir, '', ir.environmentManifest);
       const indent = memberChainIndentFor(ctx);

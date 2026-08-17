@@ -15,8 +15,7 @@ impl MainClass {
     }
     // (x) Implement ProcessData
     pub fn on_ondatareceived(&mut self, payload: String) {
-        self.ProcessData(payload, payload);
-        println!("{}", "/* Call ProcessData.return_val */");
+        println!("{}", self.ProcessData(payload, payload));
     }
     pub fn on_start(&mut self) {
         self.on_ondatareceived(("Hello from Global: " + self.GlobalGreeting));

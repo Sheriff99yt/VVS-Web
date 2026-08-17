@@ -50,7 +50,7 @@ function appendModuleImportStatement(
   sink: CodeSink,
   stmt: IrModuleImport,
   ctx: PrintContext,
-  emitUnsupportedComments = true
+  _emitUnsupportedComments = true
 ): void {
   const effective = isNodeEffectiveForLanguage(
     IMPORT_MODULE_KIND,
@@ -61,12 +61,8 @@ function appendModuleImportStatement(
     appendLeafStatement(sink, stmt, ctx);
     return;
   }
-  if (!emitUnsupportedComments) return;
-  const label = (stmt.displayLabel?.trim() || stmt.moduleSlug).trim();
-  sink.appendTagged({
-    nodeId: stmt.sourceGraphNodeId,
-    text: `${ctx.indent}${commentPrefixFromPack(ctx)}(x) ${label}`,
-  });
+  // Language-gated Import Module: omit. Do not leave leftover (x) Import in branch bodies.
+  return;
 }
 
 function appendRawWithExprSpans(
@@ -129,7 +125,7 @@ function appendIfBranch(
       sink.appendRaw(ifElseLine(ctx));
       appendBodyOrPlaceholder(sink, stmt.falseBody, inner, placeholder, options);
     }
-    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
+    if (['javascript', 'cpp', 'csharp', 'rust', 'go'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'IfBranchClose'));
     }
   } else {
@@ -164,7 +160,7 @@ function appendForLoop(
       forSpanOffset(ctx.family, ctx.indent, stmt.indexVar)
     );
     appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
-    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
+    if (['javascript', 'cpp', 'csharp', 'rust', 'go'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
     }
   } else {
@@ -207,6 +203,8 @@ function appendForEach(
       headerText = `${ctx.indent}for ${stmt.elementVar} in ${collPrinted.text}.iter() {`;
     } else if (ctx.family === 'verse') {
       headerText = `${ctx.indent}for (${stmt.elementVar} : ${collPrinted.text}):`;
+    } else if (ctx.family === 'go') {
+      headerText = `${ctx.indent}for _, ${stmt.elementVar} := range ${collPrinted.text} {`;
     } else {
       headerText = `${ctx.indent}for (${elementTypeName} ${stmt.elementVar} : ${collPrinted.text}) {`;
     }
@@ -215,7 +213,7 @@ function appendForEach(
   if (isPackDrivenFamily(ctx.family)) {
     appendRawWithExprSpans(sink, headerText, collPrinted.spans, ctx.indent.length);
     appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
-    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
+    if (['javascript', 'cpp', 'csharp', 'rust', 'go'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
     }
   } else {
@@ -273,6 +271,9 @@ function appendArrayPush(sink: CodeSink, stmt: IrArrayPush, ctx: PrintContext): 
   } else if (ctx.family === 'gdscript') {
     line = `${ctx.indent}${arr.text}.append(${val.text})`;
     valOffset = ctx.indent.length + arr.text.length + '.append('.length;
+  } else if (ctx.family === 'go') {
+    line = `${ctx.indent}${arr.text} = append(${arr.text}, ${val.text})`;
+    valOffset = ctx.indent.length + arr.text.length + ' = append('.length + arr.text.length + ', '.length;
   } else {
     line = `${ctx.indent}// push ${val.text}`;
     valOffset = ctx.indent.length + '// push '.length;
@@ -308,7 +309,7 @@ function appendWhileLoop(
       condSpanOffset(ctx.family, ctx.indent, 'while')
     );
     appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
-    if (['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)) {
+    if (['javascript', 'cpp', 'csharp', 'rust', 'go'].includes(ctx.family)) {
       sink.appendRaw(blockCloseLine(ctx, 'WhileLoopClose'));
     }
   } else {
@@ -477,6 +478,25 @@ function appendSwitch(
     } else {
       sink.appendRaw(`${ctx.indent}}`);
     }
+  } else if (family === 'go') {
+    const selector = printExpr(stmt.selector, ctx);
+    const open = `${ctx.indent}switch `;
+    appendRawWithExprSpans(
+      sink,
+      `${open}${selector.text} {`,
+      selector.spans,
+      open.length
+    );
+    const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
+    for (const c of stmt.cases) {
+      sink.appendRaw(`${ctx.indent}case ${formatSwitchCaseLabel(c, family)}:`);
+      appendSwitchBody(sink, c.body, inner, placeholder, options);
+    }
+    if (stmt.defaultBody.length > 0) {
+      sink.appendRaw(`${ctx.indent}default:`);
+      appendSwitchBody(sink, stmt.defaultBody, inner, placeholder, options);
+    }
+    sink.appendRaw(`${ctx.indent}}`);
   } else {
     sink.appendRaw(`${ctx.indent}// switch`);
   }
@@ -525,7 +545,7 @@ function appendTry(
   const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
   const finallyBody = stmt.finallyBody ?? [];
 
-  if (isPackDrivenFamily(ctx.family)) {
+  if (isPackDrivenFamily(ctx.family) && ctx.profile?.templates.TryHeader) {
     sink.appendRaw(printFromTemplate(ctx, 'TryHeader', {}).text);
     appendBodyOrPlaceholder(sink, stmt.tryBody, inner, placeholder, options);
     const printCatch = stmt.catchBody.length > 0 || finallyBody.length === 0;

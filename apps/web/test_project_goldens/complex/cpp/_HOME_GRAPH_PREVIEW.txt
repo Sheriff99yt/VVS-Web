@@ -29,7 +29,6 @@ public:
         if (Ready) {
             on_pulse();
         } else {
-            // (x) Import json
             std::cout << "Not ready" << std::endl;
         }
     }

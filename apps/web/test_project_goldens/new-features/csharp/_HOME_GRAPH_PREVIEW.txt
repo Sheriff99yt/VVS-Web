@@ -9,8 +9,7 @@ public class MainClass {
         // Concat Strings
     }
     public void on_ondatareceived(string payload) {
-        this.ProcessData(payload, payload);
-        Console.WriteLine("/* Call ProcessData.return_val */");
+        Console.WriteLine(this.ProcessData(payload, payload));
     }
     public void on_start() {
         this.on_ondatareceived(("Hello from Global: " + this.GlobalGreeting));

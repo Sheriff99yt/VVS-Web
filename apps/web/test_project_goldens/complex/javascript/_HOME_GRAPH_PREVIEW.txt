@@ -32,7 +32,6 @@ class Machine {
         if (this.Ready) {
             this.on_pulse();
         } else {
-            // (x) Import json
             console.log("Not ready");
         };
     }

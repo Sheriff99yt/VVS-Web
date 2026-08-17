@@ -151,11 +151,18 @@ describe('Function Define role — constructor / destructor', () => {
     expect(newCount).toBe(1);
     expect(code).toContain('pub fn new(');
     expect(code).not.toContain('fn Parent(');
+    expect(code).not.toContain('(x) Implement Parent');
   });
 
   test('Go role=constructor does not invent a NewParent factory', () => {
     const code = emitRoleMethod('go', 'constructor');
     expect(code).not.toContain('func NewParent');
     expect(code).not.toContain('func (self *Parent) Parent(');
+    expect(code).not.toContain('(x) Implement Parent');
+  });
+
+  test('Verse empty constructor implement does not leak leftover (x)', () => {
+    const code = emitRoleMethod('verse', 'constructor');
+    expect(code).not.toContain('(x) Implement Parent');
   });
 });

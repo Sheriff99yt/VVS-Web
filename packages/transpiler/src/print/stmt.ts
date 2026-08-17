@@ -25,7 +25,7 @@ import { resolveMethodBinding, substituteCallExpr } from '@vvs/environment-templ
 import { PackTemplateMissingError } from '@vvs/syntax-packs';
 import { offsetSpans } from '../codeExpr';
 import type { ExprPrinter } from './types';
-import { createDefaultExprPrinter, mergeArgs, rustInheritedBasePath } from './expr';
+import { createDefaultExprPrinter, mergeArgs, printCallInvocation, rustInheritedBasePath } from './expr';
 import { builtBlockToText, buildForLoop, buildIfBranch, buildSequence, buildTry, buildWhileLoop } from './blocks';
 import {
   commentPrefixFromPack,
@@ -51,93 +51,14 @@ export function createStmtPrinters(
     CallFunction: (stmt, ctx) => {
       if (stmt.kind !== 'CallFunction') return null;
       const s = stmt as IrCallFunction;
-      const { family } = ctx;
-
-      const argsArray = (s.args ?? []).map((expr) => printExpr(expr, ctx));
-      const argsStr = argsArray.map((a) => a.text).join(', ');
-
-      if (s.isSuper) {
-        return printFromTemplate(ctx, 'CallSuper', {
-          callee: s.calleeName,
-          args: argsStr,
-          parent: s.parentClassName ?? '',
-        });
-      }
-
-      if (s.crossClass && s.targetClassName) {
-        const classRef = s.targetClassName;
-        if (family === 'python') {
-          const receiver = s.instanceCall ? `${classRef}()` : classRef;
-          return printFromTemplate(ctx, 'CallCrossClass', {
-            receiver,
-            callee: s.calleeName,
-            args: argsStr,
-          });
-        }
-        if (family === 'cpp') {
-          const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
-          const receiver = s.instanceCall ? `${classRef}()` : classRef;
-          const slots = (
-            key === 'CallCrossClassStatic'
-              ? { class: classRef, callee: s.calleeName, args: argsStr }
-              : { receiver, callee: s.calleeName, args: argsStr }
-          ) as Record<string, string>;
-          return printFromTemplate(ctx, key, slots);
-        }
-        if (family === 'javascript') {
-          const receiver = s.instanceCall ? `new ${classRef}()` : classRef;
-          const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
-          const slots = (
-            key === 'CallCrossClassStatic'
-              ? { class: classRef, callee: s.calleeName, args: argsStr }
-              : { receiver, callee: s.calleeName, args: argsStr }
-          ) as Record<string, string>;
-          return printFromTemplate(ctx, key, slots);
-        }
-        if (family === 'verse') {
-          return printFromTemplate(ctx, 'CallCrossClass', {
-            receiver: classRef,
-            callee: s.calleeName,
-            args: argsStr,
-          });
-        }
-        if (family === 'gdscript') {
-          const receiver = s.instanceCall ? `${classRef}.new()` : classRef;
-          return printFromTemplate(ctx, 'CallCrossClass', {
-            receiver,
-            callee: s.calleeName,
-            args: argsStr,
-          });
-        }
-        if (family === 'rust') {
-          if (s.instanceCall) {
-            return printFromTemplate(ctx, 'CallCrossClass', {
-              receiver: `${classRef}::new()`,
-              callee: s.calleeName,
-              args: argsStr,
-            });
-          }
-          return printFromTemplate(ctx, 'CallCrossClassStatic', {
-            class: classRef,
-            callee: s.calleeName,
-            args: argsStr,
-          });
-        }
-        if (family === 'csharp') {
-          const receiver = s.instanceCall ? `new ${classRef}()` : classRef;
-          const key = s.instanceCall ? 'CallCrossClass' : 'CallCrossClassStatic';
-          const slots = (
-            key === 'CallCrossClassStatic'
-              ? { class: classRef, callee: s.calleeName, args: argsStr }
-              : { receiver, callee: s.calleeName, args: argsStr }
-          ) as Record<string, string>;
-          return printFromTemplate(ctx, key, slots);
-        }
-      }
-
-      const key = s.instanceCall ? 'CallInstance' : 'CallFunction';
-      const basePath = family === 'rust' ? rustInheritedBasePath(s.inheritedDepth) : '';
-      return printFromTemplate(ctx, key, { callee: s.calleeName, args: argsStr, basePath });
+      const printed = printCallInvocation(s, ctx, printExpr);
+      const suffix = printed.text.endsWith(';') || !['javascript', 'cpp', 'csharp', 'rust'].includes(ctx.family)
+        ? ''
+        : ';';
+      return {
+        text: `${ctx.indent}${printed.text}${suffix}`,
+        expressionSpans: offsetSpans(printed.spans, ctx.indent.length),
+      };
     },
 
     Print: (stmt, ctx) => {

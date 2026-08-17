@@ -5,7 +5,6 @@ class MainClass:
         return (a + b)
     # (x) Implement ProcessData
     def on_ondatareceived(self, payload):
-        self.ProcessData(payload, payload)
-        print("/* Call ProcessData.return_val */")
+        print(self.ProcessData(payload, payload))
     def on_start(self):
         self.on_ondatareceived(("Hello from Global: " + self.GlobalGreeting))

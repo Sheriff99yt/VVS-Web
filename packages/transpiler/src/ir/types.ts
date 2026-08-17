@@ -54,7 +54,8 @@ export type IrExprKind =
   | 'ConvertToNumber'
   | 'GetInputTemp'
   | 'EnumMember'
-  | 'Lambda';
+  | 'Lambda'
+  | 'CallExpr';
 
 export interface IrExprBase {
   kind: IrExprKind;
@@ -115,6 +116,19 @@ export interface IrLambda extends IrExprBase {
   capture: boolean;
 }
 
+/** Call node used as a value (return pin). Same slots as IrCallFunction. */
+export interface IrCallExpr extends IrExprBase {
+  kind: 'CallExpr';
+  calleeName: string;
+  args?: IrExpr[];
+  instanceCall: boolean;
+  targetClassName?: string;
+  crossClass?: boolean;
+  inheritedDepth?: number;
+  isSuper?: boolean;
+  parentClassName?: string;
+}
+
 export type IrExpr =
   | IrLiteral
   | IrInstanceRef
@@ -124,7 +138,8 @@ export type IrExpr =
   | IrConvertToNumber
   | IrGetInputTemp
   | IrEnumMember
-  | IrLambda;
+  | IrLambda
+  | IrCallExpr;
 
 // ── Structured statement IR ─────────────────────────────────────────────────
 

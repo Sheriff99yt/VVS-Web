@@ -1,4 +1,7 @@
 // ===== src/FirstGraph.go =====
+import "fmt"
+import "bufio"
+import "os"
 type FirstGraph struct {
 	var VisitorName string = ""
 func SayHello() void {

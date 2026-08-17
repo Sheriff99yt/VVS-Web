@@ -35,7 +35,6 @@ public class Machine {
         if (this.Ready) {
             this.on_pulse();
         } else {
-            // (x) Import json
             Console.WriteLine("Not ready");
         }
     }

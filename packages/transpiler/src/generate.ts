@@ -32,7 +32,7 @@ import type { GraphTab } from '@vvs/graph-types';
 import { graphToIr } from './lower/graphToIr';
 import { documentHasFunctionImplement } from './lower/buildMembers';
 import { emitIrModule, emitClassModule } from './emit';
-import { withRustHashMapImportAtFileTop } from './emit/members';
+import { withGoStdlibImportsAtFileTop, withRustHashMapImportAtFileTop } from './emit/members';
 import { CodeSink } from './codeSink';
 import type { IrModule } from './ir/types';
 import { resolveNodeKindId } from '@vvs/graph-types';
@@ -384,7 +384,7 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
 
   const sink = new CodeSink(filePath);
   const language = classIrs[0]!.targetLanguage;
-  const mergedIrs = withRustHashMapImportAtFileTop(classIrs);
+  const mergedIrs = withGoStdlibImportsAtFileTop(withRustHashMapImportAtFileTop(classIrs));
 
   const memberImportSlugs = new Set<string>();
   const waitNodeIds = new Set<string>();

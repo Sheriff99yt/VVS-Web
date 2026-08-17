@@ -9,8 +9,7 @@ class MainClass {
         // Concat Strings
     }
     on_ondatareceived(payload) {
-        this.ProcessData(payload, payload);
-        console.log("/* Call ProcessData.return_val */");
+        console.log(this.ProcessData(payload, payload));
     }
     on_start() {
         this.on_ondatareceived(("Hello from Global: " + this.GlobalGreeting));

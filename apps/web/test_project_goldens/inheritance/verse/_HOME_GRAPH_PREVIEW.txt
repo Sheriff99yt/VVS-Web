@@ -1,6 +1,5 @@
 // ===== src/InheritanceLab.verse =====
 <public>Parent := class:
-    # (x) Implement Parent
     Speak<public>() : void =
         Print("parent")
 <public>Child(Parent) := class:

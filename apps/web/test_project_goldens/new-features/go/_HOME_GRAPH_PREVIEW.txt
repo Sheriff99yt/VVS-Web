@@ -1,4 +1,5 @@
 // ===== src/NewFeaturesLab.go =====
+import "fmt"
 type MainClass struct {
 	var GlobalGreeting string = "World"
 func ProcessData(a, b) data_number {
@@ -6,8 +7,7 @@ func ProcessData(a, b) data_number {
 }
 	// (x) Implement ProcessData
 func (self *MainClass) on_ondatareceived(payload string) {
-	self.ProcessData(payload, payload)
-	fmt.Println("/* Call ProcessData.return_val */")
+	fmt.Println(self.ProcessData(payload, payload))
 }
 func (self *MainClass) on_start() {
 	self.on_ondatareceived(("Hello from Global: " + self.GlobalGreeting))

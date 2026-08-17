@@ -4,13 +4,23 @@ import { printFromTemplate } from './template';
 
 export type BlockCloseKey = 'IfBranchClose' | 'ForLoopClose' | 'WhileLoopClose' | 'TryClose';
 
+export function isBraceFamily(family: LanguageFamily): boolean {
+  return (
+    family === 'javascript' ||
+    family === 'cpp' ||
+    family === 'rust' ||
+    family === 'csharp' ||
+    family === 'go'
+  );
+}
+
 /** Column offset for condition expression spans inside `if (` / `while (` headers. */
 export function condSpanOffset(
   family: LanguageFamily,
   indent: string,
   keyword: 'if' | 'while'
 ): number {
-  if (family === 'python' || family === 'verse' || family === 'gdscript') {
+  if (family === 'python' || family === 'verse' || family === 'gdscript' || family === 'go') {
     return indent.length + `${keyword} `.length;
   }
   return indent.length + `${keyword} (`.length;
@@ -39,7 +49,7 @@ export function appendBraceFamilyClose(
   lines: { text: string }[],
   key: BlockCloseKey
 ): void {
-  if (ctx.family === 'javascript' || ctx.family === 'cpp' || ctx.family === 'rust' || ctx.family === 'csharp') {
+  if (isBraceFamily(ctx.family)) {
     lines.push({ text: blockCloseLine(ctx, key) });
   }
 }

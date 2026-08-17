@@ -5,8 +5,7 @@ public:
     float ProcessData(float a, float b);
     std::string ProcessData(std::string a, std::string b);
     void on_ondatareceived(std::string payload) {
-        ProcessData(payload, payload);
-        std::cout << "/* Call ProcessData.return_val */" << std::endl;
+        std::cout << ProcessData(payload, payload) << std::endl;
     }
     void on_start() {
         on_ondatareceived(("Hello from Global: " + GlobalGreeting));

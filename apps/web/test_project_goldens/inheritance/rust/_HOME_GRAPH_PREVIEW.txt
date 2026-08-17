@@ -8,7 +8,6 @@ impl Parent {
         Self {
         }
     }
-    // (x) Implement Parent
     pub fn Speak(&mut self) {
         println!("{}", "parent");
     }

@@ -157,4 +157,12 @@ describe('Switch native match lowering', () => {
     expect(gd).toContain('if ');
     expect(gd).not.toContain('match ');
   });
+
+  test('go emits native switch / case — not a match and not a profile stub', () => {
+    const code = transpileGraphCode(switchGraph('go'));
+    expect(code).toContain('switch ');
+    expect(code).toContain('case ');
+    expect(code).not.toContain('// switch');
+    expect(code).not.toContain('match ');
+  });
 });
