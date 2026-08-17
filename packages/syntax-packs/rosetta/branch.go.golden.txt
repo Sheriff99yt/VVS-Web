@@ -1,3 +1,5 @@
-	// if (self.Flag)
+	if self.Flag {
+		fmt.Println("yes")
+	}
 }
 }

@@ -172,10 +172,13 @@ export function printCallInvocation(
   printExpr: ExprPrinter
 ): PrintedExpr {
   const argsArray = (s.args ?? []).map((expr) => printExpr(expr, ctx));
-  const argsStr = argsArray.map((a) => a.text).join(', ');
+  const mergedArgs = mergeArgs(argsArray);
   const { family } = ctx;
 
-  const fromTemplate = (key: string, slots: Record<string, string>): PrintedExpr => {
+  const fromTemplate = (
+    key: string,
+    slots: Record<string, string | { text: string; spans: PrintedExpr['spans'] }>
+  ): PrintedExpr => {
     const printed = printFromTemplate(ctx, key, slots, { noIndent: true });
     const text = stripStmtSemi(printed.text);
     return {
@@ -190,7 +193,7 @@ export function printCallInvocation(
   if (s.isSuper) {
     return fromTemplate('CallSuper', {
       callee: s.calleeName,
-      args: argsStr,
+      args: mergedArgs,
       parent: s.parentClassName ?? '',
     });
   }
@@ -202,7 +205,7 @@ export function printCallInvocation(
       return fromTemplate('CallCrossClass', {
         receiver,
         callee: s.calleeName,
-        args: argsStr,
+        args: mergedArgs,
       });
     }
     if (family === 'cpp') {
@@ -210,13 +213,13 @@ export function printCallInvocation(
         return fromTemplate('CallCrossClass', {
           receiver: `${classRef}()`,
           callee: s.calleeName,
-          args: argsStr,
+          args: mergedArgs,
         });
       }
       return fromTemplate('CallCrossClassStatic', {
         class: classRef,
         callee: s.calleeName,
-        args: argsStr,
+        args: mergedArgs,
       });
     }
     if (family === 'javascript' || family === 'csharp') {
@@ -224,20 +227,20 @@ export function printCallInvocation(
         return fromTemplate('CallCrossClass', {
           receiver: `new ${classRef}()`,
           callee: s.calleeName,
-          args: argsStr,
+          args: mergedArgs,
         });
       }
       return fromTemplate('CallCrossClassStatic', {
         class: classRef,
         callee: s.calleeName,
-        args: argsStr,
+        args: mergedArgs,
       });
     }
     if (family === 'verse') {
       return fromTemplate('CallCrossClass', {
         receiver: classRef,
         callee: s.calleeName,
-        args: argsStr,
+        args: mergedArgs,
       });
     }
     if (family === 'gdscript') {
@@ -245,7 +248,7 @@ export function printCallInvocation(
       return fromTemplate('CallCrossClass', {
         receiver,
         callee: s.calleeName,
-        args: argsStr,
+        args: mergedArgs,
       });
     }
     if (family === 'rust') {
@@ -253,20 +256,20 @@ export function printCallInvocation(
         return fromTemplate('CallCrossClass', {
           receiver: `${classRef}::new()`,
           callee: s.calleeName,
-          args: argsStr,
+          args: mergedArgs,
         });
       }
       return fromTemplate('CallCrossClassStatic', {
         class: classRef,
         callee: s.calleeName,
-        args: argsStr,
+        args: mergedArgs,
       });
     }
   }
 
   const key = s.instanceCall ? 'CallInstance' : 'CallFunction';
   const basePath = family === 'rust' ? rustInheritedBasePath(s.inheritedDepth) : '';
-  return fromTemplate(key, { callee: s.calleeName, args: argsStr, basePath });
+  return fromTemplate(key, { callee: s.calleeName, args: mergedArgs, basePath });
 }
 
 export function printCallExpr(expr: IrExpr, ctx: PrintContext, printExpr: ExprPrinter): PrintedExpr {

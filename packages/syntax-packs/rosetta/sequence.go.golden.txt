@@ -1,3 +1,7 @@
+	{
 	// sequence
+		fmt.Println("first")
+		fmt.Println("second")
+	}
 }
 }

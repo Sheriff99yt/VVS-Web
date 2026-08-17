@@ -1,3 +1,5 @@
-	// for _vvs_i_for_loop
+	for _vvs_i_for_loop := 0; _vvs_i_for_loop <= 2; _vvs_i_for_loop++ {
+		fmt.Println(fmt.Sprintf("%v", _vvs_i_for_loop))
+	}
 }
 }

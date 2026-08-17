@@ -1,3 +1,5 @@
-	// while
+	for true {
+		fmt.Println("loop")
+	}
 }
 }
