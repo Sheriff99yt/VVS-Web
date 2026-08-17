@@ -17,7 +17,7 @@ class Machine:
         print("Shutdown")
     def Calculate(self, a, b):
         print("Calculating")
-        return
+        return (a + b)
     def on_pulse(self):
         print(("Power=" + str(self.Power)))
     def on_start(self):

@@ -16,5 +16,4 @@ float MainClass::ProcessData(float a, float b) {
 }
 std::string MainClass::ProcessData(std::string a, std::string b) {
     return (a + b);
-    // Concat Strings
 }

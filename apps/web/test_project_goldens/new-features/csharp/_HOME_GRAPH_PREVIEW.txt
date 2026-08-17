@@ -6,7 +6,6 @@ public class MainClass {
     }
     public string ProcessData(string a, string b) {
         return (a + b);
-        // Concat Strings
     }
     public void on_ondatareceived(string payload) {
         Console.WriteLine(this.ProcessData(payload, payload));

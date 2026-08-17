@@ -48,7 +48,7 @@ void Machine::Shutdown() {
 }
 float Machine::Calculate(float a, float b) {
     std::cout << "Calculating" << std::endl;
-    return;
+    return (a + b);
 }
 enum class SensorStatus {
     OK,

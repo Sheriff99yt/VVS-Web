@@ -22,7 +22,7 @@ func Shutdown() void {
 }
 func Calculate(a, b) data_number {
 	fmt.Println("Calculating")
-	return
+	return (a + b)
 }
 func (self *Machine) on_pulse() {
 	fmt.Println(("Power=" + fmt.Sprintf("%v", self.Power)))

@@ -16,7 +16,7 @@ class_name Machine
         print("Shutdown")
     func Calculate(a, b) -> void:
         print("Calculating")
-        return
+        return (a + b)
     func on_pulse() -> void:
         print(("Power=" + str(self.Power)))
     func on_start() -> void:

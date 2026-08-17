@@ -37,6 +37,7 @@ import {
   functionEntryNode,
   functionImplementNode,
   getUserInputNode,
+  mathAddNode,
   printStringNode,
   returnNode,
   stringConcatNode,
@@ -47,7 +48,7 @@ import {
 } from '@/lib/usabilityExampleTests/usabilityTestGraphBuild';
 
 /** Bump when fixture graph/semantics change so Test Project seeds refresh. */
-export const COVERAGE_LAB_FIXTURE_REVISION = 7;
+export const COVERAGE_LAB_FIXTURE_REVISION = 8;
 
 /** Primary class - Machine (entry / modifiers / abstract). */
 export const MACHINE_CLASS = createClassSymbol('Machine', {
@@ -407,12 +408,16 @@ const SHUTDOWN_EDGES: VVSEdge[] = [
 const CALCULATE_NODES: VVSNode[] = [
   functionEntryNode('lab-calculate-entry', { x: 40, y: 900 }, FN_CALCULATE),
   printStringNode('lab-calculate-print', { x: 280, y: 900 }, 'Calculating'),
+  mathAddNode('lab-calculate-add', { x: 400, y: 1020 }),
   returnNode('lab-calculate-return', { x: 520, y: 900 }),
 ];
 
 const CALCULATE_EDGES: VVSEdge[] = [
   execEdge('lab-c-0', 'lab-calculate-entry', 'lab-calculate-print'),
   execEdge('lab-c-1', 'lab-calculate-print', 'lab-calculate-return'),
+  dataEdge('lab-c-a', 'lab-calculate-entry', 'lab-calculate-add', 'p-a', 'a', 'data_number'),
+  dataEdge('lab-c-b', 'lab-calculate-entry', 'lab-calculate-add', 'p-b', 'b', 'data_number'),
+  dataEdge('lab-c-res', 'lab-calculate-add', 'lab-calculate-return', 'result', 'value', 'data_number'),
 ];
 
 // -- Sensor runtime flows --

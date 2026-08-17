@@ -21,7 +21,7 @@ public class Machine {
     }
     public float Calculate(float a, float b) {
         Console.WriteLine("Calculating");
-        return;
+        return (a + b);
     }
     public void on_pulse() {
         Console.WriteLine(("Power=" + this.Power.ToString()));

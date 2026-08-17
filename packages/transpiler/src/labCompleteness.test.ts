@@ -75,6 +75,27 @@ describe('lab completeness pass (no leftover fakes)', () => {
     expect(code).not.toContain('// if (');
   });
 
+  test('New Features: string ProcessData does not leak Concat leftover after valued return', () => {
+    const snapshot = createNewFeaturesUsabilityTestSnapshot();
+    for (const lang of ['cpp', 'csharp', 'javascript', 'verse'] as const) {
+      const code = emit(snapshot, lang);
+      expect(code).not.toMatch(/Concat Strings/);
+      expect(code).not.toMatch(/String Concat/);
+    }
+    const cpp = emit(snapshot, 'cpp');
+    expect(cpp.match(/return \(a \+ b\);/g)?.length).toBe(2);
+  });
+
+  test('Coverage: Calculate returns Math Add of parameters', () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const cpp = emit(snapshot, 'cpp');
+    expect(cpp).toContain('float Machine::Calculate(float a, float b)');
+    expect(cpp).toMatch(/float Machine::Calculate\(float a, float b\) \{[\s\S]*?return \(a \+ b\);/);
+    expect(cpp).not.toMatch(/float Machine::Calculate\(float a, float b\) \{[\s\S]*?return;\s*\n\}/);
+    const py = emit(snapshot, 'python');
+    expect(py).toMatch(/def Calculate\(self, a, b\):[\s\S]*?return \(a \+ b\)/);
+  });
+
   test('Inheritance / New Features Go include fmt when Print is used', () => {
     expect(emit(createInheritanceLabUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');
     expect(emit(createNewFeaturesUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');

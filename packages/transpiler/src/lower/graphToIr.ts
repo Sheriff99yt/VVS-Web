@@ -836,7 +836,7 @@ function lowerStatement(
   }
 
 
-  if (kindId === 'variable_get' || kindId.startsWith('math_') || isConvertKindId(kindId)) return null;
+  if (kindId === 'variable_get' || kindId.startsWith('math_') || kindId === 'string_concat' || isConvertKindId(kindId)) return null;
 
   if (kindId === 'flow_branch') {
     const condition = resolvePinValueExpr(node, 'condition', ctx, 0);

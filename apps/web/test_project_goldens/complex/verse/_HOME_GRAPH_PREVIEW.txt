@@ -16,7 +16,7 @@
         Print("Shutdown")
     Calculate<public>(a : float, b : float) : void =
         Print("Calculating")
-        return
+        return (a + b)
     on_pulse() : void =
         Print(("Power=" + ToString(Power)))
     on_start() : void =

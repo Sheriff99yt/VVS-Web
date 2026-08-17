@@ -19,7 +19,7 @@ class Machine {
     }
     Calculate(a, b) {
         console.log("Calculating");
-        return;
+        return (a + b);
     }
     on_pulse() {
         console.log(("Power=" + String(this.Power)));

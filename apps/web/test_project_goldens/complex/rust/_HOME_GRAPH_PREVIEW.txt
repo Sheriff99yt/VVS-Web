@@ -30,7 +30,7 @@ impl Machine {
     }
     pub fn Calculate(&mut self, a: f32, b: f32) {
         println!("{}", "Calculating");
-        return;
+        return (a + b);
     }
     pub fn on_pulse(&mut self) {
         println!("{}", ("Power=" + self.Power.to_string()));

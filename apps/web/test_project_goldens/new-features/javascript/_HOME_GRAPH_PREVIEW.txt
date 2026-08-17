@@ -6,7 +6,6 @@ class MainClass {
     }
     ProcessData(a, b) {
         return (a + b);
-        // Concat Strings
     }
     on_ondatareceived(payload) {
         console.log(this.ProcessData(payload, payload));
