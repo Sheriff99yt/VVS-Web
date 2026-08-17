@@ -140,6 +140,7 @@ describe('rust console environment', () => {
 describe('new curated environment packs', () => {
   test.each([
     ['env.csharp.console-app', 'csharp', 'console', 'Program.cs'],
+    ['env.go.console-app', 'go', 'console', 'main.go'],
     ['env.javascript.data-script', 'javascript', 'data', 'main.js'],
     ['env.javascript.http-service', 'javascript', 'api', 'main.js'],
   ] as const)('%s loads, validates, and expands', (id, target, category, entryPath) => {
@@ -164,3 +165,32 @@ describe('new curated environment packs', () => {
   });
 });
 
+describe('go console environment', () => {
+  test('loads go console manifest with host files and std I/O natives', () => {
+    const manifest = loadEnvironmentManifest('env.go.console-app');
+    expect(manifest).toBeDefined();
+    expect(manifest!.displayName).toBe('Go Console App');
+    expect(manifest!.defaultTarget).toBe('go');
+    expect(manifest!.category).toBe('console');
+    expect(manifest!.hostFiles.some((f) => f.path === 'main.go')).toBe(true);
+    expect(manifest!.hostFiles.some((f) => f.path === 'go.mod')).toBe(true);
+    expect(isEnvironmentManifest(manifest)).toBe(true);
+
+    const print = manifest!.apiSurface.methods.find((m) => m.id === 'native.print');
+    expect(print?.targets.go?.callExpr).toContain('fmt.Println');
+    const read = manifest!.apiSurface.methods.find((m) => m.id === 'native.read_line');
+    expect(read?.targets.go?.callExpr).toContain('bufio');
+    expect(read?.targets.go?.callExpr).toContain('Stdin');
+  });
+
+  test('createProjectFromEnvironment go console', () => {
+    const snapshot = createProjectFromEnvironment('env.go.console-app');
+    expect(snapshot).not.toBeNull();
+    expect(snapshot!.environmentId).toBe('env.go.console-app');
+    expect(snapshot!.targetLanguage).toBe('go');
+    expect(snapshot!.projectDetails.moduleName).toBe('App');
+    expect(snapshot!.integration?.hostFiles['main.go']?.strategy).toBe('emit');
+    expect(snapshot!.integration?.hostFiles['main.go']?.appliedTemplate).toContain('package main');
+    expect(snapshot!.integration?.hostFiles['go.mod']?.appliedTemplate).toContain('module app');
+  });
+});

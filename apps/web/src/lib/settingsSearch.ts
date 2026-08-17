@@ -173,6 +173,9 @@ export const SETTINGS_SEARCH_BLOCKS: SettingsSearchBlock[] = [
       'AsyncAPI',
       'Linked template',
       'Host files',
+      'Skip',
+      'Emit',
+      'Custom path',
     ],
   },
   {

@@ -18,8 +18,8 @@ import { persistEditorSnapshot, flushBrowserSnapshotSync } from '@/lib/projectPe
 import { writeGeneratedFilesToFolder, saveProjectToFolder } from '@/lib/projectFolder';
 import { emitProjectLikeCodePanelOffThread } from '@/lib/emitProjectCode';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import { canOpenAgentPanel } from '@/lib/mobileViewport';
+import { useCoarsePointer, useIsMobile } from '@/hooks/useIsMobile';
+import { canOpenAgentPanel, topNavIconButtonClass, topNavViewTabButtonClass } from '@/lib/mobileViewport';
 import { promoteBrowserProjectToDisk, SAVE_ON_DISK_PROMPT_EVENT } from '@/lib/promoteProjectToDisk';
 import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDialog';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
@@ -37,9 +37,6 @@ import { playAudioCue } from '@/lib/audioFeedback';
 import { PRODUCT_NAME } from '@/lib/productName';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
-
-const TOPNAV_ICON_BTN =
-  'p-1.5 rounded text-zinc-400 border border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900 transition-colors';
 
 function MenuTip({
   tip,
@@ -71,6 +68,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const { navigate } = useEditorNavigation();
   const [showAgentPanel, setShowAgentPanel] = useState(false);
   const isMobile = useIsMobile();
+  const coarsePointer = useCoarsePointer();
+  const enlargeIconHit = coarsePointer || isMobile;
+  const iconBtnClass = topNavIconButtonClass(enlargeIconHit);
+  const viewTabBtnClass = topNavViewTabButtonClass(enlargeIconHit);
   const agentPanelAllowed = canOpenAgentPanel(isMobile);
   const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | 'help' | null>(null);
   const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
@@ -967,7 +968,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <Tooltip content="Canvas" placement="bottom" className="flex">
               <button
                 onClick={() => navigate({ editorView: 'canvas' })}
-                className={`px-2.5 py-1.5 transition-colors ${activeTab === 'canvas' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+                className={`${viewTabBtnClass} transition-colors ${activeTab === 'canvas' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
               >
                 <PenLine size={14} />
               </button>
@@ -975,7 +976,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <Tooltip content="References" placement="bottom" className="flex">
               <button
                 onClick={() => navigate({ editorView: 'references' })}
-                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'references' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'references' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
               >
                 <GitBranch size={14} />
               </button>
@@ -983,7 +984,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <Tooltip content="Library" placement="bottom" className="flex">
               <button
                 onClick={() => navigate({ editorView: 'library' })}
-                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'library' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'library' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
               >
                 <Package size={14} />
               </button>
@@ -991,7 +992,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <Tooltip content="Development roadmap" placement="bottom" className="flex">
               <button
                 onClick={() => navigate({ editorView: 'roadmap' })}
-                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'roadmap' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'roadmap' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
               >
                 <Milestone size={14} />
               </button>
@@ -999,7 +1000,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <Tooltip content="Syntax packs" placement="bottom" className="flex">
               <button
                 onClick={() => navigate({ editorView: 'packs' })}
-                className={`px-2.5 py-1.5 transition-colors border-l border-zinc-800 ${activeTab === 'packs' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
+                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'packs' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
               >
                 <Layers size={14} />
               </button>
@@ -1034,7 +1035,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
           {agentPanelAllowed ? (
             <Tooltip content="Agent" placement="bottom">
-              <button type="button" onClick={() => setShowAgentPanel(true)} className={TOPNAV_ICON_BTN}>
+              <button type="button" onClick={() => setShowAgentPanel(true)} className={iconBtnClass}>
                 <Bot size={14} />
               </button>
             </Tooltip>
@@ -1043,7 +1044,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             <button
               type="button"
               onClick={() => dispatchOpenSettings('project')}
-              className={TOPNAV_ICON_BTN}
+              className={iconBtnClass}
             >
               <Settings size={14} />
             </button>

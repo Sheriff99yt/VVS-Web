@@ -1492,7 +1492,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Host file integration policies',
         description:
-          'Skip vs emit + custom emit path proven (`hostEmit.generate.test.ts`, `adoptExisting` skip). `appliedTemplate` persists on `HostFileIntegrationRule`. Full in-editor host editing/merge still planned.',
+          'Skip vs emit + custom emit path proven (`hostEmit.generate.test.ts`, `adoptExisting` skip). `appliedTemplate` persists on `HostFileIntegrationRule`. Skip|emit toggles + custom path now in Graph settings host-file rows. Full in-editor host editing/merge still planned.',
         status: 'partial',
       },
     ],
@@ -1618,7 +1618,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Touch & mobile UX',
         description:
-          'Agent panel / Bot / StatusBar chip hidden at max-width 768px (`mobileViewport`, `useIsMobile`). Coarse-pointer pin snap 40px vs mouse 20px (`mobileViewport`, `useCoarsePointer`, React Flow `connectionRadius`). Desktop unchanged. Gestures and radial menus still planned.',
+          'Agent panel / Bot / StatusBar chip hidden at max-width 768px (`mobileViewport`, `useIsMobile`). Coarse-pointer pin snap 40px vs mouse 20px (`mobileViewport`, `useCoarsePointer`, React Flow `connectionRadius`). Larger TopNav icon hit targets on coarse/mobile (`min-w-11 min-h-11`). Desktop unchanged. Gestures and radial menus still planned.',
         status: 'partial',
       },
       {
@@ -1634,7 +1634,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Richer project templates',
         description:
-          'Added `env.csharp.console-app`, `env.javascript.data-script`, `env.javascript.http-service` plus rust console. Community catalog still not a product.',
+          'Added `env.csharp.console-app`, `env.javascript.data-script`, `env.javascript.http-service`, rust console, and Go console pack (`env.go.console-app`). Community catalog still not a product.',
         status: 'partial',
       },
       {

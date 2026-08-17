@@ -30,6 +30,7 @@ describe('environment categories', () => {
     expect(ids).toContain('env.gdscript.godot-game');
     expect(ids).toContain('env.rust.console-app');
     expect(ids).toContain('env.csharp.console-app');
+    expect(ids).toContain('env.go.console-app');
     expect(ids).toContain('env.javascript.data-script');
     expect(ids).toContain('env.javascript.http-service');
   });

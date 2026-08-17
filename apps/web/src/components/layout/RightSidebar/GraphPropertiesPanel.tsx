@@ -22,6 +22,7 @@ import { useEnvironmentCatalog } from '@/hooks/useEnvironmentCatalog';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { readTextFile, writeTextFile } from '@/lib/projectFolder/fsAccess';
 import { formatEmitPreview, resolveHostEmitPath, syncIntegrationEnvironment } from '@vvs/graph-types';
+import { SegmentedControl } from '@/components/settings/SettingsControls';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { buildExtendsClassPickerOptions } from '@/lib/classScope';
 import { ExtendsListEditor } from '@/components/layout/ExtendsListEditor';
@@ -248,11 +249,66 @@ export function GraphPropertiesPanel({
                   ) : null}
                 </div>
                 {envSummary && envSummary.hostFilePaths.length > 0 ? (
-                  <div className="text-[10px] text-zinc-600">
-                    Host files:{' '}
-                    <span className="font-mono text-zinc-500">
-                      {envSummary.hostFilePaths.join(', ')}
-                    </span>
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-zinc-600">Host files</p>
+                    {envSummary.hostFilePaths.map((templatePath) => {
+                      const rule = integration.hostFiles[templatePath];
+                      const strategy = rule?.strategy === 'skip' ? 'skip' : 'emit';
+                      const customPath = rule?.path ?? '';
+                      return (
+                        <div
+                          key={templatePath}
+                          className="rounded border border-zinc-800 bg-zinc-900/40 px-2 py-1.5 space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-[10px] text-zinc-400 truncate" title={templatePath}>
+                              {templatePath}
+                            </span>
+                            <SegmentedControl
+                              value={strategy}
+                              options={[
+                                { value: 'skip', label: 'Skip' },
+                                { value: 'emit', label: 'Emit' },
+                              ]}
+                              onChange={(next) => {
+                                setIntegration((prev) => ({
+                                  ...prev,
+                                  hostFiles: {
+                                    ...prev.hostFiles,
+                                    [templatePath]: {
+                                      ...(prev.hostFiles[templatePath] ?? { strategy: 'emit' }),
+                                      strategy: next,
+                                    },
+                                  },
+                                }));
+                              }}
+                            />
+                          </div>
+                          <label className="block space-y-0.5">
+                            <span className="text-[10px] text-zinc-600">Custom path</span>
+                            <input
+                              type="text"
+                              value={customPath}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setIntegration((prev) => ({
+                                  ...prev,
+                                  hostFiles: {
+                                    ...prev.hostFiles,
+                                    [templatePath]: {
+                                      ...(prev.hostFiles[templatePath] ?? { strategy: 'emit' }),
+                                      path: value.trim() ? value : undefined,
+                                    },
+                                  },
+                                }));
+                              }}
+                              placeholder={templatePath}
+                              className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[10px] text-white focus:outline-none focus:border-zinc-500 font-mono"
+                            />
+                          </label>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : null}
               </>

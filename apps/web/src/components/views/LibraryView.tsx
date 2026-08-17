@@ -425,6 +425,18 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                       >
                         <h3 className="font-bold text-zinc-100">{asset.title}</h3>
                         <p className="text-xs text-zinc-400 leading-relaxed">{asset.description}</p>
+                        {asset.tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {asset.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
                         <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
                           <span className="text-[10px] text-emerald-400 font-mono">Active</span>
                           <button

@@ -26,6 +26,8 @@ describe('settingsSearch', () => {
     expect(settingsBlockMatches('output directory', 'export-paths')).toBe(true);
     expect(settingsBlockMatches('module name', 'graph-details')).toBe(true);
     expect(settingsBlockMatches('openapi', 'environment')).toBe(true);
+    expect(settingsBlockMatches('skip', 'environment')).toBe(true);
+    expect(settingsBlockMatches('custom path', 'environment')).toBe(true);
   });
 
   test('finds shortcuts by action label', () => {
