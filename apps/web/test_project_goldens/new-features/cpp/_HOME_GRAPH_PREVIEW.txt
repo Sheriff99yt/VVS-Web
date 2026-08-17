@@ -14,8 +14,14 @@ public:
         std::cout << "/* Call ProcessData.return_val */" << std::endl;
     }
 float Global::ProcessData(float a, float b) {
+    ProcessData(nullptr, nullptr);
+}
+std::string Global::ProcessData(std::string a, std::string b) {
     // empty
 }
 float Global::ProcessData(float a, float b) {
+    ProcessData(nullptr, nullptr);
+}
+std::string Global::ProcessData(std::string a, std::string b) {
     // empty
 }

@@ -5,11 +5,11 @@
     var GlobalGreeting<public> : string = "World"
     # (x) Declare ProcessData
     ProcessData<public>(a : float, b : float) : void =
-        ProcessData((a + b))
+        ProcessData("", "")
     ProcessData<public>(a : string, b : string) : void =
         # empty
     ProcessData<public>(a : float, b : float) : void =
-        ProcessData((a + b))
+        ProcessData("", "")
     ProcessData<public>(a : string, b : string) : void =
         # empty
     on_ondatareceived(payload : string) : void =

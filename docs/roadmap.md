@@ -16,7 +16,6 @@ In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mir
 | Focus | IDs | Status |
 |-------|-----|--------|
 | Verse GetInput | CL-014 | **Open** — honest `(x)` + prompt; no invented player API |
-| Switch `match` | CL-017 | Optional — if-cascade is the shipped shape |
 | Library remaining (auth / upload) | U90 | Frozen — client-first; no accounts as product |
 
 ### Long-term
@@ -25,10 +24,22 @@ In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mir
 |-------|-----|--------|
 | Code → visual (reverse of Generate) | U93 | Research — must keep canvas source of truth |
 
-### Just shipped (August 2026 emit / OOP wave + earlier catalog lock)
+### Just shipped (August 2026 emit / OOP wave + later fidelity)
 
 | Focus | IDs |
 |-------|-----|
+| **Extends multi-base emit** (python `class Child(Parent, Mixin):` / C++ `: public Parent, public Mixin`; js/gd/verse/cs still first parent) | Aug 2026 |
+| **Yield statement** (`yield_stmt` python + gdscript; hidden elsewhere) | Aug 2026 |
+| **Switch match** (same Switch node; Python `match` / Rust `match`; C#/JS/C++ keep `switch`) | CL-017 |
+| **TypeSpec → manifest** CLI (`--typespec` / `--tsp` → apiSurface; not in Pages bundle) | Aug 2026 |
+| **Multi-overload codegen** (C++ out-of-line loops; call-site selected overload args; Python extra overloads stay `(x)`) | Aug 2026 |
+| **Language profiles as JSON packs** | Aug 2026 |
+| **Off-thread transpile worker** | Aug 2026 |
+| **Rust + Go console packs** (`env.rust.console-app`, `env.go.console-app`) + optional `devcontainer` host file | Aug 2026 |
+| **Library client token search** | Aug 2026 |
+| **Mobile agent-hide + coarse pin snap + hit targets** (gestures still planned) | Aug 2026 |
+| **Host skip/emit UI** in Graph settings | Aug 2026 |
+| **Per-tab folder graph files** (`graph-doc-split`) | Aug 2026 |
 | **Component = Class** (U103 locked — no Component node) | Aug 2026 |
 | **Function constructor/destructor role** (py `__init__`, js `constructor()`, cpp ctor/dtor, cs ctor no finalizer, gd `_init`; rust/go/verse dim) | Aug 2026 |
 | **Leftover-construct roles lock** (no `constructor_define` / `property_define` / `implements_define` / `flow_match`) | Aug 2026 |
@@ -59,9 +70,12 @@ CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ─────────────────────
 1  Web editor + 8 packs        6  Leftover fidelity                4  Session collab (P2P)
 2  Persistence + in-page agent    CL-014 honest (x)                  5  UE6 Verse plugin
-   U77–U83 · U89–U92 shipped      Implements list (locked)           3  Library repo + web UI
-   emit/OOP + ctor role shipped   U93 code→visual (long-term)
-   U103 locked (Component=Class)  U90 Library auth/upload frozen
+   U77–U83 · U89–U92 shipped      U93 code→visual (long-term)        3  Library repo + web UI
+   emit/OOP + ctor role shipped   U90 Library auth/upload frozen
+   U103 locked (Component=Class)
+   CL-017 Switch match shipped
+   Yield + multi-base emit
+   TypeSpec CLI + overload codegen
    U90 Library API done
 ```
 
@@ -79,9 +93,8 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | # | Item | Notes |
 |---|------|--------|
 | **CL-014** | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API — do not invent one. |
-| **CL-017** | Switch `match` | Optional native match. If-cascade is the shipped shape. |
 
-Shipped this wave (moved to Recently completed): CL-006, CL-008, CL-009, CL-010, CL-015, CL-016, CL-018, U101, U105, U106, Call Super.
+Shipped this wave (moved to Recently completed): CL-006, CL-008, CL-009, CL-010, CL-015, CL-016, CL-017, CL-018, U101, U105, U106, Call Super, Yield, Extends multi-base emit, TypeSpec CLI, overload codegen.
 
 ### Editor & AI
 
@@ -128,8 +141,8 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
 | **U105** | Overwriting (override) | **Done** — option on Declare/Define; emit + dim per language |
-| **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010). Super / inherited members still first parent (`extendsType`). |
-| **Extends list** | Multiple inheritance visual | **Partial** — list UI shipped; extras on `extendsTypes`. Generate prints every Extends row for python/cpp; js/gd/verse/cs still first parent (C# extras are Implements, not built). go/rust list hidden. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
+| **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010). Generate prints all Extends rows for python/cpp; js/gd/verse/cs still first parent. Super still first parent. |
+| **Extends list** | Multiple inheritance visual | **Done** — list UI + generate. Python `class Child(Parent, Mixin):`. C++ `class Child : public Parent, public Mixin`. js/gd/verse/cs still first parent (extras stored; C# extras are Implements, not built). go/rust list hidden. Super still first parent. No Inherit node. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
 | **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
 | **Lambda** | Expression node | **Done** — `lambda_define` (python / javascript / csharp / rust / gdscript). Capture option. |
 | **Try** | Flow node | **Done** — `flow_try` (python / javascript / cpp / csharp / gdscript). Empty finally omitted. Hidden in Go/Rust. |
@@ -158,6 +171,10 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
+| **U65 goldens + roadmap sync** | Home-preview goldens for Coverage Lab Switch `match` (python/rust) and New Features Lab overload emit; public/in-app roadmap Open vs Done aligned to HEAD `1fcf4a3` era |
+| **Multi-base / Yield / Switch match / TypeSpec** | Extends list generate for python/cpp; `yield_stmt` py/gd; Switch → Python/Rust `match`; TypeSpec CLI → apiSurface |
+| **Overload codegen + profiles + worker** | C++ out-of-line overload loop; call-site selected args; language profile JSON packs; off-thread transpile worker |
+| **Console packs + host/mobile chrome** | rust/go console + optional `devcontainer`; host skip/emit UI; Library token search; mobile agent-hide + pin snap + hit targets; folder `graph-doc-split` |
 | **CL-016 Verse class defaults** | Class-typed field default is `Type{}` (Coverage Lab `Host = Machine{}`), not logic `false` |
 | **CL-006 C# async Task** | Void+async methods emit `async Task` / `async Task<T>`, not `async void` |
 | **CL-008 / CL-009 Rust static/const + HashMap** | Module `pub static`; associated `pub const` in `impl`; file-top `use std::collections::HashMap;` |
@@ -181,7 +198,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. CL-017 Switch match shipped. |
+| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match, Yield, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

@@ -100,16 +100,19 @@ impl Sensor {
         println!("{}", "Tick");
     }
     pub fn on_start(&mut self) {
-        let _vvs_sel = self.Status;
-        if _vvs_sel == SensorStatus::OK {
-            self.Sample();
-            self.Report();
-        } else if _vvs_sel == SensorStatus::WARN {
-            println!("{}", "Warn");
-            self.Report();
-        } else if _vvs_sel == SensorStatus::FAIL {
-            println!("{}", "Fail");
-            self.Report();
+        match self.Status {
+            SensorStatus::OK => {
+                self.Sample();
+                self.Report();
+            }
+            SensorStatus::WARN => {
+                println!("{}", "Warn");
+                self.Report();
+            }
+            SensorStatus::FAIL => {
+                println!("{}", "Fail");
+                self.Report();
+            }
         }
     }
 }

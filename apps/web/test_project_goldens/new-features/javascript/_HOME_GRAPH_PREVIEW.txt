@@ -7,12 +7,12 @@ class MainClass {
     GlobalGreeting = "World";
     // (x) Declare ProcessData
     ProcessData(a, b) {
-        this.ProcessData((a + b));
+        this.ProcessData(null, null);
     ProcessData(a, b) {
         // empty
     }
     ProcessData(a, b) {
-        this.ProcessData((a + b));
+        this.ProcessData(null, null);
     ProcessData(a, b) {
         // empty
     }

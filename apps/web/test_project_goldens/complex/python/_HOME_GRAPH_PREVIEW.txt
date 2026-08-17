@@ -58,13 +58,13 @@ class Sensor(Machine):
     def on_tick(self):
         print("Tick")
     def on_start(self):
-        _vvs_sel = self.Status
-        if _vvs_sel == SensorStatus.OK:
-            self.Sample()
-            self.Report()
-        elif _vvs_sel == SensorStatus.WARN:
-            print("Warn")
-            self.Report()
-        elif _vvs_sel == SensorStatus.FAIL:
-            print("Fail")
-            self.Report()
+        match self.Status:
+            case SensorStatus.OK:
+                self.Sample()
+                self.Report()
+            case SensorStatus.WARN:
+                print("Warn")
+                self.Report()
+            case SensorStatus.FAIL:
+                print("Fail")
+                self.Report()

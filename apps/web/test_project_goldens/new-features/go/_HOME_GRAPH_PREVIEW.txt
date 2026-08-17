@@ -7,14 +7,12 @@ type MainClass struct {
 	var GlobalGreeting string = "World"
 	// (x) Declare ProcessData
 func ProcessData(a, b) data_number {
-	self.ProcessData((a + b))
-func ProcessData(a, b) data_string {
-	// empty
+	self.ProcessData(nil, nil)
+	// (x) Implement ProcessData
 }
 func ProcessData(a, b) data_number {
-	self.ProcessData((a + b))
-func ProcessData(a, b) data_string {
-	// empty
+	self.ProcessData(nil, nil)
+	// (x) Implement ProcessData
 }
 func (self *Global) on_ondatareceived(payload string) {
 	self.ProcessData(payload, payload)

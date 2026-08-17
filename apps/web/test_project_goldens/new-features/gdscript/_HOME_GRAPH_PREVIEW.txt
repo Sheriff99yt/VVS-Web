@@ -5,13 +5,11 @@ class_name MainClass
     var GlobalGreeting = "World"
     # (x) Declare ProcessData
     func ProcessData(a, b) -> void:
-        self.ProcessData((a + b))
+        self.ProcessData(null, null)
+    # (x) Implement ProcessData
     func ProcessData(a, b) -> void:
-        pass
-    func ProcessData(a, b) -> void:
-        self.ProcessData((a + b))
-    func ProcessData(a, b) -> void:
-        pass
+        self.ProcessData(null, null)
+    # (x) Implement ProcessData
     func on_ondatareceived(payload) -> void:
         self.ProcessData(payload, payload)
         print("/* Call ProcessData.return_val */")

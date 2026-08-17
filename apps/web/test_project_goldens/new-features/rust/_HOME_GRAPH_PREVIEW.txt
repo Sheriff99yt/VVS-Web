@@ -16,14 +16,12 @@ impl MainClass {
     pub GlobalGreeting: String,
     // (x) Declare ProcessData
     pub fn ProcessData(&mut self, a: f32, b: f32) {
-        self.ProcessData((a + b));
-    pub fn ProcessData(&mut self, a: String, b: String) {
-        // empty
+        self.ProcessData(None, None);
+    // (x) Implement ProcessData
     }
     pub fn ProcessData(&mut self, a: f32, b: f32) {
-        self.ProcessData((a + b));
-    pub fn ProcessData(&mut self, a: String, b: String) {
-        // empty
+        self.ProcessData(None, None);
+    // (x) Implement ProcessData
     }
     pub fn on_ondatareceived(&mut self, payload: String) {
         self.ProcessData(payload, payload);

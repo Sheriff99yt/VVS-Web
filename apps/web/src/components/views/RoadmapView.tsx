@@ -160,8 +160,8 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        Function constructor/destructor role, leftover-construct locks, and the August emit/OOP wave (U89–U92) just shipped.
-        Open leftover fidelity is Verse GetInput (honest (x)) and optional Switch match; U93 is long-term and Library auth/upload stays frozen.
+        August emit/OOP plus Extends multi-base (py/cpp), Yield, Switch match, TypeSpec CLI, overload codegen, and host skip/emit UI just shipped.
+        Open leftover fidelity is Verse GetInput (honest (x)); U93 is long-term and Library auth/upload stays frozen.
       </p>
     </div>
   );
@@ -191,7 +191,8 @@ function DirectionCallout() {
         </li>
         <li>
           <span className="text-zinc-400">Extends is a list</span> — locked visual on Declare Class;
-          extra bases are more rows (Python/C++ only). Multi-base emit not started.
+          extra bases are more rows (Python/C++ only). Generate prints all Extends rows for
+          python/cpp; js/gd/verse/cs still first parent.
         </li>
       </ul>
     </div>

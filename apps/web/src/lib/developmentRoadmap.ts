@@ -1139,6 +1139,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'go-console-env',
+        title: 'Go console environment pack',
+        description:
+          '`env.go.console-app` with `main.go` + `go.mod` + fmt.Println / bufio stdin natives.',
+        status: 'done',
+      },
+      {
         id: 'env-devcontainer',
         title: 'Dev Container linkage',
         description:
@@ -1452,18 +1459,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Deferred -- COA_SHIPPED false. Prerequisites: multi-target export, documented compile policy. Single-target portability warnings + U66/U67 available today.',
         status: 'planned',
-      },
-    ],
-  },
-  {
-    id: 'transpiler',
-    title: 'Transpiler & languages',
-    items: [
-      {
-        id: 'overrides',
-        title: 'Function overrides (OOP)',
-        description: 'Shipped as U105 — override is an option on Function Declare/Define; emit + dim per language.',
-        status: 'done',
       },
     ],
   },
