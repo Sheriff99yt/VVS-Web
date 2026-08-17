@@ -1,0 +1,25 @@
+{
+  "id": "verse",
+  "displayName": "Verse",
+  "capabilities": [],
+  "native": [
+    "function.module",
+    "class.inheritance",
+    "variable.module",
+    "type.data_object",
+    "env.native"
+  ],
+  "emulated": [
+    "function.static",
+    "function.overload",
+    "variable.static",
+    "variable.readonly",
+    "type.data_array",
+    "type.data_any"
+  ],
+  "unsupported": [
+    "function.virtual",
+    "function.async",
+    "macro.inline"
+  ]
+}

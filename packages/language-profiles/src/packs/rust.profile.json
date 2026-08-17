@@ -1,0 +1,27 @@
+{
+  "id": "rust",
+  "displayName": "Rust",
+  "capabilities": [
+    "edition2021"
+  ],
+  "native": [
+    "function.static",
+    "function.module",
+    "class.inheritance",
+    "variable.module",
+    "variable.static",
+    "variable.readonly",
+    "type.data_object",
+    "type.data_array",
+    "env.native"
+  ],
+  "emulated": [
+    "function.async",
+    "type.data_any"
+  ],
+  "unsupported": [
+    "function.overload",
+    "function.virtual",
+    "macro.inline"
+  ]
+}

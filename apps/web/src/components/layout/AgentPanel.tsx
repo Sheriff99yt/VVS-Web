@@ -23,6 +23,8 @@ import {
 } from '@/lib/agent/agentSettings';
 import { getAgentSession, subscribeAgentSession } from '@/lib/agent/agentStatusStore';
 import { cancelAgentRun, runAgentPrompt } from '@/hooks/useAgentHost';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { canOpenAgentPanel } from '@/lib/mobileViewport';
 
 function useAgentSession() {
   return useSyncExternalStore(subscribeAgentSession, getAgentSession, getAgentSession);
@@ -51,8 +53,9 @@ export function AgentPanel({
   const windsurfMcpConfig = useMemo(() => buildWindsurfMcpConfig(mcpUrl), [mcpUrl]);
   const claudeMcpConfig = useMemo(() => buildClaudeDesktopMcpConfig(mcpUrl), [mcpUrl]);
   const mcpCliHint = useMemo(() => buildLocalMcpCliHint(), []);
+  const isNarrowViewport = useIsMobile();
 
-  if (!open) return null;
+  if (!open || !canOpenAgentPanel(isNarrowViewport)) return null;
 
   const patchLlm = (patch: Partial<AgentLlmSettings>) => {
     setLlm(writeAgentLlmSettings(patch));

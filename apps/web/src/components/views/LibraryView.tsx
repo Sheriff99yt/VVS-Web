@@ -3,18 +3,13 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Globe,
   Search,
-  Download,
-  Filter,
   Package,
-  Check,
   Layers,
   GitBranch,
   Plus,
   Trash2,
   ExternalLink,
-  Code2,
 } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
@@ -34,6 +29,11 @@ import { editorHrefForProject, persistBrowseTemplateProject } from '@/lib/startE
 import type { EnvironmentCategory } from '@vvs/environment-templates';
 import { useGitCatalog } from '@/hooks/useGitCatalog';
 import { GitPackImportModal } from './GitPackImportModal';
+import {
+  filterEnvironmentsBySearch,
+  filterGitReposBySearch,
+  filterLibraryAssetsBySearch,
+} from '@/lib/librarySearch';
 
 type LibrarySection = 'templates' | 'git_catalogs' | 'installed';
 
@@ -82,6 +82,16 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
     [environments]
   );
 
+  const filteredEnvironments = useMemo(
+    () => filterEnvironmentsBySearch(environments, searchQuery),
+    [environments, searchQuery]
+  );
+
+  const filteredGitRepos = useMemo(
+    () => filterGitReposBySearch(gitRepos, searchQuery),
+    [gitRepos, searchQuery]
+  );
+
   const communityCatalog = COMMUNITY_LIBRARY_CATALOG;
 
   const installedIds = useMemo(
@@ -99,6 +109,15 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
     .filter((row): row is { entry: (typeof installedLibrary)[0]; asset: LibraryAsset } =>
       Boolean(row.asset)
     );
+
+  const filteredInstalledAssets = useMemo(
+    () =>
+      filterLibraryAssetsBySearch(
+        installedAssets.map((row) => row.asset),
+        searchQuery
+      ).map((asset) => installedAssets.find((row) => row.asset.id === asset.id)!),
+    [installedAssets, searchQuery]
+  );
 
   const selectedAsset = selectedAssetId
     ? getLibraryAsset(selectedAssetId, environmentAssets) ??
@@ -279,6 +298,21 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                 </div>
               </div>
 
+              <label className="relative shrink-0 w-full md:w-64">
+                <Search
+                  size={14}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+                />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search name, category, language…"
+                  aria-label="Search library catalog"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded pl-8 pr-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50"
+                />
+              </label>
+
               {activeSection === 'templates' && (
                 <button
                   type="button"
@@ -307,7 +341,7 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                   <p className="text-sm text-zinc-600">Loading templates…</p>
                 ) : (
                   <EnvironmentTemplatesPanel
-                    environments={environments}
+                    environments={filteredEnvironments}
                     activeCategory={activeEnvCategory}
                     onCategoryChange={setActiveEnvCategory}
                     onSelect={(id) => {
@@ -315,6 +349,11 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                       setSelectedEnvironmentId(id);
                     }}
                     selectedId={selectedEnvironmentId}
+                    emptyLabel={
+                      searchQuery.trim()
+                        ? `No templates match “${searchQuery.trim()}”.`
+                        : undefined
+                    }
                   />
                 )}
               </>
@@ -323,7 +362,14 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
             {activeSection === 'git_catalogs' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {gitRepos.map((repo) => (
+                  {filteredGitRepos.length === 0 ? (
+                    <p className="text-sm text-zinc-600 col-span-full">
+                      {searchQuery.trim()
+                        ? `No git catalogs match “${searchQuery.trim()}”.`
+                        : 'No git catalogs yet.'}
+                    </p>
+                  ) : null}
+                  {filteredGitRepos.map((repo) => (
                     <div
                       key={repo.id}
                       className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex flex-col justify-between hover:border-zinc-700 transition-colors"
@@ -370,9 +416,9 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
 
             {activeSection === 'installed' && (
               <>
-                {installedAssets.length > 0 ? (
+                {filteredInstalledAssets.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {installedAssets.map(({ asset }) => (
+                    {filteredInstalledAssets.map(({ asset }) => (
                       <div
                         key={asset.id}
                         className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3"
@@ -395,9 +441,13 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                 ) : (
                   <div className="py-24 flex flex-col items-center justify-center text-center text-zinc-500 border border-dashed border-zinc-800 rounded-lg bg-zinc-900/30">
                     <Package size={32} className="mb-4 text-zinc-600" />
-                    <h3 className="text-zinc-300 font-semibold mb-1">Nothing installed yet</h3>
+                    <h3 className="text-zinc-300 font-semibold mb-1">
+                      {searchQuery.trim() ? 'No installed items match' : 'Nothing installed yet'}
+                    </h3>
                     <p className="text-sm max-w-sm mb-4">
-                      Pick a project template or import a custom Git catalog pack.
+                      {searchQuery.trim()
+                        ? `Nothing installed matches “${searchQuery.trim()}”.`
+                        : 'Pick a project template or import a custom Git catalog pack.'}
                     </p>
                   </div>
                 )}

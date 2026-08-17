@@ -29,9 +29,9 @@ function execEdgesFrom(snapshot: ReturnType<typeof createEmptyProjectSnapshot>, 
 }
 
 describe('in-page agent tool runtime', () => {
-  test('list_available_nodes hides leftover kinds', () => {
+  test('list_available_nodes hides leftover kinds', async () => {
     const snapshot = createEmptyProjectSnapshot();
-    const result = callTool('list_available_nodes', {}, { snapshot, allowWrites: false });
+    const result = await callTool('list_available_nodes', {}, { snapshot, allowWrites: false });
     expect(result.ok).toBe(true);
     const nodes = (result.data as { nodes: Array<{ kindId: string }> }).nodes;
     const kindIds = nodes.map((n) => n.kindId);
@@ -42,10 +42,10 @@ describe('in-page agent tool runtime', () => {
     expect(kindIds).toContain('action_print');
   });
 
-  test('add_node refuses leftover kinds even when writes are allowed', () => {
+  test('add_node refuses leftover kinds even when writes are allowed', async () => {
     const snapshot = createEmptyProjectSnapshot();
     for (const kindId of LEFTOVERS) {
-      const result = callTool(
+      const result = await callTool(
         'add_node',
         { kind_id: kindId, message: 'hello' },
         { snapshot, allowWrites: true }
@@ -56,9 +56,9 @@ describe('in-page agent tool runtime', () => {
     }
   });
 
-  test('add_node message and inline_values set print text', () => {
+  test('add_node message and inline_values set print text', async () => {
     const snapshot = createEmptyProjectSnapshot();
-    const viaMessage = callTool(
+    const viaMessage = await callTool(
       'add_node',
       { kind_id: 'action_print', message: 'hello' },
       { snapshot, allowWrites: true }
@@ -69,7 +69,7 @@ describe('in-page agent tool runtime', () => {
     ).node;
     expect(messageNode.data.inlineValues?.in_str).toBe('hello');
 
-    const viaInline = callTool(
+    const viaInline = await callTool(
       'add_node',
       { kind_id: 'action_print', inline_values: { in_str: 'from pin' } },
       { snapshot, allowWrites: true }
@@ -81,13 +81,13 @@ describe('in-page agent tool runtime', () => {
     expect(inlineNode.data.inlineValues?.in_str).toBe('from pin');
   });
 
-  test('add_node auto-wires to free On start exec_out and skips when already wired', () => {
+  test('add_node auto-wires to free On start exec_out and skips when already wired', async () => {
     const snapshot = createEmptyProjectSnapshot();
     const handler = entryHandler(snapshot);
     expect(handler).toBeDefined();
     expect(execEdgesFrom(snapshot, handler!.id)).toHaveLength(0);
 
-    const first = callTool(
+    const first = await callTool(
       'add_node',
       { kind_id: 'action_print', message: 'hello' },
       { snapshot, allowWrites: true }
@@ -101,7 +101,7 @@ describe('in-page agent tool runtime', () => {
     expect(firstEdges[0]?.target).toBe(firstNode.id);
     expect(firstEdges[0]?.targetHandle).toBe('exec_in');
 
-    const second = callTool(
+    const second = await callTool(
       'add_node',
       { kind_id: 'action_print', message: 'again' },
       { snapshot: afterFirst, allowWrites: true }
@@ -116,15 +116,15 @@ describe('in-page agent tool runtime', () => {
     expect(laterEdges.some((edge) => edge.target === secondNode.id)).toBe(false);
   });
 
-  test('get_graph and add_node operate on a fixture snapshot', () => {
+  test('get_graph and add_node operate on a fixture snapshot', async () => {
     const snapshot = createEmptyProjectSnapshot();
-    const before = callTool('get_graph', {}, { snapshot, allowWrites: false });
+    const before = await callTool('get_graph', {}, { snapshot, allowWrites: false });
     expect(before.ok).toBe(true);
     const beforeGraph = before.data as { tabId: string; nodes: Array<{ id: string }> };
     expect(beforeGraph.tabId).toBe(snapshot.activeGraphTab);
     expect(Array.isArray(beforeGraph.nodes)).toBe(true);
 
-    const blocked = callTool(
+    const blocked = await callTool(
       'add_node',
       { kind_id: 'action_print', x: 40, y: 80 },
       { snapshot, allowWrites: false }
@@ -132,7 +132,7 @@ describe('in-page agent tool runtime', () => {
     expect(blocked.ok).toBe(false);
     expect(blocked.error ?? '').toContain('write access is disabled');
 
-    const added = callTool(
+    const added = await callTool(
       'add_node',
       { kind_id: 'action_print', x: 40, y: 80 },
       { snapshot, allowWrites: true }
@@ -142,9 +142,18 @@ describe('in-page agent tool runtime', () => {
     const node = (added.data as { node: { id: string; data: { kindId: string } } }).node;
     expect(node.data.kindId).toBe('action_print');
 
-    const after = callTool('get_graph', {}, { snapshot: added.snapshot!, allowWrites: false });
+    const after = await callTool('get_graph', {}, { snapshot: added.snapshot!, allowWrites: false });
     const afterGraph = after.data as { nodes: Array<{ id: string }> };
     expect(afterGraph.nodes.some((n) => n.id === node.id)).toBe(true);
+  });
+
+  test('generate_code returns language and files via the async emit path', async () => {
+    const snapshot = createEmptyProjectSnapshot();
+    const result = await callTool('generate_code', {}, { snapshot, allowWrites: false });
+    expect(result.ok).toBe(true);
+    const data = result.data as { language: string; files: Array<{ path: string; content: string }> };
+    expect(typeof data.language).toBe('string');
+    expect(Array.isArray(data.files)).toBe(true);
   });
 
   test('window-facing tool list includes the v1 runtime names', () => {

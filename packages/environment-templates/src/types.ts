@@ -45,6 +45,11 @@ export interface HostFileTemplate {
   template: string;
 }
 
+/** Optional containers.dev reference. Path must exist in hostFiles. */
+export interface EnvironmentDevcontainerRef {
+  path: string;
+}
+
 export interface ProjectEnvironmentManifest {
   id: string;
   version: string;
@@ -60,6 +65,8 @@ export interface ProjectEnvironmentManifest {
   apiSurface: ApiSurface;
   hostFiles: HostFileTemplate[];
   starter?: Partial<ProjectSnapshot>;
+  /** Reference only — VVS does not start Docker from this field. */
+  devcontainer?: EnvironmentDevcontainerRef;
 }
 
 export interface ResolvedApiSurface {

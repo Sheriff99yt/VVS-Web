@@ -15,6 +15,10 @@ const TARGET_LABEL: Record<string, string> = {
   javascript: 'JavaScript',
   cpp: 'C++',
   verse: 'Verse',
+  gdscript: 'GDScript',
+  rust: 'Rust',
+  csharp: 'C#',
+  go: 'Go',
   json: 'JSON',
 };
 

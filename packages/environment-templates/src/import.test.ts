@@ -66,6 +66,24 @@ describe('Backstage skeleton import', () => {
     expect(out).toContain('{moduleName}');
   });
 
+  test('normalizes Nunjucks values.name from fixture README', async () => {
+    const readme = await Bun.file(join(fixtures, 'backstage-pack', 'skeleton', 'README.md')).text();
+    expect(readme).toContain('${{ values.name }}');
+    const out = normalizeBackstageTemplate(readme);
+    expect(out).toContain('{moduleName}');
+    expect(out).toContain('${{ values.owner }}');
+    expect(out).not.toContain('{%');
+  });
+
+  test('imported skeleton README stores {moduleName} not Nunjucks braces', async () => {
+    const files = await importHostFilesFromSkeleton({
+      skeletonDir: join(fixtures, 'backstage-pack', 'skeleton'),
+    });
+    const readme = files.find((f) => f.path === 'README.md');
+    expect(readme?.template).toContain('{moduleName}');
+    expect(readme?.template).not.toContain('{{ moduleName }}');
+  });
+
   test('imports skeleton host files', async () => {
     const files = await importHostFilesFromSkeleton({
       skeletonDir: join(fixtures, 'backstage-pack', 'skeleton'),
@@ -118,5 +136,55 @@ describe('registerEnvironmentManifest', () => {
     });
     registerEnvironmentManifest(manifest);
     expect(loadEnvironmentManifest('env.test.registered')?.displayName).toBe('Registered');
+  });
+});
+
+describe('devcontainer linkage', () => {
+  test('accepts rust console pack with matching host file', async () => {
+    const raw = await Bun.file(
+      join(import.meta.dir, 'manifests', 'env.rust.console-app.json')
+    ).json();
+    const result = validateEnvironmentManifest(raw);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.manifest.devcontainer?.path).toBe('.devcontainer/devcontainer.json');
+    }
+  });
+
+  test('rejects devcontainer path that is not a host file', async () => {
+    const raw = (await Bun.file(
+      join(import.meta.dir, 'manifests', 'env.python.console-app.json')
+    ).json()) as Record<string, unknown>;
+    raw.devcontainer = { path: '.devcontainer/devcontainer.json' };
+    const result = validateEnvironmentManifest(raw);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues.some((i) => i.path === 'devcontainer.path')).toBe(true);
+    }
+  });
+
+  test('accepts manifests with no devcontainer field', async () => {
+    const raw = await Bun.file(
+      join(import.meta.dir, 'manifests', 'env.python.console-app.json')
+    ).json();
+    const result = validateEnvironmentManifest(raw);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.manifest.devcontainer).toBeUndefined();
+    }
+  });
+});
+
+describe('Backstage Nunjucks skeleton files', () => {
+  test('importHostFilesFromSkeleton converts name placeholders in fixture files', async () => {
+    const files = await importHostFilesFromSkeleton({
+      skeletonDir: join(fixtures, 'backstage-pack', 'skeleton'),
+    });
+    const readme = files.find((f) => f.path === 'README.md');
+    expect(readme).toBeDefined();
+    expect(readme!.template).toContain('{moduleName}');
+    expect(readme!.template).toContain('${{ values.owner }}');
+    expect(readme!.template).not.toContain('{%');
+    expect(readme!.role).toBe('asset');
   });
 });

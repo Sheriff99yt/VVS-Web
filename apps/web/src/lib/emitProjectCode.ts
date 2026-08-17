@@ -1,6 +1,46 @@
 import type { ProjectSnapshot, TranspileResult } from '@vvs/graph-types';
 import { classHomeGraphId, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
-import { transpileProject, withProjectCodegenTarget } from '@/lib/codegen';
+import {
+  transpileProject,
+  transpileProjectOffThread,
+  withProjectCodegenTarget,
+  type TranspileOffThreadOptions,
+} from '@/lib/codegen';
+
+export type EmitProjectCodeOptions = {
+  targetLanguage?: ProjectSnapshot['targetLanguage'];
+  /** When true (default), emit `(x)` comments for language-gated ineffective imports. */
+  emitUnsupportedComments?: boolean;
+  /** When true (default), emit author Comment [C] lines (U69). */
+  emitUserComments?: boolean;
+};
+
+function projectTranspileInput(snapshot: ProjectSnapshot, options?: EmitProjectCodeOptions) {
+  const targetLanguage = options?.targetLanguage ?? snapshot.targetLanguage;
+  return withProjectCodegenTarget(
+    {
+      projectDetails: snapshot.projectDetails,
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions ?? [],
+      documents: snapshot.documents ?? {},
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+      openTabs: snapshot.openTabs,
+      targetLanguage,
+      targetFileExtensions: snapshot.targetFileExtensions,
+      environmentId: snapshot.environmentId,
+      integration: snapshot.integration,
+      emitUnsupportedComments: options?.emitUnsupportedComments !== false,
+      emitUserComments: options?.emitUserComments !== false,
+    },
+    {
+      targetLanguage,
+      codegenCapabilities: snapshot.codegenCapabilities,
+      syntaxPackLock: snapshot.syntaxPackLock,
+    }
+  );
+}
 
 /**
  * Same emit path as Code | Files / useProjectTranspileResult.
@@ -8,40 +48,19 @@ import { transpileProject, withProjectCodegenTarget } from '@/lib/codegen';
  */
 export function emitProjectLikeCodePanel(
   snapshot: ProjectSnapshot,
-  options?: {
-    targetLanguage?: ProjectSnapshot['targetLanguage'];
-    /** When true (default), emit `(x)` comments for language-gated ineffective imports. */
-    emitUnsupportedComments?: boolean;
-    /** When true (default), emit author Comment [C] lines (U69). */
-    emitUserComments?: boolean;
-  }
+  options?: EmitProjectCodeOptions
 ): TranspileResult {
-  const targetLanguage = options?.targetLanguage ?? snapshot.targetLanguage;
-  return transpileProject(
-    withProjectCodegenTarget(
-      {
-        projectDetails: snapshot.projectDetails,
-        variables: snapshot.variables,
-        projectEvents: snapshot.events,
-        functions: snapshot.functions ?? [],
-        documents: snapshot.documents ?? {},
-        classes: snapshot.classes,
-        activeClassId: snapshot.activeClassId,
-        openTabs: snapshot.openTabs,
-        targetLanguage,
-        targetFileExtensions: snapshot.targetFileExtensions,
-        environmentId: snapshot.environmentId,
-        integration: snapshot.integration,
-        emitUnsupportedComments: options?.emitUnsupportedComments !== false,
-        emitUserComments: options?.emitUserComments !== false,
-      },
-      {
-        targetLanguage,
-        codegenCapabilities: snapshot.codegenCapabilities,
-        syntaxPackLock: snapshot.syntaxPackLock,
-      }
-    )
-  );
+  return transpileProject(projectTranspileInput(snapshot, options));
+}
+
+/** Off-main-thread emit. Falls back to the sync pipeline when Worker is unavailable. */
+export function emitProjectLikeCodePanelOffThread(
+  snapshot: ProjectSnapshot,
+  options?: EmitProjectCodeOptions & TranspileOffThreadOptions
+): Promise<TranspileResult> {
+  return transpileProjectOffThread(projectTranspileInput(snapshot, options), {
+    forceMainThread: options?.forceMainThread,
+  });
 }
 
 /** Map emitted paths → owning graph tab id (mirrors Code panel Files ownership). */

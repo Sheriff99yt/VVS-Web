@@ -21,6 +21,7 @@ import {
   appendGitignoreLines,
   ensureDirPath,
   readJsonFile,
+  readTextFile,
   writeJsonFile,
 } from './fsAccess';
 
@@ -273,13 +274,19 @@ export async function createProjectInFolder(
   const manifest = snapshot.environmentId
     ? loadEnvironmentManifest(snapshot.environmentId)
     : null;
+  const hostFilePaths = manifest?.hostFiles?.map((h) => h.path) ?? [];
+  const existingHostFilePaths: string[] = [];
+  for (const path of hostFilePaths) {
+    if ((await readTextFile(root, path)) !== null) existingHostFilePaths.push(path);
+  }
   const integration = createDefaultIntegration({
     environmentId: snapshot.environmentId,
     environmentVersion: snapshot.environmentVersion,
     moduleName: snapshot.projectDetails.moduleName,
     defaultTarget: snapshot.targetLanguage,
     adoptExisting: options?.adoptExisting ?? true,
-    hostFilePaths: manifest?.hostFiles?.map((h) => h.path) ?? [],
+    hostFilePaths,
+    existingHostFilePaths,
   });
   const enriched: ProjectSnapshot = { ...snapshot, integration };
   await saveProjectToFolder(root, enriched);

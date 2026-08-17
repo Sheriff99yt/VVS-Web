@@ -1,0 +1,27 @@
+{
+  "id": "gdscript",
+  "displayName": "GDScript",
+  "capabilities": [
+    "typed"
+  ],
+  "native": [
+    "function.static",
+    "function.module",
+    "class.inheritance",
+    "variable.module",
+    "variable.static",
+    "type.data_object",
+    "type.data_array",
+    "env.native"
+  ],
+  "emulated": [
+    "function.async",
+    "variable.readonly",
+    "type.data_any"
+  ],
+  "unsupported": [
+    "function.overload",
+    "function.virtual",
+    "macro.inline"
+  ]
+}

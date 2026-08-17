@@ -8,28 +8,56 @@ export interface BackstageTemplateMeta {
   tags?: string[];
 }
 
+/** Backstage/Nunjucks keys that map onto the VVS `{moduleName}` host slot. */
+const MODULE_NAME_KEYS = new Set([
+  'name',
+  'moduleName',
+  'module_name',
+  'component_id',
+  'projectName',
+  'project_name',
+]);
+
+const ENTRY_FILE_NAMES = new Set([
+  'main.py',
+  'main.js',
+  'main.ts',
+  'main.rs',
+  'main.cpp',
+  'main.go',
+  'index.js',
+  'index.ts',
+  'app.py',
+  '__main__.py',
+  'Program.cs',
+]);
+
 export function inferHostFileRole(relativePath: string): HostFileTemplate['role'] {
-  const base = relativePath.split('/').pop() ?? relativePath;
-  const entryNames = new Set([
-    'main.py',
-    'main.js',
-    'main.ts',
-    'index.js',
-    'index.ts',
-    'app.py',
-    '__main__.py',
-  ]);
-  if (entryNames.has(base)) return 'entry';
+  const normalized = relativePath.replace(/\\/g, '/');
+  const base = normalized.split('/').pop() ?? normalized;
+  if (ENTRY_FILE_NAMES.has(base)) return 'entry';
+  if (normalized === 'src/main.rs' || normalized.endsWith('/main.rs')) return 'entry';
   if (base.endsWith('.html') || base === 'README.md') return 'asset';
   return 'config';
 }
 
-/** Map Backstage/Nunjucks placeholders to VVS host template slots. */
+function moduleNameKeyFromExpr(expr: string): string | undefined {
+  const match = expr.trim().match(/^(?:values|parameters)\.(\w+)/);
+  return match?.[1];
+}
+
+function replaceNunjucksExpr(full: string, expr: string): string {
+  const key = moduleNameKeyFromExpr(expr);
+  if (key && MODULE_NAME_KEYS.has(key)) return '{moduleName}';
+  return full;
+}
+
+/** Map Backstage/Nunjucks name placeholders to VVS `{moduleName}` slots. */
 export function normalizeBackstageTemplate(content: string): string {
   return content
-    .replace(/\$\{\{\s*values\.(\w+)\s*\}\}/g, '{moduleName}')
-    .replace(/\{\{\s*parameters\.(\w+)\s*\}\}/g, '{moduleName}')
-    .replace(/\{\{\s*values\.(\w+)\s*\}\}/g, '{moduleName}');
+    .replace(/\$\{\{\s*([^}]+?)\s*\}\}/g, (full, expr: string) => replaceNunjucksExpr(full, expr))
+    .replace(/\{\{\s*([^}]+?)\s*\}\}/g, (full, expr: string) => replaceNunjucksExpr(full, expr))
+    .replace(/\{%-?\s*.*?\s*-?%\}/g, '');
 }
 
 /** Minimal parse of Backstage template.yaml metadata block (no YAML dependency). */

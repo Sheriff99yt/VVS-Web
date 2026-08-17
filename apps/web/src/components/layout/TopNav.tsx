@@ -16,8 +16,10 @@ import { useRouter } from 'next/navigation';
 import { isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
 import { persistEditorSnapshot, flushBrowserSnapshotSync } from '@/lib/projectPersistence';
 import { writeGeneratedFilesToFolder, saveProjectToFolder } from '@/lib/projectFolder';
-import { emitProjectLikeCodePanel } from '@/lib/emitProjectCode';
+import { emitProjectLikeCodePanelOffThread } from '@/lib/emitProjectCode';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { canOpenAgentPanel } from '@/lib/mobileViewport';
 import { promoteBrowserProjectToDisk, SAVE_ON_DISK_PROMPT_EVENT } from '@/lib/promoteProjectToDisk';
 import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDialog';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
@@ -68,6 +70,8 @@ export interface TopNavProps {
 export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const { navigate } = useEditorNavigation();
   const [showAgentPanel, setShowAgentPanel] = useState(false);
+  const isMobile = useIsMobile();
+  const agentPanelAllowed = canOpenAgentPanel(isMobile);
   const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | 'help' | null>(null);
   const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
   const [saveOnDiskPromptMode, setSaveOnDiskPromptMode] = useState<'close' | 'manual'>('close');
@@ -75,6 +79,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [saveBusy, setSaveBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderPickerAvailable = useFolderPickerSupported();
+
+  useEffect(() => {
+    if (!agentPanelAllowed) setShowAgentPanel(false);
+  }, [agentPanelAllowed]);
   const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
   const { codeOpen, graphNavOpen, toggleCode, toggleGraphNav } = useEditorPanels();
 
@@ -326,11 +334,11 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setCompileState('compiling');
     try {
       // Same emit as Code | Files (graph → file) before API / disk write (U56).
-      const emitResult = emitProjectLikeCodePanel(snapshot, {
+      const emitResult = await emitProjectLikeCodePanelOffThread(snapshot, {
         emitUnsupportedComments: readUiPreference('showUnsupportedComments'),
       });
       if (isFolderProject && folderHandle) {
-        await writeGeneratedFilesToFolder(folderHandle, emitResult);
+        await writeGeneratedFilesToFolder(folderHandle, emitResult, snapshot.integration);
         await saveProjectToFolder(folderHandle, snapshot);
         resetDirtyTabs();
       }
@@ -1024,11 +1032,13 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             />
           )}
 
-          <Tooltip content="Agent" placement="bottom">
-            <button type="button" onClick={() => setShowAgentPanel(true)} className={TOPNAV_ICON_BTN}>
-              <Bot size={14} />
-            </button>
-          </Tooltip>
+          {agentPanelAllowed ? (
+            <Tooltip content="Agent" placement="bottom">
+              <button type="button" onClick={() => setShowAgentPanel(true)} className={TOPNAV_ICON_BTN}>
+                <Bot size={14} />
+              </button>
+            </Tooltip>
+          ) : null}
           <Tooltip content="Settings" placement="bottom">
             <button
               type="button"
@@ -1042,7 +1052,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         </div>
       </header>
 
-      <AgentPanel open={showAgentPanel} onClose={() => setShowAgentPanel(false)} />
+      <AgentPanel open={showAgentPanel && agentPanelAllowed} onClose={() => setShowAgentPanel(false)} />
       <SaveOnDiskPromptDialog
         open={saveOnDiskPromptOpen}
         projectName={projectDetails.moduleName || 'Untitled'}

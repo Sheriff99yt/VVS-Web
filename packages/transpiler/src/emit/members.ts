@@ -1,5 +1,5 @@
 import { type VariableSymbol, parseTypeRef, resolveTypeRef, targetLanguageToFamily } from '@vvs/graph-types';
-import { isFunctionRoleEffective, isNodeEffectiveForLanguage } from '@vvs/language-profiles';
+import { isFeatureUnsupportedForLanguage, isFunctionRoleEffective, isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
 import { CodeSink } from '../codeSink';
 import type { IrEventHandler, IrMemberDecl, IrModule, IrModuleImport } from '../ir/types';
@@ -560,7 +560,29 @@ function appendFunctionDefinition(
     return;
   }
 
-  for (const overload of member.overloads) {
+  const defineNodeId =
+    member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
+  const overloadUnsupported =
+    member.overloads.length > 1 &&
+    isFeatureUnsupportedForLanguage('function.overload', ir.targetLanguage);
+
+  for (let i = 0; i < member.overloads.length; i++) {
+    const overload = member.overloads[i]!;
+    if (overloadUnsupported && i > 0) {
+      if (ir.emitUnsupportedComments !== false) {
+        const ctx = printContextForIr(ir, '', ir.environmentManifest);
+        const indent = memberChainIndentFor(ctx);
+        const prefix = commentPrefixFromPack(ctx);
+        const label =
+          (typeof member.properties?.name === 'string' && member.properties.name.trim()) ||
+          symbol.name;
+        sink.appendTagged({
+          nodeId: defineNodeId,
+          text: `${indent}${prefix}(x) Implement ${label}`,
+        });
+      }
+      continue;
+    }
     const props = { ...member.properties, overloadId: overload.id };
     const header = formatFunctionDefHeader(
       symbol,
@@ -575,8 +597,6 @@ function appendFunctionDefinition(
 
     // Define owns the emitted header + body. Declare only maps to its own emit
     // (C++ prototype or U66 `(x) Declare`), never the Define `def` / method line.
-    const defineNodeId =
-      member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
     sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
 
     appendFunctionBody(sink, ir, overload.tabId, emptyLine, ir.environmentManifest, defineNodeId, undefined, {
@@ -605,36 +625,45 @@ export function appendCppOutOfLineFunction(
   if (functionRoleShouldSkip(ir, member.properties)) {
     return;
   }
-  if (sink.lineCount > 0) sink.appendRaw('');
 
-  const header = formatFunctionDefOutOfLineHeader(
-    symbol,
-    className,
-    'cpp',
-    functionNeedsAsync(ir, symbol.id),
-    member.properties
-  );
-  const headerStartLine = sink.lineCount + 1;
-  sink.appendRaw(header);
-
-  // Out-of-line header + body → Define only (Declare already tagged the prototype).
   const defineNodeId =
     member.implementSourceGraphNodeId ?? member.sourceGraphNodeId;
-  sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
+  const overloads =
+    member.overloads.length > 0 ? member.overloads : [{ id: '', tabId: symbol.id }];
 
-  appendFunctionBody(
-    sink,
-    ir,
-    symbol.id,
-    '    // empty',
-    ir.environmentManifest,
-    defineNodeId,
-    '    ',
-    { onBeforeNode: onBeforeFlowNode }
-  );
+  for (const overload of overloads) {
+    if (sink.lineCount > 0) sink.appendRaw('');
 
-  sink.appendRaw(renderFunctionOutOfLineClose('cpp'));
-  sink.tagRange(defineNodeId, headerStartLine, sink.lineCount, symbol.name);
+    const props = overload.id
+      ? { ...member.properties, overloadId: overload.id }
+      : member.properties;
+    const header = formatFunctionDefOutOfLineHeader(
+      symbol,
+      className,
+      'cpp',
+      functionNeedsAsync(ir, symbol.id),
+      props
+    );
+    const headerStartLine = sink.lineCount + 1;
+    sink.appendRaw(header);
+
+    // Out-of-line header + body → Define only (Declare already tagged the prototype).
+    sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
+
+    appendFunctionBody(
+      sink,
+      ir,
+      overload.tabId,
+      '    // empty',
+      ir.environmentManifest,
+      defineNodeId,
+      '    ',
+      { onBeforeNode: onBeforeFlowNode }
+    );
+
+    sink.appendRaw(renderFunctionOutOfLineClose('cpp'));
+    sink.tagRange(defineNodeId, headerStartLine, sink.lineCount, symbol.name);
+  }
 }
 
 export function appendEnumDecl(

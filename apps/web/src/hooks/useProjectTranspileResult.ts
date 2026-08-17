@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { isCodePreviewPaused } from '@/lib/codePreviewPause';
 import {
-  emitProjectLikeCodePanel,
+  emitProjectLikeCodePanelOffThread,
   fileOwnersForEmitResult,
 } from '@/lib/emitProjectCode';
 import type { TranspileResult } from '@/types/transpile';
@@ -55,26 +55,30 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
   const [showUserComments] = useUiPreference('showUserComments');
   /** Last live emit — returned while Auto generate is off and the graph is dirty. */
   const liveBundleRef = useRef<ProjectTranspileBundle | null>(null);
+  const [bundle, setBundle] = useState<ProjectTranspileBundle>(() => ({
+    result: { ...EMPTY_RESULT, language: targetLanguage },
+    fileOwners: {},
+  }));
 
   const hasDirtyTabs = Object.keys(dirtyTabIds).length > 0;
   const paused = isCodePreviewPaused(autoCompile, compileState, hasDirtyTabs);
 
-  return useMemo(() => {
+  useEffect(() => {
     if (paused) {
-      return (
-        // eslint-disable-next-line react-hooks/refs
+      setBundle(
         liveBundleRef.current ?? {
           result: { ...EMPTY_RESULT, language: targetLanguage },
           fileOwners: {},
         }
       );
+      return;
     }
 
     if (!documents) {
       const empty = { result: { ...EMPTY_RESULT, language: targetLanguage }, fileOwners: {} };
-      // eslint-disable-next-line react-hooks/refs
       liveBundleRef.current = empty;
-      return empty;
+      setBundle(empty);
+      return;
     }
 
     const snapshot: ProjectSnapshot = {
@@ -103,14 +107,19 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
       installedLibrary,
     };
 
-    const result = emitProjectLikeCodePanel(snapshot, {
+    let cancelled = false;
+    void emitProjectLikeCodePanelOffThread(snapshot, {
       emitUnsupportedComments: showUnsupportedComments,
       emitUserComments: showUserComments,
+    }).then((result) => {
+      if (cancelled) return;
+      const next = { result, fileOwners: fileOwnersForEmitResult(snapshot, result) };
+      liveBundleRef.current = next;
+      setBundle(next);
     });
-    const bundle = { result, fileOwners: fileOwnersForEmitResult(snapshot, result) };
-    // eslint-disable-next-line react-hooks/refs
-    liveBundleRef.current = bundle;
-    return bundle;
+    return () => {
+      cancelled = true;
+    };
   }, [
     paused,
     documents,
@@ -137,4 +146,6 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     showUnsupportedComments,
     showUserComments,
   ]);
+
+  return bundle;
 }

@@ -82,9 +82,37 @@ describe('ProjectIntegrationConfig', () => {
     expect(resolveHostEmitPath(cfg, 'main.py')).toBe('scripts/run.py');
   });
 
+  test('normalizeIntegrationConfig preserves appliedTemplate', () => {
+    const cfg = normalizeIntegrationConfig({
+      hostFiles: { 'main.py': { strategy: 'emit', appliedTemplate: 'from App import App\n' } },
+    });
+    expect(cfg.hostFiles['main.py']?.appliedTemplate).toBe('from App import App\n');
+  });
+
   test('formatEmitPreview', () => {
     const cfg = createDefaultIntegration({ moduleName: 'Player', defaultTarget: 'javascript' });
     cfg.emit.javascript = { moduleDir: 'src', moduleFile: 'Player.js' };
     expect(formatEmitPreview(cfg, 'javascript', 'Player')).toBe('src/Player.js');
+  });
+});
+
+describe('existing host file probe', () => {
+  test('createDefaultIntegration skips only existing host files when probed', () => {
+    const cfg = createDefaultIntegration({
+      adoptExisting: true,
+      hostFilePaths: ['main.py', 'src/main.rs', 'Cargo.toml'],
+      existingHostFilePaths: ['main.py', 'src/main.rs'],
+      moduleName: 'App',
+    });
+    expect(cfg.hostFiles['main.py']?.strategy).toBe('skip');
+    expect(cfg.hostFiles['src/main.rs']?.strategy).toBe('skip');
+    expect(cfg.hostFiles['Cargo.toml']?.strategy).toBe('emit');
+  });
+
+  test('normalizeIntegrationConfig keeps appliedTemplate', () => {
+    const cfg = normalizeIntegrationConfig({
+      hostFiles: { 'main.py': { strategy: 'emit', appliedTemplate: 'from App import App\n' } },
+    });
+    expect(cfg.hostFiles['main.py']?.appliedTemplate).toContain('from App');
   });
 });

@@ -131,6 +131,8 @@ import {
 } from '@/lib/graphCommentMembership';
 import { useSyncProjectSelection } from '@/hooks/useSyncProjectSelection';
 import { useEditorFocus } from '@/hooks/useEditorFocus';
+import { useCoarsePointer } from '@/hooks/useIsMobile';
+import { pinConnectionRadius } from '@/lib/mobileViewport';
 import { useGraphKeyboardShortcuts } from '@/hooks/useGraphKeyboardShortcuts';
 import { GraphShortcutsHelp } from './GraphShortcutsHelp';
 import { OPEN_SHORTCUTS_HELP_EVENT, readUiPreference } from '@/lib/uiPreferences';
@@ -310,6 +312,7 @@ function GraphCanvasInner() {
     useEditorNavigation();
   const { focusGraphRef, focusFunction, focusClass } = useEditorFocus();
   const { graphChromeMode } = useEditorPanels();
+  const coarsePointer = useCoarsePointer();
 
   const {
     nodes,
@@ -2504,6 +2507,7 @@ function GraphCanvasInner() {
         onConnect={onConnect}
         onConnectEnd={onConnectEnd}
         isValidConnection={isValidConnection}
+        connectionRadius={pinConnectionRadius(coarsePointer)}
         onPointerMove={onGraphPointerMove}
         onPointerLeave={onGraphPointerLeave}
         onPaneContextMenu={onPaneContextMenu}

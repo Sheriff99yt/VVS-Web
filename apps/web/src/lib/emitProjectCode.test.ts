@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import {
   emitProjectLikeCodePanel,
+  emitProjectLikeCodePanelOffThread,
   fileOwnersForEmitResult,
 } from '@/lib/emitProjectCode';
 import {
@@ -41,5 +42,17 @@ describe('emitProjectLikeCodePanel (U56)', () => {
       (f) => f.path === 'src/CoverageLab.py'
     )!.content;
     expect(home.indexOf('def on_pulse(self):')).toBeLessThan(home.indexOf('def on_start(self):'));
+  });
+
+  test('off-thread fallback matches sync emit', async () => {
+    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const sync = emitProjectLikeCodePanel(snapshot, { targetLanguage: 'python' });
+    const off = await emitProjectLikeCodePanelOffThread(snapshot, {
+      targetLanguage: 'python',
+      forceMainThread: true,
+    });
+    expect(off.language).toBe(sync.language);
+    expect(off.files.map((f) => f.path)).toEqual(sync.files.map((f) => f.path));
+    expect(off.files.map((f) => f.content)).toEqual(sync.files.map((f) => f.content));
   });
 });

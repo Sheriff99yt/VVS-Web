@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { transpileGraphCode, transpileGraph, withProjectCodegenTarget } from './codegen';
+import { transpileGraphCode, transpileGraph, withProjectCodegenTarget, transpileGraphOffThread, executeTranspileJob } from './codegen';
 import { createFirstGraphUsabilityTestSnapshot } from './usabilityExampleTests/firstGraphUsabilityTest';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
@@ -66,5 +66,31 @@ describe('transpileGraphCode', () => {
       }
     );
     expect(ctx.codegenTarget?.capabilities).toContain('es2022');
+  });
+});
+
+describe('transpile worker fallback', () => {
+  test('forceMainThread matches generate() output on a tiny snapshot', async () => {
+    const snapshot = createFirstGraphUsabilityTestSnapshot();
+    const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
+    const ctx = {
+      moduleName: snapshot.projectDetails.moduleName,
+      extendsType: snapshot.projectDetails.extendsType,
+      targetLanguage: 'python' as const,
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      nodes: doc!.nodes,
+      edges: doc!.edges,
+      classes: snapshot.classes,
+      activeClassId: snapshot.activeClassId,
+      tabId: MAIN_GRAPH_CONTAINER_ID,
+    };
+    const sync = transpileGraph(ctx);
+    const viaJob = executeTranspileJob({ kind: 'graph', input: ctx });
+    const off = await transpileGraphOffThread(ctx, { forceMainThread: true });
+    expect(viaJob.files[0]?.content).toBe(sync.files[0]?.content);
+    expect(off.files[0]?.content).toBe(sync.files[0]?.content);
+    expect(off.language).toBe(sync.language);
   });
 });

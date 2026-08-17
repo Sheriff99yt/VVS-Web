@@ -2,6 +2,8 @@
 
 VVS graphs are **language-neutral**. Features that do not map cleanly to every target are tagged in the project model and reported at compile / language-switch time.
 
+Portability matrices live as JSON packs in `packages/language-profiles/src/packs/<lang>.profile.json` and load into the existing `LANGUAGE_PROFILES` API at module init. Types and warning copy stay in TypeScript; capability semantics are unchanged.
+
 ## How warnings work
 
 1. `collectPortabilityFeatures()` scans the project (`functions[]`, `extendsType`, flags).
@@ -67,7 +69,7 @@ The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation rema
 
 Four-step workflow — portability policy and print rules stay separate ([syntax_pack_architecture.md](syntax_pack_architecture.md)):
 
-1. **Profile** — add entry in `LANGUAGE_PROFILES` (`packages/language-profiles`): native / emulated / unsupported matrix and default capabilities.
+1. **Profile** — add `packages/language-profiles/src/packs/<lang>.profile.json` (native / emulated / unsupported + capabilities) and register it on `LANGUAGE_PROFILES`.
 2. **Base pack** — add `family.base.json` in `@vvs/syntax-packs` with Lego templates and layout tokens for simple constructs.
 3. **Rosetta fixtures** — add graph JSON fixtures + `.golden.txt` expected outputs per construct; span invariants must pass.
 4. **Emitter registration** — register TS printers in `@vvs/transpiler` `PrinterRegistry` for complex constructs (events, hoisting, multi-file); wire `CodegenTarget` default mapping.

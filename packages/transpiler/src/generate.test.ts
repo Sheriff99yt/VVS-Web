@@ -680,3 +680,53 @@ describe('transpileGraphCode', () => {
     expect(defineLines).toContain(defLine);
   });
 });
+
+describe('host file skip vs emit', () => {
+  test('skips host entry files when integration strategy is skip', async () => {
+    const { loadEnvironmentManifest } = await import('@vvs/environment-templates');
+    const manifest = loadEnvironmentManifest('env.python.console-app');
+    expect(manifest).toBeDefined();
+    const result = transpileGraph({
+      moduleName: 'App',
+      extendsType: 'object',
+      targetLanguage: 'python',
+      variables: [],
+      projectEvents: [],
+      functions: [],
+      nodes: [],
+      edges: [],
+      tabId: 'main',
+      environmentManifest: manifest,
+      integration: {
+        emit: {},
+        hostFiles: { 'main.py': { strategy: 'skip' } },
+      },
+    });
+    expect(result.files.some((f) => f.path === 'main.py' || f.path.endsWith('/main.py'))).toBe(false);
+  });
+
+  test('emits host entry files when integration strategy is emit', async () => {
+    const { loadEnvironmentManifest } = await import('@vvs/environment-templates');
+    const manifest = loadEnvironmentManifest('env.python.console-app');
+    expect(manifest).toBeDefined();
+    const result = transpileGraph({
+      moduleName: 'App',
+      extendsType: 'object',
+      targetLanguage: 'python',
+      variables: [],
+      projectEvents: [],
+      functions: [],
+      nodes: [],
+      edges: [],
+      tabId: 'main',
+      environmentManifest: manifest,
+      integration: {
+        emit: {},
+        hostFiles: { 'main.py': { strategy: 'emit' } },
+      },
+    });
+    const host = result.files.find((f) => f.path === 'main.py');
+    expect(host).toBeDefined();
+    expect(host!.content).toContain('from App import App');
+  });
+});

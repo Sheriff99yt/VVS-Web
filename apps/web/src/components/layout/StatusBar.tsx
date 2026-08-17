@@ -8,6 +8,8 @@ import { useEditorPanels } from '@/contexts/EditorPanelContext';
 import { useEditorView } from '@/contexts/EditorViewContext';
 import { useApiHealth } from '@/hooks/useApiHealth';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { canOpenAgentPanel } from '@/lib/mobileViewport';
 import { formatSavedAt } from '@/lib/formatSavedAt';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { dispatchSaveOnDiskPrompt } from '@/lib/promoteProjectToDisk';
@@ -66,6 +68,7 @@ export function StatusBar() {
   const { isCanvasActive } = useEditorView();
   const { apiMode, healthState, serviceName, storeMode, authMode, userId } = useApiHealth();
   const folderPickerReady = useFolderPickerSupported();
+  const agentPanelAllowed = canOpenAgentPanel(useIsMobile());
   const hosted = isHostedFeaturesEnabled();
   const agentSession = useSyncExternalStore(subscribeAgentSession, getAgentSession, getAgentSession);
   const [logMenu, setLogMenu] = useState<{ x: number; y: number } | null>(null);
@@ -118,6 +121,7 @@ export function StatusBar() {
       <div className="flex items-center gap-2 shrink-0 min-w-0 max-w-[55%]">
         <GraphBreadcrumb compact showModeBadge />
         <div className="w-px h-3 bg-zinc-800 shrink-0" />
+        {agentPanelAllowed ? (
         <Tooltip
           content={
             agentSession.ready === 'ready'
@@ -155,6 +159,7 @@ export function StatusBar() {
             </span>
           </div>
         </Tooltip>
+        ) : null}
         {hosted ? (
           <Tooltip content={api.title ?? api.label} placement="top">
             <span className={`flex items-center gap-1 ${api.className ?? ''}`}>

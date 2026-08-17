@@ -1,5 +1,14 @@
 import type { PortabilityFeature, TargetLanguage } from '@vvs/graph-types';
 import type { Diagnostic } from '@vvs/graph-types';
+import pythonProfile from './packs/python.profile.json';
+import javascriptProfile from './packs/javascript.profile.json';
+import cppProfile from './packs/cpp.profile.json';
+import verseProfile from './packs/verse.profile.json';
+import gdscriptProfile from './packs/gdscript.profile.json';
+import rustProfile from './packs/rust.profile.json';
+import csharpProfile from './packs/csharp.profile.json';
+import goProfile from './packs/go.profile.json';
+import jsonProfile from './packs/json.profile.json';
 
 export interface LanguageProfile {
   id: TargetLanguage;
@@ -11,188 +20,15 @@ export interface LanguageProfile {
 }
 
 export const LANGUAGE_PROFILES: Record<TargetLanguage, LanguageProfile> = {
-  python: {
-    id: 'python',
-    displayName: 'Python',
-    capabilities: ['async', 'type_hints'],
-    native: [
-      'function.module',
-      'class.inheritance',
-      'variable.module',
-      'type.data_object',
-      'type.data_array',
-      'env.native',
-    ],
-    emulated: [
-      'function.static',
-      'function.async',
-      'variable.static',
-      'variable.readonly',
-      'type.data_any',
-    ],
-    unsupported: ['function.overload', 'function.virtual', 'macro.inline'],
-  },
-  javascript: {
-    id: 'javascript',
-    displayName: 'JavaScript',
-    capabilities: ['async', 'es2020'],
-    native: [
-      'function.static',
-      'function.module',
-      'function.async',
-      'class.inheritance',
-      'variable.static',
-      'variable.module',
-      'variable.readonly',
-      'type.data_object',
-      'type.data_array',
-      'type.data_any',
-      'env.native',
-    ],
-    emulated: ['function.overload'],
-    unsupported: ['function.virtual', 'macro.inline'],
-  },
-  cpp: {
-    id: 'cpp',
-    displayName: 'C++',
-    capabilities: ['cpp17'],
-    native: [
-      'function.static',
-      'function.module',
-      'function.overload',
-      'function.virtual',
-      'class.inheritance',
-      'variable.static',
-      'variable.module',
-      'variable.readonly',
-      'type.data_object',
-      'type.data_array',
-      'type.data_any',
-      'env.native',
-    ],
-    emulated: ['function.async'],
-    unsupported: ['macro.inline'],
-  },
-  verse: {
-    id: 'verse',
-    displayName: 'Verse',
-    capabilities: [],
-    native: [
-      'function.module',
-      'class.inheritance',
-      'variable.module',
-      'type.data_object',
-      'env.native',
-    ],
-    emulated: [
-      'function.static',
-      'function.overload',
-      'variable.static',
-      'variable.readonly',
-      'type.data_array',
-      'type.data_any',
-    ],
-    unsupported: ['function.virtual', 'function.async', 'macro.inline'],
-  },
-  gdscript: {
-    id: 'gdscript',
-    displayName: 'GDScript',
-    capabilities: ['typed'],
-    native: [
-      'function.static',
-      'function.module',
-      'class.inheritance',
-      'variable.module',
-      'variable.static',
-      'type.data_object',
-      'type.data_array',
-      'env.native',
-    ],
-    emulated: [
-      'function.async',
-      'variable.readonly',
-      'type.data_any',
-    ],
-    unsupported: ['function.overload', 'function.virtual', 'macro.inline'],
-  },
-  rust: {
-    id: 'rust',
-    displayName: 'Rust',
-    capabilities: ['edition2021'],
-    native: [
-      'function.static',
-      'function.module',
-      'class.inheritance',
-      'variable.module',
-      'variable.static',
-      'variable.readonly',
-      'type.data_object',
-      'type.data_array',
-      'env.native',
-    ],
-    emulated: ['function.async', 'type.data_any'],
-    unsupported: ['function.overload', 'function.virtual', 'macro.inline'],
-  },
-  csharp: {
-    id: 'csharp',
-    displayName: 'C#',
-    capabilities: ['dotnet8'],
-    native: [
-      'function.static',
-      'function.module',
-      'function.async',
-      'class.inheritance',
-      'variable.module',
-      'variable.static',
-      'variable.readonly',
-      'type.data_object',
-      'type.data_array',
-      'type.data_any',
-      'env.native',
-    ],
-    emulated: ['function.overload'],
-    unsupported: ['function.virtual', 'macro.inline'],
-  },
-  go: {
-    id: 'go',
-    displayName: 'Go',
-    capabilities: ['go1.22'],
-    native: [
-      'function.static',
-      'function.module',
-      'function.async',
-      'class.inheritance',
-      'variable.module',
-      'variable.static',
-      'variable.readonly',
-      'type.data_object',
-      'type.data_array',
-      'env.native',
-    ],
-    emulated: ['type.data_any'],
-    unsupported: ['function.overload', 'function.virtual', 'macro.inline'],
-  },
-  json: {
-    id: 'json',
-    displayName: 'JSON',
-    capabilities: [],
-    native: ['type.data_object', 'type.data_array'],
-    emulated: [],
-    unsupported: [
-      'function.static',
-      'function.overload',
-      'function.module',
-      'function.virtual',
-      'function.async',
-      'macro.inline',
-      'variable.static',
-      'variable.module',
-      'variable.readonly',
-      'type.data_any',
-      'event.multicast',
-      'env.native',
-    ],
-  },
+  python: pythonProfile as LanguageProfile,
+  javascript: javascriptProfile as LanguageProfile,
+  cpp: cppProfile as LanguageProfile,
+  verse: verseProfile as LanguageProfile,
+  gdscript: gdscriptProfile as LanguageProfile,
+  rust: rustProfile as LanguageProfile,
+  csharp: csharpProfile as LanguageProfile,
+  go: goProfile as LanguageProfile,
+  json: jsonProfile as LanguageProfile,
 };
 
 const WARNING_MESSAGES: Record<PortabilityFeature, string> = {

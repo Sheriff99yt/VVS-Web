@@ -433,6 +433,20 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'transpile-worker',
+        title: 'Worker-based transpile',
+        description:
+          'Worker + editor/agent callers off-thread (`transpileProjectOffThread` / `transpileGraphOffThread`). Sync pipeline kept for tests and Worker fallback.',
+        status: 'done',
+      },
+      {
+        id: 'profiles-json',
+        title: 'Language profiles as JSON packs',
+        description:
+          'Portability matrices live in `packages/language-profiles/src/packs/<lang>.profile.json`. `LANGUAGE_PROFILES` API unchanged.',
+        status: 'done',
+      },
+      {
         id: 'syntax-packs',
         title: 'Syntax packs & Rosetta suite',
         description:
@@ -591,6 +605,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Overloading revise & stress-test (U104)',
         description:
           'Audit overload UX and emit; CallNodeOverloadPanel in floating details; graphBinding.overloadId overload resolution across 8 target languages.',
+        status: 'done',
+      },
+      {
+        id: 'overload-codegen',
+        title: 'Multi-overload codegen',
+        description:
+          'C++ out-of-line loops overloads (Declare prototypes + Define bodies). Call-site emits selected overload args only. Python extra overloads stay (x) -- no invented @overload syntax.',
         status: 'done',
       },
       {
@@ -844,6 +865,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           'File System Access API -- new/open folder, IndexedDB handle storage, save writes `.vvs/project.json`, graphs, symbols, and integration config; `.gitignore` scaffold.',
       },
       {
+        id: 'graph-doc-split',
+        layer: 'frontend',
+        title: 'Per-tab document rows',
+        description:
+          'In-memory snapshot is already per-tab documents. Folder save writes one `.graph.json` per container/function via `buildFolderGraphManifest`. Proof in `io.test.ts`. No SQL `graph_documents` table, no collab protocol. Browser localStorage still stores a full snapshot.',
+        status: 'done',
+      },
+      {
         id: 'integration-config',
         title: 'Codegen integration settings',
         description:
@@ -987,6 +1016,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
           'Manifests, OpenAPI/AsyncAPI/Backstage import, validateEnvironmentManifest, env-import CLI, built-in packs.',
       },
       {
+        id: 'env-backstage-compat',
+        layer: 'frontend',
+        title: 'Backstage template compatibility',
+        description:
+          'Backstage `template.yaml` + skeleton/ import as hostFiles; Nunjucks `{{ moduleName }}` normalized to `{moduleName}`; existing `bun run import:env` / `scripts/env-import.ts --backstage`. No new CLI product.',
+        status: 'done',
+      },
+      {
         id: 'transpiler-pkg',
         title: '@vvs/transpiler',
         description:
@@ -1068,6 +1105,20 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Godot environment pack',
         description:
           'env.gdscript.godot-game manifest (Node, _ready, _process); GDScript language profile in @vvs/language-profiles.',
+        status: 'done',
+      },
+      {
+        id: 'rust-console-env',
+        title: 'Rust console environment pack',
+        description:
+          '`env.rust.console-app` with `src/main.rs` + `Cargo.toml` + println/stdin natives. Tree-sitter Rust is not hooked (no grammar).',
+        status: 'done',
+      },
+      {
+        id: 'env-devcontainer',
+        title: 'Dev Container linkage',
+        description:
+          'Optional `devcontainer?: { path }` on manifests. Rust console ships `.devcontainer/devcontainer.json` as a host file. No Docker runtime -- VVS does not start containers.',
         status: 'done',
       },
       {
@@ -1415,31 +1466,10 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Transpiler & languages',
     items: [
       {
-        id: 'overload-codegen',
-        layer: 'frontend',
-        title: 'Multi-overload codegen',
-        description: 'Emit every overload signature, per-overload graph bodies, and call-site arguments.',
-        status: 'planned',
-      },
-      {
         id: 'overrides',
         title: 'Function overrides (OOP)',
         description: 'Shipped as U105 — override is an option on Function Declare/Define; emit + dim per language.',
         status: 'done',
-      },
-      {
-        id: 'profiles-json',
-        layer: 'frontend',
-        title: 'Language profiles as JSON packs',
-        description: 'Move portability matrices from TypeScript to data-driven profile files.',
-        status: 'planned',
-      },
-      {
-        id: 'transpile-worker',
-        layer: 'frontend',
-        title: 'Worker-based transpile',
-        description: 'Off-main-thread codegen for large projects and graphs.',
-        status: 'planned',
       },
     ],
   },
@@ -1456,27 +1486,11 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'planned',
       },
       {
-        id: 'env-backstage-compat',
-        layer: 'frontend',
-        title: 'Backstage template compatibility',
-        description:
-          'Import template.yaml + skeleton/ as hostFiles; Nunjucks → {moduleName}; env-import CLI.',
-        status: 'partial',
-      },
-      {
-        id: 'env-devcontainer',
-        layer: 'frontend',
-        title: 'Dev Container linkage',
-        description:
-          'Optional devcontainer.json reference in manifests for tooling/runtime (containers.dev) alongside VVS host files.',
-        status: 'planned',
-      },
-      {
         id: 'env-template-upgrade',
         layer: 'frontend',
         title: 'Non-destructive template upgrade',
         description:
-          'One-click refresh from linked environment version; preserve user graph divergence with drift indicators (version drift UI done; full merge TBD).',
+          'Refresh/drift notes shipped: `refreshEnvironmentTemplate` + GraphPropertiesPanel Refresh control. Re-applies host files, preserves graphs, notes `applied` / `kept-yours` / `already-current`. Full three-way merge still TBD.',
         status: 'partial',
       },
       {
@@ -1492,7 +1506,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Host file integration policies',
         description:
-          'Skip vs emit host entry files when adopting existing repos (integration.json); custom emit paths per target. Full in-editor host editing/merge still planned.',
+          'Skip vs emit + custom emit path proven (`hostEmit.generate.test.ts`, `adoptExisting` skip). `appliedTemplate` persists on `HostFileIntegrationRule`. Full in-editor host editing/merge still planned.',
         status: 'partial',
       },
     ],
@@ -1552,8 +1566,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Semantic library search',
         description:
-          'Intent search across shared scripts and templates (client-first catalog; search backend TBD).',
-        status: 'planned',
+          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Not embeddings; semantic search backend TBD.',
+        status: 'partial',
       },
     ],
   },
@@ -1568,14 +1582,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Session client / host',
         description:
           'Game-lobby style session sync -- not account cloud multiplayer. Transport TBD (Go WS candidate).',
-        status: 'planned',
-      },
-      {
-        id: 'graph-doc-split',
-        layer: 'frontend',
-        title: 'Per-tab document rows',
-        description:
-          'Split large projects into graph_documents rows when snapshots grow or collab needs partial updates.',
         status: 'planned',
       },
     ],
@@ -1622,19 +1628,12 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Later -- scale & platforms',
     items: [
       {
-        id: 'rust-console-env',
-        layer: 'frontend',
-        title: 'Rust console environment pack',
-        description:
-          'env.rust.console-app manifest (main.rs stub, std I/O natives); optional Tree-sitter validation when grammar available.',
-        status: 'planned',
-      },
-      {
         id: 'mobile',
         layer: 'frontend',
         title: 'Touch & mobile UX',
-        description: 'Gestures, radial menus, magnetic pin snap for tablet workflows. Mobile: no AI panel for now.',
-        status: 'planned',
+        description:
+          'Agent panel / Bot / StatusBar chip hidden at max-width 768px (`mobileViewport`, `useIsMobile`). Coarse-pointer pin snap 40px vs mouse 20px (`mobileViewport`, `useCoarsePointer`, React Flow `connectionRadius`). Desktop unchanged. Gestures and radial menus still planned.',
+        status: 'partial',
       },
       {
         id: 'enterprise',
@@ -1649,7 +1648,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Richer project templates',
         description:
-          'Curated environment packs with categories (console, web, data, api, game); community catalog and Backstage-style scaffolds still expanding.',
+          'Added `env.csharp.console-app`, `env.javascript.data-script`, `env.javascript.http-service` plus rust console. Community catalog still not a product.',
         status: 'partial',
       },
       {

@@ -56,6 +56,7 @@ export function validateEnvironmentManifest(
     }
   }
 
+  const hostPaths = new Set<string>();
   if (!Array.isArray(m.hostFiles)) {
     issues.push({ path: 'hostFiles', message: 'hostFiles must be an array' });
   } else {
@@ -70,6 +71,24 @@ export function validateEnvironmentManifest(
       requireString(file, 'template', issues, `hostFiles[${i}].template`);
       if (file.role !== 'entry' && file.role !== 'config' && file.role !== 'asset') {
         issues.push({ path: `hostFiles[${i}].role`, message: 'role must be entry, config, or asset' });
+      }
+      if (typeof file.path === 'string' && file.path.trim()) {
+        hostPaths.add(file.path);
+      }
+    }
+  }
+
+  if (m.devcontainer !== undefined) {
+    if (!m.devcontainer || typeof m.devcontainer !== 'object' || Array.isArray(m.devcontainer)) {
+      issues.push({ path: 'devcontainer', message: 'devcontainer must be an object with a path' });
+    } else {
+      const dc = m.devcontainer as Record<string, unknown>;
+      requireString(dc, 'path', issues, 'devcontainer.path');
+      if (typeof dc.path === 'string' && dc.path.trim() && !hostPaths.has(dc.path)) {
+        issues.push({
+          path: 'devcontainer.path',
+          message: 'devcontainer.path must match a hostFiles[].path',
+        });
       }
     }
   }

@@ -7,7 +7,8 @@
  *     --openapi ./api.openapi.json --asyncapi ./events.asyncapi.json \
  *     --backstage ./path/to/backstage-template-pack
  */
-import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import {
   buildEnvironmentManifest,
@@ -15,6 +16,8 @@ import {
   type OpenApiDocument,
   type AsyncApiDocument,
 } from '../src/node';
+import { isEnvironmentManifest } from '../src/loader';
+import { mergeImportedManifest } from '../src/hostFiles';
 
 function argValue(flag: string): string | undefined {
   const idx = process.argv.indexOf(flag);
@@ -86,6 +89,19 @@ Options:
   }
 
   const outPath = resolve(out);
+  if (existsSync(outPath)) {
+    try {
+      const previous = JSON.parse(await readFile(outPath, 'utf8')) as unknown;
+      if (isEnvironmentManifest(previous)) {
+        manifest = mergeImportedManifest(previous, manifest);
+        console.log(`Merged with existing entry at ${outPath}`);
+      }
+    } catch (err) {
+      console.error(`Could not merge existing entry at ${outPath}:`, err);
+      process.exit(1);
+    }
+  }
+
   await mkdir(dirname(outPath), { recursive: true });
   await writeFile(outPath, JSON.stringify(manifest, null, 2), 'utf8');
   console.log(`Wrote ${outPath}`);

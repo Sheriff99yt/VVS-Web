@@ -1,0 +1,28 @@
+{
+  "id": "python",
+  "displayName": "Python",
+  "capabilities": [
+    "async",
+    "type_hints"
+  ],
+  "native": [
+    "function.module",
+    "class.inheritance",
+    "variable.module",
+    "type.data_object",
+    "type.data_array",
+    "env.native"
+  ],
+  "emulated": [
+    "function.static",
+    "function.async",
+    "variable.static",
+    "variable.readonly",
+    "type.data_any"
+  ],
+  "unsupported": [
+    "function.overload",
+    "function.virtual",
+    "macro.inline"
+  ]
+}

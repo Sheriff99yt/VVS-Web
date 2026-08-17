@@ -91,5 +91,76 @@ describe('createProjectFromEnvironment', () => {
     expect(
       snapshot!.documents['main-graph']?.nodes.some((n) => n.data.kindId === 'class_define')
     ).toBe(true);
+    expect(snapshot!.integration?.hostFiles['main.py']?.strategy).toBe('emit');
+    expect(snapshot!.integration?.hostFiles['main.py']?.appliedTemplate).toContain('from App import App');
   });
 });
+
+describe('rust console environment', () => {
+  test('loads rust console manifest with host files and std I/O natives', () => {
+    const manifest = loadEnvironmentManifest('env.rust.console-app');
+    expect(manifest).toBeDefined();
+    expect(manifest!.displayName).toBe('Rust Console App');
+    expect(manifest!.defaultTarget).toBe('rust');
+    expect(manifest!.category).toBe('console');
+    expect(manifest!.hostFiles.some((f) => f.path === 'src/main.rs')).toBe(true);
+    expect(manifest!.hostFiles.some((f) => f.path === 'Cargo.toml')).toBe(true);
+    expect(manifest!.hostFiles.some((f) => f.path === '.devcontainer/devcontainer.json')).toBe(true);
+    expect(manifest!.devcontainer?.path).toBe('.devcontainer/devcontainer.json');
+    expect(isEnvironmentManifest(manifest)).toBe(true);
+
+    const print = manifest!.apiSurface.methods.find((m) => m.id === 'native.print');
+    expect(print?.targets.rust?.callExpr).toContain('println!');
+    const read = manifest!.apiSurface.methods.find((m) => m.id === 'native.read_line');
+    expect(read?.targets.rust?.callExpr).toContain('stdin');
+  });
+
+  test('expands rust console natives and events', () => {
+    const manifest = loadEnvironmentManifest('env.rust.console-app')!;
+    const categories = expandEnvironmentSymbols({
+      environmentId: manifest.id,
+      manifest,
+      targetLanguage: 'rust',
+      currentGraphId: 'main',
+    });
+    const allItems = categories.flatMap((c) => c.items);
+    expect(allItems.some((i) => i.graphBinding?.kind === 'env_native')).toBe(true);
+    expect(allItems.some((i) => i.graphBinding?.kind === 'env_event')).toBe(true);
+  });
+
+  test('createProjectFromEnvironment rust console', () => {
+    const snapshot = createProjectFromEnvironment('env.rust.console-app');
+    expect(snapshot).not.toBeNull();
+    expect(snapshot!.environmentId).toBe('env.rust.console-app');
+    expect(snapshot!.targetLanguage).toBe('rust');
+    expect(snapshot!.projectDetails.moduleName).toBe('App');
+  });
+});
+
+describe('new curated environment packs', () => {
+  test.each([
+    ['env.csharp.console-app', 'csharp', 'console', 'Program.cs'],
+    ['env.javascript.data-script', 'javascript', 'data', 'main.js'],
+    ['env.javascript.http-service', 'javascript', 'api', 'main.js'],
+  ] as const)('%s loads, validates, and expands', (id, target, category, entryPath) => {
+    const manifest = loadEnvironmentManifest(id);
+    expect(manifest).toBeDefined();
+    expect(manifest!.defaultTarget).toBe(target);
+    expect(manifest!.category).toBe(category);
+    expect(manifest!.hostFiles.some((f) => f.path === entryPath)).toBe(true);
+    expect(isEnvironmentManifest(manifest)).toBe(true);
+
+    const snapshot = createProjectFromEnvironment(id);
+    expect(snapshot?.environmentId).toBe(id);
+    expect(snapshot?.targetLanguage).toBe(target);
+
+    const categories = expandEnvironmentSymbols({
+      environmentId: id,
+      manifest: manifest!,
+      targetLanguage: target,
+      currentGraphId: 'main',
+    });
+    expect(categories.length).toBeGreaterThan(0);
+  });
+});
+

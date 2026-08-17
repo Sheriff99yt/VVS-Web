@@ -16,7 +16,7 @@ import {
 } from '@vvs/syntax-registry';
 import { listSyntaxPacks } from '@vvs/syntax-packs';
 import { bootstrapClassHomeDocuments } from '@/lib/defineNodeSync';
-import { emitProjectLikeCodePanel } from '@/lib/emitProjectCode';
+import { emitProjectLikeCodePanelOffThread } from '@/lib/emitProjectCode';
 import { normalizeNodeData } from '@/lib/nodeKind';
 import { coerceInlineValue } from '@/lib/pinInlineWidget';
 import type { PinDefinition } from '@/types/graph';
@@ -350,11 +350,11 @@ export function listAgentTools(): AgentToolDef[] {
   return AGENT_TOOLS.map((t) => t);
 }
 
-export function callTool(
+export async function callTool(
   name: string,
   args: Record<string, unknown> | undefined,
   ctx: ToolRuntimeContext
-): ToolCallResult {
+): Promise<ToolCallResult> {
   const tool = getAgentTool(name);
   if (!tool) {
     return { ok: false, write: false, error: `unknown tool: ${name}` };
@@ -386,7 +386,7 @@ export function callTool(
       case 'get_graph':
         return { ok: true, write: false, data: getGraph(snapshot, safeArgs) };
       case 'generate_code':
-        return { ok: true, write: false, data: emitProjectLikeCodePanel(snapshot) };
+        return { ok: true, write: false, data: await emitProjectLikeCodePanelOffThread(snapshot) };
       case 'add_class': {
         const result = addClass(snapshot, safeArgs);
         return {

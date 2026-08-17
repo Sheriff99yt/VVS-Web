@@ -1,12 +1,17 @@
 'use client';
 
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphWorkspace } from '@/contexts/GraphWorkspaceContext';
 import { GraphTabMetadata } from '@/lib/graphDefaults';
-import { resolveApiSurface, summarizeEnvironmentManifest } from '@vvs/environment-templates';
+import {
+  resolveApiSurface,
+  summarizeEnvironmentManifest,
+  refreshEnvironmentTemplate,
+  type HostFileRefreshNote,
+} from '@vvs/environment-templates';
 import {
   getLinkedEnvironmentManifest,
   environmentVersionDrift,
@@ -14,7 +19,9 @@ import {
 } from '@/lib/environmentContext';
 import { dispatchEnvironmentImportModal } from '@/components/environments/EnvironmentImportModal';
 import { useEnvironmentCatalog } from '@/hooks/useEnvironmentCatalog';
-import { formatEmitPreview } from '@vvs/graph-types';
+import { useProjectFolder } from '@/contexts/ProjectFolderContext';
+import { readTextFile, writeTextFile } from '@/lib/projectFolder/fsAccess';
+import { formatEmitPreview, resolveHostEmitPath, syncIntegrationEnvironment } from '@vvs/graph-types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { buildExtendsClassPickerOptions } from '@/lib/classScope';
 import { ExtendsListEditor } from '@/components/layout/ExtendsListEditor';
@@ -48,9 +55,14 @@ export function GraphPropertiesPanel({
     activeClassId,
     integration,
     setIntegration,
+    installedLibrary,
+    setInstalledLibrary,
   } = useProject();
   const { getActiveTabMetadata, updateActiveTabMetadata, subscribeMetadata } = useGraphWorkspace();
   const { environments } = useEnvironmentCatalog();
+  const { folderHandle } = useProjectFolder();
+  const [refreshNotes, setRefreshNotes] = useState<HostFileRefreshNote[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const isMain = activeGraphTab === 'main';
   const activeTab = openTabs.find((t) => t.id === activeGraphTab);
@@ -100,6 +112,19 @@ export function GraphPropertiesPanel({
       return;
     }
     setEnvironmentLink(manifest.id, manifest.version);
+    void (async () => {
+      const hostPaths = manifest.hostFiles.map((file) => file.path);
+      let existing: string[] | undefined;
+      if (folderHandle) {
+        existing = [];
+        for (const path of hostPaths) {
+          if ((await readTextFile(folderHandle, path)) !== null) existing.push(path);
+        }
+      }
+      setIntegration((prev) =>
+        syncIntegrationEnvironment(prev, manifest.id, manifest.version, hostPaths, existing)
+      );
+    })();
     if (isMain) {
       const surface = resolveApiSurface(manifest, targetLanguage);
       setProjectDetails((prev) => ({
@@ -127,9 +152,43 @@ export function GraphPropertiesPanel({
 
   const targetEmit = integration.emit[targetLanguage] ?? {};
 
-  const handleUpgradeEnvironment = () => {
-    if (!environmentId || !versionDrift.currentVersion) return;
-    setEnvironmentLink(environmentId, versionDrift.currentVersion);
+  const handleRefreshEnvironment = async () => {
+    if (!environmentId) return;
+    const nextManifest = loadEnvironmentManifest(environmentId);
+    if (!nextManifest) return;
+    setRefreshing(true);
+    try {
+      let currentHostFiles: Record<string, string> | undefined;
+      if (folderHandle) {
+        currentHostFiles = {};
+        for (const host of nextManifest.hostFiles) {
+          const emitPath = resolveHostEmitPath(integration, host.path);
+          const textOnDisk = await readTextFile(folderHandle, emitPath);
+          if (textOnDisk !== null) currentHostFiles[emitPath] = textOnDisk;
+        }
+      }
+      const result = refreshEnvironmentTemplate({
+        moduleName: projectDetails.moduleName,
+        integration,
+        nextManifest,
+        currentHostFiles,
+        installedLibrary,
+      });
+      setIntegration(result.integration);
+      setInstalledLibrary(result.installedLibrary);
+      setEnvironmentLink(result.environmentId, result.environmentVersion);
+      if (folderHandle) {
+        for (const file of result.writeFiles) {
+          const path = file.path.replace(/\\/g, '/').replace(/^\/+/, '');
+          if (!path || path.includes('..')) continue;
+          const content = file.content.endsWith('\n') ? file.content : `${file.content}\n`;
+          await writeTextFile(folderHandle, path, content);
+        }
+      }
+      setRefreshNotes(result.notes);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const showEnvironment = visible.has('environment') && isMain;
@@ -205,12 +264,37 @@ export function GraphPropertiesPanel({
                 </p>
                 <button
                   type="button"
-                  onClick={handleUpgradeEnvironment}
-                  className="text-[10px] font-semibold text-amber-200 hover:text-white px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 transition-colors shrink-0"
+                  onClick={() => void handleRefreshEnvironment()}
+                  disabled={refreshing}
+                  className="text-[10px] font-semibold text-amber-200 hover:text-white px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 transition-colors shrink-0 disabled:opacity-50"
                 >
-                  Update
+                  {refreshing ? 'Refreshing…' : 'Refresh'}
                 </button>
               </div>
+            ) : linkedManifest ? (
+              <button
+                type="button"
+                onClick={() => void handleRefreshEnvironment()}
+                disabled={refreshing}
+                className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
+              >
+                {refreshing ? 'Refreshing template…' : 'Refresh template'}
+              </button>
+            ) : null}
+            {refreshNotes && refreshNotes.length > 0 ? (
+              <ul className="text-[10px] text-zinc-500 space-y-0.5">
+                {refreshNotes.map((note) => (
+                  <li key={note.path}>
+                    <span className="font-mono text-zinc-400">{note.emitPath}</span>
+                    {' · '}
+                    {note.action === 'kept-yours'
+                      ? 'kept yours'
+                      : note.action === 'already-current'
+                        ? 'already current'
+                        : 'updated'}
+                  </li>
+                ))}
+              </ul>
             ) : null}
             <button
               type="button"

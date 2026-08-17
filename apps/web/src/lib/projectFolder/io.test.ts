@@ -9,7 +9,7 @@ import {
 } from '@vvs/graph-types';
 import { createCoverageLabUsabilityTestSnapshot } from '../usabilityExampleTests/coverageLabUsabilityTest';
 import { createInheritanceLabUsabilityTestSnapshot } from '../usabilityExampleTests/inheritanceLabUsabilityTest';
-import { mkdtempSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { loadProjectSnapshotFromPath, saveProjectSnapshotToPath } from './nodeIo';
@@ -86,6 +86,68 @@ describe('projectFolder graph manifest helpers', () => {
     const snapshot = normalizeProjectSnapshot(createCoverageLabUsabilityTestSnapshot())!;
     expect(snapshot.documents.main).toBeUndefined();
     expect(snapshot.documents[MAIN_GRAPH_CONTAINER_ID]).toBeDefined();
+  });
+
+
+  test('folder save writes one graph file per document, not a giant snapshot blob', () => {
+    const snapshot = normalizeProjectSnapshot(createCoverageLabUsabilityTestSnapshot())!;
+    const dir = mkdtempSync(join(tmpdir(), 'vvs-doc-split-'));
+    try {
+      saveProjectSnapshotToPath(dir, snapshot);
+      const manifest = buildFolderGraphManifest(snapshot);
+
+      expect(existsSync(join(dir, 'snapshot.json'))).toBe(false);
+      expect(existsSync(join(dir, '.vvs', 'snapshot.json'))).toBe(false);
+      expect(existsSync(join(dir, '.vvs', 'documents.json'))).toBe(false);
+
+      const projectJson = JSON.parse(readFileSync(join(dir, '.vvs', 'project.json'), 'utf8')) as {
+        documents?: unknown;
+      };
+      expect(projectJson.documents).toBeUndefined();
+
+      const expectedRel = {
+        ...(manifest.containers ?? {}),
+        ...manifest.functions,
+      };
+      expect(Object.keys(expectedRel).length).toBeGreaterThan(1);
+
+      for (const [docId, rel] of Object.entries(expectedRel)) {
+        const path = join(dir, '.vvs', rel);
+        expect(existsSync(path)).toBe(true);
+        const doc = JSON.parse(readFileSync(path, 'utf8')) as {
+          nodes?: unknown;
+          edges?: unknown;
+          documents?: unknown;
+          version?: unknown;
+        };
+        expect(Array.isArray(doc.nodes)).toBe(true);
+        expect(Array.isArray(doc.edges)).toBe(true);
+        expect(doc.documents).toBeUndefined();
+        expect(doc.version).toBeUndefined();
+        expect(snapshot.documents[docId]).toBeDefined();
+      }
+
+      const graphJsonFiles: string[] = [];
+      const walk = (folder: string) => {
+        if (!existsSync(folder)) return;
+        for (const name of readdirSync(folder)) {
+          const next = join(folder, name);
+          if (statSync(next).isDirectory()) walk(next);
+          else if (name.endsWith('.graph.json')) graphJsonFiles.push(next);
+        }
+      };
+      walk(join(dir, '.vvs', 'graphs'));
+      expect(graphJsonFiles).toHaveLength(Object.keys(expectedRel).length);
+
+      const loaded = loadProjectSnapshotFromPath(dir);
+      if (!loaded) throw new Error('failed to reload split folder project');
+      for (const docId of Object.keys(expectedRel)) {
+        expect(loaded.documents[docId]).toBeDefined();
+        expect(loaded.documents[docId]?.nodes.length).toBe(snapshot.documents[docId]?.nodes.length);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test('loadProjectFromFolder registers custom packs from packs directory', async () => {

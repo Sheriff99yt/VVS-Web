@@ -6,6 +6,7 @@ export type {
   ApiMethodTargetBinding,
   ApiSurface,
   HostFileTemplate,
+  EnvironmentDevcontainerRef,
   ProjectEnvironmentManifest,
   ResolvedApiSurface,
 } from './types';
@@ -71,3 +72,26 @@ export {
   isEnvironmentCategory,
   type EnvironmentCategory,
 } from './categories';
+
+export {
+  adoptHostFileRules,
+  filterGeneratedFilesForHostPolicy,
+  hashHostContent,
+  mergeImportedManifest,
+  normalizeHostFileContent,
+  planHostFileWrites,
+  recordAppliedHostFiles,
+  refreshLinkedEnvironment,
+  skippedHostEmitPaths,
+  type HostFileDrift,
+  type HostFileSkipReason,
+  type HostFileWritePlan,
+} from './hostFiles';
+
+export {
+  refreshEnvironmentTemplate,
+  type HostFileRefreshAction,
+  type HostFileRefreshNote,
+  type RefreshEnvironmentTemplateInput,
+  type RefreshEnvironmentTemplateResult,
+} from './refreshEnvironmentTemplate';

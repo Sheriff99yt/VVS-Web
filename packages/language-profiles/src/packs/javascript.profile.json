@@ -1,0 +1,28 @@
+{
+  "id": "javascript",
+  "displayName": "JavaScript",
+  "capabilities": [
+    "async",
+    "es2020"
+  ],
+  "native": [
+    "function.static",
+    "function.module",
+    "function.async",
+    "class.inheritance",
+    "variable.static",
+    "variable.module",
+    "variable.readonly",
+    "type.data_object",
+    "type.data_array",
+    "type.data_any",
+    "env.native"
+  ],
+  "emulated": [
+    "function.overload"
+  ],
+  "unsupported": [
+    "function.virtual",
+    "macro.inline"
+  ]
+}

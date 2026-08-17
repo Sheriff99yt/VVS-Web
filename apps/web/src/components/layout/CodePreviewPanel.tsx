@@ -10,7 +10,7 @@ import {
 import { useProject } from '@/contexts/ProjectContext';
 import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { VVSNode, VVSEdge } from '@/types/graph';
-import { transpileGraph, withProjectCodegenTarget } from '@/lib/codegen';
+import { transpileGraphOffThread, withProjectCodegenTarget } from '@/lib/codegen';
 import type { TranspileResult } from '@/types/transpile';
 import { isOrgOnlyGraphTab } from '@/lib/graphTabs';
 import { MAIN_GRAPH_CONTAINER_ID, classForHomeGraphId, classHomeGraphId } from '@/lib/classScope';
@@ -240,14 +240,21 @@ export function CodePreviewPanel({
   );
   const pausedLiveRef = useRef<TranspileResult | null>(null);
 
-  const liveResult = useMemo(() => {
+  const [liveResult, setLiveResult] = useState<TranspileResult>(() => ({
+    language: targetLanguage,
+    files: [],
+    sourceMap: {},
+  }));
+
+  useEffect(() => {
     if (previewPaused) {
       const emptyPaused: TranspileResult = {
         language: targetLanguage,
         files: [],
         sourceMap: {},
       };
-      return pausedLiveRef.current ?? emptyPaused;
+      setLiveResult(pausedLiveRef.current ?? emptyPaused);
+      return;
     }
 
     if (isOrgGraph) {
@@ -257,7 +264,8 @@ export function CodePreviewPanel({
         sourceMap: {},
       };
       pausedLiveRef.current = empty;
-      return empty;
+      setLiveResult(empty);
+      return;
     }
 
     const nodes = (previewDocument?.nodes ?? []) as VVSNode[];
@@ -272,17 +280,17 @@ export function CodePreviewPanel({
 
     // Container / class-home graphs: show project emit (one graph → one file),
     // except JSON — always dump via transpileGraph so the panel matches the lang picker.
-    let next: TranspileResult;
     if (!isFunctionTab && isModuleGraph && targetLanguage !== 'json') {
       const ownedFiles = projectResult.files.filter((file) => fileOwners[file.path] === previewTabId);
       if (ownedFiles.length > 0) {
-        next = {
+        const next = {
           language: projectResult.language,
           files: ownedFiles,
           sourceMap: projectResult.sourceMap,
         } as TranspileResult;
         pausedLiveRef.current = next;
-        return next;
+        setLiveResult(next);
+        return;
       }
     }
 
@@ -307,15 +315,21 @@ export function CodePreviewPanel({
       emitUserComments: showUserComments,
     };
 
-    next = transpileGraph(
+    let cancelled = false;
+    void transpileGraphOffThread(
       withProjectCodegenTarget(codegenCtx, {
         targetLanguage,
         codegenCapabilities,
         syntaxPackLock,
       })
-    );
-    pausedLiveRef.current = next;
-    return next;
+    ).then((next) => {
+      if (cancelled) return;
+      pausedLiveRef.current = next;
+      setLiveResult(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [
     previewPaused,
     previewDocument,

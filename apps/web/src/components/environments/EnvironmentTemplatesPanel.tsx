@@ -17,6 +17,7 @@ interface EnvironmentTemplatesPanelProps {
   onCategoryChange: (category: EnvironmentCategory | 'all') => void;
   onSelect: (environmentId: string) => void;
   selectedId?: string | null;
+  emptyLabel?: string;
 }
 
 export function EnvironmentTemplatesPanel({
@@ -25,6 +26,7 @@ export function EnvironmentTemplatesPanel({
   onCategoryChange,
   onSelect,
   selectedId,
+  emptyLabel,
 }: EnvironmentTemplatesPanelProps) {
   const categoryCounts = useMemo(() => {
     const counts: Record<EnvironmentCategory | 'all', number> = {
@@ -54,7 +56,7 @@ export function EnvironmentTemplatesPanel({
   if (environments.length === 0) {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-center text-zinc-500 border border-dashed border-zinc-800 rounded-lg">
-        <p className="text-sm">No project templates available.</p>
+        <p className="text-sm">{emptyLabel ?? 'No project templates available.'}</p>
       </div>
     );
   }

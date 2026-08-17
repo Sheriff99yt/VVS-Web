@@ -1,0 +1,27 @@
+{
+  "id": "csharp",
+  "displayName": "C#",
+  "capabilities": [
+    "dotnet8"
+  ],
+  "native": [
+    "function.static",
+    "function.module",
+    "function.async",
+    "class.inheritance",
+    "variable.module",
+    "variable.static",
+    "variable.readonly",
+    "type.data_object",
+    "type.data_array",
+    "type.data_any",
+    "env.native"
+  ],
+  "emulated": [
+    "function.overload"
+  ],
+  "unsupported": [
+    "function.virtual",
+    "macro.inline"
+  ]
+}

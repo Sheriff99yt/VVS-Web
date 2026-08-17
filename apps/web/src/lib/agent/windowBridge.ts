@@ -36,7 +36,7 @@ export async function invokeAgentTool(
   if (!snapshot) {
     throw new Error('editor graph is not ready');
   }
-  const result = callTool(name, args, {
+  const result = await callTool(name, args, {
     snapshot,
     allowWrites: host.getAllowWrites(),
   });

@@ -34,6 +34,7 @@ Each manifest includes:
 - `hostFiles[]` — entry templates with `{moduleName}` slots (not visual graphs)
 - `module.extends` — resolved per target via `ApiTypeDef.targets[lang].extendsName`
 - Per-target `callExpr` on methods for text-shaped native emission
+- Optional `devcontainer: { path }` — a containers.dev reference that must name an existing `hostFiles[]` entry (typically `.devcontainer/devcontainer.json`). VVS ships the file with the pack and does not start Docker or apply the container.
 
 ## UI
 
@@ -125,4 +126,12 @@ import {
 import { importBackstagePack } from '@vvs/environment-templates/node';
 ```
 
-**Planned:** TypeSpec emitter, devcontainer.json linkage, Backstage catalog publish action.
+**Planned:** TypeSpec emitter, Backstage catalog publish action. Dev Container linkage is an optional manifest field + host file (no Docker runtime in the editor).
+
+### Host file skip vs emit
+
+`.vvs/integration.json` `hostFiles[path].strategy` is `skip` or `emit` (optional custom `path`). Adopting a folder probes for existing host entries (`main.py`, `src/main.rs`, ...) and marks those `skip` so Generate does not clobber them. Missing template files stay `emit`.
+
+### Template upgrade
+
+Graph settings **Refresh** re-applies host files from the linked environment version. User graphs are not rewritten. Files that still match the last applied template are refreshed; user-changed files are kept and listed as drift. There is no three-way merge and no in-editor host IDE.

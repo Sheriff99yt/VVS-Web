@@ -64,7 +64,16 @@
         }
       }
     },
-    "starter": { "type": "object" }
+    "starter": { "type": "object" },
+    "devcontainer": {
+      "type": "object",
+      "description": "Optional containers.dev reference. path must exist in hostFiles. VVS does not start Docker.",
+      "required": ["path"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 }
+      }
+    }
   },
   "additionalProperties": false
 }

@@ -487,6 +487,31 @@ function collectBranchDescendantIds(branchNodeId: string, nodes: GraphNode[], ed
   return ids;
 }
 
+function selectedCallOverloadId(node: GraphNode): string | undefined {
+  const fromBinding = node.data.graphBinding?.overloadId;
+  if (typeof fromBinding === 'string' && fromBinding.trim()) return fromBinding.trim();
+  const fromProps = node.data.properties?.overloadId;
+  if (typeof fromProps === 'string' && fromProps.trim()) return fromProps.trim();
+  return undefined;
+}
+
+/** Args for the Call node's selected overload — not every overload, not leftover pins. */
+function callFunctionArgExprs(
+  node: GraphNode,
+  fn: FunctionSymbol | undefined,
+  ctx: LowerContext
+): IrExpr[] {
+  const overloadId = selectedCallOverloadId(node);
+  const overload =
+    (fn && overloadId ? fn.overloads.find((o) => o.id === overloadId) : undefined) ??
+    fn?.overloads[0];
+  if (overload) {
+    return overload.parameters.map((p) => resolvePinValueExpr(node, p.id, ctx, 0));
+  }
+  const paramIds = node.data.inputs.filter((p) => p.type !== 'execution').map((p) => p.id);
+  return paramIds.map((pinId) => resolvePinValueExpr(node, pinId, ctx, 0));
+}
+
 function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   const kindId = resolveNodeKindId(node.data);
 
@@ -612,8 +637,7 @@ function lowerStatement(
     const inheritedDepth = inheritedMemberDepth(fn?.classId, ctx);
     const inheritedCall = inheritedDepth > 0;
     const staticCall = fn?.binding === 'static' || fn?.binding === 'module';
-    const paramIds = node.data.inputs.filter((p) => p.type !== 'execution').map((p) => p.id);
-    const args = paramIds.map((pinId) => resolvePinValueExpr(node, pinId, ctx, 0));
+    const args = callFunctionArgExprs(node, fn, ctx);
     const isSuper = nodeWantsSuper(node) && Boolean(activeParentClassName(ctx));
     return {
       kind: 'CallFunction',

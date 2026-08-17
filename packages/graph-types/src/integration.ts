@@ -18,6 +18,8 @@ export interface HostFileIntegrationRule {
   strategy: HostFileStrategy;
   /** Repo-relative path when strategy is emit (defaults to template path) */
   path?: string;
+  /** Last-applied template render — used by refresh to detect user edits. */
+  appliedTemplate?: string;
 }
 
 export interface TargetEmitConfig {
@@ -34,6 +36,8 @@ export interface ProjectIntegrationConfig {
   environmentVersion?: string;
   emit: Partial<Record<TargetLanguage, TargetEmitConfig>>;
   hostFiles: Record<string, HostFileIntegrationRule>;
+  /** Fingerprints of last-applied host file contents (refresh / drift). */
+  appliedHostFiles?: Record<string, string>;
 }
 
 export function createDefaultIntegration(options?: {
@@ -44,11 +48,21 @@ export function createDefaultIntegration(options?: {
   /** When true, skip emitting template host entry files (existing repo) */
   adoptExisting?: boolean;
   hostFilePaths?: string[];
+  /** Host files already on disk — those are skipped; others emit when this list is provided. */
+  existingHostFilePaths?: string[];
 }): ProjectIntegrationConfig {
   const hostFiles: Record<string, HostFileIntegrationRule> = {};
-  const strategy: HostFileStrategy = options?.adoptExisting ? 'skip' : 'emit';
+  const existing = new Set(
+    (options?.existingHostFilePaths ?? []).map((path) => path.replace(/\\/g, '/'))
+  );
+  const probed = options?.existingHostFilePaths != null;
   for (const path of options?.hostFilePaths ?? []) {
-    hostFiles[path] = { strategy };
+    const normalized = path.replace(/\\/g, '/');
+    let strategy: HostFileStrategy;
+    if (existing.has(normalized)) strategy = 'skip';
+    else if (probed) strategy = 'emit';
+    else strategy = options?.adoptExisting ? 'skip' : 'emit';
+    hostFiles[normalized] = { strategy };
   }
 
   const moduleName = options?.moduleName ?? 'App';
@@ -110,8 +124,16 @@ export function normalizeIntegrationConfig(raw: unknown): ProjectIntegrationConf
         hostFiles[path] = {
           strategy,
           path: typeof r.path === 'string' ? r.path : undefined,
+          appliedTemplate: typeof r.appliedTemplate === 'string' ? r.appliedTemplate : undefined,
         };
       }
+    }
+  }
+
+  const appliedHostFiles: Record<string, string> = {};
+  if (value.appliedHostFiles && typeof value.appliedHostFiles === 'object') {
+    for (const [path, hash] of Object.entries(value.appliedHostFiles as Record<string, unknown>)) {
+      if (typeof hash === 'string' && hash.trim()) appliedHostFiles[path] = hash;
     }
   }
 
@@ -121,6 +143,7 @@ export function normalizeIntegrationConfig(raw: unknown): ProjectIntegrationConf
       typeof value.environmentVersion === 'string' ? value.environmentVersion : undefined,
     emit,
     hostFiles,
+    ...(Object.keys(appliedHostFiles).length > 0 ? { appliedHostFiles } : {}),
   };
 }
 
@@ -210,13 +233,20 @@ export function syncIntegrationEnvironment(
   integration: ProjectIntegrationConfig,
   environmentId: string | undefined,
   environmentVersion: string | undefined,
-  hostFilePaths: string[]
+  hostFilePaths: string[],
+  existingHostFilePaths?: string[]
 ): ProjectIntegrationConfig {
   const hostFiles = { ...integration.hostFiles };
+  const existing = new Set(
+    (existingHostFilePaths ?? []).map((path) => path.replace(/\\/g, '/'))
+  );
+  const probed = existingHostFilePaths != null;
   for (const path of hostFilePaths) {
-    if (!hostFiles[path]) {
-      hostFiles[path] = { strategy: 'skip' };
-    }
+    const normalized = path.replace(/\\/g, '/');
+    if (hostFiles[normalized]) continue;
+    hostFiles[normalized] = {
+      strategy: probed ? (existing.has(normalized) ? 'skip' : 'emit') : 'skip',
+    };
   }
   return {
     ...integration,

@@ -1,0 +1,24 @@
+{
+  "id": "json",
+  "displayName": "JSON",
+  "capabilities": [],
+  "native": [
+    "type.data_object",
+    "type.data_array"
+  ],
+  "emulated": [],
+  "unsupported": [
+    "function.static",
+    "function.overload",
+    "function.module",
+    "function.virtual",
+    "function.async",
+    "macro.inline",
+    "variable.static",
+    "variable.module",
+    "variable.readonly",
+    "type.data_any",
+    "event.multicast",
+    "env.native"
+  ]
+}

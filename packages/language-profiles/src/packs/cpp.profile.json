@@ -1,0 +1,27 @@
+{
+  "id": "cpp",
+  "displayName": "C++",
+  "capabilities": [
+    "cpp17"
+  ],
+  "native": [
+    "function.static",
+    "function.module",
+    "function.overload",
+    "function.virtual",
+    "class.inheritance",
+    "variable.static",
+    "variable.module",
+    "variable.readonly",
+    "type.data_object",
+    "type.data_array",
+    "type.data_any",
+    "env.native"
+  ],
+  "emulated": [
+    "function.async"
+  ],
+  "unsupported": [
+    "macro.inline"
+  ]
+}

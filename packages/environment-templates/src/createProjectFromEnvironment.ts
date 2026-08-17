@@ -1,4 +1,5 @@
 import {
+  createDefaultIntegration,
   createEmptyProjectSnapshot,
   defaultTabMetadata,
   MAIN_GRAPH_CONTAINER_ID,
@@ -6,7 +7,7 @@ import {
   type ProjectSnapshot,
 } from '@vvs/graph-types';
 import { loadEnvironmentManifest } from './loader';
-import { resolveApiSurface } from './resolveApiSurface';
+import { renderHostFileTemplate, resolveApiSurface } from './resolveApiSurface';
 
 function mergeStarterDocuments(
   snapshot: ProjectSnapshot,
@@ -65,6 +66,23 @@ export function createProjectFromEnvironment(environmentId: string): ProjectSnap
       environmentVersion: manifest.version,
     },
   ];
+
+  const integration = createDefaultIntegration({
+    environmentId,
+    environmentVersion: manifest.version,
+    moduleName,
+    defaultTarget: manifest.defaultTarget,
+    adoptExisting: false,
+    hostFilePaths: manifest.hostFiles.map((h) => h.path),
+  });
+  for (const host of manifest.hostFiles) {
+    const prior = integration.hostFiles[host.path] ?? { strategy: 'emit' as const };
+    integration.hostFiles[host.path] = {
+      ...prior,
+      appliedTemplate: renderHostFileTemplate(host.template, moduleName),
+    };
+  }
+  snapshot.integration = integration;
 
   return snapshot;
 }
