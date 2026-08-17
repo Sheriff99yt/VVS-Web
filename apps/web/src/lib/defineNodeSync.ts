@@ -11,7 +11,6 @@ import type {
 import {
   findDefineNodesForSymbol,
   findMemberChainTail,
-  findProgramEntryEvent,
   isMemberDefineKind,
   MEMBER_DEFINE_KINDS,
   classDefineMatchesClass as graphClassDefineMatchesClass,
@@ -22,7 +21,7 @@ import { resolve as resolveKind } from '@/lib/nodeRegistry';
 import { classHomeGraphId, syncClassExtendsFields, createClassHomeBootstrap, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 import { createUniqueEdgeId } from '@/lib/graphWiring';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
-import { resolveOverloadForCall, buildFunctionImplementData, applyFunctionDefineBinding, applyFunctionImplementBinding } from '@/lib/functionHelpers';
+import { buildFunctionImplementData, applyFunctionDefineBinding, applyFunctionImplementBinding } from '@/lib/functionHelpers';
 import { applyEventDefineBinding } from '@/lib/eventHelpers';
 import { getLastGraphFlowPosition } from '@/lib/graphPointerPlacement';
 

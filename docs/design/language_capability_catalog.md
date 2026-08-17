@@ -105,7 +105,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 
 | Capability | Neutral UI | Node / property | Families | uiStatus | Notes |
 |------------|------------|-----------------|----------|----------|-------|
-| Class / module shell | Declare Class `{name}` | `class_define` | all | shipped | `extendsType` on class + define node (emit today: one string). Extends is a **list** (locked visual). See [Multiple inheritance](#multiple-inheritance-locked-visual). |
+| Class / module shell | Declare Class `{name}` | `class_define` | all | shipped | `extendsType` on class + define node; extras on `extendsTypes`. Generate prints all Extends rows for python/cpp; others first parent. Extends is a **list** (locked visual). See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Component (game-talk) | same as Declare Class | `class_define` + field or Extends | all | **locked** | Not a second construct. See [Component = Class](#component--class). U103 closed. |
 | Inheritance / Extends | Extends list on Declare Class | `class_define` Extends rows | py, cpp (two class rows); cs one class + Implements; js/gd/verse one; go/rs hidden | **partial** | List UI shipped. Generate prints all Extends rows for python/cpp; others still first parent / stored only. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Variable field | Declare `{name}` | `var_define` | all | shipped | **TypeRef** (builtin / enum / class / array / map); legacy `enumType` migrates |
@@ -343,7 +343,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 | **Lambda / anonymous function** | Lambda expression node | `lambda_define` — not a project symbol | py, js, cs, rs, gd | **shipped** | You type `lambda` / `=>` / `\|x\|`. Capture is an **option**. Drop `closure_define`. |
 | **Closure capture** | option on the Lambda node | capture option on `lambda_define` | py, js, rs | shipped | Not a second `closure_define` kind. Rust emit uses `move` when set. |
 | **Null / optional** | Optional type + nodes | type system + `optional_*` | cs, rs | planned | |
-| **Pattern matching** | Switch is the node | `flow_switch` + optional `match` lowering (CL-017) | rs, py 3.10+, cs | planned | Drop planned `flow_match` as a kind. Do not add a Match node. |
+| **Pattern matching** | Switch is the node | `flow_switch` + native match lowering (CL-017) | rs, py 3.10+ | **shipped** | Python `match` / Rust `match`. C# / JS / C++ keep `switch`. Drop planned `flow_match`. Do not add a Match node. |
 | **Try / catch** | Try flow node (like Branch) | `flow_try`; catch / finally are exec pins | py, js, cpp, cs, gd | **shipped** | Not a symbol. Do **not** spawn in Go or Rust. Empty finally omitted. |
 | **Await** | Wait `isAsync` option (or function async flag) | `action_wait` | all 8 packs | shipped | No `expr_await` node; C++/Rust keep std thread sleep; Verse `Sleep` |
 | Generics / templates | `type_params[]` **option** on Class or Function | option — not a node | cpp, cs, rs | planned | `template<typename T>` / `fn foo<T>()`. Not a node. |

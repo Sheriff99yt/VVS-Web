@@ -59,7 +59,7 @@ CLOSED                         ACTIVE                              PLANNED
 ─────────────────────────────  ──────────────────────────────────  ─────────────────────
 1  Web editor + 8 packs        6  Leftover fidelity                4  Session collab (P2P)
 2  Persistence + in-page agent    CL-014 honest (x)                  5  UE6 Verse plugin
-   U77–U83 · U89–U92 shipped      optional CL-017                    3  Library repo + web UI
+   U77–U83 · U89–U92 shipped      Implements list (locked)           3  Library repo + web UI
    emit/OOP + ctor role shipped   U93 code→visual (long-term)
    U103 locked (Component=Class)  U90 Library auth/upload frozen
    U90 Library API done
@@ -128,11 +128,13 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
 | **U104** | Overloading | Done — UX/emit audited under real fixtures; floating overload panel |
 | **U105** | Overwriting (override) | **Done** — option on Declare/Define; emit + dim per language |
-| **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010). One parent today (`extendsType` string). |
-| **Extends list** | Multiple inheritance visual | **Partial** — list UI shipped on Declare Class; extras stored on `extendsTypes`; generate still prints the first parent only. Multi-base emit not shipped. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
+| **U106** | Inheritance | **Done** — canvas authoring + per-language lowering (pairs CL-010). Super / inherited members still first parent (`extendsType`). |
+| **Extends list** | Multiple inheritance visual | **Partial** — list UI shipped; extras on `extendsTypes`. Generate prints every Extends row for python/cpp; js/gd/verse/cs still first parent (C# extras are Implements, not built). go/rust list hidden. See [catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual). |
 | **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
 | **Lambda** | Expression node | **Done** — `lambda_define` (python / javascript / csharp / rust / gdscript). Capture option. |
 | **Try** | Flow node | **Done** — `flow_try` (python / javascript / cpp / csharp / gdscript). Empty finally omitted. Hidden in Go/Rust. |
+| **Yield** | Statement node | **Done** — `yield_stmt` (python / gdscript). Hidden elsewhere. No invented generator syntax. |
+| **Switch match** | CL-017 | **Done** — same Switch node. Python `match` / Rust `match`. C#/JS/C++ keep `switch`. |
 
 Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no** live run.
 
@@ -145,7 +147,7 @@ Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no
 | **P1** | CL-008, CL-009 | Rust static/const + imports | **Done** — module `static` / associated `const`; generated `use std::collections::HashMap;` |
 | **P1** | CL-012, CL-013 | GDScript temps + GetInput | **Done** — Switch temp `var`; GetInput prints prompt |
 | **P1** | CL-016 | Verse field defaults | **Done** — class-typed `Host = Machine{}` (archetype value, not constructor) |
-| **P2** | CL-017 | Switch `match` | Optional native match — if-cascade is intentional ship shape |
+| **P2** | CL-017 | Switch `match` | **Done** — Python `match` / Rust `match`; C#/JS/C++ keep `switch`; GDScript/Go/Verse keep if-cascade |
 | **P2** | CL-018 | Async chips | **Done** — rust `isAsync` dimmed (no Tokio; Wait is `thread::sleep`); Call Super is a Call option |
 
 Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
@@ -179,7 +181,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, optional CL-017, U93 long-term, U90 frozen. |
+| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. CL-017 Switch match shipped. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

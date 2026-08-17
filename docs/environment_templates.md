@@ -129,7 +129,7 @@ import {
 import { importBackstagePack, importTypeSpecFile } from '@vvs/environment-templates/node';
 ```
 
-TypeSpec is a first-class import path next to OpenAPI/AsyncAPI: `loadTypeSpecDocument()` / `importTypeSpecFile()` compile a `.tsp` with `@typespec/compiler` (not a subset parser) and map `@service` title/namespace, `model`s, `interface` operations, and namespace `op`s into a `ProjectEnvironmentManifest`. Host files stay empty unless another importer supplies them. The compiler lives on the Node/CLI entry (`@vvs/environment-templates/node` and `scripts/env-import.ts --typespec|--tsp`) so it is not part of the hosted Pages bundle. `` is also exported from `./emitter` for `tsp compile --emit`. Backstage catalog publish remains planned. Dev Container linkage is an optional manifest field + host file (no Docker runtime in the editor).
+TypeSpec is a first-class import path next to OpenAPI/AsyncAPI: `loadTypeSpecDocument()` / `importTypeSpecFile()` compile a `.tsp` with `@typespec/compiler` (not a subset parser) and map `@service` title/namespace, `model`s, `interface` operations, and namespace `op`s into a `ProjectEnvironmentManifest`. Host files stay empty unless another importer supplies them. The compiler lives on the Node/CLI entry (`@vvs/environment-templates/node` and `scripts/env-import.ts --typespec|--tsp`) so it is not part of the hosted Pages bundle. `$onEmit` is also exported from `./emitter` for `tsp compile --emit`. Backstage catalog publish remains planned. Dev Container linkage is an optional manifest field + host file (no Docker runtime in the editor).
 
 ### Host file skip vs emit
 

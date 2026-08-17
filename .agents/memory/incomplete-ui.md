@@ -149,7 +149,7 @@ Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_
 
 ## Suggested depth-first order (remaining)
 
-**§15–§18 remaining:** CL-014 honest `(x)` · optional CL-017 Switch match · U93 long-term · U90 frozen. **U103 locked** (Component = Class) is not remaining work. Function constructor/destructor role shipped. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
+**§15–§18 remaining:** CL-014 honest `(x)` · U93 long-term · U90 frozen. **U103 locked** (Component = Class) is not remaining work. Function constructor/destructor role shipped. **U77 Go**, **U78 Pack Manager**, **U83**, and **U84–U88 / U94–U96** done. Client-first: **no dedicated server**, **no live code execution**. Emit fidelity plans (CL backlog): [cross_language_mapping/SKILL.md](../skills/vvs_cross_language_mapping/SKILL.md) · [roadmap.md](../../docs/roadmap.md).
 
 ---
 

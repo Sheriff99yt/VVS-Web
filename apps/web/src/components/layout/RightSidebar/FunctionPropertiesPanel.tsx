@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { FunctionBinding, FunctionSymbol, PinType, SymbolVisibility } from '@vvs/graph-types';
-import { createDefaultOverload, FUNCTION_RETURN_TYPE_OPTIONS, overloadReturnParameters } from '@vvs/graph-types';
+import type { FunctionBinding, FunctionSymbol, SymbolVisibility } from '@vvs/graph-types';
+import { createDefaultOverload, overloadReturnParameters } from '@vvs/graph-types';
 import { graphInlineFieldProps } from '@/components/graph/graphInlineFieldProps';
 import { SymbolParameterEditor } from './SymbolParameterEditor';
 import { overloadDisplayLabel } from '@/lib/functionTabs';

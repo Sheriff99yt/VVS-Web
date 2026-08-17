@@ -45,8 +45,8 @@ The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation rema
 | C++ | Yes | `cpp.base` | 14 fixtures | `env.cpp.*` |
 | Verse | Yes | `verse.base` | 14 fixtures | (via multi-target envs) |
 | GDScript | Yes | `gdscript.base` | 14 fixtures | `env.gdscript.godot-game` |
-| Rust | Yes | `rust.base` | 14 fixtures | — (console env planned) |
-| C# | Yes | `csharp.base` | 14 fixtures | — (console env planned) |
+| Rust | Yes | `rust.base` | 14 fixtures | `env.rust.console-app` |
+| C# | Yes | `csharp.base` | 14 fixtures | `env.csharp.console-app` |
 | Go | Yes | `go.base` | 14 fixtures | — (console env planned) |
 | Graph JSON | Yes | — | — | — |
 

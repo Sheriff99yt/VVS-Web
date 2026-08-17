@@ -40,7 +40,7 @@ import { FloatingPanelShell } from './FloatingPanelShell';
 import { readUiPreference, writeUiPreferences, clampDetailsPanelHeight, clampFloatingPanelWidth, defaultDetailsPanelLayout, dispatchResetDetailsPanelLayout, RESET_DETAILS_PANEL_LAYOUT_EVENT } from '@/lib/uiPreferences';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
-import { activeClass, buildExtendsClassPickerOptions } from '@/lib/classScope';
+import { activeClass } from '@/lib/classScope';
 import { useClassLifecycle } from '@/hooks/useClassLifecycle';
 import {
   hasDefineNodeForEvent,
@@ -717,18 +717,6 @@ function GraphFloatingDetailsPanel() {
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}
               fieldOptions={{
-                ...(nodeKindId === 'class_define'
-                  ? {
-                      extendsType: buildExtendsClassPickerOptions(
-                        classes,
-                        typeof nodeData.data.properties?.classId === 'string'
-                          ? nodeData.data.properties.classId
-                          : typeof nodeData.data.properties?.symbolId === 'string'
-                            ? nodeData.data.properties.symbolId
-                            : undefined
-                      ),
-                    }
-                  : {}),
                 ...(nodeKindId === 'function_implement' || nodeKindId === 'function_define'
                   ? { role: functionRoleFieldOptions(targetLanguage) }
                   : {}),
