@@ -6,6 +6,7 @@ import {
   applyEventUpdateToDocuments,
   applyFunctionUpdateToDocuments,
   applyVariableRenameToDocuments,
+  planSymbolDelete,
 } from './symbolLifecycle';
 
 function varDefineNode(variableId: string, name: string): VVSNode {
@@ -280,6 +281,7 @@ describe('applyClassDeleteToDocuments', () => {
           classDefineNode(kept.id, kept.name, 'class-define-cls-kept'),
           varDefineNode(variable.id, variable.name),
           functionDefineNode(func.id, func.name, func.overloads[0]!.id, 'fn-def-gone'),
+          functionImplementNode(func.id, func.name, func.overloads[0]!.id),
           eventMemberNode(event.id, event.name),
         ],
         edges: [],
@@ -297,7 +299,69 @@ describe('applyClassDeleteToDocuments', () => {
     expect(next.home!.nodes.some((n) => n.id === 'class-define-cls-gone')).toBe(false);
     expect(next.home!.nodes.some((n) => n.data.kindId === 'var_define')).toBe(false);
     expect(next.home!.nodes.some((n) => n.data.kindId === 'function_define')).toBe(false);
+    expect(next.home!.nodes.some((n) => n.data.kindId === 'function_implement')).toBe(false);
     expect(next.home!.nodes.some((n) => n.data.kindId === 'event_member_define')).toBe(false);
     expect(kinds.some((k) => k.startsWith('class_define:cls-kept'))).toBe(true);
+  });
+});
+
+describe('planSymbolDelete function', () => {
+  test('symbol_only removes function_define and function_implement', () => {
+    const ovl = createDefaultOverload();
+    const func: FunctionSymbol = {
+      id: 'fn-1',
+      name: 'Boot',
+      kind: 'function',
+      classId: 'cls-1',
+      binding: 'instance',
+      visibility: 'public',
+      overloads: [ovl],
+    };
+    const other: FunctionSymbol = {
+      id: 'fn-2',
+      name: 'Tick',
+      kind: 'function',
+      classId: 'cls-1',
+      binding: 'instance',
+      visibility: 'public',
+      overloads: [createDefaultOverload()],
+    };
+    const documents: Record<string, GraphDocument> = {
+      home: {
+        nodes: [
+          functionDefineNode(func.id, func.name, ovl.id, 'fn-def-1'),
+          functionImplementNode(func.id, func.name, ovl.id),
+          functionDefineNode(other.id, other.name, other.overloads[0]!.id, 'fn-def-2'),
+        ],
+        edges: [],
+      },
+      [func.id]: { nodes: [], edges: [] },
+    };
+    const plan = planSymbolDelete(
+      'function',
+      func.id,
+      'symbol_only',
+      {
+        variables: [],
+        functions: [func, other],
+        events: [],
+        openTabs: [
+          { id: func.id, type: 'function', name: func.name },
+          { id: 'home', type: 'graph', name: 'Home' },
+        ],
+      },
+      documents
+    );
+    expect(plan.nextSymbols.functions.map((f) => f.id)).toEqual([other.id]);
+    expect(plan.nextDocuments[func.id]).toBeUndefined();
+    expect(plan.closeTabIds).toContain(func.id);
+    const home = plan.nextDocuments.home!;
+    expect(home.nodes.some((n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === func.id)).toBe(
+      false
+    );
+    expect(home.nodes.some((n) => n.data.kindId === 'function_implement' && n.data.properties?.symbolId === func.id)).toBe(
+      false
+    );
+    expect(home.nodes.some((n) => n.id === 'fn-def-2')).toBe(true);
   });
 });

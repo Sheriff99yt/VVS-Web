@@ -9,6 +9,7 @@ import type {
   VVSNodeData,
 } from '@/types/graph';
 import {
+  defineNodeSymbolId,
   findDefineNodesForSymbol,
   findMemberChainTail,
   isMemberDefineKind,
@@ -813,12 +814,14 @@ export function removeDefineNodesForSymbol(
   kind: 'variable' | 'function' | 'event',
   symbolId: string
 ): Record<string, GraphDocument> {
-  const expectedKind =
+  // Function delete must drop both Declare (function_define) and Define
+  // (function_implement). Leaving implement is a leftover orphan with no symbol.
+  const expectedKinds =
     kind === 'variable'
-      ? 'var_define'
+      ? ['var_define']
       : kind === 'function'
-        ? 'function_define'
-        : 'event_member_define';
+        ? ['function_define', 'function_implement']
+        : ['event_member_define'];
 
   let changed = false;
   const next: Record<string, GraphDocument> = { ...documents };
@@ -826,9 +829,15 @@ export function removeDefineNodesForSymbol(
   for (const [tabId, doc] of Object.entries(documents)) {
     const removeIds = new Set(
       doc.nodes
-        .filter(
-          (n) => n.data.kindId === expectedKind && n.data.properties?.symbolId === symbolId
-        )
+        .filter((n) => {
+          const kindId = n.data.kindId ?? '';
+          if (!expectedKinds.includes(kindId)) return false;
+          const bound =
+            defineNodeSymbolId(n) ??
+            (typeof n.data.properties?.symbolId === 'string' ? n.data.properties.symbolId : undefined) ??
+            n.data.graphBinding?.symbolId;
+          return bound === symbolId;
+        })
         .map((n) => n.id)
     );
     if (removeIds.size === 0) continue;

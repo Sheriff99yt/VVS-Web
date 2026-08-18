@@ -745,7 +745,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'function-declare-define-u81',
         title: 'Function Declare â‰  Define (U81)',
         description:
-          'Call / Declare / Define release menu. function_define = existence; function_implement = body placement on the member chain. No stub without Define; no legacy fold.',
+          'Call / Declare / Define release menu. function_define = existence; function_implement = body placement on the member chain. No stub without Define; no legacy fold. Symbol delete and deleteClass cascade remove both Declare and Define.',
         status: 'done',
       },
       {

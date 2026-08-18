@@ -175,6 +175,7 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
+| **U81 symbol-delete Define leftover (`4ea967e` follow-on)** | `removeDefineNodesForSymbol` drops `function_implement` with `function_define` on symbol delete and deleteClass |
 | **Consume-path completeness (`1f2c051`)** | Settings env/host/export tab; class/var/event write-through; define-node sync; extract-to-function keeps body + Declare; Yield/Return typed pins; Switch `case_*` indices; eight-language docs |
 | **Implements / form / language chips / env packs** | Implements list + Class form (cs/rs); Library language chips (no embeddings); `env.csharp.data-script` + `env.go.http-service`. Search stays partial. Templates stay partial (no community catalog). |
 | **U65 goldens + roadmap sync** | Home-preview goldens for Coverage Lab Switch `match` (python/rust) and New Features Lab overload emit; public/in-app roadmap Open vs Done aligned to HEAD `1fcf4a3` era |

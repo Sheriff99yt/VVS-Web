@@ -14,6 +14,7 @@ import {
   insertDefineNodeForFunction,
   insertImplementNodeForFunction,
   insertBoundDefineFromCatalogTemplate,
+  removeDefineNodesForSymbol,
   syncDefineNodesForSymbol,
 } from './defineNodeSync';
 
@@ -391,5 +392,48 @@ describe('defineNodeSync', () => {
         { cls, functions: [], events: [] }
       )
     ).toBeNull();
+  });
+
+  it('removeDefineNodesForSymbol drops function_define and function_implement', () => {
+    const cls = createClassSymbol('Calc', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+    const func = {
+      id: 'fn-add',
+      name: 'Add',
+      classId: cls.id,
+      visibility: 'public' as const,
+      binding: 'instance' as const,
+      overloads: [{ id: 'ov-add', parameters: [], returnType: 'void' }],
+    };
+    const other = {
+      id: 'fn-other',
+      name: 'Other',
+      classId: cls.id,
+      visibility: 'public' as const,
+      binding: 'instance' as const,
+      overloads: [{ id: 'ov-other', parameters: [], returnType: 'void' }],
+    };
+    let documents = { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } };
+    documents = insertDefineNodeForFunction(documents, cls, func);
+    documents = insertImplementNodeForFunction(documents, cls, func);
+    documents = insertDefineNodeForFunction(documents, cls, other);
+    documents = insertImplementNodeForFunction(documents, cls, other);
+
+    const next = removeDefineNodesForSymbol(documents, 'function', func.id);
+    const nodes = next[MAIN_GRAPH_CONTAINER_ID]!.nodes;
+    expect(nodes.some((n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === func.id)).toBe(
+      false
+    );
+    expect(nodes.some((n) => n.data.kindId === 'function_implement' && n.data.properties?.symbolId === func.id)).toBe(
+      false
+    );
+    expect(nodes.some((n) => n.data.kindId === 'function_define' && n.data.properties?.symbolId === other.id)).toBe(
+      true
+    );
+    expect(nodes.some((n) => n.data.kindId === 'function_implement' && n.data.properties?.symbolId === other.id)).toBe(
+      true
+    );
   });
 });
