@@ -38,14 +38,14 @@ impl Machine {
 }
 ```
 
-Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial is module `static`; MaxPower is associated `const`; Tags uses `HashMap` after a generated `use std::collections::HashMap;`; Switch → `if/else if` cascade; GetInput uses `stdin().read_line`; for-each uses `for val in self.Readings.iter()`.
+Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial is module `static`; MaxPower is associated `const`; Tags uses `HashMap` after a generated `use std::collections::HashMap;`; Switch → `match`; GetInput uses `stdin().read_line`; for-each uses `for val in self.Readings.iter()`.
 
 ## Concept → emit
 
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `pub enum Color` |
-| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `pub trait IDamageable` |
+| **Interface** | Class `form: interface\|trait` + Implements option | `pub trait IDamageable` |
 | **Class** | `Class Define` Node | `pub struct MyClass` + `impl` |
 | **Inheritance** | `Class Define` Option: **Extends** | `base: BaseClass` *(composition — see CL-010)* |
 | **Implements** | `Class Define` Option: **Implements** | `impl IDamageable for` |
@@ -63,8 +63,8 @@ Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial
 | **Static Function** | `Function` Option: **Static** | `pub fn Func()` *(no self)* |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* |
 | **Generics** | `Function` Option: **Wildcard Pin** | `pub fn Func<T>()` |
-| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `pub fn new() -> Self` |
-| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `Result<T, E>` *(impl)* |
+| **Constructor** | Function Define + `role: constructor` (not Rust `new` / not Go) | *(dim — `new` is a normal function)* |
+| **Error (Try)** | Try flow node (catch/finally pins); not Go/Rust | *(do not spawn)* |
 | **Lambda/Callback** | Pin Type: **Callable** | `F: FnOnce()` |
 | **Namespaces** | `Namespace Define` Node | `mod x` |
 | **Structs** | `Struct Define` Node | `struct X` |
@@ -72,7 +72,7 @@ Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial
 | **Async Function** | `Function` Option: **Async** | *Ineffective* (no Tokio) — emit `fn`; Wait is `thread::sleep` |
 | **Await** | `Await` Node | `X.await` |
 | **If/Else** | `Branch (If)` Node | `if {} else {}` |
-| **Switch/Match** | `Switch` Node | `if/else if` cascade (`_vvs_sel`) — *not* `match` today |
+| **Switch/Match** | `Switch` Node | `match { … }` |
 | **For Loop** | `For Loop` Node | `for x in y.iter() {}` |
 | **While Loop** | `While Loop` Node | `while x {}` |
 | **Break** | `Break` Node | `break;` |
@@ -193,10 +193,11 @@ impl FlowAndAsyncDemo {
         } else {
         }
 
-        // Switch — Coverage Lab emits if/else if (not match)
-        let _vvs_sel = val;
-        if _vvs_sel == 1 {
-        } else if _vvs_sel == 2 {
+        // Switch — native match (CL-017)
+        match val {
+            1 => {}
+            2 => {}
+            _ => {}
         }
 
         for val in items.iter() {

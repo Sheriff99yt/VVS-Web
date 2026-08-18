@@ -10,7 +10,7 @@ import { findGraphEntryNodeId, nestedGraphIdForNode, linkedGraphInspectorLabel }
 import { resolveImportableGraphName } from '@/lib/projectNodeCatalog';
 import { CallNodeOverloadPanel } from './RightSidebar/CallNodeOverloadPanel';
 import { SwitchNodePanel } from './RightSidebar/SwitchNodePanel';
-import { resolveVariableForNode } from '@/lib/variableHelpers';
+import { applyDefinePropertyToVariable, resolveVariableForNode } from '@/lib/variableHelpers';
 import { resolveFunctionForNode } from '@/lib/functionHelpers';
 import { normalizeNodeData, resolveNodeKindId } from '@/lib/nodeKind';
 import { getNodeKindDefinition } from '@/lib/nodeRegistry';
@@ -363,15 +363,12 @@ function GraphFloatingDetailsPanel() {
     // Dual write to symbol table
     const symbolId = nodeData.data.properties?.symbolId;
     if (symbolId && typeof symbolId === 'string') {
-      const isFlag = ['isConst', 'isAbstract', 'isVirtual', 'isOverride', 'isAsync'].includes(key);
+      const isFlag = ['isConst', 'isAbstract', 'isVirtual', 'isOverride', 'isAsync', 'isGenerator'].includes(key);
       const flagKey = key === 'isConst' ? 'readonly' : (isFlag ? key.slice(2).toLowerCase() : null);
       
       if (nodeData.data.kindId === 'var_define') {
         const v = variables.find(x => x.id === symbolId);
-        if (v) {
-          if (isFlag) renameVariable({ ...v, flags: { ...v.flags, [flagKey!]: value } });
-          else renameVariable({ ...v, [key]: value });
-        }
+        if (v) renameVariable(applyDefinePropertyToVariable(v, key, value));
       } else if (nodeData.data.kindId === 'function_define' || nodeData.data.kindId === 'function_implement') {
         const f = functions.find(x => x.id === symbolId);
         if (f) {
@@ -384,6 +381,16 @@ function GraphFloatingDetailsPanel() {
           // Event doesn't have flags currently, but if it does later, handle it here
           renameEvent({ ...e, [key]: value });
         }
+      }
+    }
+
+    if (
+      (nodeData.data.kindId === 'event_define' || nodeData.data.kindId === 'event_custom') &&
+      key === 'role'
+    ) {
+      const bound = resolveEventForNode(nodeData.data, events);
+      if (bound && (value === 'entry' || value === 'tick' || value === 'custom')) {
+        renameEvent({ ...bound, role: value });
       }
     }
 

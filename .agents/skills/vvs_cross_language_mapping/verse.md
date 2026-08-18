@@ -39,7 +39,7 @@ Coverage Lab: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, `var
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `Color := enum:` |
-| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `IDamageable := interface:` |
+| **Interface** | Class `form: interface\|trait` + Implements option | `IDamageable := interface:` |
 | **Class** | `Class Define` Node | `<public>MyClass := class:` |
 | **Inheritance** | `Class Define` Option: **Extends** | `<public>Child(Base) := class:` |
 | **Implements** | `Class Define` Option: **Implements** | `, IDamageable` |
@@ -57,8 +57,8 @@ Coverage Lab: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, `var
 | **Static Function** | `Function` Option: **Static** | *(Module function)* |
 | **Virtual Func** | `Function` Option: **Virtual** | `Func<override>()` |
 | **Generics** | `Function` Option: **Wildcard Pin** | `Func(t: type)` |
-| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `MakeMyClass()` |
-| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | *(Failure Context)* |
+| **Constructor** | Function Define + `role: constructor` (not Rust `new` / not Go) | *(dim)* |
+| **Error (Try)** | Try flow node (catch/finally pins); not Go/Rust | *(do not spawn)* |
 | **Lambda/Callback** | Pin Type: **Callable** | `type {() : void}` |
 | **Namespaces** | `Namespace Define` Node | `x := module:` |
 | **Structs** | `Struct Define` Node | `X := struct:` |

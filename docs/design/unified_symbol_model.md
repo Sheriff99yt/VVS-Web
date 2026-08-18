@@ -50,7 +50,7 @@ Release menus: variables **Get** / **Set** / **Declare**; functions & events **C
 
 **Component** is not a kind: game-talk components are **Class** (`class_define`) used as a field or via Extends ([catalog](language_capability_catalog.md#component--class)).
 
-**Class Extends** is a list on `class_define` (locked visual). Emit today is still one `extendsType` string. Extra bases are more Extends rows, not a new node ([catalog](language_capability_catalog.md#multiple-inheritance-locked-visual)).
+**Class Extends** is a list on `class_define`. Generate prints all Extends rows for python/cpp; others first parent. Extra bases are more Extends rows, not a new node ([catalog](language_capability_catalog.md#multiple-inheritance-locked-visual)).
 
 Events and functions both split declare and implement (**U81 shipped**). Declare and Define stay two nodes so a prototype / abstract signature can sit in a different place than the body.
 

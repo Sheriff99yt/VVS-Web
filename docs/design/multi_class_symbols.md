@@ -50,7 +50,7 @@ interface ClassSymbol {
 }
 ```
 
-**Project snapshot (v3, planned):**
+**Project snapshot (v3, shipped).** Sketch below is the July 2026 design; live fields live in `@vvs/graph-types` (`ProjectSnapshot`).
 
 ```typescript
 interface ProjectSnapshotV3 {

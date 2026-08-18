@@ -55,7 +55,7 @@ func (self *Machine) Shutdown() {
 | **Map/Dictionary** | `Variable` Pin Type: **Map** | `map[K]V` |
 | **Function** | `Function Declare` + `Function Define` | `func (self *Class) Func()` |
 | **Free Function** | `Function` Option: **Not in Class** | `func Func()` |
-| **Async Function** | `Function` Option: **Async** | `go Func()` |
+| **Async Function** | `Function` Option: **Async** | *(ineffective — CL-018; do not invent `go Func()`)* |
 | **Await / Sleep** | `Await` / `Wait` Node | `time.Sleep(...)` |
 | **If/Else** | `Branch (If)` Node | `if cond { } else { }` |
 | **Switch** | `Switch` Node | `switch _vvs_sel { case 1: ... }` |

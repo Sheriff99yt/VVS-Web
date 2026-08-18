@@ -1,10 +1,11 @@
 import type { VVSNode, VVSEdge } from '@/types/graph';
-import type { FunctionSymbol } from '@vvs/graph-types';
+import type { ClassSymbol, FunctionSymbol } from '@vvs/graph-types';
 import type { GraphTab } from '@/contexts/ProjectContext';
 import type { GraphDocument } from '@/lib/graphDefaults';
 import { createFunctionSymbol, formatFunctionTabName } from './functionTabs';
 import { applyFunctionCallBinding } from './functionHelpers';
 import { defaultTabMetadata } from './graphDefaults';
+import { insertDefineNodeForFunction } from './defineNodeSync';
 
 export interface ExtractToFunctionResult {
   func: FunctionSymbol;
@@ -17,7 +18,7 @@ export interface ExtractToFunctionResult {
 export function extractSelectionToFunction(
   nodes: VVSNode[],
   edges: VVSEdge[],
-  options?: { name?: string }
+  options?: { name?: string; classId?: string }
 ): ExtractToFunctionResult | { error: string } {
   const selected = nodes.filter((n) => n.selected && n.type === 'vvs_standard_node');
   if (selected.length === 0) {
@@ -39,7 +40,7 @@ export function extractSelectionToFunction(
   cy /= selected.length;
 
   const name = options?.name ?? `Extracted_${Date.now().toString(36).slice(-4)}`;
-  const func = createFunctionSymbol(name);
+  const func = createFunctionSymbol(name, { classId: options?.classId });
 
   let minX = Infinity;
   let minY = Infinity;
@@ -193,4 +194,32 @@ export function extractSelectionToFunction(
     nextNodes: [...remainingNodes, callNode],
     nextEdges: newEdges,
   };
+}
+
+/**
+ * Persist extract onto documents without switching the live view.
+ * Source tab gets Call + remaining; function tab gets the body.
+ * When a class is present, attach Declare via insertDefineNodeForFunction
+ * (same helper as tree/tab add and catalog missing-declare).
+ */
+export function applyExtractSelectionToDocuments(
+  documents: Record<string, GraphDocument>,
+  result: ExtractToFunctionResult,
+  sourceTabId: string,
+  ctx?: { cls?: ClassSymbol }
+): Record<string, GraphDocument> {
+  const source = documents[sourceTabId] ?? { nodes: [], edges: [] };
+  let next: Record<string, GraphDocument> = {
+    ...documents,
+    [sourceTabId]: {
+      ...source,
+      nodes: result.nextNodes,
+      edges: result.nextEdges,
+    },
+    [result.tab.id]: result.functionDocument,
+  };
+  if (ctx?.cls) {
+    next = insertDefineNodeForFunction(next, ctx.cls, result.func, sourceTabId);
+  }
+  return next;
 }

@@ -19,7 +19,7 @@ import {
   bootstrapClassHomeDocuments,
   relocateClassHomeGraph,
 } from '@/lib/defineNodeSync';
-import { applyClassUpdateToDocuments } from '@/lib/symbolLifecycle';
+import { applyClassUpdateToDocuments, applyClassDeleteToDocuments } from '@/lib/symbolLifecycle';
 
 export function useClassLifecycle() {
   const {
@@ -124,6 +124,8 @@ export function useClassLifecycle() {
 
       const homeGraphId = classGraphTabId(cls);
       const classFunctions = symbolsForClass(functions, classId);
+      const classVariables = symbolsForClass(variables, classId);
+      const classEvents = symbolsForClass(events, classId);
       const tabIdsToRemove = new Set<string>();
       for (const fn of classFunctions) {
         for (const ovl of fn.overloads) {
@@ -151,7 +153,12 @@ export function useClassLifecycle() {
 
       patchAllDocuments(
         (docs) => {
-          const next = { ...docs };
+          let next = applyClassDeleteToDocuments(docs, cls, {
+            variables: classVariables,
+            functions: classFunctions,
+            events: classEvents,
+          });
+          next = { ...next };
           for (const id of tabIdsToRemove) {
             delete next[id];
           }
@@ -170,7 +177,9 @@ export function useClassLifecycle() {
       activeClassId,
       activeGraphTab,
       classes,
+      events,
       functions,
+      variables,
       patchAllDocuments,
       pushHistory,
       setActiveClassId,

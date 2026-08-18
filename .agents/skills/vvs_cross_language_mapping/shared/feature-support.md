@@ -39,7 +39,7 @@ Before marking a feature supported, confirm all five:
 | Enum Define | `enum_define` | ✅ | Shipped; Coverage Lab / Dual Class Lab |
 | Interface / trait | Class `form` + Implements option | — | Locked: not `implements_define`. C++ stays abstract Class + `isAbstract`. |
 | Constructor | Function Define + `role: constructor` | — | Locked: not `constructor_define`. Spawn only where the language types one. Rust `new` is a normal function. |
-| Try/Catch | planned flow node; catch/finally exec pins | — | Like Branch. Do not spawn in Go or Rust. Not a symbol. |
+| Try/Catch | `flow_try` (shipped); catch/finally exec pins | — | Like Branch. Do not spawn in Go or Rust. Not a symbol. |
 
 ### Node settings / modifiers
 
@@ -69,7 +69,7 @@ Before marking a feature supported, confirm all five:
 
 ### Flow / action / expression (summary)
 
-Shipped flow: `flow_branch`, `flow_for`, `flow_while`, `flow_switch`, `flow_sequence`. Shipped actions: `action_print`, `action_get_input`, Wait (`action_wait` with `isAsync` option and `seconds` pin). Math + convert nodes ship; string-concat / comparison operator nodes are still gaps.
+Shipped flow: `flow_branch`, `flow_for`, `flow_while`, `flow_switch`, `flow_sequence`, `flow_try`. Shipped actions: `action_print`, `action_get_input`, Wait (`action_wait` with `isAsync` option and `seconds` pin). Math + convert nodes ship; string-concat / comparison operator nodes are still gaps.
 
 ### Events
 

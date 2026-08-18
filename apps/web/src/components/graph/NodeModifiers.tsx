@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useSymbolLifecycle } from '@/hooks/useSymbolLifecycle';
+import { useClassLifecycle } from '@/hooks/useClassLifecycle';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
 import { VVSNodeData } from '@/types/graph';
 import { resolveNodeKindId } from '@/lib/nodeKind';
@@ -17,6 +18,7 @@ import {
 import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock, CornerLeftUp } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { markNavNodeOptions } from '@/lib/navActivityFlags';
+import { applyDefinePropertyToVariable } from '@/lib/variableHelpers';
 import styles from './VVSNode.module.css';
 
 interface NodeModifiersProps {
@@ -229,6 +231,7 @@ export function NodeModifiers({
   const { variables, functions, events, classes, activeClassId, projectDetails } = useProject();
   const { targetLanguage } = useActiveGraphCodegenSettings();
   const { renameVariable, renameFunction, renameEvent } = useSymbolLifecycle();
+  const { renameClass } = useClassLifecycle();
   const openMenuCount = useRef(0);
 
   const handleMenuOpenChange = (open: boolean) => {
@@ -276,10 +279,7 @@ export function NodeModifiers({
 
       if (kindId === 'var_define') {
         const v = variables.find((x) => x.id === symbolId);
-        if (v) {
-          if (isFlag) renameVariable({ ...v, flags: { ...v.flags, [flagKey!]: value } });
-          else renameVariable({ ...v, [key]: value });
-        }
+        if (v) renameVariable(applyDefinePropertyToVariable(v, key, value));
       } else if (kindId === 'function_define' || kindId === 'function_implement') {
         const f = functions.find((x) => x.id === symbolId);
         if (f) {
@@ -290,6 +290,15 @@ export function NodeModifiers({
         const e = events.find((x) => x.id === symbolId);
         if (e) renameEvent({ ...e, [key]: value });
       }
+    }
+
+    if (kindId === 'class_define' && (key === 'visibility' || key === 'name')) {
+      const classId =
+        (typeof data.properties?.classId === 'string' && data.properties.classId) ||
+        (typeof symbolId === 'string' ? symbolId : undefined);
+      const cls = classId ? classes.find((x) => x.id === classId) : undefined;
+      // Node-only isAbstract is preserved by buildClassDefineData; do not invent a ClassSymbol field.
+      if (cls) renameClass({ ...cls, [key]: value });
     }
   };
 

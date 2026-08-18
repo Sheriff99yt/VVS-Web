@@ -33,7 +33,7 @@ Two canvas positions, or existence without a body, are two nodes. An option cann
 | Branch / For / While / Switch / Return / Break / Continue | low_* | Control-flow constructs |
 | Print String | ction_print | Statement |
 | Wait | ction_wait | Sleep / wait call. **Async is an option** (or follows the function async flag) |
-| Get User Input | ction_get_input | Blocking read. **inputKind** is an option; **prompt** is a pin |
+| Get User Input | ction_get_input | Blocking read where the target has stdin; Verse is honest (x). **inputKind** is an option; **prompt** is a pin |
 | To String / To Number | convert_* | One conversion = one call. Do not collapse |
 | Math Add / Subtract / Multiply / Divide | math_* | One operator = one node. Do not collapse to a dropdown |
 | Concat Strings | string_concat | Operator / call |
@@ -79,9 +79,9 @@ Old graphs may still contain these. Analyzer / migration keep working. Spawn cat
 | low_sequence | Not a text construct. The exec chain already is sequence |
 | graph_ref | Navigation / project-map, not a statement. Must not appear in the spawn catalog |
 
-### Planned (not in registry yet)
+### Leftover kinds (do not add)
 
-Do **not** add `constructor_define` / `implements_define` / `property_define` / `closure_define` / `flow_match`. Constructor is Function `role`. Interface/trait is Class `form` + Implements option. Try/catch is a planned flow node (catch/finally pins) — not in Go or Rust. Lambda is one planned expression node (`lambda_define`); capture is an option. See catalog leftover-constructs lock.
+Do **not** add `constructor_define` / `implements_define` / `property_define` / `closure_define` / `flow_match`. Constructor is Function `role`. Interface/trait is Class `form` + Implements option. Try/catch is a shipped flow node (`flow_try`; catch/finally pins) — not in Go or Rust. Lambda is a shipped expression node (`lambda_define`); capture is an option. See catalog leftover-constructs lock.
 
 ## Settings that stay on Declare / Import
 

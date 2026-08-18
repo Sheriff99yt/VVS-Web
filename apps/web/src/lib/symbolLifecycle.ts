@@ -26,9 +26,7 @@ import { createVariableSymbol } from '@vvs/graph-types';
 import { applyVariableRefBinding } from '@/lib/variableHelpers';
 import {
   applyFunctionCallBinding,
-  applyFunctionDefineBinding,
   applyFunctionEntryBinding,
-  applyFunctionImplementBinding,
   applyFunctionReturnBinding,
 } from '@/lib/functionHelpers';
 import { applyEventDefineBinding, applyEventDispatchBinding, applyEventEmitBinding, applyEventSubscribeBinding, createEventId } from '@/lib/eventHelpers';
@@ -44,6 +42,7 @@ import {
   insertDefineNodeForEvent,
   insertClassDefineNode,
   hasDefineNodeForClass,
+  findClassDefineNode,
 } from '@/lib/defineNodeSync';
 import { MAIN_CLASS_ID } from '@/lib/classScope';
 
@@ -135,8 +134,36 @@ export function planSymbolDelete(
   return { nextSymbols, nextDocuments, closeTabIds };
 }
 
+/** Strip this class's Declare nodes (members + class_define). Body tabs are dropped by the caller. */
+export function applyClassDeleteToDocuments(
+  documents: Record<string, GraphDocument>,
+  cls: ClassSymbol,
+  members: {
+    variables: VariableSymbol[];
+    functions: FunctionSymbol[];
+    events: ProjectEventDefinition[];
+  }
+): Record<string, GraphDocument> {
+  let next = documents;
+  for (const variable of members.variables) {
+    next = removeDefineNodesForSymbol(next, 'variable', variable.id);
+  }
+  for (const func of members.functions) {
+    next = removeDefineNodesForSymbol(next, 'function', func.id);
+  }
+  for (const event of members.events) {
+    next = removeDefineNodesForSymbol(next, 'event', event.id);
+  }
+  const loc = findClassDefineNode(next, cls);
+  if (!loc) return next;
+  return deleteBrokenNodeFromDocuments(next, loc.tabId, loc.nodeId);
+}
+
 function syncNodeForVariable(node: GraphNode, variable: VariableSymbol): GraphNode {
   const kindId = resolveNodeKindId(node.data);
+  // Declare nodes are rebuilt by syncDefineNodesForSymbol. Ref-binding would
+  // rewrite var_define → variable_get.
+  if (kindId === 'var_define') return node;
   const role = kindId === 'variable_set' ? 'set' : 'get';
   return {
     ...node,
@@ -161,19 +188,10 @@ export function syncNodeForFunction(node: GraphNode, func: FunctionSymbol, tabId
     };
   }
 
-  if (kindId === 'function_define') {
-    return {
-      ...node,
-      data: applyFunctionDefineBinding(node.data, func, overloadId),
-    };
-  }
-
-  if (kindId === 'function_implement') {
-    return {
-      ...node,
-      data: applyFunctionImplementBinding(node.data, func, overloadId),
-    };
-  }
+  // Declare/Define nodes are rebuilt by syncDefineNodesForSymbol.
+  // Rebinding here would map a deleted-overload function_define onto
+  // overloads[0] via resolveOverloadForCall, so the second pass keeps a duplicate.
+  if (kindId === 'function_define' || kindId === 'function_implement') return node;
 
   if (kindId === 'flow_return' || kindId === 'action_return') {
     return {
@@ -199,6 +217,9 @@ function syncNodeForEvent(node: GraphNode, event: ProjectEventDefinition): Graph
   if (kindId === 'event_dispatch') {
     return { ...node, data: applyEventDispatchBinding(node.data, event) };
   }
+  // Declare nodes are rebuilt by syncDefineNodesForSymbol. Handler binding
+  // would rewrite event_member_define → event_define.
+  if (kindId === 'event_member_define') return node;
   return { ...node, data: applyEventDefineBinding(node.data, event) };
 }
 

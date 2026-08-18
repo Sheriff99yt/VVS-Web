@@ -25,7 +25,6 @@ import {
 import {
   FUNCTION_OVERLOAD_DRAG_MIME,
   type FunctionOverloadDragPayload,
-  commitFunctionSymbolUpdate,
 } from '@/lib/functionHelpers';
 import { defaultValueForVariableType, VariableType } from '@/lib/variableDefaults';
 import {
@@ -711,11 +710,11 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       const func = functions.find((f) => f.id === funcId);
       if (!func) return;
       const { func: next, graphTabId } = appendFunctionOverload(func);
-      commitFunctionSymbolUpdate(next, setFunctions, setOpenTabs);
+      renameFunction(next);
       setAddingOverloadForId(null);
       editorFocus.focusFunction(next, graphTabId);
     },
-    [editorFocus, functions, setFunctions, setOpenTabs]
+    [editorFocus, functions, renameFunction]
   );
 
   const handleRemoveOverload = useCallback(
@@ -724,9 +723,9 @@ export function ProjectTree({ mode = 'canvas' }: ProjectTreeProps) {
       if (!func || func.overloads.length <= 1) return;
       const nextOverloads = func.overloads.filter((o) => o.id !== overloadId);
       const next: FunctionSymbol = { ...func, overloads: nextOverloads };
-      commitFunctionSymbolUpdate(next, setFunctions, setOpenTabs);
+      renameFunction(next);
     },
-    [functions, setFunctions, setOpenTabs]
+    [functions, renameFunction]
   );
 
   const selectGraphForReferences = useCallback(

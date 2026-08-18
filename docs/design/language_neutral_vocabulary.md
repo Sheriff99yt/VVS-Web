@@ -59,7 +59,7 @@ Variables: **Get** / **Set** / **Declare**. Functions: **Call** / **Declare** / 
 
 **Implementation (U81 — shipped):** `function_define` = Declare (existence / abstract signature only). `function_implement` = Define (body placement on the member chain). No legacy fold; no invented stub body without Define. Call unchanged.
 
-**U82 / U66 (all seven targets):** Only **cpp** emits a real non-abstract Declare prototype (`FUNCTION_DECLARE_PROTOTYPE_LANGS`). Elsewhere non-abstract Declare is ineffective → U66 `(x) Declare Name` + canvas dim (never silent skip). Abstract still emits (`# abstract` / `= 0` / C# `abstract` prototype). **sourceMap:** Declare maps only to its own emit; Define maps to method/`def` header + body. See [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) § Function Declare / Define per language.
+**U82 / U66 (all eight targets):** Only **cpp** emits a real non-abstract Declare prototype (`FUNCTION_DECLARE_PROTOTYPE_LANGS`). Elsewhere non-abstract Declare is ineffective → U66 `(x) Declare Name` + canvas dim (never silent skip). Abstract is real only on **C++** / **C#**; elsewhere abstract Declare is also U66 `(x)` + dim — never invent `# abstract` stubs. **sourceMap:** Declare maps only to its own emit; Define maps to method/`def` header + body. See [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) § Function Declare / Define per language.
 
 ### Per-kind member / implement mapping
 

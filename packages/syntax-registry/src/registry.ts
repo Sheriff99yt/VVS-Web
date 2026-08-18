@@ -370,6 +370,7 @@ function expandMissingDeclareRows(options: ListRegistryOptions): SpawnNodeTempla
       category: 'Events',
       inputs: [EXEC_IN],
       outputs: [EXEC_OUT],
+      properties: { symbolId: event.id, name: event.name, eventId: event.id },
     });
   }
 

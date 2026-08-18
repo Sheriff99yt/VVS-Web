@@ -5,7 +5,7 @@ Choices agents must not undo without explicit user approval.
 ## Cross-language mapping skill layout (July 2026)
 
 - **One skill only:** `.agents/skills/vvs_cross_language_mapping/SKILL.md` (parent index + workflow).
-- **Exactly one doc per language** (siblings of the skill, not skills): `cpp.md`, `python.md`, `javascript.md`, `csharp.md`, `rust.md`, `gdscript.md`, `verse.md`.
+- **Exactly one doc per language** (siblings of the skill, not skills): `cpp.md`, `python.md`, `javascript.md`, `csharp.md`, `rust.md`, `gdscript.md`, `verse.md`, `go.md`.
 - **Shared cross-cutting only:** `shared/` (nodes-vs-settings, translation-matrix, declare-define-rules, feature-support).
 - **Agent habit:** open parent skill → open **one** `<lang>.md` for the target; do not open other language docs.
 
@@ -242,7 +242,7 @@ Still partial: JWKS verification (HS256 via `SUPABASE_JWT_SECRET` today). Syntax
 
 **Function Declare (U82 + U66):** Non-abstract `function_define` is effective only for **cpp** (prototype). Elsewhere emit `# (x) Declare Name` (or omit when comments off) and dim the node. **Abstract** Declare effectiveness is **derived from** `modifierEffectiveness(lang, 'isAbstract')` — do not maintain a parallel allow-list. C++ (`= 0`) / C# (real prototype) only; other langs U66 `(x)` + U67 dim (Coverage Lab **Declare Diagnose** lock test). **sourceMap lock:** Declare maps only to its own emit; Define maps to method/`def` header + body — never dual-tag.
 
-- **All seven targets follow the same Declare/Define table** — C++ = prototypes + out-of-line Define; Python / JS / C# / Rust / GDScript / Verse = U66 `(x)` for non-abstract Declare + in-class Define; no silent skip; no expanding `FUNCTION_DECLARE_PROTOTYPE_LANGS` beyond `cpp`; no out-of-line invent for C#/Rust. Spec: `docs/visual_to_text_fidelity.md` · skill `vvs_cross_language_mapping` (one doc per language: `cpp.md`, `python.md`, …).
+- **All eight targets follow the same Declare/Define table** — C++ = prototypes + out-of-line Define; Python / JS / C# / Rust / GDScript / Verse / Go = U66 `(x)` for non-abstract Declare + in-class / package Define; no silent skip; no expanding `FUNCTION_DECLARE_PROTOTYPE_LANGS` beyond `cpp`; no out-of-line invent for C#/Rust. Spec: `docs/visual_to_text_fidelity.md` · skill `vvs_cross_language_mapping` (one doc per language: `cpp.md`, `python.md`, …).
 
 **Do not:** invent real emit for unsupported constructs; hide unsupported nodes from the catalog; couple the two toggles (comments ≠ dimming). **Author Comment [C] (U68/U69)** is a third channel — `showUserComments` / `emitUserComments` — never emit as `(x)` and never gate with `emitUnsupportedComments`.
 

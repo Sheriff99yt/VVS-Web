@@ -7,7 +7,7 @@
 
 **Agent rule:** For GDScript work, open **this file only** (plus `SKILL.md` for workflow). Do not open other language docs.
 
-> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues (`CL-011`–`CL-013`, `CL-018`).
+> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues (`CL-011`, `CL-018`). CL-012 / CL-013 shipped (`var _vvs_sel`; GetInput prints prompt).
 
 ## Declare / Define
 
@@ -32,14 +32,14 @@ class_name Machine
         print("Shutdown")
 ```
 
-Coverage Lab: `enum SensorStatus { OK, WARN, FAIL }`, second `class_name Sensor` + `extends Machine`, Switch → **if/elif** (temp `_vvs_sel` currently missing `var` — CL-012), GetInput via `OS.read_string_from_stdin()` without printing the prompt (CL-013). Async modifier is a no-op today (CL-018).
+Coverage Lab: `enum SensorStatus { OK, WARN, FAIL }`, second `class_name Sensor` + `extends Machine`, Switch → **if/elif** (`var _vvs_sel`), GetInput via `print(prompt)` + `OS.read_string_from_stdin()`. Async modifier is a no-op today (CL-018).
 
 ## Concept → emit
 
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `enum Color { … }` |
-| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | *Implicit* |
+| **Interface** | Class `form: interface\|trait` + Implements option | *Implicit* |
 | **Class** | `Class Define` Node | `class_name MyClass` |
 | **Inheritance** | `Class Define` Option: **Extends** | `extends BaseClass` |
 | **Implements** | `Class Define` Option: **Implements** | *Implicit* |
@@ -56,8 +56,8 @@ Coverage Lab: `enum SensorStatus { OK, WARN, FAIL }`, second `class_name Sensor`
 | **Static Function** | `Function` Option: **Static** | `static func Func():` |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* |
 | **Generics** | `Function` Option: **Wildcard Pin** | *Implicit* |
-| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `func _init():` |
-| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | *Implicit/Asserts* |
+| **Constructor** | Function Define + `role: constructor` (not Rust `new` / not Go) | `func _init():` |
+| **Error (Try)** | Try flow node (catch/finally pins); not Go/Rust | `try:` |
 | **Lambda/Callback** | Pin Type: **Callable** | `Callable` |
 | **Namespaces** | `Namespace Define` Node | `class_name` |
 | **Structs** | `Struct Define` Node | *Dictionary* |
@@ -158,8 +158,8 @@ func flow_example(val: int):
     else:
         pass
 
-    # Switch — Coverage Lab emits if/elif (not match)
-    _vvs_sel = val
+    # Switch — if/elif cascade (not match)
+    var _vvs_sel = val
     if _vvs_sel == 1:
         pass
     elif _vvs_sel == 2:

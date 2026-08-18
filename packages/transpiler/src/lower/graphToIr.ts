@@ -284,6 +284,22 @@ function resolveNodeOutputExpr(
   return literalIr(node.id, `/* ${node.data.label}.${pinId} */`, 'string');
 }
 
+
+function isPresentYieldValue(expr: IrExpr): boolean {
+  if (expr.kind !== 'Literal') return true;
+  if (expr.literalType === 'null') return false;
+  if (typeof expr.value === 'string' && !expr.value.trim()) return false;
+  return true;
+}
+
+/** Edge first (resolvePinValueExpr), then a typed inline. Skip spawn empty / null. */
+function yieldValueFromPin(node: GraphNode, ctx: LowerContext): IrExpr | undefined {
+  const primary = resolvePinValueExpr(node, 'value', ctx, 0);
+  if (isPresentYieldValue(primary)) return primary;
+  const alt = resolvePinValueExpr(node, 'val', ctx, 0);
+  return isPresentYieldValue(alt) ? alt : undefined;
+}
+
 function resolvePinValueExpr(
   node: GraphNode,
   pinId: string,
@@ -765,15 +781,8 @@ function lowerStatement(
     if (dataPins.length > 1) {
       const exprValues: IrExpr[] = [];
       for (const pin of dataPins) {
-        const edge = getDataEdgeToPin(edges, node.id, pin.id);
-        if (edge) {
-          const sourceNode = nodes.find((n) => n.id === edge.source);
-          if (sourceNode) {
-            exprValues.push(resolveNodeOutputExpr(sourceNode, edge.sourceHandle ?? '', ctx, 0));
-          } else {
-            exprValues.push(literalIr(node.id, 0, 'number'));
-          }
-        }
+        const expr = resolvePinValueExpr(node, pin.id, ctx, 0);
+        if (isPresentYieldValue(expr)) exprValues.push(expr);
       }
       if (exprValues.length > 0) {
         return {
@@ -784,17 +793,11 @@ function lowerStatement(
       }
     }
 
-    const valEdge =
-      getDataEdgeToPin(edges, node.id, 'value') ??
-      getDataEdgeToPin(edges, node.id, 'return_val') ??
-      getDataEdgeToPin(edges, node.id, 'val') ??
-      (dataPins[0] ? getDataEdgeToPin(edges, node.id, dataPins[0].id) : undefined);
+    const pinId = firstInputPinId(node, ['value', 'return_val', 'val']) ?? dataPins[0]?.id;
     let valueExpr: IrExpr | undefined;
-    if (valEdge) {
-      const sourceNode = nodes.find((n) => n.id === valEdge.source);
-      if (sourceNode) {
-        valueExpr = resolveNodeOutputExpr(sourceNode, valEdge.sourceHandle ?? '', ctx, 0);
-      }
+    if (pinId) {
+      const expr = resolvePinValueExpr(node, pinId, ctx, 0);
+      if (isPresentYieldValue(expr)) valueExpr = expr;
     }
     return {
       kind: 'Return',
@@ -818,16 +821,7 @@ function lowerStatement(
   }
 
   if (kindId === 'yield_stmt') {
-    const valEdge =
-      getDataEdgeToPin(edges, node.id, 'value') ??
-      getDataEdgeToPin(edges, node.id, 'val');
-    let valueExpr: IrExpr | undefined;
-    if (valEdge) {
-      const sourceNode = nodes.find((n) => n.id === valEdge.source);
-      if (sourceNode) {
-        valueExpr = resolveNodeOutputExpr(sourceNode, valEdge.sourceHandle ?? '', ctx, 0);
-      }
-    }
+    const valueExpr = yieldValueFromPin(node, ctx);
     return {
       kind: 'Yield',
       sourceGraphNodeId: node.id,

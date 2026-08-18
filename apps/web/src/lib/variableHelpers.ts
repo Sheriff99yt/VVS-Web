@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
-import type { PinDefinition, PinType, VariableSymbol, VVSNodeData } from '@/types/graph';
-import { defaultValueForDataType, resolveTypeRef, typeRefToPinType } from '@vvs/graph-types';
+import type { PinDefinition, PinType, VariableDataType, VariableSymbol, VVSNodeData } from '@/types/graph';
+import { defaultValueForDataType, resolveTypeRef, syncTypeFieldsFromRef, typeRefToPinType } from '@vvs/graph-types';
 import { resolveNodeKindId } from '@/lib/nodeKind';
 
 const EXEC_IN: PinDefinition = { id: 'exec_in', label: '', type: 'execution' };
@@ -23,6 +23,32 @@ export function resolveVariableForNode(
     return variables.find((v) => v.name === name);
   }
   return undefined;
+}
+
+
+/** Map a var_define schema/chip key onto VariableSymbol fields (default→defaultValue, type→typeRef). */
+export function applyDefinePropertyToVariable(
+  variable: VariableSymbol,
+  key: string,
+  value: unknown
+): VariableSymbol {
+  if (key === 'isConst') {
+    return { ...variable, flags: { ...variable.flags, readonly: Boolean(value) } };
+  }
+  if (key === 'isAbstract' || key === 'isVirtual' || key === 'isOverride') {
+    const flagKey = key.slice(2).toLowerCase() as 'abstract' | 'virtual' | 'override';
+    return { ...variable, flags: { ...variable.flags, [flagKey]: Boolean(value) } };
+  }
+  if (key === 'default') {
+    return { ...variable, defaultValue: value };
+  }
+  if (key === 'type' && typeof value === 'string' && value.startsWith('data_')) {
+    return { ...variable, ...syncTypeFieldsFromRef({ kind: 'builtin', id: value as VariableDataType }) };
+  }
+  if (key === 'enumType' && typeof value === 'string' && value.trim()) {
+    return { ...variable, ...syncTypeFieldsFromRef({ kind: 'enum', name: value.trim() }) };
+  }
+  return { ...variable, [key]: value } as VariableSymbol;
 }
 
 export function variableGetSetPins(variable: VariableSymbol, role: 'get' | 'set'): {

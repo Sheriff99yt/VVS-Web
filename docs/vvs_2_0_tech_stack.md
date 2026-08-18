@@ -1,5 +1,7 @@
 # VVS 2.0: The Definitive Tech Stack
 
+> **Product path (August 2026):** Hosted AI is the **in-page TypeScript Agent** (starts with the editor). Optional localhost Go MCP sidecar is **not** the product, and there is no remote hosted MCP URL. Client-first — no dedicated server hosting. Sections below that treat Go MCP / VPS / BYOAI-via-MCP as the locked product stack are **historical / experimental**. See [current_state.md](current_state.md) · [deployment.md](deployment.md) · [design/mcp_autonomy_audit.md](design/mcp_autonomy_audit.md).
+
 This document outlines the finalized technology stack for Vision Visual Scripting (VVS) 2.0. Each component has been specifically selected to ensure the system is high-performance, agentic-friendly, and universally accessible across devices.
 
 ## Project Vision & Goal

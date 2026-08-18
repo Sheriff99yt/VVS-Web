@@ -67,6 +67,12 @@ describe('list catalog grouping', () => {
     const declareSection = categories.find((c) => c.name === 'Declare');
     expect(declareSection?.items.some((i) => i.label === 'Declare Add')).toBe(false);
     expect(declareSection?.items.some((i) => i.label === 'Declare calculate')).toBe(true);
+    const declareEvent = declareSection?.items.find((i) => i.label === 'Declare calculate');
+    expect(declareEvent?.properties).toEqual({
+      symbolId: 'evt-1',
+      name: 'calculate',
+      eventId: 'evt-1',
+    });
   });
 
   test('spawns Function Declare for C++ and for abstract functions only', () => {

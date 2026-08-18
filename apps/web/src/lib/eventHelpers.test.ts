@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  applyEventDefineBinding,
   defineNodeOutputs,
   dispatchNodeInputs,
   eventHandlerName,
@@ -41,5 +42,24 @@ describe('eventHelpers', () => {
     expect(
       resolveEventForDrop({ eventId: 'dispatcher-pulse', eventName: 'pulse' }, events)?.id
     ).toBe('evt-pulse');
+  });
+
+  test('applyEventDefineBinding copies symbol role onto the handler node', () => {
+    const event = { id: 'evt-start', name: 'start', role: 'entry' as const, parameters: [] };
+    const bound = applyEventDefineBinding(
+      { label: 'start', category: 'Events', inputs: [], outputs: [], inlineValues: {}, properties: {} },
+      event
+    );
+    expect(bound.properties?.role).toBe('entry');
+    expect(bound.properties?.eventId).toBe('evt-start');
+  });
+
+  test('applyEventDefineBinding leaves role unset when the symbol has none', () => {
+    const event = { id: 'evt-pulse', name: 'pulse', parameters: [] };
+    const bound = applyEventDefineBinding(
+      { label: 'pulse', category: 'Events', inputs: [], outputs: [], inlineValues: {}, properties: {} },
+      event
+    );
+    expect(bound.properties?.role).toBeUndefined();
   });
 });

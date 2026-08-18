@@ -71,7 +71,7 @@ flowchart TB
 |-------|----------------|
 | **Registry `propertySchema`** | Declares inspector fields (visibility, static, async, …) with neutral labels. |
 | **Language profiles** | Which properties apply / warn / hide per `CodegenTarget`. |
-| **Node effectiveness** | Dim or badge nodes ineffective for current target (planned — `terms_refactor_plan` V4). |
+| **Node effectiveness** | Dim shipped (U67). Badges still `terms_refactor_plan` V4. |
 | **Usability example tests** | Fixed graphs that must compile and expose every shipped capability in the UI. |
 | **Rosetta fixtures** | Pack-level golden strings; complement graph-driven tests. |
 
@@ -122,9 +122,9 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 | **Override** / `virtual` | Modifier on Declare function | `properties.isVirtual`, `isOverride` | cpp, cs, verse | **shipped** | Emit only when toggled on the node; ineffective langs omit keywords |
 | **Const** / **readonly** field | Modifier on Declare var | `properties.isConst` | cpp, rs, cs | **shipped** (cpp/cs/rs when set) | C++ `const`; C# `readonly`; Rust `const` — only when node property set |
 | **Property** (getter/setter) vs field | option on field / Function — not a node | property option on `var_define`; `@property` option on Function (py) | cs, gd; py `@property` on Function | planned | Not `property_define`. C# / GDScript `setget`: field written as property. Python `@property`: option on Function. C++ has no language property. |
-| **Function overload set** | One Declare node, N signatures in inspector | `function_define` + `overloads[]` on symbol | cpp, cs, rs | **partial** | Symbol model has `overloads[]`; UI does not expose multiple arities on one name yet |
+| **Function overload set** | One Declare node, N signatures in inspector | `function_define` + `overloads[]` on symbol | cpp, cs (emulated); extras `(x)` on py/gd/go/rs | **shipped** | `FunctionPropertiesPanel` add/remove arity; Call picker uses `graphBinding.overloadId`. Extra overloads emit on C++ (native) and C# (same-name methods); python/gdscript/go/rust stay honest `(x)` — no invented `@overload`. |
 | **Default parameter values** | Function tab entry pins / inspector | function graph + symbol metadata | py, cpp, cs, gd | partial | |
-| **Return type** on Declare | Inspector | `returnType` | typed targets | **planned** | Stored on overloads for future emit; UI removed until signatures are non-void |
+| **Return type** on Declare | Inspector Return Parameters | `returnType` / `returnParameters` | typed targets | **shipped** | Function inspector writes return parameters; emit via `functionReturnTypeName`. Not a leftover construct. |
 | **Constructor** | Function Define + `role: constructor` | `function_define` / `function_implement` + **role** option | cpp, cs, js, py, gd | shipped | Same pattern as On `role: entry\|tick`. Not `constructor_define`. Spawn only where you type one: C++ ctor, C# ctor, JS `constructor`, Python `__init__`, GDScript `_init`. Rust `new` is a normal function (do not invent `impl Default`). Go has none. Super/init call stays `isSuper` on Call. |
 | **Destructor** | Function Define + `role: destructor` | `function_define` / `function_implement` + **role** option | cpp (and langs that type one) | shipped | Not `destructor_define`. Spawn only where the language has a destructor. |
 | **Interface / trait** | Class + `form` option; Implements list | `class_define` + `form: class\|interface\|trait`; `implementsTypes` on class + define node | cs, rs (form + Implements); others hidden / stored-not-printed | **shipped** | Not `implements_define`. C# `class Child : Base, IFoo` (Extends first parent, then Implements) or `interface IFoo`. Rust `pub trait` when form=trait; `impl Trait for Type` only when Implements has names (no invented `impl Default`). C++ stays abstract Class + `isAbstract`. Python/JS stay Class; Implements not printed. Extends extras are not auto-migrated to Implements. |
@@ -298,7 +298,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 
    Example: C# `Math.Abs(x)` is Call with a type-name callee + static binding.
 
-9. **Pattern matching** — Switch is the node. Native match/switch lowering is shipped where the language has it: Python `match` / `case` / `case _`; Rust `match` on value-equality cases; C# / JS / C++ already emit `switch`. GDScript / Go / Verse keep the shipped if-cascade (or comment). Drop planned `flow_match` as a kind. Do not add a Match node.
+9. **Pattern matching** — Switch is the node. Native match/switch lowering is shipped where the language has it: Python `match` / `case` / `case _`; Rust `match` on value-equality cases; C# / JS / C++ / Go already emit `switch`. GDScript / Verse keep the shipped if-cascade (or comment). Drop planned `flow_match` as a kind. Do not add a Match node.
 
    Example: Rust `match x { ... }` lowers from Switch (CL-017), not `flow_match`.
 
@@ -318,7 +318,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 | Per-frame | On Update | `event_define` + `role: tick` | game targets | shipped | Do not spawn `event_on_update` |
 | Custom event body | On `{name}` | `event_define` | all | shipped | |
 | **Async** handler | `isAsync` option on On / function / Wait | `properties.isAsync` | py, js, cs | shipped | Emits `async def` / `async Task`; C++/Go/Verse/GDScript function async dimmed (CL-018) |
-| **Coroutine** / yield | Yield | `yield_stmt` | py, gd | shipped | Statement node where you type `yield`. Spawn python / gdscript. Hidden on cpp / js / cs / go / rust / verse. Optional empty value = bare `yield`. Function Define `isGenerator` is stored; Python `def` is enough. |
+| **Coroutine** / yield | Yield | `yield_stmt` | py, gd | shipped | Statement node where you type `yield`. Spawn python / gdscript. Hidden on cpp / js / cs / go / rust / verse. Optional empty value = bare `yield`; wired/inline value via `resolvePinValueExpr`. Function Define `isGenerator` is persist-only — Python `def` is enough (no `function*`). |
 
 ### C — Invoke (Call / Dispatch)
 
@@ -362,7 +362,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 | Capability | Source | Families | uiStatus | Notes |
 |------------|--------|----------|----------|-------|
 | Godot lifecycle | `env.gdscript.godot-game` | gd | shipped | `_ready`, `_process` anchors |
-| Console main | env pack (planned) | rs, cs | planned | `env.rust.console-app`, `env.csharp.console-app` |
+| Console main | env pack | rs, cs, go | shipped | `env.rust.console-app`, `env.csharp.console-app`, `env.go.console-app` |
 | Verse / UE hooks | environment templates | verse | partial | |
 
 ---
@@ -383,7 +383,7 @@ Surface forms are owned by **syntax packs**; graph must still carry the decision
 | Inheritance | `class A(B)` | `extends` | `: public B` | `: B` | `impl Trait` | `extends` | — |
 | Component | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node | same as Class (`class_define`) + field or Extends — not a separate node |
 
-When adding a row to this table, add a matching **catalog §** entry with `uiStatus` and planned node or option (not a leftover-construct kind id). Go (8th family, not a column above): Component is the same lock — struct + field or embed; no Component node. Leftover constructs (constructor, interface, lambda, try, property, generics, package visibility, static call, pattern match) are locked roles — see [Leftover constructs](#leftover-constructs-locked-roles). Inheritance / Extends is list-shaped (locked visual): two class Extends rows for Python and C++ only; C# extra types are Implements; generate prints all Extends rows for python/cpp and first parent elsewhere — see [Multiple inheritance](#multiple-inheritance-locked-visual).
+When adding a row to this table, add a matching **catalog §** entry with `uiStatus` and planned node or option (not a leftover-construct kind id). Go (8th family, not a column above): Component is the same lock — struct + field or embed; no Component node. Go methods emit as package `func Name` after the struct, not inside the struct body (event handlers still use `func (self *T)`). Leftover constructs (constructor, interface, lambda, try, property, generics, package visibility, static call, pattern match) are locked roles — see [Leftover constructs](#leftover-constructs-locked-roles). Inheritance / Extends is list-shaped (locked visual): two class Extends rows for Python and C++ only; C# extra types are Implements; generate prints all Extends rows for python/cpp and first parent elsewhere — see [Multiple inheritance](#multiple-inheritance-locked-visual).
 
 ---
 
@@ -524,6 +524,7 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 
 | Date | Change |
 |------|--------|
+| 2026-08-18 | **Return type + honesty** — Declare Return Parameters shipped (`returnType` / `functionReturnTypeName`). Yield value pin typed; `isGenerator` persist-only (no `function*`). Go methods are package `func` after the struct, not inside it. Verse GetInput stays `(x)`.
 | 2026-08-17 | **Implements list + Class form shipped** -- `form` (`class`/`interface`/`trait`) + `implementsTypes` on Class / `class_define`. C# `class Child : Base, IFoo` or `interface IFoo`; Rust `pub trait` + `impl Trait for Type` when Implements has names. Analyzer missing-target + cycle (picker). Extends extras not auto-migrated. Super stays first Extends parent. |
 | 2026-08-17 | **Multi-base emit + Yield + Switch match** — generate prints all Extends rows for python/cpp; `yield_stmt` (py/gd); Switch lowers to Python `match` and Rust `match` (value-equality cases). C# extras still not printed. Super stays first-parent. |
 | 2026-08-16 | **Extends list UI shipped (partial)** — list on Declare Class; extras stored; generate first parent only. Multi-base emit not shipped. See [Multiple inheritance](#multiple-inheritance-locked-visual). |

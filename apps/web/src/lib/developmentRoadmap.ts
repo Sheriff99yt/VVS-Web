@@ -301,7 +301,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'clipboard',
         title: 'Clipboard workflow',
         description:
-          'Cut, copy, paste, duplicate (in-app + OS clipboard) with unique edge IDs on batch paste; extract selection to function (Ctrl+Shift+E).',
+          'Cut, copy, paste, duplicate (in-app + OS clipboard) with unique edge IDs on batch paste; extract selection to function (Ctrl+Shift+E) keeps body + Declare.',
       },
       {
         id: 'symbol-drag-spawn',
@@ -429,7 +429,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'transpile',
         title: 'Client transpiler',
         description:
-          'IR pipeline (analyze → graphToIr → print via syntax packs → emit/classModule); Python, JS, C++, Verse, GDScript; control flow; example + Rosetta snapshot tests; 233+ package tests.',
+          'IR pipeline (analyze → graphToIr → print via syntax packs → emit/classModule); Python, JS, C++, Verse, GDScript, Rust, C#, Go; control flow; example + Rosetta snapshot tests; 233+ package tests.',
         status: 'done',
       },
       {
@@ -450,7 +450,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'syntax-packs',
         title: 'Syntax packs & Rosetta suite',
         description:
-          '@vvs/syntax-packs -- base JSON (Rosetta + shell templates), capability overlays, 14 fixtures Ã-- 5 families, packCoverage + fidelity linter + parse validation script.',
+          '@vvs/syntax-packs -- base JSON (Rosetta + shell templates), capability overlays, 14 fixtures × 8 families, packCoverage + fidelity linter + parse validation script.',
         status: 'done',
       },
       {
@@ -478,7 +478,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'syntax-pack-go-shipped',
         title: 'Go syntax pack family (U77)',
         description:
-          'go.base.json; struct+func shells; get_input + switch printers; 14 Rosetta goldens; UI target (.go); update-go-goldens.ts. Expands target language platform to 8 languages.',
+          'go.base.json; struct+func shells; get_input + switch printers; 14 Rosetta goldens; UI target (.go); update-go-goldens.ts. Methods emit as package `func Name` after the struct, not inside the struct (event handlers still use `func (self *T)`).',
         status: 'done',
       },
       {
@@ -583,7 +583,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'flow-control-return-break-continue',
         title: 'Generic flow control (Return, Break, Continue)',
         description:
-          'flow_return / flow_break / flow_continue lower across all eight syntax packs.',
+          'flow_return / flow_break / flow_continue lower across all eight syntax packs. Return value pin is typed via resolvePinValueExpr.',
         status: 'done',
       },
       {
@@ -597,7 +597,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'function-return-args-u99',
         title: 'Function return with arguments (U99)',
         description:
-          'Return statement node (flow_return) with value input pin lowering to return statements across all 8 target languages.',
+          'Return statement node (flow_return) with typed value pin (resolvePinValueExpr) lowering to return statements across all 8 target languages.',
         status: 'done',
       },
       {
@@ -866,7 +866,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Yield statement',
         description:
-          '`yield_stmt` node, python + gdscript. Optional value pin. `isGenerator` option on Function. Hidden on cpp/js/cs/go/rust/verse (`(x) Yield`). No invented rust/cpp generators.',
+          '`yield_stmt` node, python + gdscript. Optional value pin typed via resolvePinValueExpr. `isGenerator` persist-only (no `function*`). Hidden on cpp/js/cs/go/rust/verse (`(x) Yield`). No invented rust/cpp generators.',
         status: 'done',
       },
       {
@@ -874,7 +874,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Switch match (CL-017)',
         description:
-          'Same Switch node. Python `match`/`case`. Rust `match`. C#/JS/C++ keep native switch. GDScript/Verse/Go keep shipped if-cascade. No Match node.',
+          'Same Switch node. Python `match`/`case`. Rust `match`. C#/JS/C++ keep native switch. GDScript/Verse/Go keep shipped if-cascade. Add Case uses case_* indices. No Match node.',
         status: 'done',
       },
     ],
@@ -1107,7 +1107,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
   {
     id: 'language-platform',
     layer: 'frontend',
-    title: 'Language platform (seven families)',
+    title: 'Language platform (eight families)',
     phase: 6,
     emphasis: 'shipped',
     items: [
@@ -1115,7 +1115,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'languages-more',
         title: 'Pack-driven language families',
         description:
-          'Python, JS, C++, Verse, GDScript, Rust, C# -- pack-first print + 14×7 Rosetta goldens. Milestone 3 closed July 2026.',
+          'Python, JS, C++, Verse, GDScript, Rust, C#, Go -- pack-first print + 14×8 Rosetta goldens. Milestone 3 closed July 2026.',
         status: 'done',
       },
       {
@@ -1337,7 +1337,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'go-target-language-u77',
         title: 'Go Target Language Pack (U77)',
         description:
-          'Go (.go) target language family support: go.base.json syntax pack, goProfile, custom statement printers (getInput, switch), 14 Rosetta goldens, and UI selectors.',
+          'Go (.go) target language family support: go.base.json syntax pack, goProfile, custom statement printers (getInput, switch), 14 Rosetta goldens, and UI selectors. Methods emit as package funcs after the struct, not inside the struct.',
         status: 'done',
       },
       {

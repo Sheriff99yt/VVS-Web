@@ -2,7 +2,7 @@
 
 Vision Visual Scripting (VVS) is an open visual programming platform that **builds on top of traditional software development** — not against it.
 
-The graph is an authoring surface. **Text code remains the integration layer**: files you can read in any IDE, commit to git, run in CI, and hand to the tools you already use (including AI assistants via MCP).
+The graph is an authoring surface. **Text code remains the integration layer**: files you can read in any IDE, commit to git, run in CI, and hand to the tools you already use (including the in-page Agent; later MCP wrapper for other apps).
 
 > **Origin:** VVS began as a [university graduation project](https://github.com/Sheriff99yt/Vision_Visual_Scripting) (2021) — a Python desktop app proving that a visual graph could translate into **any selected programming language**. **VVS Web** continues that mission for the open-system and AI era. See [history.md](history.md).
 
@@ -14,7 +14,7 @@ We are working toward a **portable visual programming model** — graph schema, 
 
 - **Web** — author in the browser; share graphs and **trustworthy** generated code
 - **Repos & automation** — JSON graphs + text output; no proprietary runtime required
-- **AI tools** — MCP exposes graph operations to assistants you already use
+- **AI tools** — in-page Agent exposes graph operations; later MCP wrapper for other apps / Cursor
 - **Game engines** — UE6 plugin (roadmap) reuses the **v1 Verse emitter** for in-engine authoring
 - **Everything else** — education, tooling, scripting glue — via open node packs and syntax profiles
 
@@ -32,7 +32,7 @@ Visual node systems have proven that **flow + typed data** is one of the fastest
 - Generate code that **does not match** the graph (hidden macros, latent actions, folded operations), or
 - Stall when the host platform moves on (new languages, new engine APIs, deprecated authoring models).
 
-VVS takes a different path: **decouple logic from syntax**, generate **ordinary source** with **text-shaped fidelity** (every node maps to honest text), and meet developers **where they already work** — browser, repo, IDE, MCP, and optionally in-engine via **Verse export** — without a proprietary graph runtime.
+VVS takes a different path: **decouple logic from syntax**, generate **ordinary source** with **text-shaped fidelity** (every node maps to honest text), and meet developers **where they already work** — browser, repo, IDE, in-page Agent, and optionally in-engine via **Verse export** — without a proprietary graph runtime.
 
 **Canonical fidelity spec:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md)
 
@@ -44,8 +44,9 @@ VVS takes a different path: **decouple logic from syntax**, generate **ordinary 
 ┌─────────────────────────────────────────────────────────────────┐
 │  Authoring surfaces (same graph schema, different hosts)        │
 │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
-│  │ Web editor   │  │ MCP / AI     │  │ UE6 editor plugin      │ │
-│  │ (PWA)        │  │ agents       │  │ (planned)              │ │
+│  │ Web editor   │  │ In-page      │  │ UE6 editor plugin      │ │
+│  │ (PWA)        │  │ Agent        │  │ (planned)              │ │
+│  │              │  │ (later MCP)  │  │                        │ │
 │  └──────┬───────┘  └──────┬───────┘  └───────────┬────────────┘ │
 │         └─────────────────┴──────────────────────┘              │
 │                           │                                     │
@@ -71,7 +72,7 @@ A data-driven **syntax registry** turns the intermediate representation into rea
 
 ### 3. Integration layer (your stack)
 
-Export files, sync projects, connect MCP-capable AI tools, and (roadmap) run graphs **inside UE6** through a first-party-style plugin that emits **Verse** and interoperates with Epic’s direction away from legacy Blueprint-only workflows.
+Export files, sync projects, use the in-page Agent (later MCP wrapper), and (roadmap) run graphs **inside UE6** through a first-party-style plugin that emits **Verse** and interoperates with Epic’s direction away from legacy Blueprint-only workflows.
 
 ---
 
@@ -82,7 +83,7 @@ Export files, sync projects, connect MCP-capable AI tools, and (roadmap) run gra
 | Text code in git | Graphs serialize to JSON; generated code is normal source files |
 | IDEs & debuggers | Output is not a black box — use standard tooling on emitted code |
 | Code review | Diff generated artifacts or graph JSON depending on team preference |
-| AI assistants | MCP exposes graph operations; predictable text diffs when nodes change |
+| AI assistants | In-page Agent exposes graph operations; later MCP wrapper; predictable text diffs when nodes change |
 | Third-party products | Generated files import into **any** stack — no VVS runtime required |
 | Engine evolution | UE6 plugin emits **Verse text** with same fidelity rules — not Blueprint simulation |
 
@@ -117,10 +118,10 @@ Nodes are **data**, not hardcoded UI-only widgets:
 
 - Categories, port types, and inline properties are schema-driven
 - Community **node packs** and project-specific nodes extend the catalog without forked engines
-- AI agents (via MCP) choose from **registered** nodes — reducing hallucinated APIs
+- The in-page Agent (later MCP wrapper) chooses from **registered** nodes — reducing hallucinated APIs
 - Cross-graph **Call Function** and **Import Module** — honest call sites in generated text
 
-This flexibility is what makes a single graph model viable across **web**, **CLI**, **MCP**, and **UE6**.
+This flexibility is what makes a single graph model viable across **web**, **CLI**, **in-page Agent**, and **UE6**.
 
 ---
 
@@ -129,7 +130,7 @@ This flexibility is what makes a single graph model viable across **web**, **CLI
 - **Learners** — visual structure with real code output they can study
 - **Professional developers** — faster glue logic, AI-assisted graph edits, export to repo
 - **Unreal teams** — a Verse-oriented path through the Blueprint transition
-- **Tool builders** — open graph schema, transpiler packages, MCP integration surface
+- **Tool builders** — open graph schema, transpiler packages, in-page agent / later MCP integration surface
 
 ---
 

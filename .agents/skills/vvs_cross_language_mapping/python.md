@@ -29,14 +29,14 @@ class Machine:
         print("Shutdown")
 ```
 
-Coverage Lab also shows: `from enum import Enum`, `class SensorStatus(Enum):`, inheritance `class Sensor(Machine):`, GetInput via `input("…")`, Switch as **if/elif** (not `match`), and conditional `import json` inside a branch.
+Coverage Lab also shows: `from enum import Enum`, `class SensorStatus(Enum):`, inheritance `class Sensor(Machine):`, GetInput via `input("…")`, Switch as **`match` / `case` / `case _`**, and conditional `import json` inside a branch.
 
 ## Concept → emit
 
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `class Color(Enum):` (+ `from enum import Enum`) |
-| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `class IDamageable:` |
+| **Interface** | Class `form: interface\|trait` + Implements option | `class IDamageable:` |
 | **Class** | `Class Define` Node | `class MyClass:` |
 | **Inheritance** | `Class Define` Option: **Extends** | `(BaseClass)` |
 | **Implements** | `Class Define` Option: **Implements** | `(IDamageable)` |
@@ -53,8 +53,8 @@ Coverage Lab also shows: `from enum import Enum`, `class SensorStatus(Enum):`, i
 | **Static Function** | `Function` Option: **Static** | `@staticmethod` |
 | **Virtual Func** | `Function` Option: **Virtual** | *Implicit* |
 | **Generics** | `Function` Option: **Wildcard Pin** | `TypeVar('T')` |
-| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `def __init__(self):` |
-| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `try: / except:` |
+| **Constructor** | Function Define + `role: constructor` (not Rust `new` / not Go) | `def __init__(self):` |
+| **Error (Try)** | Try flow node (catch/finally pins); not Go/Rust | `try: / except:` |
 | **Lambda/Callback** | Pin Type: **Callable** | `callback()` |
 | **Namespaces** | `Namespace Define` Node | `module.py` |
 | **Structs** | `Struct Define` Node | `@dataclass` |
@@ -62,7 +62,7 @@ Coverage Lab also shows: `from enum import Enum`, `class SensorStatus(Enum):`, i
 | **Async Function** | `Function` Option: **Async** | `async def` |
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if: / else:` |
-| **Switch/Match** | `Switch` Node | `if/elif` cascade (`_vvs_sel`) — *not* `match` today |
+| **Switch/Match** | `Switch` Node | `match` / `case` / `case _` |
 | **For Loop** | `For Loop` Node | `for x in y:` |
 | **While Loop** | `While Loop` Node | `while x:` |
 | **Break** | `Break` Node | `break` |
@@ -187,12 +187,12 @@ class FlowAndAsyncDemo:
         else:
             pass
 
-        # Switch — Coverage Lab emits if/elif (not match) via _vvs_sel
-        _vvs_sel = val
-        if _vvs_sel == 1:
-            pass
-        elif _vvs_sel == 2:
-            pass
+        # Switch — native match (CL-017)
+        match val:
+            case 1:
+                pass
+            case 2:
+                pass
 
         # Loops
         for i in range(10):

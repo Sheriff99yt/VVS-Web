@@ -109,7 +109,7 @@ import {
   resolveCrossGraphTarget,
   wouldCrossGraphDependencyCycle,
 } from '@/lib/graphRelations';
-import { extractSelectionToFunction } from '@/lib/extractToFunction';
+import { applyExtractSelectionToDocuments, extractSelectionToFunction } from '@/lib/extractToFunction';
 import { resolve as resolveKind } from '@vvs/syntax-registry';
 import { defaultPropertiesFromSchema } from '@vvs/syntax-registry';
 import { normalizeNodeData } from '@/lib/nodeKind';
@@ -144,6 +144,7 @@ import {
   hasDefineNodeForFunction,
   hasDefineNodeForVariable,
   insertClassDefineNode,
+  insertBoundDefineFromCatalogTemplate,
   insertDefineNodeForEvent,
   insertDefineNodeForFunction,
   insertDefineNodeForVariable,
@@ -323,10 +324,9 @@ function GraphCanvasInner() {
     setEdges,
     setNodesWithHistory,
     setEdgesWithHistory,
-    importGraphTab,
   } = useGraphEdit();
 
-  const { getDocuments, patchAllDocuments } = useGraphWorkspace();
+  const { getDocuments, patchAllDocuments, pushHistory } = useGraphWorkspace();
   const { addEventWithDefine } = useSymbolLifecycle();
 
   const classEvents = useMemo(
@@ -1076,6 +1076,36 @@ function GraphCanvasInner() {
     (template: LibraryNodeTemplate) => {
       if (!menu) return;
 
+      // Bound missing-declare catalog rows: insert Declare via helpers, never call-bind.
+      if (currentClass) {
+        const documents = getDocuments() ?? {};
+        const bound = insertBoundDefineFromCatalogTemplate(documents, template, {
+          cls: currentClass,
+          functions,
+          events: classEvents,
+          variables: spawnVariables,
+          activeGraphTab,
+        });
+        if (bound) {
+          patchAllDocuments(() => bound);
+          const targetNode =
+            findMemberDeclareNodeForSymbol(
+              bound,
+              currentClass,
+              template.type === 'event_member_define' ? 'event' : template.type === 'var_define' ? 'variable' : 'function',
+              template.graphBinding?.symbolId ??
+                template.linkedGraphId ??
+                (typeof template.properties?.symbolId === 'string' ? template.properties.symbolId : undefined) ??
+                ''
+            );
+          const targetTabId = targetNode?.tabId ?? activeGraphTab ?? classGraphTabId(currentClass);
+          markTabDirty(targetTabId);
+          setCompileState('dirty');
+          setMenu(null);
+          return;
+        }
+      }
+
       const defaultInlineValues: Record<string, string | number | boolean> = {};
       if (template.inputs) {
         template.inputs.forEach((input) => {
@@ -1251,6 +1281,10 @@ function GraphCanvasInner() {
       variables,
       openTabs,
       getDocuments,
+      currentClass,
+      patchAllDocuments,
+      markTabDirty,
+      setCompileState,
     ]
   );
 
@@ -2193,16 +2227,21 @@ function GraphCanvasInner() {
   }, [screenToFlowPosition]);
 
   const handleExtractToFunction = useCallback(() => {
-    const result = extractSelectionToFunction(nodes, edges);
+    const result = extractSelectionToFunction(nodes, edges, {
+      classId: currentClass?.id,
+    });
     if ('error' in result) {
       dispatchEditorWarning(result.error, 'Extract');
       return;
     }
+    pushHistory(`Extract to function ${result.func.name}`);
     setFunctions((prev) => [...prev, result.func]);
     setOpenTabs((prev) => (prev.some((t) => t.id === result.tab.id) ? prev : [...prev, result.tab]));
-    importGraphTab(result.tab, result.functionDocument);
-    setNodesWithHistory(result.nextNodes);
-    setEdgesWithHistory(result.nextEdges);
+    const documents = getDocuments() ?? {};
+    const next = applyExtractSelectionToDocuments(documents, result, activeGraphTab, {
+      cls: currentClass ?? undefined,
+    });
+    patchAllDocuments(() => next, { preserveHistory: true });
     markTabDirty(activeGraphTab);
     markTabDirty(result.tab.id);
     setCompileState('dirty');
@@ -2210,11 +2249,12 @@ function GraphCanvasInner() {
   }, [
     nodes,
     edges,
+    currentClass,
     setFunctions,
     setOpenTabs,
-    importGraphTab,
-    setNodesWithHistory,
-    setEdgesWithHistory,
+    getDocuments,
+    patchAllDocuments,
+    pushHistory,
     markTabDirty,
     activeGraphTab,
     setCompileState,

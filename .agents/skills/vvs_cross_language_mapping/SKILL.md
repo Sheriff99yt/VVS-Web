@@ -40,7 +40,7 @@ Each language doc is self-contained: Declare/Define, that languageâ€™s conceptâ†
 | Topic | Document |
 |-------|----------|
 | Distinct nodes vs inspector modifiers | [`shared/nodes-vs-settings.md`](shared/nodes-vs-settings.md) |
-| Full 7-language matrix | [`shared/translation-matrix.md`](shared/translation-matrix.md) |
+| Language matrix (7 columns; Go is [`go.md`](go.md)) | [`shared/translation-matrix.md`](shared/translation-matrix.md) |
 | U66 / U81 / U82 + file boundaries | [`shared/declare-define-rules.md`](shared/declare-define-rules.md) |
 | Feature support / progressive confirmation | [`shared/feature-support.md`](shared/feature-support.md) |
 

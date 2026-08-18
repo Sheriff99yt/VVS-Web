@@ -81,6 +81,22 @@ describe('yield_stmt', () => {
     expect(code).not.toContain('yield x');
   });
 
+  test('python emits yield from a typed inline value', () => {
+    const y = yieldNode('yield-1');
+    y.data.inlineValues = { value: 'hello' };
+    const graph = withTestEntryGraph({
+      moduleName: 'Demo',
+      extendsType: '',
+      targetLanguage: 'python',
+      variables: [],
+      functions: [],
+      nodes: [y],
+      edges: [],
+    });
+    const code = transpileGraphCode(graph);
+    expect(code).toContain('yield "hello"');
+  });
+
   test('gdscript emits yield when the node is placed', () => {
     const code = transpileGraphCode(yieldGraph('gdscript', true));
     expect(code).toContain('yield self.x');

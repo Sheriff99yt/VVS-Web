@@ -28,7 +28,9 @@ import { buildExtendsClassPickerOptions } from '@/lib/classScope';
 import { ExtendsListEditor } from '@/components/layout/ExtendsListEditor';
 import { ImplementsListEditor } from '@/components/layout/ImplementsListEditor';
 import { ClassFormEditor } from '@/components/layout/ClassFormEditor';
-import { extendsListUiMode, implementsListUiMode, classFormUiOptions, syncClassExtendsFields, syncClassImplementsFields, normalizeClassForm } from '@vvs/graph-types';
+import { useClassLifecycle } from '@/hooks/useClassLifecycle';
+import { isProjectMapTab } from '@/lib/graphTabs';
+import { extendsListUiMode, implementsListUiMode, classFormUiOptions, syncClassExtendsFields } from '@vvs/graph-types';
 
 export type GraphPropertiesSection = 'environment' | 'exportPaths' | 'details';
 
@@ -54,7 +56,6 @@ export function GraphPropertiesPanel({
     environmentVersion,
     setEnvironmentLink,
     classes,
-    setClasses,
     activeClassId,
     integration,
     setIntegration,
@@ -62,12 +63,13 @@ export function GraphPropertiesPanel({
     setInstalledLibrary,
   } = useProject();
   const { getActiveTabMetadata, updateActiveTabMetadata, subscribeMetadata } = useGraphWorkspace();
+  const { renameClass } = useClassLifecycle();
   const { environments } = useEnvironmentCatalog();
   const { folderHandle } = useProjectFolder();
   const [refreshNotes, setRefreshNotes] = useState<HostFileRefreshNote[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const isMain = activeGraphTab === 'main';
+  const isMain = isProjectMapTab(activeGraphTab);
   const activeTab = openTabs.find((t) => t.id === activeGraphTab);
   const [, bumpMetadata] = useReducer((n: number) => n + 1, 0);
   const visible = new Set(sections);
@@ -194,8 +196,9 @@ export function GraphPropertiesPanel({
     }
   };
 
-  const showEnvironment = visible.has('environment') && isMain;
-  const showExportPaths = visible.has('exportPaths') && isMain;
+  // Project settings only consumer — env / host / export are project-level, not tab-gated.
+  const showEnvironment = visible.has('environment');
+  const showExportPaths = visible.has('exportPaths');
   const showDetails = visible.has('details');
 
   return (
@@ -463,11 +466,11 @@ export function GraphPropertiesPanel({
                   classes={classes}
                   targetLanguage={targetLanguage}
                   onChange={(next) => {
-                    const synced = syncClassExtendsFields(next.extendsType, next.extendsTypes);
-                    handleChange('extendsType', synced.extendsType ?? '');
-                    setClasses((prev) =>
-                      prev.map((item) => (item.id === next.id ? { ...item, ...synced } : item))
-                    );
+                    renameClass(next);
+                    if (!isMain) {
+                      const synced = syncClassExtendsFields(next.extendsType, next.extendsTypes);
+                      handleChange('extendsType', synced.extendsType ?? '');
+                    }
                   }}
                 />
               )}
@@ -485,14 +488,7 @@ export function GraphPropertiesPanel({
                   }
                   targetLanguage={targetLanguage}
                   onChange={(next) => {
-                    const form = normalizeClassForm(next.form);
-                    setClasses((prev) =>
-                      prev.map((item) =>
-                        item.id === next.id
-                          ? { ...item, form: form && form !== 'class' ? form : undefined }
-                          : item
-                      )
-                    );
+                    renameClass(next);
                   }}
                 />
                 <ImplementsListEditor
@@ -507,12 +503,7 @@ export function GraphPropertiesPanel({
                   classes={classes}
                   targetLanguage={targetLanguage}
                   onChange={(next) => {
-                    const synced = syncClassImplementsFields(next.implementsTypes);
-                    setClasses((prev) =>
-                      prev.map((item) =>
-                        item.id === next.id ? { ...item, implementsTypes: synced.implementsTypes } : item
-                      )
-                    );
+                    renameClass(next);
                   }}
                 />
               </div>

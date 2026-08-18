@@ -170,7 +170,12 @@ export function applyEventDefineBinding(
     kindId: 'event_define',
     category: 'Events',
     label: eventDisplayName(event.name),
-    properties: { ...(data.properties ?? {}), eventId: event.id, eventName: event.name },
+    properties: {
+      ...(data.properties ?? {}),
+      eventId: event.id,
+      eventName: event.name,
+      ...(event.role ? { role: event.role } : {}),
+    },
     inputs: [],
     outputs,
   };

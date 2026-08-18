@@ -239,4 +239,201 @@ describe('flow_return, flow_break, flow_continue emit', () => {
       expect(code.toLowerCase()).toContain('continue');
     }
   });
+
+  test('python emits return from a typed inline value', () => {
+    const returnNode = {
+      id: 'ret-1',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        kindId: 'flow_return',
+        label: 'Return',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' as const },
+          { id: 'value', label: 'Value', type: 'data_any' as const },
+        ],
+        outputs: [],
+        inlineValues: { value: 'hello' },
+      },
+    };
+    const code = transpileGraphCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [returnNode],
+        edges: [],
+      })
+    );
+    expect(code).toContain('return "hello"');
+  });
+
+  test('python emits return from a function-bound return_val inline', () => {
+    const returnNode = {
+      id: 'ret-1',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        kindId: 'flow_return',
+        label: 'Return',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' as const },
+          { id: 'return_val', label: 'Return', type: 'data_number' as const },
+        ],
+        outputs: [],
+        inlineValues: { return_val: 7 },
+      },
+    };
+    const code = transpileGraphCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [returnNode],
+        edges: [],
+      })
+    );
+    expect(code).toContain('return 7');
+  });
+
+  test('python keeps bare return when the value pin is the empty spawn default', () => {
+    const returnNode = {
+      id: 'ret-1',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        kindId: 'flow_return',
+        label: 'Return',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' as const },
+          { id: 'value', label: 'Value', type: 'data_any' as const },
+        ],
+        outputs: [],
+        inlineValues: { value: '' },
+      },
+    };
+    const code = transpileGraphCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [returnNode],
+        edges: [],
+      })
+    );
+    expect(code).toMatch(/(^|\n)\s*return\s*$/m);
+    expect(code).not.toContain('return ""');
+  });
+
+  test('connected Get still wins over a typed inline on Return', () => {
+    const returnNode = {
+      id: 'ret-1',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        kindId: 'flow_return',
+        label: 'Return',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' as const },
+          { id: 'value', label: 'Value', type: 'data_any' as const },
+        ],
+        outputs: [],
+        inlineValues: { value: 'ignored' },
+      },
+    };
+    const getX = {
+      id: 'get-x',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        kindId: 'variable_get',
+        label: 'Get x',
+        inputs: [],
+        outputs: [{ id: 'val', label: '', type: 'data_any' as const }],
+        properties: { variableName: 'x' },
+      },
+    };
+    const code = transpileGraphCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [returnNode, getX],
+        edges: [
+          {
+            id: 'e-x-ret',
+            source: 'get-x',
+            target: 'ret-1',
+            sourceHandle: 'val',
+            targetHandle: 'value',
+            type: 'vvs_standard_edge' as const,
+            data: { pinType: 'data_any' as const },
+          },
+        ],
+      })
+    );
+    expect(code).toContain('return self.x');
+    expect(code).not.toContain('ignored');
+  });
+
+  test('python multi-return includes a typed inline next to a wired pin', () => {
+    const returnNode = {
+      id: 'ret-1',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        kindId: 'flow_return',
+        label: 'Return',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' as const },
+          { id: 'val-1', label: 'Sum', type: 'data_number' as const },
+          { id: 'val-2', label: 'Tag', type: 'data_string' as const },
+        ],
+        outputs: [],
+        inlineValues: { 'val-2': 'ok' },
+      },
+    };
+    const numNode = {
+      id: 'num-1',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        kindId: 'literal_number',
+        label: 'Number',
+        inputs: [],
+        outputs: [{ id: 'value', label: '', type: 'data_number' as const }],
+        properties: { value: 100 },
+      },
+    };
+    const code = transpileGraphCode(
+      withTestEntryGraph({
+        moduleName: 'Demo',
+        extendsType: '',
+        targetLanguage: 'python',
+        variables: [],
+        functions: [],
+        nodes: [returnNode, numNode],
+        edges: [
+          {
+            id: 'e1',
+            source: 'num-1',
+            target: 'ret-1',
+            sourceHandle: 'value',
+            targetHandle: 'val-1',
+            type: 'vvs_standard_edge' as const,
+            data: { pinType: 'data_number' as const },
+          },
+        ],
+      })
+    );
+    expect(code).toContain('return 100, "ok"');
+  });
 });

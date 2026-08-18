@@ -128,7 +128,7 @@ Example — **`action_get_input`** (Get User Input):
 
 | Pin / field | Role |
 |-------------|------|
-| `exec_in` → `exec_out` | Blocking read; flow continues after input |
+| `exec_in` → `exec_out` | Blocking read where the target has stdin; Verse is honest `(x)` + prompt |
 | `prompt` (string, optional wire) | Message shown to the user |
 | `value` (out) | Result read by downstream nodes |
 | `properties.inputKind` | `text` \| `number` — syncs `value` pin type |
@@ -164,7 +164,7 @@ Each conversion is **one graph node = one call in source**. The transpiler never
 
 **No implicit coercion policy:** mismatched pin types are rejected by the editor and by `analyzeProject` (`PIN_TYPE_MISMATCH`). Examples must wire **Get Result → To String → Print String** to display numeric results.
 
-**Writing examples that work on all targets (Python, JavaScript, C++, Verse):**
+**Writing examples that work on portable targets (Python, JavaScript, C++).** Verse GetInput is honest `(x)` — not a blocking read.
 
 | Do | Avoid |
 |----|--------|
@@ -172,7 +172,7 @@ Each conversion is **one graph node = one call in source**. The transpiler never
 | Use portable types: `data_number`, `data_string`, `data_boolean` | `data_object`, `data_array`, `data_any` on **variables** |
 | Wire same types or through **Conversion** nodes | Hand-authoring edges the UI would reject |
 | Use **To String** before Print for numeric values | Wiring number directly to Print String |
-| Use **Get User Input** `number` + **Set** for numeric vars | Hardcoded literals when demonstrating input |
+| Use **Get User Input** `number` + **Set** for numeric vars (not Verse — `(x)` only) | Hardcoded literals when demonstrating input |
 | Use **Branch** on `data_boolean` | Comparison nodes (not in core pack yet) |
 | Keep events **parameterless** until param emit is uniform | Cross-language param naming edge cases |
 | Prefer inline string literals on Print when message is fixed | String concat nodes (not in core pack yet) |
@@ -193,7 +193,7 @@ Canonical spec: [visual_to_text_fidelity.md](visual_to_text_fidelity.md) — **C
 
 `class_define` also covers game-talk “components” (Health / Inventory): composition field or Extends — no `component_define` node ([catalog](design/language_capability_catalog.md#component--class)).
 
-Extends on `class_define` is a **list** (locked visual; emit today is still one `extendsType` string). Extra bases are more Extends rows, not an Inherit node ([catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual)).
+Extends on `class_define` is a **list**. Generate prints all Extends rows for python/cpp; others first parent. Extra bases are more Extends rows, not an Inherit node ([catalog](design/language_capability_catalog.md#multiple-inheritance-locked-visual)).
 
 Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push symbol rows without a canvas correlate.
 

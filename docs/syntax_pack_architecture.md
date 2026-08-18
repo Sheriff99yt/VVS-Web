@@ -71,11 +71,11 @@ flowchart TB
 
 ## Target resolution and capabilities
 
-Flat `TargetLanguage` (`python`, `javascript`, `cpp`, `verse`, `gdscript`, `json`) maps to a **codegen target** with capabilities:
+Flat `TargetLanguage` (`python`, `javascript`, `cpp`, `verse`, `gdscript`, `rust`, `csharp`, `go`, `json`) maps to a **codegen target** with capabilities:
 
 ```ts
 interface CodegenTarget {
-  family: 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp';
+  family: 'python' | 'javascript' | 'cpp' | 'verse' | 'gdscript' | 'rust' | 'csharp' | 'go';
   capabilities: string[];  // e.g. 'async', 'type_hints', 'es2022', 'typed'
   packLock?: { base: string; overlays: string[] }; // pinned in .vvs/project.json
 }

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { GraphTab } from '@vvs/graph-types';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
-import { closeGraphTab, graphDisplayName, selectionForGraphTab } from './graphTabs';
+import { closeGraphTab, graphDisplayName, isProjectMapTab, selectionForGraphTab } from './graphTabs';
 
 const mainTab: GraphTab = { id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: 'Main graph' };
 const fnA: GraphTab = { id: 'fn-a', type: 'function', name: 'Function: A' };
@@ -72,5 +72,13 @@ describe('graphDisplayName', () => {
     expect(
       graphDisplayName({ id: MAIN_GRAPH_CONTAINER_ID, type: 'container', name: 'Project map' })
     ).toBe('Overview');
+  });
+});
+
+describe('isProjectMapTab', () => {
+  test('treats legacy main and main-graph as the project map', () => {
+    expect(isProjectMapTab('main')).toBe(true);
+    expect(isProjectMapTab(MAIN_GRAPH_CONTAINER_ID)).toBe(true);
+    expect(isProjectMapTab('fn-boot')).toBe(false);
   });
 });

@@ -13,6 +13,7 @@ import {
   relocateClassHomeGraph,
   insertDefineNodeForFunction,
   insertImplementNodeForFunction,
+  insertBoundDefineFromCatalogTemplate,
   syncDefineNodesForSymbol,
 } from './defineNodeSync';
 
@@ -256,6 +257,51 @@ describe('defineNodeSync', () => {
     expect(node?.data.properties?.extendsTypes).toEqual(['Parent', 'Mixin']);
   });
 
+  it('preserves class_define isAbstract across rename sync', () => {
+    const cls = createClassSymbol('Old', { id: 'cls-1', containerId: 'container-a' });
+    let documents = insertClassDefineNode(
+      { 'container-a': { nodes: [], edges: [] } },
+      cls
+    );
+    const tab = documents['container-a']!;
+    const node = tab.nodes.find((n) => n.data.kindId === 'class_define');
+    if (!node) throw new Error('missing class_define');
+    documents = {
+      'container-a': {
+        ...tab,
+        nodes: [
+          {
+            ...node,
+            data: {
+              ...node.data,
+              properties: { ...node.data.properties, isAbstract: true },
+            },
+          },
+        ],
+      },
+    };
+    documents = syncDefineNodesForClass(documents, { ...cls, name: 'Renamed' });
+    const defineNode = documents['container-a']!.nodes.find((n) => n.data.kindId === 'class_define');
+    expect(defineNode?.data.label).toBe('Declare Renamed');
+    expect(defineNode?.data.properties?.name).toBe('Renamed');
+    expect(defineNode?.data.properties?.isAbstract).toBe(true);
+  });
+
+  it('clears class_define form when symbol returns to class', () => {
+    const cls = createClassSymbol('Child', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+      form: 'interface',
+    });
+    let documents = insertClassDefineNode(
+      { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } },
+      cls
+    );
+    documents = syncDefineNodesForClass(documents, { ...cls, form: undefined });
+    const node = documents[MAIN_GRAPH_CONTAINER_ID]!.nodes.find((n) => n.data.kindId === 'class_define');
+    expect(node?.data.properties?.form).toBeUndefined();
+  });
+
   it('syncs class_define implementsTypes and form', () => {
     const cls = createClassSymbol('Child', {
       id: 'main-class',
@@ -271,5 +317,79 @@ describe('defineNodeSync', () => {
     const node = synced[MAIN_GRAPH_CONTAINER_ID]!.nodes.find((n) => n.data.kindId === 'class_define');
     expect(node?.data.properties?.implementsTypes).toEqual(['IFoo', 'IBar']);
     expect(node?.data.properties?.form).toBe('interface');
+  });
+
+  it('catalog bound function_define inserts Declare, not a Call', () => {
+    const cls = createClassSymbol('Calc', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+    const func = {
+      id: 'fn-add',
+      name: 'Add',
+      classId: cls.id,
+      visibility: 'public' as const,
+      binding: 'instance' as const,
+      overloads: [{ id: 'ov-add', parameters: [], returnType: 'void' }],
+    };
+    const documents = { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } };
+    const next = insertBoundDefineFromCatalogTemplate(
+      documents,
+      {
+        type: 'function_define',
+        linkedGraphId: func.id,
+        graphBinding: { symbolId: func.id },
+      },
+      { cls, functions: [func], events: [] }
+    );
+    expect(next).not.toBeNull();
+    const nodes = next![MAIN_GRAPH_CONTAINER_ID]!.nodes;
+    expect(nodes.some((n) => n.data.kindId === 'function_define')).toBe(true);
+    expect(nodes.some((n) => n.data.kindId === 'vvs.project.call_function')).toBe(false);
+    expect(nodes.find((n) => n.data.kindId === 'function_define')?.data.properties?.symbolId).toBe(
+      func.id
+    );
+  });
+
+  it('catalog bound event_member_define inserts Declare for that event', () => {
+    const cls = createClassSymbol('Calc', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+    const event = { id: 'evt-1', name: 'calculate', parameters: [], classId: cls.id };
+    const documents = { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } };
+    const next = insertBoundDefineFromCatalogTemplate(
+      documents,
+      {
+        type: 'event_member_define',
+        properties: { symbolId: event.id, name: event.name, eventId: event.id },
+      },
+      { cls, functions: [], events: [event] }
+    );
+    expect(next).not.toBeNull();
+    const node = next![MAIN_GRAPH_CONTAINER_ID]!.nodes.find((n) => n.data.kindId === 'event_member_define');
+    expect(node?.data.properties?.symbolId).toBe(event.id);
+  });
+
+  it('catalog unbound define kinds return null so raw add can stay honest', () => {
+    const cls = createClassSymbol('Calc', {
+      id: 'main-class',
+      containerId: MAIN_GRAPH_CONTAINER_ID,
+    });
+    const documents = { [MAIN_GRAPH_CONTAINER_ID]: { nodes: [], edges: [] } };
+    expect(
+      insertBoundDefineFromCatalogTemplate(
+        documents,
+        { type: 'function_define' },
+        { cls, functions: [], events: [] }
+      )
+    ).toBeNull();
+    expect(
+      insertBoundDefineFromCatalogTemplate(
+        documents,
+        { type: 'vvs.project.call_function', graphBinding: { symbolId: 'fn-1' } },
+        { cls, functions: [], events: [] }
+      )
+    ).toBeNull();
   });
 });

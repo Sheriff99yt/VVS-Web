@@ -39,7 +39,7 @@ Coverage Lab also shows: `using System;` / `using System.Collections.Generic;`, 
 | Concept | Representation in VVS | Emit |
 | :--- | :--- | :--- |
 | **Enum** | `Enum Define` Node | `public enum Color` |
-| **Interface** *(planned)* | Class `form: interface\|trait` + Implements option | `interface IDamageable` |
+| **Interface** | Class `form: interface\|trait` + Implements option | `interface IDamageable` |
 | **Class** | `Class Define` Node | `public class MyClass` |
 | **Inheritance** | `Class Define` Option: **Extends** | `: BaseClass` |
 | **Implements** | `Class Define` Option: **Implements** | `, IDamageable` |
@@ -56,8 +56,8 @@ Coverage Lab also shows: `using System;` / `using System.Collections.Generic;`, 
 | **Static Function** | `Function` Option: **Static** | `public static void Func` |
 | **Virtual Func** | `Function` Option: **Virtual** | `public virtual void Func` |
 | **Generics** | `Function` Option: **Wildcard Pin** | `void Func<T>()` |
-| **Constructor** *(planned)* | Function Define + `role: constructor` (not Rust `new` / not Go) | `public MyClass()` |
-| **Error (Try)** *(planned)* | Try flow node (catch/finally pins); not Go/Rust | `try { } catch` |
+| **Constructor** | Function Define + `role: constructor` (not Rust `new` / not Go) | `public MyClass()` |
+| **Error (Try)** | Try flow node (catch/finally pins); not Go/Rust | `try { } catch` |
 | **Lambda/Callback** | Pin Type: **Callable** | `Action callback` |
 | **Namespaces** | `Namespace Define` Node | `namespace X` |
 | **Structs** | `Struct Define` Node | `struct X` |

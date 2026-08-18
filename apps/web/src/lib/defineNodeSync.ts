@@ -139,7 +139,10 @@ function buildEventDefineData(event: ProjectEventDefinition, existingProperties?
   });
 }
 
-function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
+function buildClassDefineData(
+  cls: ClassSymbol,
+  existingProperties?: Record<string, unknown>
+): VVSNodeData {
   const def = resolveKind('class_define');
   const extendsFields = syncClassExtendsFields(cls.extendsType, cls.extendsTypes);
   const implementsFields = syncClassImplementsFields(cls.implementsTypes);
@@ -152,13 +155,15 @@ function buildClassDefineData(cls: ClassSymbol): VVSNodeData {
     outputs: def?.outputs ?? [EXEC_OUT],
     inlineValues: {},
     properties: {
+      ...(existingProperties ?? {}),
       symbolId: cls.id,
       classId: cls.id,
       name: cls.name,
       extendsType: extendsFields.extendsType ?? '',
       extendsTypes: extendsFields.extendsTypes ?? [],
       implementsTypes: implementsFields.implementsTypes ?? [],
-      ...(form && form !== 'class' ? { form } : {}),
+      // Always overwrite — do not keep a stale interface/trait from existingProperties.
+      form: form && form !== 'class' ? form : undefined,
       visibility: cls.visibility ?? 'public',
     },
   });
@@ -584,7 +589,7 @@ export function syncDefineNodesForClass(
     const nodes = doc.nodes.map((node) => {
       if (!classDefineMatchesClass(node, cls, doc)) return node;
       docChanged = true;
-      const data = buildClassDefineData(cls);
+      const data = buildClassDefineData(cls, node.data.properties);
       return {
         ...node,
         data: {
@@ -861,6 +866,64 @@ export function bootstrapClassHomeDocuments(
   next = insertDefineNodeForEvent(next, cls, entry, targetTabId);
   next = insertProgramEntryHandlerNode(next, cls, entry, targetTabId);
   return next;
+}
+
+
+/** Catalog template shape used to bind an existing symbol to a Declare node. */
+export interface CatalogDefineTemplate {
+  type?: string;
+  kindId?: string;
+  linkedGraphId?: string;
+  graphBinding?: { symbolId?: string };
+  properties?: Record<string, unknown>;
+}
+
+function catalogTemplateSymbolId(template: CatalogDefineTemplate): string | undefined {
+  const fromBind = template.graphBinding?.symbolId;
+  if (typeof fromBind === 'string' && fromBind.trim()) return fromBind;
+  const fromLink = template.linkedGraphId;
+  if (typeof fromLink === 'string' && fromLink.trim()) return fromLink;
+  const fromProps = template.properties?.symbolId;
+  if (typeof fromProps === 'string' && fromProps.trim()) return fromProps;
+  return undefined;
+}
+
+/**
+ * Bound Declare rows from the spawn catalog (missing-declare recovery).
+ * Returns updated documents, or null so the caller can raw-add an unbound kind.
+ * Never call-binds a function_define.
+ */
+export function insertBoundDefineFromCatalogTemplate(
+  documents: Record<string, GraphDocument>,
+  template: CatalogDefineTemplate,
+  ctx: {
+    cls: ClassSymbol;
+    functions: FunctionSymbol[];
+    events: ProjectEventDefinition[];
+    variables?: VariableSymbol[];
+    activeGraphTab?: string;
+  }
+): Record<string, GraphDocument> | null {
+  const kindId = template.kindId || template.type;
+  const symbolId = catalogTemplateSymbolId(template);
+  if (!kindId || !symbolId) return null;
+
+  if (kindId === 'function_define') {
+    const func = ctx.functions.find((f) => f.id === symbolId);
+    if (!func) return null;
+    return insertDefineNodeForFunction(documents, ctx.cls, func, ctx.activeGraphTab);
+  }
+  if (kindId === 'event_member_define') {
+    const event = ctx.events.find((e) => e.id === symbolId);
+    if (!event) return null;
+    return insertDefineNodeForEvent(documents, ctx.cls, event, ctx.activeGraphTab);
+  }
+  if (kindId === 'var_define') {
+    const variable = (ctx.variables ?? []).find((v) => v.id === symbolId);
+    if (!variable) return null;
+    return insertDefineNodeForVariable(documents, ctx.cls, variable, ctx.activeGraphTab);
+  }
+  return null;
 }
 
 export { MEMBER_DEFINE_KINDS };

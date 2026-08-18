@@ -57,6 +57,11 @@ export function isPinnedGraphTab(tab: GraphTab): boolean {
   return tab.id === MAIN_GRAPH_CONTAINER_ID;
 }
 
+/** Project-map tab (current id or legacy `main`) — project-level settings. */
+export function isProjectMapTab(tabId: string): boolean {
+  return tabId === 'main' || tabId === MAIN_GRAPH_CONTAINER_ID;
+}
+
 export function isOrgOnlyGraphTab(
   activeGraphTab: string,
   classes?: Pick<ClassSymbol, 'containerId'>[]

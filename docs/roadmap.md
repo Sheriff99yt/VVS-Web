@@ -201,7 +201,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 
 | Phase | Status | One-liner |
 |-------|--------|-----------|
-| **1** Web editor & transpiler | Closed | Seven packs, `.vvs/`, canvas source of truth |
+| **1** Web editor & transpiler | Closed | Eight packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; packs via GitHub; **no dedicated server** as product |
 | **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match, Yield, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
