@@ -160,7 +160,7 @@ function FocusCallout() {
     <div className="rounded-lg border border-indigo-500/35 bg-indigo-500/5 px-4 py-3 space-y-1.5">
       <p className="text-[11px] font-medium text-indigo-300/90">Current focus — Phase 6</p>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        August emit/OOP plus Extends multi-base (py/cpp), Implements list + Class form (cs/rs), Yield, Switch match, TypeSpec CLI, overload codegen, host skip/emit UI, Library language chips, and two env packs just shipped.
+        Consume paths after 1f2c051: settings env tab, class/var/event write-through, define-node sync, extract-to-function, typed Yield/Return pins, Switch case index. Extends multi-base (py/cpp), Implements + Class form (cs/rs), and eight-language emit stay shipped.
         Open leftover fidelity is Verse GetInput (honest (x)); U93 is long-term and Library auth/upload stays frozen.
       </p>
     </div>

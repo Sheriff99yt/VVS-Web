@@ -107,7 +107,7 @@ When a catalog row below moves to **Shipped**, add or extend a usability test as
 |------------|------------|-----------------|----------|----------|-------|
 | Class / module shell | Declare Class `{name}` | `class_define` | all | shipped | `extendsType` on class + define node; extras on `extendsTypes`. Generate prints all Extends rows for python/cpp; others first parent. Extends is a **list** (locked visual). See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Component (game-talk) | same as Declare Class | `class_define` + field or Extends | all | **locked** | Not a second construct. See [Component = Class](#component--class). U103 closed. |
-| Inheritance / Extends | Extends list on Declare Class | `class_define` Extends rows | py, cpp (two class rows); cs one class + Implements; js/gd/verse one; go/rs hidden | **partial** | List UI shipped. Generate prints all Extends rows for python/cpp; others first parent / stored only. C# extra types belong on Implements (shipped); Extends extras are not auto-moved. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
+| Inheritance / Extends | Extends list on Declare Class | `class_define` Extends rows | py, cpp (two class rows); cs one class + Implements; js/gd/verse one; go/rs hidden | **shipped** | Locked visual. Generate prints all Extends rows for python/cpp; others first parent / stored only. C# extra types belong on Implements (shipped); Extends extras are not auto-moved. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
 | Variable field | Declare `{name}` | `var_define` | all | shipped | **TypeRef** (builtin / enum / class / array / map); legacy `enumType` migrates |
 | Function member | Declare `{name}` | existence / signature / abstract | all | **shipped (U81)** | `function_define` — no method without Define (except abstract) |
 | Function body place | Define `{name}` | body insert at chain position | all | **shipped (U81)** | `function_implement` on member chain + Edit function body tab |
@@ -338,12 +338,12 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 | Explicit conversion | To String / To Number | `convert_*` | all | shipped | No implicit cast in Print/Set |
 | User input | Get User Input | `action_get_input` | all | shipped | Already a node; Verse stays honest `(x)`. No new symbol/option. |
 | Branch | Branch | `flow_branch` | all | shipped | |
-| Switch | Switch | `flow_switch` | all | shipped | Enum type from canvas `enum_define`; member case labels → `EnumMemberAccess` |
+| Switch | Switch | `flow_switch` | all | shipped | Enum type from canvas `enum_define`; member case labels → `EnumMemberAccess`. Add Case uses `case_*` indices. |
 | **Get Enum Member** | Get Enum Member | `expr_enum_member` | all | **shipped** | properties `enumName` + `member`; pure data pin |
 | **Lambda / anonymous function** | Lambda expression node | `lambda_define` — not a project symbol | py, js, cs, rs, gd | **shipped** | You type `lambda` / `=>` / `\|x\|`. Capture is an **option**. Drop `closure_define`. |
 | **Closure capture** | option on the Lambda node | capture option on `lambda_define` | py, js, rs | shipped | Not a second `closure_define` kind. Rust emit uses `move` when set. |
 | **Null / optional** | Optional type + nodes | type system + `optional_*` | cs, rs | planned | |
-| **Pattern matching** | Switch is the node | `flow_switch` + native match lowering (CL-017) | rs, py 3.10+ | **shipped** | Python `match` / Rust `match`. C# / JS / C++ keep `switch`. Drop planned `flow_match`. Do not add a Match node. |
+| **Pattern matching** | Switch is the node | `flow_switch` + native match lowering (CL-017) | rs, py 3.10+ | **shipped** | Python `match` / Rust `match`. C# / JS / C++ / Go keep `switch`. GDScript / Verse keep if-cascade. Add Case uses `case_*` indices. Drop planned `flow_match`. Do not add a Match node. |
 | **Try / catch** | Try flow node (like Branch) | `flow_try`; catch / finally are exec pins | py, js, cpp, cs, gd | **shipped** | Not a symbol. Do **not** spawn in Go or Rust. Empty finally omitted. |
 | **Await** | Wait `isAsync` option (or function async flag) | `action_wait` | all 8 packs | shipped | No `expr_await` node; C++/Rust keep std thread sleep; Verse `Sleep` |
 | Generics / templates | `type_params[]` **option** on Class or Function | option — not a node | cpp, cs, rs | planned | `template<typename T>` / `fn foo<T>()`. Not a node. |
@@ -524,7 +524,7 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 
 | Date | Change |
 |------|--------|
-| 2026-08-18 | **Return type + honesty** — Declare Return Parameters shipped (`returnType` / `functionReturnTypeName`). Yield value pin typed; `isGenerator` persist-only (no `function*`). Go methods are package `func` after the struct, not inside it. Verse GetInput stays `(x)`.
+| 2026-08-18 | **Return type + honesty** — Declare Return Parameters shipped (`returnType` / `functionReturnTypeName`). Yield value pin typed; `isGenerator` persist-only (no `function*`). Go methods are package `func` after the struct, not inside it. Verse GetInput stays `(x)`. Extends list **shipped** (locked visual; py/cpp multi-base, others first parent). Switch Add Case uses `case_*` indices.
 | 2026-08-17 | **Implements list + Class form shipped** -- `form` (`class`/`interface`/`trait`) + `implementsTypes` on Class / `class_define`. C# `class Child : Base, IFoo` or `interface IFoo`; Rust `pub trait` + `impl Trait for Type` when Implements has names. Analyzer missing-target + cycle (picker). Extends extras not auto-migrated. Super stays first Extends parent. |
 | 2026-08-17 | **Multi-base emit + Yield + Switch match** — generate prints all Extends rows for python/cpp; `yield_stmt` (py/gd); Switch lowers to Python `match` and Rust `match` (value-equality cases). C# extras still not printed. Super stays first-parent. |
 | 2026-08-16 | **Extends list UI shipped (partial)** — list on Declare Class; extras stored; generate first parent only. Multi-base emit not shipped. See [Multiple inheritance](#multiple-inheritance-locked-visual). |

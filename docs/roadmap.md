@@ -29,8 +29,8 @@ In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mir
 | Focus | IDs |
 |-------|-----|
 | **Extends multi-base emit** (python `class Child(Parent, Mixin):` / C++ `: public Parent, public Mixin`; js/gd/verse/cs still first parent) | Aug 2026 |
-| **Yield statement** (`yield_stmt` python + gdscript; hidden elsewhere) | Aug 2026 |
-| **Switch match** (same Switch node; Python `match` / Rust `match`; C#/JS/C++ keep `switch`) | CL-017 |
+| **Yield statement** (`yield_stmt` python + gdscript; typed value pin; hidden elsewhere) | Aug 2026 |
+| **Switch match** (same Switch node; Python `match` / Rust `match`; C#/JS/C++/Go keep `switch`; Add Case uses `case_*` indices) | CL-017 |
 | **TypeSpec → manifest** CLI (`--typespec` / `--tsp` → apiSurface; not in Pages bundle) | Aug 2026 |
 | **Multi-overload codegen** (C++ out-of-line loops; call-site selected overload args; Python extra overloads stay `(x)`) | Aug 2026 |
 | **Language profiles as JSON packs** | Aug 2026 |
@@ -137,7 +137,7 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 |---|------|--------|
 | **U97** | Add-node menu audit | Done — Full catalog audit + naming convention integration |
 | **U98** | Function argument pins | Done — Define / implement / call / emit end-to-end; auto-sync across documents |
-| **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with value pin lowering across 8 target languages |
+| **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with typed value pin (`resolvePinValueExpr`) lowering across 8 target languages |
 | **U100** | Event listeners | **Cut** — subscribe/emit hidden runtime rejected; Dispatch only |
 | **U101** | Cross-language async concept | **Done** — one Wait node; `isAsync` option; pack-complete await/sleep |
 | **CL-018** | Dim ineffective async | **Done** — U66/U67 chips; Wait.isAsync does not flip the function |
@@ -150,8 +150,8 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **Flow Control** | Generic Return, Break, Continue | **Done** — `flow_return` / `flow_break` / `flow_continue` |
 | **Lambda** | Expression node | **Done** — `lambda_define` (python / javascript / csharp / rust / gdscript). Capture option. |
 | **Try** | Flow node | **Done** — `flow_try` (python / javascript / cpp / csharp / gdscript). Empty finally omitted. Hidden in Go/Rust. |
-| **Yield** | Statement node | **Done** — `yield_stmt` (python / gdscript). Hidden elsewhere. No invented generator syntax. |
-| **Switch match** | CL-017 | **Done** — same Switch node. Python `match` / Rust `match`. C#/JS/C++ keep `switch`. |
+| **Yield** | Statement node | **Done** — `yield_stmt` (python / gdscript). Typed value pin. Hidden elsewhere. No invented generator syntax. |
+| **Switch match** | CL-017 | **Done** — same Switch node. Python `match` / Rust `match`. C#/JS/C++/Go keep `switch`. Add Case uses `case_*` indices. |
 
 Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no** live run.
 
@@ -175,6 +175,7 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
+| **Consume-path completeness (`1f2c051`)** | Settings env/host/export tab; class/var/event write-through; define-node sync; extract-to-function keeps body + Declare; Yield/Return typed pins; Switch `case_*` indices; eight-language docs |
 | **Implements / form / language chips / env packs** | Implements list + Class form (cs/rs); Library language chips (no embeddings); `env.csharp.data-script` + `env.go.http-service`. Search stays partial. Templates stay partial (no community catalog). |
 | **U65 goldens + roadmap sync** | Home-preview goldens for Coverage Lab Switch `match` (python/rust) and New Features Lab overload emit; public/in-app roadmap Open vs Done aligned to HEAD `1fcf4a3` era |
 | **Multi-base / Yield / Switch match / TypeSpec** | Extends list generate for python/cpp; `yield_stmt` py/gd; Switch → Python/Rust `match`; TypeSpec CLI → apiSurface |
@@ -203,7 +204,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Eight packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match, Yield, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split. |
+| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match + `case_*` indices, Yield/Return typed pins, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split, settings env tab + define-node write-through (`1f2c051`). |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

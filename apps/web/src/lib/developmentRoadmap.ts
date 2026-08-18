@@ -339,7 +339,8 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'functions',
         title: 'Function symbols',
-        description: 'Bindings, visibility, overloads, virtual/async flags, call nodes with graphBinding pin sync.',
+        description:
+          'Bindings, visibility, overloads, virtual/async flags, return parameters, call nodes with graphBinding pin sync; `syncNodeForFunction` skips define/implement; ProjectTree overload add/remove write-through.',
       },
       {
         id: 'macros',
@@ -371,13 +372,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'events',
         title: 'Custom & entry events',
         description:
-          'events[] + On-node role entry | tick | custom; event_member_define + event_define handlers + dispatch nodes (direct call); Emit/Subscribe blocked (HIDDEN_EVENT_RUNTIME_UNSUPPORTED); tree + New event hereâ€¦; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog.',
+          'events[] + On-node role entry | tick | custom; event_member_define + event_define handlers + dispatch nodes (direct call); Emit/Subscribe blocked (HIDDEN_EVENT_RUNTIME_UNSUPPORTED); tree + New event hereâ€¦; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog. Event-role rename write-through via applyEventUpdateToDocuments.',
         status: 'done',
       },
       {
         id: 'variables',
         title: 'Project variables',
-        description: 'Instance/static binding, readonly flag, Get/Set nodes, rename propagation.',
+        description:
+          'Instance/static binding, readonly flag, Get/Set nodes, rename propagation; panel/define write-through (`applyDefinePropertyToVariable` + `commitVariableSymbolUpdate`).',
       },
       {
         id: 'linked-graphs',
@@ -680,14 +682,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'class-lifecycle',
         title: 'Class management',
         description:
-          'Create, rename, delete, and move classes between graph folders; selecting a class opens its container graph and sets activeClassId; Functions/Variables sections scoped to active class.',
+          'Create, rename, delete, and move classes between graph folders; selecting a class opens its container graph and sets activeClassId; Functions/Variables sections scoped to active class. Rename persists form / implements / extends; `isAbstract` / visibility / `isGenerator` persist; deleteClass cascades define nodes.',
         status: 'done',
       },
       {
         id: 'define-nodes',
         title: 'Canvas define nodes',
         description:
-          'class_define, var_define, function_define, event_member_define on the container graph exec chain; panelâ†”canvas dual-write via defineNodeSync + useSymbolLifecycle; addClassWithDefine on class create; legacy class tabs and documents.main migrate to home graphs on load.',
+          'class_define, var_define, function_define, event_member_define on the container graph exec chain; panelâ†”canvas dual-write via defineNodeSync + useSymbolLifecycle (class/var/event write-through; rename skips define kinds; catalog missing-declare inserts a real define, not a Call); addClassWithDefine on class create; legacy class tabs and documents.main migrate to home graphs on load.',
         status: 'done',
       },
       {
@@ -1268,7 +1270,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'settings-redesign-u110',
         title: 'Settings redesign (U110)',
         description:
-          'Sidebar shell -- Project · Editor · Shortcuts · Audio · About. Search catalogs every section (U110 follow-on): honest Editor blurb, Project grouping (this graph / defaults / environment / export / details / packs), Audio cards. Output panel tab toggles.',
+          'Sidebar shell -- Project · Editor · Shortcuts · Audio · About. Search catalogs every section (U110 follow-on): honest Editor blurb, Project grouping (this graph / defaults / environment / export / details / packs), Audio cards. Output panel tab toggles. Env tab consume path works: link, refresh (`applied` / `kept-yours` / `already-current`), host skip/emit, export paths; `isProjectMapTab` gates class form / implements / extends.',
         status: 'done',
       },
       {
