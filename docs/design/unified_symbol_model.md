@@ -8,7 +8,7 @@ Companion: [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [langu
 
 ## Goal
 
-One **language-neutral graph** is the single source of truth. Every declaration and use is a **visible node**. Emitters translate the same IR into idiomatic Python, C++, JavaScript, Verse, and future targets — without hidden runtime or sidebar-only symbols.
+One **language-neutral graph** is the single source of truth. Every declaration and use is a **visible node**. Emitters translate the same IR into idiomatic Python, JavaScript, C++, Verse, GDScript, Rust, C#, and Go — without hidden runtime or sidebar-only symbols.
 
 Cross Over Architecture (COA) — multi-target authoring with effectiveness indicators — builds on this model and is **deferred** until node-level portability UX ships.
 
@@ -146,7 +146,7 @@ When shipped:
 | `event_on_start` lifecycle shortcut | Hidden entry — `LIFECYCLE_NODE_DEPRECATED` |
 | Macro inline expansion | Not text-shaped |
 
-Future **subscribe** nodes must emit one visible registration line per node (e.g. C# `+=`, JS `.on()`), not a hidden callback list.
+**Bind** (`event_bind`) prints one visible registration line (C# `+=`, JS `.on()`, GDScript `.connect`); other langs unspawned. Hidden subscribe/emit stay blocked.
 
 ---
 

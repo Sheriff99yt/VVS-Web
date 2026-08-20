@@ -23,7 +23,7 @@ This is a **major strategic choice**. It diverges from Unreal Engine Blueprint s
 |---------|------|
 | **Declare** | Member-existence nodes: `class_define`, `var_define`, function declare, `event_member_define` |
 | **Define** (functions) | Body placement — inserts the function body at that canvas position (distinct from Declare) |
-| **Use** | Usage nodes where logic runs: Get/Set, Call Function, event dispatch, flow nodes |
+| **Use** | Usage nodes where logic runs: Get/Set, Call Function, event dispatch, Bind, flow nodes |
 | **Panel row** | Metadata + navigation; dual-writes a declare/define correlate when creating or renaming a symbol |
 | **Generated line** | Must map to a canvas node via `sourceGraphNodeId` / `sourceMap` |
 
@@ -81,6 +81,7 @@ Two canvas positions, or existence without a body, are two nodes. Function **Dec
 | One conversion node → one call | **To String** → `str(x)` |
 | One call node → one call site | **Call Function** → `self.Add()` |
 | One dispatch → one visible line | **Dispatch calculate** → `self.on_calculate()` |
+| One bind -> one registration line | **Bind go** -> C# `+=` / JS `.on` / GDScript `.connect` |
 | One handler → one method body | **On calculate** → `def on_calculate(self):` |
 | Selection → code highlight | `sourceMap` / `expressionSpans` — no re-transpile on select; **no per-kindId highlight UI** (Code panel looks up ranges only). Nested control-flow bodies must emit via `appendIrStatements` so each statement tags itself (Switch fixed U71a; If/For already did). Auto-scroll to highlight is **smooth** |
 
@@ -94,7 +95,7 @@ Multiple inheritance is the same construct: extra Extends rows on one Declare Cl
 - Macro **inline expansion** that duplicates nodes without labeled regions in text
 - **Latent / delay** behavior with no matching `sleep`, `await`, or timer in output
 - Auto-cast at wire time in codegen (editor may warn; graph must show **Conversion** nodes)
-- Hidden event runtime helpers (`_emit`, `_subscribe`, `event_emit`, `event_subscribe`) — use **Declare** + **On** + **Dispatch** (direct call) only
+- Hidden event runtime helpers (`_emit`, `_subscribe`, `event_emit`, `event_subscribe`) -- use **Declare** + **On** + **Dispatch** (direct call); **Bind** is the visible registration line on C# / JS / GDScript
 
 ### 3. Reuse = functions and modules, not invisible paste
 
@@ -114,6 +115,7 @@ Multiple inheritance is the same construct: extra Extends rows on one Declare Cl
 | **Event handler** | On handler node | `def on_event(self, ...):` |
 | **Program entry** | `role: 'entry'` event + define chain | `def on_start(self):` — **only** when user declared entry on the class graph |
 | **Event signal** | Dispatch node | `self.on_event(...)` — direct handler call; no hidden `emit` / `_emit` runtime |
+| **Event bind** | Bind node | One registration line (`+=` / `.on` / `.connect`); other langs unspawned |
 | **Lifecycle tick** | On handler with role tick | `on_update` / tick handler — still a visible method when wired |
 
 Sync vs async rules follow **target language**, not a hidden VM:
@@ -168,7 +170,7 @@ All eight targets follow the same canvas roles. Only **C++** is in `FUNCTION_DEC
 ```text
 Need reusable logic?
   └─ Returns a value or void?     → Function + Call
-  └─ React to a named signal?     → Event Declare + On + Dispatch (explicit line in code)
+  └─ React to a named signal?     → Event Declare + On + Dispatch (explicit line in code); Bind where the language has a registration line
   └─ Program start (host calls)?  → Entry event (`role: 'entry'`) + event_member_define + event_define on class graph
   └─ Per-frame / tick hook?       → On handler with role tick (when the target supports it)
   └─ Pause time?                  → Wait node (async is an option) — visible in text
@@ -268,8 +270,9 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 
 - Conversion nodes — explicit calls, `sourceMap` spans
 - Call Function — visible methods and calls (macro/`use_macro` removed; migration on load)
-- Event Declare + On + Dispatch — visible handler methods and direct call lines (`self.on_<name>(…)`)
+- Event Declare + On + Dispatch -- visible handler methods and direct call lines (`self.on_<name>(...)`). Bind prints one registration line on csharp / js / gdscript (partial; other langs unspawned).
 - No hidden event runtime — `event_emit` / `event_subscribe` blocked (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does not inject `_emit` / `_subscribe`
+- Event Bind (`event_bind`) -- honest registration; csharp / js / gdscript spawn+print; Details picker + rename write-through; other langs unspawned
 - Import Module — emits at **canvas chain position** with `sourceMap`; place shared imports **once at file top** on the first class chain (`targetLanguages` gate). **Flow** Import Module inside branches for conditional imports (e.g. Python `import json`). Optional `ownerClassId` when scoping is required.
 - Member / event order — **primary:** connected exec chain = nest/emit order; **secondary:** canvas Y among **unconnected chain heads** (and event Declare peers — event→event wires do not force emit). When height and wires disagree, emit still follows these rules; **Compiler Log warnings** teach the fundamentals (`CHAIN_ORDER_Y_MISMATCH`, `EVENT_PEER_Y_ORDER`) without reordering.
 - Wait (async is an option) — explicit sleep/await in export; async function flag
@@ -289,6 +292,7 @@ We evaluated paths common in visual tools (especially Unreal). **We did not adop
 |------|--------|
 | `event_emit` / `event_subscribe` | Legacy graphs may still contain nodes — analyzer blocks Generate; kinds excluded from spawn catalog |
 | `event_dispatch` | Supported — lowers to direct handler call |
+| `event_bind` | **Partial** -- one registration line on csharp / js / gdscript; other langs unspawned or `(x)` |
 | Macro tabs in old saves | Migrated to function tabs on load |
 | Sidebar preamble (`appendLegacyPreamble`) | **Removed** — strict canvas-only emit |
 

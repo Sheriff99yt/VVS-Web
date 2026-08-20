@@ -352,7 +352,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'text-shaped',
         title: 'Text-shaped graphs',
         description:
-          'Canvas is the codegen source of truth -- IR pipeline, ordered define-chain emit, hoisted imports, Wait (`isAsync` option), event Dispatch (direct call); every behavioral node maps to visible export text with sourceMap. Emit/Subscribe hidden-runtime nodes blocked.',
+          'Canvas is the codegen source of truth -- IR pipeline, ordered define-chain emit, hoisted imports, Wait (`isAsync` option), event Dispatch (direct call); Bind is a visible registration line on C#/JS/GDScript (partial); every behavioral node maps to visible export text with sourceMap. Emit/Subscribe hidden-runtime nodes blocked.',
         status: 'done',
       },
       {
@@ -1462,7 +1462,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Long-term: code → visual (U93)',
         description:
-          'Research track: read raw source and produce text-shaped graphs (reverse of Generate). Must preserve canvas source of truth and fidelity -- not near-term polish.',
+          'Research track: read raw source and produce text-shaped graphs (reverse of Generate). Three approaches compared on the Research tab. Must preserve canvas source of truth and fidelity -- not near-term polish.',
         status: 'planned',
       },
     ],
@@ -1485,7 +1485,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Event Bind (honest registration)',
         description:
-          'Bind is one node that prints one registration line (C# `+=`, JS `.on`/`addEventListener` when that is the host, GDScript `.connect`). Declare/On/Dispatch unchanged. Extra On illegal until a Bind is on the graph. No `_subscribe` helper, no hidden listener list. Spawn only where a pack can print the line; other langs unspawned or `(x)`. Not U100. C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped. Other langs unspawned or `(x)` Bind. Not Done — not all targets.',
+          'Bind is one node that prints one registration line (C# `+=`, JS `.on`/`addEventListener` when that is the host, GDScript `.connect`). Declare/On/Dispatch unchanged. Extra On illegal until a Bind is on the graph. No `_subscribe` helper, no hidden listener list. Spawn only where a pack can print the line; other langs unspawned or `(x)`. Not U100. C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped. Details picker + rename write-through shipped (same path as Dispatch). Other langs unspawned or `(x)` Bind. Still partial — not all targets.',
         status: 'partial',
       },
     ],
@@ -1588,7 +1588,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'backend',
         title: 'Session client / host',
         description:
-          'Game-lobby style session sync -- not account cloud multiplayer. Transport TBD (Go WS candidate).',
+          'Game-lobby style session sync -- not account cloud multiplayer. Three approaches compared on the Research tab. Transport TBD (Go WS is a later fallback, not the default).',
         status: 'planned',
       },
     ],

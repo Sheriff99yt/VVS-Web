@@ -99,6 +99,11 @@ export function inferEventNameFromNodeData(data: VVSNodeData): string | undefine
   const dispatchMatch = data.label.match(/^(?:Call|Dispatch)\s+(.+)$/i);
   if (dispatchMatch?.[1]) return dispatchMatch[1].trim();
 
+  const bindMatch = data.label.match(/^Bind\s+(.+)$/i);
+  if (bindMatch?.[1] && bindMatch[1].trim().toLowerCase() !== 'event') {
+    return bindMatch[1].trim();
+  }
+
   const onMatch = data.label.match(/^On\s+(.+)$/i);
   if (onMatch?.[1]) return onMatch[1].trim();
 
@@ -222,7 +227,7 @@ export function applyEventEmitBinding(
 }
 
 /** @deprecated Legacy subscribe nodes — use event_define handlers + event_dispatch. */
-export function subscribeNodeInputs(parameters: EventParameter[]): PinDefinition[] {
+function subscribeNodeInputs(parameters: EventParameter[]): PinDefinition[] {
   return [
     { id: 'exec_in', label: '', type: 'execution' },
     { id: 'handler', label: 'Handler', type: 'execution' },
@@ -245,6 +250,54 @@ export function applyEventSubscribeBinding(
     outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
     inlineValues: data.inlineValues ?? {},
   };
+}
+
+export type EventNodeRole = 'define' | 'dispatch' | 'emit' | 'subscribe' | 'bind';
+
+export function eventNodeRoleForKind(kindId: string | null | undefined): EventNodeRole | null {
+  if (kindId === 'event_define' || kindId === 'event_custom') return 'define';
+  if (kindId === 'event_subscribe') return 'subscribe';
+  if (kindId === 'event_emit') return 'emit';
+  if (kindId === 'event_dispatch') return 'dispatch';
+  if (kindId === 'event_bind') return 'bind';
+  return null;
+}
+
+export function bindNodeInputs(): PinDefinition[] {
+  return [
+    { id: 'exec_in', label: '', type: 'execution' },
+    { id: 'target', label: 'Target', type: 'data_any' },
+    { id: 'event', label: 'Event', type: 'data_any' },
+    { id: 'handler', label: 'Handler', type: 'data_any' },
+  ];
+}
+
+export function applyEventBindBinding(
+  data: VVSNodeData,
+  event: ProjectEventDefinition
+): VVSNodeData {
+  return {
+    ...data,
+    kindId: 'event_bind',
+    category: 'Events',
+    label: `Bind ${event.name}`,
+    properties: { ...(data.properties ?? {}), eventId: event.id, eventName: event.name },
+    inputs: bindNodeInputs(),
+    outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+    inlineValues: data.inlineValues ?? {},
+  };
+}
+
+export function applyEventRoleBinding(
+  data: VVSNodeData,
+  event: ProjectEventDefinition,
+  role: EventNodeRole
+): VVSNodeData {
+  if (role === 'define') return applyEventDefineBinding(data, event);
+  if (role === 'subscribe') return applyEventSubscribeBinding(data, event);
+  if (role === 'emit') return applyEventEmitBinding(data, event);
+  if (role === 'bind') return applyEventBindBinding(data, event);
+  return applyEventDispatchBinding(data, event);
 }
 
 export function buildEventNodeData(

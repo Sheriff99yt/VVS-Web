@@ -5,7 +5,7 @@ Directional phases — not schedule commitments.
 
 **Product default (locked):** client-first editor — **no VVS accounts**, **no dedicated app server**, **no live code execution**. Edit graphs, **Generate** ordinary source, run **logical checks** / import from existing code.
 
-In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mirrors this doc).
+In-app: **Development roadmap** → Open / Done / Research, grouped frontend / backend (mirrors this doc).
 
 ---
 
@@ -22,7 +22,7 @@ In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mir
 
 | Focus | IDs | Notes |
 |-------|-----|--------|
-| Code → visual (reverse of Generate) | U93 | Research — must keep canvas source of truth |
+| Code → visual (reverse of Generate) | U93 | Research tab: deterministic IR reverse (ship), LLM graph guess (reject), deterministic + confirmed leftovers (later) |
 
 ### Just shipped (August 2026 emit / OOP wave + later fidelity)
 
@@ -142,7 +142,7 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U98** | Function argument pins | Done — Define / implement / call / emit end-to-end; auto-sync across documents |
 | **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with typed value pin (`resolvePinValueExpr`) lowering across 8 target languages |
 | **U100** | Event listeners | **Cut** — subscribe/emit hidden runtime rejected; Dispatch only |
-| **Event Bind** | Event Bind (honest registration) | **Partial** — C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped; one visible registration line; Declare/On/Dispatch unchanged; extra On illegal until a Bind is on the graph; no `_subscribe` helper, no hidden listener list; other langs unspawned or `(x)` Bind. Not U100. Not Done — not all targets. |
+| **Event Bind** | Event Bind (honest registration) | **Partial** — C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped; one visible registration line; Declare/On/Dispatch unchanged; extra On illegal until a Bind is on the graph; no `_subscribe` helper, no hidden listener list; other langs unspawned or `(x)` Bind. Details picker + rename write-through shipped. Still partial for other langs. Not U100. Not Done — not all targets. |
 | **U101** | Cross-language async concept | **Done** — one Wait node; `isAsync` option; pack-complete await/sleep |
 | **CL-018** | Dim ineffective async | **Done** — U66/U67 chips; Wait.isAsync does not flip the function |
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
@@ -214,7 +214,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; packs via GitHub; **no dedicated server** as product |
 | **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match + `case_*` indices, Yield/Return typed pins, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split, settings env tab + define-node write-through (`1f2c051`); Refresh 3-way merge + host Contents + 17 first-party templates. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
-| **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
+| **4** Collaboration | Planned | **Session client/host**, not account cloud. Research tab: lobby-host LWW (ship), Yjs-as-SoT (reject), local Go WS (later) |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |
 
 Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md) · backlog `.agents/memory/incomplete-ui.md` · lang emit [cross_language_mapping/SKILL.md](../.agents/skills/vvs_cross_language_mapping/SKILL.md) · library [library-backend-api.md](library-backend-api.md)
@@ -249,7 +249,7 @@ Product default: **no VVS accounts, no dedicated app server**. Browser/editor + 
 | **Pack updates** | Fetch from GitHub; versions **accumulate**; Pack versions view (U78) |
 | **Library** | Separate official **library git repo**; public links only; API for search/browse/upload |
 | **MCP / AI** | Hosted app = **in-page TS agent** (starts with the editor, no extra install). Other apps / Cursor = later thin MCP wrapper over the same package; today optional localhost Go sidecar |
-| **Collab** | Session **client/host**, not account cloud multiplayer |
+| **Collab** | Session **client/host**, not account cloud. See in-app Research tab |
 
 ---
 

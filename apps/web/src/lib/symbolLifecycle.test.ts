@@ -117,12 +117,40 @@ describe('applyVariableRenameToDocuments', () => {
   });
 });
 
+
+function eventBindNode(eventId: string, name: string): VVSNode {
+  return {
+    id: 'evt-bind-1',
+    type: 'vvs_standard_node',
+    position: { x: 240, y: 0 },
+    data: {
+      label: `Bind ${name}`,
+      category: 'Events',
+      kindId: 'event_bind',
+      properties: { eventId, eventName: name },
+      inputs: [
+        { id: 'exec_in', label: '', type: 'execution' },
+        { id: 'target', label: 'Target', type: 'data_any' },
+        { id: 'event', label: 'Event', type: 'data_any' },
+        { id: 'handler', label: 'Handler', type: 'data_any' },
+      ],
+      outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+      inlineValues: {},
+    },
+  };
+}
+
 describe('applyEventUpdateToDocuments', () => {
   test('keeps event_member_define and rebuilds handler/dispatch pins', () => {
     const event: ProjectEventDefinition = { id: 'evt-1', name: 'pulse', parameters: [] };
     const documents: Record<string, GraphDocument> = {
       home: {
-        nodes: [eventMemberNode(event.id, event.name), eventHandlerNode(event.id, event.name), eventDispatchNode(event.id, event.name)],
+        nodes: [
+          eventMemberNode(event.id, event.name),
+          eventHandlerNode(event.id, event.name),
+          eventDispatchNode(event.id, event.name),
+          eventBindNode(event.id, event.name),
+        ],
         edges: [],
       },
     };
@@ -146,6 +174,13 @@ describe('applyEventUpdateToDocuments', () => {
     const dispatch = next.home!.nodes.find((n) => n.id === 'evt-call-1');
     expect(dispatch?.data.kindId).toBe('event_dispatch');
     expect(dispatch?.data.inputs.map((p) => p.id)).toEqual(['exec_in', 'amt']);
+
+    const bind = next.home!.nodes.find((n) => n.id === 'evt-bind-1');
+    expect(bind?.data.kindId).toBe('event_bind');
+    expect(bind?.data.label).toBe('Bind tick');
+    expect(bind?.data.properties?.eventId).toBe('evt-1');
+    expect(bind?.data.properties?.eventName).toBe('tick');
+    expect(bind?.data.inputs.map((p) => p.id)).toEqual(['exec_in', 'target', 'event', 'handler']);
   });
 });
 

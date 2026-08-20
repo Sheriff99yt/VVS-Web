@@ -43,6 +43,7 @@ The UX borrows **canvas patterns** from node editors (wires, typed ports, flow) 
 | **Handler (On …)** | Place an event handler entry on the class graph (`event_define`) — wires the handler body |
 | **Call** | Invoke a function at a call site (`vvs.project.call_function`) |
 | **Dispatch** | Invoke an event handler at a call site (`event_dispatch`) |
+| **Bind** | Visible event registration line (`event_bind`) -- partial csharp/js/gdscript |
 | **Get** / **Set** | Read or write a variable where logic runs |
 | **Project panel row** | Index + CRUD shortcut — dual-writes the canvas correlate; **not** a second source of truth for codegen |
 
@@ -78,6 +79,7 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Event handler entry | **On** `{name}` / **Handler** | — | `event_define` — flow entry, not the member declare |
 | Function invoke | **Call** `{name}` | — | `vvs.project.call_function` |
 | Event invoke | **Dispatch** `{name}` | Call (events) | `event_dispatch` — not “Call” in UI copy |
+| Event registration | **Bind** `{name}` | Subscribe, Listen | `event_bind` -- one visible line; partial csharp/js/gdscript |
 | Variable member on chain | **Declare** `{name}` | Define Variable | `var_define` — C++-style declaration (`int x;`) |
 | Class member on chain | **Declare** `{name}` / **Declare Class** | Define Class | `class_define` |
 | Macro (legacy UI tab) | **Function** *(migrate)* | Macro | Deprecated as codegen concept — see [visual_to_text_fidelity.md](visual_to_text_fidelity.md) |

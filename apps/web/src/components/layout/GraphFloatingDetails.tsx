@@ -15,12 +15,11 @@ import { resolveFunctionForNode } from '@/lib/functionHelpers';
 import { normalizeNodeData, resolveNodeKindId } from '@/lib/nodeKind';
 import { getNodeKindDefinition } from '@/lib/nodeRegistry';
 import {
-  applyEventDefineBinding,
-  applyEventDispatchBinding,
-  applyEventEmitBinding,
-  applyEventSubscribeBinding,
+  applyEventRoleBinding,
   eventDisplayName,
+  eventNodeRoleForKind,
   resolveEventForNode,
+  type EventNodeRole,
 } from '@/lib/eventHelpers';
 import type { ClassSymbol, FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
 import { buildProjectSymbolIndex, isUnresolvedSymbolRef, syncClassExtendsFields } from '@vvs/graph-types';
@@ -63,6 +62,7 @@ const ROLE_CHIP_CLASS: Record<string, string> = {
   Declare: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
   Define: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
   Call: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+  Bind: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
 };
 
 function resolveNodeRoleChip(kindId: string | null): string | null {
@@ -78,6 +78,7 @@ function resolveNodeRoleChip(kindId: string | null): string | null {
   }
   if (kindId === 'event_define' || kindId === 'event_custom') return 'Define';
   if (kindId === 'event_dispatch') return 'Call';
+  if (kindId === 'event_bind') return 'Bind';
   if (kindId === 'vvs.project.call_function' || kindId === 'call_function') return 'Call';
   return null;
 }
@@ -418,10 +419,7 @@ function GraphFloatingDetailsPanel() {
     renameEvent(next);
   };
 
-  const bindNodeToEvent = (
-    event: ProjectEventDefinition,
-    role: 'define' | 'dispatch' | 'emit' | 'subscribe'
-  ) => {
+  const bindNodeToEvent = (event: ProjectEventDefinition, role: EventNodeRole) => {
     if (!selectedNodeId) return;
     const empty: VVSNodeData = {
       label: '',
@@ -430,14 +428,7 @@ function GraphFloatingDetailsPanel() {
       outputs: [],
       inlineValues: {},
     };
-    const patch =
-      role === 'define'
-        ? applyEventDefineBinding(nodeData?.data ?? empty, event)
-        : role === 'subscribe'
-          ? applyEventSubscribeBinding(nodeData?.data ?? empty, event)
-          : role === 'emit'
-            ? applyEventEmitBinding(nodeData?.data ?? empty, event)
-            : applyEventDispatchBinding(nodeData?.data ?? empty, event);
+    const patch = applyEventRoleBinding(nodeData?.data ?? empty, event, role);
     updateNodeData(selectedNodeId, patch);
   };
 
@@ -459,20 +450,7 @@ function GraphFloatingDetailsPanel() {
 
   const nodeKindId = nodeData ? resolveNodeKindId(nodeData.data) : null;
   const nodeKindDef = nodeKindId ? getNodeKindDefinition(nodeKindId) : undefined;
-  const isEventDefineNode = nodeKindId === 'event_define' || nodeKindId === 'event_custom';
-  const isEventDispatchNode = nodeKindId === 'event_dispatch';
-  const isEventEmitNode = nodeKindId === 'event_emit';
-  const isEventSubscribeNode = nodeKindId === 'event_subscribe';
-  const eventNodeRole: 'define' | 'dispatch' | 'emit' | 'subscribe' | null =
-    isEventDefineNode
-      ? 'define'
-      : isEventSubscribeNode
-        ? 'subscribe'
-        : isEventEmitNode
-          ? 'emit'
-          : isEventDispatchNode
-            ? 'dispatch'
-            : null;
+  const eventNodeRole = eventNodeRoleForKind(nodeKindId);
   const boundEvent = nodeData ? resolveEventForNode(nodeData.data, events) : undefined;
   const boundFunction = nodeData ? resolveFunctionForNode(nodeData.data, functions) : undefined;
   const isCallFunctionNode = nodeKindId === 'vvs.project.call_function';

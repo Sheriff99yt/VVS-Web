@@ -65,6 +65,8 @@ The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation rema
 | Async / await | Emulated | Native | Emulated | Unsupported | Emulated (`await`) |
 | Macro inline | **Deprecated** — use Function + Call | **Deprecated** | **Deprecated** | **Deprecated** | **Deprecated** |
 
+C#, Rust, and Go are also shipped (eight families). See [language_capability_catalog.md](design/language_capability_catalog.md).
+
 ## Adding a language
 
 Four-step workflow — portability policy and print rules stay separate ([syntax_pack_architecture.md](syntax_pack_architecture.md)):

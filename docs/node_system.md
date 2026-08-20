@@ -205,7 +205,7 @@ Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push 
 | `DECLARATION_NOT_ON_CANVAS` | Symbols exist but class graph has no define chain |
 | `ORPHAN_DEFINE_NODE` | Define node on canvas with `symbolId` not in symbol table |
 | `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` | `event_emit` or `event_subscribe` on canvas — hidden runtime helper |
-| `MULTICAST_REQUIRES_SUBSCRIBE` | Multiple `event_define` handlers for same event without visible multicast |
+| `MULTICAST_REQUIRES_SUBSCRIBE` | Multiple `event_define` handlers for same event without an `event_bind` on the graph |
 
 #### Visual → text mapping
 
@@ -214,6 +214,7 @@ Panel create paths must call `defineNodeSync` / `add*WithDefine` — never push 
 | **Call Function** | `self.foo(args)` | One call node → one call site |
 | **Define** (event handler) | `def on_foo(self, …):` | Handler body |
 | **Dispatch** | `self.on_foo(…)` | Direct handler call — one visible line per dispatch node |
+| **Bind** | C# `+=` / JS `.on` / GDScript `.connect` | One visible registration line -- csharp / js / gdscript only |
 | **Conversion** | `str(x)`, etc. | Never folded into consumers |
 | **var_define** / **function_define** | `self.x = …` / `def foo(…):` | Declaration position from exec chain order |
 | **Macro (legacy)** | **Deprecated** | Must become **Function + Call** — no compile-time paste |
@@ -640,7 +641,7 @@ flowchart LR
 
 ## 12. Event dispatchers (custom events)
 
-**Status:** Shipped (July 2026) — project-level `events[]`, **Declare** (member chain) + **On** (handler) + **Dispatch** node kinds, direct-call emit in `@vvs/transpiler`. **Emit** / **Subscribe** kinds exist in the registry for legacy graphs only — **blocked** from spawn and codegen (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe` helpers.
+**Status:** Shipped (July 2026) — project-level `events[]`, **Declare** (member chain) + **On** (handler) + **Dispatch** node kinds, direct-call emit in `@vvs/transpiler`. **Bind** (`event_bind`) is **partial** -- C# `+=` / JS `.on` / GDScript `.connect` printers+spawn; Details picker + rename write-through. Other langs unspawned or `(x)` Bind. **Emit** / **Subscribe** kinds exist in the registry for legacy graphs only — **blocked** from spawn and codegen (`HIDDEN_EVENT_RUNTIME_UNSUPPORTED`); transpiler does **not** inject `_emit` / `_subscribe` helpers. U100 (hidden listen/subscribe) remains cut.
 
 Unreal **Event Dispatchers** are one engine’s name for a universal pattern: **named signals with typed parameters, subscribers, and a broadcast**. VVS models that in the **graph + IR**; language-specific idioms live only in the **emitter**.
 
@@ -663,6 +664,7 @@ EventDefinition(id, name, parameters)
 Declare(eventId)    → event_member_define on define chain (member slot)
 On(eventId)         → event_define handler entry + output pins = parameters
 Dispatch(eventId)   → event_dispatch — exec + input pins = parameters
+Bind(eventId)       -> event_bind -- one registration line (cs/js/gd); other langs unspawned
 ```
 
 Same idea across ecosystems:
@@ -697,6 +699,7 @@ Stored in `ProjectSnapshot.events[]` alongside `variables[]` and `functions[]`. 
 | `event_on_update` | On Update | **Folded** -- use `event_define` + `role: tick`. Do not spawn |
 | `event_define` | On … | Handler entry; `properties.eventId` |
 | `event_dispatch` | Dispatch … | Direct handler call; `properties.eventId` — **supported** |
+| `event_bind` | Bind ... | **Partial** -- one registration line; csharp/js/gdscript printers+spawn; Details picker + rename write-through; other langs unspawned or `(x)` |
 | `event_emit` | Emit … | **Blocked** — hidden runtime helper; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` |
 | `event_subscribe` | Subscribe … | **Blocked** — hidden runtime helper; `HIDDEN_EVENT_RUNTIME_UNSUPPORTED` |
 | `action_print` | Print String | Sync stdout/log |
@@ -752,9 +755,9 @@ flowchart LR
   D --> JS
 ```
 
-**Enforced model (direct call):** one `event_define` handler per event → emitter generates a method and `self.on_<name>(args)` at dispatch sites. Multiple handlers for the same event without a visible multicast pattern → `MULTICAST_REQUIRES_SUBSCRIBE` error (no hidden callback list).
+**Enforced model (direct call):** one `event_define` handler per event → emitter generates a method and `self.on_<name>(args)` at dispatch sites. Multiple handlers for the same event without an `event_bind` on the graph → `MULTICAST_REQUIRES_SUBSCRIBE` error (no hidden callback list). Bind is the visible registration node -- not a hidden subscriber list.
 
-**Rejected:** `event_emit` / `event_subscribe` and transpiler-injected `_emit` / `_subscribe` helpers — violate text-shaped fidelity ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)). **Event Bind** is one visible registration line on C# `+=` / JS `.on` / GDScript `.connect` (other langs unspawned or `(x)` Bind). Extra On is illegal until a Bind exists for that event. U100 (hidden subscribe/emit) remains cut.
+**Rejected:** `event_emit` / `event_subscribe` and transpiler-injected `_emit` / `_subscribe` helpers — violate text-shaped fidelity ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)). **Event Bind** (`event_bind`) is one visible registration line on C# `+=` / JS `.on` / GDScript `.connect` (other langs unspawned or `(x)` Bind). Details picker + rename write-through shipped (same path as Dispatch). Extra On is illegal until a Bind exists for that event. U100 (hidden subscribe/emit) remains cut.
 
 ### 12.6 Selection → code highlight
 
@@ -765,18 +768,21 @@ Uses the same `TranspileResult.sourceMap` contract (§6):
 | **Declare** (`event_member_define`) | Method **signature** line of the paired handler (`def on_x` / `void on_x() {`) — same construct as On; dual-node fidelity |
 | **On** (`event_define`) | Full handler block (`def on_x(self):` …) |
 | **Dispatch** | Dispatch call line |
+| **Bind** | Registration line (`+=` / `.on` / `.connect`) |
 | **Parameter pins** | Argument sub-expressions (`ExprSpan`) |
 
 No re-transpile on selection. Emit is **single-pass**: member-chain order = source order (`appendIrMembersInOrder`); no `# Declare` comment stubs.
 
 ### 12.7 Cross-language emit (phase 1)
 
-| Target | Declare + On (same method) | Dispatch |
-|--------|----------------------------|----------|
-| Python | `def on_damage(self, amount):` … | `self.on_damage(amount)` |
-| JavaScript | `on_damage(amount) {` … | `this.on_damage(amount);` |
-| C++ | `void on_damage(float amount) { … }` | `on_damage(amount);` |
-| Verse | `on_damage(…) : void =` … | `on_damage(Amount)` |
+| Target | Declare + On (same method) | Dispatch | Bind |
+|--------|----------------------------|----------|------|
+| Python | `def on_damage(self, amount):` ... | `self.on_damage(amount)` | unspawned / `(x)` |
+| JavaScript | `on_damage(amount) {` ... | `this.on_damage(amount);` | `.on` / `addEventListener` |
+| C++ | `void on_damage(float amount) { ... }` | `on_damage(amount);` | unspawned / `(x)` |
+| C# | `void on_damage(...)` ... | `on_damage(...);` | `+=` |
+| GDScript | `func on_damage(...):` ... | `on_damage(...)` | `.connect` |
+| Verse | `on_damage(...) : void =` ... | `on_damage(Amount)` | unspawned / `(x)` |
 
 `event_member_define` and `event_define` both map to the **same** method (signature vs full span). Canvas chain position of the Declare node controls where that method appears in the class body.
 
@@ -786,10 +792,10 @@ Parameter names are derived from event parameter labels (snake_case in Python, c
 
 | Layer | Term |
 |-------|------|
-| **UI** | **Declare …** (member chain) / **On …** (handler) / **Dispatch …** (invoke) |
+| **UI** | **Declare ...** (member chain) / **On ...** (handler) / **Dispatch ...** (invoke) / **Bind ...** (registration) |
 | **Project JSON** | `events[]`, `eventId` |
-| **Registry** | `event_member_define`, `event_define`, `event_dispatch` — `kindId`s stable |
-| **IR** | `EventDefinition`, `EventHandler`, `DispatchEvent` |
+| **Registry** | `event_member_define`, `event_define`, `event_dispatch`, `event_bind` -- `kindId`s stable. `event_emit` / `event_subscribe` remain in registry, spawn-excluded |
+| **IR** | `EventDefinition`, `EventHandler`, `DispatchEvent`, `BindEvent` |
 | **Tree section** | Event Dispatchers (UE-familiar label; canonical type is `events[]`) |
 
 ---
@@ -801,7 +807,7 @@ Parameter names are derived from event parameter labels (snake_case in Python, c
 | Symbol | Inspector | Pin sync |
 |--------|-----------|----------|
 | Variable | `VariablePropertiesPanel` | Get/Set nodes |
-| Event | `EventPropertiesPanel` | Declare / On / Dispatch |
+| Event | `EventPropertiesPanel` | Declare / On / Dispatch / Bind |
 | Function | `FunctionPropertiesPanel` | Call nodes + function entry |
 
 **Portability:** `@vvs/language-profiles` + `runProjectAnalysis()` warn when graph features are unsupported for the selected target. See [language_profiles.md](language_profiles.md).

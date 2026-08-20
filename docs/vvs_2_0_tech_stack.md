@@ -6,7 +6,7 @@ This document outlines the finalized technology stack for Vision Visual Scriptin
 
 ## Project Vision & Goal
 
-* **The Vision**: Visual programming in the browser that **generates real source code** — compose logic on a graph, export to Python/JavaScript/C++/Verse/…, and integrate with your existing IDE, repo, and AI tools (MCP). Logic and syntax stay decoupled — an idea proven in the original [VVS graduation project](https://github.com/Sheriff99yt/Vision_Visual_Scripting) and extended here as an **open visual scripting platform for all engines and workflows**. See [history.md](history.md).
+* **The Vision**: Visual programming in the browser that **generates real source code** — compose logic on a graph, export to Python/JavaScript/C++/Verse/GDScript/Rust/C#/Go, and integrate with your existing IDE, repo, and AI tools (in-page Agent; later MCP wrapper -- not the hosted product). Logic and syntax stay decoupled — an idea proven in the original [VVS graduation project](https://github.com/Sheriff99yt/Vision_Visual_Scripting) and extended here as an **open visual scripting platform for all engines and workflows**. See [history.md](history.md).
 * **The Goal**: A modular node-based system where beginners and professionals can author flows visually, export readable code, and connect the AI subscriptions they already use — without replacing traditional development.
 
 ## 1. Frontend & UI Layer (The Experience)

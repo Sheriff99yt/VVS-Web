@@ -326,6 +326,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 |------------|------------|------|----------|----------|-------|
 | Function call | Call `{name}` | `vvs.project.call_function` | all | shipped | |
 | Event invoke | Dispatch `{name}` | `event_dispatch` | all | shipped | |
+| Event bind | Bind `{name}` | `event_bind` | cs, js, gd | **partial** | One registration line (C# `+=`, JS `.on`/`addEventListener`, GDScript `.connect`). Details picker + rename write-through. Other langs unspawned or `(x)`. Not U100. `event_emit` / `event_subscribe` stay excluded. |
 | **Static call** | Call + type-name callee + static binding | existing Call (`vvs.project.call_function`) — shipped-as-Call / planned-as-option | cpp, cs | planned-as-option | Not a new kind. This row is the Call + static-binding model, not a new node. |
 | **Cross-class call** | Call after Import Class | `import_class` + Call | multi-class | shipped | `CROSS_CLASS_CALL_WITHOUT_IMPORT` warning |
 | **Cross-class dispatch** | Dispatch after Import Class | `import_class` + Dispatch | multi-class | shipped | `CROSS_CLASS_DISPATCH_WITHOUT_IMPORT`; same-graph multi-class OK; inherited → `self` |
@@ -528,12 +529,13 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 
 | Date | Change |
 |------|--------|
+| 2026-08-20 | **Event Bind honest registration (partial)** -- `event_bind` printers+spawn for csharp/js/gdscript; Details picker + rename write-through. Other langs unspawned. U100 remains cut. `event_emit` / `event_subscribe` stay spawn-excluded. |
 | 2026-08-20 | **First-party environment templates complete** — 17 built-in packs (console / web / data / api / game) registered and listed by Library. Catalog F lists each category. Community catalog stays Phase 3. |
 | 2026-08-18 | **Return type + honesty** — Declare Return Parameters shipped (`returnType` / `functionReturnTypeName`). Yield value pin typed; `isGenerator` persist-only (no `function*`). Go methods are package `func` after the struct, not inside it. Verse GetInput stays `(x)`. Extends list **shipped** (locked visual; py/cpp multi-base, others first parent). Switch Add Case uses `case_*` indices.
 | 2026-08-17 | **Implements list + Class form shipped** -- `form` (`class`/`interface`/`trait`) + `implementsTypes` on Class / `class_define`. C# `class Child : Base, IFoo` or `interface IFoo`; Rust `pub trait` + `impl Trait for Type` when Implements has names. Analyzer missing-target + cycle (picker). Extends extras not auto-migrated. Super stays first Extends parent. |
 | 2026-08-17 | **Multi-base emit + Yield + Switch match** — generate prints all Extends rows for python/cpp; `yield_stmt` (py/gd); Switch lowers to Python `match` and Rust `match` (value-equality cases). C# extras still not printed. Super stays first-parent. |
-| 2026-08-16 | **Extends list UI shipped (partial)** — list on Declare Class; extras stored; generate first parent only. Multi-base emit not shipped. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
-| 2026-08-16 | **Lambda + Try nodes shipped** — `lambda_define` (py/js/cs/rs/gd) and `flow_try` (py/js/cpp/cs/gd). Empty finally omitted. Yield and CL-017 stay planned. |
+| 2026-08-16 | **Extends list UI shipped (Done)** — list on Declare Class; extras stored. Multi-base emit shipped for python/cpp; js/gd/verse/cs first parent only. See [Multiple inheritance](#multiple-inheritance-locked-visual). |
+| 2026-08-16 | **Lambda + Try nodes shipped** — `lambda_define` (py/js/cs/rs/gd) and `flow_try` (py/js/cpp/cs/gd). Empty finally omitted. Yield shipped (py/gd only). CL-017 Switch match shipped. |
 | 2026-08-16 | **Leftover constructs locked** — constructor/destructor = Function `role`; interface/trait = Class `form` + Implements option; lambda = one expression node (`lambda_define`, drop `closure_define`); try/catch = flow node (not Go/Rust); property/generics/package visibility = options; static call = existing Call; pattern match = Switch (drop `flow_match`). See [Leftover constructs](#leftover-constructs-locked-roles). |
 | 2026-08-16 | **Component = Class locked (U103)** — game-talk component is `class_define` + field or Extends; no `component_define` node; Health-on-Enemy examples for all 8 families |
 | 2026-07-16 | **Imports once at top + conditional flow Import** — Coverage Lab shared import chain; Python `import {mod}` pack; event defines Y-ordered peers; roadmap **U68–U77** |

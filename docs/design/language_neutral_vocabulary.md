@@ -43,7 +43,7 @@ Recent decisions unified member-chain UI copy around **Declare**, handler entry 
 | Write variable | **Set** `{name}` | Assign, Store | `variable_set` | `x = …`, `self.x = …` |
 | Program start hook | **On Start** (entry event) | BeginPlay, main(), Event BeginPlay | `events[]` `role: 'entry'` + Declare + On | `on_start()`, `main()`, `Start()` |
 | Per-frame hook | **On Update** | Tick, Event Tick | `event_on_update` (lifecycle) | `on_update(dt)`, `Update()` |
-| User-named signal | **Custom event** (panel) + **Declare** / **On** / **Dispatch** (canvas) | Event Dispatcher, Delegate (as primary UI) | `events[]` `role: 'custom'` | Language-specific handler + invoke (see node_system §12) |
+| User-named signal | **Custom event** (panel) + **Declare** / **On** / **Dispatch** / **Bind** (canvas) | Event Dispatcher, Delegate (as primary UI) | `events[]` `role: 'custom'` | Language-specific handler + invoke (see node_system §12) |
 
 ### Function release menu (locked — parallel to variables)
 
@@ -67,7 +67,7 @@ Variables: **Get** / **Set** / **Declare**. Functions: **Call** / **Declare** / 
 |-------------|------------------------|--------------------|--------|
 | Variable | Declare `{name}` (`var_define`) — e.g. `int x;` | defaults on declare node | Get / Set |
 | Function | Declare `{name}` — signature / “exists” | **Define** `{name}` — body insert site + **Edit function body** tab | **Call** `{name}` |
-| Event (member slot) | Declare `{name}` (`event_member_define`) | **On** `{name}` (`event_define`) | **Dispatch** `{name}` |
+| Event (member slot) | Declare `{name}` (`event_member_define`) | **On** `{name}` (`event_define`) | **Dispatch** `{name}` / **Bind** `{name}` |
 | Class / module shell | Declare Class `{name}` (`class_define`) | — | — |
 | Nested graph reference | Graph Reference (`graph_ref`) | — | — |
 
@@ -111,7 +111,7 @@ Function graph tabs are **Edit function body** only (author the body). **Define*
 |------|--------|-------------|
 | Define-only for functions (collapse Declare+body) | **Superseded** July 2026 | **Declare** (exists) + **Define** (place body) + **Call** |
 | Define (for variables / class / event slot) | **Deprecated** in user copy | **Declare** |
-| Emit Event / Subscribe Event | Blocked | **Dispatch** + visible handler; future subscribe must emit one line per node |
+| Emit Event / Subscribe Event | Blocked | **Dispatch** + visible handler; **Bind** is the one-line registration (partial csharp/js/gdscript). Hidden subscribe/emit stay blocked. |
 | Macro (codegen) | Deprecated | **Function** + **Call** |
 | Blueprint, BeginPlay, BP_* | Forbidden in UI | Graph, On Start, module name |
 | `event_on_start` node | Deprecated | `role: 'entry'` + Declare + On |
@@ -125,7 +125,7 @@ Function graph tabs are **Edit function body** only (author the body). **Define*
 | **Member ordering chain** | “define chain”, “member define chain”, “member chain” used interchangeably | **Member chain** (UI/docs) | `define chain`, `collectMemberDefineNodeIds`, `MEMBER_DEFINE_KINDS` | One doc term: *member chain* = ordered Declare nodes on class home graph |
 | **Canvas node for Declare** | “define node”, “member define node”, “declare node” | **Declare node** (docs); “member slot” in tooltips | `isMemberDefineNode`, `defineNodes.ts`, `DEFINE_NODE_*` codes | Do not rename files/codes in this pass |
 | **Registry `symbolRole`** | `'declare' \| 'implement' \| 'invoke' \| 'define'` — `'define'` unused in core-pack | Use only **declare / implement / invoke** in registry | Remove `'define'` from type in a later cleanup | Go `core-pack.json` lacks `symbolRole` entirely today |
-| **Event spawn role in UI code** | `role: 'define' \| 'dispatch'` in custom events | User sees **Declare** / **Dispatch**; internal enum → `'declare' \| 'dispatch'` (future) | Keep `'define'` in TS until refactor | `eventHelpers.ts`, `GraphCanvas.tsx`, `ProjectTree.tsx` |
+| **Event spawn role in UI code** | `role: 'define' \| 'dispatch' \| 'bind'` (plus leftover emit/subscribe) | User sees **Declare** / **Dispatch** / **Bind**; internal enum → `'declare' \| 'dispatch'` (future) | Keep `'define'` in TS until refactor | `eventHelpers.ts`, `GraphCanvas.tsx`, `ProjectTree.tsx` |
 | **Catalog section for handlers** | **Handlers** (plural section) vs node title **On Event** | Section: **Handlers**; node: **On** `{name}` | `spawnCatalogCategory` → `'Handlers'` | OK if section name stays plural |
 | **Handler vs On** | Both used | Node title: **On** `{name}`; inspector badge: **Handler** optional | `event_define` | “Handler” is acceptable secondary label, not primary spawn title |
 | **Dispatch vs Call** | Mostly aligned | Functions → **Call**; events → **Dispatch** | — | Locked in naming doc |
@@ -198,7 +198,7 @@ Function graph tabs are **Edit function body** only (author the body). **Define*
 | `apps/web/src/components/layout/ProjectTree.tsx` | Buttons say **Declare** ✓; imports `defineNodeSync` |
 | `apps/web/src/components/graph/GraphCanvas.tsx` | `handleDeclare*` ✓; event `role: 'define'` internally |
 | `apps/web/src/components/layout/GraphFloatingDetails.tsx` | Badges Declare/Dispatch ✓; `role: 'define'` |
-| `apps/web/src/lib/eventHelpers.ts` | `applyEventDefineBinding`, `role: 'define'` |
+| `apps/web/src/lib/eventHelpers.ts` | `applyEventDefineBinding`, `applyEventBindBinding`, `role: 'define'` / `'bind'` |
 | `apps/web/src/components/views/RoadmapView.tsx` | Mostly aligned; verify after lock |
 | `apps/web/src/lib/developmentRoadmap.ts` | Describes Declare alignment — reference this doc |
 

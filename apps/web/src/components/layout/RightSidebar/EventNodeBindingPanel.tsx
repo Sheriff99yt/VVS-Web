@@ -8,7 +8,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 interface EventNodeBindingPanelProps {
   events: ProjectEventDefinition[];
   eventId: string | undefined;
-  role: 'define' | 'dispatch' | 'emit' | 'subscribe';
+  role: 'define' | 'dispatch' | 'emit' | 'subscribe' | 'bind';
   onSelectEvent: (event: ProjectEventDefinition) => void;
 }
 
@@ -29,7 +29,9 @@ export function EventNodeBindingPanel({
               ? `Subscribe ${ev.name}`
               : role === 'emit'
                 ? `Emit ${ev.name}`
-                : `Call ${ev.name}`,
+                : role === 'bind'
+                  ? `Bind ${ev.name}`
+                  : `Call ${ev.name}`,
       })),
     [events, role]
   );
@@ -43,7 +45,9 @@ export function EventNodeBindingPanel({
             ? 'Subscribe event'
             : role === 'emit'
               ? 'Emit event'
-              : 'Call event'}
+              : role === 'bind'
+                ? 'Bind event'
+                : 'Call event'}
       </label>
       <SearchableSelect
         value={eventId ?? ''}

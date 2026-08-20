@@ -66,10 +66,10 @@ Choices agents must not undo without explicit user approval.
 
 **Canonical spec:** `docs/design/unified_symbol_model.md`
 
-- **Declare → implement → invoke** — variables (Declare + Get/Set), functions (Declare + Define + Call; body tab), events (Declare + On + Dispatch)
+- **Declare → implement → invoke** — variables (Declare + Get/Set), functions (Declare + Define + Call; body tab), events (Declare + On + Dispatch + Bind)
 - **Canvas only** for codegen; panel rows are indexes with dual-write
 - **COA deferred** — `COA_SHIPPED = false`; single-target portability warnings shipped; full COA requires node effectiveness UI + multi-emit first
-- **Future subscribe/emit** — only if each node emits one visible line (no hidden runtime)
+- **Bind** (`event_bind`) -- one visible line (partial csharp/js/gdscript). Hidden subscribe/emit stay blocked (not U100).
 
 ## Language-neutral vocabulary (July 2026 — plan before rework)
 

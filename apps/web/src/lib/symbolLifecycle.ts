@@ -29,7 +29,7 @@ import {
   applyFunctionEntryBinding,
   applyFunctionReturnBinding,
 } from '@/lib/functionHelpers';
-import { applyEventDefineBinding, applyEventDispatchBinding, applyEventEmitBinding, applyEventSubscribeBinding, createEventId } from '@/lib/eventHelpers';
+import { applyEventBindBinding, applyEventDefineBinding, applyEventDispatchBinding, applyEventEmitBinding, applyEventSubscribeBinding, createEventId } from '@/lib/eventHelpers';
 import { createFunctionSymbol } from '@/lib/functionTabs';
 import { formatFunctionTabName } from '@/lib/functionTabs';
 import { resolveNodeKindId } from '@/lib/nodeKind';
@@ -216,6 +216,9 @@ function syncNodeForEvent(node: GraphNode, event: ProjectEventDefinition): Graph
   }
   if (kindId === 'event_dispatch') {
     return { ...node, data: applyEventDispatchBinding(node.data, event) };
+  }
+  if (kindId === 'event_bind') {
+    return { ...node, data: applyEventBindBinding(node.data, event) };
   }
   // Declare nodes are rebuilt by syncDefineNodesForSymbol. Handler binding
   // would rewrite event_member_define → event_define.

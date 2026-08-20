@@ -24,6 +24,7 @@ Two canvas positions, or existence without a body, are two nodes. An option cann
 | Declare Event | event_member_define | Event slot |
 | On (handler) | event_define | Handler method. **role** (entry / 	ick / custom) is an option, not a kind |
 | Dispatch | event_dispatch | Direct handler call |
+| Bind | event_bind | One visible registration line (C# += / JS .on / GDScript .connect). Partial -- other langs unspawned |
 | Declare Enum | enum_define | Enum type |
 | Get Enum Member | expr_enum_member | Member access expression |
 | Import Module | vs.project.import_module | Import / include line |

@@ -77,7 +77,7 @@ interface ProjectSnapshotV3 {
 |--------|-------------------|-------------|
 | Variable | yes | Static/module binding may be referenced across classes via explicit import/call — **defer cross-class refs to slice 4** |
 | Function | yes | Call Function nodes resolve within class first; cross-class = future `import` node |
-| Event | yes | Dispatch/subscribe within class; cross-class = `import_class` + Dispatch (or same-graph multi-class); inherited → `self` |
+| Event | yes | Dispatch/Bind within class; cross-class = `import_class` + Dispatch (or same-graph multi-class); inherited → `self` |
 | Graph tab | optional `classId` on tab metadata | `main` tab becomes **class graph** for active class |
 
 ### 1.3 Graph node kinds (new registry entries)
@@ -268,7 +268,7 @@ Each `*_define` node registers spans for the declaration line(s) — same `sourc
 [On clear] → Call Clear → Print …
 ```
 
-Events use the **dual-node pattern**: `event_member_define` on the member chain (Declare) pairs with `event_define` handler nodes in flow (On). Dispatch nodes call declared events; they are not member-chain slots.
+Events use the **dual-node pattern**: `event_member_define` on the member chain (Declare) pairs with `event_define` handler nodes in flow (On). Dispatch nodes call declared events; they are not member-chain slots. **Bind** is the visible registration line (partial csharp/js/gdscript).
 
 **Function graphs:** unchanged bodies; signatures emitted from `function_define` nodes on class graph, not duplicated from sidebar.
 

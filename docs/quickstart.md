@@ -81,7 +81,7 @@ bun run lint
 |-----------|---------|
 | Graph editor, tabs, references view | Cloud sync |
 | localStorage save/load | Hosted MCP URL / remote deploy (not product) |
-| `@vvs/transpiler` — Python, JS, C++, Verse | JSON graph export as runnable code |
+| `@vvs/transpiler` — Python, JS, C++, Verse, GDScript, Rust, C#, Go | JSON graph export as runnable code |
 | Conversion nodes, Get User Input, pin validation, loops | String concat, compare |
 | Start-screen usability tests (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) | Community library backend |
 | Offline honest UI | WebSocket collaboration |

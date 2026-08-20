@@ -11,8 +11,10 @@ import {
   type RoadmapLayer,
   type RoadmapSection,
 } from '@/lib/developmentRoadmap';
+import { RESEARCH_TOPICS } from '@/lib/roadmapResearch';
+import { RoadmapResearchPanel } from '@/components/views/RoadmapResearchPanel';
 
-type RoadmapTab = 'open' | 'done';
+type RoadmapTab = 'open' | 'done' | 'research';
 
 const STATUS_META: Record<
   RoadmapItemStatus,
@@ -225,7 +227,7 @@ export function RoadmapView() {
         <header className="space-y-2">
           <h1 className="text-lg font-semibold text-zinc-100">Development roadmap</h1>
           <p className="text-[12px] text-zinc-500 leading-relaxed max-w-2xl">
-            Client-first editor. Open and Done are grouped frontend (canvas, chrome, client codegen) vs
+            Client-first editor. Open, Done, and Research are grouped frontend (canvas, chrome, client codegen) vs
             backend (Go, MCP sidecar, hosting). Full public notes in{' '}
             <a
               href="https://github.com/Sheriff99yt/VVS-Web/blob/main/docs/roadmap.md"
@@ -262,6 +264,15 @@ export function RoadmapView() {
           >
             Done ({doneCount})
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('research')}
+            className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
+              tab === 'research' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Research ({RESEARCH_TOPICS.length})
+          </button>
         </div>
 
         <div className="space-y-8">
@@ -282,7 +293,7 @@ export function RoadmapView() {
                 cutItems={cutByLayer.backend}
               />
             </>
-          ) : (
+          ) : tab === 'done' ? (
             <>
               <LayerBlock
                 title="Frontend"
@@ -297,6 +308,8 @@ export function RoadmapView() {
                 defaultStatus="done"
               />
             </>
+          ) : (
+            <RoadmapResearchPanel />
           )}
         </div>
       </div>
