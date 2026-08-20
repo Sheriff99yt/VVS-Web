@@ -1,28 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  createDefaultIntegration,
-  resolveHostEmitPath,
-  shouldEmitHostFile,
-} from '@vvs/graph-types';
-import { renderHostFileTemplate } from './resolveApiSurface';
+import { createDefaultIntegration } from '@vvs/graph-types';
+import { generateHostFiles } from './hostFiles';
 import type { ProjectEnvironmentManifest } from './types';
-
-/**
- * Mirrors packages/transpiler/src/generate.ts appendHostFiles selection.
- * Proves skip vs emit vs custom path without changing generate emit semantics.
- */
-function generateHostFiles(
-  manifest: ProjectEnvironmentManifest,
-  moduleName: string,
-  integration: ReturnType<typeof createDefaultIntegration>
-) {
-  return manifest.hostFiles
-    .filter((host) => shouldEmitHostFile(integration, host.path))
-    .map((host) => ({
-      path: resolveHostEmitPath(integration, host.path),
-      content: renderHostFileTemplate(host.template, moduleName),
-    }));
-}
 
 function hostManifest(): ProjectEnvironmentManifest {
   return {
@@ -80,5 +59,32 @@ describe('generate host-file emit (skip vs emit)', () => {
     expect(files.find((f) => f.path === 'scripts/run.py')?.content).toBe(
       'from App import App\n'
     );
+  });
+
+  test('emit uses persisted in-editor contents instead of the template', () => {
+    const integration = createDefaultIntegration({
+      hostFilePaths: ['main.py'],
+      moduleName: 'App',
+    });
+    integration.hostFiles['main.py'] = {
+      strategy: 'emit',
+      contents: 'print("edited host")\n',
+    };
+    const files = generateHostFiles(hostManifest(), 'App', integration);
+    expect(files.find((f) => f.path === 'main.py')?.content).toBe('print("edited host")\n');
+  });
+
+  test('skip still omits the file when contents are set', () => {
+    const integration = createDefaultIntegration({
+      adoptExisting: true,
+      hostFilePaths: ['main.py'],
+      moduleName: 'App',
+    });
+    integration.hostFiles['main.py'] = {
+      strategy: 'skip',
+      contents: 'print("edited host")\n',
+    };
+    const files = generateHostFiles(hostManifest(), 'App', integration);
+    expect(files).toEqual([]);
   });
 });

@@ -15,8 +15,6 @@ import type {
 } from '@vvs/graph-types';
 import {
   resolveModuleEmitPath,
-  resolveHostEmitPath,
-  shouldEmitHostFile,
   MAIN_GRAPH_CONTAINER_ID,
   MAIN_CLASS_ID,
   classForHomeGraphId,
@@ -26,7 +24,7 @@ import {
   resolveGraphCodegenSettings,
 } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
-import { loadEnvironmentManifest, renderHostFileTemplate } from '@vvs/environment-templates';
+import { loadEnvironmentManifest, generateHostFiles } from '@vvs/environment-templates';
 import { generatedFileName } from './graphTabs';
 import type { GraphTab } from '@vvs/graph-types';
 import { graphToIr } from './lower/graphToIr';
@@ -165,12 +163,7 @@ function appendHostFiles(
   integration?: ProjectIntegrationConfig
 ): TranspileResult {
   if (!manifest?.hostFiles?.length) return result;
-  const hostFiles = manifest.hostFiles
-    .filter((host) => shouldEmitHostFile(integration, host.path))
-    .map((host) => ({
-      path: resolveHostEmitPath(integration, host.path),
-      content: renderHostFileTemplate(host.template, moduleName),
-    }));
+  const hostFiles = generateHostFiles(manifest, moduleName, integration);
   if (hostFiles.length === 0) return result;
   return {
     ...result,

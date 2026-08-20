@@ -33,7 +33,7 @@ export function EnvironmentLanguageFilter({
       </button>
       {languages.map((id) => {
         const count = counts[id] ?? 0;
-        if (count === 0) return null;
+        if (count === 0 && active !== id) return null;
         return (
           <button
             key={id}

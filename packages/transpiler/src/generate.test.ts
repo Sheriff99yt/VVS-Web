@@ -740,4 +740,29 @@ describe('host file skip vs emit', () => {
     expect(host).toBeDefined();
     expect(host!.content).toContain('from App import App');
   });
+
+  test('emit uses persisted in-editor host contents', async () => {
+    const { loadEnvironmentManifest } = await import('@vvs/environment-templates');
+    const manifest = loadEnvironmentManifest('env.python.console-app');
+    expect(manifest).toBeDefined();
+    const result = transpileGraph({
+      moduleName: 'App',
+      extendsType: 'object',
+      targetLanguage: 'python',
+      variables: [],
+      projectEvents: [],
+      functions: [],
+      nodes: [],
+      edges: [],
+      tabId: 'main',
+      environmentManifest: manifest,
+      integration: {
+        emit: {},
+        hostFiles: { 'main.py': { strategy: 'emit', contents: 'print("edited host")\n' } },
+      },
+    });
+    const host = result.files.find((f) => f.path === 'main.py');
+    expect(host).toBeDefined();
+    expect(host!.content).toBe('print("edited host")\n');
+  });
 });

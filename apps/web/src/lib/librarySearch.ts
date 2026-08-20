@@ -135,3 +135,30 @@ export function filterEnvironmentsByLanguage<T extends LibrarySearchEnvironment>
   if (!lang || lang === 'all') return environments;
   return environments.filter((env) => environmentLanguageIds(env).includes(lang));
 }
+
+
+/** Keep a selected chip in the list after search hides every pack for that language. */
+export function visibleEnvironmentLanguages<T extends LibrarySearchEnvironment>(
+  environments: T[],
+  activeLanguage: string | 'all'
+): string[] {
+  const ids = collectEnvironmentLanguages(environments);
+  const lang = activeLanguage.trim().toLowerCase();
+  if (lang && lang !== 'all' && !ids.includes(lang)) return [...ids, lang];
+  return ids;
+}
+/** Honest empty copy when token search and/or a language chip hide every template. */
+export function libraryTemplateEmptyLabel(
+  searchQuery: string,
+  language: string | 'all',
+  labels: Record<string, string> = LIBRARY_LANGUAGE_LABELS
+): string | undefined {
+  const q = searchQuery.trim();
+  const lang = language.trim().toLowerCase();
+  const hasLang = Boolean(lang) && lang !== 'all';
+  const langLabel = hasLang ? labels[lang] ?? lang : '';
+  if (q && hasLang) return `No templates match “${q}” for ${langLabel}.`;
+  if (q) return `No templates match “${q}”.`;
+  return undefined;
+}
+

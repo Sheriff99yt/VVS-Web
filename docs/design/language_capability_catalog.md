@@ -362,8 +362,12 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 | Capability | Source | Families | uiStatus | Notes |
 |------------|--------|----------|----------|-------|
 | Godot lifecycle | `env.gdscript.godot-game` | gd | shipped | `_ready`, `_process` anchors |
-| Console main | env pack | rs, cs, go | shipped | `env.rust.console-app`, `env.csharp.console-app`, `env.go.console-app` |
-| Verse / UE hooks | environment templates | verse | partial | |
+| Console / CLI | env packs | py, js, cpp, cs, rs, go | shipped | `env.python.console-app` / `cli-tool`; `env.javascript.node-script`; `env.cpp.console-app`; `env.csharp.console-app`; `env.rust.console-app`; `env.go.console-app` |
+| Web & browser | env packs | js | shipped | `env.javascript.browser-app`, `env.javascript.spa-app` |
+| Data & analysis | env packs | py, js, cs | shipped | `env.python.data-script`, `env.javascript.data-script`, `env.csharp.data-script` |
+| API & services | env packs | py, js, go | shipped | `env.python.api-service`, `env.javascript.http-service`, `env.go.http-service` |
+| C++ game loop | `env.cpp.game-loop` | cpp | shipped | Host `main.cpp`; Verse/Python supported targets |
+| Verse / UE hooks | environment templates | verse | partial | UE/Verse engine API manifests still `env-engine-packs` (not first-party richer templates) |
 
 ---
 
@@ -524,6 +528,7 @@ Catalog §A rows for visibility / static / abstract / virtual / const / async mo
 
 | Date | Change |
 |------|--------|
+| 2026-08-20 | **First-party environment templates complete** — 17 built-in packs (console / web / data / api / game) registered and listed by Library. Catalog F lists each category. Community catalog stays Phase 3. |
 | 2026-08-18 | **Return type + honesty** — Declare Return Parameters shipped (`returnType` / `functionReturnTypeName`). Yield value pin typed; `isGenerator` persist-only (no `function*`). Go methods are package `func` after the struct, not inside it. Verse GetInput stays `(x)`. Extends list **shipped** (locked visual; py/cpp multi-base, others first parent). Switch Add Case uses `case_*` indices.
 | 2026-08-17 | **Implements list + Class form shipped** -- `form` (`class`/`interface`/`trait`) + `implementsTypes` on Class / `class_define`. C# `class Child : Base, IFoo` or `interface IFoo`; Rust `pub trait` + `impl Trait for Type` when Implements has names. Analyzer missing-target + cycle (picker). Extends extras not auto-migrated. Super stays first Extends parent. |
 | 2026-08-17 | **Multi-base emit + Yield + Switch match** — generate prints all Extends rows for python/cpp; `yield_stmt` (py/gd); Switch lowers to Python `match` and Rust `match` (value-equality cases). C# extras still not printed. Super stays first-parent. |

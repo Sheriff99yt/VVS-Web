@@ -82,6 +82,7 @@ export {
 export {
   adoptHostFileRules,
   filterGeneratedFilesForHostPolicy,
+  generateHostFiles,
   hashHostContent,
   mergeImportedManifest,
   normalizeHostFileContent,
@@ -101,3 +102,5 @@ export {
   type RefreshEnvironmentTemplateInput,
   type RefreshEnvironmentTemplateResult,
 } from './refreshEnvironmentTemplate';
+
+export { threeWayMerge, type ThreeWayMergeResult } from './threeWayMerge';

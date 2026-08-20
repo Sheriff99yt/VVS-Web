@@ -15,11 +15,15 @@ describe('environment categories', () => {
 
   test('groups built-in manifests by category', () => {
     const manifests = listBuiltinEnvironments();
+    expect(manifests).toHaveLength(17);
     const groups = groupEnvironmentsByCategory(manifests);
     const total = [...groups.values()].reduce((n, arr) => n + arr.length, 0);
     expect(total).toBe(manifests.length);
     expect((groups.get('console') ?? []).length).toBeGreaterThanOrEqual(2);
     expect((groups.get('web') ?? []).length).toBeGreaterThanOrEqual(2);
+    expect((groups.get('data') ?? []).length).toBeGreaterThanOrEqual(1);
+    expect((groups.get('api') ?? []).length).toBeGreaterThanOrEqual(1);
+    expect((groups.get('game') ?? []).length).toBeGreaterThanOrEqual(1);
   });
 
   test('includes api and data templates', () => {
@@ -35,5 +39,10 @@ describe('environment categories', () => {
     expect(ids).toContain('env.javascript.http-service');
     expect(ids).toContain('env.csharp.data-script');
     expect(ids).toContain('env.go.http-service');
+    expect(ids).toContain('env.python.cli-tool');
+    expect(ids).toContain('env.javascript.spa-app');
+    expect(ids).toContain('env.javascript.node-script');
+    expect(ids).toContain('env.cpp.console-app');
+    expect(ids).toHaveLength(17);
   });
 });

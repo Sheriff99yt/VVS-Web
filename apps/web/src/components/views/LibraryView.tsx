@@ -33,6 +33,7 @@ import {
   filterEnvironmentsBySearch,
   filterGitReposBySearch,
   filterLibraryAssetsBySearch,
+  libraryTemplateEmptyLabel,
 } from '@/lib/librarySearch';
 
 type LibrarySection = 'templates' | 'git_catalogs' | 'installed';
@@ -353,11 +354,7 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                       setSelectedEnvironmentId(id);
                     }}
                     selectedId={selectedEnvironmentId}
-                    emptyLabel={
-                      searchQuery.trim()
-                        ? `No templates match “${searchQuery.trim()}”.`
-                        : undefined
-                    }
+                    emptyLabel={libraryTemplateEmptyLabel(searchQuery, activeEnvLanguage)}
                   />
                 )}
               </>

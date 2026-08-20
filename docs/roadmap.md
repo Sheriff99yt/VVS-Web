@@ -38,10 +38,13 @@ In-app: **Development roadmap** → Open / Done, grouped frontend / backend (mir
 | **Rust + Go console packs** (`env.rust.console-app`, `env.go.console-app`) + optional `devcontainer` host file | Aug 2026 |
 | **Library client token search** | Aug 2026 |
 | **Implements list + Class form** (cs/rs UI + emit; python does not print Implements; Super stays first Extends parent) | Aug 2026 |
-| **Library language chips** (filter templates by default/supported target; token search stays, no embeddings) | Aug 2026 |
+| **Library language chips** (filter templates by default/supported target; active chip stays at count 0; empty copy names search + chip; token search stays, no embeddings) | Aug 2026 |
 | **C# data-script + Go HTTP service packs** (`env.csharp.data-script`, `env.go.http-service`) | Aug 2026 |
 | **Mobile agent-hide + coarse pin snap + hit targets** (gestures still planned) | Aug 2026 |
 | **Host skip/emit UI** in Graph settings | Aug 2026 |
+| **Non-destructive template upgrade** (Refresh line-based 3-way merge: `merged` / `applied` / `kept-yours` / `already-current`; no merge IDE) | Aug 2026 |
+| **Host file in-editor contents** (Graph settings textarea persists on snapshot; Generate emit uses edited text; skip stays skip; no merge IDE) | Aug 2026 |
+| **First-party project templates** (17 built-in env packs across console / web / data / api / game; Library lists all; community catalog is Phase 3) | Aug 2026 |
 | **Per-tab folder graph files** (`graph-doc-split`) | Aug 2026 |
 | **Component = Class** (U103 locked — no Component node) | Aug 2026 |
 | **Function constructor/destructor role** (py `__init__`, js `constructor()`, cpp ctor/dtor, cs ctor no finalizer, gd `_init`; rust/go/verse dim) | Aug 2026 |
@@ -175,9 +178,12 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
+| **search leftover (this pass)** | Language chip stays visible at count 0; empty copy names search + chip so a stuck Verse filter cannot blame `rust`. Embeddings still TBD — search stays partial. |
+| **env-template-upgrade (this pass)** | Refresh line-based 3-way merge: template additions apply on non-overlapping hunks (`merged`); conflict stays `kept-yours` + skip; no merge IDE |
+| **templates (this pass)** | First-party 17 env packs Done; docs table + catalog F catch-up; community catalog stays Phase 3 |
 | **U81 symbol-delete Define leftover (`4ea967e` follow-on)** | `removeDefineNodesForSymbol` drops `function_implement` with `function_define` on symbol delete and deleteClass |
 | **Consume-path completeness (`1f2c051`)** | Settings env/host/export tab; class/var/event write-through; define-node sync; extract-to-function keeps body + Declare; Yield/Return typed pins; Switch `case_*` indices; eight-language docs |
-| **Implements / form / language chips / env packs** | Implements list + Class form (cs/rs); Library language chips (no embeddings); `env.csharp.data-script` + `env.go.http-service`. Search stays partial. Templates stay partial (no community catalog). |
+| **Implements / form / language chips / env packs** | Implements list + Class form (cs/rs); Library language chips (no embeddings; active chip stays at count 0; empty copy names search + chip); `env.csharp.data-script` + `env.go.http-service`. Search stays partial. Templates **Done** — 17 first-party packs; community catalog is Phase 3 (`library-backend`). |
 | **U65 goldens + roadmap sync** | Home-preview goldens for Coverage Lab Switch `match` (python/rust) and New Features Lab overload emit; public/in-app roadmap Open vs Done aligned to HEAD `1fcf4a3` era |
 | **Multi-base / Yield / Switch match / TypeSpec** | Extends list generate for python/cpp; `yield_stmt` py/gd; Switch → Python/Rust `match`; TypeSpec CLI → apiSurface |
 | **Overload codegen + profiles + worker** | C++ out-of-line overload loop; call-site selected args; language profile JSON packs; off-thread transpile worker |
@@ -205,7 +211,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Eight packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local/folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; packs via GitHub; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match + `case_*` indices, Yield/Return typed pins, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split, settings env tab + define-node write-through (`1f2c051`). |
+| **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match + `case_*` indices, Yield/Return typed pins, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split, settings env tab + define-node write-through (`1f2c051`); Refresh 3-way merge + host Contents + 17 first-party templates. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud collab |
 | **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |

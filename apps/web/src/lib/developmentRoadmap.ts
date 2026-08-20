@@ -1058,6 +1058,22 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         status: 'done',
       },
       {
+        id: 'env-template-upgrade',
+        layer: 'frontend',
+        title: 'Non-destructive template upgrade',
+        description:
+          'Refresh + line-based three-way merge: `refreshEnvironmentTemplate` writes template additions onto user-edited host files when hunks do not overlap (`merged`); unchanged baselines `applied`; identical `already-current`; overlapping hunks `kept-yours` + skip. No merge IDE / conflict markers. Graphs untouched.',
+        status: 'done',
+      },
+      {
+        id: 'env-host-editable',
+        layer: 'frontend',
+        title: 'Host file integration policies',
+        description:
+          'Skip vs emit + custom emit path + in-editor `contents` persist on `HostFileIntegrationRule`. Generate emit uses edited text when set; skip stays skip. Graph settings host-file row textarea (not a merge IDE). Refresh still uses disk / last `appliedTemplate`.',
+        status: 'done',
+      },
+      {
         id: 'transpiler-pkg',
         title: '@vvs/transpiler',
         description:
@@ -1160,6 +1176,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         title: 'Dev Container linkage',
         description:
           'Optional `devcontainer?: { path }` on manifests. Rust console ships `.devcontainer/devcontainer.json` as a host file. No Docker runtime -- VVS does not start containers.',
+        status: 'done',
+      },
+      {
+        id: 'templates',
+        layer: 'frontend',
+        title: 'Richer project templates',
+        description:
+          'First-party Library templates: 17 built-in packs across console / web / data / api / game. Python console, CLI, data-script, API service; JavaScript browser, SPA, Node script, data-script, HTTP service; C++ console + game-loop; C# console + data-script; Go console + HTTP service; Rust console; Godot (`env.gdscript.godot-game`). All registered in builtins and listed by Library. Community catalog is Phase 3 (`library-backend`), not this item.',
         status: 'done',
       },
       {
@@ -1270,7 +1294,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'settings-redesign-u110',
         title: 'Settings redesign (U110)',
         description:
-          'Sidebar shell -- Project · Editor · Shortcuts · Audio · About. Search catalogs every section (U110 follow-on): honest Editor blurb, Project grouping (this graph / defaults / environment / export / details / packs), Audio cards. Output panel tab toggles. Env tab consume path works: link, refresh (`applied` / `kept-yours` / `already-current`), host skip/emit, export paths; `isProjectMapTab` gates class form / implements / extends.',
+          'Sidebar shell -- Project · Editor · Shortcuts · Audio · About. Search catalogs every section (U110 follow-on): honest Editor blurb, Project grouping (this graph / defaults / environment / export / details / packs), Audio cards. Output panel tab toggles. Env tab consume path works: link, refresh (`applied` / `merged` / `kept-yours` / `already-current`), host skip/emit, export paths; `isProjectMapTab` gates class form / implements / extends.',
         status: 'done',
       },
       {
@@ -1477,28 +1501,12 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     title: 'Environment templates & standards',
     items: [
       {
-        id: 'env-template-upgrade',
-        layer: 'frontend',
-        title: 'Non-destructive template upgrade',
-        description:
-          'Refresh/drift notes shipped: `refreshEnvironmentTemplate` + GraphPropertiesPanel Refresh control. Re-applies host files, preserves graphs, notes `applied` / `kept-yours` / `already-current`. Full three-way merge still TBD.',
-        status: 'partial',
-      },
-      {
         id: 'env-engine-packs',
         layer: 'frontend',
         title: 'Engine environment packs',
         description:
           'UE/Verse and other engine API manifests as installable Library environments -- portability-gated natives.',
         status: 'planned',
-      },
-      {
-        id: 'env-host-editable',
-        layer: 'frontend',
-        title: 'Host file integration policies',
-        description:
-          'Skip vs emit + custom emit path proven (`hostEmit.generate.test.ts`, `adoptExisting` skip). `appliedTemplate` persists on `HostFileIntegrationRule`. Skip|emit toggles + custom path now in Graph settings host-file rows. Full in-editor host editing/merge still planned.',
-        status: 'partial',
       },
     ],
   },
@@ -1557,7 +1565,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Semantic library search',
         description:
-          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Language chips filter templates by default/supported target. Not embeddings; semantic search backend TBD.',
+          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Language chips filter templates by default/supported target; the active chip stays visible at count 0 and empty copy names search + chip. Not embeddings; semantic search backend TBD.',
         status: 'partial',
       },
     ],
@@ -1633,14 +1641,6 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         description:
           'Out of scope as product. No dedicated enterprise VPS. Client-first local/.vvs/git. Legacy self-host notes may remain in docs/deployment.md.',
         status: 'cut',
-      },
-      {
-        id: 'templates',
-        layer: 'frontend',
-        title: 'Richer project templates',
-        description:
-          'Added `env.csharp.console-app`, `env.csharp.data-script`, `env.javascript.data-script`, `env.javascript.http-service`, rust console, Go console (`env.go.console-app`), and `env.go.http-service`. Community catalog still not a product.',
-        status: 'partial',
       },
       {
         id: 'folder-os-path',

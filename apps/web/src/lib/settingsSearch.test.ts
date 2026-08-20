@@ -28,6 +28,12 @@ describe('settingsSearch', () => {
     expect(settingsBlockMatches('openapi', 'environment')).toBe(true);
     expect(settingsBlockMatches('skip', 'environment')).toBe(true);
     expect(settingsBlockMatches('custom path', 'environment')).toBe(true);
+    expect(settingsBlockMatches('contents', 'environment')).toBe(true);
+    expect(settingsBlockMatches('host file contents', 'environment')).toBe(true);
+    expect(settingsBlockMatches('refresh', 'environment')).toBe(true);
+    expect(settingsBlockMatches('template upgrade', 'environment')).toBe(true);
+    expect(settingsBlockMatches('three-way merge', 'environment')).toBe(true);
+    expect(settingsBlockMatches('kept-yours', 'environment')).toBe(true);
   });
 
   test('finds shortcuts by action label', () => {

@@ -12,9 +12,9 @@ import { EnvironmentCategoryFilter } from '@/components/environments/Environment
 import { EnvironmentLanguageFilter } from '@/components/environments/EnvironmentLanguageFilter';
 import { EnvironmentTemplateCard } from '@/components/environments/EnvironmentTemplateCard';
 import {
-  collectEnvironmentLanguages,
   environmentLanguageIds,
   filterEnvironmentsByLanguage,
+  visibleEnvironmentLanguages,
 } from '@/lib/librarySearch';
 
 interface EnvironmentTemplatesPanelProps {
@@ -58,7 +58,10 @@ export function EnvironmentTemplatesPanel({
     return counts;
   }, [languageFiltered]);
 
-  const languageIds = useMemo(() => collectEnvironmentLanguages(environments), [environments]);
+  const languageIds = useMemo(
+    () => visibleEnvironmentLanguages(environments, activeLanguage),
+    [environments, activeLanguage]
+  );
 
   const languageCounts = useMemo(() => {
     const counts: Record<string, number> = { all: environments.length };
@@ -80,7 +83,7 @@ export function EnvironmentTemplatesPanel({
     return languageFiltered.filter((e) => resolveEnvironmentCategory(e) === activeCategory);
   }, [languageFiltered, activeCategory]);
 
-  if (environments.length === 0) {
+  if (environments.length === 0 && activeLanguage === 'all' && activeCategory === 'all') {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-center text-zinc-500 border border-dashed border-zinc-800 rounded-lg">
         <p className="text-sm">{emptyLabel ?? 'No project templates available.'}</p>

@@ -33,7 +33,7 @@ export function EnvironmentCategoryFilter({
       </button>
       {ENVIRONMENT_CATEGORIES.map((cat) => {
         const count = counts[cat.id] ?? 0;
-        if (count === 0) return null;
+        if (count === 0 && active !== cat.id) return null;
         return (
           <button
             key={cat.id}

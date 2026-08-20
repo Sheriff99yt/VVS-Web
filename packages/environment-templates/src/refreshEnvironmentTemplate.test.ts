@@ -236,4 +236,75 @@ describe('refreshEnvironmentTemplate', () => {
     expect(result.writeFiles[0]?.path).toBe('scripts/run.py');
     expect(result.notes[0]?.emitPath).toBe('scripts/run.py');
   });
+
+  test('merges template additions into a user-edited host file', () => {
+    const previous = 'from App import App\n# stable\n# v1\n';
+    const ours = 'from App import App\n# user banner\n# stable\n# v1\n';
+    const nextManifest = manifest({
+      hostFiles: [
+        {
+          path: 'main.py',
+          role: 'entry',
+          template: 'from {moduleName} import {moduleName}\n# stable\n# v1\n# extra\n',
+        },
+      ],
+    });
+    const integration = createDefaultIntegration({
+      environmentId: 'env.test.refresh',
+      environmentVersion: '1.0.0',
+      moduleName: 'App',
+      hostFilePaths: ['main.py'],
+    });
+    integration.hostFiles['main.py'] = {
+      strategy: 'emit',
+      appliedTemplate: previous,
+    };
+    const result = refreshEnvironmentTemplate({
+      moduleName: 'App',
+      integration,
+      nextManifest,
+      currentHostFiles: { 'main.py': ours },
+    });
+    const written = result.writeFiles.find((f) => f.path === 'main.py');
+    expect(written?.content).toBe('from App import App\n# user banner\n# stable\n# v1\n# extra\n');
+    expect(result.notes.find((n) => n.path === 'main.py')?.action).toBe('merged');
+    expect(result.integration.hostFiles['main.py']?.strategy).toBe('skip');
+    expect(result.integration.hostFiles['main.py']?.appliedTemplate).toBe(
+      'from App import App\n# stable\n# v1\n# extra\n'
+    );
+  });
+
+  test('skip with a baseline still merges template additions', () => {
+    const previous = 'from App import App\n# stable\n# v1\n';
+    const ours = 'from App import App\n# user banner\n# stable\n# v1\n';
+    const nextManifest = manifest({
+      hostFiles: [
+        {
+          path: 'main.py',
+          role: 'entry',
+          template: 'from {moduleName} import {moduleName}\n# stable\n# v1\n# extra\n',
+        },
+      ],
+    });
+    const integration = createDefaultIntegration({
+      environmentId: 'env.test.refresh',
+      environmentVersion: '1.0.0',
+      moduleName: 'App',
+      hostFilePaths: ['main.py'],
+    });
+    integration.hostFiles['main.py'] = {
+      strategy: 'skip',
+      appliedTemplate: previous,
+    };
+    const result = refreshEnvironmentTemplate({
+      moduleName: 'App',
+      integration,
+      nextManifest,
+      currentHostFiles: { 'main.py': ours },
+    });
+    expect(result.notes.find((n) => n.path === 'main.py')?.action).toBe('merged');
+    expect(result.writeFiles.find((f) => f.path === 'main.py')?.content).toContain('# extra');
+    expect(result.writeFiles.find((f) => f.path === 'main.py')?.content).toContain('# user banner');
+    expect(result.integration.hostFiles['main.py']?.strategy).toBe('skip');
+  });
 });

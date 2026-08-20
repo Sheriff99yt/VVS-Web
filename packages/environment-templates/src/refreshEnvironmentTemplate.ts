@@ -4,9 +4,10 @@ import {
   type ProjectIntegrationConfig,
 } from '@vvs/graph-types';
 import { renderHostFileTemplate } from './resolveApiSurface';
+import { threeWayMerge } from './threeWayMerge';
 import type { ProjectEnvironmentManifest } from './types';
 
-export type HostFileRefreshAction = 'applied' | 'kept-yours' | 'already-current';
+export type HostFileRefreshAction = 'applied' | 'kept-yours' | 'already-current' | 'merged';
 
 export interface HostFileRefreshNote {
   path: string;
@@ -50,7 +51,10 @@ function normalizeHostContent(text: string): string {
  *
  * Overwrites a host file only when it is missing, already matches the new
  * template, or still matches the last-applied / previous template render.
- * Diverged files are kept and marked skip so a later generate does not clobber them.
+ * When the file and the new template both diverge from the baseline, a
+ * line-based three-way merge applies non-overlapping hunks (merged) and
+ * marks skip so a later generate does not clobber the merge. Overlapping
+ * hunks stay kept-yours + skip. No conflict-marker editor.
  */
 export function refreshEnvironmentTemplate(
   input: RefreshEnvironmentTemplateInput
@@ -70,7 +74,12 @@ export function refreshEnvironmentTemplate(
     const previous =
       input.previousRenderedHostFiles?.[host.path] ?? prior.appliedTemplate;
 
-    if (prior.strategy === 'skip' || prior.strategy === 'patch') {
+    if (
+      (prior.strategy === 'skip' || prior.strategy === 'patch') &&
+      (input.currentHostFiles === undefined || previous === undefined)
+    ) {
+      // Skip/patch stay hands-off when there is no disk snapshot or no baseline
+      // to merge against (adopt-existing). Refresh with both still tries merge.
       hostFiles[host.path] = { ...prior };
       notes.push({ path: host.path, emitPath, action: 'kept-yours' });
       continue;
@@ -121,6 +130,30 @@ export function refreshEnvironmentTemplate(
       };
       notes.push({ path: host.path, emitPath, action: 'applied' });
       continue;
+    }
+
+    if (previous !== undefined && currentRaw !== undefined) {
+      const mergeResult = threeWayMerge(previous, currentRaw, newContent);
+      if (mergeResult.ok) {
+        const mergedNorm = normalizeHostContent(mergeResult.text);
+        if (mergedNorm === nextNorm) {
+          writeFiles.push({ path: emitPath, content: newContent });
+          hostFiles[host.path] = {
+            ...prior,
+            appliedTemplate: newContent,
+          };
+          notes.push({ path: host.path, emitPath, action: 'applied' });
+          continue;
+        }
+        writeFiles.push({ path: emitPath, content: mergeResult.text });
+        hostFiles[host.path] = {
+          ...prior,
+          strategy: 'skip',
+          appliedTemplate: newContent,
+        };
+        notes.push({ path: host.path, emitPath, action: 'merged' });
+        continue;
+      }
     }
 
     hostFiles[host.path] = {

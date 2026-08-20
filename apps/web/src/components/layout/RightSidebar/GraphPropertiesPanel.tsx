@@ -10,6 +10,7 @@ import {
   resolveApiSurface,
   summarizeEnvironmentManifest,
   refreshEnvironmentTemplate,
+  renderHostFileTemplate,
   type HostFileRefreshNote,
 } from '@vvs/environment-templates';
 import {
@@ -260,6 +261,12 @@ export function GraphPropertiesPanel({
                       const rule = integration.hostFiles[templatePath];
                       const strategy = rule?.strategy === 'skip' ? 'skip' : 'emit';
                       const customPath = rule?.path ?? '';
+                      const hostTemplate = linkedManifest.hostFiles.find((file) => file.path === templatePath);
+                      const renderedTemplate = hostTemplate
+                        ? renderHostFileTemplate(hostTemplate.template, projectDetails.moduleName)
+                        : '';
+                      const contents =
+                        typeof rule?.contents === 'string' ? rule.contents : renderedTemplate;
                       return (
                         <div
                           key={templatePath}
@@ -311,6 +318,28 @@ export function GraphPropertiesPanel({
                               className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[10px] text-white focus:outline-none focus:border-zinc-500 font-mono"
                             />
                           </label>
+                          <label className="block space-y-0.5">
+                            <span className="text-[10px] text-zinc-600">Contents</span>
+                            <textarea
+                              value={contents}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setIntegration((prev) => ({
+                                  ...prev,
+                                  hostFiles: {
+                                    ...prev.hostFiles,
+                                    [templatePath]: {
+                                      ...(prev.hostFiles[templatePath] ?? { strategy: 'emit' }),
+                                      contents: value,
+                                    },
+                                  },
+                                }));
+                              }}
+                              rows={6}
+                              spellCheck={false}
+                              className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[10px] text-white focus:outline-none focus:border-zinc-500 font-mono resize-y"
+                            />
+                          </label>
                         </div>
                       );
                     })}
@@ -352,7 +381,9 @@ export function GraphPropertiesPanel({
                       ? 'kept yours'
                       : note.action === 'already-current'
                         ? 'already current'
-                        : 'updated'}
+                        : note.action === 'merged'
+                          ? 'merged'
+                          : 'updated'}
                   </li>
                 ))}
               </ul>

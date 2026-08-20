@@ -11,9 +11,11 @@ import { createProjectFromEnvironment } from './createProjectFromEnvironment';
 describe('environment-templates loader', () => {
   test('lists built-in environments', () => {
     const envs = listBuiltinEnvironments();
-    expect(envs.length).toBeGreaterThanOrEqual(2);
+    expect(envs).toHaveLength(17);
     expect(envs.some((e) => e.id === 'env.python.console-app')).toBe(true);
     expect(envs.some((e) => e.id === 'env.javascript.browser-app')).toBe(true);
+    expect(envs.some((e) => e.id === 'env.javascript.spa-app')).toBe(true);
+    expect(envs.some((e) => e.id === 'env.cpp.game-loop')).toBe(true);
   });
 
   test('loads python console manifest', () => {
@@ -139,6 +141,12 @@ describe('rust console environment', () => {
 
 describe('new curated environment packs', () => {
   test.each([
+    ['env.python.cli-tool', 'python', 'console', 'main.py'],
+    ['env.python.api-service', 'python', 'api', 'main.py'],
+    ['env.javascript.spa-app', 'javascript', 'web', 'index.html'],
+    ['env.javascript.node-script', 'javascript', 'console', 'main.js'],
+    ['env.cpp.console-app', 'cpp', 'console', 'main.cpp'],
+    ['env.cpp.game-loop', 'cpp', 'game', 'main.cpp'],
     ['env.csharp.console-app', 'csharp', 'console', 'Program.cs'],
     ['env.go.console-app', 'go', 'console', 'main.go'],
     ['env.javascript.data-script', 'javascript', 'data', 'main.js'],

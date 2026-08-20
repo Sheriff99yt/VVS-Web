@@ -89,6 +89,13 @@ describe('ProjectIntegrationConfig', () => {
     expect(cfg.hostFiles['main.py']?.appliedTemplate).toBe('from App import App\n');
   });
 
+  test('normalizeIntegrationConfig preserves in-editor contents', () => {
+    const cfg = normalizeIntegrationConfig({
+      hostFiles: { 'main.py': { strategy: 'emit', contents: 'print("edited")\n' } },
+    });
+    expect(cfg.hostFiles['main.py']?.contents).toBe('print("edited")\n');
+  });
+
   test('formatEmitPreview', () => {
     const cfg = createDefaultIntegration({ moduleName: 'Player', defaultTarget: 'javascript' });
     cfg.emit.javascript = { moduleDir: 'src', moduleFile: 'Player.js' };

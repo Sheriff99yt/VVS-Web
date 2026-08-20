@@ -21,10 +21,27 @@ Empty `environmentId` preserves blank-project behavior.
 
 ## Built-in environments
 
-| ID | Target | Host files |
-|----|--------|------------|
-| `env.python.console-app` | Python (also JS/C++/Verse bindings) | `main.py` |
-| `env.javascript.browser-app` | JavaScript (partial Python) | `index.html`, `main.js` |
+Seventeen first-party packs, all registered in `manifests/builtins.ts` and listed by Library. Community catalog is Phase 3, not this set.
+
+| ID | Category | Default target | Host files |
+|----|----------|----------------|------------|
+| `env.python.console-app` | console | Python (also JS/C++/Verse) | `main.py` |
+| `env.python.cli-tool` | console | Python (also JS) | `main.py` |
+| `env.python.data-script` | data | Python (also JS) | `main.py`, `data/sample.csv` |
+| `env.python.api-service` | api | Python (also JS) | `main.py`, `routes.json` |
+| `env.javascript.browser-app` | web | JavaScript (also Python) | `index.html`, `main.js` |
+| `env.javascript.spa-app` | web | JavaScript (also Python) | `index.html`, `main.js`, `styles.css` |
+| `env.javascript.node-script` | console | JavaScript (also Python) | `main.js`, `package.json` |
+| `env.javascript.data-script` | data | JavaScript (also Python) | `main.js`, `package.json`, `data/sample.csv` |
+| `env.javascript.http-service` | api | JavaScript (also Python) | `main.js`, `package.json`, `routes.json` |
+| `env.cpp.console-app` | console | C++ (also Python) | `main.cpp` |
+| `env.cpp.game-loop` | game | C++ (also Verse/Python) | `main.cpp` |
+| `env.csharp.console-app` | console | C# (also Python) | `Program.cs`, `App.csproj` |
+| `env.csharp.data-script` | data | C# (also Python) | `Program.cs`, `App.csproj`, `data/sample.csv` |
+| `env.go.console-app` | console | Go (also Python) | `main.go`, `go.mod` |
+| `env.go.http-service` | api | Go (also Python) | `main.go`, `go.mod` |
+| `env.rust.console-app` | console | Rust (also Python) | `src/main.rs`, `Cargo.toml`, `.devcontainer/devcontainer.json` |
+| `env.gdscript.godot-game` | game | GDScript (also Python) | `project.godot` |
 
 ## Manifest shape
 
@@ -133,8 +150,8 @@ TypeSpec is a first-class import path next to OpenAPI/AsyncAPI: `loadTypeSpecDoc
 
 ### Host file skip vs emit
 
-`.vvs/integration.json` `hostFiles[path].strategy` is `skip` or `emit` (optional custom `path`). Adopting a folder probes for existing host entries (`main.py`, `src/main.rs`, ...) and marks those `skip` so Generate does not clobber them. Missing template files stay `emit`.
+`.vvs/integration.json` `hostFiles[path].strategy` is `skip` or `emit` (optional custom `path`, optional in-editor `contents`). Adopting a folder probes for existing host entries (`main.py`, `src/main.rs`, ...) and marks those `skip` so Generate does not clobber them. Missing template files stay `emit`. Graph settings host-file rows edit `contents` on the project snapshot; Generate emit writes that text when set. Skip still omits the file. Refresh still reads disk / last `appliedTemplate` (no merge IDE).
 
 ### Template upgrade
 
-Graph settings **Refresh** re-applies host files from the linked environment version. User graphs are not rewritten. Files that still match the last applied template are refreshed; user-changed files are kept and listed as drift. There is no three-way merge and no in-editor host IDE.
+Graph settings **Refresh** re-applies host files from the linked environment version. User graphs are not rewritten. Files that still match the last applied template are refreshed (`applied`). User-changed files take a line-based three-way merge: non-overlapping template additions apply (`merged`); overlapping hunks stay `kept-yours` and are marked skip so Generate does not clobber them. Identical files are `already-current`. There is no in-editor merge IDE and no conflict-marker UI.

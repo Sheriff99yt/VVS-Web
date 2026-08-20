@@ -5,6 +5,8 @@ import {
   filterEnvironmentsBySearch,
   filterGitReposBySearch,
   filterLibraryAssetsBySearch,
+  libraryTemplateEmptyLabel,
+  visibleEnvironmentLanguages,
   matchesLibrarySearch,
   tokenizeLibrarySearch,
 } from './librarySearch';
@@ -142,5 +144,37 @@ describe('library language chips', () => {
       'env.javascript.http-service',
     ]);
     expect(filterEnvironmentsByLanguage(searched, 'rust')).toEqual([]);
+  });
+});
+
+describe('visibleEnvironmentLanguages', () => {
+  const rust = {
+    id: 'env.rust.console-app',
+    displayName: 'Rust Console App',
+    description: 'Native Rust binary',
+    category: 'console',
+    defaultTarget: 'rust',
+    supportedTargets: ['rust', 'python'],
+  };
+
+  test('keeps a stuck language chip after search removes that family', () => {
+    expect(visibleEnvironmentLanguages([rust], 'verse')).toEqual(['rust', 'python', 'verse']);
+    expect(visibleEnvironmentLanguages([rust], 'all')).toEqual(['rust', 'python']);
+    expect(visibleEnvironmentLanguages([rust], 'rust')).toEqual(['rust', 'python']);
+  });
+});
+
+describe('libraryTemplateEmptyLabel', () => {
+  test('search-only miss names the query', () => {
+    expect(libraryTemplateEmptyLabel('rust', 'all')).toBe('No templates match “rust”.');
+  });
+
+  test('search + language chip names both so a stuck chip cannot blame search alone', () => {
+    expect(libraryTemplateEmptyLabel('rust', 'verse')).toBe('No templates match “rust” for Verse.');
+  });
+
+  test('language-only leaves copy to the panel', () => {
+    expect(libraryTemplateEmptyLabel('', 'verse')).toBeUndefined();
+    expect(libraryTemplateEmptyLabel('   ', 'all')).toBeUndefined();
   });
 });

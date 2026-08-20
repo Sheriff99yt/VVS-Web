@@ -54,6 +54,27 @@ export function adoptHostFileRules(
   return rules;
 }
 
+/** Host files Generate would write: emit/patch only; `contents` overrides the template render. */
+export function generateHostFiles(
+  manifest: { hostFiles: HostFileTemplate[] },
+  moduleName: string,
+  integration?: ProjectIntegrationConfig
+): { path: string; content: string }[] {
+  return manifest.hostFiles
+    .filter((host) => shouldEmitHostFile(integration, host.path))
+    .map((host) => {
+      const rule = integration?.hostFiles?.[host.path];
+      const content =
+        typeof rule?.contents === 'string'
+          ? rule.contents
+          : renderHostFileTemplate(host.template, moduleName);
+      return {
+        path: resolveHostEmitPath(integration, host.path),
+        content,
+      };
+    });
+}
+
 export function skippedHostEmitPaths(
   integration: ProjectIntegrationConfig | undefined
 ): Set<string> {

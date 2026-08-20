@@ -20,6 +20,8 @@ export interface HostFileIntegrationRule {
   path?: string;
   /** Last-applied template render — used by refresh to detect user edits. */
   appliedTemplate?: string;
+  /** In-editor host file body. Generate emit uses this instead of the template render. */
+  contents?: string;
 }
 
 export interface TargetEmitConfig {
@@ -125,6 +127,7 @@ export function normalizeIntegrationConfig(raw: unknown): ProjectIntegrationConf
           strategy,
           path: typeof r.path === 'string' ? r.path : undefined,
           appliedTemplate: typeof r.appliedTemplate === 'string' ? r.appliedTemplate : undefined,
+          contents: typeof r.contents === 'string' ? r.contents : undefined,
         };
       }
     }
