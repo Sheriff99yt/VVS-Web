@@ -754,7 +754,7 @@ flowchart LR
 
 **Enforced model (direct call):** one `event_define` handler per event → emitter generates a method and `self.on_<name>(args)` at dispatch sites. Multiple handlers for the same event without a visible multicast pattern → `MULTICAST_REQUIRES_SUBSCRIBE` error (no hidden callback list).
 
-**Rejected:** `event_emit` / `event_subscribe` and transpiler-injected `_emit` / `_subscribe` helpers — violate text-shaped fidelity ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)). Future multicast must be explicit, highlightable lines — not hidden runtime.
+**Rejected:** `event_emit` / `event_subscribe` and transpiler-injected `_emit` / `_subscribe` helpers — violate text-shaped fidelity ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)). **Event Bind** is one visible registration line on C# `+=` / JS `.on` / GDScript `.connect` (other langs unspawned or `(x)` Bind). Extra On is illegal until a Bind exists for that event. U100 (hidden subscribe/emit) remains cut.
 
 ### 12.6 Selection → code highlight
 

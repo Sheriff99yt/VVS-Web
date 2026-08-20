@@ -43,6 +43,9 @@
     "DispatchEvent": {
       "quasi": "this.on_{handler}({args});"
     },
+    "BindEvent": {
+      "quasi": "{target}.{event} += {handler};"
+    },
     "DispatchEventCrossClass": {
       "quasi": "{receiver}.on_{handler}({args});"
     },

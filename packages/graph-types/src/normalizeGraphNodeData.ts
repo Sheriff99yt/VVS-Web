@@ -6,6 +6,7 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'On Update') return 'event_on_update';
   if (label.startsWith('On ')) return 'event_define';
   if (label.startsWith('Dispatch ')) return 'event_dispatch';
+  if (label === 'Bind Event' || label.startsWith('Bind ')) return 'event_bind';
   if (label.startsWith('Emit ')) return 'event_emit';
   if (label.startsWith('Subscribe ')) return 'event_subscribe';
   if (label === 'Branch') return 'flow_branch';
@@ -85,6 +86,11 @@ function backfillProperties(kindId: string, data: VVSNodeData): Record<string, u
   if (kindId === 'event_dispatch' && !properties.eventName) {
     const match = data.label.match(/^Dispatch\s+(.+)$/i);
     if (match?.[1]) properties.eventName = match[1];
+  }
+
+  if (kindId === 'event_bind' && !properties.eventName) {
+    const match = data.label.match(/^Bind\s+(.+)$/i);
+    if (match?.[1] && match[1].trim().toLowerCase() !== 'event') properties.eventName = match[1];
   }
 
   if (kindId === 'import_class' && !properties.targetClassId) {

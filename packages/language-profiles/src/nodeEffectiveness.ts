@@ -9,6 +9,9 @@ const IMPORT_KIND_IDS = new Set(['vvs.project.import_module', 'import_module']);
 /** Languages that emit a real non-abstract Function Declare prototype (U82). */
 const FUNCTION_DECLARE_PROTOTYPE_LANGS = new Set<string>(['cpp']);
 
+/** Bind printers: C# +=, JS .on, GDScript .connect. Other langs stay (x) / unspawned. */
+const EVENT_BIND_LANGS = new Set<string>(['csharp', 'javascript', 'gdscript']);
+
 const TARGET_LANGS = new Set<string>([
   'python',
   'javascript',
@@ -146,6 +149,10 @@ export function nodeEffectiveness(
     return 'effective';
   }
 
+  if (kindId === 'event_bind') {
+    return EVENT_BIND_LANGS.has(lang) ? 'effective' : 'ineffective';
+  }
+
   return 'effective';
 }
 
@@ -183,6 +190,9 @@ export function nodeIneffectiveTooltip(
   }
   if (isEventDeclareKind(kindId) && options?.eventHasHandler === false) {
     return `Declare is not emitted until an On handler is placed — no method without On`;
+  }
+  if (kindId === 'event_bind') {
+    return `Bind is not emitted for ${lang} — no native += / .on / .connect registration`;
   }
   if (isFunctionDeclareKind(kindId)) {
     if (isAbstractDeclare(properties) && !isAbstractDeclareNative(String(lang).toLowerCase())) {

@@ -285,6 +285,11 @@ function resolveNodeOutputExpr(
 }
 
 
+function bindPinExpr(node: GraphNode, pinId: string, ctx: LowerContext): IrExpr | undefined {
+  const expr = resolvePinValueExpr(node, pinId, ctx, 0);
+  return isPresentYieldValue(expr) ? expr : undefined;
+}
+
 function isPresentYieldValue(expr: IrExpr): boolean {
   if (expr.kind !== 'Literal') return true;
   if (expr.literalType === 'null') return false;
@@ -627,6 +632,7 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
     return 'CallFunction';
   }
   if (kindId === 'event_dispatch' || kindId === 'event_emit') return 'DispatchEvent';
+  if (kindId === 'event_bind') return 'BindEvent';
   if (kindId === 'action_wait' || kindId === 'action_await_wait') return 'AwaitWait';
   if (kindId === 'flow_branch') return 'IfBranch';
   if (kindId === 'flow_for') return 'ForLoop';
@@ -760,6 +766,29 @@ function lowerStatement(
       targetClassName,
       isSuper: isSuper || undefined,
       parentClassName: isSuper ? activeParentClassName(ctx) : undefined,
+    };
+  }
+
+  if (kindId === 'event_bind') {
+    const eventDef = resolveEventForNode(node.data, projectEvents);
+    const boundName =
+      eventDef?.name ??
+      (typeof node.data.properties?.eventName === 'string' && node.data.properties.eventName.trim()
+        ? node.data.properties.eventName.trim()
+        : eventKeyForNode(node, projectEvents));
+    const handlerName = eventDef ? eventHandlerName(eventDef.name) : eventHandlerName(boundName || 'event');
+    const eventName = boundName || handlerName;
+    const target = bindPinExpr(node, 'target', ctx);
+    const event = bindPinExpr(node, 'event', ctx);
+    const handler = bindPinExpr(node, 'handler', ctx);
+    return {
+      kind: 'BindEvent',
+      sourceGraphNodeId: node.id,
+      eventName,
+      handlerName,
+      ...(target ? { target } : {}),
+      ...(event ? { event } : {}),
+      ...(handler ? { handler } : {}),
     };
   }
 

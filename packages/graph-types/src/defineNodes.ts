@@ -26,6 +26,7 @@ export type MemberChainKind = (typeof MEMBER_CHAIN_KINDS)[number];
 export function resolveNodeKindId(data: VVSNodeData): string {
   if (typeof data.kindId === 'string' && data.kindId) return data.kindId;
   if (data.label.startsWith('Dispatch ')) return 'event_dispatch';
+  if (data.label === 'Bind Event' || data.label.startsWith('Bind ')) return 'event_bind';
   if (data.label.startsWith('Emit ')) return 'event_emit';
   if (data.label.startsWith('Subscribe ')) return 'event_subscribe';
   if (data.label === 'Wait') return 'action_wait';

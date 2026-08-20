@@ -4,9 +4,9 @@ Tracked gaps between **what the shell shows** and **what the UI skill / product 
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
 **Last updated:** 2026-08-16  
-**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — in-page TS agent + U92 / U94 / U95 done; U91 dual-consent / MCP Ready **not** product chrome; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; U103 locked (Component = Class — not remaining). Function constructor/destructor role + leftover-role locks + settings search audit shipped. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
+**Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — in-page TS agent + U92 / U94 / U95 done; U91 dual-consent / MCP Ready **not** product chrome; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; Event Bind partial; U103 locked (Component = Class — not remaining). Function constructor/destructor role + leftover-role locks + settings search audit shipped. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
-**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U90 / U92 / U94–U97 / U102 / U107 / U108–U119 done** · in-page TS agent shipped · U91 dual-consent / MCP Ready downgraded · U93 long-term · U103 locked (not remaining) · U100 cut · ctor/dtor role shipped
+**Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U90 / U92 / U94–U97 / U102 / U107 / U108–U119 done** · in-page TS agent shipped · U91 dual-consent / MCP Ready downgraded · U93 long-term · U103 locked (not remaining) · U100 cut · Event Bind partial · ctor/dtor role shipped
 
 ## Status legend
 
@@ -307,7 +307,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 
 ---
 
-## 18. Graph catalog, functions, async & OOP (July 2026) — **Done** except U100 cut; U103 locked (not remaining)
+## 18. Graph catalog, functions, async & OOP (July 2026) — **Done** except U100 cut; Event Bind partial; U103 locked (not remaining)
 
 Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmentRoadmap.ts` `graph-model-u97`.
 
@@ -319,6 +319,7 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 | U98 | **Function argument pins** | **Done** | Parameter input pins populated on function_define and function_implement nodes end-to-end; syncs on parameter list changes. |
 | U99 | **Function return with arguments** | **Done** | Return statement node (`flow_return`) with value pin lowering to return statements across all 8 target languages. |
 | U100 | **Event listeners** | **Cut** | Hidden subscribe/emit runtime rejected; Dispatch only. |
+| Event Bind | **Event Bind (honest registration)** | **Partial** | One visible registration line (C# `+=`, JS `.on`, GDScript `.connect`) printers and spawn shipped. Declare/On/Dispatch unchanged. Extra On illegal until a Bind is on the graph. No `_subscribe` helper, no hidden listener list. Other langs unspawned or `(x)` Bind. Not U100. Not Done — not all targets. |
 | U101 | **Cross-language async concept** | **Done** | One Wait node; `isAsync` option; pack-complete await/sleep; CL-018 dim. |
 | U102 | **Symbols overlay rethink** | **Done** | Open Graph removed from symbol tree + Details; modifier chips on **hover** (pinned while menus open). Selection toolbar + right-click menus with shortcuts remain. |
 | U103 | **Components** (visual + examples) | **Locked** | Component = Class (`class_define` + field or Extends). No Component node. See [language_capability_catalog.md](../../docs/design/language_capability_catalog.md#component--class). |

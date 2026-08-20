@@ -27,6 +27,7 @@ export type IrStmtKind =
   | 'Continue'
   | 'EventHandler'
   | 'DispatchEvent'
+  | 'BindEvent'
   | 'ModuleImport'
   | 'ImportClass'
   | 'AwaitWait'
@@ -256,6 +257,21 @@ export interface IrDispatchEvent extends IrBase {
   parentClassName?: string;
 }
 
+/** One visible registration statement. No hidden listener list. */
+export interface IrBindEvent extends IrBase {
+  kind: 'BindEvent';
+  /** Event name from binding (identifier / string). */
+  eventName: string;
+  /** Handler stem for on_{stem}, matching event_define / event_dispatch. */
+  handlerName: string;
+  /** Wired target pin; omitted → instance receiver (this/self). */
+  target?: IrExpr;
+  /** Wired event pin; omitted → eventName (quoted on JS/GDScript). */
+  event?: IrExpr;
+  /** Wired handler pin; omitted → {receiver}.on_{handlerName}. */
+  handler?: IrExpr;
+}
+
 export interface IrEmitEvent extends IrBase {
   kind: 'EmitEvent';
   eventKey: string;
@@ -354,6 +370,7 @@ export type IrStructuredStatement =
   | IrBreak
   | IrContinue
   | IrDispatchEvent
+  | IrBindEvent
   | IrModuleImport
   | IrImportClass
   | IrAwaitWait

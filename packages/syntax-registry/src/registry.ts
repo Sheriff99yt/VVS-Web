@@ -9,6 +9,7 @@ export type NodeSemantics =
   | 'event.custom'
   | 'event.define'
   | 'event.dispatch'
+  | 'event.bind'
   | 'event.emit'
   | 'event.subscribe'
   | 'flow.branch'
@@ -148,7 +149,7 @@ function pinsMatchFilter(pin: PinDefinition, filter?: PinDefinition): boolean {
 }
 
 function getSpawnNamingPrefix(
-  type: 'Get' | 'Set' | 'Declare' | 'Define' | 'Call' | 'Dispatch' | 'On',
+  type: 'Get' | 'Set' | 'Declare' | 'Define' | 'Call' | 'Dispatch' | 'On' | 'Bind',
   namingConvention: string,
   targetLanguage?: string
 ): string {
@@ -271,6 +272,9 @@ function kindToSpawnTemplate(
       label = `${prefix} Event`;
     } else if (kind.kindId === 'event_dispatch') {
       const prefix = getSpawnNamingPrefix('Dispatch', namingConvention, targetLanguage);
+      label = `${prefix} Event`;
+    } else if (kind.kindId === 'event_bind') {
+      const prefix = getSpawnNamingPrefix('Bind', namingConvention, targetLanguage);
       label = `${prefix} Event`;
     }
   }
@@ -487,6 +491,15 @@ function yieldStmtIsSpawnable(targetLanguage?: TargetLanguage): boolean {
   return targetLanguage === 'python' || targetLanguage === 'gdscript';
 }
 
+/** Bind printers exist only for C# +=, JS .on, GDScript .connect (event.multicast native). */
+function eventBindIsSpawnable(targetLanguage?: TargetLanguage): boolean {
+  return (
+    targetLanguage === 'csharp' ||
+    targetLanguage === 'javascript' ||
+    targetLanguage === 'gdscript'
+  );
+}
+
 function destructorRoleIsSpawnable(targetLanguage?: TargetLanguage): boolean {
   return targetLanguage === 'cpp';
 }
@@ -540,6 +553,9 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
       continue;
     }
     if (kind.kindId === 'yield_stmt' && !yieldStmtIsSpawnable(targetLanguage)) {
+      continue;
+    }
+    if (kind.kindId === 'event_bind' && !eventBindIsSpawnable(targetLanguage)) {
       continue;
     }
     if (options.filterPin) {
@@ -600,6 +616,7 @@ export function inferKindIdFromLabel(label: string, category: string): string | 
   if (label === 'On Update') return 'event_on_update';
   if (label.startsWith('On ')) return 'event_define';
   if (label.startsWith('Dispatch ')) return 'event_dispatch';
+  if (label === 'Bind Event' || label.startsWith('Bind ')) return 'event_bind';
   if (label.startsWith('Emit ')) return 'event_emit';
   if (label.startsWith('Subscribe ')) return 'event_subscribe';
   if (label === 'Branch') return 'flow_branch';

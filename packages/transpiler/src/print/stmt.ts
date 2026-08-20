@@ -4,6 +4,7 @@ import type {
   IrCallFunction,
   IrCallNative,
   IrDispatchEvent,
+  IrBindEvent,
   IrForLoop,
   IrIfBranch,
   IrModuleImport,
@@ -29,6 +30,7 @@ import { createDefaultExprPrinter, mergeArgs, printCallInvocation, rustInherited
 import { builtBlockToText, buildForLoop, buildIfBranch, buildSequence, buildTry, buildWhileLoop } from './blocks';
 import {
   commentPrefixFromPack,
+  instanceReceiver,
   isPackDrivenFamily,
   printFromTemplate,
 } from './template';
@@ -242,6 +244,26 @@ export function createStmtPrinters(
         text: printed.text,
         expressionSpans: offsetSpans(merged.spans, argsOffset >= 0 ? argsOffset : printed.text.length),
       };
+    },
+
+    BindEvent: (stmt, ctx) => {
+      if (stmt.kind !== 'BindEvent') return null;
+      const s = stmt as IrBindEvent;
+      const { family } = ctx;
+      if (family !== 'csharp' && family !== 'javascript' && family !== 'gdscript') {
+        return {
+          text: `${ctx.indent}${commentPrefixFromPack(ctx)}(x) Bind`,
+          expressionSpans: [],
+        };
+      }
+      const receiver = s.target ? printExpr(s.target, ctx).text : instanceReceiver(ctx);
+      const event = s.event
+        ? printExpr(s.event, ctx).text
+        : family === 'csharp'
+          ? s.eventName
+          : JSON.stringify(s.eventName);
+      const handler = s.handler ? printExpr(s.handler, ctx).text : `${receiver}.on_${s.handlerName}`;
+      return printFromTemplate(ctx, 'BindEvent', { target: receiver, event, handler });
     },
 
     AwaitWait: (stmt, ctx) => {

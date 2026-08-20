@@ -324,4 +324,88 @@ describe('analyzeProject event fidelity', () => {
     expect(multicast[0]?.level).toBe('error');
     expect(result.ok).toBe(false);
   });
+
+  it('does not block event_bind nodes with HIDDEN_EVENT_RUNTIME_UNSUPPORTED', () => {
+    const bind = {
+      id: 'bind-1',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Bind tick',
+        category: 'Events',
+        kindId: 'event_bind',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' },
+          { id: 'target', label: 'Target', type: 'data_any' },
+          { id: 'event', label: 'Event', type: 'data_any' },
+          { id: 'handler', label: 'Handler', type: 'data_any' },
+        ],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+        inlineValues: {},
+        properties: { eventId: 'evt-tick', eventName: 'tick' },
+      },
+    };
+
+    const result = analyzeProject(
+      baseInput({
+        documents: {
+          [HOME_GRAPH]: { nodes: [bind], edges: [] },
+        },
+        events: [{ id: 'evt-tick', name: 'tick', parameters: [], role: 'custom' }],
+      })
+    );
+
+    const hidden = result.diagnostics.filter((d) => d.code === 'HIDDEN_EVENT_RUNTIME_UNSUPPORTED');
+    expect(hidden).toHaveLength(0);
+  });
+
+  it('clears MULTICAST_REQUIRES_SUBSCRIBE when a Bind exists for that event', () => {
+    const handler = (id: string) => ({
+      id,
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'On tick',
+        category: 'Events',
+        kindId: 'event_define',
+        inputs: [{ id: 'exec_in', label: '', type: 'execution' }],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+        inlineValues: {},
+        properties: { eventId: 'evt-tick', eventName: 'tick' },
+      },
+    });
+    const bind = {
+      id: 'bind-tick',
+      type: 'vvs_standard_node' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Bind tick',
+        category: 'Events',
+        kindId: 'event_bind',
+        inputs: [
+          { id: 'exec_in', label: '', type: 'execution' },
+          { id: 'target', label: 'Target', type: 'data_any' },
+          { id: 'event', label: 'Event', type: 'data_any' },
+          { id: 'handler', label: 'Handler', type: 'data_any' },
+        ],
+        outputs: [{ id: 'exec_out', label: '', type: 'execution' }],
+        inlineValues: {},
+        properties: { eventId: 'evt-tick', eventName: 'tick' },
+      },
+    };
+
+    const result = analyzeProject(
+      baseInput({
+        documents: {
+          [HOME_GRAPH]: { nodes: [handler('h1'), handler('h2'), bind], edges: [] },
+        },
+        events: [{ id: 'evt-tick', name: 'tick', parameters: [], role: 'custom' }],
+      })
+    );
+
+    const multicast = result.diagnostics.filter((d) => d.code === 'MULTICAST_REQUIRES_SUBSCRIBE');
+    expect(multicast).toHaveLength(0);
+    const hidden = result.diagnostics.filter((d) => d.code === 'HIDDEN_EVENT_RUNTIME_UNSUPPORTED');
+    expect(hidden).toHaveLength(0);
+  });
 });

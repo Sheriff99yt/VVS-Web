@@ -9,6 +9,7 @@ const SPAWN_SEARCH_ALIASES: Record<string, readonly string[]> = {
   event_member_define: ['declare', 'event', 'member'],
   event_define: ['on', 'handler', 'event handler', 'tick', 'update', 'frame', 'on update', 'on start', 'entry'],
   event_dispatch: ['dispatch', 'invoke', 'emit'],
+  event_bind: ['bind', 'listen', 'connect', '+=', 'on', 'registration'],
   'vvs.project.call_function': ['call', 'invoke', 'function'],
   flow_branch: ['if', 'branch', 'condition'],
   flow_switch: ['switch', 'case', 'match'],

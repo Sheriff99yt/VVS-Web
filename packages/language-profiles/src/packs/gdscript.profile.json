@@ -12,7 +12,8 @@
     "variable.static",
     "type.data_object",
     "type.data_array",
-    "env.native"
+    "env.native",
+    "event.multicast"
   ],
   "emulated": [
     "function.async",

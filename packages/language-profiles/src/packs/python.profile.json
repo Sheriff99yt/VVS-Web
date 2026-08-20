@@ -23,6 +23,7 @@
   "unsupported": [
     "function.overload",
     "function.virtual",
-    "macro.inline"
+    "macro.inline",
+    "event.multicast"
   ]
 }

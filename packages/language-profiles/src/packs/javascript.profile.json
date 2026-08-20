@@ -16,7 +16,8 @@
     "type.data_object",
     "type.data_array",
     "type.data_any",
-    "env.native"
+    "env.native",
+    "event.multicast"
   ],
   "emulated": [
     "function.overload"

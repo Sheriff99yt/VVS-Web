@@ -44,6 +44,7 @@ function resolveKindId(data: VVSNodeData): string {
   if (data.label.startsWith('Set ')) return 'variable_set';
   if (data.label.startsWith('Call ')) return 'vvs.project.call_function';
   if (data.label.startsWith('Dispatch ')) return 'event_dispatch';
+  if (data.label === 'Bind Event' || data.label.startsWith('Bind ')) return 'event_bind';
   if (data.label.startsWith('Emit ')) return 'event_emit';
   if (data.label.startsWith('Subscribe ')) return 'event_subscribe';
   if (data.label.match(/^On\s+/i)) return 'event_define';
@@ -142,6 +143,7 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
     kindId === 'event_define' ||
     kindId === 'event_custom' ||
     kindId === 'event_dispatch' ||
+    kindId === 'event_bind' ||
     kindId === 'event_emit' ||
     kindId === 'event_subscribe' ||
     data.graphBinding?.kind === 'dispatch_event'
@@ -162,6 +164,8 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
         ? data.properties.eventName
         : kindId === 'event_dispatch' || kindId === 'event_emit'
           ? data.label.replace(/^(Dispatch|Emit)\s+/, '').trim()
+          : kindId === 'event_bind'
+            ? data.label.replace(/^Bind\s+/, '').trim()
           : kindId === 'event_subscribe'
             ? data.label.replace(/^Subscribe\s+/, '').trim()
             : data.label.replace(/^On\s+/i, '').trim();

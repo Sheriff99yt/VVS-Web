@@ -107,6 +107,17 @@ describe('nodeEffectiveness', () => {
     }
   });
 
+  test('Event Bind: effective only where printers exist', () => {
+    expect(nodeEffectiveness('event_bind', {}, 'csharp')).toBe('effective');
+    expect(nodeEffectiveness('event_bind', {}, 'javascript')).toBe('effective');
+    expect(nodeEffectiveness('event_bind', {}, 'gdscript')).toBe('effective');
+    expect(nodeEffectiveness('event_bind', {}, 'python')).toBe('ineffective');
+    expect(nodeEffectiveness('event_bind', {}, 'cpp')).toBe('ineffective');
+    const tip = nodeIneffectiveTooltip('event_bind', {}, 'python');
+    expect(tip).toContain('Bind');
+    expect(tip).toContain('python');
+  });
+
   test('Event Declare: unpaired is ineffective', () => {
     expect(
       nodeEffectiveness('event_member_define', {}, 'python', { eventHasHandler: false })

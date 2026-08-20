@@ -422,7 +422,7 @@ function resolveEventIdFromNode(
 function validateMulticastEvents(input: AnalyzeProjectInput): Diagnostic[] {
   const messages: Diagnostic[] = [];
   const defineCountByEvent = new Map<string, { count: number; tabId: string; nodeId: string }>();
-  const subscribeEventIds = new Set<string>();
+  const bindEventIds = new Set<string>();
 
   for (const [tabId, doc] of Object.entries(input.documents)) {
     for (const node of doc.nodes) {
@@ -440,18 +440,18 @@ function validateMulticastEvents(input: AnalyzeProjectInput): Diagnostic[] {
         });
       }
 
-      if (kindId === 'event_subscribe') {
+      if (kindId === 'event_bind') {
         const eventId = resolveEventIdFromNode(node, input.events);
-        if (eventId) subscribeEventIds.add(eventId);
+        if (eventId) bindEventIds.add(eventId);
       }
     }
   }
 
   for (const [eventId, info] of defineCountByEvent) {
-    if (info.count > 1 && !subscribeEventIds.has(eventId)) {
+    if (info.count > 1 && !bindEventIds.has(eventId)) {
       messages.push({
         level: 'error',
-        message: `Multiple handlers for the same event cannot be dispatched without a hidden runtime helper (event: ${eventId}) — use a single event_define handler per event.`,
+        message: `Multiple handlers for the same event require an event_bind registration (event: ${eventId}) — add a Bind node or use a single event_define handler per event.`,
         tabId: info.tabId,
         nodeId: info.nodeId,
         source: 'semantic',

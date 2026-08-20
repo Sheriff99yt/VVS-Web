@@ -25,7 +25,7 @@ export function getVariableName(data: VVSNodeData): string | undefined {
 }
 
 function getNamingPrefix(
-  type: 'Get' | 'Set' | 'Declare' | 'Define' | 'Call' | 'Dispatch' | 'On',
+  type: 'Get' | 'Set' | 'Declare' | 'Define' | 'Call' | 'Dispatch' | 'On' | 'Bind',
   namingConvention: string,
   activeLanguage?: string
 ): string {
@@ -200,6 +200,14 @@ export function getNodeDisplayTitle(data: VVSNodeData, activeLanguage?: string):
     }
     return def?.title ?? data.label;
   }
+  if (kindId === 'event_bind') {
+    const eventName = data.properties?.eventName;
+    const prefix = getNamingPrefix('Bind', convention, activeLanguage);
+    if (typeof eventName === 'string' && eventName.trim()) {
+      return `${prefix} ${eventName}`;
+    }
+    return def?.title ?? data.label;
+  }
   if (kindId === 'event_dispatch') {
     const eventName = data.properties?.eventName;
     const prefix = getNamingPrefix('Dispatch', convention, activeLanguage);
@@ -255,6 +263,13 @@ export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
   if (kindId === 'event_dispatch') {
     const match = core.label.match(/^(?:Call|Dispatch)\s+(.+)$/i);
     if (match?.[1] && !properties.eventName) properties.eventName = match[1];
+  }
+
+  if (kindId === 'event_bind') {
+    const match = core.label.match(/^Bind\s+(.+)$/i);
+    if (match?.[1] && match[1].trim().toLowerCase() !== 'event' && !properties.eventName) {
+      properties.eventName = match[1];
+    }
   }
 
   const label = getNodeDisplayTitle({ ...core, kindId, properties });

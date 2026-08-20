@@ -39,6 +39,9 @@
     "DispatchEvent": {
       "quasi": "self.on_{handler}({args})"
     },
+    "BindEvent": {
+      "quasi": "{target}.connect({event}, {handler})"
+    },
     "DispatchEventCrossClass": {
       "quasi": "{receiver}.on_{handler}({args})"
     },

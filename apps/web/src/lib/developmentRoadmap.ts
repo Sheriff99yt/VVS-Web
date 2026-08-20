@@ -1480,6 +1480,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
           'Cut -- hidden subscribe/emit runtime is rejected. Dispatch is the invoke node. Do not spawn event_emit / event_subscribe.',
         status: 'cut',
       },
+      {
+        id: 'event-bind-honest',
+        layer: 'frontend',
+        title: 'Event Bind (honest registration)',
+        description:
+          'Bind is one node that prints one registration line (C# `+=`, JS `.on`/`addEventListener` when that is the host, GDScript `.connect`). Declare/On/Dispatch unchanged. Extra On illegal until a Bind is on the graph. No `_subscribe` helper, no hidden listener list. Spawn only where a pack can print the line; other langs unspawned or `(x)`. Not U100. C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped. Other langs unspawned or `(x)` Bind. Not Done — not all targets.',
+        status: 'partial',
+      },
     ],
   },
   {

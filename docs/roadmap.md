@@ -142,6 +142,7 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U98** | Function argument pins | Done — Define / implement / call / emit end-to-end; auto-sync across documents |
 | **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with typed value pin (`resolvePinValueExpr`) lowering across 8 target languages |
 | **U100** | Event listeners | **Cut** — subscribe/emit hidden runtime rejected; Dispatch only |
+| **Event Bind** | Event Bind (honest registration) | **Partial** — C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped; one visible registration line; Declare/On/Dispatch unchanged; extra On illegal until a Bind is on the graph; no `_subscribe` helper, no hidden listener list; other langs unspawned or `(x)` Bind. Not U100. Not Done — not all targets. |
 | **U101** | Cross-language async concept | **Done** — one Wait node; `isAsync` option; pack-complete await/sleep |
 | **CL-018** | Dim ineffective async | **Done** — U66/U67 chips; Wait.isAsync does not flip the function |
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
