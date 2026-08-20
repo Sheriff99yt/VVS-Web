@@ -15,8 +15,8 @@ In-app: **Development roadmap** → Open / Done / Research, grouped frontend / b
 
 | Focus | IDs | Status |
 |-------|-----|--------|
-| Verse GetInput | CL-014 | **Open** — honest `(x)` + prompt; no invented player API |
-| Library remaining (auth / upload) | U90 | Frozen — client-first; no accounts as product |
+| Verse GetInput | CL-014 | **Open** — honest `(x)` + prompt; no invented player API. Research tab: keep stub (ship), invent Player.GetInput (reject), pack device input (later) |
+| Library remaining (auth / upload) | U90 | Frozen — client-first; no accounts as product. Research tab: git catalog (ship), VVS accounts (reject) |
 
 ### Long-term
 
@@ -38,9 +38,9 @@ In-app: **Development roadmap** → Open / Done / Research, grouped frontend / b
 | **Rust + Go console packs** (`env.rust.console-app`, `env.go.console-app`) + optional `devcontainer` host file | Aug 2026 |
 | **Library client token search** | Aug 2026 |
 | **Implements list + Class form** (cs/rs UI + emit; python does not print Implements; Super stays first Extends parent) | Aug 2026 |
-| **Library language chips** (filter templates by default/supported target; active chip stays at count 0; empty copy names search + chip; token search stays, no embeddings) | Aug 2026 |
+| **Library language chips** (filter templates by default/supported target; active chip stays at count 0; empty copy names search + chip; token search stays, no embeddings). Research tab: token+chips v1 (ship), hosted vectors (reject), optional in-page MiniLM (later) | Aug 2026 |
 | **C# data-script + Go HTTP service packs** (`env.csharp.data-script`, `env.go.http-service`) | Aug 2026 |
-| **Mobile agent-hide + coarse pin snap + hit targets** (gestures still planned) | Aug 2026 |
+| **Mobile agent-hide + coarse pin snap + hit targets** (gestures still planned). Research tab: keep hide/pin/hit (ship), radial spawn everywhere (reject) | Aug 2026 |
 | **Host skip/emit UI** in Graph settings | Aug 2026 |
 | **Non-destructive template upgrade** (Refresh line-based 3-way merge: `merged` / `applied` / `kept-yours` / `already-current`; no merge IDE) | Aug 2026 |
 | **Host file in-editor contents** (Graph settings textarea persists on snapshot; Generate emit uses edited text; skip stays skip; no merge IDE) | Aug 2026 |
@@ -98,7 +98,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 
 | # | Item | Notes |
 |---|------|--------|
-| **CL-014** | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API — do not invent one. |
+| **CL-014** | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API — do not invent one. Research tab: keep stub (ship). |
 
 Shipped this wave (moved to Recently completed): CL-006, CL-008, CL-009, CL-010, CL-015, CL-016, CL-017, CL-018, U101, U105, U106, Call Super, Yield, Extends multi-base emit, TypeSpec CLI, overload codegen.
 
@@ -142,7 +142,7 @@ See [library-backend-api.md](library-backend-api.md) for full API spec.
 | **U98** | Function argument pins | Done — Define / implement / call / emit end-to-end; auto-sync across documents |
 | **U99** | Function return with arguments | Done — Return statement node (`flow_return`) with typed value pin (`resolvePinValueExpr`) lowering across 8 target languages |
 | **U100** | Event listeners | **Cut** — subscribe/emit hidden runtime rejected; Dispatch only |
-| **Event Bind** | Event Bind (honest registration) | **Partial** — C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped; one visible registration line; Declare/On/Dispatch unchanged; extra On illegal until a Bind is on the graph; no `_subscribe` helper, no hidden listener list; other langs unspawned or `(x)` Bind. Details picker + rename write-through shipped. Still partial for other langs. Not U100. Not Done — not all targets. |
+| **Event Bind** | Event Bind (honest registration) | **Partial** — C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped; one visible registration line; Declare/On/Dispatch unchanged; extra On illegal until a Bind is on the graph; no `_subscribe` helper, no hidden listener list; other langs unspawned or `(x)` Bind. Details picker + rename write-through shipped. Still partial for other langs. Not U100. Not Done — not all targets. Research tab: leave other langs unspawned/(x) (ship), helper bus (reject). |
 | **U101** | Cross-language async concept | **Done** — one Wait node; `isAsync` option; pack-complete await/sleep |
 | **CL-018** | Dim ineffective async | **Done** — U66/U67 chips; Wait.isAsync does not flip the function |
 | **Call Super** | Parent call option | **Done** — option on Call (and Dispatch); emit `super()` / `base` / `Parent::` / `self.base` |
@@ -164,7 +164,7 @@ Also strengthening: analyzer / portability / `(x)` / dim / compiler log — **no
 | Priority | CL IDs | Cluster | Plan needed for |
 |----------|--------|---------|-----------------|
 | **P0** | CL-010 | Rust inheritance / lowering | **Done** — composition + `self.base` projection |
-| **P0** | CL-014 | Verse GetInput | No blocking string read on a plain class; `(x)` + prompt shipped |
+| **P0** | CL-014 | Verse GetInput | No blocking string read on a plain class; `(x)` + prompt shipped. Research tab. |
 | **P1** | CL-008, CL-009 | Rust static/const + imports | **Done** — module `static` / associated `const`; generated `use std::collections::HashMap;` |
 | **P1** | CL-012, CL-013 | GDScript temps + GetInput | **Done** — Switch temp `var`; GetInput prints prompt |
 | **P1** | CL-016 | Verse field defaults | **Done** — class-typed `Host = Machine{}` (archetype value, not constructor) |
@@ -179,7 +179,7 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 
 | Wave | Items |
 |------|--------|
-| **search leftover (this pass)** | Language chip stays visible at count 0; empty copy names search + chip so a stuck Verse filter cannot blame `rust`. Embeddings still TBD — search stays partial. |
+| **search leftover (this pass)** | Language chip stays visible at count 0; empty copy names search + chip so a stuck Verse filter cannot blame `rust`. Embeddings still TBD — search stays partial. Research tab: token+chips (ship). |
 | **env-template-upgrade (this pass)** | Refresh line-based 3-way merge: template additions apply on non-overlapping hunks (`merged`); conflict stays `kept-yours` + skip; no merge IDE |
 | **templates (this pass)** | First-party 17 env packs Done; docs table + catalog F catch-up; community catalog stays Phase 3 |
 | **U81 symbol-delete Define leftover (`4ea967e` follow-on)** | `removeDefineNodesForSymbol` drops `function_implement` with `function_define` on symbol delete and deleteClass |
@@ -215,7 +215,7 @@ Detail notes for older IDs: prior revisions of this file and `.agents/memory/inc
 | **6** Fidelity, canvas scale & polish | **Active** | Ctor/dtor Function role + leftover-role locks + settings audit + August emit/OOP + in-page TS agent + U89 / U92 shipped. U91 dual-consent / MCP Ready not product chrome. **U103 locked** as Class (field or Extends; no Component node). Open: CL-014 honest `(x)`, U93 long-term, U90 frozen. Shipped this wave: CL-017 Switch match + `case_*` indices, Yield/Return typed pins, Extends multi-base emit, TypeSpec CLI, overload codegen, JSON profiles, transpile worker, rust/go console, skip/emit UI, graph-doc-split, settings env tab + define-node write-through (`1f2c051`); Refresh 3-way merge + host Contents + 17 first-party templates. |
 | **3** Community library | **In progress** | Go backend done; create `vvs-library` repo · GitHub Actions CI · web UI wiring |
 | **4** Collaboration | Planned | **Session client/host**, not account cloud. Research tab: lobby-host LWW (ship), Yjs-as-SoT (reject), local Go WS (later) |
-| **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM |
+| **5** UE6 plugin | Planned | Same graph → Verse text; not Blueprint VM. Research tab: packs-first, later official UEFN MCP attach, no Slate rewrite |
 
 Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md) · backlog `.agents/memory/incomplete-ui.md` · lang emit [cross_language_mapping/SKILL.md](../.agents/skills/vvs_cross_language_mapping/SKILL.md) · library [library-backend-api.md](library-backend-api.md)
 

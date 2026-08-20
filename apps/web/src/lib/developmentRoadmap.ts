@@ -1447,7 +1447,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Verse GetInput (CL-014)',
         description:
-          'Honest (x) + prompt. Real player/string read is not a plain-class API — do not invent one.',
+          'Honest (x) + prompt. Real player/string read is not a plain-class API — do not invent one. Three approaches on the Research tab.',
         status: 'planned',
       },
     ],
@@ -1485,7 +1485,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Event Bind (honest registration)',
         description:
-          'Bind is one node that prints one registration line (C# `+=`, JS `.on`/`addEventListener` when that is the host, GDScript `.connect`). Declare/On/Dispatch unchanged. Extra On illegal until a Bind is on the graph. No `_subscribe` helper, no hidden listener list. Spawn only where a pack can print the line; other langs unspawned or `(x)`. Not U100. C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped. Details picker + rename write-through shipped (same path as Dispatch). Other langs unspawned or `(x)` Bind. Still partial — not all targets.',
+          'Bind is one node that prints one registration line (C# `+=`, JS `.on`/`addEventListener` when that is the host, GDScript `.connect`). Declare/On/Dispatch unchanged. Extra On illegal until a Bind is on the graph. No `_subscribe` helper, no hidden listener list. Spawn only where a pack can print the line; other langs unspawned or `(x)`. Not U100. C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped. Details picker + rename write-through shipped (same path as Dispatch). Other langs unspawned or `(x)` Bind. Still partial — not all targets. Remaining-lang options on the Research tab.',
         status: 'partial',
       },
     ],
@@ -1499,7 +1499,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'backend',
         title: 'Cross Over Architecture (COA)',
         description:
-          'Deferred -- COA_SHIPPED false. Prerequisites: multi-target export, documented compile policy. Single-target portability warnings + U66/U67 available today.',
+          'Deferred -- COA_SHIPPED false. Prerequisites: multi-target export, documented compile policy. Three approaches compared on the Research tab. Single-target portability warnings + U66/U67 available today.',
         status: 'planned',
       },
     ],
@@ -1513,7 +1513,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Engine environment packs',
         description:
-          'UE/Verse and other engine API manifests as installable Library environments -- portability-gated natives.',
+          'UE/Verse and other engine API manifests as installable Library environments -- portability-gated natives. First Phase 5 slice on the Research tab.',
         status: 'planned',
       },
     ],
@@ -1565,7 +1565,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'backend',
         title: 'Library remaining (U90 auth / upload)',
         description:
-          'Library page redesign shipped (templates / git import). Auth / upload frozen (client-first; no accounts as product). Remaining Phase 3: vvs-library repo, CI, web UI wiring.',
+          'Library page redesign shipped (templates / git import). Auth / upload frozen (client-first; no accounts as product). Remaining Phase 3: vvs-library repo, CI, web UI wiring. Three approaches on the Research tab.',
         status: 'partial',
       },
       {
@@ -1573,7 +1573,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Semantic library search',
         description:
-          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Language chips filter templates by default/supported target; the active chip stays visible at count 0 and empty copy names search + chip. Not embeddings; semantic search backend TBD.',
+          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Language chips filter templates by default/supported target; the active chip stays visible at count 0 and empty copy names search + chip. Not embeddings; semantic search backend TBD. Three approaches on the Research tab.',
         status: 'partial',
       },
     ],
@@ -1602,14 +1602,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'ue-plugin',
         layer: 'backend',
         title: 'In-engine graph editor',
-        description: 'UE6-embedded canvas on the same graph schema with Verse emitter integration.',
+        description: 'UE6-embedded canvas on the same graph schema with Verse emitter integration. Three attach paths compared on the Research tab.',
         status: 'planned',
       },
       {
         id: 'verse-parity',
         layer: 'backend',
         title: 'Web ↔ engine round-trip',
-        description: 'Import/export graphs between browser editor and in-engine sessions.',
+        description: 'Import/export graphs between browser editor and in-engine sessions. File-shaped v1; live dual canvas is a later attach (see Research tab).',
         status: 'planned',
       },
       {
@@ -1617,7 +1617,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'UE API environment packs',
         description:
-          'Engine environment manifests and data-driven nodes atop @vvs/environment-templates (not Blueprint VM).',
+          'Engine environment manifests and data-driven nodes atop @vvs/environment-templates (not Blueprint VM). First Phase 5 slice on the Research tab.',
         status: 'planned',
       },
       {
@@ -1639,7 +1639,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Touch & mobile UX',
         description:
-          'Agent panel / Bot / StatusBar chip hidden at max-width 768px (`mobileViewport`, `useIsMobile`). Coarse-pointer pin snap 40px vs mouse 20px (`mobileViewport`, `useCoarsePointer`, React Flow `connectionRadius`). Larger TopNav icon hit targets on coarse/mobile (`min-w-11 min-h-11`). Desktop unchanged. Gestures and radial menus still planned.',
+          'Agent panel / Bot / StatusBar chip hidden at max-width 768px (`mobileViewport`, `useIsMobile`). Coarse-pointer pin snap 40px vs mouse 20px (`mobileViewport`, `useCoarsePointer`, React Flow `connectionRadius`). Larger TopNav icon hit targets on coarse/mobile (`min-w-11 min-h-11`). Desktop unchanged. Gestures and radial menus still planned. Three approaches on the Research tab.',
         status: 'partial',
       },
       {
@@ -1655,7 +1655,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Reveal in Explorer / Finder',
         description:
-          'Native “open containing folder” from the editor -- blocked today by browser File System Access API (no absolute path exposure).',
+          'Native “open containing folder” from the editor -- blocked today by browser File System Access API (no absolute path exposure). Three approaches on the Research tab.',
         status: 'planned',
       },
     ],
