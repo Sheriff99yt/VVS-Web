@@ -373,16 +373,16 @@ export function StartScreen() {
                       className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded ${
                         fixture.level === 'simple'
                           ? 'text-emerald-400 bg-emerald-500/10'
-                          : fixture.level === 'branch'
-                            ? 'text-amber-400 bg-amber-500/10'
-                            : 'text-indigo-400 bg-indigo-500/10'
+                          : fixture.level === 'complex'
+                            ? 'text-indigo-400 bg-indigo-500/10'
+                            : 'text-amber-400 bg-amber-500/10'
                       }`}
                     >
                       {fixture.level === 'simple'
                         ? 'Baseline'
-                        : fixture.level === 'branch'
-                          ? 'Flow'
-                          : 'Full coverage'}
+                        : fixture.level === 'complex'
+                          ? 'All langs'
+                          : 'Most langs'}
                     </span>
                     <span className="text-[11px] text-zinc-600 font-mono">{fixture.moduleName}</span>
                   </div>
@@ -458,7 +458,7 @@ export function StartScreen() {
                   onClick={() => handleOpenUsabilityTest('simple')}
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
-                  Open First Graph →
+                  Open Simple →
                 </button>
               </div>
             ) : (

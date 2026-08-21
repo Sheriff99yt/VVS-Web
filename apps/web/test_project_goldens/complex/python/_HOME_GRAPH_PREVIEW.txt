@@ -1,62 +1,26 @@
-// ===== src/CoverageLab.py =====
+// ===== src/Counter.py =====
 from enum import Enum
-class Machine:
-    Power = 0
-    Serial = 0
-    MaxPower = 100
-    Ready = False
-    def Boot(self):
-        self.Ready = True
-        print("Booted")
-        Sensor().on_tick()
-    def Diagnose(self):
-        print("Diagnose")
-        return
-    async def Shutdown(self):
-        self.Ready = False
-        print("Shutdown")
-    def Calculate(self, a, b):
-        print("Calculating")
-        return (a + b)
-    def on_pulse(self):
-        print(("Power=" + str(self.Power)))
+class Mode(Enum):
+    Idle = 1
+    Run = 2
+class Counter:
+    Total = 0
+    Limit = 3
+    Ready = True
+    CurrentMode = Mode.Run
+    def Add(self, n):
+        self.Total = (self.Total + n)
+        return self.Total
     def on_start(self):
-        _vvs_input_lab_get_input = input("Operator name?")
-        print(_vvs_input_lab_get_input)
-        self.Boot()
-        self.Diagnose()
-        print(str(self.Calculate(self.Power, self.MaxPower)))
         if self.Ready:
-            self.on_pulse()
+            print("go")
+            for _vvs_i_cx_for_limit in range(1, self.Limit + 1):
+                self.Add(1)
+                print(str(self.Total))
+            match self.CurrentMode:
+                case Mode.Idle:
+                    print("Idle")
+                case Mode.Run:
+                    print("Run")
         else:
-            import json
-            print("Not ready")
-class SensorStatus(Enum):
-    OK = 1
-    WARN = 2
-    FAIL = 3
-class Sensor(Machine):
-    Readings = []
-    Status = SensorStatus.OK
-    Host = None
-    Tags = {}
-    async def Sample(self):
-        self.Readings.append(self.Power)
-        print("Sampled")
-    def Report(self):
-        print("--- Readings ---")
-        for val in self.Readings:
-            print(str(val))
-    def on_tick(self):
-        print("Tick")
-    def on_start(self):
-        match self.Status:
-            case SensorStatus.OK:
-                self.Sample()
-                self.Report()
-            case SensorStatus.WARN:
-                print("Warn")
-                self.Report()
-            case SensorStatus.FAIL:
-                print("Fail")
-                self.Report()
+            print("skip")

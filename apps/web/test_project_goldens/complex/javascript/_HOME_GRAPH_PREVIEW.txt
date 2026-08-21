@@ -1,79 +1,34 @@
-// ===== src/CoverageLab.js =====
-class Machine {
-    Power = 0;
-    static Serial = 0;
-    MaxPower = 100;
-    Ready = false;
-    Boot() {
-        this.Ready = true;
-        console.log("Booted");
-        new Sensor().on_tick();
-    }
-    Diagnose() {
-        console.log("Diagnose");
-        return;
-    }
-    async Shutdown() {
-        this.Ready = false;
-        console.log("Shutdown");
-    }
-    Calculate(a, b) {
-        console.log("Calculating");
-        return (a + b);
-    }
-    on_pulse() {
-        console.log(("Power=" + String(this.Power)));
-    }
-    on_start() {
-        const _vvs_input_lab_get_input = (prompt("Operator name?") ?? "");
-        console.log(_vvs_input_lab_get_input);
-        this.Boot();
-        this.Diagnose();
-        console.log(String(this.Calculate(this.Power, this.MaxPower)));
-        if (this.Ready) {
-            this.on_pulse();
-        } else {
-            console.log("Not ready");
-        };
-    }
-}
-const SensorStatus = Object.freeze({
-  OK: 1,
-  WARN: 2,
-  FAIL: 3
+// ===== src/Counter.js =====
+const Mode = Object.freeze({
+  Idle: 1,
+  Run: 2
 });
-class Sensor extends Machine {
-    Readings = [];
-    Status = SensorStatus.OK;
-    Host = null;
-    Tags = new Map();
-    async Sample() {
-        this.Readings.push(this.Power);
-        console.log("Sampled");
-    }
-    Report() {
-        console.log("--- Readings ---");
-        for (const val of this.Readings) {
-            console.log(String(val));
-        };
-    }
-    on_tick() {
-        console.log("Tick");
+class Counter {
+    Total = 0;
+    Limit = 3;
+    Ready = true;
+    CurrentMode = Mode.Run;
+    Add(n) {
+        this.Total = (this.Total + n);
+        return this.Total;
     }
     on_start() {
-        switch (this.Status) {
-          case SensorStatus.OK:
-            this.Sample();
-            this.Report();
-                break;
-          case SensorStatus.WARN:
-            console.log("Warn");
-            this.Report();
-                break;
-          case SensorStatus.FAIL:
-            console.log("Fail");
-            this.Report();
-                break;
+        if (this.Ready) {
+            console.log("go");
+            for (let _vvs_i_cx_for_limit = 1; _vvs_i_cx_for_limit <= this.Limit; _vvs_i_cx_for_limit++) {
+                this.Add(1);
+                console.log(String(this.Total));
+            };
+            switch (this.CurrentMode) {
+              case Mode.Idle:
+                console.log("Idle");
+                    break;
+              case Mode.Run:
+                console.log("Run");
+                    break;
+            };
+        } else {
+            console.log("skip");
         };
     }
 }

@@ -71,8 +71,9 @@ Enforce separation where possible: (1) Graph Analysis (DAG sorting), (2) IR / ex
 # Usability example tests
 
 - **Verify as the user sees:** Code panel path — `useProjectTranspileResult` / `bun apps/web/scripts/extract_test_project_outputs.ts` → `apps/web/test_project_outputs/`. Do not ship emit fixes validated only with raw `transpileGraph` that skips multi-class keying or integration `moduleFile`.
-- `coverageLabUsabilityTest.ts` — full coverage (Machine+Sensor, one graph)
-- `firstGraphUsabilityTest.ts` — newcomer Declare / GetInput / Call baseline
+- `advancedUsabilityTest.ts` — Machine+Sensor Diagnose + GetInput + Wait
+- `simpleUsabilityTest.ts` — Hello.Name + Greet (all 8)
+- `complexUsabilityTest.ts` — Counter Add + branch/for/while/switch (all 8)
 - Hook mirror: `apps/web/src/hooks/useProjectTranspileResult.test.ts`
 - Catalog: `docs/design/language_capability_catalog.md` · skill: `vvs_usability_example_tests/SKILL.md`
 
@@ -82,7 +83,7 @@ Enforce separation where possible: (1) Graph Analysis (DAG sorting), (2) IR / ex
 
 1. Emit via **`appendIrMembersInOrder`** — one pass, canvas order = text order.
 2. No `# Declare` placeholders; `function_define` / `event_member_define` map to real signatures.
-3. Coverage Lab C++ Machine golden must stay honest (modifiers + access sections + order).
+3. Advanced C++ Machine golden must stay honest (virtual Diagnose + order).
 4. Drive keywords only from define-node `properties` via `resolveModifierSlots` + packs — no inventing class abstract / Default / forced `public`.
 5. Access sections: emit `public:` / `protected:` / `private:` only when visibility **changes** along the member chain (unset visibility omits keyword).
 6. Async only from define-node `isAsync` — never infer from body; C++ no-op until coroutines (UI disables the chip).

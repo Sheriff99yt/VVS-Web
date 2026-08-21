@@ -43,7 +43,7 @@ The terminal prints a **Network** URL for LAN access (e.g. `http://192.168.x.x:3
 ## First session (2 minutes)
 
 1. **New project** — empty class graph with a program entry (Declare start + On start)  
-2. **Usability tests** — First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab  
+2. **Usability tests** — Simple, Complex, Advanced  
 3. **Right-click canvas** — spawn nodes (Action, **Conversion**, Math, Variables, …)  
 4. **Connect pins** — same-type wires only; use **To String** before Print for numbers  
 5. **Generate** (TopNav) — validation + `@vvs/transpiler` code preview (per-graph language; **Code** and **Files** tabs on the right)  
@@ -83,7 +83,7 @@ bun run lint
 | localStorage save/load | Hosted MCP URL / remote deploy (not product) |
 | `@vvs/transpiler` — Python, JS, C++, Verse, GDScript, Rust, C#, Go | JSON graph export as runnable code |
 | Conversion nodes, Get User Input, pin validation, loops | String concat, compare |
-| Start-screen usability tests (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) | Community library backend |
+| Start-screen usability tests (Simple, Complex, Advanced) | Community library backend |
 | Offline honest UI | WebSocket collaboration |
 | Optional local Go API + MCP sidecar (`start_app.ps1`) | Self-hosted Supabase + `pgx` on VPS ([deployment.md](deployment.md)) |
 

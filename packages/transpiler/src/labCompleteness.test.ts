@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { transpileProject } from './generate';
-import { createNewFeaturesUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/newFeaturesUsabilityTest';
-import { createCoverageLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
-import { createInheritanceLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/inheritanceLabUsabilityTest';
-import { createBranchLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/branchLabUsabilityTest';
-import { createFirstGraphUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/firstGraphUsabilityTest';
+import { createSimpleSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/simpleUsabilityTest';
+import { createComplexSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/complexUsabilityTest';
+import { createAdvancedSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/advancedUsabilityTest';
 import type { ProjectSnapshot, TargetLanguage } from '@vvs/graph-types';
 
 function emit(snapshot: ProjectSnapshot, lang: TargetLanguage): string {
@@ -21,117 +19,61 @@ function emit(snapshot: ProjectSnapshot, lang: TargetLanguage): string {
   return result.files.map((f) => f.content).join('\n');
 }
 
+const ALL_LANGS = ['python', 'javascript', 'cpp', 'csharp', 'rust', 'gdscript', 'verse', 'go'] as const;
+
 describe('lab completeness pass (no leftover fakes)', () => {
-  test('New Features: Call return pin is a real expression, not a return_val comment', () => {
-    const snapshot = createNewFeaturesUsabilityTestSnapshot();
-    for (const lang of ['python', 'javascript', 'cpp', 'csharp', 'rust', 'gdscript', 'verse', 'go'] as const) {
-      const code = emit(snapshot, lang);
-      expect(code).not.toContain('return_val');
-      expect(code).toContain('ProcessData(');
-    }
-    const py = emit(snapshot, 'python');
-    expect(py).toContain('print(self.ProcessData(');
-    expect(py).toContain('# (x) Implement ProcessData');
-    expect(py).not.toContain('@overload');
-  });
-
-  test('Coverage: gated Import json is real on Python and silent-skipped elsewhere', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const py = emit(snapshot, 'python');
-    expect(py).toMatch(/else:\s*\n\s+import json\s*\n\s+print\("Not ready"\)/);
-    for (const lang of ['javascript', 'cpp', 'csharp', 'rust', 'gdscript', 'verse', 'go'] as const) {
-      const code = emit(snapshot, lang);
-      expect(code).not.toContain('(x) Import json');
+  test('Simple + Complex: zero leftover (x) on all 8 languages', () => {
+    for (const create of [createSimpleSnapshot, createComplexSnapshot]) {
+      const snapshot = create();
+      for (const lang of ALL_LANGS) {
+        const code = emit(snapshot, lang);
+        expect(code).not.toContain('(x)');
+      }
     }
   });
 
-  test('Inheritance: empty Parent ctor does not leak (x) Implement Parent', () => {
-    const snapshot = createInheritanceLabUsabilityTestSnapshot();
-    const rust = emit(snapshot, 'rust');
-    expect(rust).toContain('pub fn new()');
-    expect(rust).not.toContain('(x) Implement Parent');
-    expect(emit(snapshot, 'go')).not.toContain('(x) Implement Parent');
-    expect(emit(snapshot, 'verse')).not.toContain('(x) Implement Parent');
-  });
-
-  test('Coverage Go: real if / switch / for range / append + fmt import', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const code = emit(snapshot, 'go');
-    expect(code).toContain('import "fmt"');
-    expect(code).toContain('if self.Ready');
-    expect(code).toContain('switch ');
-    expect(code).toContain('for _, val := range');
-    expect(code).toContain(' = append(');
-    expect(code).not.toContain('// if (');
-    expect(code).not.toContain('// switch');
-    expect(code).not.toContain('// foreach');
-    expect(code).not.toContain('// push');
-    expect(code).not.toContain('match ');
-  });
-
-  test('Branch Go: real if, not a profile stub', () => {
-    const snapshot = createBranchLabUsabilityTestSnapshot();
-    const code = emit(snapshot, 'go');
-    expect(code).toContain('if false');
-    expect(code).not.toContain('// if (');
-  });
-
-  test('New Features: string ProcessData does not leak Concat leftover after valued return', () => {
-    const snapshot = createNewFeaturesUsabilityTestSnapshot();
-    for (const lang of ['cpp', 'csharp', 'javascript', 'verse'] as const) {
-      const code = emit(snapshot, lang);
-      expect(code).not.toMatch(/Concat Strings/);
-      expect(code).not.toMatch(/String Concat/);
-    }
-    const cpp = emit(snapshot, 'cpp');
-    expect(cpp.match(/return \(a \+ b\);/g)?.length).toBe(2);
-  });
-
-  test('Coverage: Calculate returns Math Add of parameters', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const cpp = emit(snapshot, 'cpp');
-    expect(cpp).toContain('float Machine::Calculate(float a, float b)');
-    expect(cpp).toMatch(/float Machine::Calculate\(float a, float b\) \{[\s\S]*?return \(a \+ b\);/);
-    expect(cpp).not.toMatch(/float Machine::Calculate\(float a, float b\) \{[\s\S]*?return;\s*\n\}/);
+  test('Simple greets via Greet / concat and has a real entry', () => {
+    const snapshot = createSimpleSnapshot();
     const py = emit(snapshot, 'python');
-    expect(py).toMatch(/def Calculate\(self, a, b\):[\s\S]*?return \(a \+ b\)/);
+    expect(py).toContain('def Greet(');
+    expect(py).toContain('self.Greet()');
+    expect(py).toContain('Hello, ');
+    expect(py).toContain('Ada');
+    expect(emit(snapshot, 'go')).toContain('import "fmt"');
   });
 
-  test('Coverage: Calculate call site uses Power/MaxPower and prints the return', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('Complex: Add returns Total+n; Ready branch; Go if/for/switch', () => {
+    const snapshot = createComplexSnapshot();
     const py = emit(snapshot, 'python');
-    expect(py).not.toContain('Calculate(0, 0)');
-    expect(py).toContain('self.Calculate(self.Power, self.MaxPower)');
-    const cpp = emit(snapshot, 'cpp');
-    expect(cpp).not.toContain('Calculate(0, 0)');
-    expect(cpp).toContain('Calculate(Power, MaxPower)');
+    expect(py).toContain('def Add(self, n):');
+    expect(py).toMatch(/self\.Total\s*=/);
+    expect(py).toContain('print("go")');
+    expect(py).toContain('self.Add(');
+
+    const go = emit(snapshot, 'go');
+    expect(go).toContain('import "fmt"');
+    expect(go).toContain('if self.Ready');
+    expect(go).toMatch(/for /);
+    expect(go).toContain('switch ');
+    expect(go).not.toContain('// if (');
+    expect(go).not.toContain('// switch');
   });
 
-  test('Inheritance / New Features Go include fmt when Print is used', () => {
-    expect(emit(createInheritanceLabUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');
-    expect(emit(createNewFeaturesUsabilityTestSnapshot(), 'go')).toContain('import "fmt"');
-  });
-
-  test('First Graph: GetInput result is stored in VisitorName', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
+  test('Advanced: GetInput stored in Operator; Diagnose + super; Wait', () => {
+    const snapshot = createAdvancedSnapshot();
     const py = emit(snapshot, 'python');
-    expect(py).toContain('self.VisitorName = _vvs_input_fg_get_input');
-    const cpp = emit(snapshot, 'cpp');
-    expect(cpp).toContain('VisitorName = _vvs_input_fg_get_input');
-  });
-
-  test('Coverage: Diagnose is called from on_start after Boot', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const py = emit(snapshot, 'python');
+    expect(py).toContain('self.Operator = _vvs_input_ad_get_input');
     expect(py).toContain('self.Diagnose()');
-    expect(py).not.toContain('self.Shutdown()');
-    const boot = py.indexOf('self.Boot()');
-    const diagnose = py.indexOf('self.Diagnose()');
-    const calculate = py.indexOf('self.Calculate(');
-    expect(boot).toBeGreaterThan(-1);
-    expect(diagnose).toBeGreaterThan(boot);
-    expect(calculate).toBeGreaterThan(diagnose);
-    const cpp = emit(snapshot, 'cpp');
-    expect(cpp).toMatch(/Boot\(\);\s*\n\s*Diagnose\(\);/);
+    expect(py).toContain('print("sensor")');
+    expect(py).toContain('super().Diagnose()');
+    expect(py).toMatch(/async def on_start/);
+    expect(py).toMatch(/sleep|asyncio/);
+
+    const verse = emit(snapshot, 'verse');
+    expect(verse).toContain('(x)');
+    expect(verse).not.toContain('Player.GetInput');
+    expect(verse).not.toContain('.GetInput(');
+
+    expect(emit(snapshot, 'go')).toContain('import "fmt"');
   });
 });

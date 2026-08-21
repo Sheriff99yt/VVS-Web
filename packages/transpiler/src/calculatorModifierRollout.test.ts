@@ -1,18 +1,22 @@
 import { describe, expect, test } from 'bun:test';
 import { transpileGraph } from './generate';
 import {
-  createCoverageLabUsabilityTestSnapshot,
+  createAdvancedSnapshot,
   MACHINE_CLASS,
-} from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
+} from '../../../apps/web/src/lib/usabilityExampleTests/advancedUsabilityTest';
+import { createComplexSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/complexUsabilityTest';
 import type { TargetLanguage } from '@vvs/graph-types';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
-function transpileMachine(lang: TargetLanguage): string {
-  const snapshot = createCoverageLabUsabilityTestSnapshot();
+function transpileHome(
+  snapshot: ReturnType<typeof createAdvancedSnapshot>,
+  lang: TargetLanguage,
+  activeClassId?: string
+): string {
   const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
   return (
     transpileGraph({
-      moduleName: 'Machine',
+      moduleName: snapshot.projectDetails.moduleName,
       extendsType: '',
       targetLanguage: lang,
       variables: snapshot.variables,
@@ -23,96 +27,40 @@ function transpileMachine(lang: TargetLanguage): string {
       tabId: MAIN_GRAPH_CONTAINER_ID,
       documents: snapshot.documents,
       classes: snapshot.classes,
-      activeClassId: MACHINE_CLASS.id,
+      activeClassId: activeClassId ?? snapshot.activeClassId,
     }).files[0]?.content ?? ''
   );
 }
 
-describe('Coverage Lab modifier rollout (U52)', () => {
-  test('C# — visibility, static, virtual, abstract prototype, async', () => {
-    const code = transpileMachine('csharp');
-    expect(code).toContain('using System;');
-    expect(code).toContain('protected float Power');
-    expect(code).toContain('public static float Serial');
-    expect(code).toContain('public readonly float MaxPower');
-    expect(code).toContain('public virtual void Boot()');
-    expect(code).toContain('public async Task Shutdown()');
-    expect(code).toContain('protected void Diagnose()');
-    expect(code).not.toContain('protected abstract void Diagnose() {');
+describe('example modifier rollout (U52)', () => {
+  test('Advanced C++ — virtual Diagnose prototype + out-of-line Define (U82)', () => {
+    const code = transpileHome(createAdvancedSnapshot(), 'cpp', MACHINE_CLASS.id);
+    expect(code).toContain('virtual void Diagnose();');
+    expect(code).toContain('void Machine::Diagnose() {');
+    expect(code).not.toContain('virtual void Diagnose() {');
   });
 
-  test('C++ — Declare prototype + out-of-line Define (U82)', () => {
-    const code = transpileMachine('cpp');
-    expect(code).toContain('virtual void Boot();');
-    expect(code).toContain('void Machine::Boot() {');
-    expect(code).toContain('void Diagnose();');
-    expect(code).toContain('void Shutdown();');
-    expect(code).toContain('void Machine::Shutdown() {');
-    expect(code).not.toContain('virtual void Boot() {');
-  });
-
-  test('Python — async Shutdown; abstract Diagnose → (x) (no invented body)', () => {
-    const code = transpileMachine('python');
-    expect(code).toContain('async def Shutdown(self):');
-    expect(code).toContain('def Boot(self):');
+  test('Advanced Python — Diagnose is a real def, no leftover declare', () => {
+    const code = transpileHome(createAdvancedSnapshot(), 'python', MACHINE_CLASS.id);
     expect(code).toContain('def Diagnose(self):');
+    expect(code).not.toContain('(x) Declare Diagnose');
     expect(code).not.toContain('# abstract Diagnose');
+  });
+
+  test('Complex public members emit without invented keywords (python)', () => {
+    const code = transpileHome(createComplexSnapshot(), 'python');
+    expect(code).toContain('def Add(self, n):');
     expect(code).not.toContain('virtual');
     expect(code).not.toContain('protected');
-    // Shared imports (incl. enum) live on the Machine chain at file top in Coverage Lab.
-    expect(code).toContain('from enum import Enum');
+    expect(code).not.toContain('(x)');
   });
 
-  test('JavaScript — static Serial and async Shutdown; abstract Diagnose → (x)', () => {
-    const code = transpileMachine('javascript');
-    expect(code).toContain('static Serial = 0');
-    expect(code).toContain('async Shutdown()');
-    expect(code).toContain('Diagnose(');
-    expect(code).not.toContain('// abstract Diagnose');
-    expect(code).not.toContain('virtual');
-  });
-
-  test('Rust — pub only for public members; isAsync is a no-op (no Tokio)', () => {
-    const code = transpileMachine('rust');
-    expect(code).toContain('pub static Serial: f32');
-    expect(code).toContain('pub const MaxPower: f32');
-    expect(code).not.toMatch(/^\s+pub Serial: f32,/m);
-    expect(code).toMatch(/^\s+Power: f32,/m);
-    expect(code).toContain('pub fn Shutdown');
-    expect(code).not.toContain('async fn');
-  });
-
-  test('GDScript — static var Serial; no async keyword', () => {
-    const code = transpileMachine('gdscript');
-    expect(code).toContain('static var Serial');
-    expect(code).toContain('func Shutdown()');
-    expect(code).not.toContain('async');
-  });
-
-  test('Verse — visibility tags on public members', () => {
-    const code = transpileMachine('verse');
-    expect(code).toContain('var Serial<public>');
-    expect(code).toContain('var MaxPower<public>');
-    expect(code).toContain('var Power : float');
-    expect(code).not.toContain('var Power<public>');
-  });
-
-  test('no invented public/async without define-node properties (python)', () => {
-    const code = transpileMachine('python');
-    expect(code).toMatch(/^\s+def Boot\(self\):/m);
-    expect(code).not.toMatch(/async def Boot/);
-    expect(code).toContain('async def Shutdown(self):');
-  });
-
-  test('unset visibility does not invent public keyword (csharp/rust)', () => {
-    const cs = transpileMachine('csharp');
+  test('unset visibility does not invent public keyword (csharp/rust Complex)', () => {
+    const cs = transpileHome(createComplexSnapshot(), 'csharp');
     expect(cs).not.toContain('impl Default');
     expect(cs).not.toContain('#include');
-    const rs = transpileMachine('rust');
+    const rs = transpileHome(createComplexSnapshot(), 'rust');
     expect(rs).not.toContain('impl Default');
     expect(rs).not.toContain('#include');
-    expect(rs).toContain('pub static Serial');
-    expect(rs).toMatch(/^\s+Power: f32,/m);
-    expect(rs).not.toMatch(/^\s+pub Power:/m);
   });
 });

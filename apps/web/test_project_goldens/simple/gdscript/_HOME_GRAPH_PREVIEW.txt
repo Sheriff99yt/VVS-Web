@@ -1,12 +1,7 @@
-// ===== src/FirstGraph.gd =====
-class_name FirstGraph
-    var VisitorName = ""
-    func SayHello() -> void:
-        print("Hello from SayHello!")
+// ===== src/Hello.gd =====
+class_name Hello
+    var Name = "Ada"
+    func Greet() -> void:
+        print(("Hello, " + self.Name))
     func on_start() -> void:
-        print("What is your name?")
-        var _vvs_input_fg_get_input = OS.read_string_from_stdin()
-        self.VisitorName = _vvs_input_fg_get_input
-        print(_vvs_input_fg_get_input)
-        self.SayHello()
-        print("Done.")
+        self.Greet()

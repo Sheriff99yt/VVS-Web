@@ -29,7 +29,7 @@ class Machine:
         print("Shutdown")
 ```
 
-Coverage Lab also shows: `from enum import Enum`, `class SensorStatus(Enum):`, inheritance `class Sensor(Machine):`, GetInput via `input("…")`, Switch as **`match` / `case` / `case _`**, and conditional `import json` inside a branch.
+Complex / Advanced examples also shows: `from enum import Enum`, `class SensorStatus(Enum):`, inheritance `class Sensor(Machine):`, GetInput via `input("…")`, Switch as **`match` / `case` / `case _`**, and conditional `import json` inside a branch.
 
 ## Concept → emit
 

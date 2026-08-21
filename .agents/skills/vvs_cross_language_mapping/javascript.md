@@ -32,7 +32,7 @@ class Machine {
 }
 ```
 
-Coverage Lab also shows: `const SensorStatus = Object.freeze({…})`, `class Sensor extends Machine`, GetInput via `(prompt("…") ?? "")`, `new Map()` for maps, and `for (const val of …)`.
+Complex / Advanced examples also shows: `const SensorStatus = Object.freeze({…})`, `class Sensor extends Machine`, GetInput via `(prompt("…") ?? "")`, `new Map()` for maps, and `for (const val of …)`.
 
 ## Concept → emit
 
@@ -66,7 +66,7 @@ Coverage Lab also shows: `const SensorStatus = Object.freeze({…})`, `class Sen
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if () {} else {}` |
 | **Switch/Match** | `Switch` Node | `switch() case:` |
-| **For Loop** | `For Loop` Node | `for (const x of xs)` (Coverage Lab) |
+| **For Loop** | `For Loop` Node | `for (const x of xs)` (Complex / Advanced examples) |
 | **While Loop** | `While Loop` Node | `while() {}` |
 | **Break** | `Break` Node | `break;` |
 | **Continue** | `Continue` Node | `continue;` |

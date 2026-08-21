@@ -297,6 +297,46 @@ export function forEachNode(id: string, position: { x: number; y: number }): VVS
   });
 }
 
+export function forRangeNode(
+  id: string,
+  position: { x: number; y: number },
+  options?: { first?: number; last?: number }
+): VVSNode {
+  const inlineValues: Record<string, string | number | boolean> = {};
+  if (options?.first !== undefined) inlineValues.first = options.first;
+  if (options?.last !== undefined) inlineValues.last = options.last;
+  return usabilityTestNode(id, position, {
+    label: 'For Loop',
+    kindId: 'flow_for',
+    category: 'Control Flow',
+    inputs: [
+      EXEC_IN,
+      { id: 'first', label: 'First', type: 'data_number' },
+      { id: 'last', label: 'Last', type: 'data_number' },
+    ],
+    outputs: [
+      { id: 'body_exec', label: 'Body', type: 'execution' },
+      EXEC_OUT,
+      { id: 'index', label: 'Index', type: 'data_number' },
+    ],
+    inlineValues,
+  });
+}
+
+export function whileNode(id: string, position: { x: number; y: number }): VVSNode {
+  return usabilityTestNode(id, position, {
+    label: 'While Loop',
+    kindId: 'flow_while',
+    category: 'Flow Control',
+    inputs: [EXEC_IN, { id: 'condition', label: 'Condition', type: 'data_boolean' }],
+    outputs: [
+      { id: 'body_exec', label: 'Body', type: 'execution' },
+      EXEC_OUT,
+    ],
+    inlineValues: {},
+  });
+}
+
 export function arrayPushNode(id: string, position: { x: number; y: number }): VVSNode {
   return usabilityTestNode(id, position, {
     label: 'Array Push',

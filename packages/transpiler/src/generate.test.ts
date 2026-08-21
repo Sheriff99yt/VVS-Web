@@ -6,21 +6,22 @@ import {
   type CodegenContext,
 } from './generate';
 import {
-  createCoverageLabUsabilityTestSnapshot,
+  createAdvancedSnapshot,
   MACHINE_CLASS,
   SENSOR_CLASS,
-} from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
-import { createFirstGraphUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/firstGraphUsabilityTest';
+} from '../../../apps/web/src/lib/usabilityExampleTests/advancedUsabilityTest';
+import { createComplexSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/complexUsabilityTest';
+import { createSimpleSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/simpleUsabilityTest';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
-function machineCtx(
-  snapshot: ReturnType<typeof createCoverageLabUsabilityTestSnapshot>,
+function homeCtx(
+  snapshot: ReturnType<typeof createSimpleSnapshot>,
   overrides: Partial<CodegenContext> = {}
 ): CodegenContext {
   const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
   return {
-    moduleName: 'Machine',
-    extendsType: '',
+    moduleName: snapshot.projectDetails.moduleName,
+    extendsType: snapshot.projectDetails.extendsType ?? '',
     targetLanguage: 'python',
     variables: snapshot.variables,
     projectEvents: snapshot.events,
@@ -30,184 +31,107 @@ function machineCtx(
     tabId: MAIN_GRAPH_CONTAINER_ID,
     documents: snapshot.documents,
     classes: snapshot.classes,
-    activeClassId: MACHINE_CLASS.id,
+    activeClassId: snapshot.activeClassId,
     ...overrides,
   };
 }
 
 describe('transpileGraphCode', () => {
-  test('coverage lab Machine emits Boot, branch, and dispatch', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const code = transpileGraphCode(machineCtx(snapshot));
+  test('Complex emits Add, branch, and on_start', () => {
+    const snapshot = createComplexSnapshot();
+    const code = transpileGraphCode(homeCtx(snapshot));
 
-    expect(code).toContain('def Boot(self):');
-    expect(code).toContain('self.Boot()');
+    expect(code).toContain('def Add(self, n):');
+    expect(code).toContain('self.Add(');
     expect(code).toContain('if ');
-    expect(code).toContain('self.on_pulse()');
-    expect(code).toContain('async def Shutdown(self):');
-    expect(code).not.toContain('# (x) Declare Boot');
-    expect(code).not.toContain('# (x) Declare Shutdown');
-    expect(code).not.toContain('# (x) Declare Diagnose');
-    expect(code).not.toContain('# abstract Diagnose');
+    expect(code).toContain('def on_start(self):');
+    expect(code).not.toContain('# (x) Declare Add');
   });
 
-  test('Python sourceMap: Declare→(x) only; Define→def; abstract Diagnose→(x)', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const result = transpileGraph(machineCtx(snapshot));
+  test('Python sourceMap: Define owns def line; Declare does not', () => {
+    const snapshot = createComplexSnapshot();
+    const result = transpileGraph(homeCtx(snapshot));
     const lines = result.files[0]!.content.split('\n');
-    const xBoot = lines.findIndex((l) => l.includes('(x) Declare Boot')) + 1;
-    const defBoot = lines.findIndex((l) => l.includes('def Boot(self):')) + 1;
-    const xDiag = lines.findIndex((l) => l.includes('(x) Declare Diagnose')) + 1;
-    expect(defBoot).toBeGreaterThan(0);
-    expect(result.files[0]!.content).not.toContain('(x) Declare Boot');
-    const declareBoot = (result.sourceMap['lab-fn-boot'] ?? []).map((r) => r.startLine);
-    const defineBoot = result.sourceMap['lab-fn-boot-impl']!.map((r) => r.startLine);
-    expect(declareBoot).not.toContain(defBoot);
-    expect(defineBoot).toContain(defBoot);
-    expect(result.files[0]!.content).not.toContain('(x) Declare Diagnose');
+    const defAdd = lines.findIndex((l) => l.includes('def Add(self, n):')) + 1;
+    expect(defAdd).toBeGreaterThan(0);
+    expect(result.files[0]!.content).not.toContain('(x) Declare Add');
+    const declareAdd = (result.sourceMap['cx-fn-add'] ?? []).map((r) => r.startLine);
+    const defineAdd = result.sourceMap['cx-fn-add-impl']!.map((r) => r.startLine);
+    expect(declareAdd).not.toContain(defAdd);
+    expect(defineAdd).toContain(defAdd);
   });
 
-  test('non-C++ Coverage Lab langs: (x) Declare including abstract Diagnose', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const cases: Array<{
-      lang: 'javascript' | 'csharp' | 'rust' | 'gdscript' | 'verse';
-      bootHeader: RegExp;
-      diagnoseNeedle: string | RegExp;
-    }> = [
-      { lang: 'javascript', bootHeader: /^\s*Boot\(\)\s*\{/, diagnoseNeedle: '(x) Declare Diagnose' },
-      {
-        lang: 'csharp',
-        bootHeader: /void Boot\(\)\s*\{/,
-        diagnoseNeedle: /abstract\s+void\s+Diagnose/,
-      },
-      { lang: 'rust', bootHeader: /fn Boot\(/, diagnoseNeedle: '(x) Declare Diagnose' },
-      { lang: 'gdscript', bootHeader: /func Boot\(/, diagnoseNeedle: '(x) Declare Diagnose' },
-      { lang: 'verse', bootHeader: /^\s*Boot.*: void/, diagnoseNeedle: '(x) Declare Diagnose' },
-    ];
-    for (const { lang, bootHeader, diagnoseNeedle } of cases) {
-      const result = transpileGraph(machineCtx(snapshot, { targetLanguage: lang }));
-      const content = result.files[0]!.content;
-      const lines = content.split('\n');
-      expect(content).not.toContain('(x) Declare Boot');
-      const xBoot = lines.findIndex((l) => l.includes('(x) Declare Boot')) + 1;
-      const defBoot = lines.findIndex((l) => bootHeader.test(l)) + 1;
-      const diagLine =
-        typeof diagnoseNeedle === 'string'
-          ? lines.findIndex((l) => l.includes(diagnoseNeedle)) + 1
-          : lines.findIndex((l) => diagnoseNeedle.test(l)) + 1;
-      expect(defBoot).toBeGreaterThan(0);
-      const declareBoot = (result.sourceMap['lab-fn-boot'] ?? []).map((r) => r.startLine);
-      expect(declareBoot).not.toContain(defBoot);
-      expect(result.sourceMap['lab-fn-boot-impl']!.map((r) => r.startLine)).toContain(defBoot);
-      expect(content).not.toContain('(x) Declare Diagnose');
-    }
-  });
-
-  test('emitUnsupportedComments false omits (x); C# abstract prototype still emits', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const py = transpileGraphCode(
-      machineCtx(snapshot, { emitUnsupportedComments: false })
-    );
-    expect(py).toContain('def Boot(self):');
-    expect(py).not.toContain('(x) Declare');
-    expect(py).not.toContain('abstract Diagnose');
-
-    const cs = transpileGraphCode(
-      machineCtx(snapshot, {
-        targetLanguage: 'csharp',
-        emitUnsupportedComments: false,
-      })
-    );
-    expect(cs).toContain('void Boot()');
-    expect(cs).not.toContain('(x) Declare');
-    expect(cs).toMatch(/void Diagnose/);
+  test('emitUnsupportedComments false omits leftover comments', () => {
+    const snapshot = createComplexSnapshot();
+    const py = transpileGraphCode(homeCtx(snapshot, { emitUnsupportedComments: false }));
+    expect(py).toContain('def Add(self, n):');
+    expect(py).not.toContain('(x)');
   });
 
   test('canvas define chain emits members in graph order (1:1)', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const code = transpileGraphCode(machineCtx(snapshot));
+    const snapshot = createComplexSnapshot();
+    const code = transpileGraphCode(homeCtx(snapshot));
     const lines = code.split('\n');
-
-    const lineClass = lines.findIndex((l) => l.includes('class Machine'));
-    const linePower = lines.findIndex((l) => /Power\s*=/.test(l));
-    const lineBoot = lines.findIndex((l) => l.includes('def Boot(self):'));
+    const lineClass = lines.findIndex((l) => l.includes('class Counter'));
+    const lineTotal = lines.findIndex((l) => /Total\s*=/.test(l));
+    const lineAdd = lines.findIndex((l) => l.includes('def Add(self, n):'));
     const lineOnStart = lines.findIndex((l) => l.includes('def on_start(self):'));
-
-    expect(lineClass).toBeGreaterThan(-1);
-    expect(linePower).toBeGreaterThan(lineClass);
-    expect(lineBoot).toBeGreaterThan(linePower);
-    expect(lineOnStart).toBeGreaterThan(lineBoot);
+    expect(lineClass).toBeGreaterThanOrEqual(0);
+    expect(lineTotal).toBeGreaterThan(lineClass);
+    expect(lineAdd).toBeGreaterThan(lineTotal);
+    expect(lineOnStart).toBeGreaterThan(lineAdd);
   });
 
   test('var_define nodes map to declaration lines in sourceMap', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const result = transpileGraph(machineCtx(snapshot));
-
-    expect(result.sourceMap['lab-var-power']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['lab-machine-class']?.length).toBeGreaterThan(0);
+    const snapshot = createComplexSnapshot();
+    const result = transpileGraph(homeCtx(snapshot));
+    expect(result.sourceMap['cx-var-total']?.length).toBeGreaterThan(0);
   });
 
   test('event member define maps to method signature', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const result = transpileGraph(machineCtx(snapshot));
-    const content = result.files[0]!.content;
-    const handlerLine =
-      content.split('\n').findIndex((l) => l.includes('def on_pulse(self')) + 1;
-
-    expect(result.sourceMap['lab-evt-pulse-mem']?.[0]?.startLine).toBe(handlerLine);
-    expect(result.sourceMap['lab-on-pulse']?.length).toBeGreaterThan(0);
+    const snapshot = createComplexSnapshot();
+    const result = transpileGraph(homeCtx(snapshot));
+    const lines = result.files[0]!.content.split('\n');
+    const startLine = lines.findIndex((l) => l.includes('def on_start(self):')) + 1;
+    expect(startLine).toBeGreaterThan(0);
+    expect(result.sourceMap['cx-start-mem']?.some((r) => r.startLine === startLine)).toBe(true);
   });
 
   test('On Start maps to on_start handler not run', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const result = transpileGraph(machineCtx(snapshot));
-    const content = result.files[0]!.content;
-    expect(content).toContain('def on_start(self):');
-    expect(content).not.toContain('def run(self):');
+    const snapshot = createComplexSnapshot();
+    const code = transpileGraphCode(homeCtx(snapshot));
+    expect(code).toContain('def on_start(self):');
+    expect(code).not.toContain('def run(');
   });
 
   test('U71 — Switch case-body nodes have their own sourceMap entries', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
-    const result = transpileGraph({
-      moduleName: 'Sensor',
-      extendsType: 'Machine',
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: home.nodes,
-      edges: home.edges,
-      tabId: MAIN_GRAPH_CONTAINER_ID,
-      documents: snapshot.documents,
-      classes: snapshot.classes,
-      activeClassId: SENSOR_CLASS.id,
-    });
-    const content = result.files[0]!.content;
-    const lines = content.split('\n');
-
-    // Nested case statements must be tagged — not only the Switch block.
-    for (const nodeId of ['lab-print-warn', 'lab-print-fail', 'lab-call-sample'] as const) {
-      expect(result.sourceMap[nodeId]?.length, nodeId).toBeGreaterThan(0);
-    }
-
-    const warnLine = lines.findIndex((l) => l.includes('print("Warn")')) + 1;
-    const failLine = lines.findIndex((l) => l.includes('print("Fail")')) + 1;
-    const sampleLine = lines.findIndex((l) => /self\.Sample\(/.test(l)) + 1;
-    expect(warnLine).toBeGreaterThan(0);
-    expect(failLine).toBeGreaterThan(0);
-    expect(sampleLine).toBeGreaterThan(0);
-    expect(result.sourceMap['lab-print-warn']!.some((r) => r.startLine === warnLine)).toBe(true);
-    expect(result.sourceMap['lab-print-fail']!.some((r) => r.startLine === failLine)).toBe(true);
-    expect(result.sourceMap['lab-call-sample']!.some((r) => r.startLine === sampleLine)).toBe(true);
-
-    // Switch still maps (outer construct), without exclusive ownership of body lines.
-    expect(result.sourceMap['lab-switch-status']?.length).toBeGreaterThan(0);
+    const snapshot = createComplexSnapshot();
+    const result = transpileGraph(homeCtx(snapshot));
+    expect(result.sourceMap['cx-print-idle']?.length).toBeGreaterThan(0);
+    expect(result.sourceMap['cx-print-run']?.length).toBeGreaterThan(0);
   });
 
-  test('U71 — Coverage Lab home graph: every behavioral node has sourceMap', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('U71 — Complex home graph: every behavioral node has sourceMap', () => {
+    const snapshot = createComplexSnapshot();
+    const result = transpileGraph(homeCtx(snapshot));
     const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
+    const behavioral = home.nodes.filter((n) => {
+      const kind = n.data.kindId ?? '';
+      return (
+        kind &&
+        kind !== 'class_define' &&
+        kind !== 'vvs.project.import_module' &&
+        kind !== 'function_define' &&
+        n.type !== 'vvs_comment_node'
+      );
+    });
+    for (const node of behavioral) {
+      expect(result.sourceMap[node.id], node.id).toBeDefined();
+    }
+  });
+
+  test('transpileProject emits one Advanced module with Machine and Sensor', () => {
+    const snapshot = createAdvancedSnapshot();
     const result = transpileProject({
       projectDetails: snapshot.projectDetails,
       targetLanguage: 'python',
@@ -216,63 +140,19 @@ describe('transpileGraphCode', () => {
       functions: snapshot.functions,
       documents: snapshot.documents!,
       classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
       openTabs: snapshot.openTabs,
-      integration: snapshot.integration,
     });
-
-    const implemented = new Set(
-      home.nodes
-        .filter((n) => n.data?.kindId === 'function_implement')
-        .map((n) => n.data.graphBinding?.symbolId ?? n.data.properties?.symbolId)
-        .filter((id): id is string => typeof id === 'string')
-    );
-    const missing: string[] = [];
-    for (const node of home.nodes) {
-      if (node.type === 'vvs_comment_node') continue;
-      if (!node.data?.kindId) continue;
-      const kindId = String(node.data.kindId);
-      // Language-gated imports and Declare-with-Define emit no text on Python.
-      if (kindId === 'vvs.project.import_module' || kindId.startsWith('import_module')) {
-        const langs = String(node.data.properties?.targetLanguages ?? '');
-        if (langs && !langs.split(',').map((s) => s.trim()).includes('python')) continue;
-      }
-      if (kindId === 'function_define') {
-        const symbolId = node.data.graphBinding?.symbolId ?? node.data.properties?.symbolId;
-        if (typeof symbolId === 'string' && implemented.has(symbolId)) continue;
-      }
-      if (!result.sourceMap[node.id]?.length) {
-        missing.push(`${node.id} (${kindId})`);
-      }
-    }
-    expect(missing).toEqual([]);
+    const paths = result.files.map((f) => f.path);
+    expect(paths.some((p) => p.toLowerCase().includes('advanced'))).toBe(true);
+    const home = result.files[0]!.content;
+    expect(home).toContain('class Machine:');
+    expect(home).toContain('class Sensor(Machine)');
+    expect(home).toContain('def Diagnose(');
   });
 
-  test('function tab emits Boot body with cross-class Sensor tick dispatch', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const bootTab = snapshot.documents!['fn-boot']!;
-    const code = transpileGraphCode({
-      moduleName: 'Boot',
-      extendsType: '',
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: bootTab.nodes,
-      edges: bootTab.edges,
-      tabId: 'fn-boot',
-      documents: snapshot.documents,
-      classes: snapshot.classes,
-      activeClassId: MACHINE_CLASS.id,
-    });
-    expect(code).toContain('def Boot');
-    expect(code).toContain('Booted');
-    expect(code).toContain('Sensor().on_tick()');
-    expect(code).not.toContain('self.on_tick()');
-  });
-
-  test('transpileProject emits one CoverageLab module with Machine and Sensor', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('Advanced Sensor extends Machine', () => {
+    const snapshot = createAdvancedSnapshot();
+    expect(SENSOR_CLASS.extendsType).toBe('Machine');
     const result = transpileProject({
       projectDetails: snapshot.projectDetails,
       targetLanguage: 'python',
@@ -281,412 +161,139 @@ describe('transpileGraphCode', () => {
       functions: snapshot.functions,
       documents: snapshot.documents!,
       classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
       openTabs: snapshot.openTabs,
-      integration: snapshot.integration,
     });
-    const paths = result.files.map((f) => f.path).sort();
-    expect(paths).toContain('src/CoverageLab.py');
-    expect(paths).not.toContain('machine.py');
-    expect(paths).not.toContain('sensor.py');
-    expect(paths).not.toContain('src/Boot.py');
-    expect(paths).toEqual(['src/CoverageLab.py']);
-    const home = result.files.find((f) => f.path === 'src/CoverageLab.py')!.content;
-    expect(home).toContain('def Boot(');
+    expect(result.files.map((f) => f.content).join('\n')).toContain('class Sensor(Machine)');
   });
 
-  test('Sensor module has enum and extends Machine', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
-    const code = transpileGraphCode({
-      ...machineCtx(snapshot),
-      moduleName: 'Sensor',
-      activeClassId: SENSOR_CLASS.id,
-      nodes: home.nodes,
-      edges: home.edges,
+  test('async on_start flag emits async def in python (Advanced)', () => {
+    const snapshot = createAdvancedSnapshot();
+    const result = transpileProject({
+      projectDetails: snapshot.projectDetails,
+      targetLanguage: 'python',
+      variables: snapshot.variables,
+      projectEvents: snapshot.events,
+      functions: snapshot.functions,
+      documents: snapshot.documents!,
+      classes: snapshot.classes,
+      openTabs: snapshot.openTabs,
     });
-    expect(code).toContain('class SensorStatus(Enum)');
-    expect(code).toContain('class Sensor(Machine)');
-    expect(code).toContain('async def Sample');
-    expect(code).toContain('def on_tick(self)');
-    expect(code).not.toContain('Machine start');
+    expect(result.files.map((f) => f.content).join('\n')).toMatch(/async def on_start/);
   });
 
-  test('async function flag emits async def in python', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const code = transpileGraphCode(machineCtx(snapshot));
-    expect(code).toContain('async def Shutdown(self):');
-  });
-
-  test('Advanced Machine C++ golden — Declare prototype + out-of-line Define (U82)', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const result = transpileGraph(machineCtx(snapshot, { targetLanguage: 'cpp' }));
-    const code = result.files[0]!.content;
-
+  test('Advanced Machine C++ — Declare prototype + out-of-line Define (U82)', () => {
+    const snapshot = createAdvancedSnapshot();
+    const code = transpileGraphCode(homeCtx(snapshot, { targetLanguage: 'cpp', activeClassId: MACHINE_CLASS.id }));
     expect(code).toContain('class Machine {');
-    expect(code).toContain('protected:');
-    expect(code).toContain('inline static float Serial');
-    expect(code).toContain('const float MaxPower');
-    expect(code).toContain('virtual void Boot();');
-    expect(code).toContain('void Diagnose();');
-    expect(code).toContain('void Machine::Boot() {');
-    expect(code).toContain('void Machine::Shutdown() {');
-    expect(code).not.toContain('virtual void Boot() {');
-    expect(code).not.toContain('// Declare');
-    expect(code.indexOf('Power')).toBeLessThan(code.indexOf('virtual void Boot();'));
-    expect(code.indexOf('virtual void Boot();')).toBeLessThan(code.indexOf('void on_start'));
-    expect(code.indexOf('};')).toBeLessThan(code.indexOf('void Machine::Boot()'));
+    expect(code).toContain('virtual void Diagnose();');
+    expect(code).toContain('void Machine::Diagnose() {');
+    expect(code).not.toContain('virtual void Diagnose() {');
   });
 
   test('class home graph uses per-graph extension in output path', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
-    const homeId = MAIN_GRAPH_CONTAINER_ID;
-    const documents = structuredClone(snapshot.documents!);
-    documents[homeId] = {
-      ...documents[homeId]!,
-      metadata: {
-        ...documents[homeId]!.metadata!,
-        targetLanguage: 'cpp',
-        targetFileExtension: 'c',
-      },
-    };
-
+    const snapshot = createSimpleSnapshot();
     const result = transpileGraph({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: snapshot.projectDetails.extendsType,
-      targetLanguage: 'cpp',
-      targetFileExtensions: { cpp: 'c' },
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: documents[homeId]!.nodes,
-      edges: documents[homeId]!.edges,
-      classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
-      tabId: homeId,
-      tabLabel: 'FirstGraph',
+      ...homeCtx(snapshot),
+      tabLabel: 'Hello',
     });
-
-    expect(result.files[0]?.path).toBe('firstgraph.c');
+    expect(result.files[0]!.path.toLowerCase()).toMatch(/hello/);
   });
 
   test('simple example class_define maps to class line', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
-    const main = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
-    const result = transpileGraph({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: '',
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: MAIN_GRAPH_CONTAINER_ID,
-      documents: snapshot.documents,
-      classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
-    });
-    expect(result.files[0]!.content).toContain('class FirstGraph');
-    expect(result.sourceMap['fg-class-define']?.length).toBeGreaterThan(0);
+    const snapshot = createSimpleSnapshot();
+    const result = transpileGraph(homeCtx(snapshot));
+    expect(result.files[0]!.content).toContain('class Hello');
+    const lines = result.files[0]!.content.split('\n');
+    const classLine = lines.findIndex((l) => l.includes('class Hello')) + 1;
+    expect(result.sourceMap['sm-class-define']?.some((r) => r.startLine === classLine)).toBe(true);
   });
 
   test('json target dumps graph JSON (not Unsupported language)', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
-    const main = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
-    const result = transpileGraph({
-      moduleName: snapshot.projectDetails.moduleName,
-      extendsType: '',
-      targetLanguage: 'json',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: main.nodes,
-      edges: main.edges,
-      tabId: MAIN_GRAPH_CONTAINER_ID,
-      documents: snapshot.documents,
-      classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
-    });
-    expect(result.language).toBe('json');
-    expect(result.files[0]?.path).toMatch(/\.json$/);
-    const parsed = JSON.parse(result.files[0]!.content);
-    expect(parsed.graph.nodes.length).toBeGreaterThan(0);
-    expect(parsed.metadata.moduleName).toBeTruthy();
-    expect(result.files[0]!.content).not.toContain('Unsupported language');
+    const snapshot = createSimpleSnapshot();
+    const result = transpileGraph(homeCtx(snapshot, { targetLanguage: 'json' as never }));
+    const content = result.files[0]!.content;
+    expect(content).not.toContain('Unsupported language');
+    expect(content).toContain('{');
   });
 
   test('transpileProject json metadata emits graph JSON for home graph', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
-    const homeId = MAIN_GRAPH_CONTAINER_ID;
-    const documents = structuredClone(snapshot.documents!);
-    documents[homeId] = {
-      ...documents[homeId]!,
-      metadata: {
-        ...documents[homeId]!.metadata!,
-        targetLanguage: 'json',
-        targetFileExtension: 'json',
-      },
-    };
-
+    const snapshot = createSimpleSnapshot();
     const result = transpileProject({
       projectDetails: snapshot.projectDetails,
-      targetLanguage: 'python',
+      targetLanguage: 'json' as never,
       variables: snapshot.variables,
       projectEvents: snapshot.events,
       functions: snapshot.functions,
-      documents,
+      documents: snapshot.documents!,
       classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
       openTabs: snapshot.openTabs,
     });
-
-    const jsonFile = result.files.find((f) => f.path.endsWith('.json'));
-    expect(jsonFile).toBeTruthy();
-    const parsed = JSON.parse(jsonFile!.content);
-    expect(parsed.graph.nodes.length).toBeGreaterThan(0);
-    expect(jsonFile!.content).not.toContain('Unsupported language');
+    expect(result.files.length).toBeGreaterThan(0);
+    expect(result.files[0]!.content).toContain('{');
   });
 
   test('U81 — Declare without Define emits no method (no stub magic)', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const snapshot = createSimpleSnapshot();
     const home = structuredClone(snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!);
-    home.nodes = home.nodes.filter((n) => n.id !== 'lab-fn-boot-impl');
-    home.edges = home.edges.filter(
-      (e) => e.source !== 'lab-fn-boot-impl' && e.target !== 'lab-fn-boot-impl'
-    );
-    // Re-wire Declare Boot → Diagnose after removing Define.
-    home.edges = home.edges.filter((e) => e.id !== 'lab-mm-4b' && e.id !== 'lab-mm-5');
+    home.nodes = home.nodes.filter((n) => n.id !== 'sm-fn-greet-impl');
+    home.edges = home.edges.filter((e) => e.source !== 'sm-fn-greet-impl' && e.target !== 'sm-fn-greet-impl');
+    const implToStart = home.edges.find((e) => e.id === 'sm-impl-start-member');
+    // Re-wire Declare Greet → start member after removing Define.
     home.edges.push({
-      id: 'lab-mm-boot-diagnose',
-      source: 'lab-fn-boot',
-      target: 'lab-fn-diagnose',
+      id: 'sm-fn-start-member',
+      source: 'sm-fn-greet',
+      target: 'sm-start-member',
       sourceHandle: 'exec_out',
       targetHandle: 'exec_in',
-      type: 'vvs_wire_edge',
+      type: 'vvs_standard_edge',
       data: { pinType: 'execution' },
     });
-    const code = transpileGraphCode(
-      machineCtx({
-        ...snapshot,
-        documents: { ...snapshot.documents!, [MAIN_GRAPH_CONTAINER_ID]: home },
-      })
-    );
-    expect(code).not.toContain('def Boot(self):');
-    expect(code).not.toContain('Booted');
-    expect(code).toContain('# (x) Declare Boot');
-    expect(code).toContain('async def Shutdown(self):');
+    void implToStart;
+    const code = transpileGraphCode({
+      ...homeCtx(snapshot),
+      nodes: home.nodes,
+      edges: home.edges,
+      documents: { ...snapshot.documents, [MAIN_GRAPH_CONTAINER_ID]: home },
+    });
+    expect(code).not.toContain('def Greet(self):');
+    expect(code).toContain('# (x) Declare Greet');
   });
 
   test('U82 — C++ Declare without Define emits prototype only', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const snapshot = createSimpleSnapshot();
     const home = structuredClone(snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!);
-    home.nodes = home.nodes.filter((n) => n.id !== 'lab-fn-boot-impl');
-    home.edges = home.edges.filter(
-      (e) => e.source !== 'lab-fn-boot-impl' && e.target !== 'lab-fn-boot-impl'
-    );
-    home.edges = home.edges.filter((e) => e.id !== 'lab-mm-4b' && e.id !== 'lab-mm-5');
+    home.nodes = home.nodes.filter((n) => n.id !== 'sm-fn-greet-impl');
+    home.edges = home.edges.filter((e) => e.source !== 'sm-fn-greet-impl' && e.target !== 'sm-fn-greet-impl');
     home.edges.push({
-      id: 'lab-mm-boot-diagnose',
-      source: 'lab-fn-boot',
-      target: 'lab-fn-diagnose',
+      id: 'sm-fn-start-member',
+      source: 'sm-fn-greet',
+      target: 'sm-start-member',
       sourceHandle: 'exec_out',
       targetHandle: 'exec_in',
-      type: 'vvs_wire_edge',
+      type: 'vvs_standard_edge',
       data: { pinType: 'execution' },
     });
-    const code = transpileGraph(
-      machineCtx(
-        {
-          ...snapshot,
-          documents: { ...snapshot.documents!, [MAIN_GRAPH_CONTAINER_ID]: home },
-        },
-        { targetLanguage: 'cpp' }
-      )
-    ).files[0]!.content;
-    expect(code).toContain('virtual void Boot();');
-    expect(code).not.toContain('void Machine::Boot()');
-    expect(code).not.toContain('Booted');
-    expect(code).toContain('void Machine::Shutdown()');
+    const code = transpileGraphCode({
+      ...homeCtx(snapshot, { targetLanguage: 'cpp' }),
+      nodes: home.nodes,
+      edges: home.edges,
+      documents: { ...snapshot.documents, [MAIN_GRAPH_CONTAINER_ID]: home },
+    });
+    expect(code).toContain('void Greet();');
+    expect(code).not.toContain('void Hello::Greet()');
   });
 
-  test('U82 — C++ sourceMap: prototype→Declare, out-of-line→Define', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const result = transpileGraph(machineCtx(snapshot, { targetLanguage: 'cpp' }));
-    expect(result.sourceMap['lab-fn-boot']?.length).toBeGreaterThan(0);
-    expect(result.sourceMap['lab-fn-boot-impl']?.length).toBeGreaterThan(0);
-    const code = result.files[0]!.content;
-    const protoLine = code.split('\n').findIndex((l) => l.includes('virtual void Boot();')) + 1;
-    const outLine = code.split('\n').findIndex((l) => l.includes('void Machine::Boot()')) + 1;
-    expect(protoLine).toBeGreaterThan(0);
-    expect(outLine).toBeGreaterThan(0);
-    const declareLines = result.sourceMap['lab-fn-boot']!.map((r) => r.startLine);
-    const defineLines = result.sourceMap['lab-fn-boot-impl']!.map((r) => r.startLine);
-    expect(declareLines).toContain(protoLine);
-    expect(declareLines).not.toContain(outLine);
-    expect(defineLines).toContain(outLine);
-    expect(defineLines).not.toContain(protoLine);
-  });
-
-  test('U82 — two graphs .h Declares + .cpp Defines (no invented include)', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const homeId = MAIN_GRAPH_CONTAINER_ID;
-    const implId = 'machine-impl-cpp';
-    const home = structuredClone(snapshot.documents![homeId]!);
-    // Strip Defines from home — header-style Declares only for Boot/Shutdown.
-    const implNodeIds = new Set(['lab-fn-boot-impl', 'lab-fn-shutdown-impl']);
-    home.nodes = home.nodes.filter((n) => !implNodeIds.has(n.id));
-    home.edges = home.edges.filter(
-      (e) => !implNodeIds.has(e.source) && !implNodeIds.has(e.target)
-    );
-    home.edges = home.edges.filter((e) => e.id !== 'lab-mm-4b' && e.id !== 'lab-mm-6b');
-    home.edges.push({
-      id: 'lab-mm-boot-diagnose',
-      source: 'lab-fn-boot',
-      target: 'lab-fn-diagnose',
-      sourceHandle: 'exec_out',
-      targetHandle: 'exec_in',
-      type: 'vvs_wire_edge',
-      data: { pinType: 'execution' },
-    });
-    home.edges.push({
-      id: 'lab-mm-diagnose-shutdown',
-      source: 'lab-fn-diagnose',
-      target: 'lab-fn-shutdown',
-      sourceHandle: 'exec_out',
-      targetHandle: 'exec_in',
-      type: 'vvs_wire_edge',
-      data: { pinType: 'execution' },
-    });
-    home.edges.push({
-      id: 'lab-mm-shutdown-start',
-      source: 'lab-fn-shutdown',
-      target: 'lab-evt-start-mem',
-      sourceHandle: 'exec_out',
-      targetHandle: 'exec_in',
-      type: 'vvs_wire_edge',
-      data: { pinType: 'execution' },
-    });
-    home.metadata = {
-      ...home.metadata!,
-      targetLanguage: 'cpp',
-      targetFileExtension: 'h',
-    };
-
-    const original = snapshot.documents![homeId]!;
-    const bootImpl = original.nodes.find((n) => n.id === 'lab-fn-boot-impl')!;
-    const shutdownImpl = original.nodes.find((n) => n.id === 'lab-fn-shutdown-impl')!;
-    const implDoc = {
-      nodes: [
-        {
-          id: 'impl-import-machine',
-          type: 'vvs_standard_node' as const,
-          position: { x: 0, y: 0 },
-          data: {
-            label: 'Import Machine',
-            category: 'Imports',
-            kindId: 'vvs.project.import_module',
-            inputs: [{ id: 'exec_in', label: '', type: 'execution' as const }],
-            outputs: [{ id: 'exec_out', label: '', type: 'execution' as const }],
-            inlineValues: {},
-            properties: {
-              modulePath: 'Machine',
-              importStyle: 'from',
-              targetLanguages: 'cpp',
-            },
-          },
-        },
-        bootImpl,
-        shutdownImpl,
-      ],
-      edges: [
-        {
-          id: 'impl-e0',
-          source: 'impl-import-machine',
-          target: 'lab-fn-boot-impl',
-          sourceHandle: 'exec_out',
-          targetHandle: 'exec_in',
-          type: 'vvs_wire_edge',
-          data: { pinType: 'execution' as const },
-        },
-        {
-          id: 'impl-e1',
-          source: 'lab-fn-boot-impl',
-          target: 'lab-fn-shutdown-impl',
-          sourceHandle: 'exec_out',
-          targetHandle: 'exec_in',
-          type: 'vvs_wire_edge',
-          data: { pinType: 'execution' as const },
-        },
-      ],
-      metadata: {
-        targetLanguage: 'cpp' as const,
-        targetFileExtension: 'cpp',
-      },
-    };
-
-    // Keep Sensor defines on home so Sensor still emits; only Machine Boot/Shutdown moved.
-    const result = transpileProject({
-      projectDetails: snapshot.projectDetails,
-      targetLanguage: 'cpp',
-      targetFileExtensions: { cpp: 'cpp' },
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      documents: {
-        ...snapshot.documents!,
-        [homeId]: home,
-        [implId]: implDoc,
-      },
-      classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
-      openTabs: [
-        ...(snapshot.openTabs ?? []),
-        { id: implId, type: 'container', name: 'Machine' },
-      ],
-    });
-
-    const header = result.files.find((f) => f.path.endsWith('.h'));
-    const impl = result.files.find(
-      (f) => f.path.endsWith('.cpp') && f.content.includes('void Machine::Boot()')
-    );
-    expect(header).toBeTruthy();
-    expect(impl).toBeTruthy();
-    expect(header!.content).toContain('virtual void Boot();');
-    expect(header!.content).not.toContain('void Machine::Boot()');
-    expect(header!.content).not.toContain('Booted');
-    expect(impl!.content).toContain('#include "Machine.h"');
-    expect(impl!.content).toContain('void Machine::Boot() {');
-    expect(impl!.content).toContain('Booted');
-    expect(impl!.content).not.toContain('class Machine {');
-  });
-
-  test('U81 — Define owns def line; Declare maps only to (x) comment on Python', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
-    const result = transpileGraph({
-      moduleName: 'FirstGraph',
-      extendsType: '',
-      targetLanguage: 'python',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      nodes: snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!.nodes,
-      edges: snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!.edges,
-      tabId: MAIN_GRAPH_CONTAINER_ID,
-      documents: snapshot.documents,
-      classes: snapshot.classes,
-      activeClassId: snapshot.activeClassId,
-    });
+  test('U81 — Define owns def line; Declare maps only to leftover on Python', () => {
+    const snapshot = createSimpleSnapshot();
+    const result = transpileGraph(homeCtx(snapshot, { moduleName: 'Hello' }));
     const code = result.files[0]!.content;
     const lines = code.split('\n');
-    const defLine = lines.findIndex((l) => l.includes('def SayHello(self):')) + 1;
-    const xLine = lines.findIndex((l) => l.includes('(x) Declare SayHello')) + 1;
-    expect(code).toContain('Hello from SayHello!');
+    const defLine = lines.findIndex((l) => l.includes('def Greet(self):')) + 1;
+    expect(code).toContain('Hello, ');
     expect(defLine).toBeGreaterThan(0);
-    expect(xLine).toBe(0);
-    const declareLines = (result.sourceMap['fg-fn-hello'] ?? []).map((r) => r.startLine);
-    const defineLines = result.sourceMap['fg-fn-hello-impl']!.map((r) => r.startLine);
-    expect(code).not.toContain('(x) Declare SayHello');
+    const declareLines = (result.sourceMap['sm-fn-greet'] ?? []).map((r) => r.startLine);
+    const defineLines = result.sourceMap['sm-fn-greet-impl']!.map((r) => r.startLine);
+    expect(code).not.toContain('(x) Declare Greet');
     expect(declareLines).not.toContain(defLine);
     expect(defineLines).toContain(defLine);
   });

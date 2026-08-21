@@ -1,0 +1,31 @@
+// ===== src/Advanced.cpp =====
+#include <thread>
+#include <chrono>
+#include <iostream>
+class Machine {
+public:
+    std::string Label = "ok";
+    virtual void Diagnose();
+};
+void Machine::Diagnose() {
+    std::cout << Label << std::endl;
+}
+class Sensor : public Machine {
+public:
+    std::string Operator = "";
+    void Diagnose() override;
+    void on_start() {
+        std::cout << "name";
+        std::string _vvs_input_ad_get_input;
+        std::getline(std::cin, _vvs_input_ad_get_input);
+        Operator = _vvs_input_ad_get_input;
+        std::cout << _vvs_input_ad_get_input << std::endl;
+        Diagnose();
+        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(1 * 1000)));
+        std::cout << "done" << std::endl;
+    }
+};
+void Sensor::Diagnose() {
+    std::cout << "sensor" << std::endl;
+    Machine::Diagnose();
+}

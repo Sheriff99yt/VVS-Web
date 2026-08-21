@@ -1,59 +1,23 @@
-// ===== src/CoverageLab.gd =====
-class_name Machine
-    var Power = 0
-    static var Serial = 0
-    var MaxPower = 100
-    var Ready = false
-    func Boot() -> void:
-        self.Ready = true
-        print("Booted")
-        Sensor.new().on_tick()
-    func Diagnose() -> void:
-        print("Diagnose")
-        return
-    func Shutdown() -> void:
-        self.Ready = false
-        print("Shutdown")
-    func Calculate(a, b) -> void:
-        print("Calculating")
-        return (a + b)
-    func on_pulse() -> void:
-        print(("Power=" + str(self.Power)))
+// ===== src/Counter.gd =====
+enum Mode { Idle, Run }
+class_name Counter
+    var Total = 0
+    var Limit = 3
+    var Ready = true
+    var CurrentMode = Mode.Run
+    func Add(n) -> void:
+        self.Total = (self.Total + n)
+        return self.Total
     func on_start() -> void:
-        print("Operator name?")
-        var _vvs_input_lab_get_input = OS.read_string_from_stdin()
-        print(_vvs_input_lab_get_input)
-        self.Boot()
-        self.Diagnose()
-        print(str(self.Calculate(self.Power, self.MaxPower)))
         if self.Ready:
-            self.on_pulse()
+            print("go")
+            for _vvs_i_cx_for_limit in range(1, self.Limit + 1):
+                self.Add(1)
+                print(str(self.Total))
+            var _vvs_sel = self.CurrentMode
+            if _vvs_sel == Mode.Idle:
+                print("Idle")
+            elif _vvs_sel == Mode.Run:
+                print("Run")
         else:
-            print("Not ready")
-enum SensorStatus { OK, WARN, FAIL }
-class_name Sensor
-extends Machine
-    var Readings = []
-    var Status = SensorStatus.OK
-    var Host = null
-    var Tags = {}
-    func Sample() -> void:
-        self.Readings.append(self.Power)
-        print("Sampled")
-    func Report() -> void:
-        print("--- Readings ---")
-        for val in self.Readings:
-            print(str(val))
-    func on_tick() -> void:
-        print("Tick")
-    func on_start() -> void:
-        var _vvs_sel = self.Status
-        if _vvs_sel == SensorStatus.OK:
-            self.Sample()
-            self.Report()
-        elif _vvs_sel == SensorStatus.WARN:
-            print("Warn")
-            self.Report()
-        elif _vvs_sel == SensorStatus.FAIL:
-            print("Fail")
-            self.Report()
+            print("skip")

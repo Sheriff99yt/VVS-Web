@@ -25,7 +25,7 @@ Today: `ProjectSnapshot` v3, `class_define` / `var_define` / `function_define` /
 | **Class declaration** | **`class_define`** required for class shell; shell opens only on `ClassDecl` | Same |
 | **Graph tabs** | Any graph may host N `class_define` chains (Dual Class Lab) | Same + Generate/export honesty (U56); emit unit = graph (U58) |
 | **Codegen fidelity** | Define nodes + `sourceMap`; `appendIrMembersInOrder` only | Same — see [fidelity_streamline.md](fidelity_streamline.md) |
-| **Primary golden** | **Coverage Lab** (Machine + Sensor) | Same — not Calculator-era shortcuts |
+| **Primary golden** | **Advanced** (Machine + Sensor) | Same — not Calculator-era shortcuts |
 
 ### Architectural model (locked)
 
@@ -324,7 +324,7 @@ During slice 2, creating a symbol from the panel also inserts a define node on t
 | Project panel | `apps/web/src/components/layout/ProjectTree.tsx` |
 | Symbol CRUD/rename | `apps/web/src/hooks/useSymbolLifecycle.ts` |
 | Function ↔ tab link | `apps/web/src/lib/functionTabs.ts` |
-| Dual Class Lab usability test | `apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest.ts` (renamed Coverage Lab) |
+| Dual Class Lab usability test | `apps/web/src/lib/usabilityExampleTests/advancedUsabilityTest.ts` (Advanced) |
 | Code panel extract | `apps/web/scripts/extract_test_project_outputs.ts` |
 | Project transpile hook | `apps/web/src/hooks/useProjectTranspileResult.ts` |
 | Prefer graph path (not per-class) | Emit path from graph/`moduleFile` — **not** `preferFallbackOverModuleFile` per class (superseded by graph=file lock) |

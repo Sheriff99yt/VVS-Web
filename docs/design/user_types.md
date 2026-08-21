@@ -2,7 +2,7 @@
 
 **Status:** Shipped teaching slice (July 2026) — enums, classes, Array/Map  
 **North star:** [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · canvas source of truth  
-**Fixture:** Coverage Lab (`SensorStatus`, `Host: Machine`, `Readings: list[float]`)
+**Fixture:** Complex (`Mode` enum) and Advanced (`Machine` / `Sensor`)
 
 ---
 

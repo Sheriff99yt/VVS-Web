@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { createCoverageLabUsabilityTestSnapshot } from './usabilityExampleTests/coverageLabUsabilityTest';
+import { createComplexSnapshot } from './usabilityExampleTests/complexUsabilityTest';
 import { resolveSymbolCodegenLink } from './symbolCodegenLink';
 import { resolveCodePreviewHighlightNodeIds } from './projectSelection';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
 describe('resolveSymbolCodegenLink', () => {
-  const snapshot = createCoverageLabUsabilityTestSnapshot();
+  const snapshot = createComplexSnapshot();
   const documents = snapshot.documents!;
   const baseInput = {
     documents,
@@ -17,63 +17,63 @@ describe('resolveSymbolCodegenLink', () => {
     selectedNodeIds: [] as string[],
   };
 
-  test('evt-pulse links to home graph and highlights member define', () => {
+  test('evt-start links to home graph and highlights member define', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'event', id: 'evt-pulse' },
+      selection: { type: 'event', id: 'evt-start' },
     });
 
     expect(link).not.toBeNull();
     expect(link!.tabId).toBe(MAIN_GRAPH_CONTAINER_ID);
-    expect(link!.highlightNodeIds).toContain('lab-evt-pulse-mem');
-    expect(link!.primaryNodeId).toBe('lab-evt-pulse-mem');
+    expect(link!.highlightNodeIds).toContain('cx-start-mem');
+    expect(link!.primaryNodeId).toBe('cx-start-mem');
   });
 
-  test('var-power links to home graph and highlights var define', () => {
+  test('var-total links to home graph and highlights var define', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'variable', id: 'var-power' },
+      selection: { type: 'variable', id: 'var-total' },
     });
 
     expect(link).not.toBeNull();
     expect(link!.tabId).toBe(MAIN_GRAPH_CONTAINER_ID);
-    expect(link!.highlightNodeIds).toContain('lab-var-power');
-    expect(link!.primaryNodeId).toBe('lab-var-power');
+    expect(link!.highlightNodeIds).toContain('cx-var-total');
+    expect(link!.primaryNodeId).toBe('cx-var-total');
   });
 
-  test('fn-boot links to function graph and highlights function entry', () => {
+  test('fn-add links to function graph and highlights function entry', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'function', id: 'fn-boot' },
+      selection: { type: 'function', id: 'fn-add' },
     });
 
     expect(link).not.toBeNull();
-    expect(link!.tabId).toBe('fn-boot');
-    expect(link!.highlightNodeIds).toContain('lab-boot-entry');
-    expect(link!.primaryNodeId).toBe('lab-boot-entry');
+    expect(link!.tabId).toBe('fn-add');
+    expect(link!.highlightNodeIds).toContain('cx-add-entry');
+    expect(link!.primaryNodeId).toBe('cx-add-entry');
   });
 
   test('node selection falls back to active tab and selected node ids', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
       activeGraphTab: MAIN_GRAPH_CONTAINER_ID,
-      selectedNodeIds: ['lab-dispatch-pulse'],
-      selection: { type: 'node', id: 'lab-dispatch-pulse' },
+      selectedNodeIds: ['cx-call-add'],
+      selection: { type: 'node', id: 'cx-call-add' },
     });
 
     expect(link).not.toBeNull();
     expect(link!.tabId).toBe(MAIN_GRAPH_CONTAINER_ID);
-    expect(link!.highlightNodeIds).toEqual(['lab-dispatch-pulse']);
+    expect(link!.highlightNodeIds).toEqual(['cx-call-add']);
   });
 
   test('function selection prefers active overload graph tab', () => {
-    const func = snapshot.functions.find((f) => f.id === 'fn-boot')!;
+    const func = snapshot.functions.find((f) => f.id === 'fn-add')!;
     const overloadTab = func.overloads[0]?.graphTabId ?? func.id;
 
     const link = resolveSymbolCodegenLink({
       ...baseInput,
       activeGraphTab: overloadTab,
-      selection: { type: 'function', id: 'fn-boot' },
+      selection: { type: 'function', id: 'fn-add' },
     });
 
     expect(link).not.toBeNull();
@@ -83,16 +83,16 @@ describe('resolveSymbolCodegenLink', () => {
   test('multi tree selection merges highlight node ids', () => {
     const link = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'variable', id: 'var-power' },
+      selection: { type: 'variable', id: 'var-total' },
       selectedTreeSymbols: [
-        { kind: 'variable', id: 'var-power' },
-        { kind: 'event', id: 'evt-pulse' },
+        { kind: 'variable', id: 'var-total' },
+        { kind: 'event', id: 'evt-start' },
       ],
     });
 
     expect(link).not.toBeNull();
-    expect(link!.highlightNodeIds).toContain('lab-var-power');
-    expect(link!.highlightNodeIds).toContain('lab-evt-pulse-mem');
+    expect(link!.highlightNodeIds).toContain('cx-var-total');
+    expect(link!.highlightNodeIds).toContain('cx-start-mem');
   });
 
   test('class selection highlights class_define', () => {
@@ -110,16 +110,16 @@ describe('resolveSymbolCodegenLink', () => {
   test('dispatch node canvas selection highlights dispatch not member define', () => {
     const eventLink = resolveSymbolCodegenLink({
       ...baseInput,
-      selection: { type: 'event', id: 'evt-pulse' },
+      selection: { type: 'event', id: 'evt-start' },
     });
 
     const highlightNodeIds = resolveCodePreviewHighlightNodeIds(
-      { type: 'event', id: 'evt-pulse' },
-      ['lab-dispatch-pulse'],
+      { type: 'event', id: 'evt-start' },
+      ['cx-call-add'],
       eventLink?.highlightNodeIds
     );
 
-    expect(highlightNodeIds).toEqual(['lab-dispatch-pulse']);
-    expect(highlightNodeIds).not.toContain('lab-evt-pulse-mem');
+    expect(highlightNodeIds).toEqual(['cx-call-add']);
+    expect(highlightNodeIds).not.toContain('cx-start-mem');
   });
 });

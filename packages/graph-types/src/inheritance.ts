@@ -20,7 +20,7 @@ export function symbolClassId(item: { classId?: string }): string {
   return item.classId ?? MAIN_CLASS_ID;
 }
 
-/** Resolve Extends by class name (emit / Coverage Lab) or id. */
+/** Resolve Extends by class name (emit / Advanced) or id. */
 export function resolveExtendsClass(
   classes: ClassSymbol[],
   extendsType: string | undefined | null

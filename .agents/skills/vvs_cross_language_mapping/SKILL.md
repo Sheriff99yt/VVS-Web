@@ -18,7 +18,7 @@ Parent skill for **visual → code** fidelity. **One markdown file per language*
 2. Open **exactly one** language doc below for that target’s emit / pack / inspector work.
 3. Open `shared/` only for cross-cutting policy (all languages at once).
 4. **Verify as the user sees:** Code | Files for StartScreen Test Projects
-   (especially Coverage Lab) via the **Doc verification cycle** below.
+   (especially Simple / Complex / Advanced) via the **Doc verification cycle** below.
 
 ## One document per language (not skills)
 
@@ -64,8 +64,8 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 
 | Fixture | Golden |
 |---------|--------|
-| First Graph (simple) | `apps/web/test_project_goldens/simple/<lang>/_HOME_GRAPH_PREVIEW.txt` |
-| Coverage Lab (complex) | `apps/web/test_project_goldens/complex/<lang>/_HOME_GRAPH_PREVIEW.txt` |
+| Simple | `apps/web/test_project_goldens/simple/<lang>/_HOME_GRAPH_PREVIEW.txt` |
+| Complex | `apps/web/test_project_goldens/complex/<lang>/_HOME_GRAPH_PREVIEW.txt` |
 
 **Per-language pass checklist**
 
@@ -109,17 +109,17 @@ All cross-language mapping findings live here (`CL-NNN`). Do **not** duplicate f
 
 | ID | Lang | Severity | Source | Finding | Disposition | Status |
 |----|------|----------|--------|---------|-------------|--------|
-| CL-001 | cpp | P1 | `complex/cpp`, `simple/cpp` | Teaching fences showed out-of-line `Machine::on_start` and non-`virtual` prototypes; Coverage Lab puts events **inside** the class and uses `virtual` / `= 0` / access sections / `(x) Import`. | fixed-in-cycle (`cpp.md`) | done |
+| CL-001 | cpp | P1 | `complex/cpp`, `simple/cpp` | Teaching fences showed out-of-line `Machine::on_start` and non-`virtual` prototypes; the complex fixture put events **inside** the class and uses `virtual` / `= 0` / access sections / `(x) Import`. | fixed-in-cycle (`cpp.md`) | done |
 | CL-002 | cpp | P1 | matrix / `complex/cpp` | Static field emit is `inline static float`, not bare `static`. For-each over arrays is range-for `for (T x : xs)`, not C-style `for(;;)`. | fixed-in-cycle (`cpp.md`, matrix) | done |
-| CL-003 | python | P1 | `complex/python` | Concept → emit said Switch → `match:`; Coverage Lab emits `if/elif` cascade via `_vvs_sel`. | fixed-in-cycle (`python.md`, matrix) | done |
-| CL-004 | javascript | P1 | `complex/javascript` | For Loop cell said `for(;;)`; Coverage Lab emits `for (const val of …)`. | fixed-in-cycle (`javascript.md`, matrix) | done |
+| CL-003 | python | P1 | `complex/python` | Concept → emit said Switch → `match:`; the fixture emits `if/elif` cascade via `_vvs_sel`. | fixed-in-cycle (`python.md`, matrix) | done |
+| CL-004 | javascript | P1 | `complex/javascript` | For Loop cell said `for(;;)`; the fixture emits `for (const val of …)`. | fixed-in-cycle (`javascript.md`, matrix) | done |
 | CL-005 | csharp | P1 | `complex/csharp` | Instance **Constant** emits `readonly`, not `const`. For-each is `foreach`, not `for(;;)`. | fixed-in-cycle (`csharp.md`, matrix) | done |
 | CL-006 | csharp | P1 | `complex/csharp` | **Async** on functions/handlers emits `async Task` / `async Task<T>`, never `async void`. | fixed-in-cycle (`shell.ts`, `csharp.base.json`) | done |
-| CL-007 | rust | P1 | `complex/rust` | Switch cell said `match {}`; Coverage Lab emits `if/else if` cascade (`_vvs_sel`). | fixed-in-cycle (`rust.md`, matrix) | done |
+| CL-007 | rust | P1 | `complex/rust` | Switch cell said `match {}`; the fixture emits `if/else if` cascade (`_vvs_sel`). | fixed-in-cycle (`rust.md`, matrix) | done |
 | CL-008 | rust | P1 | `complex/rust` | **Static** Serial is module `pub static Serial: f32`; **Constant** MaxPower is associated `pub const MaxPower: f32` in `impl` (not struct fields, no `// static`). | fixed-in-cycle — [plans/CL-008-009-rust-static-const-import.md](plans/CL-008-009-rust-static-const-import.md) | done |
 | CL-009 | rust | P1 | `complex/rust` | Generated visible `use std::collections::HashMap;` at file top (Import Module emit), tagged to the map field. No VVS HashMap runtime. | fixed-in-cycle — [plans/CL-008-009-rust-static-const-import.md](plans/CL-008-009-rust-static-const-import.md) | done |
 | CL-010 | rust | P0 | `complex/rust` | Inheritance is `base: Machine` composition; Get/Set/Call now project `self.base.<name>` and rust subclasses emit `fn new()`. | fixed-in-cycle — [plans/CL-010-rust-inheritance.md](plans/CL-010-rust-inheritance.md) | done |
-| CL-011 | gdscript | P1 | `complex/gdscript` | Switch cell said `match:`; Coverage Lab emits `if/elif` cascade. | fixed-in-cycle (`gdscript.md`, matrix) | done |
+| CL-011 | gdscript | P1 | `complex/gdscript` | Switch cell said `match:`; the fixture emits `if/elif` cascade. | fixed-in-cycle (`gdscript.md`, matrix) | done |
 | CL-012 | gdscript | P1 | `complex/gdscript` | Switch temp `_vvs_sel = self.Status` omits `var` — invalid GDScript. | fixed-in-cycle (`gdscript.base.json`) | done |
 | CL-013 | gdscript | P1 | `simple/gdscript`, `complex/gdscript` | Get User Input uses `OS.read_string_from_stdin()` only — prompt string from the node is now printed. | fixed-in-cycle (`getInput.gdscript.ts`) | done |
 | CL-014 | verse | P0 | `simple/verse`, `complex/verse` | Verse has no blocking string-read API on a plain class. Emit is now `Print(prompt)` + `# (x) Get User Input` + typed local (`string = ""` / `float = 0.0`) so the node is locatable and not a silent fake. Still not real player/string input (needs creative_device / UI — do not mark done). | needs-system-plan (UEFN player/UI read) | open |

@@ -173,7 +173,7 @@ Do **not** prove multi-class or emit fixes with raw `transpileGraph` dumps alone
 |------|------|
 | Project transpile hook | `apps/web/src/hooks/useProjectTranspileResult.ts` |
 | Test Project extract | `apps/web/scripts/extract_test_project_outputs.ts` → `apps/web/test_project_outputs/` |
-| Coverage Lab / usability goldens | `vvs_usability_example_tests` skill |
+| Simple / Complex / Advanced usability goldens | `vvs_usability_example_tests` skill |
 
 ---
 

@@ -32,7 +32,7 @@ public class Machine {
 }
 ```
 
-Coverage Lab also shows: `using System;` / `using System.Collections.Generic;`, `public enum SensorStatus`, `public class Sensor : Machine`, `readonly` on const fields, GetInput via `Console.ReadLine()`, `foreach`, and `override` on Report.
+Complex / Advanced examples also shows: `using System;` / `using System.Collections.Generic;`, `public enum SensorStatus`, `public class Sensor : Machine`, `readonly` on const fields, GetInput via `Console.ReadLine()`, `foreach`, and `override` on Report.
 
 ## Concept → emit
 
@@ -66,7 +66,7 @@ Coverage Lab also shows: `using System;` / `using System.Collections.Generic;`, 
 | **Await** | `Await` Node | `await X` |
 | **If/Else** | `Branch (If)` Node | `if () {} else {}` |
 | **Switch/Match** | `Switch` Node | `switch() case:` |
-| **For Loop** | `For Loop` Node | `foreach (var x in xs)` (Coverage Lab) |
+| **For Loop** | `For Loop` Node | `foreach (var x in xs)` (Complex / Advanced examples) |
 | **While Loop** | `While Loop` Node | `while() {}` |
 | **Break** | `Break` Node | `break;` |
 | **Continue** | `Continue` Node | `continue;` |
@@ -160,7 +160,7 @@ public class FlowAndAsyncDemo {
     }
 
     // --- Async / Await ---
-    // Coverage Lab void+async methods emit `async Task` (CL-006).
+    // Complex / Advanced examples void+async methods emit `async Task` (CL-006).
     public async Task FetchData() {
         await Task.Delay(1000);
     }

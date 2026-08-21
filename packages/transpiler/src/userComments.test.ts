@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { transpileGraph, transpileProject } from './generate';
 import type { GraphEdge, GraphNode } from '@vvs/graph-types';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
-import { createCoverageLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
+import { createComplexSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/complexUsabilityTest';
 
 function baseNodes(): GraphNode[] {
   const classNode: GraphNode = {
@@ -335,8 +335,8 @@ describe('user comments (U68/U69)', () => {
     expect(code).toContain('# says hi');
   });
 
-  test('nested if-body Print: one comment, same indent as print (Coverage Lab)', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('nested if-body Print: one comment, same indent as print (Complex)', () => {
+    const snapshot = createComplexSnapshot();
     const home = structuredClone(snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!);
     home.nodes.push({
       id: 'comment-testing',
@@ -351,7 +351,7 @@ describe('user comments (U68/U69)', () => {
         properties: {
           commentText: 'Testing',
           commentLocked: true,
-          commentMemberIds: ['lab-print-not-ready'],
+          commentMemberIds: ['cx-print-skip'],
         },
       },
     });
@@ -375,7 +375,7 @@ describe('user comments (U68/U69)', () => {
 
     const lines = code.split('\n');
     const commentIdx = lines.findIndex((l) => l.includes('# Testing'));
-    const printIdx = lines.findIndex((l) => /print\(.*Not ready/.test(l));
+    const printIdx = lines.findIndex((l) => /print\(\"skip\"/.test(l));
     expect(commentIdx).toBeGreaterThan(0);
     expect(printIdx).toBe(commentIdx + 1);
     expect(lines[commentIdx]!.match(/^\s*/)?.[0]).toBe(lines[printIdx]!.match(/^\s*/)?.[0]);

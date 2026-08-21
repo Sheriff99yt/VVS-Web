@@ -1,16 +1,14 @@
 import { ProjectSnapshot } from '@/types/projectSnapshot';
-import { createFirstGraphUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/firstGraphUsabilityTest';
-import { createCoverageLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/coverageLabUsabilityTest';
-import { createBranchLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/branchLabUsabilityTest';
-import { createNewFeaturesUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/newFeaturesUsabilityTest';
-import { createInheritanceLabUsabilityTestSnapshot } from '@/lib/usabilityExampleTests/inheritanceLabUsabilityTest';
+import { createSimpleSnapshot } from '@/lib/usabilityExampleTests/simpleUsabilityTest';
+import { createComplexSnapshot } from '@/lib/usabilityExampleTests/complexUsabilityTest';
+import { createAdvancedSnapshot } from '@/lib/usabilityExampleTests/advancedUsabilityTest';
 import {
   createProjectId,
   loadProjectFromStore,
   writeProjectPayload,
 } from '@/lib/projectStore';
 
-export type UsabilityTestLevel = 'simple' | 'complex' | 'branch' | 'new-features' | 'inheritance';
+export type UsabilityTestLevel = 'simple' | 'complex' | 'advanced';
 
 export interface UsabilityExampleTestDefinition {
   id: UsabilityTestLevel;
@@ -29,74 +27,42 @@ export interface UsabilityExampleTestDefinition {
 
 /**
  * Curated graph fixtures for usability regression — not tutorial demos.
- * See `docs/design/language_capability_catalog.md` · U65 Test Project rethink.
- * Rev 3: Declare ≠ Define vocabulary (U81) — Call / Declare / Define; same-file bodies (U80).
- * Rev 6: Branch Lab (U92 thin) — Entry → Branch → True/False Print.
- * Rev 7: Inheritance Lab (U92) — Extends + override + Call Super + Wait async; Go goldens asserted.
- * Rev 8: Inheritance Lab Speak bodies use unique function tab names so disk save does not collide.
- * Rev 9: Function graph files key by name+id so same-named methods (override) do not collide;
- *        Inheritance Lab entry isAsync so python/js emit async on_start with await.
+ * See `docs/design/language_capability_catalog.md` § U65 Test Project rethink.
+ * Rev 1: three examples — Simple (all 8), Complex (all 8), Advanced (most).
  */
 export const USABILITY_EXAMPLE_TESTS: UsabilityExampleTestDefinition[] = [
   {
     id: 'simple',
-    stableProjectId: 'vvs-test-first-graph',
+    stableProjectId: 'vvs-test-simple',
     level: 'simple',
-    title: 'First Graph',
-    moduleName: 'FirstGraph',
+    title: 'Simple',
+    moduleName: 'Hello',
     description:
-      'Newcomer path: Declare (var/class/function) → Get User Input → Print → Call → Print. Body via Edit function body (same file).',
-    highlights: ['Declare · Call · Define roles', 'Edit function body', 'Get User Input'],
-    create: createFirstGraphUsabilityTestSnapshot,
-  },
-  {
-    id: 'branch',
-    stableProjectId: 'vvs-test-branch-lab',
-    level: 'branch',
-    title: 'Branch Lab',
-    moduleName: 'BranchLab',
-    description:
-      'Cross-language Branch flow: program entry → If → True Print / False Print. Thin U92 coverage fixture.',
-    highlights: ['Branch True/False', 'Entry event', 'Cross-language'],
-    create: createBranchLabUsabilityTestSnapshot,
+      'Hello.Name + Greet concat/print. Real program on all 8 languages — no leftover (x).',
+    highlights: ['One class', 'Print + concat', 'All 8 languages'],
+    create: createSimpleSnapshot,
   },
   {
     id: 'complex',
-    stableProjectId: 'vvs-test-coverage-lab',
+    stableProjectId: 'vvs-test-complex',
     level: 'complex',
-    title: 'Coverage Lab',
-    moduleName: 'CoverageLab',
+    title: 'Complex',
+    moduleName: 'Counter',
     description:
-      'Machine + Sensor on one graph → one file. Declare functions · Call at use; TypeRef enum / class / array / map, modifiers, switch, for, imports, Get User Input.',
-    highlights: [
-      'Two classes / one graph',
-      'Declare · Call (Define = U81)',
-      'TypeRef (enum·class·array·map)',
-      '1:1 member order',
-    ],
-    create: createCoverageLabUsabilityTestSnapshot,
+      'Counter Add + branch, counted for, enum switch. Runs on all 8 languages.',
+    highlights: ['Branch / for / switch', 'Enum switch', 'All 8 languages'],
+    create: createComplexSnapshot,
   },
   {
-    id: 'new-features',
-    stableProjectId: 'vvs-test-new-features',
-    level: 'new-features',
-    title: 'New Features Lab',
-    moduleName: 'NewFeaturesLab',
+    id: 'advanced',
+    stableProjectId: 'vvs-test-advanced',
+    level: 'advanced',
+    title: 'Advanced',
+    moduleName: 'Advanced',
     description:
-      'Demonstrates Global Scope, Function Overloads with arguments, and Events with parameters.',
-    highlights: ['Global Scope', 'Function Overloads', 'Event Parameters'],
-    create: createNewFeaturesUsabilityTestSnapshot,
-  },
-  {
-    id: 'inheritance',
-    stableProjectId: 'vvs-test-inheritance-lab',
-    level: 'inheritance',
-    title: 'Inheritance Lab',
-    moduleName: 'InheritanceLab',
-    description:
-      'Extends + override + Call Super + Wait async across languages.',
-    highlights: ['Extends', 'Override', 'Call Super', 'Wait async'],
-    create: createInheritanceLabUsabilityTestSnapshot,
+      'Machine / Sensor Diagnose (override + super), Get User Input, Wait. Most languages.',
+    highlights: ['Extends + override', 'Get User Input', 'Wait async'],
+    create: createAdvancedSnapshot,
   },
 ];
 

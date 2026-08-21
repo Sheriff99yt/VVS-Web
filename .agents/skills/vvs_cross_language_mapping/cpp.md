@@ -21,9 +21,9 @@
 Out-of-line definitions omit `virtual` / `static` / `override` — those belong on the Declare prototype only.
 Return type comes from Declare / overload (`void`, `float`, …) — not hardcoded.
 
-> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues log (`CL-001`, `CL-002`). Teaching shapes below match Coverage Lab / First Graph goldens.
+> **Issues:** See parent [`SKILL.md`](SKILL.md) Issues log (`CL-001`, `CL-002`). Teaching shapes below match Complex / Advanced examples / Simple goldens.
 
-#### Teaching example — one file (Coverage Lab shape)
+#### Teaching example — one file (Complex / Advanced examples shape)
 
 Events stay **inside** the class; Declare prototypes stay inside; Define bodies are `Class::Method` **after** `};`. Ineffective imports keep `(x)` comments.
 
@@ -64,7 +64,7 @@ void Machine::Shutdown() {            // Define Shutdown
 }
 ```
 
-#### First Graph (Declare · GetInput · Call)
+#### Simple (Declare · GetInput · Call)
 
 ```cpp
 class FirstGraph {
@@ -117,7 +117,7 @@ int Machine::Add(int a, int b) {  // Define Add
 
 **Other languages:** non-abstract Declare is **ineffective** → U66 `(x) Declare Name` + U67 dim (toggleable); method body remains at Define (no out-of-line split). Abstract is native only on C++ / C#; elsewhere abstract Declare also uses U66 `(x)` + dim — never emit `# abstract` without `(x)`. Details: [`shared/declare-define-rules.md`](shared/declare-define-rules.md).
 
-**Coverage Lab C++ golden** proves Machine+Sensor one-file shape: prototypes inside each class, `Class::Method` bodies after each `};`.
+**Complex / Advanced examples C++ golden** proves Machine+Sensor one-file shape: prototypes inside each class, `Class::Method` bodies after each `};`.
 
 ## Concept → emit
 
@@ -151,7 +151,7 @@ int Machine::Add(int a, int b) {  // Define Add
 | **Await** | `Await` Node | *(ineffective with Async)* |
 | **If/Else** | `Branch (If)` Node | `if () {} else {}` |
 | **Switch/Match** | `Switch` Node | `switch() case:` |
-| **For Loop** | `For Loop` Node | `for (T x : xs)` (Coverage Lab) |
+| **For Loop** | `For Loop` Node | `for (T x : xs)` (Complex / Advanced examples) |
 | **While Loop** | `While Loop` Node | `while() {}` |
 | **Break** | `Break` Node | `break;` |
 | **Continue** | `Continue` Node | `continue;` |
@@ -291,7 +291,7 @@ public:
 };
 ```
 
-## Support matrix (Coverage Lab baseline)
+## Support matrix (Complex / Advanced examples baseline)
 
 | Feature / Modifier | Graph & UI Support | C++ Transpiler Support | Backend / Save | Dual Class Lab Accuracy | Code Highlighting (SourceMap) |
 | :--- | :--- | :--- | :--- | :--- | :--- |

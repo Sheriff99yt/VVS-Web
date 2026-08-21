@@ -122,7 +122,7 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
       'CST \u2192 existing IR for a closed set: class, function, if / for / return, get / set, call.',
       'IR \u2192 graph document + a simple layered layout. No comment / group / reroute recovery in v1.',
       'Unknown syntax \u2192 (x) leftover that stores the source span and the original text.',
-      'Golden: invert First Graph and Branch. graph \u2192 Generate \u2192 import \u2192 same IR (layout ignored).',
+      'Golden: invert Simple and Complex. graph \u2192 Generate \u2192 import \u2192 same IR (layout ignored).',
       'VVS-aware patterns from day one for the closed set only. Bind / Dispatch wait until that pack already prints them.',
       'Verse, C++ macros, and Agent-proposed leftovers are out of the first slice.',
     ],
@@ -278,7 +278,7 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
           'Makes "portable" a real predicate, not a zip. Eight files means eight honest printers.',
           'Reuses nodeEffectiveness + analyzeCrossOverDiagnostics. The code is already waiting.',
           'Agrees with Bind spawn gating: if the pack cannot print the line, COA will not pretend it can.',
-          'Keeps everyday single-target (x) so Coverage Lab Declare and Verse GetInput do not become project-wide errors.',
+          'Keeps everyday single-target (x) so Advanced GetInput leftover and other honest (x) do not become project-wide errors.',
           'The policy is a few rules, not a new graph schema. That is what the deferred prerequisite asked for.',
         ],
         cons: [
@@ -469,7 +469,7 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
     subtitle:
       'A blocking string read is not a plain-class Verse API. The Open item is leftover fidelity, not a missing printer.',
     problem:
-      'Coverage Lab GetInput already emits Print + (x) + empty string. That is user-owned. Verse player input lives on devices and session APIs, not on a class method you would type on a plain object. Inventing GetInput() or a fake Player.GetInput would be the same leak as hidden _subscribe. The research is whether to keep the stub, wait for an Epic-shaped line, or move input onto an environment-pack device node that is not GetInput.',
+      'Advanced GetInput already emits Print + (x) + empty string. That is user-owned. Verse player input lives on devices and session APIs, not on a class method you would type on a plain object. Inventing GetInput() or a fake Player.GetInput would be the same leak as hidden _subscribe. The research is whether to keep the stub, wait for an Epic-shaped line, or move input onto an environment-pack device node that is not GetInput.',
     constraints: [
       'Do not invent a Verse player API (CL-014).',
       'Honest (x) stays the leftover. Never silent skip a GetInput the user placed.',
@@ -486,7 +486,7 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
         summary:
           'Leave the shipped stub. The node stays visible. Verse output stays honest. Close the item as leftover-fidelity-done, not as a real read.',
         how:
-          'No new printer. Docs and the Open row already say this. If Epic later publishes a plain-class read, reopen with a real line, not a helper. Coverage Lab goldens stay as they are.',
+          'No new printer. Docs and the Open row already say this. If Epic later publishes a plain-class read, reopen with a real line, not a helper. Advanced goldens stay as they are for the Verse leftover.',
         pros: [
           'Matches the lock and the goldens already on main.',
           'Does not pretend Verse has stdin.',

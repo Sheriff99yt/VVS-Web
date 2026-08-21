@@ -1,0 +1,19 @@
+// ===== src/Advanced.gd =====
+class_name Machine
+    var Label = "ok"
+    func Diagnose() -> void:
+        print(self.Label)
+class_name Sensor
+extends Machine
+    var Operator = ""
+    func Diagnose() -> void:
+        print("sensor")
+        super.Diagnose()
+    func on_start() -> void:
+        print("name")
+        var _vvs_input_ad_get_input = OS.read_string_from_stdin()
+        self.Operator = _vvs_input_ad_get_input
+        print(_vvs_input_ad_get_input)
+        self.Diagnose()
+        await get_tree().create_timer(1).timeout
+        print("done")

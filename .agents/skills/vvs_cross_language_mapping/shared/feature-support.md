@@ -1,6 +1,6 @@
 # Feature Support & Progressive Confirmation
 
-Parent: [`../SKILL.md`](../SKILL.md). C++ Coverage Lab modifier matrix: [`../cpp.md`](../cpp.md) § Support matrix.
+Parent: [`../SKILL.md`](../SKILL.md). C++ modifier matrix: [`../cpp.md`](../cpp.md) § Support matrix.
 
 ## Progressive multi-stage confirmation
 
@@ -9,14 +9,14 @@ Before marking a feature supported, confirm all five:
 1. **Graph / UI** — properties in `@vvs/graph-types` and controls exposed (e.g. Details `PropertySchemaPanel`).
 2. **Syntax pack** — target pack can express the keyword/concept; else mark **ineffective** and disable the chip (do not invent emit).
 3. **Backend** — schema stores safely (mostly JSON passthrough).
-4. **Coverage Lab output** — Machine/Sensor modules match goldens via Code | Files (`extract_test_project_outputs.ts` / `useProjectTranspileResult`). Do **not** use Calculator-era goldens.
+4. **Example output** — Machine/Sensor modules match goldens via Code | Files (`extract_test_project_outputs.ts` / `useProjectTranspileResult`). Do **not** use Calculator-era goldens.
 5. **sourceMap** — every emitted line maps to a canvas node ID for Code-panel highlight.
 
 **Canonical plans:** `docs/design/fidelity_streamline.md` · `docs/design/language_capability_catalog.md`.
 
-## Active track: Coverage Lab + fidelity streamline
+## Active track: three examples + fidelity streamline
 
-1. Lock **Coverage Lab → C++** Machine golden (modifiers + access sections + sourceMap).
+1. Lock **Advanced → C++** Machine golden (virtual Diagnose + sourceMap).
 2. Strip emit magic per `fidelity_streamline.md` — no inferred abstract, invented Default/override/public, hardcoded param types, silent class shells.
 3. Wire **modifierEffectiveness** so ineffective chips disable for the current language.
 4. Same property → IR slot → syntax-pack flow across C# → Python → JS → Rust → GDScript → Verse.
@@ -36,7 +36,7 @@ Before marking a feature supported, confirm all five:
 | Function **Declare** | `function_define`, Symbols Panel | ✅ | Signature / abstract / modifiers |
 | Function **Define** | `function_implement` | ✅ | Body placement; inherits Declare modifiers |
 | Event (Custom) | `event_member_define`, Symbols Panel | ✅ | Handler + dispatch pattern |
-| Enum Define | `enum_define` | ✅ | Shipped; Coverage Lab / Dual Class Lab |
+| Enum Define | `enum_define` | ✅ | Shipped; Complex / Advanced |
 | Interface / trait | Class `form` + Implements option | — | Locked: not `implements_define`. C++ stays abstract Class + `isAbstract`. |
 | Constructor | Function Define + `role: constructor` | — | Locked: not `constructor_define`. Spawn only where the language types one. Rust `new` is a normal function. |
 | Try/Catch | `flow_try` (shipped); catch/finally exec pins | — | Like Branch. Do not spawn in Go or Rust. Not a symbol. |

@@ -1,0 +1,47 @@
+// ===== src/Advanced.rs =====
+pub struct Machine {
+
+    pub Label: String,
+}
+impl Machine {
+
+    pub fn new() -> Self {
+        Self {
+            Label: "ok",
+        }
+    }
+    pub fn Diagnose(&mut self) {
+        println!("{}", self.Label);
+    }
+}
+
+pub struct Sensor {
+    base: Machine,
+
+    pub Operator: String,
+}
+impl Sensor {
+
+    pub fn new() -> Self {
+        Self {
+            base: Machine::new(),
+            Operator: "",
+        }
+    }
+    pub fn Diagnose(&mut self) {
+        println!("{}", "sensor");
+        self.base.Diagnose();
+    }
+    pub fn on_start(&mut self) {
+        print!("{}", "name");
+        std::io::Write::flush(&mut std::io::stdout()).unwrap();
+        let mut _vvs_input_ad_get_input = String::new();
+        std::io::stdin().read_line(&mut _vvs_input_ad_get_input).unwrap();
+        _vvs_input_ad_get_input = _vvs_input_ad_get_input.trim_end().to_string();
+        self.Operator = _vvs_input_ad_get_input;
+        println!("{}", _vvs_input_ad_get_input);
+        self.Diagnose();
+        std::thread::sleep(std::time::Duration::from_secs_f64(1));
+        println!("{}", "done");
+    }
+}

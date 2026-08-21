@@ -30,7 +30,7 @@ Details: [docs/setup.md](docs/setup.md) § GitHub Pages / Releases.
 
 | Layer | Today | Not yet |
 |-------|--------|---------|
-| **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, References, wiring, local / folder / `.vvs/` persist, real codegen preview (`@vvs/transpiler`). Test projects: First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab. GitHub Pages showcase | U93 code → visual, session collab |
+| **Web editor** (`apps/web`) | Start screen, graph canvas, tabs, References, wiring, local / folder / `.vvs/` persist, real codegen preview (`@vvs/transpiler`). Test projects: Simple, Complex, Advanced. GitHub Pages showcase | U93 code → visual, session collab |
 | **Transpiler** (`packages/transpiler`) | Client-side codegen for all eight languages | — |
 | **Backend** (`server/`) | Optional local MCP sidecar + optional HTTP — **not** the product host or the hosted agent. Writes gated by `VVS_MCP_ALLOW_WRITE` (the in-page checkbox does not set it) | Dedicated app server, accounts, library git repo / upload auth |
 | **UE6 plugin** (`plugins/`) | Roadmap only | In-engine canvas |

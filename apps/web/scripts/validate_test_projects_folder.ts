@@ -1,7 +1,7 @@
 /**
  * Validation cycle for StartScreen Test Projects (folder-backed):
  *   1. Clear repo-root `Test Projects/`
- *   2. Materialize First Graph + Coverage Lab as on-disk `.vvs/` projects
+ *   2. Materialize Simple + Complex + Advanced as on-disk `.vvs/` projects
  *   3. **Load snapshot back from disk** → emit Code-panel codegen into each folder
  *   4. Compare home-graph preview to `test_project_goldens/`
  *

@@ -1,0 +1,19 @@
+// ===== src/Advanced.verse =====
+<public>Machine := class:
+    var Label<public> : string = "ok"
+    Diagnose<public>() : void =
+        Print(Label)
+<public>Sensor(Machine) := class:
+    var Operator<public> : string = ""
+    Diagnose<public><override>() : void =
+        Print("sensor")
+        (super:)Diagnose()
+    on_start() : void =
+        Print("name")
+        # (x) Get User Input
+        var _vvs_input_ad_get_input : string = ""
+        set Operator = _vvs_input_ad_get_input
+        Print(_vvs_input_ad_get_input)
+        Diagnose()
+        # wait 1s
+        Print("done")

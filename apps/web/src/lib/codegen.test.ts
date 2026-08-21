@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { transpileGraphCode, transpileGraph, withProjectCodegenTarget, transpileGraphOffThread, executeTranspileJob } from './codegen';
-import { createFirstGraphUsabilityTestSnapshot } from './usabilityExampleTests/firstGraphUsabilityTest';
+import { createSimpleSnapshot } from './usabilityExampleTests/simpleUsabilityTest';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
 describe('transpileGraphCode', () => {
   test('emits python class from simple example', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
+    const snapshot = createSimpleSnapshot();
     const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
     const code = transpileGraphCode({
       moduleName: snapshot.projectDetails.moduleName,
@@ -20,12 +20,13 @@ describe('transpileGraphCode', () => {
       activeClassId: snapshot.activeClassId,
       tabId: MAIN_GRAPH_CONTAINER_ID,
     });
-    expect(code).toContain('class FirstGraph');
-    expect(code).toContain('print(');
+    expect(code).toContain('class Hello');
+    expect(code).toContain('def Greet');
+    expect(code).toContain('def on_start');
   });
 
   test('transpile result includes sourceMap for statement nodes', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
+    const snapshot = createSimpleSnapshot();
     const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
     const result = transpileGraph({
       moduleName: snapshot.projectDetails.moduleName,
@@ -44,7 +45,7 @@ describe('transpileGraphCode', () => {
   });
 
   test('es2022 capability resolves via project codegen target', () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
+    const snapshot = createSimpleSnapshot();
     const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
     const ctx = withProjectCodegenTarget(
       {
@@ -71,7 +72,7 @@ describe('transpileGraphCode', () => {
 
 describe('transpile worker fallback', () => {
   test('forceMainThread matches generate() output on a tiny snapshot', async () => {
-    const snapshot = createFirstGraphUsabilityTestSnapshot();
+    const snapshot = createSimpleSnapshot();
     const doc = snapshot.documents[MAIN_GRAPH_CONTAINER_ID];
     const ctx = {
       moduleName: snapshot.projectDetails.moduleName,

@@ -74,7 +74,7 @@ References: ReactFlowProvider (ref)  → ReferenceGraphCanvas (read-only)
 ### StartScreen (`components/start/StartScreen.tsx`)
 
 - **Start:** New blank, Open file, folder picker buttons (gated by `useFolderPickerSupported`)
-- **Usability tests:** `USABILITY_EXAMPLE_TESTS` from `lib/usabilityExampleProjects.ts` — First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab; verify via Code panel extract (`vvs_usability_example_tests`); see `docs/design/language_capability_catalog.md`
+- **Usability tests:** `USABILITY_EXAMPLE_TESTS` from `lib/usabilityExampleProjects.ts` — Simple, Complex, Advanced; verify via Code panel extract (`vvs_usability_example_tests`); see `docs/design/language_capability_catalog.md`
 - **Explore:** dedicated browse routes `/library` and `/roadmap` via `startExplore.ts` (not editor `?view=` without a project)
 - **Recent:** via `useRecentProjects()` — deferred localStorage hydration (see below)
 - Auth is **TopNav `AuthButton`** when Supabase configured — not on StartScreen

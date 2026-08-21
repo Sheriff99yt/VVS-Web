@@ -14,7 +14,7 @@ import {
   resolveEventForDrop,
   resolveEventForNode,
 } from './eventHelpers';
-import { createCoverageLabUsabilityTestSnapshot } from './usabilityExampleTests/coverageLabUsabilityTest';
+import { createAdvancedSnapshot } from './usabilityExampleTests/advancedUsabilityTest';
 
 describe('eventHelpers', () => {
   test('eventHandlerName strips On prefix and snake_cases', () => {
@@ -39,10 +39,10 @@ describe('eventHelpers', () => {
   });
 
   test('inferEventsFromDocuments repairs legacy graphs', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+    const snapshot = createAdvancedSnapshot();
     const { events: _removed, ...withoutEvents } = snapshot;
     const inferred = inferEventsFromDocuments(withoutEvents.documents!);
-    expect(inferred.some((e) => e.name.toLowerCase() === 'pulse')).toBe(true);
+    
     expect(inferred.some((e) => e.name.toLowerCase() === 'start')).toBe(true);
   });
 

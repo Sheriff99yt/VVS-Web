@@ -1,82 +1,34 @@
-// ===== src/CoverageLab.cs =====
-using System;
-using System.Collections.Generic;
-public class Machine {
-    protected float Power = 0;
-    public static float Serial = 0;
-    public readonly float MaxPower = 100;
-    public bool Ready = false;
-    public virtual void Boot() {
-        this.Ready = true;
-        Console.WriteLine("Booted");
-        new Sensor().on_tick();
-    }
-    protected void Diagnose() {
-        Console.WriteLine("Diagnose");
-        return;
-    }
-    public async Task Shutdown() {
-        this.Ready = false;
-        Console.WriteLine("Shutdown");
-    }
-    public float Calculate(float a, float b) {
-        Console.WriteLine("Calculating");
-        return (a + b);
-    }
-    public void on_pulse() {
-        Console.WriteLine(("Power=" + this.Power.ToString()));
+// ===== src/Counter.cs =====
+public enum Mode {
+    Idle,
+    Run
+}
+public class Counter {
+    public float Total = 0;
+    public float Limit = 3;
+    public bool Ready = true;
+    public Mode CurrentMode = Mode.Run;
+    public float Add(float n) {
+        this.Total = (this.Total + n);
+        return this.Total;
     }
     public void on_start() {
-        Console.Write("Operator name?");
-        var _vvs_input_lab_get_input = Console.ReadLine() ?? "";
-        Console.WriteLine(_vvs_input_lab_get_input);
-        this.Boot();
-        this.Diagnose();
-        Console.WriteLine(this.Calculate(this.Power, this.MaxPower).ToString());
         if (this.Ready) {
-            this.on_pulse();
+            Console.WriteLine("go");
+            for (int _vvs_i_cx_for_limit = 1; _vvs_i_cx_for_limit <= this.Limit; _vvs_i_cx_for_limit++) {
+                this.Add(1);
+                Console.WriteLine(this.Total.ToString());
+            }
+            switch (this.CurrentMode) {
+                case Mode.Idle:
+                Console.WriteLine("Idle");
+                        break;
+                case Mode.Run:
+                Console.WriteLine("Run");
+                        break;
+            }
         } else {
-            Console.WriteLine("Not ready");
-        }
-    }
-}
-public enum SensorStatus {
-    OK,
-    WARN,
-    FAIL
-}
-public class Sensor : Machine {
-    public List<float> Readings = new List<float>();
-    public SensorStatus Status = SensorStatus.OK;
-    public Machine Host = null;
-    public Dictionary<string, string> Tags = new Dictionary<string, string>();
-    public async Task Sample() {
-        this.Readings.Add(this.Power);
-        Console.WriteLine("Sampled");
-    }
-    public override void Report() {
-        Console.WriteLine("--- Readings ---");
-        foreach (var val in this.Readings) {
-            Console.WriteLine(val.ToString());
-        }
-    }
-    public void on_tick() {
-        Console.WriteLine("Tick");
-    }
-    public override void on_start() {
-        switch (this.Status) {
-            case SensorStatus.OK:
-            this.Sample();
-            this.Report();
-                    break;
-            case SensorStatus.WARN:
-            Console.WriteLine("Warn");
-            this.Report();
-                    break;
-            case SensorStatus.FAIL:
-            Console.WriteLine("Fail");
-            this.Report();
-                    break;
+            Console.WriteLine("skip");
         }
     }
 }

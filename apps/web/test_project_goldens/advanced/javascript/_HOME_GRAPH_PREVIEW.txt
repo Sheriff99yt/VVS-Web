@@ -1,0 +1,22 @@
+// ===== src/Advanced.js =====
+class Machine {
+    Label = "ok";
+    Diagnose() {
+        console.log(this.Label);
+    }
+}
+class Sensor extends Machine {
+    Operator = "";
+    Diagnose() {
+        console.log("sensor");
+        super.Diagnose();
+    }
+    async on_start() {
+        const _vvs_input_ad_get_input = (prompt("name") ?? "");
+        this.Operator = _vvs_input_ad_get_input;
+        console.log(_vvs_input_ad_get_input);
+        this.Diagnose();
+        await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
+        console.log("done");
+    }
+}

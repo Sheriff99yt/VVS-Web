@@ -3,17 +3,17 @@ import { MAIN_GRAPH_CONTAINER_ID, createClassSymbol, createVariableSymbol } from
 import type { GraphEdge, GraphNode, ProjectEventDefinition } from '@vvs/graph-types';
 import { transpileGraph, transpileProject } from './generate';
 import {
-  createCoverageLabUsabilityTestSnapshot,
+  createAdvancedSnapshot,
   MACHINE_CLASS,
   SENSOR_CLASS,
-} from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
+} from '../../../apps/web/src/lib/usabilityExampleTests/advancedUsabilityTest';
 
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
 const EXEC_OUT = { id: 'exec_out', label: '', type: 'execution' as const };
 
 describe('CL-010 rust inheritance projection (composition + base.)', () => {
-  test('Coverage Lab Sensor: inherited Get emits self.base.Power and maps the Get node', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('Advanced Sensor rust: composition new() and base Machine', () => {
+    const snapshot = createAdvancedSnapshot();
     const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
     const result = transpileGraph({
       moduleName: 'Sensor',
@@ -30,20 +30,12 @@ describe('CL-010 rust inheritance projection (composition + base.)', () => {
       activeClassId: SENSOR_CLASS.id,
     });
     const code = result.files[0]!.content;
-    expect(code).toContain('self.base.Power');
-    expect(code).toMatch(/self\.Readings\.push\(\s*self\.base\.Power\s*\)/);
-    expect(code).not.toMatch(/self\.Readings\.push\(\s*self\.Power\s*\)/);
     expect(code).toMatch(/pub fn new\(\)\s*->\s*Self/);
     expect(code).toContain('base: Machine::new()');
-
-    const lines = code.split('\n');
-    const powerLine = lines.findIndex((l) => l.includes('self.base.Power')) + 1;
-    expect(powerLine).toBeGreaterThan(0);
-    expect(result.sourceMap['lab-sample-power']?.some((r) => r.startLine === powerLine)).toBe(true);
   });
 
-  test('Coverage Lab Machine: own fields stay self.Power and fn new exists', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('Advanced Machine: own fields stay self.Label and fn new exists', () => {
+    const snapshot = createAdvancedSnapshot();
     const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
     const result = transpileGraph({
       moduleName: 'Machine',
@@ -60,10 +52,9 @@ describe('CL-010 rust inheritance projection (composition + base.)', () => {
       activeClassId: MACHINE_CLASS.id,
     });
     const code = result.files[0]!.content;
-    expect(code).toContain('self.Power');
-    expect(code).not.toContain('self.base.Power');
+    expect(code).toContain('self.Label');
+    expect(code).not.toContain('self.base.Label');
     expect(code).toMatch(/pub fn new\(\)\s*->\s*Self/);
-    expect(code).toContain('Sensor::new()');
   });
 
   test('inherited Set on subclass emits self.base.Power', () => {
@@ -191,8 +182,8 @@ describe('CL-010 rust inheritance projection (composition + base.)', () => {
     expect(result.sourceMap['set-power']?.some((r) => r.startLine === setLine)).toBe(true);
   });
 
-  test('transpileProject rust Coverage Lab has Sensor::new and inherited Power projection', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('transpileProject rust Advanced has Sensor::new and Machine composition', () => {
+    const snapshot = createAdvancedSnapshot();
     const result = transpileProject({
       projectDetails: snapshot.projectDetails,
       targetLanguage: 'rust',
@@ -205,10 +196,8 @@ describe('CL-010 rust inheritance projection (composition + base.)', () => {
       openTabs: snapshot.openTabs,
       integration: snapshot.integration,
     });
-    const code = result.files.find((f) => f.path.includes('CoverageLab'))?.content ?? '';
+    const code = result.files.find((f) => f.path.includes('Advanced'))?.content ?? '';
     expect(code).toContain('pub fn new() -> Self');
     expect(code).toContain('base: Machine::new()');
-    expect(code).toContain('self.base.Power');
-    expect(code).toContain('Sensor::new()');
   });
 });

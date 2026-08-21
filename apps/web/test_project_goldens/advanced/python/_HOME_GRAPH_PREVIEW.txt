@@ -1,0 +1,18 @@
+// ===== src/Advanced.py =====
+import asyncio
+class Machine:
+    Label = "ok"
+    def Diagnose(self):
+        print(self.Label)
+class Sensor(Machine):
+    Operator = ""
+    def Diagnose(self):
+        print("sensor")
+        super().Diagnose()
+    async def on_start(self):
+        _vvs_input_ad_get_input = input("name")
+        self.Operator = _vvs_input_ad_get_input
+        print(_vvs_input_ad_get_input)
+        self.Diagnose()
+        await asyncio.sleep(1)
+        print("done")

@@ -154,7 +154,7 @@ When shipped:
 
 | Phase | Focus | Outcome |
 |-------|--------|---------|
-| **A (done)** | Canvas source of truth, define chain, program entry, event dispatch | Coverage Lab / First Graph fidelity anchors |
+| **A (done)** | Canvas source of truth, define chain, program entry, event dispatch | Simple / Complex / Advanced fidelity anchors |
 | **B (done)** | Defer COA UI; keep single-target portability | Honest product surface |
 | **C (done)** | Node effectiveness resolver + catalog/canvas chrome | Show all nodes; dim ineffective (U66/U67 shipped) |
 | **D (done)** | Unify spawn UX: **Declare** (all member slots) / **On** (handler) / **Call** / **Dispatch** | Same mental model in catalog, canvas, inspector, project tree |

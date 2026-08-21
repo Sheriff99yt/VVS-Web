@@ -1,20 +1,11 @@
-// ===== src/FirstGraph.go =====
+// ===== src/Hello.go =====
 import "fmt"
-import "bufio"
-import "os"
-type FirstGraph struct {
-	var VisitorName string = ""
-func SayHello() void {
-	fmt.Println("Hello from SayHello!")
+type Hello struct {
+	var Name string = "Ada"
+func Greet() void {
+	fmt.Println(("Hello, " + self.Name))
 }
-func (self *FirstGraph) on_start() {
-	fmt.Print("What is your name?")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	_vvs_input_fg_get_input := scanner.Text()
-	self.VisitorName = _vvs_input_fg_get_input
-	fmt.Println(_vvs_input_fg_get_input)
-	self.SayHello()
-	fmt.Println("Done.")
+func (self *Hello) on_start() {
+	self.Greet()
 }
 }

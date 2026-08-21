@@ -32,7 +32,7 @@
         Print("Shutdown")
 ```
 
-Coverage Lab: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, `var Host<public> : Machine = Machine{}` (**CL-016**), Switch → sequential `if` with `# switch` comment, GetInput → `Print(prompt)` + `# (x) Get User Input` + typed local (**CL-014** open — no real read), for-each → `for (val : Readings):` (**CL-015**).
+Complex / Advanced examples: `<public>Sensor(Machine) := class:`, `SensorStatus := enum:`, `var Host<public> : Machine = Machine{}` (**CL-016**), Switch → sequential `if` with `# switch` comment, GetInput → `Print(prompt)` + `# (x) Get User Input` + typed local (**CL-014** open — no real read), for-each → `for (val : Readings):` (**CL-015**).
 
 ## Concept → emit
 
@@ -154,7 +154,7 @@ FlowAndAsyncDemo := class():
     # --- Destructors (Not exposed in Verse) ---
 
     # --- Async / Await ---
-    # Coverage Lab: async modifier is currently a no-op (no <suspends> — CL-018).
+    # Complex / Advanced examples: async modifier is currently a no-op (no <suspends> — CL-018).
     FetchData()<suspends> : void =
         Sleep(1.0)
 
@@ -167,9 +167,9 @@ FlowAndAsyncDemo := class():
         else:
             pass
 
-        # Switch — Coverage Lab: sequential if cascade with # switch comment
+        # Switch — Complex / Advanced examples: sequential if cascade with # switch comment
 
-        # For Loop — Coverage Lab for-each (CL-015):
+        # For Loop — Complex / Advanced examples for-each (CL-015):
         for (Val : Readings):
             Print(ToString(Val))
 

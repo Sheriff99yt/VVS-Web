@@ -1,0 +1,24 @@
+// ===== src/Advanced.cs =====
+using System.Threading.Tasks;
+public class Machine {
+    public string Label = "ok";
+    public virtual void Diagnose() {
+        Console.WriteLine(this.Label);
+    }
+}
+public class Sensor : Machine {
+    public string Operator = "";
+    public override void Diagnose() {
+        Console.WriteLine("sensor");
+        base.Diagnose();
+    }
+    public async Task on_start() {
+        Console.Write("name");
+        var _vvs_input_ad_get_input = Console.ReadLine() ?? "";
+        this.Operator = _vvs_input_ad_get_input;
+        Console.WriteLine(_vvs_input_ad_get_input);
+        this.Diagnose();
+        await Task.Delay((int)(1 * 1000));
+        Console.WriteLine("done");
+    }
+}

@@ -83,13 +83,14 @@ These fixtures live in `apps/web/src/lib/usabilityExampleTests/`. They are **not
 
 | Fixture | File | Exercises today | Surfaces gaps for |
 |---------|------|-----------------|-------------------|
-| **First Graph** | `firstGraphUsabilityTest.ts` | Simple StartScreen test — Declare → Get User Input → Print → Call | Newcomer path, function tab |
-| **Coverage Lab** | `coverageLabUsabilityTest.ts` | **Primary golden** — Machine+Sensor one graph; modifiers; enum/switch/array; **shared imports once at file top** + conditional Import json in branch; event Y order; Get User Input; one graph → one file | Class shell, inheritance, enum access, import placement, Code panel single home module |
-| Calculator / Async Fetcher / Dual Class Lab | *(retired as StartScreen cards)* | Historical migration narrative only | See Coverage Lab |
+| **Simple** | `simpleUsabilityTest.ts` | All-8 baseline — Hello.Name + Greet concat/print. No leftover `(x)`. | Newcomer path, function tab |
+| **Complex** | `complexUsabilityTest.ts` | All-8 control flow — Counter Add + branch / counted for / while / enum switch. No leftover `(x)`. | Branch, loop, enum |
+| **Advanced** | `advancedUsabilityTest.ts` | Most-langs — Machine + Sensor Diagnose (override + super), Get User Input, Wait. Verse GetInput leftover expected. | Inheritance, GetInput, async Wait |
+| Calculator / Async Fetcher / Dual Class Lab | *(retired as StartScreen cards)* | Historical migration narrative only | See Complex / Advanced |
 
 **Verify as the user sees:** `bun apps/web/scripts/extract_test_project_outputs.ts` → `apps/web/test_project_outputs/` (mirrors Code | Files).
 
-**Tests:** `coverageLabUsabilityTest.test.ts`, `firstGraphUsabilityTest.ts`, `usabilityExampleSnapshots.test.ts`, `generate.test.ts`, `calculatorModifierRollout.test.ts`.
+**Tests:** `usabilityExampleGoldens.test.ts`, `simpleUsabilityTest.ts`, `usabilityExampleSnapshots.test.ts`, `generate.test.ts`, `calculatorModifierRollout.test.ts`.
 
 When a catalog row below moves to **Shipped**, add or extend a usability test assertion that the capability is set **on canvas** and appears in generated code.
 
@@ -355,7 +356,7 @@ Node vs option vs pin still governs. Spawn a construct only where the language a
 |------------|------------|------|----------|----------|-------|
 | Graph reference | Graph Reference | `graph_ref` | all | shipped | Project-map navigation only -- not in the spawn catalog |
 | Import class | Import Class | `import_class` | multi-class | partial | |
-| **Using / import statements** | Import Module | `vvs.project.import_module` | py, js, cs, rs, cpp | **shipped** | `modulePath` + `importStyle` + `importNames` + **`targetLanguages`**; place **once at file top**; flow Import for conditional (Python `import json`); optional `ownerClassId`. Coverage Lab: iostream/string/vector/unordered_map (cpp), System + Collections.Generic (csharp), enum + conditional json (python) |
+| **Using / import statements** | Import Module | `vvs.project.import_module` | py, js, cs, rs, cpp | **shipped** | `modulePath` + `importStyle` + `importNames` + **`targetLanguages`**; place **once at file top**; flow Import for conditional (Python `import json`); optional `ownerClassId`. Language-gated imports stay pack-honest; examples no longer carry the Coverage import chain |
 | **Package visibility** | visibility option on Class | `properties.visibility` on `class_define` | rs | planned | Already a visibility option on Class. Not a node. |
 
 ### F — Engine / environment (data-driven)
@@ -424,13 +425,13 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 
 ---
 
-## C++ / Coverage Lab pilot (shipped — July 2026)
+## C++ / Advanced pilot (shipped — July 2026; fixtures refreshed)
 
-**Active fidelity program:** [fidelity_streamline.md](fidelity_streamline.md) · **Pilot fixture:** Coverage Lab (`coverageLabUsabilityTest.ts`).
+**Active fidelity program:** [fidelity_streamline.md](fidelity_streamline.md) · **Pilot fixtures:** Simple + Complex (all 8) and Advanced (most) (`simpleUsabilityTest.ts`, `complexUsabilityTest.ts`, `advancedUsabilityTest.ts`).
 
-**Goal:** 1:1 visual↔text fidelity for class shell + member modifiers + **canvas member order = source order**, proven on **Coverage Lab** (Machine + Sensor, one graph). Calculator / Dual Class Lab filenames retired as StartScreen fixtures.
+**Goal:** 1:1 visual↔text fidelity for class shell + member modifiers + **canvas member order = source order**, proven on **Advanced** (Machine + Sensor, one graph) and **Complex** (Counter control flow). Calculator / Dual Class Lab filenames retired as StartScreen fixtures.
 
-### Success criteria (Coverage Lab — Machine module)
+### Success criteria (Advanced — Machine module)
 
 | Canvas | Expected C++ |
 |--------|----------------|
@@ -442,7 +443,7 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 | Shutdown `public` (`isAsync` set but **ineffective** for C++) | `void Shutdown() { … }` — no async keyword |
 | Diagnose `abstract` + `protected` | `virtual void Diagnose() = 0;` |
 | Event Declare + On | `void on_pulse` / `on_start` bodies (Y order among event peers); no `// Declare` noise |
-| Member chain order | fields → Boot → Diagnose → Shutdown → events by canvas **Y** among peers (Coverage Lab: pulse above start) |
+| Member chain order | fields → Boot → Diagnose → Shutdown → events by canvas **Y** among peers (event peers ordered by canvas Y) |
 | Every line | `sourceMap` → canvas `nodeId` |
 
 ### Progressive confirmation (C++ before “shipped”)
@@ -450,7 +451,7 @@ Phasing aligns with [terms_refactor_plan.md](terms_refactor_plan.md) (V0–V4) b
 1. Graph/UI — property on define node (`PropertySchemaPanel` / `propertySchema`)
 2. Syntax pack — `cpp.base.json` template slots only (no inventing members)
 3. Backend — JSON passthrough (no special-case schema)
-4. Coverage Lab golden — **Code panel path** (`extract_test_project_outputs.ts` / `useProjectTranspileResult`) matches expected C++ for both Machine and Sensor files
+4. Advanced / Complex golden — **Code panel path** (`extract_test_project_outputs.ts` / `useProjectTranspileResult`) matches expected C++ for both Machine and Sensor files
 5. Source map — selecting the node highlights the right line(s)
 
 **Verify as the user sees:** never ship on raw `transpileGraph` dumps alone when multi-class or integration `moduleFile` is involved.

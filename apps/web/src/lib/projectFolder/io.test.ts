@@ -7,8 +7,8 @@ import {
   sanitizeGraphFileStem,
   MAIN_GRAPH_CONTAINER_ID,
 } from '@vvs/graph-types';
-import { createCoverageLabUsabilityTestSnapshot } from '../usabilityExampleTests/coverageLabUsabilityTest';
-import { createInheritanceLabUsabilityTestSnapshot } from '../usabilityExampleTests/inheritanceLabUsabilityTest';
+import { createComplexSnapshot } from '../usabilityExampleTests/complexUsabilityTest';
+import { createAdvancedSnapshot } from '../usabilityExampleTests/advancedUsabilityTest';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -50,7 +50,7 @@ describe('projectFolder graph manifest helpers', () => {
   });
 
   test('buildFolderGraphManifest maps every container id for v2 layout', () => {
-    const snapshot = normalizeProjectSnapshot(createCoverageLabUsabilityTestSnapshot())!;
+    const snapshot = normalizeProjectSnapshot(createComplexSnapshot())!;
     const graphs = buildFolderGraphManifest(snapshot);
 
     expect(graphs.main).toBeUndefined();
@@ -62,35 +62,35 @@ describe('projectFolder graph manifest helpers', () => {
     }
 
     expect(Object.keys(graphs.functions)).toEqual(
-      expect.arrayContaining(['fn-boot', 'fn-shutdown', 'fn-sample', 'fn-report'])
+      expect.arrayContaining(['fn-add'])
     );
-    expect(graphs.functions['fn-boot']).toBe('graphs/functions/Boot__fn-boot.graph.json');
+    expect(graphs.functions['fn-add']).toBe('graphs/functions/Add__fn-add.graph.json');
   });
 
-  test('Inheritance Lab same-named Speak bodies survive folder save/load', () => {
+  test('Advanced same-named Diagnose bodies survive folder save/load', () => {
     const dir = mkdtempSync(join(tmpdir(), 'vvs-speak-'));
     try {
-      saveProjectSnapshotToPath(dir, createInheritanceLabUsabilityTestSnapshot());
+      saveProjectSnapshotToPath(dir, createAdvancedSnapshot());
       const loaded = loadProjectSnapshotFromPath(dir);
-      if (!loaded) throw new Error('failed to load inheritance lab');
-      const parentPrint = loaded.documents['fn-parent-speak']?.nodes.find((n) => n.id === 'il-parent-print');
-      const childPrint = loaded.documents['fn-child-speak']?.nodes.find((n) => n.id === 'il-child-print');
-      expect(parentPrint?.data.inlineValues?.in_str).toBe('parent');
-      expect(childPrint?.data.inlineValues?.in_str).toBe('child');
+      if (!loaded) throw new Error('failed to load Advanced');
+      const parentPrint = loaded.documents['fn-machine-diagnose']?.nodes.find((n) => n.id === 'ad-print-label');
+      const childPrint = loaded.documents['fn-sensor-diagnose']?.nodes.find((n) => n.id === 'ad-print-sensor');
+      expect(parentPrint).toBeDefined();
+      expect(childPrint?.data.inlineValues?.in_str).toBe('sensor');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
   });
 
-  test('normalized coverage lab has no documents.main key', () => {
-    const snapshot = normalizeProjectSnapshot(createCoverageLabUsabilityTestSnapshot())!;
+  test('normalized Complex has no documents.main key', () => {
+    const snapshot = normalizeProjectSnapshot(createComplexSnapshot())!;
     expect(snapshot.documents.main).toBeUndefined();
     expect(snapshot.documents[MAIN_GRAPH_CONTAINER_ID]).toBeDefined();
   });
 
 
   test('folder save writes one graph file per document, not a giant snapshot blob', () => {
-    const snapshot = normalizeProjectSnapshot(createCoverageLabUsabilityTestSnapshot())!;
+    const snapshot = normalizeProjectSnapshot(createComplexSnapshot())!;
     const dir = mkdtempSync(join(tmpdir(), 'vvs-doc-split-'));
     try {
       saveProjectSnapshotToPath(dir, snapshot);

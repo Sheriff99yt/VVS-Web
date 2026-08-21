@@ -1,96 +1,37 @@
-// ===== src/CoverageLab.cpp =====
+// ===== src/Counter.cpp =====
 #include <iostream>
-#include <string>
-#include <vector>
-#include <unordered_map>
-class Machine {
-protected:
-    float Power = 0;
+enum class Mode {
+    Idle,
+    Run
+};
+class Counter {
 public:
-    inline static float Serial = 0;
-    const float MaxPower = 100;
-    bool Ready = false;
-    virtual void Boot();
-protected:
-    void Diagnose();
-public:
-    void Shutdown();
-    float Calculate(float a, float b);
-    void on_pulse() {
-        std::cout << ("Power=" + std::to_string(Power)) << std::endl;
-    }
+    float Total = 0;
+    float Limit = 3;
+    bool Ready = true;
+    Mode CurrentMode = Mode::Run;
+    float Add(float n);
     void on_start() {
-        std::cout << "Operator name?";
-        std::string _vvs_input_lab_get_input;
-        std::getline(std::cin, _vvs_input_lab_get_input);
-        std::cout << _vvs_input_lab_get_input << std::endl;
-        Boot();
-        Diagnose();
-        std::cout << std::to_string(Calculate(Power, MaxPower)) << std::endl;
         if (Ready) {
-            on_pulse();
+            std::cout << "go" << std::endl;
+            for (int _vvs_i_cx_for_limit = 1; _vvs_i_cx_for_limit <= Limit; _vvs_i_cx_for_limit++) {
+                Add(1);
+                std::cout << std::to_string(Total) << std::endl;
+            }
+            switch (CurrentMode) {
+              case Mode::Idle:
+                std::cout << "Idle" << std::endl;
+                    break;
+              case Mode::Run:
+                std::cout << "Run" << std::endl;
+                    break;
+            }
         } else {
-            std::cout << "Not ready" << std::endl;
+            std::cout << "skip" << std::endl;
         }
     }
 };
-void Machine::Boot() {
-    Ready = true;
-    std::cout << "Booted" << std::endl;
-    Sensor().on_tick();
-}
-void Machine::Diagnose() {
-    std::cout << "Diagnose" << std::endl;
-    return;
-}
-void Machine::Shutdown() {
-    Ready = false;
-    std::cout << "Shutdown" << std::endl;
-}
-float Machine::Calculate(float a, float b) {
-    std::cout << "Calculating" << std::endl;
-    return (a + b);
-}
-enum class SensorStatus {
-    OK,
-    WARN,
-    FAIL
-};
-class Sensor : public Machine {
-public:
-    std::vector<float> Readings = {};
-    SensorStatus Status = SensorStatus::OK;
-    Machine Host = {};
-    std::unordered_map<std::string, std::string> Tags = {};
-    void Sample();
-    void Report() override;
-    void on_tick() {
-        std::cout << "Tick" << std::endl;
-    }
-    virtual void on_start() override {
-        switch (Status) {
-          case SensorStatus::OK:
-            Sample();
-            Report();
-                break;
-          case SensorStatus::WARN:
-            std::cout << "Warn" << std::endl;
-            Report();
-                break;
-          case SensorStatus::FAIL:
-            std::cout << "Fail" << std::endl;
-            Report();
-                break;
-        }
-    }
-};
-void Sensor::Sample() {
-    Readings.push_back(Power);
-    std::cout << "Sampled" << std::endl;
-}
-void Sensor::Report() {
-    std::cout << "--- Readings ---" << std::endl;
-    for (float val : Readings) {
-        std::cout << std::to_string(val) << std::endl;
-    }
+float Counter::Add(float n) {
+    Total = (Total + n);
+    return Total;
 }

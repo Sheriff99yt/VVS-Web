@@ -2,7 +2,7 @@
 
 **Status:** Active redesign (July 2026)  
 **North star:** [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) § No Hidden Magic · canvas source of truth  
-**Pilot fixture:** Coverage Lab (`coverageLabUsabilityTest.ts`) · [language_capability_catalog.md](language_capability_catalog.md)  
+**Pilot fixture:** Advanced (`advancedUsabilityTest.ts`) + Complex (`complexUsabilityTest.ts`) · [language_capability_catalog.md](language_capability_catalog.md)  
 **Backlog:** [.agents/memory/incomplete-ui.md](../../.agents/memory/incomplete-ui.md) §11 (U59+)
 
 ---
@@ -60,7 +60,7 @@ Class homes: **target** is one file per container graph (all classes). Do **not*
 | **U60** | 1 | Delete dead dual paths (`appendMemberImplementations`, unused declare helpers) |
 | **U61** | 2 | Property → slot → pack only (types, async, visibility; no invented keywords) |
 | **U62** | 3 | Strict class shell — open only on `ClassDecl`; no auto-open from field/method |
-| **U63** | 4 | Doc/skill realignment — Coverage Lab + this doc as active fidelity program |
+| **U63** | 4 | Doc/skill realignment — Simple / Complex / Advanced + this doc as active fidelity program |
 | **U64+** | 5 | Deeper fidelity — **U64a/b done**. **U65 done.** **Cross-class event dispatch done.** Next: Phase 6 polish (perf/env/mobile). |
 
 Related multi-class honesty: **U56** Generate/export, **U57** file-tab UX, **U58** **one graph → one file** (locked — no split-class profile) — backlog §10.
@@ -89,7 +89,7 @@ These systems are **required** and must stay:
 | **1** | One member emit path only; dead declare helpers gone |
 | **2** | No invented types / async / visibility keywords without canvas properties |
 | **3** | Class shell only from `ClassDecl`; U56/U57 as capacity allows |
-| **4** | Docs/skills name Coverage Lab + this file |
+| **4** | Docs/skills name Simple / Complex / Advanced + this file |
 | **5** | Temps → pack+sourceMap (U64a switch selector done); Import Declare for stdlib (props shipped — place nodes explicitly) |
 
 ### Canvas surface added (2026-07-16)
@@ -114,8 +114,8 @@ These systems are **required** and must stay:
 
 - No emit path invents keywords, types, or includes without a canvas property/node
 - One member emit path only (`appendIrMembersInOrder`)
-- Docs/skills name Coverage Lab + `fidelity_streamline.md` as the active fidelity program
-- Coverage Lab + Rosetta + modifier rollout tests remain green
+- Docs/skills name the three examples + `fidelity_streamline.md` as the active fidelity program
+- Simple / Complex / Advanced + Rosetta + modifier rollout tests remain green
 - **Code panel parity:** StartScreen Test Projects dump via `extract_test_project_outputs.ts` matches what Code | Files shows (one home-graph file; shared imports once at top; conditional flow imports)
 
 ## Agent gate

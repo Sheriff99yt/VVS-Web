@@ -19,7 +19,7 @@ description: >-
 - Strict errors block Generate: `DEFINE_NODE_MISSING`, `DECLARATION_NOT_ON_CANVAS`, `ORPHAN_DEFINE_NODE`
 - Function release menu (locked): **Call** / **Declare** / **Define** — not header-file focus
 - **C++ (U82):** Declare → in-class prototype; Define → out-of-line `Class::Method` after `};` (or separate `.cpp` graph). Never auto-split one graph into `.h`+`.cpp`.
-- **Other langs:** non-abstract Function Declare is ineffective → U66 `(x) Declare Name` + U67 dim (same as gated imports). Abstract is native only on C++/C#; elsewhere also `(x)` + dim (e.g. Coverage Lab Declare Diagnose). Body stays on Define. **sourceMap:** Declare↔own emit only; Define↔header+body.
+- **Other langs:** non-abstract Function Declare is ineffective → U66 `(x) Declare Name` + U67 dim (same as gated imports). Abstract is native only on C++/C#; elsewhere also `(x)` + dim (e.g. leftover Declare when Define is missing). Body stays on Define. **sourceMap:** Declare↔own emit only; Define↔header+body.
 
 ## Node vs option vs pin (locked)
 
@@ -35,9 +35,9 @@ Two positions or existence-without-body = two nodes. Do not fold Function Declar
 
 Never inject hidden structural code (stdlib includes, async wrappers, class `abstract` from members, `impl Default`). Users place **Import Module**, **enumType**, modifiers, etc. on the canvas.
 
-## Coverage Lab + streamline (active)
+## Examples + streamline (active)
 
-**Fixture:** `coverageLabUsabilityTest.ts` · **docs:** `fidelity_streamline.md`
+**Fixtures:** `simpleUsabilityTest.ts` / `complexUsabilityTest.ts` / `advancedUsabilityTest.ts` · **docs:** `fidelity_streamline.md`
 
 1. Canvas chain order = source order (`appendIrMembersInOrder`). **Y is secondary** for unconnected heads (+ event peers). Do not auto-reorder connected members by height. Do **not** emit chain-vs-height Compiler Log warnings (`CHAIN_ORDER_Y_MISMATCH` / `EVENT_PEER_Y_ORDER` disabled).
 2. **One graph → one file (locked):** all `class_define` chains on a container graph emit into **one** module in canvas order. Want two files → two graphs. **No** class-per-file invent and **no** split-classes profile.
@@ -51,7 +51,7 @@ Never inject hidden structural code (stdlib includes, async wrappers, class `abs
 
 Before claiming an emit fix is done:
 
-1. Open or extract **StartScreen Test Projects** (First Graph + Coverage Lab).
+1. Open or extract **StartScreen Test Projects** (Simple + Complex + Advanced).
 2. Match **Code | Files** panel output — `useProjectTranspileResult` / `bun apps/web/scripts/extract_test_project_outputs.ts`.
 3. Reject “passes unit test but panel shows one overwritten file / wrong import on wrong class.”
 
@@ -74,4 +74,4 @@ See `vvs_usability_example_tests/SKILL.md` § Verify as the user sees.
 | Cross-language | `vvs_cross_language_mapping/SKILL.md` → one of `cpp.md` / `python.md` / … |
 | UI shell | `vvs_ui_development/SKILL.md` |
 
-Locked: `.agents/memory/decisions.md` § Coverage Lab + fidelity streamline · § Code panel verification
+Locked: `.agents/memory/decisions.md` § examples + fidelity streamline · § Code panel verification

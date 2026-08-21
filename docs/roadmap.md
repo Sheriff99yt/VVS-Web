@@ -55,7 +55,7 @@ In-app: **Development roadmap** → Open / Done / Research, grouped frontend / b
 | **Function argument pins end-to-end** (define, implement, call, emit) | U98 |
 | **Function return with arguments** (Return node & value pin codegen) | U99 |
 | **Library backend API** (Go service) | U90+ |
-| **Multi-language test project examples** (5 fixtures × 8 langs = 40 goldens; Inheritance Lab + Go asserted) | U92 |
+| **Multi-language test project examples** (3 fixtures × 8 langs = 24 goldens; Simple + Complex all-8, Advanced most) | U92 |
 | Function graph disk path uniqueness (`Name__{id}.graph.json`) so two `Speak` methods don't collide | U92 follow-on |
 | **Catalog & add-node menu audit** (synonyms, module import spawn) | U97 |
 | **Client-first Library** page redesign (Git repo import, OpenAPI/AsyncAPI templates) | U90 |
@@ -108,6 +108,7 @@ Shipped this wave (moved to Recently completed): CL-006, CL-008, CL-009, CL-010,
 |---|------|--------|
 | **U90** | **Library** API done → **web UI** | Wiring to browse/search/import; upload form; auth integration |
 | **U93** | **Code → visual** | Long-term reverse import research |
+| **start-topbar-consistent** | **Start screen top bar matches editor / roadmap** | Homepage currently has its own header. Redesign so Start uses the same top bar as when a project is open and as the roadmap page. Planned — do not implement in the example-refresh pile. |
 
 ### Library backend (U90+)
 
@@ -185,11 +186,11 @@ Validate: `bun apps/web/scripts/validate_test_projects_folder.ts`.
 | **U81 symbol-delete Define leftover (`4ea967e` follow-on)** | `removeDefineNodesForSymbol` drops `function_implement` with `function_define` on symbol delete and deleteClass |
 | **Consume-path completeness (`1f2c051`)** | Settings env/host/export tab; class/var/event write-through; define-node sync; extract-to-function keeps body + Declare; Yield/Return typed pins; Switch `case_*` indices; eight-language docs |
 | **Implements / form / language chips / env packs** | Implements list + Class form (cs/rs); Library language chips (no embeddings; active chip stays at count 0; empty copy names search + chip); `env.csharp.data-script` + `env.go.http-service`. Search stays partial. Templates **Done** — 17 first-party packs; community catalog is Phase 3 (`library-backend`). |
-| **U65 goldens + roadmap sync** | Home-preview goldens for Coverage Lab Switch `match` (python/rust) and New Features Lab overload emit; public/in-app roadmap Open vs Done aligned to HEAD `1fcf4a3` era |
+| **U65 goldens + roadmap sync** | Home-preview goldens for Simple / Complex / Advanced home-preview goldens; public/in-app roadmap Open vs Done aligned to HEAD `1fcf4a3` era |
 | **Multi-base / Yield / Switch match / TypeSpec** | Extends list generate for python/cpp; `yield_stmt` py/gd; Switch → Python/Rust `match`; TypeSpec CLI → apiSurface |
 | **Overload codegen + profiles + worker** | C++ out-of-line overload loop; call-site selected args; language profile JSON packs; off-thread transpile worker |
 | **Console packs + host/mobile chrome** | rust/go console + optional `devcontainer`; host skip/emit UI; Library token search; mobile agent-hide + pin snap + hit targets; folder `graph-doc-split` |
-| **CL-016 Verse class defaults** | Class-typed field default is `Type{}` (Coverage Lab `Host = Machine{}`), not logic `false` |
+| **CL-016 Verse class defaults** | Class-typed field default is `Type{}` (class-typed field default `Type{}`), not logic `false` |
 | **CL-006 C# async Task** | Void+async methods emit `async Task` / `async Task<T>`, not `async void` |
 | **CL-008 / CL-009 Rust static/const + HashMap** | Module `pub static`; associated `pub const` in `impl`; file-top `use std::collections::HashMap;` |
 | **CL-018 rust async dim + Call Super option** | Rust `isAsync` ineffective (no Tokio). Super is an option on Call / Dispatch, not a node |

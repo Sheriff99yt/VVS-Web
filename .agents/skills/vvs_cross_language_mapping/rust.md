@@ -38,7 +38,7 @@ impl Machine {
 }
 ```
 
-Coverage Lab: inheritance is **composition** (`base: Machine` on Sensor); Serial is module `static`; MaxPower is associated `const`; Tags uses `HashMap` after a generated `use std::collections::HashMap;`; Switch → `match`; GetInput uses `stdin().read_line`; for-each uses `for val in self.Readings.iter()`.
+Complex / Advanced examples: inheritance is **composition** (`base: Machine` on Sensor); Serial is module `static`; MaxPower is associated `const`; Tags uses `HashMap` after a generated `use std::collections::HashMap;`; Switch → `match`; GetInput uses `stdin().read_line`; for-each uses `for val in self.Readings.iter()`.
 
 ## Concept → emit
 
@@ -103,7 +103,7 @@ pub struct AdvancedClass {
 }
 
 // --- Constants & Statics ---
-// Coverage Lab: static Serial is a module item; const MaxPower is associated in impl.
+// Complex / Advanced examples: static Serial is a module item; const MaxPower is associated in impl.
 pub static Serial: f32 = 0;
 
 impl Machine {

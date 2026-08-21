@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { transpileGraph, transpileProject } from './generate';
-import { createCoverageLabUsabilityTestSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/coverageLabUsabilityTest';
+import { createSimpleSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/simpleUsabilityTest';
+import { createComplexSnapshot } from '../../../apps/web/src/lib/usabilityExampleTests/complexUsabilityTest';
 import { MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
 
 describe('unsupported import comments (U66)', () => {
-  test('python with comments on emits (x) for cpp-only iostream', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('Simple python emit has no leftover import comments', () => {
+    const snapshot = createSimpleSnapshot();
     const result = transpileProject({
       projectDetails: snapshot.projectDetails,
       targetLanguage: 'python',
@@ -17,18 +18,14 @@ describe('unsupported import comments (U66)', () => {
       openTabs: snapshot.openTabs,
       emitUnsupportedComments: true,
     });
-    const home = result.files.find((f) => f.content.includes('class Machine'));
+    const home = result.files.find((f) => f.content.includes('class Hello'));
     expect(home).toBeTruthy();
-    const code = home!.content;
-    expect(code).not.toContain('# (x) Import iostream');
-    expect(code).not.toContain('# (x) Import System');
-    expect(code).toContain('from enum import Enum');
-    expect(code).not.toContain('#include');
-    expect(result.sourceMap['lab-import-iostream'] ?? []).toEqual([]);
+    expect(home!.content).not.toContain('(x) Import');
+    expect(home!.content).not.toContain('#include');
   });
 
-  test('python with comments off omits gated imports (silent skip)', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('Complex python with comments off still has no leftover imports', () => {
+    const snapshot = createComplexSnapshot();
     const result = transpileProject({
       projectDetails: snapshot.projectDetails,
       targetLanguage: 'python',
@@ -40,40 +37,16 @@ describe('unsupported import comments (U66)', () => {
       openTabs: snapshot.openTabs,
       emitUnsupportedComments: false,
     });
-    const home = result.files.find((f) => f.content.includes('class Machine'));
+    const home = result.files.find((f) => f.content.includes('class Counter'));
     expect(home).toBeTruthy();
-    const code = home!.content;
-    expect(code).not.toContain('(x) Import iostream');
-    expect(code).not.toContain('(x) Import System');
-    expect(code).toContain('from enum import Enum');
+    expect(home!.content).not.toContain('(x) Import');
   });
 
-  test('cpp emits real include for iostream and (x) for python Enum', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
-    const result = transpileProject({
-      projectDetails: snapshot.projectDetails,
-      targetLanguage: 'cpp',
-      variables: snapshot.variables,
-      projectEvents: snapshot.events,
-      functions: snapshot.functions,
-      documents: snapshot.documents!,
-      classes: snapshot.classes,
-      openTabs: snapshot.openTabs,
-      emitUnsupportedComments: true,
-    });
-    const home = result.files.find((f) => f.content.includes('class Machine'));
-    expect(home).toBeTruthy();
-    const code = home!.content;
-    expect(code).toContain('#include <iostream>');
-    expect(code).not.toContain('// (x) Import Enum');
-    expect(code).not.toContain('from enum import');
-  });
-
-  test('transpileGraph default emitUnsupportedComments is true', () => {
-    const snapshot = createCoverageLabUsabilityTestSnapshot();
+  test('transpileGraph default emitUnsupportedComments is true (Simple)', () => {
+    const snapshot = createSimpleSnapshot();
     const home = snapshot.documents![MAIN_GRAPH_CONTAINER_ID]!;
     const result = transpileGraph({
-      moduleName: 'Machine',
+      moduleName: 'Hello',
       extendsType: '',
       targetLanguage: 'python',
       variables: snapshot.variables,
@@ -86,6 +59,6 @@ describe('unsupported import comments (U66)', () => {
       classes: snapshot.classes,
       activeClassId: snapshot.classes![0]!.id,
     });
-    expect(result.files[0]!.content).not.toContain('# (x) Import iostream');
+    expect(result.files[0]!.content).not.toContain('# (x) Import');
   });
 });

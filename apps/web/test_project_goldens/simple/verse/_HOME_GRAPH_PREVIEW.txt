@@ -1,13 +1,7 @@
-// ===== src/FirstGraph.verse =====
-<public>FirstGraph := class:
-    var VisitorName<public> : string = ""
-    SayHello<public>() : void =
-        Print("Hello from SayHello!")
+// ===== src/Hello.verse =====
+<public>Hello := class:
+    var Name<public> : string = "Ada"
+    Greet<public>() : void =
+        Print(("Hello, " + Name))
     on_start() : void =
-        Print("What is your name?")
-        # (x) Get User Input
-        var _vvs_input_fg_get_input : string = ""
-        set VisitorName = _vvs_input_fg_get_input
-        Print(_vvs_input_fg_get_input)
-        SayHello()
-        Print("Done.")
+        Greet()

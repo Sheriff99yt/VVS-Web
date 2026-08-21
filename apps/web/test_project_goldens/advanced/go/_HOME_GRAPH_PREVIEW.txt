@@ -1,0 +1,29 @@
+// ===== src/Advanced.go =====
+import "time"
+import "fmt"
+import "bufio"
+import "os"
+type Machine struct {
+	var Label string = "ok"
+func Diagnose() void {
+	fmt.Println(self.Label)
+}
+}
+type Sensor struct {
+	var Operator string = ""
+func Diagnose() void {
+	fmt.Println("sensor")
+	self.Machine.Diagnose()
+}
+func (self *Sensor) on_start() {
+	fmt.Print("name")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	_vvs_input_ad_get_input := scanner.Text()
+	self.Operator = _vvs_input_ad_get_input
+	fmt.Println(_vvs_input_ad_get_input)
+	self.Diagnose()
+	time.Sleep(time.Duration(1 * float64(time.Second)))
+	fmt.Println("done")
+}
+}

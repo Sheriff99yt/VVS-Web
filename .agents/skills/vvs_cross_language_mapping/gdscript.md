@@ -32,7 +32,7 @@ class_name Machine
         print("Shutdown")
 ```
 
-Coverage Lab: `enum SensorStatus { OK, WARN, FAIL }`, second `class_name Sensor` + `extends Machine`, Switch → **if/elif** (`var _vvs_sel`), GetInput via `print(prompt)` + `OS.read_string_from_stdin()`. Async modifier is a no-op today (CL-018).
+Complex / Advanced examples: `enum SensorStatus { OK, WARN, FAIL }`, second `class_name Sensor` + `extends Machine`, Switch → **if/elif** (`var _vvs_sel`), GetInput via `print(prompt)` + `OS.read_string_from_stdin()`. Async modifier is a no-op today (CL-018).
 
 ## Concept → emit
 
@@ -145,7 +145,7 @@ func _notification(what):
         pass # Cleanup
 
 # --- Async / Await ---
-# Coverage Lab: async modifier is currently a no-op (plain func). await remains valid when used.
+# Complex / Advanced examples: async modifier is currently a no-op (plain func). await remains valid when used.
 func fetch_data():
     await get_tree().create_timer(1.0).timeout
 

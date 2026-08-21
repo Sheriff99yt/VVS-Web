@@ -68,30 +68,35 @@ describe('U65 Test Project goldens (Code panel path, disk-loaded)', () => {
     }
   }
 
-  test('First Graph teaches Get User Input', () => {
+  test('Simple greets Ada with no leftover', () => {
     const simple = USABILITY_EXAMPLE_TESTS.find((f) => f.id === 'simple')!;
     const py = emitFixtureFromDisk(simple, 'python');
-    expect(py).toContain('What is your name?');
-    expect(py).toMatch(/input\(/);
+    expect(py).toContain('Hello, ');
+    expect(py).toContain('Ada');
+    expect(py).toContain('def Greet(');
+    expect(py).not.toContain('(x)');
+    expect(py).not.toMatch(/input\(/);
   });
 
-  test('Coverage Lab teaches TypeRef map Tags', () => {
+  test('Complex teaches branch / for / switch on all-lang path', () => {
     const complex = USABILITY_EXAMPLE_TESTS.find((f) => f.id === 'complex')!;
-    const cpp = emitFixtureFromDisk(complex, 'cpp');
-    expect(cpp).toContain('Tags');
-    expect(cpp).toMatch(/std::unordered_map|map</i);
+    const py = emitFixtureFromDisk(complex, 'python');
+    expect(py).toContain('print("go")');
+    expect(py).toContain('def Add(');
+    expect(py).toMatch(/for /);
+    expect(py).not.toContain('(x)');
   });
 
-  test('Inheritance Lab teaches parent/child Speak and Wait async', () => {
-    const inheritance = USABILITY_EXAMPLE_TESTS.find((f) => f.id === 'inheritance')!;
-    const py = emitFixtureFromDisk(inheritance, 'python');
-    expect(py).toContain('print("parent")');
-    expect(py).toContain('super().Speak()');
-    expect(py).toContain('print("child")');
-    const parentBlock = py.split('class Child')[0] ?? '';
-    expect(parentBlock).toContain('print("parent")');
-    expect(parentBlock).not.toContain('print("child")');
+  test('Advanced teaches override Diagnose, GetInput, and Wait', () => {
+    const advanced = USABILITY_EXAMPLE_TESTS.find((f) => f.id === 'advanced')!;
+    const py = emitFixtureFromDisk(advanced, 'python');
+    expect(py).toContain('print("sensor")');
+    expect(py).toContain('super().Diagnose()');
+    expect(py).toMatch(/input\(/);
     expect(py).toMatch(/async def on_start/);
     expect(py).toMatch(/sleep|asyncio|delay/);
+    const parentBlock = py.split('class Sensor')[0] ?? '';
+    expect(parentBlock).toContain('def Diagnose(');
+    expect(parentBlock).not.toContain('print("sensor")');
   });
 });

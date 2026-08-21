@@ -1,109 +1,46 @@
-// ===== src/CoverageLab.rs =====
-use std::collections::HashMap;
-pub static Serial: f32 = 0;
-pub struct Machine {
+// ===== src/Counter.rs =====
+pub enum Mode {
+    Idle,
+    Run
+}
+pub struct Counter {
 
-    Power: f32,
+    pub Total: f32,
+    pub Limit: f32,
     pub Ready: bool,
+    pub CurrentMode: Mode,
 }
-impl Machine {
+impl Counter {
 
-    pub const MaxPower: f32 = 100;
     pub fn new() -> Self {
         Self {
-            Power: 0,
-            Ready: false,
+            Total: 0,
+            Limit: 3,
+            Ready: true,
+            CurrentMode: Mode::Run,
         }
     }
-    pub fn Boot(&mut self) {
-        self.Ready = true;
-        println!("{}", "Booted");
-        Sensor::new().on_tick();
-    }
-    fn Diagnose(&mut self) {
-        println!("{}", "Diagnose");
-        return;
-    }
-    pub fn Shutdown(&mut self) {
-        self.Ready = false;
-        println!("{}", "Shutdown");
-    }
-    pub fn Calculate(&mut self, a: f32, b: f32) {
-        println!("{}", "Calculating");
-        return (a + b);
-    }
-    pub fn on_pulse(&mut self) {
-        println!("{}", ("Power=" + self.Power.to_string()));
+    pub fn Add(&mut self, n: f32) {
+        self.Total = (self.Total + n);
+        return self.Total;
     }
     pub fn on_start(&mut self) {
-        print!("{}", "Operator name?");
-        std::io::Write::flush(&mut std::io::stdout()).unwrap();
-        let mut _vvs_input_lab_get_input = String::new();
-        std::io::stdin().read_line(&mut _vvs_input_lab_get_input).unwrap();
-        _vvs_input_lab_get_input = _vvs_input_lab_get_input.trim_end().to_string();
-        println!("{}", _vvs_input_lab_get_input);
-        self.Boot();
-        self.Diagnose();
-        println!("{}", self.Calculate(self.Power, self.MaxPower).to_string());
         if self.Ready {
-            self.on_pulse();
+            println!("{}", "go");
+            for _vvs_i_cx_for_limit in 1..=self.Limit {
+                self.Add(1);
+                println!("{}", self.Total.to_string());
+            }
+            match self.CurrentMode {
+                Mode::Idle => {
+                    println!("{}", "Idle");
+                }
+                Mode::Run => {
+                    println!("{}", "Run");
+                }
+            }
         } else {
-            println!("{}", "Not ready");
-        }
-    }
-}
-
-pub enum SensorStatus {
-    OK,
-    WARN,
-    FAIL
-}
-pub struct Sensor {
-    base: Machine,
-
-    pub Readings: Vec<f32>,
-    pub Status: SensorStatus,
-    pub Host: Machine,
-    pub Tags: HashMap<String, String>,
-}
-impl Sensor {
-
-    pub fn new() -> Self {
-        Self {
-            base: Machine::new(),
-            Readings: Vec::new(),
-            Status: SensorStatus::OK,
-            Host: Machine::new(),
-            Tags: HashMap::new(),
-        }
-    }
-    pub fn Sample(&mut self) {
-        self.Readings.push(self.base.Power);
-        println!("{}", "Sampled");
-    }
-    pub fn Report(&mut self) {
-        println!("{}", "--- Readings ---");
-        for val in self.Readings.iter() {
-            println!("{}", val.to_string());
-        }
-    }
-    pub fn on_tick(&mut self) {
-        println!("{}", "Tick");
-    }
-    pub fn on_start(&mut self) {
-        match self.Status {
-            SensorStatus::OK => {
-                self.Sample();
-                self.Report();
-            }
-            SensorStatus::WARN => {
-                println!("{}", "Warn");
-                self.Report();
-            }
-            SensorStatus::FAIL => {
-                println!("{}", "Fail");
-                self.Report();
-            }
+            println!("{}", "skip");
         }
     }
 }

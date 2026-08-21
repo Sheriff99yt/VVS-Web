@@ -1,62 +1,25 @@
-// ===== src/CoverageLab.verse =====
-<public>Machine := class:
-    var Power : float = 0
-    var Serial<public> : float = 0
-    var MaxPower<public> : float = 100
-    var Ready<public> : logic = false
-    Boot<public>() : void =
-        set Ready = true
-        Print("Booted")
-        Sensor.on_tick()
-    Diagnose() : void =
-        Print("Diagnose")
-        return
-    Shutdown<public>() : void =
-        set Ready = false
-        Print("Shutdown")
-    Calculate<public>(a : float, b : float) : void =
-        Print("Calculating")
-        return (a + b)
-    on_pulse() : void =
-        Print(("Power=" + ToString(Power)))
+// ===== src/Counter.verse =====
+Mode := enum:
+    Idle
+    Run
+<public>Counter := class:
+    var Total<public> : float = 0
+    var Limit<public> : float = 3
+    var Ready<public> : logic = true
+    var CurrentMode<public> : Mode = Mode.Run
+    Add<public>(n : float) : void =
+        set Total = (Total + n)
+        return Total
     on_start() : void =
-        Print("Operator name?")
-        # (x) Get User Input
-        var _vvs_input_lab_get_input : string = ""
-        Print(_vvs_input_lab_get_input)
-        Boot()
-        Diagnose()
-        Print(ToString(Calculate(Power, MaxPower)))
         if (Ready?):
-            on_pulse()
+            Print("go")
+            for (_vvs_i_cx_for_limit := 1..Limit):
+                Add(1)
+                Print(ToString(Total))
+            # switch (CurrentMode)
+            if (CurrentMode = Mode.Idle):
+                Print("Idle")
+            if (CurrentMode = Mode.Run):
+                Print("Run")
         else:
-            Print("Not ready")
-SensorStatus := enum:
-    OK
-    WARN
-    FAIL
-<public>Sensor(Machine) := class:
-    var Readings<public> : []float = array{}
-    var Status<public> : SensorStatus = SensorStatus.OK
-    var Host<public> : Machine = Machine{}
-    var Tags<public> : [string]string = map{}
-    Sample<public>() : void =
-        set Readings += array{Power}
-        Print("Sampled")
-    Report<public><override>() : void =
-        Print("--- Readings ---")
-        for (val : Readings):
-            Print(ToString(val))
-    on_tick() : void =
-        Print("Tick")
-    on_start<override>() : void =
-        # switch (Status)
-        if (Status = SensorStatus.OK):
-            Sample()
-            Report()
-        if (Status = SensorStatus.WARN):
-            Print("Warn")
-            Report()
-        if (Status = SensorStatus.FAIL):
-            Print("Fail")
-            Report()
+            Print("skip")

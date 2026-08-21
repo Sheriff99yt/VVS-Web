@@ -478,7 +478,7 @@ export function resolveModifierSlots(
     visibility = '';
     if (binding === 'static') staticKw = 'inline static ';
     if (isVirtual || isAbstract) virtualKw = 'virtual ';
-    // C++ override is a postfix specifier (matches skill AdvancedClass / Coverage Lab).
+    // C++ override is a postfix specifier (matches skill AdvancedClass / Advanced example).
     if (isOverride) overrideKw = ' override';
     if (isConst) constKw = 'const ';
   } else if (lang === 'javascript' || lang === 'python' || lang === 'gdscript') {

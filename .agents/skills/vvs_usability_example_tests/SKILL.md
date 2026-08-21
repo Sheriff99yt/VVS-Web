@@ -33,7 +33,7 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 | Step | What |
 |------|------|
 | **1. Clear** | Delete repo-root `Test Projects/` (gitignored) |
-| **2. Seed** | Write First Graph + Coverage Lab as on-disk `.vvs/` projects |
+| **2. Seed** | Write Simple + Complex + Advanced as on-disk `.vvs/` projects |
 | **2b. Load** | `loadProjectSnapshotFromPath` — emit must **not** use the in-memory `fixture.create()` object |
 | **3. Emit** | Code-panel path (`emitProjectLikeCodePanel`) from the **disk-loaded** snapshot |
 | **4. Compare** | Home-graph preview vs `apps/web/test_project_goldens/` |
@@ -49,20 +49,20 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 | **Extract dump** | `bun apps/web/scripts/extract_test_project_outputs.ts` → `apps/web/test_project_outputs/` |
 | **Hook regression** | `apps/web/src/hooks/useProjectTranspileResult.test.ts` |
 
-**Anti-pattern:** Asserting only `transpileProject({ activeClassId })` or inventing one file per class / a “split classes” profile — file layout is graph layout (user awareness). Coverage Lab must show **one** home-graph file containing both classes.
+**Anti-pattern:** Asserting only `transpileProject({ activeClassId })` or inventing one file per class / a “split classes” profile — file layout is graph layout (user awareness). Advanced must show **one** home-graph file containing both classes.
 
 **Required when changing emit / integration / multi-class:**
 
 1. Run `extract_test_project_outputs.ts` (or mirror its emit loop).
-2. Diff `_HOME_GRAPH_PREVIEW.txt` for Coverage Lab + First Graph.
+2. Diff `_HOME_GRAPH_PREVIEW.txt` for Simple + Complex + Advanced.
 3. Confirm distinct class files (e.g. `src/machine.py` + `src/sensor.py`) are **not** inventing a split — home is one module (`src/CoverageLab.*`).
 
-## Coverage Lab golden (active)
+## Example goldens (active)
 
-**Canonical:** `docs/design/fidelity_streamline.md` · catalog § Coverage Lab
+**Canonical:** `docs/design/fidelity_streamline.md` · catalog § U65 Test Projects
 
-1. **Primary golden:** Coverage Lab — Machine + Sensor on one graph (modifiers, enum, imports, inheritance, switch/for, Get User Input).
-2. C++ Machine still anchors access-section modifiers; Python/JS/etc. via `calculatorModifierRollout.test.ts` (Coverage Lab–based).
+1. **Primary goldens:** Simple + Complex (all 8, zero leftover). Advanced (most langs) — Machine + Sensor Diagnose, Get User Input, Wait.
+2. C++ Machine virtual Diagnose still anchors U82; Python/JS/etc. via `calculatorModifierRollout.test.ts` (Advanced/Complex).
 3. Member emit: `appendIrMembersInOrder` — canvas chain order = source order.
 4. Imports: place **once at file top** on the first class chain (`targetLanguages` gate); optional **flow Import Module** inside branches (Python-style conditional import). Do not duplicate the same import per class.
 5. Enum: `enumType` + member names; pack `EnumMemberAccess`.
@@ -73,8 +73,9 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 
 | Path | Role |
 |------|------|
-| `usabilityExampleTests/firstGraphUsabilityTest.ts` | Simple StartScreen test — Declare · GetInput · Call |
-| `usabilityExampleTests/coverageLabUsabilityTest.ts` | Complex StartScreen test — TypeRef enum/class/array/map + multi-class |
+| `usabilityExampleTests/simpleUsabilityTest.ts` | Simple — Hello.Name + Greet (all 8) |
+| `usabilityExampleTests/complexUsabilityTest.ts` | Complex — Counter Add + branch/for/while/switch (all 8) |
+| `usabilityExampleTests/advancedUsabilityTest.ts` | Advanced — Machine/Sensor Diagnose + GetInput + Wait (most) |
 | `usabilityExampleTests/usabilityTestGraphBuild.ts` | Spawn helpers |
 | `usabilityExampleProjects.ts` | StartScreen registry + stable `vvs-test-*` seed/open |
 | `scripts/extract_test_project_outputs.ts` | Dump Code-panel outputs; `--update-goldens` |
@@ -87,7 +88,8 @@ bun apps/web/scripts/validate_test_projects_folder.ts --update-goldens
 
 - [ ] Behavior reachable from spawn catalog or inspector
 - [ ] Asserted via **Code panel emit path** (extract script or hook mirror), not only raw `transpileGraph`
-- [ ] Coverage Lab home preview shows **both** classes in one module with correct imports/order
+- [ ] Advanced home preview shows **both** classes in one module
+- [ ] Simple + Complex home previews have zero leftover `(x)`
 - [ ] Catalog row updated if new node/setting
 - [ ] No emit from sidebar-only symbols
 

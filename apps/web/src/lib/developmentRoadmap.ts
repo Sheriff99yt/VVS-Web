@@ -107,7 +107,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen -- new/open folder (.vvs/ overlay), recent projects, import JSON, five usability test cards (First Graph featured, plus Branch / Coverage / New Features / Inheritance Lab), Library and Roadmap explore shortcuts. SSR hydration-safe; Library and Roadmap browse via /library and /roadmap without creating a stored project.',
+          'Start screen -- new/open folder (.vvs/ overlay), recent projects, import JSON, three usability example cards (Simple featured, plus Complex / Advanced), Library and Roadmap explore shortcuts. SSR hydration-safe; Library and Roadmap browse via /library and /roadmap without creating a stored project.',
       },
       {
         id: 'nav-history',
@@ -522,7 +522,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'cross-and-lang-examples-u92',
         title: 'New cross-language & language-specific examples (U92)',
         description:
-          'Five multi-language test projects (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) across 8 target languages (40 goldens total); validate_test_projects_folder.ts.',
+          'Three multi-language test projects (Simple, Complex, Advanced) across 8 target languages (24 goldens); validate_test_projects_folder.ts.',
         status: 'done',
       },
       {
@@ -675,7 +675,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'graph-containers',
         title: 'Graph-as-canvas model',
         description:
-          'Each graphContainer is a real canvas (`documents[container.id]`). Project map (`main-graph`) is organizational -- graph_ref navigation only, no codegen. Module graphs hold class_define chains plus runtime flow (Coverage Lab: Machine+Sensor on one graph). Classes are symbols nested under graphs, not separate tabs.',
+          'Each graphContainer is a real canvas (`documents[container.id]`). Project map (`main-graph`) is organizational -- graph_ref navigation only, no codegen. Module graphs hold class_define chains plus runtime flow (Advanced: Machine+Sensor on one graph). Classes are symbols nested under graphs, not separate tabs.',
         status: 'done',
       },
       {
@@ -696,7 +696,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'class-define-fidelity',
         title: 'Class declare fidelity',
         description:
-          'class_define required when class has symbols or member defines; ORPHAN_DEFINE_NODE for stray class_define; no phantom class shell from symbol table; deleting Declare blocks Generate (DEFINE_NODE_MISSING) but preview shows member chain without class Name: wrapper; Coverage Lab covers strict declare fidelity.',
+          'class_define required when class has symbols or member defines; ORPHAN_DEFINE_NODE for stray class_define; no phantom class shell from symbol table; deleting Declare blocks Generate (DEFINE_NODE_MISSING) but preview shows member chain without class Name: wrapper; Simple / Complex / Advanced cover declare fidelity.',
         status: 'done',
       },
       {
@@ -759,7 +759,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'ordered-emit',
         title: 'Ordered member emit',
         description:
-          'Transpiler walks ir.members once in define-chain order (appendIrMembersInOrder); no sidebar preamble fallback. Coverage Lab locks Machine+Sensor on one graph.',
+          'Transpiler walks ir.members once in define-chain order (appendIrMembersInOrder); no sidebar preamble fallback. Advanced locks Machine+Sensor on one graph.',
         status: 'done',
       },
       {
@@ -788,7 +788,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'graph-equals-file',
         title: 'One graph → one file (U58)',
         description:
-          'All class_define chains on a container graph emit into one module (canvas order). Want two files → two graphs. Coverage Lab → src/CoverageLab.*',
+          'All class_define chains on a container graph emit into one module (canvas order). Want two files → two graphs. Advanced → src/Advanced.*',
         status: 'done',
       },
       {
@@ -802,7 +802,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'fidelity-streamline-0-4',
         title: 'Fidelity streamline Phases 0--4',
         description:
-          'Single member emit path, property→pack only, ClassDecl-only shell, Coverage Lab golden. docs/design/fidelity_streamline.md.',
+          'Single member emit path, property→pack only, ClassDecl-only shell, Advanced + Complex goldens. docs/design/fidelity_streamline.md.',
         status: 'done',
       },
       {
@@ -816,7 +816,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'user-types-typeref',
         title: 'User types (TypeRef)',
         description:
-          'TypeRef for builtin / enum / class / Array / Map; pickers from canvas declares; Coverage Lab Status/Host/Readings. docs/design/user_types.md.',
+          'TypeRef for builtin / enum / class / Array / Map; pickers from canvas declares; Complex Mode enum; Advanced Machine/Sensor. docs/design/user_types.md.',
         status: 'done',
       },
       {
@@ -830,14 +830,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'test-project-rethink-u65',
         title: 'Test Project goldens (U65)',
         description:
-          'Stable vvs-test-* seeds; five labs (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab); test_project_goldens/ + usabilityExampleGoldens.test.ts; extract --update-goldens.',
+          'Stable vvs-test-* seeds; three examples (Simple, Complex, Advanced); test_project_goldens/ + usabilityExampleGoldens.test.ts; extract --update-goldens.',
         status: 'done',
       },
       {
         id: 'cross-class-refs',
         title: 'Cross-class event dispatch',
         description:
-          'DispatchEventCrossClass pack + lower; CROSS_CLASS_DISPATCH_WITHOUT_IMPORT; Coverage Lab Boot→Sensor.on_tick.',
+          'DispatchEventCrossClass pack + lower; CROSS_CLASS_DISPATCH_WITHOUT_IMPORT; Advanced Diagnose override + Call Super.',
         status: 'done',
       },
       {
@@ -1190,7 +1190,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'usability-example-tests',
         title: 'Usability Test Projects',
         description:
-          'Five usability test cards on StartScreen (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab); verify codegen via Code panel extract (extract_test_project_outputs.ts). Calculator/Async Fetcher/Dual Class Lab retired as StartScreen fixtures.',
+          'Three usability example cards on StartScreen (Simple, Complex, Advanced); verify codegen via Code panel extract (extract_test_project_outputs.ts). Calculator/Async Fetcher/Dual Class Lab stay retired.',
         status: 'done',
       },
       {
@@ -1218,7 +1218,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'highlight-reverse-u71',
         title: 'Code↔graph highlight rethink (U71)',
         description:
-          'Reverse select (dblclick Code → node); generic sourceMap UI; Switch structured sink; smooth auto-scroll; Coverage Lab completeness + sink nest-as-text CI gate.',
+          'Reverse select (dblclick Code → node); generic sourceMap UI; Switch structured sink; smooth auto-scroll; example completeness + sink nest-as-text CI gate.',
         status: 'done',
       },
       {
@@ -1442,6 +1442,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
     phase: 6,
     emphasis: 'active',
     items: [
+      {
+        id: 'start-topbar-consistent',
+        layer: 'frontend',
+        title: 'Start screen top bar matches editor / roadmap',
+        description:
+          'Homepage currently has its own header. Redesign so Start uses the same top bar as when a project is open and as the roadmap page, so every view is consistent.',
+        status: 'planned',
+      },
       {
         id: 'verse-getinput-cl014',
         layer: 'frontend',
