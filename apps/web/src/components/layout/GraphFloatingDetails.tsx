@@ -26,6 +26,7 @@ import { buildProjectSymbolIndex, isUnresolvedSymbolRef, syncClassExtendsFields 
 import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel';
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
 import { EventNodeBindingPanel } from './RightSidebar/EventNodeBindingPanel';
+import { filterDetailsPropertySchema } from './detailsPropertySchema';
 import { NodePinsPanel } from './RightSidebar/NodePinsPanel';
 import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import { PropertySchemaPanel } from './RightSidebar/PropertySchemaPanel';
@@ -463,32 +464,10 @@ function GraphFloatingDetailsPanel() {
     nodeKindId === 'vvs.project.import_module' ||
     nodeData?.data.linkKind === 'import_module';
 
-  const filteredPropertySchema = useMemo(() => {
-    if (!nodeKindDef?.propertySchema?.length) return [];
-    const hidden = new Set<string>();
-    if (nodeKindId === 'graph_ref') {
-      hidden.add('classId');
-      hidden.add('containerId');
-      hidden.add('graphTabId');
-      hidden.add('refLabel');
-    }
-    if (nodeKindId === 'import_class') {
-      hidden.add('targetClassId');
-    }
-    // Linking IDs — not user codegen options
-    hidden.add('symbolId');
-    hidden.add('eventId');
-    if (nodeKindId === 'function_define') {
-      hidden.add('graphTabId');
-    }
-    if (nodeKindId === 'class_define') {
-      hidden.add('extendsType');
-      hidden.add('extendsTypes');
-      hidden.add('implementsTypes');
-      hidden.add('form');
-    }
-    return nodeKindDef.propertySchema.filter((field) => !hidden.has(field.key));
-  }, [nodeKindDef?.propertySchema, nodeKindId]);
+  const filteredPropertySchema = useMemo(
+    () => filterDetailsPropertySchema(nodeKindDef?.propertySchema, nodeKindId),
+    [nodeKindDef?.propertySchema, nodeKindId]
+  );
   const boundVariable = nodeData ? resolveVariableForNode(nodeData.data, variables) : undefined;
   const isCommentNode = nodeData?.type === 'vvs_comment_node';
   const isRerouteNode = nodeData?.type === 'vvs_reroute_node';
