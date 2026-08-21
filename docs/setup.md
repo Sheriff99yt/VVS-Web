@@ -2,17 +2,27 @@
 
 One-time machine setup for developing VVS Web locally. For day-to-day commands after setup, see **[quickstart.md](quickstart.md)**.
 
+**Product path:** GitHub Pages plus a local folder / `.vvs/` / git. No VVS account. No dedicated app server. Postgres, GoTrue, and library upload are a **frozen experiment**, not a first-time step. Skip them.
+
 ---
 
-## What you need
+## Try it without installing
+
+**Live editor:** [https://sheriff99yt.github.io/VVS-Web/](https://sheriff99yt.github.io/VVS-Web/)
+
+Static GitHub Pages build. Projects save to browser `localStorage` only. Versioned zips live on [Releases](https://github.com/Sheriff99yt/VVS-Web/releases).
+
+---
+
+## What you need (local)
 
 | Tool | Required | Purpose |
 |------|----------|---------|
-| [Bun](https://bun.sh) | Yes | Frontend package manager & dev server |
+| [Bun](https://bun.sh) | Yes | Frontend package manager and dev server |
 | [Git](https://git-scm.com/) | Yes | Clone, commit, contribute |
-| [Go](https://go.dev/) 1.22+ | Optional | `server/` — project API, compile, registry, **optional** local MCP sidecar (`/mcp`). Hosted agent is in-page TypeScript — Go is not required |
+| [Go](https://go.dev/) 1.22+ | Optional | `server/` - local MCP sidecar only. Hosted agent is in-page TypeScript. Go is not required |
 
-**OS:** Windows scripts live in `tools/`; macOS/Linux users can run the equivalent `bun` commands from `apps/web` (see [Quick start](#manual-setup-all-platforms)).
+**OS:** Windows scripts live in `tools/`. macOS/Linux users can run the equivalent `bun` commands from `apps/web` (see [Manual setup](#manual-setup-all-platforms)).
 
 ---
 
@@ -36,6 +46,8 @@ The script will:
 
 Restart your terminal if Bun or Go was just installed.
 
+Then start the editor: `.\tools\start_app.ps1`. Open [http://localhost:3000](http://localhost:3000). Create a project in the browser or in a folder (`.vvs/`).
+
 ---
 
 ## Manual setup (all platforms)
@@ -45,14 +57,14 @@ Restart your terminal if Bun or Go was just installed.
 git clone https://github.com/Sheriff99yt/VVS-Web.git
 cd VVS-Web
 
-# 2. Install JS dependencies (root workspaces — web + packages)
+# 2. Install JS dependencies (root workspaces - web + packages)
 bun install
 
-# 3. Local env (gitignored — copy template; includes optional http API + sidecar defaults)
+# 3. Local env (gitignored - copy template)
 cp apps/web/.env.example apps/web/.env.local
 # Edit DEV_ALLOWED_ORIGIN in .env.local if you use http://192.168.x.x:3000 on LAN
 
-# 4. Optional Go sidecar (API + local MCP — start_app.ps1 launches this on Windows)
+# 4. Optional Go sidecar (API + local MCP - start_app.ps1 launches this on Windows)
 cd server
 go mod download
 ```
@@ -63,11 +75,13 @@ go mod download
 
 | File | Committed? | Purpose |
 |------|------------|---------|
-| `apps/web/.env.example` | Yes | Template — safe placeholders only |
-| `apps/web/.env.local` | **Never** | Your LAN IP, API URLs, local overrides |
+| `apps/web/.env.example` | Yes | Template - safe placeholders only |
+| `apps/web/.env.local` | **Never** | Your LAN IP, optional sidecar URLs, local overrides |
 | Root `.env.example` | Yes | Pointer / shared notes |
 
 **Rule:** Never commit `.env.local` or real IP addresses. It is listed in `.gitignore`.
+
+Supabase / GoTrue keys in `.env.example` belong to the **frozen experiment** below. Leave them unset for normal product work.
 
 ### LAN access (optional)
 
@@ -78,213 +92,85 @@ If you open the app via `http://YOUR_LAN_IP:3000` instead of `localhost`:
 DEV_ALLOWED_ORIGIN=192.168.x.x
 ```
 
-Restart `bun run dev` after changing env. Use **one URL consistently** — browser `localStorage` is per-origin (`localhost` ≠ LAN IP).
+Restart `bun run dev` after changing env. Use **one URL consistently** - browser `localStorage` is per-origin (`localhost` is not the LAN IP).
 
 ---
-
 ## Files excluded from Git
 
-These must **not** be pushed to a public repo:
+These must **not** appear in a public repo:
 
 | Pattern | Why |
 |---------|-----|
-| `**/.env.local`, `.env.*` (except `.env.example`) | Machine-specific secrets & LAN IPs |
-| `apps/web/.next/`, `node_modules/` | Build & install artifacts |
+| `**/.env.local`, `.env.*` (except `.env.example`) | Machine-specific secrets and LAN IPs |
+| `apps/web/.next/`, `node_modules/` | Build and install artifacts |
 | `*.local.md`, `AGENTS.local.md` | Personal agent overrides |
 | `.cursor/` | Local IDE state |
-| `*.pem`, `*.log` | Certs & debug logs |
+| `*.pem`, `*.log` | Certs and debug logs |
 
-Before your first push:
+Before your first contribution, run `git status` and confirm `.env.local` is not listed.
 
-```powershell
-git status   # confirm .env.local is NOT listed
-```
-
-**Nested git repos:** If `apps/web` was initialized with its own `git init` (e.g. from `create-next-app`), remove `apps/web/.git` before the monorepo first commit. Otherwise Git records `apps/web` as a submodule gitlink and most web source files will **not** be uploaded.
+**Nested git repos:** If `apps/web` was initialized with its own `git init` (for example from `create-next-app`), remove `apps/web/.git` before the monorepo first commit. Otherwise Git records `apps/web` as a submodule gitlink and most web source files will **not** be uploaded.
 
 ---
 
 ## Publish to GitHub (maintainers)
 
-Create a new public repo named **VVS-Web**, then from this project root:
-
-```powershell
-git remote remove origin   # only if origin points to a deleted or wrong repo
-git remote add origin https://github.com/Sheriff99yt/VVS-Web.git
-git push -u origin main
-```
-
-Or with GitHub CLI:
-
-```powershell
-gh repo create Sheriff99yt/VVS-Web --public --source=. --remote=origin --push
-```
+Maintainers publish this repo as a public GitHub project. The live site and zips come from workflows, not from a first-time contributor step.
 
 ### Release channels (locked)
 
 | Channel | How it updates | Artifact |
 |---------|----------------|----------|
-| **Live Pages** | Every green `main` push → `.github/workflows/pages.yml` | https://sheriff99yt.github.io/VVS-Web/ |
-| **Current preview** | Same workflow, after deploy → floating tag `pre-release` | Showcase link in Releases + `vvs-web-pre-release.zip` |
-| **Stable** | Push `v*` tag → `.github/workflows/release.yml` | Full GitHub Release + `vvs-web-vX.Y.Z.zip` |
+| **Live Pages** | Green main build via `.github/workflows/pages.yml` | https://sheriff99yt.github.io/VVS-Web/ |
+| **Current preview** | Same workflow, floating tag `pre-release` | Showcase link in Releases plus zip |
+| **Stable** | SemVer `v*` tag via `.github/workflows/release.yml` | Full GitHub Release zip |
 
-**Cycle on every `main` push:** install (Bun **1.3.1** pinned) → `GITHUB_PAGES=true` static export → upload Pages artifact → deploy → force-move `pre-release` tag → create/edit the floating pre-release (CLI + retries; GitHub API 503s must not leave the sidebar stale forever).
+Cycle on a green main build: install (Bun **1.3.1** pinned), `GITHUB_PAGES=true` static export, upload Pages artifact, deploy, move `pre-release` tag, edit the floating pre-release.
 
-**One-time Pages setup** (or deploy fails with **404 Not Found**):
+One-time Pages setup if deploy returns 404: Settings, Pages, Build and deployment, Source = GitHub Actions.
 
-1. **Settings → Pages → Build and deployment → Source:** **GitHub Actions**
-2. Or via CLI: `gh api -X POST repos/Sheriff99yt/VVS-Web/pages -f build_type=workflow`
+### Verify the static export locally
 
-### Verify Pages build locally (before push)
-
-Local `next build` can pass while CI fails when a package is only a **transitive** dependency (Turbopack resolves differently). Catch that before push:
-
-```powershell
-# From repository root — mirrors pages.yml build + dep lint
-bun run pages:verify
-```
-
-That runs frozen install → web lint (`import/no-extraneous-dependencies`) → `GITHUB_PAGES=true` static export. Prefer a clean `node_modules` if you suspect hoisting hid a miss.
-
-### GitHub Releases (versioned static zip)
-
-CI runs on every push/PR (`.github/workflows/ci.yml`). **Stable** versioned downloads are separate: push a `v*` tag after `main` is green.
-
-```powershell
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-That runs `.github/workflows/release.yml`: full verify suite → Pages-compatible static build → **full** (non-pre) GitHub Release with `vvs-web-v0.2.0.zip`. You can also run **Actions → Release → Run workflow** and pass an existing tag.
-
-No npm package required.
-
----
+From the repository root, the `pages:verify` script mirrors the Pages workflow (frozen install, web lint, static export).
 
 ## Verify installation
 
-```powershell
-# From repository root
-bun install
-bun run build
-bun test packages
-```
+From the repository root run the workspace install, then the web build, then the package tests. From apps/web you can run the web build alone. Expect a successful compile and the `/` and `/editor` routes.
 
-Or from `apps/web` only:
+---
 
-```powershell
-cd apps\web
-bun run build
-```
+## In-page agent (hosted path)
 
-Expected: `✓ Compiled successfully` and static routes `/`, `/editor`.
+The GitHub Pages / editor agent is the in-page TypeScript runtime. Open a project, then the TopNav Bot button (tooltip Agent). No Go install is required.
 
-Optional server check:
-
-```powershell
-cd server
-go test ./...
-go run ./cmd/vvs-server
-# curl http://localhost:8080/health
-# curl http://localhost:8080/registry/nodes
-```
-
-### Phase 2 — Postgres persistence (optional)
-
-Local dev defaults to an **in-memory** project store (no database). To test **Postgres** persistence:
-
-```powershell
-# From repository root — Postgres + GoTrue auth gateway
-docker compose up -d postgres gotrue auth-gateway
-```
-
-Set these env vars when starting the Go server (PowerShell example):
-
-```powershell
-$env:DATABASE_URL = "postgres://vvs:vvs_dev_password@localhost:5432/vvs?sslmode=disable"
-$env:SUPABASE_JWT_SECRET = "super-secret-jwt-token-with-at-least-32-characters-long"
-$env:AUTH_REQUIRED = "false"   # dev mode — uses DEV_USER_ID when no Bearer token
-cd server
-go run ./cmd/vvs-server
-```
-
-`GET /health` reports `"store": "postgres"` and `"auth": "dev"` when configured correctly.
-
-To test **auth-required** mode (rejects unauthenticated API/MCP calls):
-
-```powershell
-$env:AUTH_REQUIRED = "true"
-$env:SUPABASE_JWT_SECRET = "super-secret-jwt-token-with-at-least-32-characters-long"
-# Bearer token must match GoTrue JWT secret above
-```
-
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `DATABASE_URL` | No | Postgres connection string; omit for in-memory store |
-| `AUTH_REQUIRED` | No | `true` = reject requests without valid JWT; default `false` |
-| `SUPABASE_JWT_SECRET` | When `AUTH_REQUIRED=true` or Bearer tokens present | HS256 secret — **must match** GoTrue `GOTRUE_JWT_SECRET` in docker-compose |
-| `DEV_USER_ID` | No | UUID used when `AUTH_REQUIRED=false` and no Bearer token (default: fixed dev UUID) |
-
-### Phase 2 — Supabase Auth (GoTrue, optional)
-
-Minimal self-hosted auth for local/VPS dev (Postgres + GoTrue + nginx `/auth/v1` gateway):
-
-```powershell
-docker compose up -d postgres gotrue auth-gateway
-```
-
-Add to `apps/web/.env.local` (see `.env.example` for the standard dev anon key):
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-```
-
-GoTrue dev settings (in `docker-compose.yml`):
-
-- `GOTRUE_MAILER_AUTOCONFIRM=true` — email sign-up works without SMTP
-- `GOTRUE_JWT_SECRET` — must match Go server `SUPABASE_JWT_SECRET`
-
-**GitHub OAuth (optional v1):** create a GitHub OAuth app with callback `http://localhost:54321/auth/v1/callback`, then:
-
-```powershell
-$env:GOTRUE_EXTERNAL_GITHUB_ENABLED = "true"
-$env:GOTRUE_GITHUB_CLIENT_ID = "your-client-id"
-$env:GOTRUE_GITHUB_CLIENT_SECRET = "your-client-secret"
-docker compose up -d gotrue auth-gateway
-```
-
-In `apps/web/.env.local`: `NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=true`
-
-Without GitHub env vars, **email/password auth works** for v1.
-
-### In-page agent (hosted path — no Go required)
-
-The GitHub Pages / editor agent is the **in-page TypeScript** runtime. Open a project (Worker starts with the editor), then TopNav Bot button (tooltip **Agent**).
-
-- Prompt + optional local LLM key / base / model in `localStorage` key `vvs:agent-llm` (default `https://api.openai.com/v1` + `gpt-4o-mini`)
+- Prompt plus optional local LLM key / base / model in localStorage key `vvs:agent-llm` (default OpenAI-compatible base plus `gpt-4o-mini`)
 - `/tool name json` works without a key
-- Writes gated by **Allow agent writes** (`agentAllowWrites`, default **false**)
-- StatusBar: **Agent ready** / **Agent error** / **Agent…**
+- Writes gated by Allow agent writes (`agentAllowWrites`, default false)
+- StatusBar: Agent ready / Agent error
 - Tools: `list_available_nodes`, `list_syntax_packs`, `list_classes`, `get_graph`, `generate_code`, `add_class`, `add_node`, `remove_node`, `connect_pins` (`add_node` refuses leftover kinds)
 - `window.vvs.agent` / `window.vvs.tools`: `listTools()`, `callTool(name, args)`
 
 No remote hosted MCP URL. No Chrome DevTools bridge. No in-page chat on the start screen.
 
-### Optional Go MCP sidecar (other apps / Cursor)
+---
 
-Not the hosted path. Agent panel keeps a collapsed sidecar section for paste-config. The in-page `mcpAllowDangerousTools` checkbox does **not** reach the Go server — set `VVS_MCP_ALLOW_WRITE` on the process.
+## Optional Go MCP sidecar
 
-Frontend HTTP experiments: set `NEXT_PUBLIC_API_MODE=http` in `apps/web/.env.local`. Sign in via **AuthButton** (TopNav, only when Supabase env is set — not a product account). Token is stored in `session.ts` and sent as `Authorization: Bearer …` on project APIs and the sidecar probe.
+Not the hosted path. Local experiment only. The Agent panel keeps a collapsed sidecar section for paste-config. The in-page write checkbox does not reach the Go server; set `VVS_MCP_ALLOW_WRITE` on that process.
 
-There is **no** product `NEXT_PUBLIC_MCP_URL` hosted endpoint.
+There is no product hosted MCP URL. Library auth / upload is frozen. Do not treat AuthButton, GoTrue, or an upload form as current setup.
 
-1. Start the optional sidecar: `.\tools\start_app.ps1` (or `go run ./cmd/vvs-server` from `server/`)
-2. Copy `tools/mcp.cursor.example.json` to `.cursor/mcp.json` in the repo root (or merge the `VVS` entry into `%USERPROFILE%\.cursor\mcp.json`)
-3. Reload Cursor (**Settings → MCP** or restart the IDE)
-4. Sidecar URL: `http://localhost:8080/mcp` — local experiment only
+Start the optional sidecar with the Windows start script, or run the server command from `server/`. Copy `tools/mcp.cursor.example.json` into a local Cursor MCP config. Sidecar URL is localhost port 8080 path `/mcp`.
 
-Sidecar tools (Go): `list_available_nodes`, `list_syntax_packs`, `list_classes`, `add_class`, `get_graph`, `add_node`, `remove_node`, `connect_pins`, `generate_code`, `save_project`, plus pack tools not in the TS runtime (`propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse`).
+Sidecar tools include the same graph tools as the TS runtime, plus pack tools that are not in the hosted agent (`propose_syntax_delta`, `run_rosetta_suite`, `validate_generated_parse`). Frontend HTTP experiments use `NEXT_PUBLIC_API_MODE=http` in `.env.local`. That is not a product account.
+
+---
+
+## Frozen experiment (not product)
+
+Postgres persistence, GoTrue / Supabase Auth, GitHub OAuth, and library upload were a Phase 2 experiment. They are not the product path and not a first-time step. Library auth / upload stays frozen. Leave `DATABASE_URL`, `AUTH_REQUIRED`, `SUPABASE_JWT_SECRET`, and `NEXT_PUBLIC_SUPABASE_*` unset unless you are deliberately opening that leftover.
+
+The compose file can still start those leftover services for a local experiment. That is not product setup. A health response that reports a postgres store means the experiment store is on, not that VVS has accounts. See [deployment.md](deployment.md) for leftover self-host notes.
 
 ---
 
@@ -292,15 +178,15 @@ Sidecar tools (Go): `list_available_nodes`, `list_syntax_packs`, `list_classes`,
 
 | Problem | Fix |
 |---------|-----|
-| WebSocket HMR errors on LAN IP | Set `DEV_ALLOWED_ORIGIN` in `.env.local`, restart dev server |
-| Clicks do nothing on LAN URL | Same as above; hard-refresh browser |
-| No projects on LAN URL | Create projects on that URL — storage is separate from `localhost` |
-| `bun` not found after install | Restart terminal; ensure `~/.bun/bin` is on PATH |
-| Port 3000 in use | Stop other `next dev` processes or use another port |
+| WebSocket HMR errors on LAN IP | Set `DEV_ALLOWED_ORIGIN` in `.env.local`, restart the dev server |
+| Clicks do nothing on LAN URL | Same as above; hard-refresh the browser |
+| No projects on LAN URL | Create projects on that URL. Storage is separate from localhost |
+| `bun` not found after install | Restart the terminal; ensure the Bun bin directory is on PATH |
+| Port 3000 in use | Stop other Next dev processes or use another port |
 
 ---
 
 ## Next
 
-→ **[quickstart.md](quickstart.md)** — start the app and open your first graph  
-→ **[deployment.md](deployment.md)** — legacy self-host notes (not product direction; client-first / no dedicated server)
+- **[quickstart.md](quickstart.md)** - start the app and open your first graph
+- **[deployment.md](deployment.md)** - leftover self-host notes (not product direction; client-first / no dedicated server)
