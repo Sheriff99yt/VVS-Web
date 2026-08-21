@@ -165,6 +165,8 @@ Layout profile also carries `emptyHandlerBody` and `emptyFunctionBody` for empty
 
 ## Rosetta suite and verification gates
 
+**Rosetta** is one construct graph printed in every language (one meaning, many scripts). It is not Generate (the user action / full pipeline) and not the Start-screen Simple / Complex / Advanced home-preview goldens. See [language_neutral_vocabulary.md](design/language_neutral_vocabulary.md#generate-emit-and-goldens).
+
 Syntax changes are **contract-driven**. Version reuse means "most Rosetta files unchanged."
 
 | Gate | Purpose |

@@ -83,7 +83,10 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Variable member on chain | **Declare** `{name}` | Define Variable | `var_define` — C++-style declaration (`int x;`) |
 | Class member on chain | **Declare** `{name}` / **Declare Class** | Define Class | `class_define` |
 | Macro (legacy UI tab) | **Function** *(migrate)* | Macro | Deprecated as codegen concept — see [visual_to_text_fidelity.md](visual_to_text_fidelity.md) |
-| Build graph → code | **Generate code** | Compile (OK in toolbar shorthand) | Button may say **Generate**; logs say "generation" |
+| Build graph → source | **Generate code** | Compile (OK in toolbar shorthand) | User action and the full path: graph → analyze → IR → emit → Code panel. Button says **Generate**; logs say generation. |
+| Stage C (printers write text) | **Emit** (docs only) | Emit Event; toolbar **Emit** | Not a UI label. Event invoke is **Dispatch**. |
+| Same construct in every language | **Rosetta** | Calling Start-screen examples Rosetta | Pack fixtures in `packages/syntax-packs/rosetta/`. One graph, eight prints. |
+| Expected generated text in tests | **Golden** | Snapshot (for these files) | Tests generate and compare. Rosetta goldens ≠ Simple / Complex / Advanced home-preview goldens. |
 | Generated artifact name | **Module name** | Class name, BP_* | Maps to class/module in target language |
 | Optional base type | **Extends** | Parent class, Super | List on Declare Class (`+ Add base` = MI, Python/C++ only). Generate prints all Extends rows for python/cpp; others first parent. |
 | Community item (full graph) | **Script** | Blueprint | Library filter category |
@@ -91,6 +94,8 @@ Use the **Preferred term** in UI, docs, and agent prompts. **Avoid** Unreal-spec
 | Community template | **Template** | — | Library filter |
 | AI / agent | **Agent** | Connect AI, Integrations page | In-page TS agent panel. Optional sidecar paste is not the hosted path |
 
+
+**Generate vs emit.** Generate is the button and the whole pipeline. Emit is only the last stage (printers). **Rosetta** proves a construct in every language. A **golden** is the expected text those tests compare against. Start-screen Simple / Complex / Advanced use home-preview goldens, not the Rosetta suite. Glossary: [language_neutral_vocabulary.md](design/language_neutral_vocabulary.md#generate-emit-and-goldens).
 A game-talk **component** is **Declare Class** plus a field or **Extends** — not a Component node ([catalog](design/language_capability_catalog.md#component--class)).
 
 ### Library categories (community)

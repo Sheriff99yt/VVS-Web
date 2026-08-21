@@ -85,12 +85,33 @@ Function graph tabs are **Edit function body** only (author the body). **Define*
 | Connection point | **Port** (beginner copy); **pin** OK in dev docs | — | `Pin`, `execution` type | Prefer **flow** for execution ports in UI |
 | Execution wire | **Flow** connection | Exec wire | `pinType: execution` | Linear chain semantics (node_system §5) |
 | Data wire | **Data** connection | — | typed pins | |
-| Build → text | **Generate** / **Generate code** | Compile (toolbar shorthand OK) | `generate`, transpile pipeline | Logs: “generation” |
+| Build graph → source | **Generate** / **Generate code** | Compile (toolbar shorthand OK) | `generate`, transpile pipeline | User action and the full path: graph → analyze → IR → **emit** → Code panel files. Button says **Generate**. Logs say generation. |
 | Export name | **Module name** | Class name (as primary), `BP_*` | `moduleName` | Maps to class/module per target |
 | Optional base | **Extends** | Parent, Super | `extendsType` | OOP targets only. A “component” attaches this way or as a class-typed field (U103). |
 | Community full graph | **Script** | Blueprint | Library filter | |
 | Community nodes | **Node pack** | — | — | |
 | AI / agent | **Agent** | Connect AI, Integrations | In-page TS agent panel | |
+
+
+### Generate, emit, and goldens
+
+**Generate** is what the user does (and the whole pipeline). **Emit** is Stage C only: printers write the source text. Do not put **Emit** on the toolbar, and do not use emit as an event verb (that is **Dispatch**).
+
+A **golden** is a checked-in expected file. Tests generate and compare the text. If they differ, either emit changed or the golden is stale.
+
+**Rosetta** is one construct graph printed in every language (one meaning, many scripts). Those fixtures live in `packages/syntax-packs/rosetta/` and are compared strictly. They are not the Start-screen examples.
+
+**Home-preview goldens** (U65) are Simple / Complex / Advanced. Same idea (expected text), different suite.
+
+| Concept | Term | Avoid | Notes |
+|---------|------|-------|-------|
+| User action + full pipeline | **Generate** / **Generate code** | Compile as the primary word | graph → analyze → IR → emit → files |
+| Stage C printers | **Emit** (docs / pipeline) | Emit Event; toolbar **Emit** | Writes source. Not a UI label. |
+| Expected test file | **Golden** | Using “snapshot” for these files | `ProjectSnapshot` is the saved graph, not a golden |
+| Same graph × every language | **Rosetta** | Calling Start-screen examples Rosetta | Pack fixtures; 14 constructs × 8 families |
+| Start-screen expected text | **Home-preview goldens** | Calling them Rosetta | Simple / Complex / Advanced (U65) |
+
+See [syntax_pack_architecture.md](../syntax_pack_architecture.md) (Rosetta suite) and [code_panel.md](../code_panel.md) (Generate UX).
 
 ### Flow & data nodes (stable — audit only)
 
@@ -137,7 +158,7 @@ Function graph tabs are **Edit function body** only (author the body). **Define*
 | **Pin vs Port** | Code: `pin`; UI skill: port for beginners | **Port** in onboarding; **pin** in inspector/dev | `Pin` type | Document preference; no mass rename |
 | **Symbol vs member** | `symbols.ts`, “symbol table”, “member chain” | Panel: **symbol** rows; canvas: **member** slots on chain | `VariableSymbol`, etc. | Symbol = project index; member = canvas declare slot |
 | **Module vs class** | `moduleName`, `ClassSymbol`, “Declare Class” | **Module name** for export; **Class** for OOP declare node | Both kept — target-dependent | Python/JS: module; C++/Java: class |
-| **Generate vs Compile** | Toolbar “Generate”; some docs say compile | **Generate (code)** primary | `compile` in portability docs OK for warnings | |
+| **Generate vs Compile vs Emit** | Toolbar “Generate”; some docs say compile; emit used for Stage C and (wrongly) events | **Generate (code)** primary; **Emit** = printers only | `compile` in portability docs OK for warnings | See Generate, emit, and goldens |
 | **Custom event vs handler** | `ProjectEventDefinition`, “On damage” | Panel: event name; canvas: **Declare** + **On** + **Dispatch** | `events[]` | Avoid “dispatcher” as primary noun |
 
 ---
