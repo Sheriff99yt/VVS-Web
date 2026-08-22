@@ -16,7 +16,7 @@ In-app: **Development roadmap** with **Open / Done / Research**, grouped fronten
 | Focus | IDs | Status |
 |-------|-----|--------|
 | Verse GetInput | CL-014 (`verse-getinput-cl014`) | **Open** - honest `(x)` + Print + empty string. No invented player API. Research tab: keep stub (ship), invent Player.GetInput (reject), pack device input (later) |
-| Start screen top bar | start-topbar-consistent | **Open / planned**. Homepage is StartScreen with its own header, not the editor TopNav |
+| Start screen top bar | start-topbar-consistent | **Done**. Home / library / roadmap show the same page-switch tabs as in-project TopNav. Project tab with no project goes home |
 | Library remaining (auth / upload) | U90 | **Frozen** - client-first; no accounts as product. Do not unfreeze upload or GoTrue. Research tab: git catalog (ship), VVS accounts (reject) |
 | Event Bind | event-bind-honest | **Partial** - C# `+=`, JavaScript `.on`, GDScript `.connect`. Other langs unspawned or leftover `(x)` |
 
@@ -32,14 +32,12 @@ In-app: **Development roadmap** with **Open / Done / Research**, grouped fronten
 ```mermaid
 flowchart LR
   subgraph today [Today]
-    Start[StartScreen own header]
-    Nav[Editor TopNav]
+    Shared[One shared page-switch top bar]
+    Home[Home / library / roadmap]
+    Editor[In-project TopNav]
   end
-  subgraph planned [Planned: start-topbar-consistent]
-    Shared[One shared top bar]
-  end
-  Start -.-> Shared
-  Nav -.-> Shared
+  Shared --> Home
+  Shared --> Editor
 ```
 
 ### Just shipped (August 2026)
@@ -68,7 +66,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | # | Item | Notes |
 |---|------|--------|
 | **CL-014** (`verse-getinput-cl014`) | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API. Research tab: keep stub (ship). |
-| **start-topbar-consistent** | Start screen top bar matches editor / roadmap | Homepage currently has its own header. Planned. Do not implement in the example-refresh pile. |
+| **start-topbar-consistent** | Start screen top bar matches editor / roadmap | **Done.** Same page-switch tabs on home, /library, /roadmap, and in-project. Project tab without a loaded project goes to the homepage. |
 | **folder-os-path** | Reveal in Explorer / Finder | Planned. |
 | **env-engine-packs** | Engine environment packs | Planned. Do not invent UE6 APIs. |
 | **folder-os-path** | Reveal in Explorer / Finder | Planned. |
@@ -127,7 +125,7 @@ User-facing waves (detail lives in [current_state.md](current_state.md) and the 
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Eight packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local / folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Open: CL-014 honest `(x)`, start-topbar-consistent, U93 long-term, U90 frozen, Bind partial |
+| **6** Fidelity, canvas scale & polish | **Active** | Open: CL-014 honest `(x)`, U93 long-term, U90 frozen, Bind partial. start-topbar-consistent done. |
 | **3** Community library | **Partial** | Client browse/search/templates shipped. Auth / upload **frozen**. Git catalog still research |
 | **4** Collaboration | Planned | Session client/host, not account cloud. Research tab |
 

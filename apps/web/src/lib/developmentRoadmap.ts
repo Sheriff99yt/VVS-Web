@@ -107,7 +107,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen -- new/open folder (.vvs/ overlay), recent projects, import JSON, three usability example cards (Simple featured, plus Complex / Advanced), Library and Roadmap explore shortcuts. SSR hydration-safe; Library and Roadmap browse via /library and /roadmap without creating a stored project.',
+          'Start screen -- new/open folder (.vvs/ overlay), recent projects, import JSON, three usability example cards (Simple featured, plus Complex / Advanced), Library and Roadmap explore shortcuts. Same page-switch top bar as the editor (StandaloneTopBar / TopNavPageSwitch). SSR hydration-safe; Library and Roadmap browse via /library and /roadmap without creating a stored project. Project tab with no project loaded returns to the homepage.',
       },
       {
         id: 'nav-history',
@@ -1471,8 +1471,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Start screen top bar matches editor / roadmap',
         description:
-          'Homepage currently has its own header. Redesign so Start uses the same top bar as when a project is open and as the roadmap page, so every view is consistent.',
-        status: 'planned',
+          'Shipped: Home, /library, and /roadmap use the same page-switch tab cluster as the in-project TopNav. Project tab with no project loaded navigates to the homepage (does not open a blank project). File/Edit/View menus and Generate stay in-project only.',
+        status: 'done',
       },
       {
         id: 'verse-getinput-cl014',

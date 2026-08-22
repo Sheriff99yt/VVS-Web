@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Save, Zap, Bot, PenLine, GitBranch, Package, Milestone, Layers, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings, HelpCircle, History, Search, FilePlus, Keyboard } from 'lucide-react';
+import { Save, Zap, Bot, Milestone, Undo2, Redo2, Scissors, Copy, ClipboardPaste, Files, ZoomIn, Group, Ungroup, FileDown, FileUp, FolderOutput, RefreshCw, Settings, HelpCircle, History, Search, FilePlus, Keyboard } from 'lucide-react';
 import { useProject } from '@/contexts/ProjectContext';
 import { useEditorNavigation } from '@/contexts/EditorNavigationContext';
 import { useEditorPanels } from '@/contexts/EditorPanelContext';
@@ -19,7 +19,7 @@ import { writeGeneratedFilesToFolder, saveProjectToFolder } from '@/lib/projectF
 import { emitProjectLikeCodePanelOffThread } from '@/lib/emitProjectCode';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { useCoarsePointer, useIsMobile } from '@/hooks/useIsMobile';
-import { canOpenAgentPanel, topNavIconButtonClass, topNavViewTabButtonClass } from '@/lib/mobileViewport';
+import { canOpenAgentPanel, topNavIconButtonClass } from '@/lib/mobileViewport';
 import { promoteBrowserProjectToDisk, SAVE_ON_DISK_PROMPT_EVENT } from '@/lib/promoteProjectToDisk';
 import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDialog';
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
@@ -28,6 +28,7 @@ import { AuthButton } from '@/components/auth/AuthButton';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 import { AgentPanel } from '@/components/layout/AgentPanel';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
+import { TopNavPageSwitch } from '@/components/layout/TopNavPageSwitch';
 import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
 import { useUiPreference } from '@/hooks/useUiPreference';
@@ -71,7 +72,6 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const coarsePointer = useCoarsePointer();
   const enlargeIconHit = coarsePointer || isMobile;
   const iconBtnClass = topNavIconButtonClass(enlargeIconHit);
-  const viewTabBtnClass = topNavViewTabButtonClass(enlargeIconHit);
   const agentPanelAllowed = canOpenAgentPanel(isMobile);
   const [openMenu, setOpenMenu] = useState<'file' | 'edit' | 'view' | 'help' | null>(null);
   const [saveOnDiskPromptOpen, setSaveOnDiskPromptOpen] = useState(false);
@@ -964,48 +964,11 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
 
           <div className="h-4 w-px bg-zinc-800 mx-2" />
 
-          <div className="flex items-center bg-zinc-950 rounded border border-zinc-800 overflow-hidden">
-            <Tooltip content="Canvas" placement="bottom" className="flex">
-              <button
-                onClick={() => navigate({ editorView: 'canvas' })}
-                className={`${viewTabBtnClass} transition-colors ${activeTab === 'canvas' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-              >
-                <PenLine size={14} />
-              </button>
-            </Tooltip>
-            <Tooltip content="References" placement="bottom" className="flex">
-              <button
-                onClick={() => navigate({ editorView: 'references' })}
-                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'references' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-              >
-                <GitBranch size={14} />
-              </button>
-            </Tooltip>
-            <Tooltip content="Library" placement="bottom" className="flex">
-              <button
-                onClick={() => navigate({ editorView: 'library' })}
-                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'library' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-              >
-                <Package size={14} />
-              </button>
-            </Tooltip>
-            <Tooltip content="Development roadmap" placement="bottom" className="flex">
-              <button
-                onClick={() => navigate({ editorView: 'roadmap' })}
-                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'roadmap' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-              >
-                <Milestone size={14} />
-              </button>
-            </Tooltip>
-            <Tooltip content="Syntax packs" placement="bottom" className="flex">
-              <button
-                onClick={() => navigate({ editorView: 'packs' })}
-                className={`${viewTabBtnClass} transition-colors border-l border-zinc-800 ${activeTab === 'packs' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}
-              >
-                <Layers size={14} />
-              </button>
-            </Tooltip>
-          </div>
+          <TopNavPageSwitch
+            activeTab={activeTab}
+            enlargeIconHit={enlargeIconHit}
+            onTab={(tab) => navigate({ editorView: tab })}
+          />
         </div>
 
         <div className="flex items-center gap-2">

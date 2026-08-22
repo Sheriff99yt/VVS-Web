@@ -15,7 +15,7 @@ import {
   BookOpen,
   Map,
 } from 'lucide-react';
-import { PRODUCT_NAME } from '@/lib/productName';
+import { StandaloneTopBar } from '@/components/layout/StandaloneTopBar';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
@@ -295,18 +295,7 @@ export function StartScreen() {
         onChange={handleImportFile}
       />
 
-      <header className="border-b border-zinc-800 px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded bg-zinc-100" />
-          <div>
-            <h1 className="text-lg font-bold text-zinc-100 tracking-wide">{PRODUCT_NAME}</h1>
-            <p className="text-xs text-zinc-500">Visual graphs that generate real code</p>
-          </div>
-        </div>
-        <span className="text-[10px] uppercase tracking-widest text-zinc-600 font-semibold">
-          {folderPickerReady ? 'Git-friendly · .vvs/ overlay' : 'Offline · Local projects'}
-        </span>
-      </header>
+      <StandaloneTopBar />
 
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-8 py-10 space-y-10">
