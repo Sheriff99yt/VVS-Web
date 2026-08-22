@@ -129,6 +129,8 @@ projects
 
 ## What we use from Supabase vs what we skip
 
+> Historical experiment only. Product does **not** use Supabase / GoTrue / Postgres.
+
 | Component | Use? | Why |
 |-----------|------|-----|
 | PostgreSQL | **Yes** | Projects, library metadata, pgvector later |

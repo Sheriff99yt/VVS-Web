@@ -21,6 +21,8 @@ The schema and endpoints below are an **early sketch**. Do not implement them as
 
 ## Database Schema
 
+> Historical sketch only. Not product. No Postgres metadata store.
+
 ### `library_items`
 
 Stores metadata for all library items. Graph content can be inline (JSONB) or referenced from git.

@@ -1,4 +1,7 @@
 # VVS Class Scopes and Symbol Relationships
+
+> **Status:** Shipped-as architecture note (July 2026). Not a feature catalog. Product persist is local / folder / `.vvs/` / git.
+
 *Documented on: 2026-07-11T19:45:15+03:00*
 
 This document illustrates how VVS structures class scopes, symbols, and visual graphs. 

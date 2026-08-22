@@ -1,6 +1,6 @@
 # Language capability catalog
 
-**Status:** Living plan (July 2026) — drives unified, modular UI for all codegen targets.  
+**Status:** Living plan (July 2026) — capability inventory. Dual Class / Calculator names in later tables are **historical fixture labels**, not current Start cards (Simple / Complex / Advanced).
 **Companion:** [language_neutral_vocabulary.md](language_neutral_vocabulary.md) · [terms_refactor_plan.md](terms_refactor_plan.md) · [fidelity_streamline.md](fidelity_streamline.md) · [node_system.md](../node_system.md) · [visual_to_text_fidelity.md](../visual_to_text_fidelity.md) · [language_profiles.md](../language_profiles.md)
 
 ---

@@ -70,7 +70,7 @@ export function AuthButton() {
 
   return (
     <>
-      <Tooltip content={user ? 'Cloud account' : 'Sign in for cloud save'} placement="bottom">
+      <Tooltip content={user ? 'Frozen leftover session' : 'Frozen leftover sign-in (not product accounts)'} placement="bottom">
         <button
           type="button"
           onClick={openModal}
@@ -96,7 +96,7 @@ export function AuthButton() {
           <div className="bg-zinc-950 border border-zinc-800 rounded-lg w-[400px] overflow-hidden flex flex-col">
             <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
               <h3 className="text-zinc-100 font-semibold text-sm">
-                {user ? 'Cloud account' : mode === 'sign-in' ? 'Sign in' : 'Create account'}
+                {user ? 'Frozen leftover session' : mode === 'sign-in' ? 'Leftover sign-in' : 'Leftover create (frozen)'}
               </h3>
               <button
                 type="button"
@@ -111,8 +111,8 @@ export function AuthButton() {
               {user ? (
                 <>
                   <p className="text-xs text-zinc-400">
-                    Signed in as <span className="text-zinc-200">{user.email}</span>. Project API
-                    calls include your access token.
+                    Signed in as <span className="text-zinc-200">{user.email}</span>. Leftover experiment
+                    only — not VVS product accounts.
                   </p>
                   <button
                     type="button"
@@ -127,8 +127,8 @@ export function AuthButton() {
               ) : (
                 <>
                   <p className="text-xs text-zinc-500 leading-relaxed">
-                    Sign in with Supabase Auth (GoTrue). Your JWT is sent to the Go API for
-                    user-scoped cloud save when Postgres is enabled.
+                    Frozen leftover. Library auth/upload and VVS accounts are not product.
+                    This panel is only for a local GoTrue experiment, not cloud save.
                   </p>
                   {isGitHubOAuthConfigured() ? (
                     <button
@@ -148,9 +148,8 @@ export function AuthButton() {
                     </button>
                   ) : (
                     <p className="text-[11px] text-zinc-600 leading-relaxed">
-                      GitHub OAuth: set GOTRUE_EXTERNAL_GITHUB_ENABLED and client credentials in
-                      docker-compose, then NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=true in .env.local.
-                      Email/password works without GitHub for v1.
+                      GitHub OAuth is part of the same frozen leftover. Leave it unset.
+                      Product persist is local / folder / .vvs / git.
                     </p>
                   )}
                   <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
