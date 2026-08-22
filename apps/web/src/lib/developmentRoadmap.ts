@@ -1437,6 +1437,30 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
 /** Open / partial only -- shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
+    id: 'native-hosts-priority',
+    title: 'High priority: native hosts',
+    phase: 5,
+    emphasis: 'active',
+    items: [
+      {
+        id: 'vscode-native-plugin',
+        layer: 'frontend',
+        title: 'Native VS Code plugin',
+        description:
+          'High priority. Open VVS graphs from a VS Code workspace with real workspace paths (unlike browser File System Access). Generate still writes ordinary source beside the graph. Do not treat a “open Pages in a browser tab” button as native. Three approaches on the Research tab.',
+        status: 'planned',
+      },
+      {
+        id: 'ue6-native-plugin',
+        layer: 'backend',
+        title: 'Native Unreal Engine 6 plugin (after UE6 releases)',
+        description:
+          'High priority, gated on Unreal Engine 6 actually shipping (Epic public target: Early Access end of 2027; not released as of August 2026). Same graph schema and ordinary Verse/source. Do not invent UE6 APIs. Do not start a Slate canvas before the engine exists. Sibling Phase 5 items and the existing attach study stay; this row is the native-plugin question after release. Three approaches on the Research tab.',
+        status: 'planned',
+      },
+    ],
+  },
+  {
     id: 'leftover-fidelity-open',
     title: 'Leftover fidelity',
     phase: 6,
@@ -1610,7 +1634,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'ue-plugin',
         layer: 'backend',
         title: 'In-engine graph editor',
-        description: 'UE6-embedded canvas on the same graph schema with Verse emitter integration. Three attach paths compared on the Research tab.',
+        description: 'Same graph schema and Verse emit inside Unreal. High-priority native-plugin question is `ue6-native-plugin` (after UE6 releases). Packs / file attach still on the Research tab. Do not invent UE6 APIs.',
         status: 'planned',
       },
       {

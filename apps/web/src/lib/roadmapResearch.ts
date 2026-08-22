@@ -962,4 +962,239 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
       { label: 'Stack Overflow: full path is not revealed', href: 'https://stackoverflow.com/questions/69236490/how-do-you-get-the-selected-directory-path-from-file-system-access-api-window-sh' },
     ],
   },
+  {
+    id: 'vscode-native-plugin',
+    systemId: 'vscode-native-plugin',
+    title: 'Native VS Code plugin',
+    subtitle:
+      'A Marketplace VSIX is not a fact. The honest question is which VS Code surface, if any, can host the canvas without lying about paths or inventing a second product.',
+    problem:
+      'Reveal in Explorer is blocked in the browser because File System Access handles have no OS path. A VS Code extension host does have Uri.fsPath and workspace.fs. That is the only real native win. CustomTextEditor binds a webview to TextDocument and is official when the on-disk format is text (graph JSON under .vvs). CustomEditor is for binary. A plain webview has no dirty bit and no Save. Simple Browser is a bundled iframe, not a public API. openExternal is a thin system-browser button. Iframing live GitHub Pages is technically possible today because Pages often cannot emit X-Frame-Options, which is an accident of hosting, not a contract. That iframe has no workspace.fs, FSAA still has no path, and acquireVsCodeApi is missing unless VVS adds a bridge. Bundling Next/Pages into vscode-webview:// needs asWebviewUri, a CSP nonce, and a rewrite of /_next paths. That build is unspiked. retainContextWhenHidden is expensive. Draw.io uses custom-editor priority option so the text editor survives. Cursor pulls Open VSX; a tight engines.vscode can hide the extension. Undo is a product choice (text buffer versus graph stack). Two writers (browser FSAA plus plugin) have no lock. This pile does not ship a plugin.',
+    constraints: [
+      'Client-first Pages stays the product. No VVS accounts. No dedicated app server. No hosted MCP.',
+      'Canvas is source of truth as JSON under .vvs. Generate writes ordinary language files. Do not make generated source the custom-editor document.',
+      'U93 is not shipped. Do not LLM-synthesize a graph from code inside a plugin.',
+      'Bind only csharp / js / gdscript. Verse GetInput stays leftover. Do not pretend eight-target Bind.',
+      'Do not call openExternal or Simple Browser native. Do not iframe production Pages and call that a plugin.',
+      'No Marketplace VSIX this pile. A later spike, if any, starts read-only. Unknowns stay listed until the spike succeeds.',
+      'Go MCP stays a local sidecar the user already runs. It is not the hosted agent and not required for a first plugin.',
+    ],
+    options: [
+      {
+        id: 'thin-open-external',
+        title: 'Thin openExternal plus Explorer for paths',
+        verdict: 'later',
+        summary:
+          'A command opens the Pages URL in the system browser. The user already has the folder in VS Code, so they reveal generated files from Explorer, not from the canvas. Honest distribution. Not a native canvas.',
+        how:
+          'vscode.env.openExternal (and asExternalUri on Remote). Optional status bar if .vvs exists. Optional reveal of bound csharp/js/gdscript from the Explorer. Do not wrap Simple Browser as product chrome. Do not claim Reveal-from-canvas.',
+        pros: [
+          'Matches no server and no accounts. Hours, not a second product.',
+          'Remote-safe. Official openExternal / asExternalUri path.',
+          'No two-undo-stack problem. Canvas stays one Pages tab.',
+          'Users already have the folder. Unreal-helper shaped: IDE for text, Pages for graph.',
+          'Does not depend on Pages framing headers or a Next webview rewrite.',
+          'Can dual-publish later if you still want a bookmark on Marketplace and Open VSX.',
+        ],
+        cons: [
+          'Not native. Canvas is still FSAA. Reveal from a node stays dead.',
+          'Easy to over-promise "VS Code plugin" and ship a bookmark.',
+          'Simple Browser is unofficial (vscode#258125). Interaction is poor if someone sneaks it in.',
+          'Generate-into-this-workspace only if the user already granted FSAA to that folder in the browser.',
+          'Does not unlock Codespaces-correct writes from the canvas.',
+          'Marketing still has to say "open the website." That is the honest sentence.',
+        ],
+      },
+      {
+        id: 'iframe-live-pages',
+        title: 'Iframe live Pages inside a webview',
+        verdict: 'reject',
+        summary:
+          'Host the production Pages URL in a webview iframe and call it a native plugin. Worse chrome, no real paths, and framing can die if GitHub adds clickjacking headers.',
+        how:
+          'createWebviewPanel with CSP frame-src https. iframe src = Pages origin. Optional postMessage only if VVS grows an embed protocol it does not have. Stock Pages has no acquireVsCodeApi.',
+        pros: [
+          'One visual canvas without re-platforming Next onto vscode-webview://.',
+          'Pages is often frameable today because authors cannot set X-Frame-Options (pages-gem #415).',
+          'Draw.io online mode is this pattern, for an app that already embeds.',
+          'Avoids VSIX size of a full Next vendor.',
+        ],
+        cons: [
+          'Framing is not a GitHub contract. A default frame-ancestors header kills the product.',
+          'No workspace.fs, no Uri.fsPath, no Reveal unless VVS adds a bridge (product change).',
+          'FSAA inside the iframe still has no OS path. Permissions-Policy in VS Code sandbox is unproven.',
+          'Outer webview cannot read the iframe DOM. Cookies and localStorage belong to Pages, not vscode-webview://.',
+          'Remote: iframe-to-localhost is the UI machine, not the extension host, unless asExternalUri is used.',
+          'Two canvases if the user also keeps a browser tab. No lock.',
+          'Worse chrome than the real browser. Microsoft told extensions to write their own webview if they need interaction.',
+          'Production origin headers were not a contract in the brief. Do not treat pages.github.com as VVS.',
+        ],
+      },
+      {
+        id: 'custom-text-editor-bridge',
+        title: 'CustomTextEditor plus workspace.fs bridge',
+        verdict: 'later',
+        summary:
+          'Not a ship-this-week. Bundle a VVS canvas build (or a folder-scoped webview) and postMessage to workspace.fs. First slice is a read-only spike, not a Marketplace VSIX. Unknowns stay listed until that spike succeeds.',
+        how:
+          'CustomTextEditor on the graph JSON if the SoT is a text file (official rule). Folder-scoped webview if the document is the whole .vvs tree. asWebviewUri + CSP nonce + rewrite of /_next. Replace FSAA with acquireVsCodeApi to workspace.fs. Reveal via revealFileInOS on Uri. In-page TS agent stays in the webview. Generate writes bound languages only. Draw.io-style priority option so the text editor survives.',
+        pros: [
+          'Only option that makes native and Reveal true.',
+          'Remote and Codespaces-correct: workspace.fs is the workspace, not the laptop picker.',
+          'Git dirty state can match the graph file if every commit is a WorkspaceEdit.',
+          'Precedents exist: CustomTextEditor docs, cat-scratch sample, Draw.io text provider.',
+          'Does not require GitHub framing. Origin is vscode-webview:// you control.',
+          'Canvas can stay SoT if generated files are writes, not the document.',
+        ],
+        cons: [
+          'Largest engineering. Next bundle size, hashed /_next, CSP, workers, WASM, Play are unspiked.',
+          'retainContextWhenHidden keeps a second Chromium heap. Official webview docs call that expensive.',
+          'Undo is not free. Text-buffer undo versus graph-op undo is a product choice, not an API fact.',
+          'Two writers if the user also keeps Pages FSAA open. File watchers reload. They do not merge.',
+          'VSIX size and dual-release with Pages, or version skew.',
+          'Cursor: Open VSX plus engines.vscode can hide the extension. Not measured.',
+          'Play-in-webview is unknown. SharedArrayBuffer / COOP is not settable on Pages headers and may fail in-IDE.',
+          'Which file is the graph SoT (one JSON versus many under .vvs) is still unknown. Selector depends on it.',
+        ],
+      },
+    ],
+    recommendation:
+      'Do not ship a plugin this pile. Pages stays the product. Do not call a browser button native. Do not iframe Pages as the plugin. A later spike may prove CustomTextEditor plus workspace.fs. Until that spike succeeds, native VS Code is research, not a date. Option 1 can stay a later honest launcher if you still want a bookmark. Option 2 stays rejected.',
+    firstSlice: [
+      'No VSIX this pile. No Marketplace listing. No Open VSX listing.',
+      'Keep Pages as the hosted canvas. Do not iframe production as the product.',
+      'Do not ship openExternal as "native VS Code." If a launcher exists later, name it Open VVS Web.',
+      'Optional later read-only webview spike: load a graph JSON, postMessage readFile, no write, no generate, no retainContextWhenHidden.',
+      'Spike must list: Next bundle size, FSAA versus workspace.fs, undo policy, Cursor engines field, Play, production headers.',
+      'If the spike fails, the card stays later. Do not paper over it with an iframe.',
+      'Bind generate only to csharp / js / gdscript if writes ever land. Two-writer lock is a product rule, not a TODO comment.',
+    ],
+    sources: [
+      { label: 'VS Code Custom Editor API (CustomTextEditor vs CustomEditor)', href: 'https://code.visualstudio.com/api/extension-guides/custom-editors' },
+      { label: 'VS Code Webview API (asWebviewUri, CSP, retainContextWhenHidden)', href: 'https://code.visualstudio.com/api/extension-guides/webview' },
+      { label: 'Remote extensions: openExternal, asExternalUri, webview iframe sample', href: 'https://code.visualstudio.com/api/advanced-topics/remote-extensions' },
+      { label: 'vscode-discussions #89 (custom editors / webview practice)', href: 'https://github.com/microsoft/vscode-discussions/discussions/89' },
+      { label: 'hediet/vscode-drawio (text provider, priority option, online iframe)', href: 'https://github.com/hediet/vscode-drawio' },
+      { label: 'microsoft/vscode#258125 (Simple Browser is not a public API)', href: 'https://github.com/microsoft/vscode/issues/258125' },
+      { label: 'workspace.fs (VS Code 1.37 file system API)', href: 'https://code.visualstudio.com/updates/v1_37#_vscodeworkspacefs' },
+      { label: 'Cursor extensions come from Open VSX', href: 'https://cursor.com/help/customization/extensions' },
+      { label: 'MDN FileSystemHandle has no path', href: 'https://developer.mozilla.org/en-US/docs/Web/API/FileSystemHandle' },
+      { label: 'GitHub pages-gem #415 (Pages cannot set response headers)', href: 'https://github.com/github/pages-gem/issues/415' },
+    ],
+  },
+  {
+    id: 'ue6-native-plugin',
+    systemId: 'ue6-native-plugin',
+    title: 'Native Unreal Engine 6 plugin (after UE6 releases)',
+    subtitle:
+      'UE6 is not released as of 22 Aug 2026. High priority means watch Epic, not start a Slate canvas in 2026.',
+    problem:
+      'Epic published The road to UE 6: Early Access targeted end of 2027, full release 12 to 18 months later. The public GitHub ue6 stream is not Alpha. Verse visible there is not for general adoption. There is no published UE6 plugin SDK, Slate module map, or VVS graph widget API. Do not invent those. UE 5.8 Unreal MCP is an in-process localhost server on :8000/mcp with editor tools. It is experimental and not a third-party graph source of truth. UEFN MCP Toolset Beta (about 20 Aug 2026) can compile Verse, place devices, and run PIE. It is built-in. It does not rewrite a React canvas. File-drop ordinary Verse plus Build Verse Code is the real path today. A Slate rewrite is a second product and forks IR. Existing card ue6-attach-path already rejects that. This card does not contradict it. Packs plus Generate Verse first still stands. This Open item is gated on a real UE6 release, then a thin compile/import plugin or Epic MCP client that compiles files VVS already wrote. Not a VVS-hosted MCP. Not a Pages requirement.',
+    constraints: [
+      'Client-first Pages stays the hosted product. No Unreal install required to edit. No VVS accounts. No hosted MCP.',
+      'Canvas is source of truth in the browser. Generate writes ordinary Verse/source. U93 is not shipped. COA_SHIPPED is false. Bind is not on Verse.',
+      'Do not invent UE6 plugin APIs, IVerseCompiler, a React host in the unified editor, or a public UE6 MCP tool list.',
+      'Do not design against ue6-main community flags (VersePath, copied UEFN VSIX). Those are not contracts.',
+      'Do not contradict ue6-attach-path: packs first, official MCP later, Slate rewrite reject.',
+      'Do not flip packs-first because this row is high priority. Priority is the gate, not a 2026 C++ start.',
+      'Same graph schema if anything is ever embedded. A Slate or UEdGraph clone that drifts from web IR is a fork.',
+    ],
+    options: [
+      {
+        id: 'wait-ue6-packs-first',
+        title: 'Wait for UE6 EA/docs; ship packs and ordinary Verse now',
+        verdict: 'ship',
+        summary:
+          'Treat native plugin as date-gated on Epic EA or full release notes. Until then ship environment packs and Generate ordinary Verse. File-shaped attach into UEFN today. High priority does not mean start Slate in 2026.',
+        how:
+          'Author on Pages. Generate ordinary .verse (and C++ from the C++ pack). User drops into Verse Explorer / Content. User hits Verse, Build Verse Code. Docs say that. Watch Epic road-to-ue-6. Do not write a .uplugin against unpublished keys.',
+        pros: [
+          'No vapor APIs. Pages stays the product.',
+          'Works with current UEFN Build Verse Code and with a future UE6 without a rewrite.',
+          'Does not compete with Epic MCP. Does not stand up a VVS server.',
+          'Matches leftover honesty (CL-014, Bind not on Verse, U93 unshipped).',
+          'Staff time goes to packs users can install, not a C++ graph they cannot host.',
+          'Matches ue6-attach-path option 1. One story, two cards.',
+        ],
+        cons: [
+          'No live compile or PIE from VVS.',
+          'Does not look like "we shipped a UE6 plugin." That sentence is not available yet.',
+          'API manifests will lag Epic. Packs will need a refresh when EA lands.',
+          'Users still alt-tab from Pages to the editor.',
+          'Verse APIs that survive unification are unknown. Packs can rot.',
+        ],
+      },
+      {
+        id: 'slate-uedgraph-now',
+        title: 'Native Slate / UEdGraph VVS canvas before UE6 contracts',
+        verdict: 'reject',
+        summary:
+          'Rewrite the canvas in Slate or UEdGraph before (or without) published UE6 contracts. Invented APIs. Second source of truth. Existing attach study already said no.',
+        how:
+          'Editor module against 5.8 UnrealEd or against ue6-main folklore. New SCompoundWidget graph. Or treat Blueprint VM as the VVS model. Ship a Fab "UE6" plugin that cannot target a store product that does not exist.',
+        pros: [
+          'Discoverability inside an editor the user already lives in, if the engine existed.',
+          'Artists would not leave Unreal for compile, if compile were the only ask (it is not).',
+          'A screenshot of nodes in Slate looks like a native plugin.',
+        ],
+        cons: [
+          'UE6 is not released. Module IDs, Verse hooks, and extension points are unpublished.',
+          'Second product. Pan/zoom, leftovers, Generate, Agent, Research, packs all become C++.',
+          'Schema fork. UEdGraph / Blueprint VM is not VVS IR. Phase 5 said same schema, not Blueprint VM.',
+          'Canvas-as-SoT dies. An out-of-date Slate clone teaches the user the web graph is disposable.',
+          'Cannot be the hosted path. Pages must keep working with no Unreal install.',
+          'Epic will move the floor: UE5+UEFN merge, later deprecation of Actors/Blueprints. A 5.8 UnrealEd widget will be rewritten.',
+          'U93 unshipped. An in-engine canvas pretends the loop is closed.',
+          'Community ue6-main VersePath posts tell you not to ship on them.',
+        ],
+      },
+      {
+        id: 'thin-plugin-after-contracts',
+        title: 'Thin editor plugin or official MCP client after UE6 publishes contracts',
+        verdict: 'later',
+        summary:
+          'After UE6 publishes plugin, MCP, or compiler contracts: a thin editor module or an official MCP client that compiles files VVS already wrote. Not a VVS-hosted MCP. Not a Pages requirement. Not a Slate canvas.',
+        how:
+          'Wait for EA or full SDK docs. Then either a menu that imports the generated .verse and triggers the documented compile, or a local helper that speaks Epic MCP (localhost, user-enabled) to compile and read logs. Bridge applies Generate output. It does not let MCP edit VVS nodes. WebView of the same web app only if an in-editor window is truly required and UE6 documents a browser host. Still one JSON.',
+        pros: [
+          'Canvas stays web. Same SoT as Pages.',
+          'Epic owns editor tools and will keep adding MCP toolsets toward UE6.',
+          'Closes alt-tab for compile/PIE for people who already have the editor open.',
+          'Fab / Plugins discoverability without a second graph editor.',
+          'Matches ue6-attach-path later row. No hosted MCP. No accounts.',
+          'Can stay unused. Pages users never install Unreal.',
+        ],
+        cons: [
+          'Requires a running editor plus Beta or Experimental MCP until UE6 contracts exist.',
+          'Temptation to become a VVS MCP client product or a Cursor wrapper. Fights in-page Agent.',
+          'UEFN toolsets are not 5.8 toolsets. Unified-editor tools are unknown.',
+          'File ownership fight if an agent rewrites Verse VVS just wrote.',
+          'Official UEFN MCP full tool schema was press-only from the research box. Confirm the live Epic page before coding.',
+          'Unknown whether Epic allows a non-agent local app as a first-class MCP client.',
+          'CEF versus WebView2 versus no browser in UE6 is unpublished. Do not bet the product on SWebBrowser.',
+        ],
+      },
+    ],
+    recommendation:
+      'Keep the existing attach study. High priority native plugin is gated on a real UE6 release. Do not design against ue6-main community flags. Do not flip packs-first. Ship packs and ordinary Verse now. Reject Slate/UEdGraph as the VVS canvas. After Epic publishes contracts, a thin compile plugin or official MCP client may be later. Not a VVS-hosted MCP. Not a Pages requirement.',
+    firstSlice: [
+      'No Slate module. No .uplugin against unpublished UE6 keys. No Fab listing for an engine that is not a store product.',
+      'Keep ue6-attach-path verdicts: packs first, MCP attach later, Slate rewrite reject.',
+      'Ship or continue environment packs and Generate ordinary Verse. File-drop plus Build Verse Code is the 2026 story.',
+      'Watch Epic road-to-ue-6 and State of Unreal notes. Reopen this card when EA or full SDK docs exist.',
+      'Do not implement MCP tools VVS invented. If a later helper exists, it calls Epic tools on files VVS already wrote.',
+      'Do not treat UEFN MCP Beta or 5.8 Unreal MCP as UE6 contracts. They are proxies for attach shape only.',
+      'Docs: drop this file in UEFN, Build Verse Code. That sentence is allowed now.',
+    ],
+    sources: [
+      { label: 'Epic: The road to Unreal Engine 6 (EA end 2027, stream not Alpha)', href: 'https://www.unrealengine.com/news/the-road-to-ue-6' },
+      { label: 'Epic: State of Unreal 2026 (UE6 pillars, 5.8 experimental MCP)', href: 'https://www.unrealengine.com/news/state-of-unreal-2026-top-news-from-the-show' },
+      { label: 'Inven Global: UEFN MCP Toolset about 20 Aug 2026', href: 'https://www.invenglobal.com/articles/24955/speeding-up-development-with-ai-uefn-supports-unreal-mcp-plugin-starting-aug-20' },
+      { label: 'UEFN: Create your own device using Verse (Build Verse Code)', href: 'https://dev.epicgames.com/documentation/en-us/uefn/create-your-own-device-using-verse-in-unreal-editor-for-fortnite' },
+      { label: 'Unreal MCP in Unreal Editor (UE 5.8, localhost :8000/mcp)', href: 'https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor' },
+      { label: 'GamesBeat: UE6 unifies UE5 and UEFN, EA end 2027', href: 'https://gamesbeat.com/unreal-engine-6-will-combine-ue5-and-uefn-into-a-unified-engine-state-of-unreal/' },
+      { label: 'Engadget: 5.8 MCP, Epic wants MCP integral to UE6', href: 'https://www.engadget.com/2196807/epic-games-details-how-its-embracing-gen-ai-in-unreal-engine/' },
+      { label: 'Digital Foundry: UE6 EA end-2027, full about 12 to 18 months later', href: 'https://www.digitalfoundry.net/news/2026/06/unreal-engine-6-gets-q4-2027-early-access-release-date-full-release-by-mid-2029' },
+    ],
+  },
 ];

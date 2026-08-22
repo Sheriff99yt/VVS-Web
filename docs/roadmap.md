@@ -126,6 +126,14 @@ User-facing waves (detail lives in [current_state.md](current_state.md) and the 
 | **6** Fidelity, canvas scale & polish | **Active** | Open: CL-014 honest `(x)`, start-topbar-consistent, U93 long-term, U90 frozen, Bind partial |
 | **3** Community library | **Partial** | Client browse/search/templates shipped. Auth / upload **frozen**. Git catalog still research |
 | **4** Collaboration | Planned | Session client/host, not account cloud. Research tab |
+
+### High priority: native hosts
+
+| Item | Status | Gate |
+|------|--------|------|
+| **Native VS Code plugin** | **Open** — high priority. Research tab. Not a “open Pages” button. | Workspace paths + ordinary Generate |
+| **Native Unreal Engine 6 plugin** | **Open** — high priority, **after UE6 releases**. Epic public target: Early Access end of 2027. Not released as of August 2026. | Do not invent UE6 APIs. Do not start Slate before the engine exists. |
+
 | **5** UE6 plugin | Planned | Same graph to Verse text; not Blueprint VM. Research tab |
 
 Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md). Backlog `.agents/memory/incomplete-ui.md`. Lang emit [cross_language_mapping/SKILL.md](../.agents/skills/vvs_cross_language_mapping/SKILL.md).
