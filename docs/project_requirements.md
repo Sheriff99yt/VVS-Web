@@ -16,7 +16,7 @@ This document captures functional and non-functional requirements for Vision Vis
 
 **Strategic engine integration:** A planned **Unreal Engine 6 editor plugin** will share the same graph schema and transpiler pipeline, targeting **Verse** as the primary in-engine language. The goal is a **dynamic, extensible node system** that helps teams **transition from deprecated Blueprint-centric workflows** to Verse-first development while keeping graphs portable and generated code reviewable. See [vision.md](vision.md) and [roadmap.md](roadmap.md).
 
-**The Goal**: Build a modular, portable node-based programming system where AI agents can autonomously construct logic flows without hallucinating syntax. Accessible as an offline-capable Progressive Web App and, on the roadmap, inside UE6 — allowing developers to jump in and out on any device or authoring surface.
+**The Goal**: Build a modular, portable node-based programming system where AI agents can autonomously construct logic flows without hallucinating syntax. Accessible as a static GitHub Pages editor plus local folder / `.vvs/` / git. Offline-capable client Generate is in-browser. There is **no PWA product path**. A native UE6 host is Research, after a real engine release.
 
 ---
 
@@ -85,7 +85,7 @@ This document captures functional and non-functional requirements for Vision Vis
 
 ### 3.3 Code Generation (Transpiler)
 - [x] Generate syntactically valid code from the visual graph for multiple target languages
-- [x] **V1 languages**: Python, JavaScript/TypeScript, C++, **Verse**
+- [x] **V1 languages**: Python, JavaScript, C++, **Verse** (JavaScript is one target; TypeScript is not a generate target)
 - [x] **V2 languages** (stretch): **GDScript, Rust, C#, Go** — pack-first base packs, 14 Rosetta goldens each, UI codegen targets — **shipped** July 2026 (milestone 3; Go is U77)
 - [ ] Language switching is instant — the graph does not change, only the emitter output
 - [ ] Generated code is human-readable and properly formatted (indentation, spacing, line breaks)
@@ -141,10 +141,10 @@ This document captures functional and non-functional requirements for Vision Vis
 
 ### 4.2 Accessibility & Portability
 - [ ] Runs in any modern browser (Chrome, Safari, Firefox, Edge)
-- [ ] **Progressive Web App (PWA)**: installable on mobile/desktop home screens
+- [ ] ~~**Progressive Web App (PWA)**~~: **cut** — no PWA product path
 - [ ] **Full offline mode**: graph editing AND code generation work without internet
 - [ ] Syntax registry cached in IndexedDB for offline transpilation
-- [ ] Auto-sync to cloud (Supabase) when connectivity is restored
+- [ ] ~~Auto-sync to cloud (Supabase)~~: **cut** — no VVS accounts; persist is local / folder / `.vvs/` / git
 - [ ] Responsive layout: usable on mobile phones, tablets, and desktops
 - [ ] Touch-optimized controls for mobile (radial menus, gesture nav, magnetic snapping)
 
@@ -156,13 +156,13 @@ This document captures functional and non-functional requirements for Vision Vis
 - [ ] Comprehensive test coverage for the transpiler (the most critical system, now client-side TypeScript)
 
 ### 4.4 Scalability
-- [ ] Backend handles thousands of concurrent users syncing graphs (Go concurrency)
-- [ ] Community library scales to tens of thousands of uploaded scripts
+- [ ] ~~Backend handles thousands of concurrent users syncing graphs~~: **not product** — no dedicated app server
+- [ ] Community library: **git catalog is Research**; auth / upload **frozen**. Do not treat uploads as a requirement
 - [ ] Adding a new target language requires **zero engine code changes** — only database entries
 - [ ] Node definitions are extensible without modifying core engine logic
 
 ### 4.5 Security
-- [ ] Authentication and authorization on all API endpoints
+- [ ] ~~Authentication on all API endpoints~~: **frozen / not product** — no VVS accounts
 - [ ] MCP server authenticates external AI tool connections and scopes to user's projects
 - [ ] Input validation on all user-submitted data (graph JSON, script metadata)
 - [ ] Community library moderation tools (flag/report/remove)
@@ -184,10 +184,10 @@ These decisions have been evaluated against all requirements and are confirmed.
 | **Backend Language** | Go (Golang) | REST API, MCP server, WebSocket collaboration; zero-pain concurrency via Goroutines |
 | **AI Strategy** | In-page TS agent (hosted) + later MCP wrapper | No bundled LLM; optional local key; other apps via later wrapper / today's optional Go sidecar |
 | **Communication** | REST (OpenAPI) + WebSocket | Type safety via generated TS clients from OpenAPI spec; no gRPC proxy overhead |
-| **Database** | Self-hosted **Supabase Postgres** + JSONB via Go **`pgx`** | Relational ownership + document snapshots; pgvector on same DB |
-| **Vector Search** | pgvector (Postgres extension) | Semantic search in Phase 3 — no separate vector DB |
+| **Database** | **None as product** (local / folder / `.vvs/`). Postgres + `pgx` remains a frozen experiment — [deployment.md](deployment.md) | Client-first; no dedicated app server |
+| **Library search** | Token + language chips (shipped) | Embeddings / pgvector are not the shipped search |
 | **Code Formatting** | Lightweight client-side TS formatter (v1); lazy-load Prettier (Phase 2+) | Transpiler tokens handle indentation; minor whitespace cleanup done client-side |
-| **Deployment** | **VPS: self-hosted Supabase + Go**; optional CDN for Next.js — [deployment.md](deployment.md) | Final architecture; shared hosting = static web only |
+| **Deployment** | **GitHub Pages** static export + local folder / `.vvs/` | VPS / Supabase is a frozen experiment, not final product architecture — [deployment.md](deployment.md) |
 | **Caching** | IndexedDB (client) + Go in-process | Syntax registry small; Redis deferred until multi-replica scale |
 | **Syntax packs + Tree-sitter** | Syntax packs authoritative; Tree-sitter validator-only | Print rules in `@vvs/syntax-packs` with Rosetta golden tests; optional Tree-sitter parse validation in CI — not syntax author — see [syntax_pack_architecture.md](syntax_pack_architecture.md) |
 
@@ -197,10 +197,10 @@ These decisions have been evaluated against all requirements and are confirmed.
 
 | # | Decision | Options | Impact |
 |---|---|---|---|
-| 1 | **Auth providers (v1)** | **Locked:** GitHub OAuth + email via GoTrue — magic links optional | See [deployment.md](deployment.md) |
+| 1 | **Auth providers (v1)** | **Frozen / reject as product.** No VVS accounts. GoTrue leftover in repo only | See [deployment.md](deployment.md) |
 | 2 | **Monorepo structure** | Turborepo, Nx, or simple folder structure for Next.js + Go | Build tooling, CI/CD, developer experience |
-| 3 | **Collaboration conflict resolution** | OT (Operational Transform), CRDT, or simple last-write-wins for v1? | Complexity, real-time editing quality |
-| 4 | **MCP auth** | **Locked:** Supabase JWT passthrough — Go verifies JWKS, scopes tools to `user_id` | See [deployment.md](deployment.md) |
+| 3 | **Collaboration conflict resolution** | Research / Phase 4. **CRDT is not shipped.** Session client/host, not account cloud | In-app Research tab |
+| 4 | **MCP auth** | Hosted agent is **in-page TS**. Go MCP is a **local sidecar**. There is no product hosted MCP URL | See [setup.md](setup.md) |
 
 ---
 
@@ -223,7 +223,7 @@ These items are acknowledged as necessary but not yet specified:
 - [ ] **Testing strategy**: Unit tests (transpiler — TypeScript), integration tests (Go API + MCP), E2E tests (graph editor interactions)
 - [ ] **Error handling & user feedback**: How invalid graphs surface errors in the UI
 - [ ] **Graph versioning / undo-redo**: State history management approach
-- [ ] **CI/CD pipeline**: Build, test, and deploy automation — VPS Compose for Supabase + Go; see [deployment.md](deployment.md)
+- [x] **CI/CD pipeline**: GitHub Actions Pages + package tests. VPS Compose is leftover experiment, not the pipeline
 - [ ] **Logging & observability**: Structured logging, error tracking, performance monitoring (especially MCP server)
 - [ ] **Rate limiting & abuse prevention**: MCP tool call limits, community moderation workflows
 - [ ] **MCP auth & session management**: How external AI tools authenticate and scope access to user projects

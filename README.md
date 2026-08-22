@@ -208,6 +208,8 @@ Contributor rules: **[CONTRIBUTING.md](CONTRIBUTING.md)**. **[.agents/AGENTS.md]
 | **[naming_and_product_direction.md](docs/naming_and_product_direction.md)** | UI vocabulary (web stays engine-neutral) |
 | **[project_requirements.md](docs/project_requirements.md)** | Full requirements spec |
 | **[vvs_2_0_tech_stack.md](docs/vvs_2_0_tech_stack.md)** | Technology choices |
+| **[visual_to_text_fidelity.md](docs/visual_to_text_fidelity.md)** | Text-shaped graphs |
+| **[docs/README.md](docs/README.md)** | Full documentation index |
 | **[ui_api_delivery_loop.md](docs/ui_api_delivery_loop.md)** | Wiring UI to APIs incrementally |
 
 ---

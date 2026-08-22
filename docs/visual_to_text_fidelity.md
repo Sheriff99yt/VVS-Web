@@ -70,7 +70,7 @@ Two canvas positions, or existence without a body, are two nodes. Function **Dec
 
 ### 1. Text code is the integration layer
 
-- Generated output runs in **standard** Python, JS/TS, C++, Verse, etc. — no VVS runtime required.
+- Generated output runs in **standard** Python, JavaScript, C++, Verse, and the other shipped targets — no VVS runtime required. TypeScript is not a generate target.
 - Users read, diff, grep, debug, and review in their **existing IDE and CI**.
 - Graph JSON is the **authoring** artifact; text is what teams **ship and integrate**.
 

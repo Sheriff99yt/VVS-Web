@@ -15,7 +15,7 @@ In-app: **Development roadmap** with **Open / Done / Research**, grouped fronten
 
 | Focus | IDs | Status |
 |-------|-----|--------|
-| Verse GetInput | CL-014 | **Open** - honest `(x)` + Print + empty string. No invented player API. Research tab: keep stub (ship), invent Player.GetInput (reject), pack device input (later) |
+| Verse GetInput | CL-014 (`verse-getinput-cl014`) | **Open** - honest `(x)` + Print + empty string. No invented player API. Research tab: keep stub (ship), invent Player.GetInput (reject), pack device input (later) |
 | Start screen top bar | start-topbar-consistent | **Open / planned**. Homepage is StartScreen with its own header, not the editor TopNav |
 | Library remaining (auth / upload) | U90 | **Frozen** - client-first; no accounts as product. Do not unfreeze upload or GoTrue. Research tab: git catalog (ship), VVS accounts (reject) |
 | Event Bind | event-bind-honest | **Partial** - C# `+=`, JavaScript `.on`, GDScript `.connect`. Other langs unspawned or leftover `(x)` |
@@ -67,15 +67,19 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 
 | # | Item | Notes |
 |---|------|--------|
-| **CL-014** | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API. Research tab: keep stub (ship). |
+| **CL-014** (`verse-getinput-cl014`) | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API. Research tab: keep stub (ship). |
 | **start-topbar-consistent** | Start screen top bar matches editor / roadmap | Homepage currently has its own header. Planned. Do not implement in the example-refresh pile. |
+| **folder-os-path** | Reveal in Explorer / Finder | Planned. |
+| **env-engine-packs** | Engine environment packs | Planned. Do not invent UE6 APIs. |
+| **folder-os-path** | Reveal in Explorer / Finder | Planned. |
+| **env-engine-packs** | Engine environment packs | Planned. Do not invent UE6 APIs. |
 
 ### Editor & AI
 
 | # | Item | Notes |
 |---|------|--------|
 | **U90** | Library remaining | Templates / git import shipped. **Auth / upload frozen.** Remaining is a public git catalog and browse/search, not an upload form or GoTrue accounts. |
-| **U93** | Code to visual | Long-term reverse-import **research**. Not a default. |
+| **U93** (`code-to-visual-u93`) | Code to visual | Long-term reverse-import **research**. Not a default. |
 
 ### Library (U90)
 
@@ -131,8 +135,8 @@ User-facing waves (detail lives in [current_state.md](current_state.md) and the 
 
 | Item | Status | Gate |
 |------|--------|------|
-| **Native VS Code plugin** | **Open** — high priority. Research tab. Not a “open Pages” button. | Workspace paths + ordinary Generate |
-| **Native Unreal Engine 6 plugin** | **Open** — high priority, **after UE6 releases**. Epic public target: Early Access end of 2027. Not released as of August 2026. | Do not invent UE6 APIs. Do not start Slate before the engine exists. |
+| Native VS Code plugin (`vscode-native-plugin`) | **Open** — high priority. Research tab. Not an “open Pages” button. No VSIX this pile. iframe Pages reject. | Workspace paths + ordinary Generate |
+| Native Unreal Engine 6 plugin (`ue6-native-plugin`) | **Open** — high priority, **after UE6 releases**. Epic public EA end of 2027. Not released as of 22 August 2026. GitHub `ue6` stream is not Alpha. | Do not invent UE6 APIs. Do not start Slate before the engine exists. |
 
 | **5** UE6 plugin | Planned | Same graph to Verse text; not Blueprint VM. Research tab |
 

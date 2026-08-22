@@ -1,6 +1,6 @@
 # Deployment & Persistence Architecture
 
-> **Product direction (July 2026):** VVS is **client-first** — **no dedicated server hosting** as the official product. Prefer local / folder / `.vvs/` / git and static Pages. This document describes a **legacy / experimental** self-host stack that remains in the repo for reference; do **not** treat VPS deploy as open roadmap work. See [roadmap.md](roadmap.md) § Client-first · `.agents/memory/decisions.md` § No dedicated server hosting.
+> **Product direction (23 August 2026):** VVS is **client-first** — **no dedicated server hosting** as the official product. Prefer local / folder / `.vvs/` / git and static Pages. Everything below this banner is a **legacy / experimental** self-host sketch (Go API, Postgres, GoTrue). It is **not** current setup and **not** the hosted agent path. Do **not** treat VPS deploy as open roadmap work. See [roadmap.md](roadmap.md) § Client-first.
 
 **Status (historical):** Architecture notes below were locked for an optional self-host path — superseded as **product** direction by client-first (not deleted from the repo).
 
@@ -11,11 +11,11 @@ This document defines how a self-hosted stack *could* work (Go API, Postgres, Go
 ## Principles
 
 1. **Keep the monorepo boundaries** — Next.js UI, TypeScript transpiler in browser, Go for API/MCP/WebSockets.
-2. **Go is the only product API** — editor and MCP call `server/`; business logic stays in testable Go services.
-3. **Self-hosted Supabase for Auth + Postgres** — not Supabase Cloud; not PostgREST for app CRUD.
+2. **(Historical)** Go was sketched as the only API — this is **not** the product path. The hosted editor uses the client transpiler; optional local sidecar is extra.
+3. **(Historical)** Self-hosted Supabase for Auth + Postgres — **frozen**. No VVS accounts as product.
 4. **Direct `pgx` from Go** — connection pool to Postgres; no PostgREST hop for projects/graphs/compile.
 5. **Client transpiler stays in the browser** — fast preview; Go compile path is for MCP, agents, and CI.
-6. **`.vvs/` folder projects remain first-class** — cloud sync is additive, not a replacement for git-friendly exports.
+6. **`.vvs/` folder projects remain first-class** — product persist is local / folder / git. Cloud sync is **not** a product track.
 
 ---
 

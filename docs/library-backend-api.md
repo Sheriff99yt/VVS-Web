@@ -1,21 +1,21 @@
 # VVS Library Backend API
 
-**Status:** Phase 3 (Planned) — Implementation started  
-**Architecture:** Git-based public library, no dedicated server per locked product direction
+**Status (23 August 2026):** **Superseded as product spec.** What shipped is the **client Library** — first-party templates, git import, **token search + language chips**. Auth / upload stay **frozen**. A public git catalog is **Research**, not an upload form or Postgres metadata store.
+
+The schema and endpoints below are an **early sketch**. Do not implement them as product. No dedicated app server.
 
 ---
 
 ## Overview
 
-The Library backend provides read/write access to community-shared scripts, node packs, and templates. The library itself is a **separate public GitHub repository** (`vvs-library`) that acts as the single source of truth.
+**(Historical sketch.)** The text below imagined read/write access to community-shared scripts, node packs, and templates. The library itself is a **separate public GitHub repository** (`vvs-library`) that acts as the single source of truth.
 
 ### Key Design Principles
 
 - **Public static content** — all library items are `.json` files in a public repo
 - **GitHub-backed** — scripts are submitted via PRs, merged to main branch
 - **Client-first queries** — VVS Web queries the backend; backend queries GitHub API or local cache
-- **No dedicated server** — library metadata lives in Postgres; graph content in git
-- **Rate-limited uploads** — 10 scripts per user per day to prevent spam
+- **No dedicated server** as product — do not add Postgres metadata or rate-limited uploads
 
 ---
 

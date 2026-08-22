@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **20 August 2026** (HEAD `77756f0`; Research tab leftover + COA/UE studies; Bind Details picker + rename write-through shipped; `event-bind-honest` still **partial** for other langs) (HEAD `d3ccdb9` / Bind shipped `349739e`; Event Bind honest `event-bind-honest` **partial** — csharp/js/gdscript printers+spawn+Details picker/rename) (`8009c52`; `env-template-upgrade` + `env-host-editable` Done — Refresh line-based 3-way merge + host-file `contents` textarea) — Simple / Complex / Advanced examples + HEAD `e4242c1` five-labs-era + Implements list / Class form + Library language chips + `env.csharp.data-script` / `env.go.http-service` (Python/Rust Switch `match`, overload emit (retired New Features Lab)) and public/in-app roadmap sync (ctor/dtor Function role + leftover-construct catalog locks + settings search audit + emit/OOP + **in-page TypeScript agent** + **U89 / U92**; U91 dual-consent / MCP Ready **not** the product chrome; text-shaped graphs locked; **milestone 3 language platform** closed; **8 target languages**: Python, JavaScript, C++, Verse, GDScript, Rust, C#, **Go [U77]**; **class declare fidelity** + live validation sync shipped; **project explorer** Structure | Symbols | API tabs shipped; **class/graph decoupling** shipped; **U84–U88 / U94–U96 / U108–U119** shipped). HEAD `1f2c051` (this pass, 18 Aug 2026): consume-path completeness (graph settings env/host/export + `isProjectMapTab` / `renameClass` form·implements·extends; class `isAbstract` / visibility / `isGenerator` persist; define-property + event-role rename; rename skips define kinds; `syncNodeForFunction` skips define/implement + ProjectTree overload add/remove + deleteClass cascade; catalog missing-declare inserts a real define, not a Call; extract-to-function keeps body + Declare; Yield/Return typed value via `resolvePinValueExpr`; Switch Add Case uses `case_*` indices); **long completeness pass**: no new feature consume-path holes; vision / tech-stack MCP product-path honesty + multi_class v3 shipped marker).
+Last aligned with codebase: **23 August 2026** (HEAD `ccab00d`). User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
 
 Example completeness: Simple + Complex emit with zero leftover `(x)` on all 8 languages; Advanced runs on most (Verse GetInput leftover only). Complex covers branch / for / while / enum switch; Advanced covers Machine/Sensor Diagnose override + GetInput + Wait.
 Symbol delete / deleteClass now remove function Define (`function_implement`) with Declare (`function_define`).
@@ -35,7 +35,7 @@ VVS Web/
 │   ├── graph-types/       # ProjectSnapshot v3 (v1/v2 loader), ClassSymbol, analyzeProject, CodegenTarget
 │   ├── syntax-registry/   # core-pack.json, list/resolve/expandProjectSymbols
 │   ├── language-profiles/ # per-target portability matrix + capabilities + analyzePortability
-│   ├── syntax-packs/      # versioned print templates, Rosetta goldens, fidelity linter
+│   ├── syntax-packs/      # versioned print templates, Rosetta fixtures, fidelity linter
 │   └── transpiler/        # analyze → lower (structured IR v2) → print → emit
 ├── server/                # Go — domain v2 types, registry HTTP, tests
 ├── docs/                  # Architecture, language_profiles.md, this file
@@ -380,7 +380,7 @@ Graph → analyze/ → lower/graphToIr (structured IR v2, IR_VERSION=2)
 | Pack migration CI gate | `packages/transpiler/src/print/packMigrationGate.test.ts` | Done — bans legacy emitters in `stmt.ts` / `expr.ts`; per-language `emit/*.ts` removed; `classModule` + `sinkStatements` use pack helpers |
 | Base syntax packs | `packages/syntax-packs/src/packs/*.base.json` | Done — full Rosetta + shell + layout for all eight families |
 | Capability overlay | `javascript.es2022.json` | Done — proof of inherit-only version deltas |
-| Rosetta goldens | `packages/syntax-packs/rosetta/` | Done — **14 fixtures × 8 families** (112 golden pairs); regen via `scripts/update-{family}-goldens.ts` |
+| Rosetta fixtures (pack goldens; not home-preview) | `packages/syntax-packs/rosetta/` | Done — **14 fixtures × 8 families** (112 golden pairs); regen via `scripts/update-{family}-goldens.ts` |
 | Pack coverage gate | `packages/syntax-packs/src/packCoverage.test.ts` | Done — required Rosetta + **shell** template keys + layout profile per base pack |
 | Fidelity linter | `packages/syntax-packs/src/fidelity.ts` | Done — CI via `rosetta.test.ts` |
 | CodegenTarget | `packages/graph-types/src/codegenTarget.ts` | Done — family + capabilities + syntaxPackLock |
@@ -429,8 +429,9 @@ Simple, Complex, and Advanced pass strict analysis. Environment templates and li
 | HTTP project REST | `server/` Go | **Done** — `GET/PUT /api/projects`, `POST …/compile`; memory or Postgres via `DATABASE_URL` |
 | WebSocket collaboration | `server/` Go | Not started — Go WS (not Supabase Realtime) |
 | PWA / offline sync | — | **Out of scope** — prefer folder / `.vvs/` + git; no VVS sync server |
-| Community library backend | Separate library git repo | Library page redesign shipped (templates / git import); vvs-library repo + upload auth still Phase 3 |
-| **UE6 editor plugin (Verse)** | `plugins/` (planned) | Roadmap — [roadmap.md](roadmap.md) Phase 5 |
+| Community library backend | Separate library git repo | Client Library shipped (templates / git import / token+chips). Auth / upload **frozen**. Git catalog is Research |
+| **UE6 editor plugin (Verse)** | `plugins/` (planned) | **Open / Research** `ue6-native-plugin` — after a real UE6 release. Not Alpha. [roadmap.md](roadmap.md) |
+| **Native VS Code plugin** | Research tab | **Open / Research** `vscode-native-plugin` — no VSIX this pile; iframe Pages reject |
 
 ---
 
@@ -472,6 +473,9 @@ Simple, Complex, and Advanced pass strict analysis. Environment templates and li
 | `docs/naming_and_product_direction.md` | Vocabulary, product principles, terms to avoid |
 | `docs/project_requirements.md` | Full requirements + phased roadmap (planning) |
 | `docs/vvs_2_0_tech_stack.md` | Locked technology choices |
+| `docs/environment_templates.md` | First-party env packs |
+| `docs/visual_to_text_fidelity.md` | Text-shaped graphs |
+| `docs/README.md` | Documentation index |
 | `.agents/AGENTS.md` | Architecture rules for agents |
 | `.agents/skills/vvs_ui_development/SKILL.md` | UI shell layout + design rules |
 | `.agents/skills/vvs_progressive_disclosure/SKILL.md` | Show data when needed — collapse, reveal, idle inspector |

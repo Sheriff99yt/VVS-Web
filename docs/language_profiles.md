@@ -36,7 +36,7 @@ The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation rema
 - The **transpiler** never folds conversions or hides macro bodies — one graph node = one visible construct ([visual_to_text_fidelity.md](visual_to_text_fidelity.md)).
 - **`data_any`** on **To String** input accepts any wired value; output pins are strictly typed.
 
-## Shipped targets (July 2026)
+## Shipped targets (as of August 2026)
 
 | Target | Profile | Syntax pack | Rosetta | Environment template |
 |--------|---------|-------------|---------|----------------------|
@@ -50,7 +50,7 @@ The `@vvs/language-profiles` `analyzeCrossOverDiagnostics()` implementation rema
 | Go | Yes | `go.base` | 14 fixtures | `env.go.console-app` |
 | Graph JSON | Yes | — | — | — |
 
-**Milestone 3 (July 2026):** Language platform closed — eight codegen families + 112 Rosetta goldens. **Next:** usability & workflow standards ([terms_refactor_plan.md](design/terms_refactor_plan.md)).
+**Milestone 3 (July 2026):** Language platform closed — eight codegen families + 112 Rosetta fixture pairs (pack fixtures, not Simple / Complex / Advanced home-preview goldens). **Next:** usability & workflow standards ([terms_refactor_plan.md](design/terms_refactor_plan.md)).
 
 ## Feature matrix (summary)
 
