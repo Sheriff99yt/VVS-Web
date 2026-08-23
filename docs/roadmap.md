@@ -5,7 +5,7 @@ Directional phases - not schedule commitments.
 
 **Product default (locked):** client-first editor. **No VVS accounts**, **no dedicated app server**, **no live code execution**. Edit graphs, **Generate** ordinary source, run **logical checks**. Reading existing source into a graph (U93) is **research**, not a product default.
 
-In-app: **Development roadmap** with **Open / Done / Research**, grouped frontend / backend (mirrors this doc).
+In-app: **Development roadmap** with **Open / Done / Research**, grouped frontend / backend (mirrors this doc). Research tab holds studies for leftover Open items (U93, COA, Bind remaining langs, native VS Code / UE6 hosts).
 
 ---
 
@@ -16,7 +16,6 @@ In-app: **Development roadmap** with **Open / Done / Research**, grouped fronten
 | Focus | IDs | Status |
 |-------|-----|--------|
 | Verse GetInput | CL-014 (`verse-getinput-cl014`) | **Open** - honest `(x)` + Print + empty string. No invented player API. Research tab: keep stub (ship), invent Player.GetInput (reject), pack device input (later) |
-| Start screen top bar | start-topbar-consistent | **Done**. Home / library / roadmap show the same page-switch tabs as in-project TopNav. Project tab with no project goes home |
 | Library remaining (auth / upload) | U90 | **Frozen** - client-first; no accounts as product. Do not unfreeze upload or GoTrue. Research tab: git catalog (ship), VVS accounts (reject) |
 | Event Bind | event-bind-honest | **Partial** - C# `+=`, JavaScript `.on`, GDScript `.connect`. Other langs unspawned or leftover `(x)` |
 
@@ -66,9 +65,6 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | # | Item | Notes |
 |---|------|--------|
 | **CL-014** (`verse-getinput-cl014`) | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API. Research tab: keep stub (ship). |
-| **start-topbar-consistent** | Start screen top bar matches editor / roadmap | **Done.** Same page-switch tabs on home, /library, /roadmap, and in-project. Project tab without a loaded project goes to the homepage. |
-| **folder-os-path** | Reveal in Explorer / Finder | Planned. |
-| **env-engine-packs** | Engine environment packs | Planned. Do not invent UE6 APIs. |
 | **folder-os-path** | Reveal in Explorer / Finder | Planned. |
 | **env-engine-packs** | Engine environment packs | Planned. Do not invent UE6 APIs. |
 
@@ -116,6 +112,7 @@ User-facing waves (detail lives in [current_state.md](current_state.md) and the 
 | **Emit / OOP** | Switch match, Yield, Extends multi-base, Implements + Class form, ctor/dtor Function role, overload codegen |
 | **Library client** | Token search, language chips, 17 first-party env packs. Community catalog stays Phase 3 and auth/upload stays frozen |
 | **Chrome** | Undo, settings, shortcuts, audio, virtualization, References redesign |
+| **Global top bar** (`start-topbar-consistent`) | Page-switch tabs (Project / References / Library / Roadmap / Packs) on **every route**, including the homepage. Project / References / Packs with no project or standalone route go home. File / Edit / View / Save / Generate stay in-project only |
 
 ---
 
@@ -125,7 +122,7 @@ User-facing waves (detail lives in [current_state.md](current_state.md) and the 
 |-------|--------|-----------|
 | **1** Web editor & transpiler | Closed | Eight packs, `.vvs/`, canvas source of truth |
 | **2** Persistence & AI | **Redirected** | Client-first: local / folder / `.vvs/`; **in-page TS agent** (hosted); optional localhost Go sidecar for other apps; **no dedicated server** as product |
-| **6** Fidelity, canvas scale & polish | **Active** | Open: CL-014 honest `(x)`, U93 long-term, U90 frozen, Bind partial. start-topbar-consistent done. |
+| **6** Fidelity, canvas scale & polish | **Active** | Open: CL-014 honest `(x)`, U93 long-term, U90 frozen, Bind partial. Global top bar (`start-topbar-consistent`) is Done. |
 | **3** Community library | **Partial** | Client browse/search/templates shipped. Auth / upload **frozen**. Git catalog still research |
 | **4** Collaboration | Planned | Session client/host, not account cloud. Research tab |
 

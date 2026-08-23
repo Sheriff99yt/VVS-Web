@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **23 August 2026** (page-switch top bar on every route) (HEAD `a0480ea` + this leftover pass). User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
+Last aligned with codebase: **23 August 2026** (global page-switch top bar on every route; ship `70434b2`; this docs amend). User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
 
 Example completeness: Simple + Complex emit with zero leftover `(x)` on all 8 languages; Advanced runs on most (Verse GetInput leftover only). Complex covers branch / for / while / enum switch; Advanced covers Machine/Sensor Diagnose override + GetInput + Wait.
 Symbol delete / deleteClass now remove function Define (`function_implement`) with Declare (`function_define`).
@@ -51,14 +51,15 @@ Web types re-export from `@vvs/graph-types` (`apps/web/src/types/graph.ts`, `pro
 
 ### App views (TopNav)
 
-The page-switch tab cluster (Project / References / Library / Roadmap / Packs) is on **every route**, including the homepage. In a loaded project it lives in `TopNav`. On `/`, `/library`, and `/roadmap` it is the same cluster via `StandaloneTopBar`. Clicking **Project** with no project loaded goes to the homepage (does not open a blank project). File / Edit / View menus, Save, and Generate stay in-project only.
+The page-switch tab cluster (Project / References / Library / Roadmap / Packs) is on **every route**, including the homepage. In a loaded project it lives in `TopNav`. On `/`, `/library`, and `/roadmap` it is the same cluster via `StandaloneTopBar`. Clicking **Project** with no project loaded goes to the homepage (does not open a blank project). **References** and **Packs** also go home when they have no standalone route. File / Edit / View menus, Save, and Generate stay in-project only.
 
 | View | Purpose |
 |------|---------|
 | **Canvas** | Primary graph editor (default) |
 | **References** | UE5-style reference viewer — focus center, referencers left, dependencies right; huge-project breadth + persisted prefs |
 | **Library** | Client-first templates / git import; auth / upload frozen |
-| **Roadmap** | In-app development roadmap — shipped features vs coming soon |
+| **Roadmap** | In-app development roadmap -- Open / Done / Research |
+| **Packs** | In-project pack versions / host skip-emit. With no project loaded, the tab returns home |
 
 **Removed from product UI** (do not re-add as duplicate surfaces):
 
