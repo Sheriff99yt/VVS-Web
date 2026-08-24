@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **23 August 2026** (global page-switch top bar on every route; HEAD `fe4fa6a`). User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
+Last aligned with codebase: **24 August 2026** (HEAD `452fd58`). Interactive live docs: **PLANNED** (architecture + Research card only; no `/docs` route, no `docsUrl()`, no VVSNode info icon). User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
 
 Example completeness: Simple + Complex emit with zero leftover `(x)` on all 8 languages; Advanced runs on most (Verse GetInput leftover only). Complex covers branch / for / while / enum switch; Advanced covers Machine/Sensor Diagnose override + GetInput + Wait.
 Symbol delete / deleteClass now remove function Define (`function_implement`) with Declare (`function_define`).
@@ -16,6 +16,17 @@ Shipped (August 2026): C++/call-site overload emit, language profile JSON packs,
 **Vocabulary alignment:** Phased implementation plan — [design/terms_refactor_plan.md](design/terms_refactor_plan.md) (glossary: [design/language_neutral_vocabulary.md](design/language_neutral_vocabulary.md)).
 
 ---
+
+## Contents
+
+- [Development Approach](#development-approach)
+- [Repository Layout (Actual)](#repository-layout-actual)
+- [Frontend (`apps/web`) — Implemented](#frontend-appsweb--implemented)
+- [Graph system architecture (isolated domains)](#graph-system-architecture-isolated-domains)
+- [Transpiler & syntax packs (shipped)](#transpiler--syntax-packs-shipped)
+- [Backend (`server/`) — API, registry, optional local MCP sidecar](#backend-server--api-registry-optional-local-mcp-sidecar)
+- [Documentation Map](#documentation-map)
+- [UI Revision Decisions (Locked)](#ui-revision-decisions-locked)
 
 ## Development Approach
 
@@ -472,6 +483,7 @@ Simple, Complex, and Advanced pass strict analysis. Environment templates and li
 | **`docs/code_panel.md`** | Code panel navigation, highlight, hover, Files pin |
 | **`docs/deployment.md`** | Legacy self-host notes — **not** product direction (client-first; no dedicated server) |
 | **`docs/current_state.md`** | What exists today; avoid re-introducing removed UI |
+| **`docs/design/interactive_docs_architecture.md`** | Planned live docs (SSG catalog). Not shipped |
 | **`docs/ui_api_delivery_loop.md`** | Wiring UI to APIs — one slice per iteration |
 | `docs/naming_and_product_direction.md` | Vocabulary, product principles, terms to avoid |
 | `docs/project_requirements.md` | Full requirements + phased roadmap (planning) |

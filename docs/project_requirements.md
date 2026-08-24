@@ -1,8 +1,8 @@
 # VVS Web — Project Requirements
 
-This document captures functional and non-functional requirements for Vision Visual Scripting 2.0. For **phased delivery** see [roadmap.md](roadmap.md); for **what is built today** see [current_state.md](current_state.md).
+> **Planning / historical.** Some checkboxes below are cut, frozen, or superseded. **[current_state.md](current_state.md)** is implementation truth. Do not invent latency, fps, or coverage numbers — use **Unknown pending test**. Interactive live docs are planned, not shipped.
 
----
+This document captures functional and non-functional requirements for Vision Visual Scripting 2.0. For **phased delivery** see [roadmap.md](roadmap.md); for **what is built today** see [current_state.md](current_state.md).
 
 ## 1. Project Vision
 
@@ -63,34 +63,34 @@ This document captures functional and non-functional requirements for Vision Vis
 ## 3. Functional Requirements
 
 ### 3.1 Visual Graph Editor
-- [ ] Render a node-based graph canvas with draggable nodes and wire connections
-- [ ] Support **500+ nodes** in a single graph without frame drops (target: 60fps)
+- [x] Render a node-based graph canvas with draggable nodes and wire connections
+- [ ] Support large graphs without frame drops — target qualitative; **Unknown pending test** (do not treat 60fps as measured)
 - [x] Only render nodes currently visible on screen (virtualization)
 - [ ] Support sub-graphs / nested node groups
 - [ ] Provide a minimap for navigation on large graphs
-- [ ] Support zoom, pan, and fit-to-view controls
-- [ ] Support multi-select (click-drag selection box)
-- [ ] Support copy, paste, and duplicate of node selections
-- [ ] Undo / Redo for all graph operations
-- [ ] Mobile-friendly: radial context menus, magnetic pin snapping, gesture-based navigation (pinch-to-zoom, two-finger pan)
+- [x] Support zoom, pan, and fit-to-view controls
+- [x] Support multi-select (click-drag selection box)
+- [x] Support copy, paste, and duplicate of node selections
+- [x] Undo / Redo for all graph operations
+- [ ] Mobile-friendly: radial menus and gestures **planned**. Partial: Agent/Bot/StatusBar chip hide at 768px; coarse pin snap 40px; larger TopNav hit targets
 
 ### 3.2 Node System
-- [ ] Each node has typed input/output pins (String, Integer, Float, Boolean, Exec, etc.)
-- [ ] Connections enforce **type safety** — incompatible pin types cannot be connected
-- [ ] Nodes have a visual type identity (color-coded by category: logic, math, I/O, control flow, etc.)
-- [ ] Custom node definitions stored as structured data (JSON schema)
-- [ ] Support for flow-control nodes: If/Else, For Loop, While Loop, Switch/Case, Sequence
-- [ ] Support for data nodes: Variables (Get/Set), Literals, Function Calls, Operators
-- [ ] Support for user-defined function nodes (encapsulating sub-graphs)
+- [x] Each node has typed input/output pins (String, Integer, Float, Boolean, Exec, etc.)
+- [x] Connections enforce **type safety** — incompatible pin types cannot be connected
+- [x] Nodes have a visual type identity (color-coded by category: logic, math, I/O, control flow, etc.)
+- [x] Custom node definitions stored as structured data (JSON schema / `core-pack.json`)
+- [x] Support for flow-control nodes: If/Else, For Loop, While Loop, Switch/Case, Sequence
+- [x] Support for data nodes: Variables (Get/Set), Literals, Function Calls, Operators
+- [x] Support for user-defined function nodes (function graphs + Call)
 
 ### 3.3 Code Generation (Transpiler)
 - [x] Generate syntactically valid code from the visual graph for multiple target languages
 - [x] **V1 languages**: Python, JavaScript, C++, **Verse** (JavaScript is one target; TypeScript is not a generate target)
 - [x] **V2 languages** (stretch): **GDScript, Rust, C#, Go** — pack-first base packs, 14 Rosetta goldens each, UI codegen targets — **shipped** July 2026 (milestone 3; Go is U77)
-- [ ] Language switching is instant — the graph does not change, only the emitter output
-- [ ] Generated code is human-readable and properly formatted (indentation, spacing, line breaks)
+- [x] Language switching does not alter the graph; only emitter output changes
+- [x] Generated code is pack-formatted (indentation / line breaks from syntax packs)
 - [ ] Post-generation formatting pass (server-side Prettier/Clang-Format for v1; optional WASM formatters for later phases)
-- [ ] Display generated code in a live preview panel that updates as the graph changes
+- [x] Display generated code in a live preview panel that updates as the graph changes
 
 ### 3.4 AI Integration (in-page agent now; MCP wrapper later)
 - [x] Hosted path is an **in-page TypeScript agent** on the live canvas — no Cursor/Go required; Worker starts with the editor
@@ -107,16 +107,16 @@ This document captures functional and non-functional requirements for Vision Vis
 - Optional local Go sidecar (`go run ./cmd/vvs-server`, `:8080`) still exists; it is **not** the hosted agent. `mcpAllowDangerousTools` does **not** reach Go (`VVS_MCP_ALLOW_WRITE` does)
 
 ### 3.5 Community Library
-- [ ] Users can **upload** visual scripts (graph JSON + metadata) to a shared library
-- [ ] Users can **browse, search, and download** community scripts via the **Library** app view (TopNav → Library)
+- [ ] ~~Users can **upload** visual scripts~~ — **frozen / not product** (no VVS accounts)
+- [x] Users can **browse / search** first-party templates and git import via the **Library** view (token search + language chips). Community catalog still Phase 3
 - [ ] Scripts have metadata: title, description, tags, author, target language(s), node count
-- [ ] **Semantic search** via pgvector — find scripts by intent ("smooth movement") not just keywords
+- [ ] ~~**Semantic search** via pgvector~~ — **not shipped**. Client Library is token search + language chips
 - [ ] Rating / like system for community scripts
 - [ ] Version tracking for uploaded scripts
 - [ ] Scripts can be imported directly into the user's graph editor
 
 ### 3.6 User Accounts & Authentication
-- [ ] User registration and login (Supabase Auth)
+- [ ] ~~User registration and login (Supabase Auth)~~ — **frozen / not product**. No VVS accounts
 - [ ] Auth methods to decide: email/password, OAuth (Google/GitHub), magic links
 - [ ] User profiles: username, avatar, bio, published scripts count
 - [ ] Private projects (only visible to the owner)
@@ -133,7 +133,7 @@ This document captures functional and non-functional requirements for Vision Vis
 ## 4. Non-Functional Requirements
 
 ### 4.1 Performance
-- [x] Graph editor maintains **60fps** with 500+ nodes via virtualization
+- [ ] Graph editor **60fps** / 500+ nodes — **Unknown pending test** (virtualization U83 is shipped; no measured fps claim)
 - [ ] Code generation for a 500-node graph completes in **< 100ms** (client-side TypeScript transpiler)
 - [ ] Initial page load (Time to Interactive) under **3 seconds** on 4G mobile
 - [ ] Bundle size is a **mild concern** — acceptable to be slightly larger if it provides ecosystem and maturity benefits (confirmed trade-off)

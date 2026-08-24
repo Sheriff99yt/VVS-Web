@@ -2,6 +2,8 @@
 
 How to move from **UI skeleton with mocks** to a **wired frontend with real APIs**, one vertical slice at a time — without drift between UI, mock, and Go backend.
 
+> **Product law:** default persist is mock / local / folder. Go HTTP + DB is an optional experiment, not a required app server.
+
 Companion docs: [current_state.md](current_state.md) · [project_requirements.md](project_requirements.md)
 
 ---

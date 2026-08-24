@@ -1,5 +1,7 @@
 # Deployment & Persistence Architecture
 
+> **HISTORICAL -- not product direction.** See [roadmap.md](roadmap.md) / [current_state.md](current_state.md).
+
 > **Product direction (23 August 2026):** VVS is **client-first** — **no dedicated server hosting** as the official product. Prefer local / folder / `.vvs/` / git and static Pages. Everything below this banner is a **legacy / experimental** self-host sketch (Go API, Postgres, GoTrue). It is **not** current setup and **not** the hosted agent path. Do **not** treat VPS deploy as open roadmap work. See [roadmap.md](roadmap.md) § Client-first.
 
 **Status (historical):** Architecture notes below were locked for an optional self-host path — superseded as **product** direction by client-first (not deleted from the repo).

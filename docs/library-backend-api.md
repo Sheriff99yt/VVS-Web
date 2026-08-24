@@ -1,5 +1,7 @@
 # VVS Library Backend API
 
+> **HISTORICAL -- not product direction.** See [roadmap.md](roadmap.md) / [current_state.md](current_state.md).
+
 **Status (23 August 2026):** **Superseded as product spec.** What shipped is the **client Library** — first-party templates, git import, **token search + language chips**. Auth / upload stay **frozen**. A public git catalog is **Research**, not an upload form or Postgres metadata store.
 
 The schema and endpoints below are an **early sketch**. Do not implement them as product. No dedicated app server.

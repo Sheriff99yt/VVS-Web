@@ -8,7 +8,7 @@ Canonical spec for the **data-driven node model**, **port strategy**, **pin type
 
 ## 1. Problem statement (historical → current)
 
-The editor shell originally outpaced the node model. **July 2026 redesign** shipped shared packages, `kindId` registry, and `@vvs/transpiler` — many gaps below are **resolved**; remaining work is IR split and label-free hot paths.
+The editor shell originally outpaced the node model. **July 2026 redesign** shipped shared packages, `kindId` registry, and `@vvs/transpiler` — many gaps below are **resolved**; IR v2 + print/emit is shipped ([current_state.md](current_state.md)). Remaining work is leftover honesty and planned live docs — not another IR rewrite.
 
 ```mermaid
 flowchart LR

@@ -1,10 +1,14 @@
 # VVS - Vision & Product Philosophy
 
-Vision Visual Scripting (VVS) is an open visual programming platform that **builds on top of traditional software development** - not against it.
+### Product law
+
+**[Product law]** Vision Visual Scripting (VVS) is an open visual programming platform that **builds on top of traditional software development** - not against it.
+
+There is **no VVS account** and **no dedicated app server**. Browser plus folder / `.vvs/` / git. Hosted GitHub Pages is a static showcase. Canvas is the source of truth. **Generate** is the user action. Leftover `(x)` stays honest.
+
+Interactive live docs are **[Research] / planned** ([design/interactive_docs_architecture.md](design/interactive_docs_architecture.md)). They are not a shipped `/docs` site.
 
 The graph is an authoring surface. **Text code remains the integration layer**: files you can read in any IDE, commit to git, run in CI, and hand to the tools you already use (including the in-page Agent; later an MCP wrapper for other apps).
-
-There is **no VVS account** and **no dedicated app server**. Browser plus folder / `.vvs/` / git. Hosted GitHub Pages is a static showcase.
 
 > **Origin:** VVS began as a [university graduation project](https://github.com/Sheriff99yt/Vision_Visual_Scripting) (2021) - a Python desktop app proving that a visual graph could translate into **any selected programming language**. **VVS Web** continues that mission for the open-system and AI era. See [history.md](history.md).
 
@@ -17,7 +21,7 @@ We are working toward a **portable visual programming model** - graph schema, in
 - **Web** - author in the browser; share graphs and **trustworthy** generated code
 - **Repos & automation** - JSON graphs plus text output; no proprietary runtime
 - **AI tools** - in-page Agent exposes graph operations; later MCP wrapper for other apps / Cursor
-- **Game engines** - UE6 plugin (roadmap) reuses the **v1 Verse emitter** for in-engine authoring
+- **Game engines** ? **[Research]** UE6 plugin (roadmap) reuses the **v1 Verse emitter** for in-engine authoring
 - **Everything else** - education, tooling, scripting glue - via open node packs and syntax profiles
 
 **Canvas is the source of truth for generated code.** Every line in export must come from a canvas node with `sourceMap` coverage. The Project panel symbol lists (`variables[]`, `functions[]`, `events[]`) are **indexes and CRUD shortcuts**. They organize and edit symbols but do not emit declarations on their own. **Declare** on the graph (`class_define`, `var_define`, `function_define`, `event_member_define`); **use** where logic runs (Get/Set, Call, Dispatch, Bind). See [visual_to_text_fidelity.md](visual_to_text_fidelity.md).

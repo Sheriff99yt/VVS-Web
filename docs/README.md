@@ -2,7 +2,7 @@
 
 Index for the public Vision Visual Scripting documentation set.
 
-**As of 23 August 2026.** Product law is client-first: no VVS accounts, no dedicated app server, GitHub Pages plus folder / `.vvs/` / git. Canvas is the source of truth. **Generate** is the user action. **Emit** is Stage C only.
+**As of 24 August 2026.** Product law is client-first: no VVS accounts, no dedicated app server, GitHub Pages plus folder / `.vvs/` / git. Canvas is the source of truth. **Generate** is the user action. **Emit** is Stage C only.
 
 ## User
 
@@ -51,7 +51,7 @@ Index for the public Vision Visual Scripting documentation set.
 | [design/user_types.md](design/user_types.md) | User types (shipped teaching slice) |
 | [design/class_scopes_and_symbols.md](design/class_scopes_and_symbols.md) | Shipped-as architecture note, not a feature catalog |
 | [design/terms_refactor_plan.md](design/terms_refactor_plan.md) | Historical vocabulary rollout plan |
-| [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md) | Planned public docs: kindId URLs, editor info icon, SEO/GEO, Pages |
+| [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md) | **Planned** live site (not shipped). Architecture + Research card. No /docs App Router route, no docsUrl(), no info icon on VVSNode yet |
 
 ## Contributor assets
 

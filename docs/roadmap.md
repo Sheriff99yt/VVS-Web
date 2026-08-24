@@ -1,11 +1,32 @@
 # VVS - Public Roadmap
 
-Directional phases - not schedule commitments.
-**Ships today:** [current_state.md](current_state.md). **North star:** [visual_to_text_fidelity.md](visual_to_text_fidelity.md). **Code panel UX:** [code_panel.md](code_panel.md).
+**As of 24 August 2026.** Directional phases ? not schedule commitments.
 
-**Product default (locked):** client-first editor. **No VVS accounts**, **no dedicated app server**, **no live code execution**. Edit graphs, **Generate** ordinary source, run **logical checks**. Reading existing source into a graph (U93) is **research**, not a product default.
+## Contents
 
-In-app: **Development roadmap** with **Open / Done / Research**, grouped frontend / backend (mirrors this doc). Research tab holds studies for leftover Open items (U93, COA, Bind remaining langs, native VS Code / UE6 hosts, interactive node docs).
+- [Product law](#product-law)
+- [Selected live-docs route](#selected-live-docs-route)
+- [Now (August 2026)](#now-august-2026)
+- [Next (open only)](#next-open-only)
+- [Recently completed](#recently-completed)
+- [Phase notes](#phase-notes)
+- [Docs & discoverability](#docs--discoverability)
+- [Non-goals (for now)](#non-goals-for-now)
+- [Client-first direction (locked)](#client-first-direction-locked)
+
+### Product law
+
+**[Product law]** Client-first editor. **No VVS accounts**, **no dedicated app server**, **no live code execution**. Canvas is the source of truth. **Generate** is the user action. Leftover `(x)` stays honest. Ships today: [current_state.md](current_state.md).
+
+### Selected live-docs route
+
+**[Selected]** Public catalog = **HTML-first SSG from `syntax-registry` `list()`** on existing GitHub Pages (`https://sheriff99yt.github.io/VVS-Web/`, `basePath` `/VVS-Web`). Playground later. JS-only SPA / hosted-key docs: **Rejected** (empty HTML fails crawlers, GEO, and client-first Pages).
+
+**Not shipped:** `/docs` App Router route, `docsUrl()`, VVSNode info icon. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). Research card `interactive-node-docs`.
+
+### Research
+
+**[Research]** Studies for leftover Open items (U93, COA, Bind remaining langs, native VS Code / UE6 hosts, interactive node docs). Do not collapse a research verdict into a shipped claim.
 
 ---
 
@@ -27,7 +48,7 @@ In-app: **Development roadmap** with **Open / Done / Research**, grouped fronten
 | Compile-once-all | COA | `COA_SHIPPED = false`. Single-target Generate only |
 | Session collab | Phase 4 | Planned. Session client/host, not account cloud |
 | UE6 Verse plugin | Phase 5 | Planned. Same graph, Verse text, not Blueprint VM |
-| Interactive node / option / feature docs | \interactive-node-docs\ | Planned. Research tab. HTML-first catalog on existing Pages (SEO + GEO). Playground later. Do not ship the catalog in this row. |
+| Interactive node / option / feature docs | `interactive-node-docs` | Planned. Research tab. HTML-first catalog on existing Pages (SEO + GEO). Playground later. Do not ship the catalog in this row. |
 
 ```mermaid
 flowchart LR

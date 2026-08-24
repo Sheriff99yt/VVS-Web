@@ -1,5 +1,7 @@
 # Vocabulary refactor — implementation plan
 
+> **HISTORICAL -- not product direction.** Glossary lives in [language_neutral_vocabulary.md](language_neutral_vocabulary.md). This file is a past rollout plan, not a current ship checklist.
+
 **Status:** Historical rollout plan (July 2026). Glossary is locked in language_neutral_vocabulary.md. Not a current ship checklist.
 **Glossary source:** [language_neutral_vocabulary.md](language_neutral_vocabulary.md) · **Capability catalog:** [language_capability_catalog.md](language_capability_catalog.md) · **Architecture tie-in:** [unified_symbol_model.md](unified_symbol_model.md) phases D/E
 

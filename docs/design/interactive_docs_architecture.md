@@ -3,7 +3,27 @@
 **Status:** planned. Roadmap id `interactive-node-docs`. Research tab card `interactive-node-docs-research`.
 **As of 24 August 2026.** Client-first, GitHub Pages, no docs server.
 
-This is the contract for a public docs surface that the **editor can deep-link into**, and that **Google, answer engines, and bots** can read without running the canvas.
+## Contents
+
+- [Part I ? Product law and selected URL contract](#part-i--product-law-and-selected-url-contract)
+- [Part II ? Technical analysis](#part-ii--technical-analysis)
+- [Part III ? Research and future horizon](#part-iii--research-and-future-horizon)
+
+## Part I ? Product law and selected URL contract
+
+**Local index:** [Product law](#product-law) ? [Selected](#selected) ? [Goal](#goal) ? [Source of truth](#source-of-truth) ? [URL contract](#url-contract-this-is-the-app-api) ? [App integration](#app-integration)
+
+### Product law
+
+- Client-first: no VVS accounts, no docs microservice, no product accounts to read help.
+- Canvas / node / option / pin is source of truth. Generated tables come from `syntax-registry` `list()`. Overlays must not invent ports, kinds, or language APIs.
+- Leftover honesty: if Generate would print `(x)`, the live page says leftover first.
+- Publish path: `main` ? `ci.yml` ? `pages.yml` ? `https://sheriff99yt.github.io/VVS-Web/` with `basePath` `/VVS-Web`.
+- **Today in tree:** architecture + roadmap + Research card. **Not shipped:** `/docs` App Router route, `docsUrl()` helper, info icon on `VVSNode`.
+
+### Selected
+
+HTML-first SSG catalog from the registry. Playground later. JS-only SPA or hosted-key docs: **Rejected** ? empty HTML fails crawlers, GEO, and client-first Pages.
 
 ## Goal
 
@@ -72,6 +92,10 @@ Today: `VVSNode` header is title + metadata only (`VVSNode.tsx`). Hover chrome (
 
 Phase 1: icon opens the **hosted Pages URL** (or local `/docs` in dev).
 Phase 2: optional in-app panel that fetches the markdown twin (static file) if we want F1 without leaving the editor. Same URL ids. Do not write a second article.
+
+## Part II ? Technical analysis
+
+**Local index:** [Page anatomy](#page-anatomy-node) ? [Build pipeline](#build-pipeline-pages-native) ? [Schema](#schema-sketch-node-docv1) ? [SEO / GEO / bots](#seo--geo--bots-locked)
 
 ## Page anatomy (node)
 
@@ -142,6 +166,12 @@ Generated fields win. Overlay may set `summary`, pitfalls, related prose.
 - No cloaking. Playground does not replace the tables.
 - GEO here means **generative engine optimization**, not geography.
 
+## Part III ? Research and future horizon
+
+**[Research]** Phases below are planned. Checkboxes use `[x]` only for items that exist in tree.
+
+**Local index:** [Phased plan](#phased-plan) ? [Risks](#risks) ? [Open questions](#open-questions) ? [Implementation order](#implementation-order-when-we-build) ? [Future horizon](#future-horizon)
+
 ## Phased plan
 
 ### Phase 0 — contract (this doc + Research card)
@@ -207,7 +237,7 @@ Do not start hosted docs, Algolia keys, or a docs microservice.
 
 ## Future horizon
 
-The first slices make a catalog that does not lie. The longer bet is that **docs become a protocol the product speaks**, not a brochure next to it. If that holds, five years from now the website, the canvas info icon, the in-page agent, a VS Code host, and an Unreal attach path all open the **same ids**. Nobody writes a second Branch article for "the engine."
+**[Research] ? planned.** Not a shipped protocol. The first slices make a catalog that does not lie. The longer bet is that **docs become a protocol the product speaks**, not a brochure next to it. If that holds, five years from now the website, the canvas info icon, the in-page agent, a VS Code host, and an Unreal attach path all open the **same ids**. Nobody writes a second Branch article for "the engine."
 
 ### Docs as a protocol
 
