@@ -22,7 +22,7 @@
 
 **[Selected]** Public catalog = **HTML-first SSG from `syntax-registry` `list()`** on existing GitHub Pages (`https://sheriff99yt.github.io/VVS-Web/`, `basePath` `/VVS-Web`). Playground later. JS-only SPA / hosted-key docs: **Rejected** (empty HTML fails crawlers, GEO, and client-first Pages).
 
-**Not shipped:** `/docs` App Router route, `docsUrl()`, VVSNode info icon. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). Research card `interactive-node-docs`.
+**Partial:** `/docs` catalog + node/feature pages, `docsUrl()`, VVSNode info icon. Overlay prose and playground not shipped. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). Research card `interactive-node-docs`.
 
 ### Research
 
@@ -48,7 +48,7 @@
 | Compile-once-all | COA | `COA_SHIPPED = false`. Single-target Generate only |
 | Session collab | Phase 4 | Planned. Session client/host, not account cloud |
 | UE6 Verse plugin | Phase 5 | Planned. Same graph, Verse text, not Blueprint VM |
-| Interactive node / option / feature docs | `interactive-node-docs` | Planned. Research tab. HTML-first catalog on existing Pages (SEO + GEO). Playground later. Do not ship the catalog in this row. |
+| Interactive node / option / feature docs | `interactive-node-docs` | Partial. `/docs` catalog on Pages. Overlay + playground later. |
 
 ```mermaid
 flowchart LR
@@ -89,7 +89,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | **CL-014** (`verse-getinput-cl014`) | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API. Research tab: keep stub (ship). |
 | **folder-os-path** | Reveal in Explorer / Finder | Planned. |
 | **env-engine-packs** | Engine environment packs | Planned. Do not invent UE6 APIs. |
-| **interactive-node-docs** | Interactive documentation | Planned. Public catalog of each node / option / feature. Research tab (SSG ship, playground later, SPA/hosted reject). Do not ship the catalog in this docs-only row. |
+| **interactive-node-docs** | Interactive documentation | Partial. Public `/docs` catalog from CORE_NODE_REGISTRY. Overlay + playground later. |
 
 ### Editor & AI
 
@@ -166,7 +166,7 @@ Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md). Backlog 
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Interactive documentation (`interactive-node-docs`) | **Open** — catalog of every node, option, and feature. HTML-first, bot/AI + SEO + GEO. Research tab. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). | Existing CI + GitHub Pages. Playground later. Not a JS-only SPA. |
+| Interactive documentation (`interactive-node-docs`) | **Partial** - `/docs` catalog + per-kind pages live. Overlay essays and playground still open. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). | Existing CI + GitHub Pages. Playground later. Not a JS-only SPA. |
 
 ---
 

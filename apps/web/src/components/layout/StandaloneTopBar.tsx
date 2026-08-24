@@ -3,6 +3,8 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { ContributeButton } from '@/components/layout/ContributeButton';
+import { DOCS_BROWSE_PATH } from '@/lib/startExplore';
+import Link from 'next/link';
 import { TopNavPageSwitch } from '@/components/layout/TopNavPageSwitch';
 import { useCoarsePointer, useIsMobile } from '@/hooks/useIsMobile';
 import type { EditorViewTab } from '@/types/editorNavigation';
@@ -53,6 +55,12 @@ export function StandaloneTopBar() {
         <TopNavPageSwitch activeTab={activeTab} enlargeIconHit={enlargeIconHit} onTab={onTab} />
       </div>
       <div className="flex items-center gap-2">
+        <Link
+          href={DOCS_BROWSE_PATH}
+          className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-100 rounded border border-zinc-800 hover:bg-zinc-900"
+        >
+          Docs
+        </Link>
         <ContributeButton enlargeIconHit={enlargeIconHit} />
         <AuthButton />
       </div>

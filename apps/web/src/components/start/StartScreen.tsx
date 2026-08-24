@@ -432,6 +432,23 @@ export function StartScreen() {
                 </div>
                 <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-zinc-300 transition-colors" />
               </button>
+              <button
+                type="button"
+                onClick={() => openExploreView(router, 'docs')}
+                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-500/40 transition-colors text-left group"
+              >
+                <div className="p-2 rounded bg-zinc-500/10 text-zinc-300 group-hover:bg-zinc-500/20 transition-colors">
+                  <BookOpen size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-zinc-100">Docs</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">
+                    Nodes, options, and features from the registry
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-zinc-300 transition-colors" />
+              </button>
+
             </div>
           </section>
 

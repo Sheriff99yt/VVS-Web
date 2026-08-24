@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sheriff99yt.github.io/VVS-Web/sitemap.xml

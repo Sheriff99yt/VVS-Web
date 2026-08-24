@@ -16,6 +16,8 @@ import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { hasHandlerNodeForEvent } from '@/lib/defineNodeSync';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
+import { docsPath } from '@/lib/docsUrl';
+import Link from 'next/link';
 import { hoverChromeSetHoveredNode } from '@/lib/nodeHoverChromeStore';
 import {
   isCodeHoverNode,
@@ -131,6 +133,16 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 <FolderOpen size={12} className="text-emerald-400/90 shrink-0" aria-hidden />
               ) : null}
               <span className={`${styles.title} truncate`}>{title}</span>
+              <Link
+                href={docsPath({ type: 'node', id: kindId })}
+                target="_blank"
+                rel="noreferrer"
+                className="nodrag nopan shrink-0 text-zinc-500 hover:text-zinc-200"
+                aria-label={`Open documentation for ${title}`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <CircleHelp size={12} strokeWidth={2} />
+              </Link>
             </div>
             {linkedTargetLabel && (
               <Tooltip

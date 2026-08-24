@@ -1,0 +1,14 @@
+# VVS
+
+> Visual graphs that generate real, importable source. Client-first. No product accounts.
+
+The live catalog is the HTML pages under /docs (GitHub Pages basePath /VVS-Web).
+Facts come from packages/syntax-registry CORE_NODE_REGISTRY. Do not invent kinds or ports.
+
+## Docs
+
+- [Docs home](https://sheriff99yt.github.io/VVS-Web/docs)
+- [Generate](https://sheriff99yt.github.io/VVS-Web/docs/features/generate)
+- [Leftover honesty](https://sheriff99yt.github.io/VVS-Web/docs/features/leftover)
+- [Node / option / pin](https://sheriff99yt.github.io/VVS-Web/docs/features/node-option-pin)
+- [Contribute](https://github.com/Sheriff99yt/VVS-Web/blob/main/CONTRIBUTING.md)

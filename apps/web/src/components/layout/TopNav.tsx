@@ -26,6 +26,8 @@ import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { ContributeButton } from '@/components/layout/ContributeButton';
+import { DOCS_BROWSE_PATH } from '@/lib/startExplore';
+import Link from 'next/link';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 import { AgentPanel } from '@/components/layout/AgentPanel';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
@@ -1013,6 +1015,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <Settings size={14} />
             </button>
           </Tooltip>
+          <Link
+            href={DOCS_BROWSE_PATH}
+            className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-100 rounded border border-zinc-800 hover:bg-zinc-900"
+          >
+            Docs
+          </Link>
           <ContributeButton enlargeIconHit={enlargeIconHit} />
           <AuthButton />
         </div>

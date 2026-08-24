@@ -1702,8 +1702,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Interactive documentation (nodes, options, features)',
         description:
-          'Planned public catalog: a page for every VVS node, every option, and every feature. HTML-first so Google and answer engines can read it (SEO + GEO), plus llms.txt / markdown / JSON twins for bots and AIs. Playground is later progressive enhancement, not the only copy. Client-first on existing CI + GitHub Pages. Three approaches on the Research tab.',
-        status: 'planned',
+          'Partial: `/docs` catalog and per-kind pages generated from CORE_NODE_REGISTRY; editor info icon; llms.txt + sitemap. Overlay essays and playground later. HTML-first on existing CI + GitHub Pages. Research tab still holds the long plan.',
+        status: 'partial',
       },
     ],
   },

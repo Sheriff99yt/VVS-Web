@@ -19,7 +19,7 @@
 - Canvas / node / option / pin is source of truth. Generated tables come from `syntax-registry` `list()`. Overlays must not invent ports, kinds, or language APIs.
 - Leftover honesty: if Generate would print `(x)`, the live page says leftover first.
 - Publish path: `main` ? `ci.yml` ? `pages.yml` ? `https://sheriff99yt.github.io/VVS-Web/` with `basePath` `/VVS-Web`.
-- **Today in tree:** architecture + roadmap + Research card. **Not shipped:** `/docs` App Router route, `docsUrl()` helper, info icon on `VVSNode`.
+- **Today in tree (partial):** `/docs` catalog, `/docs/nodes/[kindId]`, `/docs/features/{generate,leftover,node-option-pin}`, `docsUrl()` / `docsPath()`, VVSNode header info icon, `public/llms.txt` + `sitemap.xml` + `robots.txt`. **Not shipped:** overlay essays, playground, option-type pages, `.md`/`.json` twins, Pagefind, in-app F1 panel.
 
 ### Selected
 
@@ -60,7 +60,7 @@ Live site: `https://sheriff99yt.github.io/VVS-Web/` (`basePath` `/VVS-Web` when 
 | Markdown twin | `/docs/nodes/{kindId}.md` | bots / `llms.txt` |
 | JSON twin | `/docs/nodes/{kindId}.json` | same fields as the table |
 
-One helper in the app (to add; not shipped yet):
+One helper in the app (`apps/web/src/lib/docsUrl.ts`):
 
 ```ts
 docsUrl({ type: 'node', id: kindId, hash?: `opt-${id}` })
@@ -179,7 +179,7 @@ Generated fields win. Overlay may set `summary`, pitfalls, related prose.
 - [x] Roadmap item `interactive-node-docs`
 - [x] Research study with ship / later / reject
 - [x] This architecture
-- [ ] `docsUrl()` helper + unit tests for local vs `/VVS-Web`
+- [x] `docsUrl()` helper + unit tests for local vs `/VVS-Web`
 
 ### Phase 1 — editor link + stub catalog
 
