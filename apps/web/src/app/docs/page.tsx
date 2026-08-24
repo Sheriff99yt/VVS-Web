@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DocsChrome } from '@/components/docs/DocsChrome';
 import { FEATURE_DOCS } from '@/lib/docsFeatures';
@@ -16,48 +16,63 @@ export default function DocsIndexPage() {
   const categories = [...new Set(nodes.map((n) => n.category))];
 
   return (
-    <DocsChrome title="Docs">
-      <h1 className="text-2xl font-semibold text-zinc-100 mb-2">VVS documentation</h1>
-      <p className="text-zinc-400 mb-8 leading-relaxed">
-        A catalog of every public node in the engine registry. Ports and options are generated.
-        Playground is later. The editor info icon opens the same URL.
+    <DocsChrome active={{ type: 'home' }}>
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-indigo-300/80">Reference</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50">Documentation</h1>
+      <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-zinc-400">
+        Every public node in the engine registry. Ports and options are generated. Overlay essays and
+        the playground are not shipped yet. The editor info icon opens the same URL.
       </p>
 
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">Features</h2>
-      <ul className="mb-10 space-y-2">
-        {FEATURE_DOCS.map((f) => (
-          <li key={f.slug}>
-            <Link href={docsPath({ type: 'feature', id: f.slug })} className="text-indigo-400 hover:text-indigo-300">
-              {f.title}
+      <section className="mt-10">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold text-zinc-200">Features</h2>
+          <span className="text-[11px] text-zinc-600">{FEATURE_DOCS.length}</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {FEATURE_DOCS.map((f) => (
+            <Link
+              key={f.slug}
+              href={docsPath({ type: 'feature', id: f.slug })}
+              className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 transition-colors hover:border-zinc-600 hover:bg-zinc-900"
+            >
+              <div className="text-sm font-medium text-zinc-100 group-hover:text-white">{f.title}</div>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">{f.summary}</p>
             </Link>
-            <span className="text-zinc-500"> — {f.summary}</span>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      </section>
 
-      {categories.map((category) => (
-        <section key={category} className="mb-8">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">{category}</h2>
-          <ul className="space-y-1.5">
-            {nodes
-              .filter((n) => n.category === category)
-              .map((n) => (
-                <li key={n.kindId} className="flex items-baseline gap-2">
-                  <Link
-                    href={docsPath({ type: 'node', id: n.kindId })}
-                    className="text-indigo-400 hover:text-indigo-300"
-                  >
-                    {n.title}
-                  </Link>
-                  <code className="text-[10px] text-zinc-600">{n.kindId}</code>
-                  {n.status === 'cut' ? (
-                    <span className="text-[10px] uppercase tracking-wide text-amber-500/80">cut</span>
-                  ) : null}
-                </li>
+      {categories.map((category) => {
+        const rows = nodes.filter((n) => n.category === category);
+        return (
+          <section key={category} className="mt-10">
+            <div className="mb-3 flex items-baseline justify-between border-b border-zinc-800/80 pb-2">
+              <h2 className="text-sm font-semibold text-zinc-200">{category}</h2>
+              <span className="text-[11px] text-zinc-600">{rows.length}</span>
+            </div>
+            <div className="divide-y divide-zinc-800/70 rounded-xl border border-zinc-800/80">
+              {rows.map((n) => (
+                <Link
+                  key={n.kindId}
+                  href={docsPath({ type: 'node', id: n.kindId })}
+                  className="flex items-center justify-between gap-4 px-4 py-2.5 transition-colors hover:bg-zinc-900/70"
+                >
+                  <span className="text-sm text-zinc-200">{n.title}</span>
+                  <span className="flex items-center gap-2">
+                    {n.status === 'cut' ? (
+                      <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-400">
+                        cut
+                      </span>
+                    ) : null}
+                    <code className="font-mono text-[11px] text-zinc-600">{n.kindId}</code>
+                  </span>
+                </Link>
               ))}
-          </ul>
-        </section>
-      ))}
+            </div>
+          </section>
+        );
+      })}
     </DocsChrome>
   );
 }
