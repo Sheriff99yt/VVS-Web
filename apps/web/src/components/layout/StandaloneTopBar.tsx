@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthButton } from '@/components/auth/AuthButton';
+import { ContributeButton } from '@/components/layout/ContributeButton';
 import { TopNavPageSwitch } from '@/components/layout/TopNavPageSwitch';
 import { useCoarsePointer, useIsMobile } from '@/hooks/useIsMobile';
 import type { EditorViewTab } from '@/types/editorNavigation';
@@ -52,6 +53,7 @@ export function StandaloneTopBar() {
         <TopNavPageSwitch activeTab={activeTab} enlargeIconHit={enlargeIconHit} onTab={onTab} />
       </div>
       <div className="flex items-center gap-2">
+        <ContributeButton enlargeIconHit={enlargeIconHit} />
         <AuthButton />
       </div>
     </header>

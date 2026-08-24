@@ -25,6 +25,7 @@ import { SaveOnDiskPromptDialog } from '@/components/layout/SaveOnDiskPromptDial
 import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { AuthButton } from '@/components/auth/AuthButton';
+import { ContributeButton } from '@/components/layout/ContributeButton';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 import { AgentPanel } from '@/components/layout/AgentPanel';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
@@ -1012,6 +1013,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <Settings size={14} />
             </button>
           </Tooltip>
+          <ContributeButton enlargeIconHit={enlargeIconHit} />
           <AuthButton />
         </div>
       </header>
