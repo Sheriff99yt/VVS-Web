@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { docsPath } from './docsUrl';
+import { docsCategoryHash, docsPath } from './docsUrl';
 
 describe('docsPath', () => {
   it('uses kindId as the node slug', () => {
     expect(docsPath({ type: 'home' })).toBe('/docs');
+    expect(docsPath({ type: 'home', hash: 'cat-variables' })).toBe('/docs#cat-variables');
+    expect(docsCategoryHash('Variables')).toBe('cat-variables');
     expect(docsPath({ type: 'node', id: 'flow_branch' })).toBe('/docs/nodes/flow_branch');
     expect(docsPath({ type: 'node', id: 'action_wait', hash: 'opt-duration' })).toBe(
       '/docs/nodes/action_wait#opt-duration',

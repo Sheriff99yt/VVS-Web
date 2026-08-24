@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DocsChrome } from '@/components/docs/DocsChrome';
-import { docsPath } from '@/lib/docsUrl';
+import { docsCategoryHash, docsPath } from '@/lib/docsUrl';
 import { getNodeDoc, listNodeDocKindIds, relatedNodeDocs } from '@/lib/nodeDocCatalog';
 
 type PageProps = { params: Promise<{ kindId: string }> };
@@ -45,9 +45,9 @@ export default async function NodeDocPage({ params }: PageProps) {
           Docs
         </Link>
         <span className="mx-1.5 text-zinc-700">/</span>
-        <a href={`${docsPath({ type: 'home' })}#cat-${node.category.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-zinc-200">
+        <Link href={docsPath({ type: 'home', hash: docsCategoryHash(node.category) })} className="hover:text-zinc-200">
           {node.category}
-        </a>
+        </Link>
         <span className="mx-1.5 text-zinc-700">/</span>
         <span className="text-zinc-300">{node.title}</span>
       </nav>
