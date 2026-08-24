@@ -43,7 +43,7 @@ export function DocsSidebar({
   const activeFeature = active?.type === 'feature' ? active.id : null;
 
   return (
-    <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 overflow-y-auto border-r border-zinc-800/70 px-3 py-5 text-[13px] md:block">
+    <aside className="hidden h-full w-64 shrink-0 overflow-y-auto border-r border-zinc-800/70 px-3 py-5 text-[13px] md:block">
       <label className="mb-4 block">
         <span className="sr-only">Filter nodes</span>
         <input
