@@ -203,3 +203,107 @@ Generated fields win. Overlay may set `summary`, pitfalls, related prose.
 6. Playground last.
 
 Do not start hosted docs, Algolia keys, or a docs microservice.
+
+
+## Future horizon
+
+The first slices make a catalog that does not lie. The longer bet is that **docs become a protocol the product speaks**, not a brochure next to it. If that holds, five years from now the website, the canvas info icon, the in-page agent, a VS Code host, and an Unreal attach path all open the **same ids**. Nobody writes a second Branch article for "the engine."
+
+### Docs as a protocol
+
+Treat `/docs/nodes/{kindId}` the way we treat IR kinds: a public, stable name. The HTML page is one projection. The `.md` and `.json` twins are the same record. The editor tooltip is `summary`. The agent tool is `get_node_doc(kindId)`. The VS Code hover is that JSON. If a surface cannot consume the record, it does not get a private rewrite.
+
+That is why we refuse a Mintlify body that is not generated from the registry, and why we refuse an in-app help essay that is not the markdown twin. Drift is not a docs bug. It is a second product.
+
+### Context-aware help (same URL, extra query)
+
+The icon always lands on the kind page. Later, the editor may pass **context it already knows**, never a new identity:
+
+| Query | Meaning | Rule |
+|-------|---------|------|
+| `?lang=verse` | Highlight what this kind emits in the current pack | Dim or leftover `(x)` must match Generate, not a prettier story |
+| `?opt=seconds` | Scroll/highlight an option | Same as `#opt-seconds` |
+| `?from=leftover` | Open the honesty note | If Generate would print `(x)`, the page says so first |
+| `?example=wait-then-print` | Load a checked-in graph snippet | Snippet ids are real files, not prompt text |
+
+Do not mint `/docs/nodes/flow_branch_verse`. Language is a view over one kind. Eight sites is how we get eight lies.
+
+### The page can talk back to the canvas
+
+Once graph JSON is canonical, a docs example is not a screenshot. It is a **tiny graph document**:
+
+- "Copy graph" writes the same JSON the editor already imports.
+- "Open in VVS" is `https://sheriff99yt.github.io/VVS-Web/editor?example=wait-then-print` or a `.vvs` download. Native hosts use a file, not a web-only scheme, when the OS needs a path.
+- "Drop Branch" from the page is the spawn catalog row (`kindId`), not a special docs node.
+
+The teaching loop becomes: read the definition → drop the example → Generate → the leftover note on the page matches the panel. If they disagree, the page is wrong.
+
+### Versions without a museum
+
+Cut a docs version when the **node ABI or `.vvs` schema** breaks, not on every push. Follow the Docusaurus habit: few frozen trees, current is default.
+
+- Current Pages site is always "the product as of this `main`."
+- `/docs/v/{schemaVersion}/nodes/flow_branch` exists only after a breaking cut.
+- Removed kinds 301 to a successor. Cut kinds stay as `status: cut` with the date and the replacement (`event_emit` → Dispatch / Bind).
+- Old Pages artifacts can stay on GitHub releases. Do not keep twelve live trees.
+
+### Language packs and environments
+
+A node page has one ports table. Under it, a **pack matrix**: Python / JS / C++ / C# / GDScript / Go / Rust / Verse — emit shape, or honest leftover. That matrix is generated from the same printers Generate uses. If a cell is green on the page and `(x)` in the panel, CI fails.
+
+Environment packs (Godot, console, future UE/Verse natives) get **feature pages** and, when they add kinds, real `kindId`s. Do not document a Verse device API we invented. The docs rule is the same as the canvas rule.
+
+### Agents, GEO, and "do not invent a node"
+
+The in-page agent, Cursor, and answer engines will all hit this surface. Design for that now:
+
+- `llms.txt` lists every public kind. `llms-full.txt` is the concatenated markdown twins (size-capped; link the rest).
+- A future agent tool `get_node_doc` / `search_docs` returns the JSON twin, not a hallucinated schema.
+- If the model wants a node that is not in the registry, the only legal move is leftover + link to `/docs/features/leftover`. That is U93's honesty rule applied to help.
+- GEO (generative engine optimization) is this: a quotable first paragraph, tables instead of canvas-only facts, stable ids, changelog. It is not keyword stuffing and not a hidden "AI" page.
+
+Five years out, "how does Bind work in GDScript?" should be answerable by citing `/docs/nodes/event_bind?lang=gdscript`, not by a blog.
+
+### Native hosts
+
+VS Code and a future UE6 attach path do not get a second manual. They open the same URL or embed the markdown twin.
+
+- VS Code: hover on a generated source span (source map) → kind page. Command "VVS: Open node docs."
+- Unreal / UEFN: after a real engine exists, "open docs" on a VVS node still uses `kindId`. No Slate-only help book.
+- Offline: a zipped `docs/` from the Pages artifact in the release zip we already publish. The icon falls back to the zip when there is no network. Same files.
+
+### In-app F1, later — still not a second article
+
+When we want help without leaving the graph: a side panel loads the **markdown twin** (static fetch, no API). F1 / `?` on a selected node is the icon action with `target=panel`. Selection of a pin opens `#in-*`. The panel is a viewer. If the fetch fails, the icon still has the Pages href.
+
+### Community and compounds
+
+Core kinds stay first-party. If the Library ever grows user graphs-as-nodes, those pages are **graph documents with a summary**, not forged `kindId`s in `core-pack.json`. A community overlay repo (Comfy `embedded-docs` shape) can PR prose, never ports.
+
+Preset / compound nodes (if we ever ship them) are catalogued as instances with a link to their inner graph, the Substance distinction: primitive vs library instance.
+
+### Teaching, not a course platform
+
+A future `/docs/learn/...` can be a sequence of example graphs that Generate. It is still the catalog underneath. We do not become an LMS. We do not hide a node from the catalog because it is "advanced." Status chips tell the truth.
+
+### Accessibility and media
+
+Tables stay real `<table>`s. Icon hit targets stay large. Playground is enhancement. Before/after stills get transcripts ("Branch with true takes the top exec pin"). No autoplay GPU circus on a docs page.
+
+### What we still refuse in five years
+
+- A docs microservice or product accounts to read help.
+- Play / run-from-docs. Execution stays out of VVS.
+- Invented language APIs to make a page look complete.
+- Per-host manuals that disagree with Generate.
+- Cloaking a rich page for Google and a different page for the user.
+
+### North-star stories
+
+1. A new user clicks info on Branch, reads one sentence, drops the example, Generates, sees the `if` they expected.
+2. Someone on Verse hits leftover on GetInput, follows `?from=leftover`, and is told we will not invent a player API — same text as the Research card.
+3. The in-page agent is asked "wire a wait then print." It reads `action_wait` and `action_print` JSON, spawns those kinds, and cites the pages. It does not spawn `event_subscribe`.
+4. A VS Code user hovers the generated `connect` line, lands on `event_bind`, GDScript cell.
+5. An answer engine quotes the Bind first paragraph and links the stable URL. The quote is still true because CI generates that paragraph's facts from the registry.
+
+If a future idea cannot serve those stories without a second source of truth, it is not a docs feature.
