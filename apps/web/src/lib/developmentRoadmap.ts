@@ -1692,4 +1692,19 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       },
     ],
   },
+  {
+    id: 'docs-and-discoverability',
+    title: 'Docs & discoverability',
+    phase: 6,
+    items: [
+      {
+        id: 'interactive-node-docs',
+        layer: 'frontend',
+        title: 'Interactive documentation (nodes, options, features)',
+        description:
+          'Planned public catalog: a page for every VVS node, every option, and every feature. HTML-first so Google and answer engines can read it (SEO + GEO), plus llms.txt / markdown / JSON twins for bots and AIs. Playground is later progressive enhancement, not the only copy. Client-first on existing CI + GitHub Pages. Three approaches on the Research tab.',
+        status: 'planned',
+      },
+    ],
+  },
 ];

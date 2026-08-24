@@ -1197,4 +1197,107 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
       { label: 'Digital Foundry: UE6 EA end-2027, full about 12 to 18 months later', href: 'https://www.digitalfoundry.net/news/2026/06/unreal-engine-6-gets-q4-2027-early-access-release-date-full-release-by-mid-2029' },
     ],
   },
+  {
+    id: 'interactive-node-docs-research',
+    systemId: 'interactive-node-docs',
+    title: 'Interactive node / option / feature docs',
+    subtitle:
+      'A crawlable catalog of every public node, option, and feature. Playground is enhancement. Bots, SEO, and GEO (answer engines) read the same HTML.',
+    problem:
+      'Users cannot learn a node the way they use it. Ports, types, defaults, and enums live in the engine; the website is marketing plus a TypeScript roadmap. A JS-only playground or a screenshot gallery will rot, and it will be invisible to Google and to answer engines. Help that invents a port the registry does not have is the same class of lie as a guessed import node.',
+    constraints: [
+      'GitHub Pages + existing ci.yml / pages.yml. Static artifact. basePath /VVS-Web. No secret APIs, no docs server.',
+      'Node / option / pin is the product grammar. Generated tables must come from the engine registry. Overlays must not invent ports.',
+      'Bot- and AI-friendly AND SEO + GEO (generative engine optimization, not geography): unique crawlable URLs, first-paragraph definition, sitemap/canonical/robots/OG, JSON-LD only when true, llms.txt plus .md and JSON twins. No cloaking.',
+      'Playground is progressive enhancement. If JS is off, the definition and the option table still read.',
+      'Client-only demos: WASM / JS / WebGL or pre-baked before/after. No GPU farm, no product accounts.',
+      'CI fails if a public node has no doc record (internal / undocumented allowlist only).',
+    ],
+    options: [
+      {
+        id: 'ssg-registry-catalog',
+        title: 'SSG catalog from the engine registry',
+        verdict: 'ship',
+        summary:
+          'Build static HTML pages from registry.json plus optional MDX. One URL per node, option type, and feature. Pagefind search. Machine-readable twins. This is the SEO/GEO/AI surface.',
+        how:
+          'Engine (or syntax-registry list()) emits node-doc.v1 JSON: id, ports, types, defaults, ranges, enums, status. SSG (existing Next static export) renders catalog + detail with real HTML in apps/web/out. Anchors #opt-* and #in-*. Overlay MDX for when-to-use only. Ship sitemap.xml, robots.txt, canonical, Open Graph. llms.txt + /docs/nodes/{slug}.md + JSON. Pagefind after build. CI: every public kindId has a page; overlay cannot add ports.',
+        pros: [
+          'Crawlers and answer engines see the facts without executing the canvas.',
+          'Same IDs the editor can F1 later. In-app help and the website share one file.',
+          'Fits Pages: no keys, no server, basePath already in next.config.ts.',
+          'Honesty is structural: missing docs fail CI instead of a pretty empty catalog.',
+          'n8n / Comfy / Node-RED already prove generate-the-table, write-the-essay.',
+        ],
+        cons: [
+          'Need a registry export that is public-safe (no internal kinds unless marked).',
+          'Next App Router must actually emit HTML per slug on GITHUB_PAGES=true, not an empty client shell.',
+          'Hand prose for 50+ kinds is slow; most pages start generated-only with a badge.',
+          'Search index and sitemap must respect /VVS-Web/.',
+        ],
+      },
+      {
+        id: 'client-playground',
+        title: 'Client playground on each page',
+        verdict: 'later',
+        summary:
+          'One MDN-style Try it per page: hover an option, highlight the control, tweak, copy graph JSON. Still no secrets.',
+        how:
+          'After the catalog exists, bind options[] to a small React Flow / chrome widget. Share ?example= and option query. Heavy nodes use a before/after slider built at compile time. Copy canonical graph JSON / Open in VVS. One playground per page.',
+        pros: [
+          'Teaches options the way the canvas does.',
+          'React Flow hover-to-highlight is a known pattern.',
+          'Still Pages-safe if everything is client WASM or pre-rendered frames.',
+        ],
+        cons: [
+          'A canvas that is the only copy fails SEO/GEO and print/reader mode.',
+          'Playground will not match GPU/engine nodes 1:1. Must label approx / preview.',
+          'Building this before the catalog ships leaves crawlers with empty shells.',
+        ],
+      },
+      {
+        id: 'js-only-or-hosted-docs',
+        title: 'SPA-only or hosted docs product',
+        verdict: 'reject',
+        summary:
+          'Ship a JS-only docs app, or move the catalog to Mintlify / a keyed API explorer. Content appears after hydrate, or behind a host we do not own.',
+        how:
+          'Single-page docs route with client fetch, or Mintlify/Stripe-style live explorer. Search via a secret key. Optional remote MD CMS.',
+        pros: [
+          'Fastest pretty demo if you ignore crawlers.',
+          'Hosted search and versioning are already a product somewhere else.',
+        ],
+        cons: [
+          'Empty HTML fails Google, GEO, and llms.txt. Cloaking to fix that is worse.',
+          'Keys and hosted CMS fight client-first Pages (ci.yml + pages.yml).',
+          'Second source of truth, same drift failure as a guessed U93 node.',
+        ],
+      },
+    ],
+    recommendation:
+      'Ship the SSG catalog and the machine-readable twins first. Playground later, on top of real HTML. Reject JS-only or hosted-key docs. Keep ci.yml and pages.yml as the publish path.',
+    firstSlice: [
+      'This roadmap row + this research card. Keep ci.yml and pages.yml enabled and green.',
+      'Freeze node-doc.v1 schema in-repo when the first registry dump exists. Do not invent ports.',
+      'Planned /docs nav only. Do not ship the full catalog in the same change as this card.',
+      'HTML-first: unique title, H1, meta description; sitemap; robots; canonical; OG. JSON-LD only for real TechArticle/FAQ content.',
+      'llms.txt plus markdown/JSON twins so bots do not have to execute the playground.',
+      'Later: Pagefind, ten flagship nodes with prose, then generate-the-rest.',
+    ],
+    sources: [
+      { label: 'Blender Geometry Nodes manual', href: 'https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/introduction.html' },
+      { label: 'n8n built-in node types', href: 'https://docs.n8n.io/integrations/builtin/node-types/' },
+      { label: 'n8n llms.txt', href: 'https://docs.n8n.io/llms.txt' },
+      { label: 'ComfyUI in-app node docs', href: 'https://docs.comfy.org/interface/features/node-docs' },
+      { label: 'Node-RED node HTML help', href: 'https://nodered.org/docs/creating-nodes/node-html.html' },
+      { label: 'React Flow learn', href: 'https://reactflow.dev/learn' },
+      { label: 'MDN interactive examples', href: 'https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Page_structures/Code_examples' },
+      { label: 'TypeDoc GitHub Pages output', href: 'https://typedoc.org/documents/Options.Output.html' },
+      { label: 'GitHub Pages overview', href: 'https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages' },
+      { label: 'Docusaurus versioning', href: 'https://docusaurus.io/docs/versioning' },
+      { label: 'Pagefind', href: 'https://pagefind.app/docs/' },
+      { label: 'Google SEO starter', href: 'https://developers.google.com/search/docs/fundamentals/seo-starter-guide' },
+      { label: 'llmstxt.org', href: 'https://llmstxt.org/' },
+    ],
+  },
 ];

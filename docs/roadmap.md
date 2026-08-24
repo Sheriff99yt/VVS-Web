@@ -5,7 +5,7 @@ Directional phases - not schedule commitments.
 
 **Product default (locked):** client-first editor. **No VVS accounts**, **no dedicated app server**, **no live code execution**. Edit graphs, **Generate** ordinary source, run **logical checks**. Reading existing source into a graph (U93) is **research**, not a product default.
 
-In-app: **Development roadmap** with **Open / Done / Research**, grouped frontend / backend (mirrors this doc). Research tab holds studies for leftover Open items (U93, COA, Bind remaining langs, native VS Code / UE6 hosts).
+In-app: **Development roadmap** with **Open / Done / Research**, grouped frontend / backend (mirrors this doc). Research tab holds studies for leftover Open items (U93, COA, Bind remaining langs, native VS Code / UE6 hosts, interactive node docs).
 
 ---
 
@@ -27,6 +27,7 @@ In-app: **Development roadmap** with **Open / Done / Research**, grouped fronten
 | Compile-once-all | COA | `COA_SHIPPED = false`. Single-target Generate only |
 | Session collab | Phase 4 | Planned. Session client/host, not account cloud |
 | UE6 Verse plugin | Phase 5 | Planned. Same graph, Verse text, not Blueprint VM |
+| Interactive node / option / feature docs | \interactive-node-docs\ | Planned. Research tab. HTML-first catalog on existing Pages (SEO + GEO). Playground later. Do not ship the catalog in this row. |
 
 ```mermaid
 flowchart LR
@@ -67,6 +68,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | **CL-014** (`verse-getinput-cl014`) | Verse GetInput | Honest `(x)` + prompt shipped. Real player/string read is not a plain-class API. Research tab: keep stub (ship). |
 | **folder-os-path** | Reveal in Explorer / Finder | Planned. |
 | **env-engine-packs** | Engine environment packs | Planned. Do not invent UE6 APIs. |
+| **interactive-node-docs** | Interactive documentation | Planned. Public catalog of each node / option / feature. Research tab (SSG ship, playground later, SPA/hosted reject). Do not ship the catalog in this docs-only row. |
 
 ### Editor & AI
 
@@ -136,6 +138,14 @@ User-facing waves (detail lives in [current_state.md](current_state.md) and the 
 | **5** UE6 plugin | Planned | Same graph to Verse text; not Blueprint VM. Research tab |
 
 Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md). Backlog `.agents/memory/incomplete-ui.md`. Lang emit [cross_language_mapping/SKILL.md](../.agents/skills/vvs_cross_language_mapping/SKILL.md).
+
+---
+
+### Docs & discoverability
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Interactive documentation (`interactive-node-docs`) | **Open** — catalog of every node, option, and feature. HTML-first, bot/AI + SEO + GEO. Research tab. | Existing CI + GitHub Pages. Playground later. Not a JS-only SPA. |
 
 ---
 
