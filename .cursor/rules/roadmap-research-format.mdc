@@ -1,0 +1,19 @@
+---
+description: Structure docs research without inventing evidence or stale decisions
+globs: "docs/**/*.md,docs/design/**/*.md,apps/web/src/app/docs/**/*,apps/web/src/lib/docs*.ts,apps/web/src/lib/roadmapResearch.ts,apps/web/src/lib/developmentRoadmap.ts"
+alwaysApply: false
+---
+
+# Research and evidence (live docs)
+
+- Compare v1 and long-term options with concise fields for fit, development/research, pros/cons, maintenance, transition risk, and gates. In-app Research cards keep three options and verdicts `ship` | `later` | `reject`.
+- Treat HTML-first SSG from the registry as the selected v1 route. Research playground, F1 panel, and native hovers without reopening or downgrading that route.
+- The selected publish workload is commit → CI → Pages artifact (`apps/web/out`) → public `/docs/nodes/{kindId}`. Assess it against "real HTML in the artifact," not against a client-only shell.
+- Separate stub/generated tables (v1) from overlay essays and playgrounds (later). A missing essay is not a rejected kind.
+- Record current work as architecture + roadmap + research. Do not mark `docsUrl()`, the info icon, or `/docs` routes shipped until they exist in tree.
+- Do not invent facts, costs, crawl metrics, coverage percentages, option ids, or approvals. Use `TBD` or `Unknown pending test`.
+- Put product law and selected direction before research; keep technical analysis visibly separate.
+- Keep documents concise: state each fact once, consolidate repeated explanations, avoid speculative TBD detail.
+- For an explicitly rejected candidate, record only `Candidate: <name> - Rejected` and one evidence-based `Reason:` line. Remove other fields. Do not generalize. Current reject: JS-only SPA or hosted-key docs — Reason: empty HTML fails crawlers, GEO, and client-first Pages.
+- Use descriptive human-readable names (`kindId`, Pages artifact, leftover) rather than opaque gate IDs.
+- Cite real URLs only. No fake benchmarks. GPU cost stays qualitative unless a measured method is recorded.

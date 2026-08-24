@@ -1,0 +1,22 @@
+---
+description: Preserve live-docs v1 scope, publish path, and honesty gates
+globs: "docs/**/*.md,docs/design/**/*.md,apps/web/src/app/docs/**/*,apps/web/src/lib/docs*.ts,apps/web/src/lib/roadmapResearch.ts,apps/web/src/lib/developmentRoadmap.ts"
+alwaysApply: false
+---
+
+# Live docs gates and constraints
+
+- Make a truthful public catalog the highest near-term docs priority. v1 is the Pages site plus the editor info icon, invitation to the same URLs the user already has in the app.
+- v1 input to a node page is a public `kindId` from the registry. Dynamic user symbols (a project function) do not mint core pages.
+- A public kind must have a URL that does not 404. Stub + `undocumented` badge is allowed. Silent missing page is not.
+- v1 pages are generated/prepared at build; the editor does not call a docs API. Overlay prose is optional. Automated "write the essay from an LLM at request time" is outside v1 and remains later/deferred, not rejected solely for deferral.
+- The v1 80/20 allocation is route-focused: 80% on registry → static HTML → info icon → twins, 20% on search, polish, and examples.
+- The selected publish route is `main` push → `ci.yml` → `pages.yml` → `https://sheriff99yt.github.io/VVS-Web/` with `basePath` `/VVS-Web`. Assess links with that prefix. Do not replace it with a hosted docs product.
+- Manual overlay for flagship kinds is before "complete catalog" claims. Playground and in-app F1 panel are outside v1 and remain later, not rejected solely for missing v1 fit.
+- GitHub Pages + static export is the confirmed primary delivery for both v1 and long term; keep it outside "we might switch host" tracking unless product law changes.
+- That lock does not close implementation of Pagefind, example graphs, F1 panel, or native-host viewers.
+- v1 requires accurate ports/options tables and a one-sentence definition. Live GPU playground and run-from-docs are long-term-or-never (execution stays out of VVS).
+- `kindId` is the UE-equivalent of a stable public id; parallel work on option hashes (`#opt-*`) and feature slugs stays evidence-open until inspector ids are confirmed.
+- Language is a view (`?lang=verse`), never eight sites. Pack-matrix cells must match Generate; green-on-page + leftover-in-panel fails the gate.
+- Transitional exceptions apply only to components explicitly selected with documented debt, migration path, trigger, owner, and review date (for example a stub page).
+- Do not invent latency, coverage %, or crawl rankings. Use `TBD` or `Unknown pending test`.

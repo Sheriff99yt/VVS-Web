@@ -1,0 +1,19 @@
+---
+description: Keep live-docs navigation, tables, and diagrams compact and truthful
+globs: "docs/**/*.md,docs/design/**/*.md,apps/web/src/app/docs/**/*,apps/web/src/lib/docs*.ts,apps/web/src/lib/roadmapResearch.ts,apps/web/src/lib/developmentRoadmap.ts"
+alwaysApply: false
+---
+
+# Navigation and visuals (live docs)
+
+- Keep product law and the selected URL contract at the top before phases, research, and open questions. Keep `docsUrl()` rules, `kindId` table, honesty gates, and horizon scope together as Part I.
+- Keep a compact Contents near the top that links to each Part. Add one local index under each Part heading with working anchors; update links when headings change.
+- Validate every internal Markdown link after navigation edits; avoid stale anchors and giant repeated indexes.
+- Treat navigation edits as organization-only: preserve substantive content and diagrams; replace only exact duplicate index text when compacting.
+- Use compact Markdown checklists for status, ownership, readiness, and open decisions. Use `[x]` only for confirmed or shipped items; leave pending evidence unchecked.
+- Do not force checklists into comparison matrices or prose where boxes add no clarity.
+- Use narrow tables for URL contract, schema fields, and pack matrix. Avoid giant unreadable tables.
+- Use Mermaid only for a useful flow (registry → HTML → icon → twins, or editor deep link). Keep every diagram valid. Prefer ASCII hyphens.
+- Preserve a clear NOW / Current highlight: architecture and Research card exist; `docsUrl()` + header info icon + static `/docs` pages are not shipped.
+- Show GitHub Pages + `kindId` URLs as the confirmed user-facing delivery in architecture diagrams. Do not imply that confirmation closes Pagefind, F1, or playground gates.
+- Live pages: unique title, H1, first-paragraph definition, real `<table>` for ports and options. Playground never replaces those tables.

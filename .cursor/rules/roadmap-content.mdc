@@ -1,0 +1,18 @@
+---
+description: Preserve live-docs intent, ownership, and product law
+globs: "docs/**/*.md,docs/design/**/*.md,apps/web/src/app/docs/**/*,apps/web/src/lib/docs*.ts,apps/web/src/lib/roadmapResearch.ts,apps/web/src/lib/developmentRoadmap.ts"
+alwaysApply: false
+---
+
+# Live docs content and ownership
+
+- Preserve product law. Label [Product law], [Selected], [Research], and [Technical analysis] separately. Do not collapse a research verdict into a shipped claim.
+- Preserve the near-term live-docs priorities: HTML-first catalog of every public node, option, and feature; stable `kindId` URLs; editor info icon deep links; bot/AI + SEO + GEO twins (`llms.txt`, markdown, JSON); existing CI + GitHub Pages as the publish path.
+- Preserve the long-term vision: docs as a protocol the canvas, in-page agent, VS Code host, and a future native attach path all speak. Same record, many projections. No second Branch article.
+- Treat the public Pages site as the near-term user-facing surface; treat in-app F1 / markdown-twin panel and native-host hovers as later viewers of the same files.
+- Keep canvas / node / option / pin as source of truth. Generated tables come from `syntax-registry` `list()`. Overlays must not invent ports, kinds, or language APIs.
+- Record leftover honesty: if Generate would print `(x)`, the live page says leftover first. Do not pretty-print a missing emit.
+- Keep client-first: no docs microservice, no product accounts to read help, no secret search keys required to open a page.
+- Keep playground as progressive enhancement, not the only copy. JS-off still reads definition + tables.
+- Founders / product own vision, acceptance ("info icon opens the kind URL"), and the protocol bet. Technical writing owns schema, SSG, sitemap, and CI gates.
+- A selected direction (SSG catalog from registry) may precede a full overlay set. Do not claim the catalog is complete without coverage evidence. Do not claim GEO/SEO works without real HTML in the Pages artifact.

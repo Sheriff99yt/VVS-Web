@@ -85,6 +85,8 @@ apps/web/next-env.d.ts
 
 # Agent / local scratch (optional local-only)
 .cursor/
+!.cursor/rules/
+!.cursor/rules/**
 
 # Local-only maintainer scripts (never commit)
 tools/check_git_safe.ps1
