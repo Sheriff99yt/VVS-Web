@@ -62,7 +62,7 @@ export function Tooltip({
   placement?: TooltipPlacement;
   delayMs?: number;
   disabled?: boolean;
-  /** Wrapper class — default `inline-flex` so buttons keep size. */
+  /** Wrapper class â€” default `inline-flex` so buttons keep size. */
   className?: string;
 }) {
   const tipId = useId();
@@ -157,7 +157,7 @@ export function Tooltip({
     >
       {/* eslint-disable-next-line react-hooks/refs */}
       {React.cloneElement(children, {
-        // Strip native browser tooltip — we own hover tips.
+        // Strip native browser tooltip â€” we own hover tips.
         title: undefined,
         onMouseEnter: (e: React.MouseEvent) => {
           children.props.onMouseEnter?.(e);
@@ -198,7 +198,7 @@ export function Tooltip({
               ref={tipRef}
               id={tipId}
               role="tooltip"
-              className="pointer-events-none fixed z-[1100] max-w-[240px] rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-[10px] leading-snug text-zinc-200 shadow-lg shadow-black/40"
+              className="pointer-events-none fixed z-[1100] max-w-[280px] rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-[10px] leading-snug text-zinc-200 shadow-lg shadow-black/40"
               style={{ top: coords.top, left: coords.left, transform }}
             >
               {resolvedContent}

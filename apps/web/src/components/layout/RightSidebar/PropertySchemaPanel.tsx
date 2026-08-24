@@ -4,16 +4,16 @@ import React from 'react';
 import type { PropertyFieldDefinition } from '@vvs/syntax-registry';
 import { isPropertyFieldVisible } from '@vvs/syntax-registry';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { DocsInfoIcon } from '@/components/docs/DocsInfoIcon';
 
 interface PropertySchemaPanelProps {
   fields: PropertyFieldDefinition[];
   values: Record<string, unknown>;
   onChange: (key: string, value: string | number | boolean) => void;
-  /** Dynamic choices for class / enum-like fields (e.g. Declare Class Extends). */
   fieldOptions?: Record<string, Array<{ value: string; label: string; description?: string; group?: string; dimmed?: boolean }>>;
+  kindId?: string | null;
 }
 
-/** Edited on the selected-node chip strip (`NodeModifiers`), not duplicated in Details. */
 const INLINE_MODIFIER_KEYS = new Set([
   'visibility',
   'binding',
@@ -25,7 +25,35 @@ const INLINE_MODIFIER_KEYS = new Set([
   'isSuper',
 ]);
 
-export function PropertySchemaPanel({ fields, values, onChange, fieldOptions }: PropertySchemaPanelProps) {
+function FieldLabel({
+  kindId,
+  fieldKey,
+  htmlFor,
+  children,
+}: {
+  kindId?: string | null;
+  fieldKey: string;
+  htmlFor?: string;
+  children: string;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <label className="text-[11px] font-medium text-zinc-400" htmlFor={htmlFor}>
+        {children}
+      </label>
+      {kindId ? (
+        <DocsInfoIcon
+          kindId={kindId}
+          optionKey={fieldKey}
+          label={children}
+          className="text-zinc-500 hover:text-zinc-200"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export function PropertySchemaPanel({ fields, values, onChange, fieldOptions, kindId }: PropertySchemaPanelProps) {
   const visibleFields = fields.filter(
     (field) => isPropertyFieldVisible(field, values) && !INLINE_MODIFIER_KEYS.has(field.key)
   );
@@ -54,15 +82,15 @@ export function PropertySchemaPanel({ fields, values, onChange, fieldOptions }: 
               : choiceOptions;
           return (
             <div key={field.key} className="space-y-1">
-              <label className="text-[11px] font-medium text-zinc-400" htmlFor={field.key}>
+              <FieldLabel kindId={kindId} fieldKey={field.key} htmlFor={field.key}>
                 {field.label}
-              </label>
+              </FieldLabel>
               <SearchableSelect
                 id={field.key}
                 value={current}
                 onChange={(value) => onChange(field.key, value)}
                 options={options}
-                placeholder={`Select ${field.label}…`}
+                placeholder={`Select ${field.label}`}
                 searchable={options.length > 1}
               />
               {field.description ? (
@@ -76,27 +104,34 @@ export function PropertySchemaPanel({ fields, values, onChange, fieldOptions }: 
 
         if (field.type === 'boolean') {
           return (
-            <label
-              key={field.key}
-              className="flex items-center gap-2 text-[11px] text-zinc-300 cursor-pointer py-0.5"
-            >
-              <input
-                type="checkbox"
-                checked={Boolean(raw)}
-                onChange={(e) => onChange(field.key, e.target.checked)}
-                className="accent-zinc-500 bg-zinc-900 border-zinc-800"
-              />
-              {field.label}
-            </label>
+            <div key={field.key} className="flex items-center gap-2 text-[11px] text-zinc-300 py-0.5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={Boolean(raw)}
+                  onChange={(e) => onChange(field.key, e.target.checked)}
+                  className="accent-zinc-500 bg-zinc-900 border-zinc-800"
+                />
+                {field.label}
+              </label>
+              {kindId ? (
+                <DocsInfoIcon
+                  kindId={kindId}
+                  optionKey={field.key}
+                  label={field.label}
+                  className="text-zinc-500 hover:text-zinc-200"
+                />
+              ) : null}
+            </div>
           );
         }
 
         if (field.type === 'number') {
           return (
             <div key={field.key} className="space-y-1">
-              <label className="text-[11px] font-medium text-zinc-400" htmlFor={field.key}>
+              <FieldLabel kindId={kindId} fieldKey={field.key} htmlFor={field.key}>
                 {field.label}
-              </label>
+              </FieldLabel>
               <input
                 id={field.key}
                 type="number"
@@ -110,9 +145,9 @@ export function PropertySchemaPanel({ fields, values, onChange, fieldOptions }: 
 
         return (
           <div key={field.key} className="space-y-1">
-            <label className="text-[11px] font-medium text-zinc-400" htmlFor={field.key}>
+            <FieldLabel kindId={kindId} fieldKey={field.key} htmlFor={field.key}>
               {field.label}
-            </label>
+            </FieldLabel>
             <input
               id={field.key}
               type="text"

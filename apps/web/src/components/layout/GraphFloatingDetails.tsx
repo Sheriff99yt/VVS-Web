@@ -57,7 +57,7 @@ export const SPAWN_FUNCTION_IMPLEMENT_EVENT = 'vvs:spawn-function-implement';
 /** Spawn a Call Function node at viewport center (tree context menu). */
 export const SPAWN_FUNCTION_CALL_EVENT = 'vvs:spawn-function-call';
 
-/** Delay before hover expands details — avoids flash while dragging. */
+/** Delay before hover expands details â€” avoids flash while dragging. */
 const HOVER_EXPAND_MS = 180;
 const ROLE_CHIP_CLASS: Record<string, string> = {
   Declare: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
@@ -144,7 +144,7 @@ function GraphFloatingDetailsPanel() {
   const nodeData = useNodesData<VVSNode>(selectedNodeId || '');
   const { updateNodeData } = useReactFlow();
 
-  // New selection → show editors immediately (no hover wait). Pin still wins after leave.
+  // New selection â†’ show editors immediately (no hover wait). Pin still wins after leave.
   useEffect(() => {
     if (hoverTimerRef.current) {
       clearTimeout(hoverTimerRef.current);
@@ -518,7 +518,7 @@ function GraphFloatingDetailsPanel() {
                 ? 'Code preview'
                 : 'Details';
 
-  const title = isBrokenRefSelection ? `Broken reference — ${baseTitle}` : baseTitle;
+  const title = isBrokenRefSelection ? `Broken reference â€” ${baseTitle}` : baseTitle;
 
   const inspectorEvent = selectedEvent ?? boundEvent ?? null;
 
@@ -694,6 +694,7 @@ function GraphFloatingDetailsPanel() {
 
           {filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes' || field.key === 'implementsTypes' || field.key === 'form'))).length > 0 ? (
             <PropertySchemaPanel
+              kindId={nodeKindId}
               fields={filteredPropertySchema.filter((field) => !(nodeKindId === 'class_define' && (field.key === 'extendsType' || field.key === 'extendsTypes' || field.key === 'implementsTypes' || field.key === 'form')))}
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}

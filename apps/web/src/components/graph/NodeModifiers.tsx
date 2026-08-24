@@ -17,6 +17,7 @@ import {
 } from '@vvs/language-profiles';
 import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock, CornerLeftUp } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { DocsInfoIcon } from '@/components/docs/DocsInfoIcon';
 import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import { applyDefinePropertyToVariable } from '@/lib/variableHelpers';
 import styles from './VVSNode.module.css';
@@ -24,7 +25,7 @@ import styles from './VVSNode.module.css';
 interface NodeModifiersProps {
   id: string;
   data: VVSNodeData;
-  /** True while a modifier menu is open — keeps the hover strip mounted/visible. */
+  /** True while a modifier menu is open ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â keeps the hover strip mounted/visible. */
   onInteractionChange?: (active: boolean) => void;
 }
 
@@ -341,6 +342,7 @@ export function NodeModifiers({
   return (
     <div className={styles.modifierRow} onMouseDown={(e) => e.stopPropagation()}>
       {hasVisibility ? (
+        <>
         <ModifierDropdown
           icon={getVisibilityIcon(visibilityValue)}
           title="Visibility"
@@ -356,9 +358,12 @@ export function NodeModifiers({
           onChange={(v) => handleUpdate('visibility', v)}
           onOpenChange={handleMenuOpenChange}
         />
+        <DocsInfoIcon kindId={kindId} optionKey="visibility" label="Visibility" />
+        </>
       ) : null}
 
       {hasBinding ? (
+        <>
         <ModifierDropdown
           icon={getBindingIcon(bindingValue)}
           title="Binding"
@@ -370,6 +375,8 @@ export function NodeModifiers({
           onChange={(v) => handleUpdate('binding', v)}
           onOpenChange={handleMenuOpenChange}
         />
+        <DocsInfoIcon kindId={kindId} optionKey="binding" label="Binding" />
+        </>
       ) : null}
 
       {BOOL_MODIFIERS.map(
@@ -380,8 +387,8 @@ export function NodeModifiers({
           const enabled = isModifierInteractive(targetLanguage, resolvedKey);
           const active = Boolean(props[schemaKey as keyof typeof props]);
           return (
+            <React.Fragment key={`${schemaKey}-${targetLanguage}`}>
             <ModifierDropdown
-              key={`${schemaKey}-${targetLanguage}`}
               icon={icon}
               title={title}
               value={active ? 'true' : 'false'}
@@ -396,11 +403,14 @@ export function NodeModifiers({
               onChange={(v) => handleUpdate(schemaKey, v === 'true')}
               onOpenChange={handleMenuOpenChange}
             />
+            <DocsInfoIcon kindId={kindId} optionKey={schemaKey} label={title} />
+            </React.Fragment>
           );
         }
       )}
 
       {hasSuper ? (
+        <>
         <ModifierDropdown
           icon={<CornerLeftUp size={11} strokeWidth={2.5} />}
           title="Super"
@@ -419,6 +429,8 @@ export function NodeModifiers({
           onChange={(v) => handleUpdate('isSuper', v === 'true')}
           onOpenChange={handleMenuOpenChange}
         />
+        <DocsInfoIcon kindId={kindId} optionKey="isSuper" label="Super" />
+        </>
       ) : null}
     </div>
   );

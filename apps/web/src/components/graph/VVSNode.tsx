@@ -3,6 +3,7 @@
 import React, { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { NodeProps, useReactFlow } from '@xyflow/react';
 import { CircleHelp, FolderOpen } from 'lucide-react';
+import { DocsInfoIcon } from '@/components/docs/DocsInfoIcon';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
   isNodeEffectiveForLanguage,
@@ -16,8 +17,6 @@ import { useGraphDocuments } from '@/hooks/useGraphDocuments';
 import { hasHandlerNodeForEvent } from '@/lib/defineNodeSync';
 import { linkedGraphTargetLabel } from '@/lib/linkedGraphNodes';
 import { getNodeDisplayTitle, resolveNodeKindId } from '@/lib/nodeKind';
-import { docsPath } from '@/lib/docsUrl';
-import Link from 'next/link';
 import { hoverChromeSetHoveredNode } from '@/lib/nodeHoverChromeStore';
 import {
   isCodeHoverNode,
@@ -82,7 +81,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const title = getNodeDisplayTitle(data, targetLanguage);
   const stateTip = [unsupportedTitle, hasBrokenRef ? 'Unresolved symbol reference' : '']
     .filter(Boolean)
-    .join(' · ');
+    .join(' Â· ');
   const showStateIcon = Boolean(stateTip);
   const isCodeHover = useSyncExternalStore(
     subscribeCodeHoverHighlight,
@@ -133,16 +132,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 <FolderOpen size={12} className="text-emerald-400/90 shrink-0" aria-hidden />
               ) : null}
               <span className={`${styles.title} truncate`}>{title}</span>
-              <Link
-                href={docsPath({ type: 'node', id: kindId })}
-                target="_blank"
-                rel="noreferrer"
-                className="nodrag nopan shrink-0 text-zinc-500 hover:text-zinc-200"
-                aria-label={`Open documentation for ${title}`}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <CircleHelp size={12} strokeWidth={2} />
-              </Link>
+              <DocsInfoIcon kindId={kindId} label={title} />
             </div>
             {linkedTargetLabel && (
               <Tooltip
@@ -159,7 +149,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 <span
                   className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}
                 >
-                  {isImportNode ? `↳ ${linkedTargetLabel}` : `→ ${linkedTargetLabel}`}
+                  {isImportNode ? `â†³ ${linkedTargetLabel}` : `â†’ ${linkedTargetLabel}`}
                 </span>
               </Tooltip>
             )}
