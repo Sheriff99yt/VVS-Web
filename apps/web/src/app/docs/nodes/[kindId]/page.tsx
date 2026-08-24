@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DocsChrome } from '@/components/docs/DocsChrome';
 import { docsPath } from '@/lib/docsUrl';
-import { getNodeDoc, listNodeDocKindIds } from '@/lib/nodeDocCatalog';
+import { getNodeDoc, listNodeDocKindIds, relatedNodeDocs } from '@/lib/nodeDocCatalog';
 
 type PageProps = { params: Promise<{ kindId: string }> };
 
@@ -26,10 +26,6 @@ function pinType(pin: { type?: string; label?: string }): string {
   return pin.type ?? 'data';
 }
 
-function CellEmpty() {
-  return <span className="text-zinc-600">-</span>;
-}
-
 export default async function NodeDocPage({ params }: PageProps) {
   const { kindId } = await params;
   const id = decodeURIComponent(kindId);
@@ -40,6 +36,7 @@ export default async function NodeDocPage({ params }: PageProps) {
     ...node.inputs.map((pin) => ({ dir: 'in' as const, pin })),
     ...node.outputs.map((pin) => ({ dir: 'out' as const, pin })),
   ];
+  const related = relatedNodeDocs(node.kindId);
 
   return (
     <DocsChrome title={node.title} active={{ type: 'node', id: node.kindId }}>
@@ -48,7 +45,9 @@ export default async function NodeDocPage({ params }: PageProps) {
           Docs
         </Link>
         <span className="mx-1.5 text-zinc-700">/</span>
-        <span>{node.category}</span>
+        <a href={`${docsPath({ type: 'home' })}#cat-${node.category.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-zinc-200">
+          {node.category}
+        </a>
         <span className="mx-1.5 text-zinc-700">/</span>
         <span className="text-zinc-300">{node.title}</span>
       </nav>
@@ -61,7 +60,11 @@ export default async function NodeDocPage({ params }: PageProps) {
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-amber-400">
             cut / legacy
           </span>
-        ) : null}
+        ) : (
+          <span className="rounded-full border border-zinc-800 px-2 py-0.5 text-[11px] uppercase tracking-wide text-zinc-500">
+            stable
+          </span>
+        )}
       </div>
 
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-50">{node.title}</h1>
@@ -73,24 +76,33 @@ export default async function NodeDocPage({ params }: PageProps) {
           : ''}
       </p>
 
-      <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
-          <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Kind id</dt>
-          <dd className="mt-1 font-mono text-[13px] text-zinc-200">{node.kindId}</dd>
-        </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
-          <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Semantics</dt>
-          <dd className="mt-1 font-mono text-[13px] text-zinc-200">{node.semantics}</dd>
-        </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
-          <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Source</dt>
-          <dd className="mt-1 text-[13px] text-zinc-200">CORE_NODE_REGISTRY</dd>
-        </div>
-      </dl>
+      <nav className="mt-6 flex flex-wrap gap-3 text-[12px] text-zinc-500">
+        <a href="#overview" className="hover:text-zinc-200">Overview</a>
+        <a href="#ports" className="hover:text-zinc-200">Ports ({ports.length})</a>
+        <a href="#options" className="hover:text-zinc-200">Options ({node.options.length})</a>
+        {related.length > 0 ? <a href="#related" className="hover:text-zinc-200">Related</a> : null}
+      </nav>
 
-      <p className="mt-4 text-[12px] text-zinc-600">Overlay prose is not shipped yet. Tables are the source of truth.</p>
+      <section id="overview" className="mt-8">
+        <h2 className="text-sm font-semibold text-zinc-100">Overview</h2>
+        <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+            <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Kind id</dt>
+            <dd className="mt-1 font-mono text-[13px] text-zinc-200">{node.kindId}</dd>
+          </div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+            <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Semantics</dt>
+            <dd className="mt-1 font-mono text-[13px] text-zinc-200">{node.semantics}</dd>
+          </div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+            <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Source</dt>
+            <dd className="mt-1 text-[13px] text-zinc-200">CORE_NODE_REGISTRY</dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-[12px] text-zinc-600">Overlay prose is not shipped yet. Tables are the source of truth.</p>
+      </section>
 
-      <section className="mt-10">
+      <section id="ports" className="mt-10">
         <h2 className="text-sm font-semibold text-zinc-100">Ports</h2>
         <div className="mt-3 overflow-hidden rounded-xl border border-zinc-800">
           <table className="w-full text-left text-[13px]">
@@ -111,11 +123,11 @@ export default async function NodeDocPage({ params }: PageProps) {
                 </tr>
               ) : (
                 ports.map(({ dir, pin }) => (
-                  <tr key={`${dir}-${pin.id}`} id={`${dir}-${pin.id}`} className="bg-zinc-950/40">
+                  <tr key={`${dir}-${pin.id}`} id={`${dir}-${pin.id}`}>
                     <td className="px-3 py-2 font-mono text-zinc-200">{pin.id}</td>
                     <td className="px-3 py-2 text-zinc-500">{dir}</td>
                     <td className="px-3 py-2 text-zinc-400">{pinType(pin)}</td>
-                    <td className="px-3 py-2 text-zinc-400">{pin.label || <CellEmpty />}</td>
+                    <td className="px-3 py-2 text-zinc-400">{pin.label || '-'}</td>
                   </tr>
                 ))
               )}
@@ -124,7 +136,7 @@ export default async function NodeDocPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="mt-10">
+      <section id="options" className="mt-10">
         <h2 className="text-sm font-semibold text-zinc-100">Options</h2>
         <div className="mt-3 overflow-hidden rounded-xl border border-zinc-800">
           <table className="w-full text-left text-[13px]">
@@ -145,14 +157,14 @@ export default async function NodeDocPage({ params }: PageProps) {
                 </tr>
               ) : (
                 node.options.map((opt) => (
-                  <tr key={opt.key} id={`opt-${opt.key}`} className="bg-zinc-950/40">
+                  <tr key={opt.key} id={`opt-${opt.key}`}>
                     <td className="px-3 py-2 font-mono text-zinc-200">{opt.key}</td>
                     <td className="px-3 py-2 text-zinc-400">{opt.type}</td>
                     <td className="px-3 py-2 text-zinc-400">
-                      {opt.default === undefined ? <CellEmpty /> : String(opt.default)}
+                      {opt.default === undefined ? '-' : String(opt.default)}
                     </td>
                     <td className="px-3 py-2 text-zinc-400">
-                      {opt.enumValues?.length ? `enum: ${opt.enumValues.join(', ')}` : opt.description || <CellEmpty />}
+                      {opt.enumValues?.length ? `enum: ${opt.enumValues.join(', ')}` : opt.description || '-'}
                     </td>
                   </tr>
                 ))
@@ -161,6 +173,25 @@ export default async function NodeDocPage({ params }: PageProps) {
           </table>
         </div>
       </section>
+
+      {related.length > 0 ? (
+        <section id="related" className="mt-10">
+          <h2 className="text-sm font-semibold text-zinc-100">Related in {node.category}</h2>
+          <ul className="mt-3 divide-y divide-zinc-800/80 rounded-xl border border-zinc-800">
+            {related.map((n) => (
+              <li key={n.kindId}>
+                <Link
+                  href={docsPath({ type: 'node', id: n.kindId })}
+                  className="flex items-center justify-between px-3 py-2 text-[13px] hover:bg-zinc-900/70"
+                >
+                  <span className="text-zinc-200">{n.title}</span>
+                  <code className="text-[11px] text-zinc-600">{n.kindId}</code>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </DocsChrome>
   );
 }

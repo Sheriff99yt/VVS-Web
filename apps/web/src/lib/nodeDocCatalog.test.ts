@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CORE_NODE_REGISTRY } from '@vvs/syntax-registry';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { getNodeDoc, listNodeDocKindIds, listNodeDocs } from './nodeDocCatalog';
+import { getNodeDoc, listNodeDocKindIds, listNodeDocs, listNodeDocsByCategory } from './nodeDocCatalog';
 
 describe('nodeDocCatalog', () => {
   it('covers every core registry kindId', () => {
@@ -20,6 +20,13 @@ describe('nodeDocCatalog', () => {
     expect(branch?.inputs.some((p) => p.id === 'exec_in' || p.type === 'execution')).toBe(true);
     const catalog = listNodeDocs();
     expect(catalog.some((n) => n.status === 'cut' && n.kindId === 'event_emit')).toBe(true);
+  });
+
+  it('groups by registry category without inventing names', () => {
+    const groups = listNodeDocsByCategory();
+    const cats = new Set(listNodeDocs().map((n) => n.category));
+    expect(groups.map((g) => g.category).sort()).toEqual([...cats].sort());
+    expect(groups.reduce((n, g) => n + g.nodes.length, 0)).toBe(listNodeDocs().length);
   });
 });
 

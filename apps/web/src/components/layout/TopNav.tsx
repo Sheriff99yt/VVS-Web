@@ -26,8 +26,6 @@ import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { ContributeButton } from '@/components/layout/ContributeButton';
-import { DOCS_BROWSE_PATH } from '@/lib/startExplore';
-import Link from 'next/link';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 import { AgentPanel } from '@/components/layout/AgentPanel';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
@@ -277,7 +275,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const handleSave = useCallback(async () => {
     const snapshot = buildSnapshot();
     if (!snapshot) {
-      window.alert('Could not save — graph data is not ready yet.');
+      window.alert('Could not save Ã¢â‚¬â€ graph data is not ready yet.');
       return;
     }
     setSaveBusy(true);
@@ -328,7 +326,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
       setValidationErrors(analysis.errors);
       setValidationWarnings(analysis.warnings);
       setCompileState('error');
-      logActivity('generate', 'Generate failed — validation errors');
+      logActivity('generate', 'Generate failed Ã¢â‚¬â€ validation errors');
       playAudioCue('error');
       return;
     }
@@ -337,7 +335,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     setValidationWarnings(analysis.warnings);
     setCompileState('compiling');
     try {
-      // Same emit as Code | Files (graph → file) before API / disk write (U56).
+      // Same emit as Code | Files (graph Ã¢â€ â€™ file) before API / disk write (U56).
       const emitResult = await emitProjectLikeCodePanelOffThread(snapshot, {
         emitUnsupportedComments: readUiPreference('showUnsupportedComments'),
       });
@@ -466,7 +464,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
     } else {
       const snapshot = buildSnapshot();
       if (!snapshot) {
-        window.alert('Could not save — graph data is not ready yet. Stay in the editor and try again.');
+        window.alert('Could not save Ã¢â‚¬â€ graph data is not ready yet. Stay in the editor and try again.');
         return;
       }
       try {
@@ -584,12 +582,12 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const hosted = isHostedFeaturesEnabled();
   const autoSaveTitle = autoSave
     ? hosted
-      ? 'Auto save on — debounced project snapshot to local storage and cloud when signed in'
-      : 'Auto save on — debounced project snapshot to local storage'
-    : `Auto save off — click Save or use ${shortcutKeys('save-project')}`;
+      ? 'Auto save on Ã¢â‚¬â€ debounced project snapshot to local storage and cloud when signed in'
+      : 'Auto save on Ã¢â‚¬â€ debounced project snapshot to local storage'
+    : `Auto save off Ã¢â‚¬â€ click Save or use ${shortcutKeys('save-project')}`;
   const autoGenerateTitle = autoCompile
-    ? 'Auto generate on — debounced validate and transpile on graph changes'
-    : `Auto generate off — click Generate or use ${shortcutKeys('compile')}`;
+    ? 'Auto generate on Ã¢â‚¬â€ debounced validate and transpile on graph changes'
+    : `Auto generate off Ã¢â‚¬â€ click Generate or use ${shortcutKeys('compile')}`;
 
   const handleExport = () => {
     const snapshot = buildSnapshot();
@@ -641,7 +639,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
                     <FilePlus size={12} className="shrink-0 opacity-70" />
-                    New project…
+                    New projectÃ¢â‚¬Â¦
                   </button>
                   <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
@@ -663,7 +661,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                       className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                     >
                       <FolderOutput size={12} className="shrink-0 opacity-70" />
-                      Save on disk…
+                      Save on diskÃ¢â‚¬Â¦
                     </button>
                   ) : null}
                   <button onClick={handleExport} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
@@ -708,7 +706,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
-                    tip="History — graph undo states in the Output panel"
+                    tip="History Ã¢â‚¬â€ graph undo states in the Output panel"
                     onClick={() => {
                       dispatchOpenActionHistory();
                       setOpenMenu(null);
@@ -716,7 +714,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
                     <History size={12} className="shrink-0 opacity-70" />
-                    History…
+                    HistoryÃ¢â‚¬Â¦
                   </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
@@ -810,7 +808,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                   </MenuTip>
                   <div className="h-px bg-zinc-800 my-1" />
                   <MenuTip
-                    tip="Frame selection — with nothing selected, fit all"
+                    tip="Frame selection Ã¢â‚¬â€ with nothing selected, fit all"
                     onClick={() => { dispatchGraphAction('focus-selection'); setOpenMenu(null); }}
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
@@ -885,7 +883,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     }}
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
-                    <span className="w-3 text-center shrink-0">{codeOpen ? '✓' : ''}</span>
+                    <span className="w-3 text-center shrink-0">{codeOpen ? 'Ã¢Å“â€œ' : ''}</span>
                     Code preview
                   </button>
                   <button
@@ -896,7 +894,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     }}
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
-                    <span className="w-3 text-center shrink-0">{graphNavOpen ? '✓' : ''}</span>
+                    <span className="w-3 text-center shrink-0">{graphNavOpen ? 'Ã¢Å“â€œ' : ''}</span>
                     Project tree
                   </button>
                   <div className="h-px bg-zinc-800 my-1" />
@@ -908,7 +906,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
                     <Settings size={12} className="shrink-0 opacity-70" />
-                    Settings…
+                    SettingsÃ¢â‚¬Â¦
                   </button>
                 </div>
               )}
@@ -938,7 +936,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                     className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   >
                     <Keyboard size={12} className="shrink-0 opacity-70" />
-                    Keyboard settings…
+                    Keyboard settingsÃ¢â‚¬Â¦
                   </button>
                   <button
                     onClick={() => {
@@ -1015,12 +1013,6 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               <Settings size={14} />
             </button>
           </Tooltip>
-          <Link
-            href={DOCS_BROWSE_PATH}
-            className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-100 rounded border border-zinc-800 hover:bg-zinc-900"
-          >
-            Docs
-          </Link>
           <ContributeButton enlargeIconHit={enlargeIconHit} />
           <AuthButton />
         </div>

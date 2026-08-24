@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DocsChrome } from '@/components/docs/DocsChrome';
+import { FEATURE_DOCS, getFeatureDoc, listFeatureSlugs } from '@/lib/docsFeatures';
 import { docsPath } from '@/lib/docsUrl';
-import { getFeatureDoc, listFeatureSlugs } from '@/lib/docsFeatures';
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -22,6 +22,7 @@ export default async function FeatureDocPage({ params }: PageProps) {
   const { slug } = await params;
   const feature = getFeatureDoc(slug);
   if (!feature) notFound();
+  const others = FEATURE_DOCS.filter((f) => f.slug !== feature.slug);
 
   return (
     <DocsChrome title={feature.title} active={{ type: 'feature', id: feature.slug }}>
@@ -42,6 +43,21 @@ export default async function FeatureDocPage({ params }: PageProps) {
           </p>
         ))}
       </div>
+      {others.length > 0 ? (
+        <section className="mt-10">
+          <h2 className="text-sm font-semibold text-zinc-100">Other features</h2>
+          <ul className="mt-3 space-y-2">
+            {others.map((f) => (
+              <li key={f.slug}>
+                <Link href={docsPath({ type: 'feature', id: f.slug })} className="text-zinc-200 hover:text-white">
+                  {f.title}
+                </Link>
+                <span className="text-zinc-600"> - {f.summary}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </DocsChrome>
   );
 }
