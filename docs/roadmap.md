@@ -145,7 +145,7 @@ Detail: [design/fidelity_streamline.md](design/fidelity_streamline.md). Backlog 
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Interactive documentation (`interactive-node-docs`) | **Open** — catalog of every node, option, and feature. HTML-first, bot/AI + SEO + GEO. Research tab. | Existing CI + GitHub Pages. Playground later. Not a JS-only SPA. |
+| Interactive documentation (`interactive-node-docs`) | **Open** — catalog of every node, option, and feature. HTML-first, bot/AI + SEO + GEO. Research tab. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). | Existing CI + GitHub Pages. Playground later. Not a JS-only SPA. |
 
 ---
 

@@ -51,6 +51,7 @@ Index for the public Vision Visual Scripting documentation set.
 | [design/user_types.md](design/user_types.md) | User types (shipped teaching slice) |
 | [design/class_scopes_and_symbols.md](design/class_scopes_and_symbols.md) | Shipped-as architecture note, not a feature catalog |
 | [design/terms_refactor_plan.md](design/terms_refactor_plan.md) | Historical vocabulary rollout plan |
+| [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md) | Planned public docs: kindId URLs, editor info icon, SEO/GEO, Pages |
 
 ## Contributor assets
 

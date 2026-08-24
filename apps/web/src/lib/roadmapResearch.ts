@@ -1277,7 +1277,7 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
     recommendation:
       'Ship the SSG catalog and the machine-readable twins first. Playground later, on top of real HTML. Reject JS-only or hosted-key docs. Keep ci.yml and pages.yml as the publish path.',
     firstSlice: [
-      'This roadmap row + this research card. Keep ci.yml and pages.yml enabled and green.',
+      'Architecture: docs/design/interactive_docs_architecture.md. kindId URL + header info icon is the app contract.',
       'Freeze node-doc.v1 schema in-repo when the first registry dump exists. Do not invent ports.',
       'Planned /docs nav only. Do not ship the full catalog in the same change as this card.',
       'HTML-first: unique title, H1, meta description; sitemap; robots; canonical; OG. JSON-LD only for real TechArticle/FAQ content.',
