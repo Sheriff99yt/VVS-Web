@@ -22,7 +22,7 @@
 
 **[Selected]** Public catalog = **HTML-first SSG from `syntax-registry` `list()`** on existing GitHub Pages (`https://sheriff99yt.github.io/VVS-Web/`, `basePath` `/VVS-Web`). Playground later. JS-only SPA / hosted-key docs: **Rejected** (empty HTML fails crawlers, GEO, and client-first Pages).
 
-**Partial:** `/docs` catalog + node/feature pages, `docsUrl()`, VVSNode info icon. Overlay prose and playground not shipped. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). Research card `interactive-node-docs`.
+**Partial:** `/docs` catalog + node/feature pages, `docsUrl()`, shared top bar, registry hover on info icons (node + options). Overlay prose and playground not shipped. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). Research card `interactive-node-docs`.
 
 ### Research
 

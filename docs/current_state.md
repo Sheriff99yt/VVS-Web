@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **24 August 2026** (HEAD `b36a20e`; third docs honesty pass). Interactive live docs: **partial** (`/docs` catalog + node/feature pages from `CORE_NODE_REGISTRY`; `docsUrl()`; VVSNode header info icon). Overlay prose and playground are not shipped. User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
+Last aligned with codebase: **25 August 2026** (fourth honesty pass). Interactive live docs: **partial** (`/docs` catalog + node/feature pages from `CORE_NODE_REGISTRY`; `docsUrl()` / `docsPath()` with home hashes; same `StandaloneTopBar` as Library/Roadmap; `DocsInfoIcon` hover from registry on node headers, Details options, and modifier chips; click opens `/docs/nodes/{kindId}` or `#opt-{key}`). Overlay prose and playground are not shipped. Public Pages URL is `https://sheriff99yt.github.io/VVS-Web/docs` (`basePath` `/VVS-Web`; `/docs` on github.io without that prefix 404s). User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
 
 Example completeness: Simple + Complex emit with zero leftover `(x)` on all 8 languages; Advanced runs on most (Verse GetInput leftover only). Complex covers branch / for / while / enum switch; Advanced covers Machine/Sensor Diagnose override + GetInput + Wait.
 Symbol delete / deleteClass now remove function Define (`function_implement`) with Declare (`function_define`).
@@ -62,7 +62,7 @@ Web types re-export from `@vvs/graph-types` (`apps/web/src/types/graph.ts`, `pro
 
 ### App views (TopNav)
 
-The page-switch tab cluster (Project / References / Library / Roadmap / Packs) is on **every route**, including the homepage. In a loaded project it lives in `TopNav`. On `/`, `/library`, and `/roadmap` it is the same cluster via `StandaloneTopBar`. Clicking **Project** with no project loaded goes to the homepage (does not open a blank project). **References** and **Packs** also go home when they have no standalone route. File / Edit / View menus, Save, and Generate stay in-project only.
+The page-switch tab cluster (Project / References / Library / Roadmap / Packs / **Docs**) is on **every route**, including the homepage and `/docs`. Docs is the sixth icon, after Packs. In a loaded project the cluster lives in `TopNav`. On `/`, `/library`, `/roadmap`, and `/docs` it is the same cluster via `StandaloneTopBar`. Clicking **Project** with no project loaded goes to the homepage (does not open a blank project). **References** and **Packs** also go home when they have no standalone route. File / Edit / View menus, Save, and Generate stay in-project only.
 
 | View | Purpose |
 |------|---------|
@@ -203,7 +203,7 @@ Single pipeline for project-tree symbol focus, canvas tab changes, and CodeMirro
 | Validate & compile | — | Same as **Generate** (Ctrl+G) — `runProjectAnalysis()` then transpile when no errors |
 | Save project | File menu (Ctrl+S) | Persist **ProjectSnapshot v3** JSON (folder, localStorage, or cloud); v1/v2 load via normalizer |
 | **Agent** | TopNav Bot button (tooltip **Agent**) | In-page TypeScript agent. `EditorLayout` mounts `AgentHost` (Worker starts with the editor). `AgentPanel`: prompt, optional local LLM key/base/model in `localStorage` `vvs:agent-llm` (default `https://api.openai.com/v1` + `gpt-4o-mini`). `/tool name json` works without a key. Writes gated by `agentAllowWrites` (default **false**). `window.vvs.agent` / `window.vvs.tools`: `listTools()`, `callTool(name, args)`. StatusBar **Agent ready** / **Agent error** / **Agent…** from `agentStatusStore` (not fake MCP Ready). Collapsed sidecar pastes optional local Go MCP config — not the hosted path. |
-| **Docs** | TopNav / Start Explore / `StandaloneTopBar` | `/docs` catalog. Node info icon opens `/docs/nodes/{kindId}` in a new tab. |
+| **Docs** | Sixth icon after Packs; Start Explore; `/docs` | Catalog from `CORE_NODE_REGISTRY`. Hover on the info icon shows registry title / kindId / ports / options (no invented prose). Click opens the kind page. Option icons in Details Settings and modifier chips open `#opt-{key}`. Overlay essays and playground are not shipped. |
 | **Contribute** | TopNav / `StandaloneTopBar` right cluster | GitHub icon. Opens `CONTRIBUTING.md` on Sheriff99yt/VVS-Web in a new tab. Same control on home, library, roadmap, and in-project. |
 | Settings | TopNav gear + **Help** menu | Sidebar modal — **Project** · **Editor** · **Shortcuts** (rebind) · **Audio** · **About**. Search catalogs every section (honest Editor blurb, Project grouping includes environment / host skip-emit / host contents / Refresh 3-way merge / export, Audio cards). Replaces flat Project/App tabs |
 | Action history (U108 / U114–U117) | Edit menu · floating panel | Shared undo: graph + symbol/class CRUD; survives tab switch; lean canvas snapshots |
@@ -485,7 +485,7 @@ Simple, Complex, and Advanced pass strict analysis. Environment templates and li
 | **`docs/code_panel.md`** | Code panel navigation, highlight, hover, Files pin |
 | **`docs/deployment.md`** | Legacy self-host notes — **not** product direction (client-first; no dedicated server) |
 | **`docs/current_state.md`** | What exists today; avoid re-introducing removed UI |
-| **`docs/design/interactive_docs_architecture.md`** | Planned live docs (SSG catalog). Not shipped |
+| **`docs/design/interactive_docs_architecture.md`** | Live `/docs` catalog (partial). Overlay + playground still planned |
 | **`docs/ui_api_delivery_loop.md`** | Wiring UI to APIs — one slice per iteration |
 | `docs/naming_and_product_direction.md` | Vocabulary, product principles, terms to avoid |
 | `docs/project_requirements.md` | Full requirements + phased roadmap (planning) |

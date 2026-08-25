@@ -6,7 +6,7 @@ Vision Visual Scripting did not begin as a product pitch - it began as a **unive
 
 That question became the first Vision Visual Scripting codebase - an open-source Python desktop application where nodes and wires on a canvas translate into ordinary source syntax. The interaction model drew from professional node editors (including the kind of flow-and-data graph familiar from Unreal Engine's Blueprint system), but the **goal was never engine lock-in**. From day one, the graph was meant to be **logic**; the target language was a **choice**.
 
-**Original repository:** [github.com/Sheriff99yt/Vision_Visual_Scripting](https://github.com/Sheriff99yt/Vision_Visual_Scripting). [vvscodes.com](https://www.vvscodes.com/)
+**Original / demo repository:** [github.com/Sheriff99yt/Vision_Visual_Scripting](https://github.com/Sheriff99yt/Vision_Visual_Scripting). [vvscodes.com](https://www.vvscodes.com/) is the 2021 marketing page for that demo, not the VVS Web Pages app.
 
 ---
 

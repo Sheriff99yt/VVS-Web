@@ -1,7 +1,7 @@
 # Interactive documentation architecture
 
-**Status:** planned. Roadmap id `interactive-node-docs`. Research tab card `interactive-node-docs-research`.
-**As of 24 August 2026.** Client-first, GitHub Pages, no docs server.
+**Status:** partial (catalog shipped; overlay + playground planned). Roadmap id `interactive-node-docs`. Research tab card `interactive-node-docs-research`.
+**As of 25 August 2026.** Client-first, GitHub Pages, no docs server.
 
 ## Contents
 
@@ -19,7 +19,7 @@
 - Canvas / node / option / pin is source of truth. Generated tables come from `syntax-registry` `list()`. Overlays must not invent ports, kinds, or language APIs.
 - Leftover honesty: if Generate would print `(x)`, the live page says leftover first.
 - Publish path: `main` ? `ci.yml` ? `pages.yml` ? `https://sheriff99yt.github.io/VVS-Web/` with `basePath` `/VVS-Web`.
-- **Today in tree (partial):** `/docs` catalog, `/docs/nodes/[kindId]`, `/docs/features/{generate,leftover,node-option-pin}`, `docsUrl()` / `docsPath()`, VVSNode header info icon, `public/llms.txt` + `sitemap.xml` + `robots.txt`. **Not shipped:** overlay essays, playground, option-type pages, `.md`/`.json` twins, Pagefind, in-app F1 panel.
+- **Today in tree (partial):** `/docs` catalog, `/docs/nodes/[kindId]`, `/docs/features/{generate,leftover,node-option-pin}`, `docsUrl()` / `docsPath()` (home hashes use Next `Link` so Pages keeps `/VVS-Web`), same `StandaloneTopBar` as other browse pages, `DocsInfoIcon` hover from the registry on node headers and option rows, `public/llms.txt` + `sitemap.xml` + `robots.txt`. **Not shipped:** overlay essays, playground, option-type pages, `.md`/`.json` twins, Pagefind, in-app F1 panel.
 
 ### Selected
 
@@ -27,7 +27,7 @@ HTML-first SSG catalog from the registry. Playground later. JS-only SPA or hoste
 
 ## Goal
 
-Every public **node**, **option**, and **feature** has a stable URL. Clicking the info control on a canvas node (and later on an option row or a feature chip) opens that URL. The same HTML is the SEO / GEO / `llms.txt` source.
+Every public **node**, **option**, and **feature** has a stable URL. Clicking the info control on a canvas node or an option row opens that URL. Feature chips are later. The same HTML is the SEO / GEO / `llms.txt` source.
 
 Non-goals for v1: full in-browser VVS engine, i18n, Mintlify hosting, a second node model.
 

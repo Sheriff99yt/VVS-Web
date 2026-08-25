@@ -1702,7 +1702,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Interactive documentation (nodes, options, features)',
         description:
-          'Partial: `/docs` catalog and per-kind pages generated from CORE_NODE_REGISTRY; editor info icon; llms.txt + sitemap. Overlay essays and playground later. HTML-first on existing CI + GitHub Pages. Research tab still holds the long plan.',
+          'Partial: `/docs` catalog and per-kind pages generated from CORE_NODE_REGISTRY; shared StandaloneTopBar; DocsInfoIcon hover from the registry on nodes and options; llms.txt + sitemap. Overlay essays and playground later. HTML-first on existing CI + GitHub Pages. Research tab still holds the long plan.',
         status: 'partial',
       },
     ],

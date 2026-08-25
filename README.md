@@ -1,6 +1,6 @@
 # Vision Visual Scripting (VVS)
 
-> **Early public development** - try the live editor below, or run locally. See [Where we are now](#where-we-are-now). **Origin:** [Vision Visual Scripting (2021)](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
+> **Early public development** - try the live editor below, or run locally. See [Where we are now](#where-we-are-now). **Origin / older demo repo:** [Vision Visual Scripting (2021 graduation prototype)](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
 
 **Visual programming that generates real code.** Compose logic on a graph, **Generate** ordinary source, and keep using your IDE, git, and CI. **Canvas is the source of truth** - every export line maps to a graph node. Symbol tables index only.
 
@@ -97,13 +97,21 @@ We build the **visual editor and data contracts first**. Persistence is **local*
 
 ---
 
-## Where VVS started
+## How VVS started
 
-Vision Visual Scripting began as a **[university graduation project](https://github.com/Sheriff99yt/Vision_Visual_Scripting)** (2021): an open-source Python desktop app where anyone could hop in and program with visual nodes, and the graph would translate into whatever programming language syntax you selected. That logic/syntax split still defines VVS.
+Vision Visual Scripting did not begin as a product pitch. It began as a **university graduation project** (first public repo **December 2021**) with one question:
 
-**VVS Web** is the next chapter: a browser-native open monorepo for the AI era (in-page agent, bring-your-own key, later MCP wrapper for other apps) and a long-term goal - an **open visual scripting language** portable across engines and workflows, not locked to one runtime.
+> What if anyone could hop in and start programming with visual modular blocks - and the graph could become **real code** in **whatever language you choose**?
 
-Read the origin story: **[docs/history.md](docs/history.md)**. **[Vision & philosophy](docs/vision.md)**. **[Public roadmap](docs/roadmap.md)**.
+That became an open-source **Python desktop app** (`vvs_app/main.py`, MIT). Nodes and wires on a canvas translated into ordinary source syntax you selected. The interaction model drew from professional node editors, including the kind of flow-and-data graph familiar from Unreal Blueprint, but the **goal was never engine lock-in**. The graph was **logic**. The target language was a **choice**.
+
+**Older demo / graduation repository (VVS 1):** [github.com/Sheriff99yt/Vision_Visual_Scripting](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
+
+That prototype proved visual authoring and text code are not opposites. It also showed the hard problems this repo still treats as product law: separate logic from syntax, keep graphs maintainable, and do not trap users in a proprietary runtime.
+
+**VVS Web** (this repository) is the next chapter: a browser-native open monorepo. Same idea, different foundation - client-first Pages + folder / `.vvs/` / git, an 8-language client transpiler, an in-page TypeScript agent (bring-your-own key; no bundled LLM). The long-term goal is still an **open visual scripting language** portable across engines and workflows, not locked to one runtime.
+
+Full origin write-up: **[docs/history.md](docs/history.md)**. Philosophy: **[docs/vision.md](docs/vision.md)**. Public roadmap: **[docs/roadmap.md](docs/roadmap.md)**.
 
 ---
 
@@ -111,7 +119,7 @@ Read the origin story: **[docs/history.md](docs/history.md)**. **[Vision & philo
 
 | Principle | What it means |
 |-----------|----------------|
-| **Born open** | Started as an MIT graduation project; VVS Web continues as a public open platform |
+| **Born open** | Started as a university graduation project (MIT-licensed); VVS Web continues as a public open platform |
 | **Real code out** | Generate readable source files. No proprietary VM |
 | **Logic / syntax split** | One graph; eight shipped targets (Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go) |
 | **Open visual scripting** | Portable graph schema aimed at all engines and workflows |
