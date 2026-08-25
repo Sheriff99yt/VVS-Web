@@ -34,16 +34,18 @@ function parseAllowedDevOrigins(): string[] | undefined {
 const allowedDevOrigins = parseAllowedDevOrigins();
 
 const isGithubPages = process.env.GITHUB_PAGES === 'true';
-/** Project Pages URL: https://sheriff99yt.github.io/VVS-Web/ */
-const githubPagesBasePath = '/VVS-Web';
+/** Project site needs /VVS-Web. Custom domain (vvscodes.com) is the artifact root. */
+const customDomain = process.env.VVS_CUSTOM_DOMAIN === 'true';
+const githubPagesBasePath = customDomain ? '' : '/VVS-Web';
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@vvs/graph-types', '@vvs/syntax-registry', '@vvs/language-profiles', '@vvs/transpiler'],
   ...(isGithubPages
     ? {
         output: 'export',
-        basePath: githubPagesBasePath,
-        assetPrefix: `${githubPagesBasePath}/`,
+        ...(githubPagesBasePath
+          ? { basePath: githubPagesBasePath, assetPrefix: `${githubPagesBasePath}/` }
+          : {}),
       }
     : {}),
   ...(allowedDevOrigins ? { allowedDevOrigins } : {}),

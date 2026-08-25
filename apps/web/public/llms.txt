@@ -2,8 +2,9 @@
 
 > Visual graphs that generate real, importable source. Client-first. No product accounts.
 
-The live catalog is the HTML pages under /docs (GitHub Pages basePath /VVS-Web).
+The live catalog is the HTML pages under /docs.
 Facts come from packages/syntax-registry CORE_NODE_REGISTRY. Do not invent kinds or ports.
+Public origin: https://sheriff99yt.github.io/VVS-Web
 
 ## Docs
 

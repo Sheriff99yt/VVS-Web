@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "bun test src/lib",
-    "pages:build": "GITHUB_PAGES=true next build"
+    "pages:build": "bun run scripts/write-public-seo.ts && GITHUB_PAGES=true next build"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
