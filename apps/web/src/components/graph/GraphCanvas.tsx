@@ -2511,7 +2511,7 @@ function GraphCanvasInner() {
   return (
     <div
       className="relative w-full h-full"
-      style={{ background: '#0a0a0c' }}
+      style={{ background: '#09090b' }}
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragLeave={onDragLeave}
@@ -2519,9 +2519,9 @@ function GraphCanvasInner() {
       onDropCapture={onDrop}
     >
       {isDragOverActive && (
-        <div className="absolute inset-4 border-2 border-dashed border-sky-500/40 bg-sky-950/20 rounded-lg pointer-events-none z-50 flex items-center justify-center transition-all duration-200">
-          <div className="bg-zinc-900 border border-zinc-700/80 px-4 py-2 rounded text-xs font-semibold text-sky-400 shadow-xl flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+        <div className="absolute inset-4 border-2 border-dashed border-zinc-600/50 bg-zinc-950/40 rounded-lg pointer-events-none z-50 flex items-center justify-center transition-all duration-200">
+          <div className="bg-zinc-950 border border-zinc-800 px-4 py-2 rounded-md text-sm font-medium text-zinc-200 shadow-xl flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse" />
             Drag here to spawn or declare on canvas
           </div>
         </div>
@@ -2613,7 +2613,7 @@ function GraphCanvasInner() {
         noDragClassName="nodrag"
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#333" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#27272a" />
         {graphChromeMode !== 'hidden' ? (
           <MiniMap
             position="bottom-left"
@@ -2628,9 +2628,9 @@ function GraphCanvasInner() {
               if (n.data?.category === 'Imports') return 'var(--vvs-cat-imports, #14b8a6)';
               return '#3f3f46';
             }}
-            maskColor="rgba(10, 10, 12, 0.7)"
+            maskColor="rgba(9, 9, 11, 0.72)"
             className="nowheel nopan"
-            style={{ backgroundColor: '#18181b' }}
+            style={{ backgroundColor: '#09090b' }}
           />
         ) : null}
         {graphChromeMode === 'map-controls' ? <Controls position="bottom-right" /> : null}

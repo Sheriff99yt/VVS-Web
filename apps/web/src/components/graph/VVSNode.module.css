@@ -2,7 +2,7 @@
   position: relative;
   background-color: #18181b; /* Modern Zinc-900 */
   border: 1px solid #27272a; /* Zinc-800 */
-  border-radius: 12px;
+  border-radius: 8px;
   min-width: 180px;
   max-width: 260px;
   font-family: var(--font-sans);
@@ -83,7 +83,7 @@
 
 .header {
   padding: 8px 12px;
-  border-radius: 12px 12px 0 0;
+  border-radius: 8px 8px 0 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -280,7 +280,7 @@
 
 .title {
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.1px;
   color: #f4f4f5; /* Zinc-50 */
 }

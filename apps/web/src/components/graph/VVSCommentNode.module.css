@@ -1,7 +1,7 @@
 .container {
   width: 100%;
   height: 100%;
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -32,8 +32,8 @@
 
 .header {
   padding: 6px 10px 6px 16px;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
   cursor: grab;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);

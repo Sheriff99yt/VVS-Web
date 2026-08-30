@@ -228,7 +228,7 @@ export function GraphTabBar() {
                 }`}
               />
               <span
-                className={`text-[11px] font-semibold whitespace-nowrap ${
+                className={`text-[13px] font-medium whitespace-nowrap ${
                   active ? 'text-zinc-100' : 'text-zinc-500'
                 }`}
               >
