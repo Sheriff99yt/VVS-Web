@@ -69,7 +69,7 @@ On `/`, `/library`, `/roadmap`, and `/docs` the left activity rail is the view s
 | **Canvas** | Primary graph editor (default) |
 | **References** | UE5-style reference viewer — focus center, referencers left, dependencies right; huge-project breadth + persisted prefs |
 | **Library** | Browse `/library`: templates + git import (Installed is in-project only). Auth / upload frozen |
-| **Roadmap** | In-app development roadmap -- Open / Done / Research |
+| **Roadmap** | In-app development roadmap. Browse `/roadmap` uses the activity rail plus Open / Done / Research sidebar (same chrome as Library). |
 | **Packs** | In-project pack versions / host skip-emit. With no project loaded, the tab returns home |
 
 **Removed from product UI** (do not re-add as duplicate surfaces):
