@@ -6,9 +6,7 @@ import { ChevronRight, X } from 'lucide-react';
 import { BrandMark } from '@/components/layout/BrandMark';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { PRODUCT_NAME } from '@/lib/productName';
-
-const HEADLINE =
-  'An open visual scripting language, designed to slot into anything and become the global standard.';
+import { START_POSITIONING_LINE } from '@/lib/startCopy';
 
 export function StartWelcomeModal({ onTrySimple }: { onTrySimple: () => void }) {
   const [dontShowAgain, setDontShowAgain] = useUiPreference('startWelcomeDontShowAgain');
@@ -51,24 +49,22 @@ export function StartWelcomeModal({ onTrySimple }: { onTrySimple: () => void }) 
       onClick={closeThisVisit}
     >
       <div
-        className="w-full max-w-lg flex flex-col bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden shadow-lg shadow-black/40"
+        className="relative w-full max-w-lg flex flex-col bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden shadow-lg shadow-black/40"
         role="dialog"
         aria-labelledby="start-welcome-title"
         aria-modal="true"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-end px-3 py-2 border-b border-zinc-800/80 shrink-0">
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={closeThisVisit}
-            className="p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/80"
-            aria-label="Close welcome"
-          >
-            <X size={14} />
-          </button>
-        </div>
-        <div className="px-8 pt-6 pb-8 space-y-6 text-center">
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={closeThisVisit}
+          className="absolute top-2.5 right-2.5 p-1.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/80"
+          aria-label="Close welcome"
+        >
+          <X size={14} />
+        </button>
+        <div className="px-8 pt-10 pb-8 space-y-6 text-center">
           <BrandMark className="h-14 sm:h-16 w-auto mx-auto object-contain" />
           <div className="space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
@@ -78,7 +74,7 @@ export function StartWelcomeModal({ onTrySimple }: { onTrySimple: () => void }) 
               id="start-welcome-title"
               className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight leading-snug"
             >
-              {HEADLINE}
+              {START_POSITIONING_LINE}
             </h1>
           </div>
           <button

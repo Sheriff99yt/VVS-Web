@@ -1,6 +1,6 @@
 # VVS Web — Current Implementation State
 
-This document is the **canonical snapshot** of what exists in the repo today versus what is still planned. Update this file whenever the UI shell or integration boundaries change. Start is a VS Code-like activity rail + collapsible sidebar (Start includes recent; Examples); Library/Roadmap/Docs stay routes. First visit to `/` opens a welcome overlay (Close hides this visit; Don't show again persists `startWelcomeDontShowAgain`). Separate from in-project canvas help.
+This document is the **canonical snapshot** of what exists in the repo today versus what is still planned. Update this file whenever the UI shell or integration boundaries change. Start is a VS Code-like activity rail + collapsible sidebar (Start includes recent; Examples); Library/Roadmap/Docs stay routes. Start main is hero + recent (actions stay in the sidebar unless it is collapsed). First visit to `/` opens a welcome overlay (Close hides this visit; Don't show again persists `startWelcomeDontShowAgain`). Separate from in-project canvas help.
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
@@ -62,7 +62,7 @@ Web types re-export from `@vvs/graph-types` (`apps/web/src/types/graph.ts`, `pro
 
 ### App views (TopNav)
 
-The page-switch tab cluster (Project / References / Library / Roadmap / Packs / **Docs**) is on **every route**, including the homepage and `/docs`. Docs is the sixth icon, after Packs. In a loaded project the cluster lives in `TopNav`. On `/`, `/library`, `/roadmap`, and `/docs` it is the same cluster via `StandaloneTopBar`. Clicking **Project** with no project loaded goes to the homepage (does not open a blank project). **References** and **Packs** also go home when they have no standalone route. File / Edit / View menus, Save, and Generate stay in-project only.
+On `/`, `/library`, `/roadmap`, and `/docs` the left activity rail is the view switch (Start / Examples / Library / Roadmap / Docs). `StandaloneTopBar` is brand + Contribute (no page-switch cluster). In a loaded project the cluster (Project / References / Library / Roadmap / Packs / **Docs**) still lives in `TopNav`. File / Edit / View menus, Save, and Generate stay in-project only.
 
 | View | Purpose |
 |------|---------|

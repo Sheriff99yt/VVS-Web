@@ -17,6 +17,7 @@ import { StartActivityRail } from '@/components/start/StartActivityRail';
 import { StartWelcomeModal } from '@/components/start/StartWelcomeModal';
 import { ProjectFolderBrowserModal } from '@/components/start/ProjectFolderBrowserModal';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { START_POSITIONING_LINE } from '@/lib/startCopy';
 import {
   USABILITY_EXAMPLE_TESTS,
   type UsabilityTestLevel,
@@ -160,10 +161,15 @@ export function StartHomeLayout({
                         }
                       >
                         <FolderOpen size={14} className="text-zinc-500 shrink-0" />
-                        <span className="truncate">
-                          {isFolderRecentEntry(entry) && entry.folderLabel
-                            ? `${entry.folderLabel} / ${entry.moduleName}`
-                            : entry.moduleName}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">
+                            {isFolderRecentEntry(entry) && entry.folderLabel
+                              ? `${entry.folderLabel} / ${entry.moduleName}`
+                              : entry.moduleName}
+                          </span>
+                          <span className="block text-[10px] text-zinc-600 truncate">
+                            {formatRelative(entry.savedAt)}
+                          </span>
                         </span>
                       </button>
                     ))
@@ -189,36 +195,28 @@ export function StartHomeLayout({
         ) : null}
 
         <main className="flex-1 min-h-0 overflow-y-auto">
-          <div className="max-w-5xl mx-auto px-8 py-10 space-y-10">
+          <div className="max-w-3xl mx-auto px-8 py-8 space-y-8">
             {startActivity === 'start' ? (
               <>
-                <section className="space-y-5">
-                  <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-100 tracking-tight max-w-3xl leading-snug">
-                    An open visual scripting language, designed to slot into anything and become the global standard.
-                  </h1>
-                  <button
-                    type="button"
-                    onClick={() => onOpenUsabilityTest('simple')}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-indigo-500/40 bg-indigo-500/10 hover:border-indigo-400/60 text-sm text-indigo-200 transition-colors"
-                  >
-                    Try Simple
-                    <ChevronRight size={16} />
-                  </button>
-                </section>
-                <StartActionButtons
-                  folderPickerReady={folderPickerReady}
-                  fileInputRef={fileInputRef}
-                  onNewProject={onNewProject}
-                  onNewProjectFolder={onNewProjectFolder}
-                  onOpenProjectFolder={onOpenProjectFolder}
+                <StartHero
+                  compact={recent.length > 0}
+                  onTrySimple={() => onOpenUsabilityTest('simple')}
                 />
+                {!sidebarOpen ? (
+                  <StartActionButtons
+                    folderPickerReady={folderPickerReady}
+                    fileInputRef={fileInputRef}
+                    onNewProject={onNewProject}
+                    onNewProjectFolder={onNewProjectFolder}
+                    onOpenProjectFolder={onOpenProjectFolder}
+                  />
+                ) : null}
                 <RecentProjectsPanel
                   recent={recent}
                   folderPickerReady={folderPickerReady}
                   onOpenRecent={onOpenRecent}
                   onDeleteProject={onDeleteProject}
                   onOpenProjectDirectory={onOpenProjectDirectory}
-                  onOpenUsabilityTest={onOpenUsabilityTest}
                   formatRelative={formatRelative}
                 />
               </>
@@ -244,6 +242,46 @@ export function StartHomeLayout({
   );
 }
 
+function StartHero({
+  compact,
+  onTrySimple,
+}: {
+  compact: boolean;
+  onTrySimple: () => void;
+}) {
+  if (compact) {
+    return (
+      <section className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <p className="text-sm text-zinc-400 max-w-xl leading-relaxed">{START_POSITIONING_LINE}</p>
+        <button
+          type="button"
+          onClick={onTrySimple}
+          className="inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200 transition-colors shrink-0"
+        >
+          Try Simple
+          <ChevronRight size={14} />
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-4 max-w-2xl">
+      <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight leading-snug">
+        {START_POSITIONING_LINE}
+      </h1>
+      <button
+        type="button"
+        onClick={onTrySimple}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-indigo-500/40 bg-indigo-500/10 hover:border-indigo-400/60 text-sm text-indigo-200 transition-colors"
+      >
+        Try Simple
+        <ChevronRight size={16} />
+      </button>
+    </section>
+  );
+}
+
 function StartActionButtons({
   folderPickerReady,
   fileInputRef,
@@ -259,7 +297,7 @@ function StartActionButtons({
 }) {
   return (
     <section>
-      <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">Start</h2>
+      <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Start</h2>
       <div className="flex flex-wrap gap-2">
         {folderPickerReady ? (
           <>
@@ -296,7 +334,6 @@ function RecentProjectsPanel({
   onOpenRecent,
   onDeleteProject,
   onOpenProjectDirectory,
-  onOpenUsabilityTest,
   formatRelative,
 }: {
   recent: RecentProjectEntry[];
@@ -304,24 +341,16 @@ function RecentProjectsPanel({
   onOpenRecent: (entry: RecentProjectEntry) => void;
   onDeleteProject: (e: React.MouseEvent, entry: RecentProjectEntry) => void;
   onOpenProjectDirectory: (e: React.MouseEvent, entry: RecentProjectEntry) => void;
-  onOpenUsabilityTest: (level: UsabilityTestLevel) => void;
   formatRelative: (iso: string) => string;
 }) {
   return (
     <section>
-      <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-4">
+      <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-3">
         <Clock size={14} /> Recent projects
       </h2>
       {recent.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-800 py-12 text-center">
-          <p className="text-zinc-500 text-sm mb-3">No recent projects yet.</p>
-          <button
-            type="button"
-            onClick={() => onOpenUsabilityTest('simple')}
-            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-          >
-            Open Simple →
-          </button>
+        <div className="rounded-lg border border-dashed border-zinc-800 px-4 py-10 text-center">
+          <p className="text-sm text-zinc-500">No recent projects yet.</p>
         </div>
       ) : (
         <div className="rounded-lg border border-zinc-800 overflow-hidden divide-y divide-zinc-800">
@@ -332,7 +361,7 @@ function RecentProjectsPanel({
               tabIndex={0}
               onClick={() => onOpenRecent(entry)}
               onKeyDown={(e) => e.key === 'Enter' && onOpenRecent(entry)}
-              className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-zinc-900 transition-colors text-left group cursor-pointer"
+              className="w-full flex items-center gap-4 px-4 py-3 hover:bg-zinc-900 transition-colors text-left group cursor-pointer"
             >
               <FolderOpen size={18} className="text-zinc-500 shrink-0" />
               <div className="flex-1 min-w-0">
@@ -344,12 +373,12 @@ function RecentProjectsPanel({
                 <div className="text-[11px] text-zinc-500">
                   {formatRelative(entry.savedAt)}
                   {isFolderRecentEntry(entry) ? (
-                    <span className="ml-2 text-zinc-600">· Folder</span>
+                    <span className="ml-2 text-zinc-600">Folder</span>
                   ) : (
-                    <span className="ml-2 text-zinc-600">· Browser</span>
+                    <span className="ml-2 text-zinc-600">Browser</span>
                   )}
                   {entry.source !== 'recent' && !isFolderRecentEntry(entry) ? (
-                    <span className="ml-2 text-zinc-600">· {SOURCE_LABEL[entry.source]}</span>
+                    <span className="ml-2 text-zinc-600">{SOURCE_LABEL[entry.source]}</span>
                   ) : null}
                 </div>
               </div>
@@ -371,7 +400,7 @@ function RecentProjectsPanel({
                         onOpenProjectDirectory(e as unknown as React.MouseEvent, entry);
                       }
                     }}
-                    className="p-1.5 text-zinc-500 hover:text-blue-400 rounded transition-colors shrink-0"
+                    className="p-1.5 text-zinc-500 hover:text-blue-400 rounded transition-colors shrink-0 opacity-70 group-hover:opacity-100"
                   >
                     <FolderSearch size={14} />
                   </span>
@@ -385,7 +414,7 @@ function RecentProjectsPanel({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') onDeleteProject(e as unknown as React.MouseEvent, entry);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-red-400 rounded transition-all"
+                  className="p-1.5 text-zinc-600 hover:text-red-400 rounded transition-colors opacity-70 group-hover:opacity-100"
                 >
                   <Trash2 size={14} />
                 </span>
@@ -409,14 +438,14 @@ function ExamplesPanel({
       <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
         <Layers size={14} /> Examples
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {USABILITY_EXAMPLE_TESTS.map((fixture) => (
           <button
             key={fixture.id}
             type="button"
             onClick={() => onOpenUsabilityTest(fixture.level)}
-            className={`rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group h-full ${
-              fixture.id === 'simple' ? 'md:col-span-2' : 'min-h-[10.5rem]'
+            className={`rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 hover:border-zinc-600 hover:bg-zinc-900 transition-colors text-left group h-full flex flex-col ${
+              fixture.id === 'simple' ? 'md:col-span-2' : ''
             }`}
           >
             <div className="flex items-center justify-between gap-2">
@@ -440,7 +469,7 @@ function ExamplesPanel({
             <h3 className="text-sm font-semibold text-zinc-100 mt-2 group-hover:text-white transition-colors">
               {fixture.title}
             </h3>
-            <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{fixture.description}</p>
+            <p className="text-xs text-zinc-500 mt-1 line-clamp-2 flex-1">{fixture.description}</p>
             <div className="flex flex-wrap gap-1.5 mt-3">
               {fixture.highlights.map((tag) => (
                 <span key={tag} className="text-[10px] text-zinc-500 bg-zinc-800/80 px-2 py-0.5 rounded">
@@ -448,6 +477,10 @@ function ExamplesPanel({
                 </span>
               ))}
             </div>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors">
+              Open
+              <ChevronRight size={12} />
+            </span>
           </button>
         ))}
       </div>

@@ -101,13 +101,13 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'views',
         title: 'Top-level views',
-        description: 'Canvas, References, Library, Roadmap, and Packs. Same page-switch top bar on every route, including the homepage.',
+        description: 'Canvas, References, Library, Roadmap, and Packs. In-project: page-switch cluster in TopNav. Standalone routes (`/`, `/library`, `/roadmap`, `/docs`): left activity rail; StandaloneTopBar is brand + Contribute.',
       },
       {
         id: 'start-screen',
         title: 'Project hub',
         description:
-          'Start screen -- new/open folder (.vvs/ overlay), recent projects, import JSON, three usability example cards (Simple featured, plus Complex / Advanced), Library and Roadmap explore shortcuts. Same page-switch top bar as every other route (StandaloneTopBar / TopNavPageSwitch): Project / References / Library / Roadmap / Packs. SSR hydration-safe; Library and Roadmap browse via /library and /roadmap without creating a stored project. Project tab with no project loaded returns to the homepage. References and Packs also go home when those routes have no standalone page.',
+          'Start screen -- activity rail (Start / Examples / Library / Roadmap / Docs), collapsible sidebar with new/open and recent, main pane hero + recent (actions in the sidebar unless collapsed). Examples are a rail activity. First visit opens a welcome overlay (Close this visit / Do not show again). SSR hydration-safe; Library, Roadmap, and Docs browse without creating a stored project.',
       },
       {
         id: 'nav-history',
@@ -1469,9 +1469,9 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'start-topbar-consistent',
         layer: 'frontend',
-        title: 'Global page-switch top bar on every route',
+        title: 'Standalone chrome vs in-project page-switch',
         description:
-          'Shipped: the page-switch tab cluster (Project / References / Library / Roadmap / Packs) is on every route, including the homepage. Home, /library, and /roadmap share StandaloneTopBar with in-project TopNav. Project tab with no project loaded goes to the homepage (not a blank project). References and Packs also go home when they have no standalone route. File/Edit/View menus, Save, and Generate stay in-project only.',
+          'Shipped then superseded on standalone routes: `/`, `/library`, `/roadmap`, and `/docs` use the left activity rail instead of duplicating the page-switch cluster in StandaloneTopBar (brand + Contribute only). In-project TopNav still has Project / References / Library / Roadmap / Packs / Docs. File/Edit/View, Save, and Generate stay in-project only.',
         status: 'done',
       },
       {
