@@ -1,14 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BookOpen, Clock, FilePlus, Layers, Library, Map, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { BookOpen, FilePlus, Layers, Library, Map, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { openExploreView } from '@/lib/startExplore';
 import type { StartActivityId } from '@/lib/startActivity';
 
 const RAIL_ITEMS: { id: StartActivityId; label: string; Icon: typeof FilePlus }[] = [
   { id: 'start', label: 'Start', Icon: FilePlus },
-  { id: 'recent', label: 'Recent', Icon: Clock },
   { id: 'examples', label: 'Examples', Icon: Layers },
   { id: 'library', label: 'Library', Icon: Library },
   { id: 'roadmap', label: 'Roadmap', Icon: Map },
@@ -24,7 +23,7 @@ export function StartActivityRail({
   active: StartActivityId;
   sidebarOpen?: boolean;
   onToggleSidebar?: () => void;
-  onLocalActivity?: (id: 'start' | 'recent' | 'examples') => void;
+  onLocalActivity?: (id: 'start' | 'examples') => void;
 }) {
   const router = useRouter();
 

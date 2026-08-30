@@ -83,8 +83,7 @@ export function StartHomeLayout({
   onOpenProjectDirectory: (e: React.MouseEvent, entry: RecentProjectEntry) => void;
   formatRelative: (iso: string) => string;
 }) {
-  const sidebarTitle =
-    startActivity === 'start' ? 'Start' : startActivity === 'recent' ? 'Recent' : 'Examples';
+  const sidebarTitle = startActivity === 'examples' ? 'Examples' : 'Start';
 
   return (
     <div className="h-screen bg-zinc-950 text-zinc-300 flex flex-col">
@@ -141,34 +140,34 @@ export function StartHomeLayout({
                     <Upload size={14} className="text-blue-400 shrink-0" />
                     Open file
                   </button>
+                  <div className="pt-3 mt-2 border-t border-zinc-800 text-[11px] font-semibold uppercase tracking-widest text-zinc-600 px-2 py-2">
+                    Recent
+                  </div>
+                  {recent.length === 0 ? (
+                    <p className="px-2 py-1 text-xs text-zinc-600">No recent projects yet.</p>
+                  ) : (
+                    recent.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => onOpenRecent(entry)}
+                        className={SIDEBAR_BTN}
+                        title={
+                          isFolderRecentEntry(entry) && entry.folderLabel
+                            ? `${entry.folderLabel} / ${entry.moduleName}`
+                            : entry.moduleName
+                        }
+                      >
+                        <FolderOpen size={14} className="text-zinc-500 shrink-0" />
+                        <span className="truncate">
+                          {isFolderRecentEntry(entry) && entry.folderLabel
+                            ? `${entry.folderLabel} / ${entry.moduleName}`
+                            : entry.moduleName}
+                        </span>
+                      </button>
+                    ))
+                  )}
                 </>
-              ) : null}
-
-              {startActivity === 'recent' ? (
-                recent.length === 0 ? (
-                  <p className="px-2 py-3 text-xs text-zinc-600">No recent projects yet.</p>
-                ) : (
-                  recent.map((entry) => (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      onClick={() => onOpenRecent(entry)}
-                      className={SIDEBAR_BTN}
-                      title={
-                        isFolderRecentEntry(entry) && entry.folderLabel
-                          ? `${entry.folderLabel} / ${entry.moduleName}`
-                          : entry.moduleName
-                      }
-                    >
-                      <FolderOpen size={14} className="text-zinc-500 shrink-0" />
-                      <span className="truncate">
-                        {isFolderRecentEntry(entry) && entry.folderLabel
-                          ? `${entry.folderLabel} / ${entry.moduleName}`
-                          : entry.moduleName}
-                      </span>
-                    </button>
-                  ))
-                )
               ) : null}
 
               {startActivity === 'examples' ? (
@@ -212,19 +211,16 @@ export function StartHomeLayout({
                   onNewProjectFolder={onNewProjectFolder}
                   onOpenProjectFolder={onOpenProjectFolder}
                 />
+                <RecentProjectsPanel
+                  recent={recent}
+                  folderPickerReady={folderPickerReady}
+                  onOpenRecent={onOpenRecent}
+                  onDeleteProject={onDeleteProject}
+                  onOpenProjectDirectory={onOpenProjectDirectory}
+                  onOpenUsabilityTest={onOpenUsabilityTest}
+                  formatRelative={formatRelative}
+                />
               </>
-            ) : null}
-
-            {startActivity === 'recent' ? (
-              <RecentProjectsPanel
-                recent={recent}
-                folderPickerReady={folderPickerReady}
-                onOpenRecent={onOpenRecent}
-                onDeleteProject={onDeleteProject}
-                onOpenProjectDirectory={onOpenProjectDirectory}
-                onOpenUsabilityTest={onOpenUsabilityTest}
-                formatRelative={formatRelative}
-              />
             ) : null}
 
             {startActivity === 'examples' ? (

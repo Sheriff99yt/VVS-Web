@@ -143,8 +143,8 @@ export interface UiPreferences {
   referencesBreadthLimit: number;
   /** Start screen left sidebar (VS Code-like). */
   startSidebarOpen: boolean;
-  /** Start-local activity (Start / Recent / Examples). Library/Docs/Roadmap are routes. */
-  startActivity: 'start' | 'recent' | 'examples';
+  /** Start-local activity (Start / Examples). Library/Docs/Roadmap are routes. */
+  startActivity: 'start' | 'examples';
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -528,10 +528,8 @@ export function readUiPreferences(): UiPreferences {
           ? rest.startSidebarOpen
           : DEFAULT_UI_PREFERENCES.startSidebarOpen,
       startActivity:
-        rest.startActivity === 'start' ||
-        rest.startActivity === 'recent' ||
         rest.startActivity === 'examples'
-          ? rest.startActivity
+          ? 'examples'
           : DEFAULT_UI_PREFERENCES.startActivity,
     };
     return migrateLegacyDetailsPref(merged);

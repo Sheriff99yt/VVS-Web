@@ -1,6 +1,6 @@
 # VVS Web — Current Implementation State
 
-This document is the **canonical snapshot** of what exists in the repo today versus what is still planned. Update this file whenever the UI shell or integration boundaries change. Start is a VS Code-like activity rail + collapsible sidebar (Start / Recent / Examples); Library/Roadmap/Docs stay routes.
+This document is the **canonical snapshot** of what exists in the repo today versus what is still planned. Update this file whenever the UI shell or integration boundaries change. Start is a VS Code-like activity rail + collapsible sidebar (Start includes recent; Examples); Library/Roadmap/Docs stay routes.
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
