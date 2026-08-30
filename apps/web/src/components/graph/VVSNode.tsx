@@ -81,7 +81,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
   const title = getNodeDisplayTitle(data, targetLanguage);
   const stateTip = [unsupportedTitle, hasBrokenRef ? 'Unresolved symbol reference' : '']
     .filter(Boolean)
-    .join(' Â· ');
+    .join(' · ');
   const showStateIcon = Boolean(stateTip);
   const isCodeHover = useSyncExternalStore(
     subscribeCodeHoverHighlight,
@@ -149,7 +149,7 @@ function VVSNodeBody({ id, data, selected }: VVSNodeBodyProps) {
                 <span
                   className={`${styles.linkedSubtitle} ${isImportNode ? styles.linkedSubtitleImport : ''}`}
                 >
-                  {isImportNode ? `â†³ ${linkedTargetLabel}` : `â†’ ${linkedTargetLabel}`}
+                  {isImportNode ? `↳ ${linkedTargetLabel}` : `→ ${linkedTargetLabel}`}
                 </span>
               </Tooltip>
             )}

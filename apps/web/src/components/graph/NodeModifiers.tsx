@@ -26,7 +26,7 @@ import styles from './VVSNode.module.css';
 interface NodeModifiersProps {
   id: string;
   data: VVSNodeData;
-  /** True while a modifier menu is open ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â keeps the hover strip mounted/visible. */
+  /** True while a modifier menu is open — keeps the hover strip mounted/visible. */
   onInteractionChange?: (active: boolean) => void;
 }
 

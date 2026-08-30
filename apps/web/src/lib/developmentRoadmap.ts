@@ -118,7 +118,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'breadcrumb',
         title: 'Graph breadcrumb',
         description:
-          'Module â€º graph path above tabs; settings modal for module name, **per-graph** codegen language/extension, **project defaults** for new graphs, and linked project environment.',
+          'Module › graph path above tabs; settings modal for module name, **per-graph** codegen language/extension, **project defaults** for new graphs, and linked project environment.',
       },
       {
         id: 'status-bar',
@@ -314,7 +314,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'pins-ui',
         title: 'Pin geometry & inline widgets',
         description:
-          'Distinct shapes per pin type (incl. array); inline editors on unwired pins; scroll wheel steps number values (Â±1, Shift Â±10, Ctrl Â±0.1) without fighting canvas zoom or node drag.',
+          'Distinct shapes per pin type (incl. array); inline editors on unwired pins; scroll wheel steps number values (±1, Shift ±10, Ctrl ±0.1) without fighting canvas zoom or node drag.',
         status: 'done',
       },
       {
@@ -365,14 +365,14 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'symbol-declare-vocabulary',
         title: 'Declare / Handler vocabulary',
         description:
-          'UI labels aligned to canvas roles: Declare member nodes on the chain, handler labels use the userâ€™s event name (no forced On prefix), Call/Dispatch at invoke sites. symbolRole on registry kinds; spawn catalog grouping by Declare / Handlers / Calls.',
+          'UI labels aligned to canvas roles: Declare member nodes on the chain, handler labels use the user’s event name (no forced On prefix), Call/Dispatch at invoke sites. symbolRole on registry kinds; spawn catalog grouping by Declare / Handlers / Calls.',
         status: 'done',
       },
       {
         id: 'events',
         title: 'Custom & entry events',
         description:
-          'events[] + On-node role entry | tick | custom; event_member_define + event_define handlers + dispatch nodes (direct call); Emit/Subscribe blocked (HIDDEN_EVENT_RUNTIME_UNSUPPORTED); tree + New event hereâ€¦; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog. Event-role rename write-through via applyEventUpdateToDocuments.',
+          'events[] + On-node role entry | tick | custom; event_member_define + event_define handlers + dispatch nodes (direct call); Emit/Subscribe blocked (HIDDEN_EVENT_RUNTIME_UNSUPPORTED); tree + New event here…; new class/project seeds program entry on canvas (createClassHomeBootstrap); legacy event_on_start removed from spawn catalog. Event-role rename write-through via applyEventUpdateToDocuments.',
         status: 'done',
       },
       {
@@ -689,7 +689,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'define-nodes',
         title: 'Canvas define nodes',
         description:
-          'class_define, var_define, function_define, event_member_define on the container graph exec chain; panelâ†”canvas dual-write via defineNodeSync + useSymbolLifecycle (class/var/event write-through; rename skips define kinds; catalog missing-declare inserts a real define, not a Call); addClassWithDefine on class create; legacy class tabs and documents.main migrate to home graphs on load.',
+          'class_define, var_define, function_define, event_member_define on the container graph exec chain; panel↔canvas dual-write via defineNodeSync + useSymbolLifecycle (class/var/event write-through; rename skips define kinds; catalog missing-declare inserts a real define, not a Call); addClassWithDefine on class create; legacy class tabs and documents.main migrate to home graphs on load.',
         status: 'done',
       },
       {
@@ -743,7 +743,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       },
       {
         id: 'function-declare-define-u81',
-        title: 'Function Declare â‰  Define (U81)',
+        title: 'Function Declare ≠ Define (U81)',
         description:
           'Call / Declare / Define release menu. function_define = existence; function_implement = body placement on the member chain. No stub without Define; no legacy fold. Symbol delete and deleteClass cascade remove both Declare and Define.',
         status: 'done',
@@ -795,7 +795,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'generate-export-multiclass',
         title: 'Generate = Code panel emit (U56--U57)',
         description:
-          'TopNav Generate / CLI / Code preview share emitProjectLikeCodePanel; folder write when on disk. Class-home tabs show the graphâ€™s module file.',
+          'TopNav Generate / CLI / Code preview share emitProjectLikeCodePanel; folder write when on disk. Class-home tabs show the graph’s module file.',
         status: 'done',
       },
       {
@@ -916,7 +916,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'folder-browser',
         title: 'Project folder browser',
         description:
-          'Browse on-disk tree from recents; copy repo-relative paths (.vvs/â€¦, src/â€¦). Browser security prevents full OS paths (e.g. C:\\â€¦).',
+          'Browse on-disk tree from recents; copy repo-relative paths (.vvs/…, src/…). Browser security prevents full OS paths (e.g. C:\\…).',
       },
       {
         id: 'save-on-disk-prompt',
@@ -977,7 +977,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'save-before-compile',
         title: 'Save-before-compile (HTTP)',
         description:
-          'Generate persists snapshot to Go API before POST â€¦/compile so server-side compile always sees the latest graph.',
+          'Generate persists snapshot to Go API before POST …/compile so server-side compile always sees the latest graph.',
       },
       {
         id: 'codemirror',
@@ -1097,7 +1097,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'backend',
         title: 'Go project HTTP API',
         description:
-          'ProjectStore port -- MemoryStore (default) or PostgresStore (DATABASE_URL); GET/PUT /api/projects, list, POST â€¦/compile; CORS + Authorization header.',
+          'ProjectStore port -- MemoryStore (default) or PostgresStore (DATABASE_URL); GET/PUT /api/projects, list, POST …/compile; CORS + Authorization header.',
       },
       {
         id: 'server-auth',
