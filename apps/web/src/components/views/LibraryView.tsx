@@ -67,6 +67,7 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
   const { repos: gitRepos, addCatalogRepo, removeCatalogRepo } = useGitCatalog();
 
   const [activeSection, setActiveSection] = useState<LibrarySection>(() => {
+    if (browseMode && initialSection === 'installed') return 'templates';
     if (initialSection === 'templates' || initialSection === 'git_catalogs' || initialSection === 'installed') {
       return initialSection;
     }
@@ -213,132 +214,127 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
     dispatchSwitchToCanvas();
   };
 
+  const section: LibrarySection =
+    browseMode && activeSection === 'installed' ? 'templates' : activeSection;
+
+  const librarySections = (
+    [
+      { id: 'templates' as const, label: 'Templates', icon: Layers, count: environments.length },
+      { id: 'git_catalogs' as const, label: 'Git imports', icon: GitBranch, count: gitRepos.length },
+      ...(!browseMode
+        ? [
+            {
+              id: 'installed' as const,
+              label: 'Installed',
+              icon: Package,
+              count: installedLibrary.length,
+            },
+          ]
+        : []),
+    ] as const
+  );
+
   const sectionMeta = {
     templates: {
-      title: 'Project templates',
-      description: 'Start from an environment manifest — host files, natives, and events included.',
+      title: 'Templates',
+      description: 'Start from an environment. Host files, natives, and events come with it.',
       icon: Layers,
     },
     git_catalogs: {
-      title: 'Git & release pack imports',
-      description: 'Client-first pack imports directly from GitHub repositories, releases, or local manifests.',
+      title: 'Git imports',
+      description: 'Pack imports from GitHub repositories, releases, or a local manifest.',
       icon: GitBranch,
     },
     installed: {
-      title: 'Installed in project',
-      description: `${installedAssets.length} extension${installedAssets.length === 1 ? '' : 's'} linked to this project.`,
+      title: 'Installed',
+      description: `${installedAssets.length} linked to this project.`,
       icon: Package,
     },
-  }[activeSection];
-
-  const SectionIcon = sectionMeta.icon;
+  }[section];
 
   return (
     <div className="flex h-full w-full bg-zinc-950 overflow-hidden text-zinc-300 font-sans">
-      <div className="w-60 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0 overflow-y-auto">
-        <div className="p-4">
-          <h2 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-3">
-            Client-First Library
-          </h2>
-          <div className="flex flex-col gap-1">
-            {(
-              [
-                { id: 'templates' as const, label: 'Templates', icon: Layers, count: environments.length },
-                {
-                  id: 'git_catalogs' as const,
-                  label: 'Git Imports',
-                  icon: GitBranch,
-                  count: gitRepos.length,
-                },
-                {
-                  id: 'installed' as const,
-                  label: 'Installed',
-                  icon: Package,
-                  count: installedLibrary.length,
-                },
-              ] as const
-            ).map(({ id, label, icon: Icon, count }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => {
-                  setActiveSection(id);
-                  setSearchQuery('');
-                  setActiveEnvLanguage('all');
-                  setSelectedAssetId(null);
-                  setSelectedEnvironmentId(null);
-                }}
-                className={`flex items-center justify-between gap-3 px-3 py-2 rounded text-xs font-medium transition-colors ${
-                  activeSection === id
-                    ? 'bg-zinc-800 text-white border border-zinc-700/50'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 border border-transparent'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Icon size={15} className={activeSection === id ? 'text-indigo-400' : ''} />
-                  {label}
-                </span>
-                {count > 0 && (
-                  <span className="text-[10px] bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full font-mono">
-                    {count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+      <aside className="w-60 shrink-0 border-r border-zinc-800 bg-zinc-950 flex flex-col min-h-0">
+        <div className="h-9 px-3 flex items-center text-[11px] font-semibold uppercase tracking-widest text-zinc-500 border-b border-zinc-800 shrink-0">
+          Library
         </div>
-      </div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-0.5">
+          {librarySections.map(({ id, label, icon: Icon, count }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setActiveSection(id);
+                setSearchQuery('');
+                setActiveEnvLanguage('all');
+                setSelectedAssetId(null);
+                setSelectedEnvironmentId(null);
+              }}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-[13px] transition-colors text-left ${
+                section === id
+                  ? 'bg-zinc-900 text-zinc-100'
+                  : 'text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100'
+              }`}
+            >
+              <Icon size={14} className="text-zinc-500 shrink-0" />
+              <span className="flex-1 truncate">{label}</span>
+              {count > 0 ? (
+                <span className="text-[10px] text-zinc-600 font-mono tabular-nums">{count}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      </aside>
 
       <div className="flex-1 flex min-w-0 h-full">
-        <div className="flex-1 flex flex-col h-full bg-zinc-950 overflow-y-auto p-8 min-w-0">
-          <div className="max-w-5xl mx-auto w-full">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 border-b border-zinc-800 pb-4">
-              <div className="flex items-center gap-3">
-                <SectionIcon size={24} className="text-zinc-400" />
-                <div>
-                  <h2 className="text-xl font-bold text-zinc-100 mb-1">{sectionMeta.title}</h2>
-                  <p className="text-zinc-400 text-sm">{sectionMeta.description}</p>
-                </div>
+        <div className="flex-1 flex flex-col h-full bg-zinc-950 overflow-y-auto px-8 py-8 min-w-0">
+          <div className="max-w-4xl mx-auto w-full">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+              <div className="min-w-0 max-w-xl">
+                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
+                  {sectionMeta.title}
+                </h2>
+                <p className="text-sm text-zinc-400 mt-1 leading-relaxed">{sectionMeta.description}</p>
               </div>
-
-              <label className="relative shrink-0 w-full md:w-64">
-                <Search
-                  size={14}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
-                />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search name, category, language…"
-                  aria-label="Search library catalog"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded pl-8 pr-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50"
-                />
-              </label>
-
-              {activeSection === 'templates' && (
-                <button
-                  type="button"
-                  onClick={() => dispatchEnvironmentImportModal()}
-                  className="text-xs px-3 py-2 rounded border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/15 transition-colors shrink-0"
-                >
-                  Import OpenAPI / AsyncAPI
-                </button>
-              )}
-
-              {activeSection === 'git_catalogs' && (
-                <button
-                  type="button"
-                  onClick={() => setIsGitImportModalOpen(true)}
-                  className="text-xs px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors shrink-0 flex items-center gap-1.5"
-                >
-                  <Plus size={14} />
-                  Import Git Catalog Repo
-                </button>
-              )}
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <label className="relative w-56">
+                  <Search
+                    size={14}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search"
+                    aria-label="Search library catalog"
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-md pl-8 pr-3 py-1.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600"
+                  />
+                </label>
+                {section === 'templates' ? (
+                  <button
+                    type="button"
+                    onClick={() => dispatchEnvironmentImportModal()}
+                    className="text-sm px-3 py-1.5 rounded-md border border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-600 transition-colors"
+                  >
+                    Import OpenAPI
+                  </button>
+                ) : null}
+                {section === 'git_catalogs' ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsGitImportModalOpen(true)}
+                    className="text-sm px-3 py-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/10 text-indigo-200 hover:border-indigo-400/60 transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <Plus size={14} />
+                    Import git
+                  </button>
+                ) : null}
+              </div>
             </div>
 
-            {activeSection === 'templates' && (
+
+            {section === 'templates' && (
               <>
                 {!environmentsReady ? (
                   <p className="text-sm text-zinc-600">Loading templates…</p>
@@ -360,20 +356,32 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
               </>
             )}
 
-            {activeSection === 'git_catalogs' && (
+            {section === 'git_catalogs' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredGitRepos.length === 0 ? (
-                    <p className="text-sm text-zinc-600 col-span-full">
-                      {searchQuery.trim()
-                        ? `No git catalogs match “${searchQuery.trim()}”.`
-                        : 'No git catalogs yet.'}
-                    </p>
+                    <div className="col-span-full rounded-lg border border-dashed border-zinc-800 px-4 py-10 text-center">
+                      <p className="text-sm text-zinc-500">
+                        {searchQuery.trim()
+                          ? `No git catalogs match “${searchQuery.trim()}”.`
+                          : 'No git catalogs yet.'}
+                      </p>
+                      {!searchQuery.trim() ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsGitImportModalOpen(true)}
+                          className="mt-3 inline-flex items-center gap-1.5 text-sm text-indigo-300 hover:text-indigo-200 transition-colors"
+                        >
+                          <Plus size={14} />
+                          Import git
+                        </button>
+                      ) : null}
+                    </div>
                   ) : null}
                   {filteredGitRepos.map((repo) => (
                     <div
                       key={repo.id}
-                      className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex flex-col justify-between hover:border-zinc-700 transition-colors"
+                      className="bg-zinc-900/60 border border-zinc-800 rounded-lg p-4 flex flex-col justify-between hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -415,7 +423,7 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
               </div>
             )}
 
-            {activeSection === 'installed' && (
+            {!browseMode && section === 'installed' && (
               <>
                 {filteredInstalledAssets.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

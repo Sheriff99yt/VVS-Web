@@ -68,7 +68,7 @@ On `/`, `/library`, `/roadmap`, and `/docs` the left activity rail is the view s
 |------|---------|
 | **Canvas** | Primary graph editor (default) |
 | **References** | UE5-style reference viewer — focus center, referencers left, dependencies right; huge-project breadth + persisted prefs |
-| **Library** | Client-first templates / git import; auth / upload frozen |
+| **Library** | Browse `/library`: templates + git import (Installed is in-project only). Auth / upload frozen |
 | **Roadmap** | In-app development roadmap -- Open / Done / Research |
 | **Packs** | In-project pack versions / host skip-emit. With no project loaded, the tab returns home |
 
@@ -114,7 +114,7 @@ When **References** is active, Canvas chrome is **unmounted** (no edit React Flo
 
 ### Library layout mode
 
-When **Library** is active, only TopNav + full-width `LibraryView` + StatusBar are shown. Side panels and output console are **hidden**.
+When **Library** is active in-project, only TopNav + full-width `LibraryView` + StatusBar are shown. Side panels and output console are **hidden**. On `/library` the activity rail plus a Library sidebar (Templates / Git imports) wrap the same view; Installed is omitted in browse mode.
 
 Library sections:
 

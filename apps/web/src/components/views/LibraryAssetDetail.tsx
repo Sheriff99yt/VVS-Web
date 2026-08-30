@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Download, Heart, ExternalLink, Trash2, Package, FileCode } from 'lucide-react';
+import { X, Download, ExternalLink, Trash2, Package, FileCode } from 'lucide-react';
 import { LibraryAsset, InstalledLibraryEntry } from '@/types/libraryAsset';
 import { loadEnvironmentManifest, summarizeEnvironmentManifest } from '@vvs/environment-templates';
 
@@ -43,9 +43,9 @@ export function LibraryAssetDetail({
   const envSummary = envManifest ? summarizeEnvironmentManifest(envManifest) : null;
 
   return (
-    <div className="w-96 shrink-0 border-l border-zinc-800 bg-zinc-900 flex flex-col h-full overflow-hidden">
+    <div className="w-96 shrink-0 border-l border-zinc-800 bg-zinc-950 flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-100">Asset details</h3>
+        <h3 className="text-sm font-semibold text-zinc-100">{asset.importKind === 'environment' ? 'Template' : 'Details'}</h3>
         <button
           type="button"
           onClick={onClose}
@@ -100,16 +100,6 @@ export function LibraryAssetDetail({
           ))}
         </div>
 
-        {asset.type !== 'Environments' ? (
-          <div className="flex items-center gap-4 text-xs text-zinc-500">
-            <div className="flex items-center gap-1.5">
-              <Download size={14} /> {asset.downloads}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Heart size={14} /> {asset.likes}
-            </div>
-          </div>
-        ) : null}
 
         <div>
           <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">

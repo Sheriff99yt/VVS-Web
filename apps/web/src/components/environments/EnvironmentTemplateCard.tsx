@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FileCode, Layers, Zap } from 'lucide-react';
+import { ChevronRight, FileCode, Layers, Zap } from 'lucide-react';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import {
   summarizeEnvironmentManifest,
@@ -52,7 +52,7 @@ export function EnvironmentTemplateCard({
     <button
       type="button"
       onClick={() => onSelect(manifest.id)}
-      className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group w-full"
+      className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 hover:border-zinc-600 hover:bg-zinc-900 transition-colors text-left group w-full"
     >
       <div className="flex items-start justify-between gap-2">
         <span
@@ -113,7 +113,11 @@ export function EnvironmentTemplateCard({
         </p>
       ) : null}
 
-      <p className="text-[10px] text-zinc-600 mt-2 font-mono truncate">{manifest.id}</p>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors">
+        Open
+        <ChevronRight size={12} />
+      </span>
     </button>
   );
 }
+
