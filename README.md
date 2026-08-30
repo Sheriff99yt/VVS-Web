@@ -1,5 +1,7 @@
 # Vision Visual Scripting (VVS)
 
+![VVS](apps/web/public/brand/VVS_White2.png)
+
 > **Early public development** - try the live editor below, or run locally. See [Where we are now](#where-we-are-now). **Origin / older demo repo:** [Vision Visual Scripting (2021 graduation prototype)](https://github.com/Sheriff99yt/Vision_Visual_Scripting)
 
 **Visual programming that generates real code.** Compose logic on a graph, **Generate** ordinary source, and keep using your IDE, git, and CI. **Canvas is the source of truth** - every export line maps to a graph node. Symbol tables index only.

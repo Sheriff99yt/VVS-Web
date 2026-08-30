@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { ContributeButton } from '@/components/layout/ContributeButton';
+import { BrandLockup } from '@/components/layout/BrandMark';
 import { TopNavPageSwitch } from '@/components/layout/TopNavPageSwitch';
 import { useCoarsePointer, useIsMobile } from '@/hooks/useIsMobile';
 import type { EditorViewTab } from '@/types/editorNavigation';
@@ -47,8 +48,7 @@ export function StandaloneTopBar() {
           onClick={() => router.push('/')}
           className="font-bold text-zinc-100 tracking-wide flex items-center gap-2 hover:text-zinc-300 transition-colors"
         >
-          <div className="w-4 h-4 rounded bg-zinc-100" />
-          VVS Web
+          <BrandLockup />
         </button>
         <TopNavPageSwitch activeTab={activeTab} enlargeIconHit={enlargeIconHit} onTab={onTab} />
       </div>

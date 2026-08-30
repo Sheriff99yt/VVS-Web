@@ -26,6 +26,7 @@ import { useProjectFolder } from '@/contexts/ProjectFolderContext';
 import { runProjectAnalysis } from '@/lib/projectAnalysis';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { ContributeButton } from '@/components/layout/ContributeButton';
+import { BrandLockup } from '@/components/layout/BrandMark';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 import { AgentPanel } from '@/components/layout/AgentPanel';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
@@ -621,8 +622,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
               onClick={handleCloseProject}
               className="font-bold text-zinc-100 tracking-wide flex items-center gap-2 hover:text-zinc-300 transition-colors"
             >
-              <div className="w-4 h-4 rounded bg-zinc-100" />
-              VVS Web
+              <BrandLockup />
             </button>
           </Tooltip>
 

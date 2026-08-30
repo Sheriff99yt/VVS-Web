@@ -39,6 +39,9 @@ const customDomain = process.env.VVS_CUSTOM_DOMAIN === 'true';
 const githubPagesBasePath = customDomain ? '' : '/VVS-Web';
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_SITE_BASE_PATH: isGithubPages && githubPagesBasePath ? githubPagesBasePath : '',
+  },
   transpilePackages: ['@vvs/graph-types', '@vvs/syntax-registry', '@vvs/language-profiles', '@vvs/transpiler'],
   ...(isGithubPages
     ? {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { PRODUCT_NAME } from '@/lib/productName';
+import { siteOrigin } from '@/lib/siteOrigin';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteOrigin()),
   title: PRODUCT_NAME,
   description: 'Visual graphs that generate real code',
 };
