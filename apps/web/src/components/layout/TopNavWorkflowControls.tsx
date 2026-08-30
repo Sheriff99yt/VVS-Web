@@ -1,14 +1,10 @@
 'use client';
 
 import React from 'react';
-import { EyeOff, Loader2, Save, Zap } from 'lucide-react';
+import { Loader2, Save, Zap } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 export interface TopNavWorkflowControlsProps {
-  dimUnsupportedNodes: boolean;
-  onDimUnsupportedToggle: () => void;
-  dimUnsupportedTitle: string;
-
   autoSave: boolean;
   onAutoSaveToggle: () => void;
   autoSaveTitle: string;
@@ -90,9 +86,6 @@ function ControlGroup({
 }
 
 export function TopNavWorkflowControls({
-  dimUnsupportedNodes,
-  onDimUnsupportedToggle,
-  dimUnsupportedTitle,
   autoSave,
   onAutoSaveToggle,
   autoSaveTitle,
@@ -108,18 +101,6 @@ export function TopNavWorkflowControls({
 }: TopNavWorkflowControlsProps) {
   return (
     <div className="flex items-center gap-1.5">
-      <Tooltip content={dimUnsupportedTitle} placement="bottom">
-        <button
-          type="button"
-          onClick={onDimUnsupportedToggle}
-          className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border border-zinc-800 transition-colors shrink-0 ${toggleSegmentClass(dimUnsupportedNodes)}`}
-          aria-pressed={dimUnsupportedNodes}
-          aria-label={dimUnsupportedTitle}
-        >
-          <EyeOff size={12} aria-hidden />
-          <span className="hidden sm:inline">Dim</span>
-        </button>
-      </Tooltip>
       <ControlGroup
         toggleLabel="Auto save"
         toggleOn={autoSave}

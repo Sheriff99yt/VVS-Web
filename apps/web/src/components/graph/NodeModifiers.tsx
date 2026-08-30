@@ -17,7 +17,8 @@ import {
 } from '@vvs/language-profiles';
 import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock, CornerLeftUp } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { DocsInfoIcon } from '@/components/docs/DocsInfoIcon';
+import { getNodeDoc } from '@/lib/nodeDocCatalog';
+import { nodeDocsHref } from '@/lib/docsHover';
 import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import { applyDefinePropertyToVariable } from '@/lib/variableHelpers';
 import styles from './VVSNode.module.css';
@@ -125,6 +126,7 @@ function ModifierDropdown({
   activeClass,
   onChange,
   onOpenChange,
+  docsHref,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -136,6 +138,7 @@ function ModifierDropdown({
   activeClass?: string;
   onChange: (value: string) => void;
   onOpenChange?: (open: boolean) => void;
+  docsHref?: string;
 }) {
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -181,12 +184,30 @@ function ModifierDropdown({
     .filter(Boolean)
     .join(' ');
 
+  const tooltip = enabled
+    ? docsHref
+      ? (
+          <span>
+            {title}
+            <br />
+            Right-click for docs
+          </span>
+        )
+      : title
+    : disabledTitle;
+
   return (
-    <Tooltip content={enabled ? title : disabledTitle} placement="top">
+    <Tooltip content={tooltip} placement="top">
       <div
         className={chipClass}
         onMouseEnter={openMenu}
         onMouseLeave={scheduleClose}
+        onContextMenu={(event) => {
+          if (!docsHref) return;
+          event.preventDefault();
+          event.stopPropagation();
+          window.open(docsHref, '_blank', 'noopener,noreferrer');
+        }}
       >
       {icon}
       {open && enabled ? (
@@ -243,6 +264,8 @@ export function NodeModifiers({
   const kindId = resolveNodeKindId(data);
   const def = getNodeKindDefinition(kindId);
   const schema = Array.isArray(def?.propertySchema) ? def.propertySchema : [];
+  const docsFor = (optionKey: string) =>
+    getNodeDoc(kindId) ? nodeDocsHref(kindId, optionKey) : undefined;
 
   const hasModifier = (key: string) => schema.some((f) => f.key === key);
 
@@ -342,7 +365,6 @@ export function NodeModifiers({
   return (
     <div className={styles.modifierRow} onMouseDown={(e) => e.stopPropagation()}>
       {hasVisibility ? (
-        <>
         <ModifierDropdown
           icon={getVisibilityIcon(visibilityValue)}
           title="Visibility"
@@ -357,13 +379,11 @@ export function NodeModifiers({
           active={false}
           onChange={(v) => handleUpdate('visibility', v)}
           onOpenChange={handleMenuOpenChange}
+          docsHref={docsFor('visibility')}
         />
-        <DocsInfoIcon kindId={kindId} optionKey="visibility" label="Visibility" />
-        </>
       ) : null}
 
       {hasBinding ? (
-        <>
         <ModifierDropdown
           icon={getBindingIcon(bindingValue)}
           title="Binding"
@@ -374,9 +394,8 @@ export function NodeModifiers({
           active={false}
           onChange={(v) => handleUpdate('binding', v)}
           onOpenChange={handleMenuOpenChange}
+          docsHref={docsFor('binding')}
         />
-        <DocsInfoIcon kindId={kindId} optionKey="binding" label="Binding" />
-        </>
       ) : null}
 
       {BOOL_MODIFIERS.map(
@@ -387,8 +406,8 @@ export function NodeModifiers({
           const enabled = isModifierInteractive(targetLanguage, resolvedKey);
           const active = Boolean(props[schemaKey as keyof typeof props]);
           return (
-            <React.Fragment key={`${schemaKey}-${targetLanguage}`}>
             <ModifierDropdown
+              key={`${schemaKey}-${targetLanguage}`}
               icon={icon}
               title={title}
               value={active ? 'true' : 'false'}
@@ -402,15 +421,13 @@ export function NodeModifiers({
               activeClass={activeClass}
               onChange={(v) => handleUpdate(schemaKey, v === 'true')}
               onOpenChange={handleMenuOpenChange}
+              docsHref={docsFor(schemaKey)}
             />
-            <DocsInfoIcon kindId={kindId} optionKey={schemaKey} label={title} />
-            </React.Fragment>
           );
         }
       )}
 
       {hasSuper ? (
-        <>
         <ModifierDropdown
           icon={<CornerLeftUp size={11} strokeWidth={2.5} />}
           title="Super"
@@ -428,9 +445,8 @@ export function NodeModifiers({
           activeClass={styles.modifierChipActiveRose}
           onChange={(v) => handleUpdate('isSuper', v === 'true')}
           onOpenChange={handleMenuOpenChange}
+          docsHref={docsFor('isSuper')}
         />
-        <DocsInfoIcon kindId={kindId} optionKey="isSuper" label="Super" />
-        </>
       ) : null}
     </div>
   );

@@ -33,7 +33,6 @@ import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowContro
 import { TopNavPageSwitch } from '@/components/layout/TopNavPageSwitch';
 import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
-import { useUiPreference } from '@/hooks/useUiPreference';
 import { readUiPreference, REQUEST_GENERATE_EVENT, dispatchFocusGraphNodeSearch, dispatchOpenActionHistory, dispatchOpenShortcutsHelp } from '@/lib/uiPreferences';
 import { logActivity } from '@/lib/actionActivityLog';
 import { playAudioCue } from '@/lib/audioFeedback';
@@ -86,7 +85,6 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   useEffect(() => {
     if (!agentPanelAllowed) setShowAgentPanel(false);
   }, [agentPanelAllowed]);
-  const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
   const { codeOpen, graphNavOpen, toggleCode, toggleGraphNav } = useEditorPanels();
 
   const {
@@ -975,13 +973,6 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         <div className="flex items-center gap-2">
           {activeTab === 'canvas' && (
             <TopNavWorkflowControls
-              dimUnsupportedNodes={dimUnsupportedNodes}
-              onDimUnsupportedToggle={() => setDimUnsupportedNodes(!dimUnsupportedNodes)}
-              dimUnsupportedTitle={
-                dimUnsupportedNodes
-                  ? 'Dim unsupported nodes for current language (on)'
-                  : 'Dim unsupported nodes for current language (off)'
-              }
               autoSave={autoSave}
               onAutoSaveToggle={() => setAutoSave(!autoSave)}
               autoSaveTitle={autoSaveTitle}

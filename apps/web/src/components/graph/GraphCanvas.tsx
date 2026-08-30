@@ -2531,7 +2531,7 @@ function GraphCanvasInner() {
         onOpenChange={setShortcutsHelpOpen}
       />
       {!shortcutsHelpOpen ? (
-        <div className="absolute top-3 left-12 z-20 pointer-events-none">
+        <div className="absolute top-3 left-20 z-20 pointer-events-none">
           <GraphNodeSearch />
         </div>
       ) : null}

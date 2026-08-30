@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleHelp,
+  EyeOff,
   Code2,
   Focus,
   GitBranch,
@@ -289,6 +290,7 @@ function PageShortcuts() {
  */
 export function GraphShortcutsHelp({ open, onOpenChange }: GraphShortcutsHelpProps) {
   const [welcomeDismissed, setWelcomeDismissed] = useUiPreference('canvasWelcomeDismissed');
+  const [dimUnsupportedNodes, setDimUnsupportedNodes] = useUiPreference('dimUnsupportedNodes');
   const autoOpenedRef = useRef(false);
   const wasOpenRef = useRef(open);
   const [mounted, setMounted] = useState(false);
@@ -465,7 +467,29 @@ export function GraphShortcutsHelp({ open, onOpenChange }: GraphShortcutsHelpPro
 
   return (
     <>
-      <div className="absolute top-3 left-3 z-30">
+      <div className="absolute top-3 left-3 z-30 flex items-center gap-1">
+        <Tooltip
+          content={
+            dimUnsupportedNodes
+              ? 'Dim unsupported nodes (on)'
+              : 'Dim unsupported nodes (off)'
+          }
+          placement="bottom"
+        >
+          <button
+            type="button"
+            onClick={() => setDimUnsupportedNodes(!dimUnsupportedNodes)}
+            className={`w-8 h-8 inline-flex items-center justify-center border rounded-md transition-colors ${
+              dimUnsupportedNodes
+                ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
+                : 'bg-zinc-950/90 border-zinc-800 text-zinc-500 hover:text-zinc-200 hover:border-zinc-700'
+            }`}
+            aria-pressed={dimUnsupportedNodes}
+            aria-label="Dim unsupported nodes"
+          >
+            <EyeOff size={14} />
+          </button>
+        </Tooltip>
         <Tooltip content={shortcutTitle('help')} placement="bottom">
           <button
             type="button"
