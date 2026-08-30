@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { TopNav } from './TopNav';
+import { EditorActivityRail } from './EditorActivityRail';
 import { GraphExplorer } from './GraphExplorer';
 import { CodeOutputPanel } from './CodeOutputPanel';
 import { GraphTabBar } from './GraphTabBar';
@@ -135,9 +136,11 @@ export function EditorLayout({
             <EditorNavigationProvider editorView={activeTab} setEditorView={setActiveTab}>
             <EditorPanelProvider>
               <div className="flex flex-col h-screen w-screen overflow-hidden bg-zinc-950">
-                <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
+                <TopNav activeTab={activeTab} />
 
-                <div className="flex-1 overflow-hidden min-h-0 relative">
+                <div className="flex-1 overflow-hidden min-h-0 relative flex">
+                  <EditorActivityRail activeTab={activeTab} />
+                  <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
                   {isCanvas ? (
                     <ReactFlowProvider>
                       <CanvasWorkspace />
@@ -163,6 +166,7 @@ export function EditorLayout({
                       <PacksView />
                     </div>
                   ) : null}
+                  </div>
                 </div>
 
                 <StatusBar />

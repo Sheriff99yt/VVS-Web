@@ -101,7 +101,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'views',
         title: 'Top-level views',
-        description: 'Canvas, References, Library, Roadmap, and Packs. In-project: page-switch cluster in TopNav. Standalone routes (`/`, `/library`, `/roadmap`, `/docs`): left activity rail; StandaloneTopBar is brand + Contribute.',
+        description: 'Canvas, References, Library, Roadmap, and Packs. In-project: page-switch cluster on the left activity rail (Project / References / Library / Roadmap / Packs / Docs). Standalone routes (`/`, `/library`, `/roadmap`, `/docs`): Start activity rail; StandaloneTopBar is brand + Contribute.',
       },
       {
         id: 'start-screen',
@@ -1471,7 +1471,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         layer: 'frontend',
         title: 'Standalone chrome vs in-project page-switch',
         description:
-          'Shipped then superseded on standalone routes: `/`, `/library`, `/roadmap`, and `/docs` use the left activity rail instead of duplicating the page-switch cluster in StandaloneTopBar (brand + Contribute only). In-project TopNav still has Project / References / Library / Roadmap / Packs / Docs. File/Edit/View, Save, and Generate stay in-project only.',
+          'Standalone routes (`/`, `/library`, `/roadmap`, `/docs`) use the Start activity rail; StandaloneTopBar is brand + Contribute only. In-project the page-switch cluster (Project / References / Library / Roadmap / Packs / Docs) lives on the left activity rail, not TopNav. File/Edit/View, Save, and Generate stay in-project only.',
         status: 'done',
       },
       {

@@ -30,7 +30,6 @@ import { BrandLockup } from '@/components/layout/BrandMark';
 import { isHostedFeaturesEnabled } from '@/lib/hostedFeatures';
 import { AgentPanel } from '@/components/layout/AgentPanel';
 import { TopNavWorkflowControls } from '@/components/layout/TopNavWorkflowControls';
-import { TopNavPageSwitch } from '@/components/layout/TopNavPageSwitch';
 import { shortcutTitle, shortcutKeys } from '@/lib/graphShortcuts';
 import { dispatchOpenSettings } from '@/components/layout/GraphSettingsModal';
 import { readUiPreference, REQUEST_GENERATE_EVENT, dispatchFocusGraphNodeSearch, dispatchOpenActionHistory, dispatchOpenShortcutsHelp } from '@/lib/uiPreferences';
@@ -63,10 +62,9 @@ import type { EditorViewTab } from '@/types/editorNavigation';
 
 export interface TopNavProps {
   activeTab: EditorViewTab;
-  onTabChange: (tab: EditorViewTab) => void;
 }
 
-export function TopNav({ activeTab, onTabChange }: TopNavProps) {
+export function TopNav({ activeTab }: TopNavProps) {
   const { navigate } = useEditorNavigation();
   const [showAgentPanel, setShowAgentPanel] = useState(false);
   const isMobile = useIsMobile();
@@ -961,13 +959,6 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             </div>
           </div>
 
-          <div className="h-4 w-px bg-zinc-800 mx-2" />
-
-          <TopNavPageSwitch
-            activeTab={activeTab}
-            enlargeIconHit={enlargeIconHit}
-            onTab={(tab) => navigate({ editorView: tab })}
-          />
         </div>
 
         <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-/** Top-level editor views (TopNav). */
+/** Top-level editor views (activity rail in a loaded project). */
 export type EditorViewTab = 'canvas' | 'references' | 'library' | 'roadmap' | 'packs';
 
 export const VVS_NAVIGATION_VERSION = 1 as const;

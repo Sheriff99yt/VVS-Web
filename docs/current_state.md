@@ -62,7 +62,7 @@ Web types re-export from `@vvs/graph-types` (`apps/web/src/types/graph.ts`, `pro
 
 ### App views (TopNav)
 
-On `/`, `/library`, `/roadmap`, and `/docs` the left activity rail is the view switch (Start / Examples / Library / Roadmap / Docs). `StandaloneTopBar` is brand + Contribute (no page-switch cluster). In a loaded project the cluster (Project / References / Library / Roadmap / Packs / **Docs**) still lives in `TopNav`. File / Edit / View menus, Save, and Generate stay in-project only.
+On `/`, `/library`, `/roadmap`, and `/docs` the left activity rail is the view switch (Start / Examples / Library / Roadmap / Docs). `StandaloneTopBar` is brand + Contribute (no page-switch cluster). In a loaded project the same cluster (Project / References / Library / Roadmap / Packs / **Docs**) lives on the left activity rail (GraphExplorer sidebar still collapses beside it). File / Edit / View menus, Save, and Generate stay in the in-project TopNav.
 
 | View | Purpose |
 |------|---------|
@@ -114,7 +114,7 @@ When **References** is active, Canvas chrome is **unmounted** (no edit React Flo
 
 ### Library layout mode
 
-When **Library** is active in-project, only TopNav + full-width `LibraryView` + StatusBar are shown. Side panels and output console are **hidden**. On `/library` the activity rail plus a Library sidebar (Templates / Git imports) wrap the same view; Installed is omitted in browse mode.
+When **Library** is active in-project, TopNav + the activity rail + full-width `LibraryView` + StatusBar are shown. GraphExplorer and the output console stay **hidden**. On `/library` the activity rail plus a Library sidebar (Templates / Git imports) wrap the same view; Installed is omitted in browse mode.
 
 Library sections:
 
