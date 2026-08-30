@@ -63,6 +63,11 @@ export interface UiPreferences {
    * they open it again (? / help button).
    */
   canvasWelcomeDismissed: boolean;
+  /**
+   * Start first-open welcome. Close hides it for this visit.
+   * Don't show again persists this flag.
+   */
+  startWelcomeDontShowAgain: boolean;
   /** U66: emit `(x)` comment lines for language-ineffective nodes (default on). */
   showUnsupportedComments: boolean;
   /** U69: emit author Comment [C] lines in Code preview (default on). Separate from `(x)`. */
@@ -164,6 +169,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   detailsPanelOffsetRight: 10,
   detailsPanelOffsetTop: 10,
   canvasWelcomeDismissed: false,
+  startWelcomeDontShowAgain: false,
   showUnsupportedComments: true,
   showUserComments: true,
   dimUnsupportedNodes: true,
@@ -527,6 +533,10 @@ export function readUiPreferences(): UiPreferences {
         typeof rest.startSidebarOpen === 'boolean'
           ? rest.startSidebarOpen
           : DEFAULT_UI_PREFERENCES.startSidebarOpen,
+      startWelcomeDontShowAgain:
+        typeof rest.startWelcomeDontShowAgain === 'boolean'
+          ? rest.startWelcomeDontShowAgain
+          : DEFAULT_UI_PREFERENCES.startWelcomeDontShowAgain,
       startActivity:
         rest.startActivity === 'examples'
           ? 'examples'

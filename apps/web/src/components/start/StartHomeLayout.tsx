@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { StandaloneTopBar } from '@/components/layout/StandaloneTopBar';
 import { StartActivityRail } from '@/components/start/StartActivityRail';
+import { StartWelcomeModal } from '@/components/start/StartWelcomeModal';
 import { ProjectFolderBrowserModal } from '@/components/start/ProjectFolderBrowserModal';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
@@ -229,6 +230,8 @@ export function StartHomeLayout({
           </div>
         </main>
       </div>
+
+      <StartWelcomeModal onTrySimple={() => onOpenUsabilityTest('simple')} />
 
       {folderBrowser ? (
         <ProjectFolderBrowserModal
