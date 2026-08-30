@@ -18,7 +18,7 @@ import {
 import { Lock, Puzzle, Wand2, RefreshCcw, Shield, Globe, Layers, Package, Box, Clock, CornerLeftUp } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { getNodeDoc } from '@/lib/nodeDocCatalog';
-import { nodeDocsHref } from '@/lib/docsHover';
+import { nodeDocsOpenHref } from '@/lib/docsHover';
 import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import { applyDefinePropertyToVariable } from '@/lib/variableHelpers';
 import styles from './VVSNode.module.css';
@@ -265,7 +265,7 @@ export function NodeModifiers({
   const def = getNodeKindDefinition(kindId);
   const schema = Array.isArray(def?.propertySchema) ? def.propertySchema : [];
   const docsFor = (optionKey: string) =>
-    getNodeDoc(kindId) ? nodeDocsHref(kindId, optionKey) : undefined;
+    getNodeDoc(kindId) ? nodeDocsOpenHref(kindId, optionKey) : undefined;
 
   const hasModifier = (key: string) => schema.some((f) => f.key === key);
 

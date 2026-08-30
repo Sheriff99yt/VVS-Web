@@ -1,9 +1,15 @@
 import { docsPath } from '@/lib/docsUrl';
 import type { NodeDocRecord } from '@/lib/nodeDocCatalog';
+import { siteBasePath } from '@/lib/siteOrigin';
 
 export function nodeDocsHref(kindId: string, optionKey?: string): string {
   const path = docsPath({ type: 'node', id: kindId });
   return optionKey ? `${path}#opt-${optionKey}` : path;
+}
+
+/** For window.open / raw <a href>. Next <Link> already prefixes basePath; do not use this there. */
+export function nodeDocsOpenHref(kindId: string, optionKey?: string): string {
+  return `${siteBasePath()}${nodeDocsHref(kindId, optionKey)}`;
 }
 
 export function nodeDocsHoverText(node: NodeDocRecord): string {

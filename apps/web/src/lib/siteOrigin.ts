@@ -16,6 +16,8 @@ export function siteOrigin(): string {
 /** Empty on localhost and on the custom-domain Pages build. `/VVS-Web` on today's github.io project site. */
 export function siteBasePath(): string {
   if (isCustomDomainBuild()) return '';
+  const fromPublic = process.env.NEXT_PUBLIC_SITE_BASE_PATH;
+  if (typeof fromPublic === 'string') return fromPublic.trim().replace(/\/$/, '');
   if (process.env.GITHUB_PAGES === 'true') return '/VVS-Web';
   return '';
 }

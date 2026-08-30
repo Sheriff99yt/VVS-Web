@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getNodeDoc } from './nodeDocCatalog';
-import { nodeDocsHref, nodeDocsHoverText, optionDocsHoverText } from './docsHover';
+import { nodeDocsHref, nodeDocsOpenHref, nodeDocsHoverText, optionDocsHoverText } from './docsHover';
+import { siteBasePath } from './siteOrigin';
 
 describe('docsHover', () => {
   it('uses registry fields for Print String', () => {
@@ -23,5 +24,11 @@ describe('docsHover', () => {
     expect(text).toContain(seconds!.key);
     expect(text).toContain(seconds!.type);
     expect(nodeDocsHref('action_wait', seconds!.key)).toContain(`#opt-${seconds!.key}`);
+  });
+  it('prefixes site base path for window.open, not for Next Link', () => {
+    expect(nodeDocsHref('action_print', 'visibility')).toBe('/docs/nodes/action_print#opt-visibility');
+    expect(nodeDocsOpenHref('action_print', 'visibility')).toBe(
+      `${siteBasePath()}/docs/nodes/action_print#opt-visibility`,
+    );
   });
 });
