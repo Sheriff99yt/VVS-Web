@@ -2,24 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  FolderOpen,
-  FilePlus,
-  Upload,
-  Clock,
-  Trash2,
-  ChevronRight,
-  Library,
-  FolderPlus,
-  FolderSearch,
-  BookOpen,
-  Map,
-} from 'lucide-react';
-import { StandaloneTopBar } from '@/components/layout/StandaloneTopBar';
+import { StartHomeLayout } from '@/components/start/StartHomeLayout';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
-import { Tooltip } from '@/components/ui/Tooltip';
 import {
-  USABILITY_EXAMPLE_TESTS,
   openUsabilityTestProject,
   seedUsabilityTestProjectsToLocalStorage,
   type UsabilityTestLevel,
@@ -33,7 +18,6 @@ import {
   upsertRecentProject,
   pruneStableTestProjectsFromRecent,
 } from '@/lib/projectStore';
-import { openExploreView } from '@/lib/startExplore';
 import {
   initRecentProjects,
   notifyRecentProjectsChanged,
@@ -54,8 +38,9 @@ import {
   resolveProjectFolderHandle,
 } from '@/lib/projectFolder';
 import { promoteBrowserProjectToDisk } from '@/lib/promoteProjectToDisk';
-import { ProjectFolderBrowserModal } from '@/components/start/ProjectFolderBrowserModal';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
+import { useUiPreference } from '@/hooks/useUiPreference';
+import { readUiPreference } from '@/lib/uiPreferences';
 
 function openLocalInEditor(
   router: ReturnType<typeof useRouter>,
@@ -86,15 +71,6 @@ function openFolderInEditor(
   router.push(`/editor?${params.toString()}`);
 }
 
-const SOURCE_LABEL: Record<RecentProjectEntry['source'], string> = {
-  new: 'New',
-  recent: 'Saved',
-  import: 'Imported',
-  template: 'Template',
-  demo: 'Demo',
-  test: 'Test Project',
-};
-
 export function StartScreen() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +80,21 @@ export function StartScreen() {
     handle: FileSystemDirectoryHandle;
     projectName: string;
   } | null>(null);
+  const [startActivity, setStartActivity] = useUiPreference('startActivity');
+  const [sidebarOpen, setSidebarOpen] = useUiPreference('startSidebarOpen');
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setSidebarOpen(!readUiPreference('startSidebarOpen'));
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return function unbind() {
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [setSidebarOpen]);
 
   useEffect(() => {
     initRecentProjects();
@@ -286,273 +277,25 @@ export function StartScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-300 flex flex-col">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json,.vvs.json,application/json"
-        className="hidden"
-        onChange={handleImportFile}
-      />
-
-      <StandaloneTopBar />
-
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-10 space-y-10">
-          <section>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">
-              Start
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {folderPickerReady ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => void handleNewProjectFolder()}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50 text-sm text-emerald-200 transition-colors"
-                  >
-                    <FolderPlus size={16} className="text-emerald-400" />
-                    New project in folder
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleOpenProjectFolder()}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
-                  >
-                    <FolderOpen size={16} className="text-blue-400" />
-                    Open project folder
-                  </button>
-                </>
-              ) : null}
-              <button
-                type="button"
-                onClick={handleNewProject}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
-              >
-                <FilePlus size={16} className="text-emerald-400" />
-                New blank project
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 text-sm text-zinc-300 transition-colors"
-              >
-                <Upload size={16} className="text-blue-400" />
-                Open file
-              </button>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <BookOpen size={14} /> Usability tests
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {USABILITY_EXAMPLE_TESTS.map((fixture) => (
-                <button
-                  key={fixture.id}
-                  type="button"
-                  onClick={() => handleOpenUsabilityTest(fixture.level)}
-                  className={`rounded-lg border border-zinc-800 bg-zinc-900 p-4 hover:border-indigo-500/40 transition-colors text-left group h-full ${
-                    fixture.id === 'simple' ? 'md:col-span-2' : 'min-h-[10.5rem]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded ${
-                        fixture.level === 'simple'
-                          ? 'text-emerald-400 bg-emerald-500/10'
-                          : fixture.level === 'complex'
-                            ? 'text-indigo-400 bg-indigo-500/10'
-                            : 'text-amber-400 bg-amber-500/10'
-                      }`}
-                    >
-                      {fixture.level === 'simple'
-                        ? 'Baseline'
-                        : fixture.level === 'complex'
-                          ? 'All langs'
-                          : 'Most langs'}
-                    </span>
-                    <span className="text-[11px] text-zinc-600 font-mono">{fixture.moduleName}</span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-zinc-100 mt-2 group-hover:text-white transition-colors">
-                    {fixture.title}
-                  </h3>
-                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{fixture.description}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {fixture.highlights.map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[10px] text-zinc-500 bg-zinc-800/80 px-2 py-0.5 rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">
-              Explore
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => openExploreView(router, 'library', 'templates')}
-                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-indigo-500/40 transition-colors text-left group"
-              >
-                <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
-                  <Library size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-zinc-100">Library</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">
-                    Templates, environments, and git imports
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-indigo-400 transition-colors" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => openExploreView(router, 'roadmap')}
-                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-500/40 transition-colors text-left group"
-              >
-                <div className="p-2 rounded bg-zinc-500/10 text-zinc-300 group-hover:bg-zinc-500/20 transition-colors">
-                  <Map size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-zinc-100">Roadmap</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">
-                    Current features and what&apos;s coming next
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-zinc-300 transition-colors" />
-              </button>
-              <button
-                type="button"
-                onClick={() => openExploreView(router, 'docs')}
-                className="flex items-center gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-500/40 transition-colors text-left group"
-              >
-                <div className="p-2 rounded bg-zinc-500/10 text-zinc-300 group-hover:bg-zinc-500/20 transition-colors">
-                  <BookOpen size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-zinc-100">Docs</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">
-                    Nodes, options, and features from the registry
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-zinc-600 shrink-0 group-hover:text-zinc-300 transition-colors" />
-              </button>
-
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest flex items-center gap-2 mb-4">
-              <Clock size={14} /> Recent projects
-            </h2>
-            {recent.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-zinc-800 py-12 text-center">
-                <p className="text-zinc-500 text-sm mb-3">No recent projects yet.</p>
-                <button
-                  type="button"
-                  onClick={() => handleOpenUsabilityTest('simple')}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                >
-                  Open Simple →
-                </button>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-zinc-800 overflow-hidden divide-y divide-zinc-800">
-                {recent.map((entry) => (
-                  <div
-                    key={entry.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => void handleOpenRecent(entry)}
-                    onKeyDown={(e) => e.key === 'Enter' && void handleOpenRecent(entry)}
-                    className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-zinc-900 transition-colors text-left group cursor-pointer"
-                  >
-                    <FolderOpen size={18} className="text-zinc-500 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-zinc-200 truncate">
-                        {isFolderRecentEntry(entry) && entry.folderLabel
-                          ? `${entry.folderLabel} / ${entry.moduleName}`
-                          : entry.moduleName}
-                      </div>
-                      <div className="text-[11px] text-zinc-500">
-                        {formatRelative(entry.savedAt)}
-                        {isFolderRecentEntry(entry) ? (
-                          <span className="ml-2 text-zinc-600">· Folder</span>
-                        ) : (
-                          <span className="ml-2 text-zinc-600">· Browser</span>
-                        )}
-                        {entry.source !== 'recent' && !isFolderRecentEntry(entry) ? (
-                          <span className="ml-2 text-zinc-600">· {SOURCE_LABEL[entry.source]}</span>
-                        ) : null}
-                      </div>
-                    </div>
-                    {folderPickerReady ? (
-                      <Tooltip
-                        content={
-                          isFolderRecentEntry(entry)
-                            ? 'Browse project folder'
-                            : 'Save to folder on disk and browse'
-                        }
-                        placement="top"
-                      >
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => void handleOpenProjectDirectory(e, entry)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              void handleOpenProjectDirectory(
-                                e as unknown as React.MouseEvent,
-                                entry
-                              );
-                            }
-                          }}
-                          className="p-1.5 text-zinc-500 hover:text-blue-400 rounded transition-colors shrink-0"
-                        >
-                          <FolderSearch size={14} />
-                        </span>
-                      </Tooltip>
-                    ) : null}
-                    <Tooltip content="Delete project" placement="top">
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => handleDeleteProject(e, entry)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleDeleteProject(e as unknown as React.MouseEvent, entry);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-red-400 rounded transition-all"
-                      >
-                        <Trash2 size={14} />
-                      </span>
-                    </Tooltip>
-                    <ChevronRight size={16} className="text-zinc-600 shrink-0" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-      </main>
-
-      {folderBrowser ? (
-        <ProjectFolderBrowserModal
-          handle={folderBrowser.handle}
-          projectName={folderBrowser.projectName}
-          onClose={() => setFolderBrowser(null)}
-        />
-      ) : null}
-    </div>
+    <StartHomeLayout
+      fileInputRef={fileInputRef}
+      folderPickerReady={folderPickerReady}
+      recent={recent}
+      folderBrowser={folderBrowser}
+      startActivity={startActivity}
+      sidebarOpen={sidebarOpen}
+      setStartActivity={setStartActivity}
+      setSidebarOpen={setSidebarOpen}
+      setFolderBrowser={setFolderBrowser}
+      onNewProject={handleNewProject}
+      onNewProjectFolder={() => void handleNewProjectFolder()}
+      onOpenProjectFolder={() => void handleOpenProjectFolder()}
+      onImportFile={handleImportFile}
+      onOpenUsabilityTest={handleOpenUsabilityTest}
+      onOpenRecent={(entry) => void handleOpenRecent(entry)}
+      onDeleteProject={handleDeleteProject}
+      onOpenProjectDirectory={(e, entry) => void handleOpenProjectDirectory(e, entry)}
+      formatRelative={formatRelative}
+    />
   );
 }

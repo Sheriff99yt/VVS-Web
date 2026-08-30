@@ -141,6 +141,10 @@ export interface UiPreferences {
   referencesDependenciesDepth: number;
   /** U89: max unique peers per tree/canvas node. */
   referencesBreadthLimit: number;
+  /** Start screen left sidebar (VS Code-like). */
+  startSidebarOpen: boolean;
+  /** Start-local activity (Start / Recent / Examples). Library/Docs/Roadmap are routes. */
+  startActivity: 'start' | 'recent' | 'examples';
 }
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -187,6 +191,8 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   referencesReferencersDepth: REFERENCE_DEPTH_DEFAULT,
   referencesDependenciesDepth: REFERENCE_DEPTH_DEFAULT,
   referencesBreadthLimit: REFERENCE_BREADTH_DEFAULT,
+  startSidebarOpen: true,
+  startActivity: 'start',
 };
 
 export const DETAILS_PANEL_HEIGHT = {
@@ -517,6 +523,16 @@ export function readUiPreferences(): UiPreferences {
         REFERENCE_BREADTH_MAX,
         DEFAULT_UI_PREFERENCES.referencesBreadthLimit
       ),
+      startSidebarOpen:
+        typeof rest.startSidebarOpen === 'boolean'
+          ? rest.startSidebarOpen
+          : DEFAULT_UI_PREFERENCES.startSidebarOpen,
+      startActivity:
+        rest.startActivity === 'start' ||
+        rest.startActivity === 'recent' ||
+        rest.startActivity === 'examples'
+          ? rest.startActivity
+          : DEFAULT_UI_PREFERENCES.startActivity,
     };
     return migrateLegacyDetailsPref(merged);
   } catch {
