@@ -4,7 +4,7 @@ This document is the **canonical snapshot** of what exists in the repo today ver
 
 **Public repository:** Vision, roadmap, origin story, and contribution guide — [history.md](history.md), [vision.md](vision.md), [roadmap.md](roadmap.md), [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Last aligned with codebase: **30 August 2026** (option-chip docs + dim overlay). Interactive live docs: **partial** (`/docs` catalog + node/feature pages from `CORE_NODE_REGISTRY`; `docsUrl()` / `docsPath()` with home hashes; same `StandaloneTopBar` as Library/Roadmap; `DocsInfoIcon` hover from registry on node headers and Details options (click opens `/docs/nodes/{kindId}` or `#opt-{key}`); modifier chips have no `?` — right-click the chip opens `#opt-{key}`). Overlay prose and playground are not shipped. Public Pages URL is `https://sheriff99yt.github.io/VVS-Web/docs` (`basePath` `/VVS-Web`; `/docs` on github.io without that prefix 404s). Custom domain (vvscodes.com on this same Pages project) is prepared via `VVS_CUSTOM_DOMAIN` (empty basePath + `SITE_ORIGIN`); **not flipped** until DNS is verified. App chrome uses the original vvscodes.com mark (`public/brand/VVS_White2.png`) in the Start and editor top bars, plus app icon / Open Graph. User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
+Last aligned with codebase: **30 August 2026** (details panel UX pass). Interactive live docs: **partial** (`/docs` catalog + node/feature pages from `CORE_NODE_REGISTRY`; `docsUrl()` / `docsPath()` with home hashes; same `StandaloneTopBar` as Library/Roadmap; `DocsInfoIcon` hover from registry on node headers and Details options (click opens `/docs/nodes/{kindId}` or `#opt-{key}`); modifier chips have no `?` — right-click the chip opens `#opt-{key}`). Overlay prose and playground are not shipped. Public Pages URL is `https://sheriff99yt.github.io/VVS-Web/docs` (`basePath` `/VVS-Web`; `/docs` on github.io without that prefix 404s). Custom domain (vvscodes.com on this same Pages project) is prepared via `VVS_CUSTOM_DOMAIN` (empty basePath + `SITE_ORIGIN`); **not flipped** until DNS is verified. App chrome uses the original vvscodes.com mark (`public/brand/VVS_White2.png`) in the Start and editor top bars, plus app icon / Open Graph. User-facing docs rewrite `3e1a2b2`. Bind leftover `eventName` hidden in Details (`f864100`). High-priority Research cards: `vscode-native-plugin`, `ue6-native-plugin` (`ccab00d`). Product law unchanged: client-first; eight generate targets (JavaScript is one target); Simple / Complex / Advanced home-preview goldens (U65); Rosetta = pack fixtures; `COA_SHIPPED` false; U93 research; Bind honest on csharp / javascript / gdscript only; Verse GetInput = Print + `(x)` + empty string; Library auth/upload frozen; no PWA; no VSIX this pile; UE6 not released as of 22 August 2026 (Epic public EA end of 2027 on the Research card).
 
 Example completeness: Simple + Complex emit with zero leftover `(x)` on all 8 languages; Advanced runs on most (Verse GetInput leftover only). Complex covers branch / for / while / enum switch; Advanced covers Machine/Sensor Diagnose override + GetInput + Wait.
 Symbol delete / deleteClass now remove function Define (`function_implement`) with Declare (`function_define`).
@@ -236,7 +236,7 @@ Hosted app (GitHub Pages / editor) uses an **in-page TypeScript agent**. Live ca
 
 | Panel | Corner | Compact | Expanded |
 |-------|--------|---------|----------|
-| Details | top-right | One-line summary | Full property forms |
+| Details | top-right | Title (13px) + kind / pins / bound-symbol subtitle | Full property forms |
 | Compiler log | bottom-right | Last 3 log lines | Full log with sources |
 
 StatusBar **Output** cycles the floating Output panel (` · Log → History → Activity → off).
@@ -245,7 +245,7 @@ StatusBar **Output** cycles the floating Output panel (` · Log → History → 
 
 ### Properties inspector (floating)
 
-Context-aware (`ProjectContext.selection`), shown on graph canvas when something is selected. **Expanded/collapsed state persists** across selection changes. Non-codegen fields (description, node id, comments) are excluded — focus is **pins and codegen parameters**. Graph module settings open from breadcrumb **settings** icon (modal).
+Context-aware (`ProjectContext.selection`), shown on graph canvas when something is selected. Header type scale matches graph tabs (13px title). Compact (unpinned, pointer away) shows kind/category, pin counts, and bound symbol hints. **Expanded/collapsed state persists** across selection changes. Non-codegen fields (description, node id, comments) are excluded — focus is **pins and codegen parameters**. Graph module settings open from breadcrumb **settings** icon (modal).
 
 | Selection | Panel |
 |-----------|-------|

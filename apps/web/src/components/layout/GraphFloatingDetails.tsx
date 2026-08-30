@@ -22,7 +22,7 @@ import {
   type EventNodeRole,
 } from '@/lib/eventHelpers';
 import type { ClassSymbol, FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
-import { buildProjectSymbolIndex, isUnresolvedSymbolRef, syncClassExtendsFields } from '@vvs/graph-types';
+import { buildProjectSymbolIndex, isUnresolvedSymbolRef, LOGICAL_DATA_TYPE_DESCRIPTORS, syncClassExtendsFields } from '@vvs/graph-types';
 import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel';
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
 import { EventNodeBindingPanel } from './RightSidebar/EventNodeBindingPanel';
@@ -87,7 +87,7 @@ function resolveNodeRoleChip(kindId: string | null): string | null {
 function NodeRoleChip({ role }: { role: string }) {
   return (
     <span
-      className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium border ${ROLE_CHIP_CLASS[role] ?? 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}
+      className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium border ${ROLE_CHIP_CLASS[role] ?? 'bg-zinc-800/80 text-zinc-400 border-zinc-800'}`}
     >
       {role}
     </span>
@@ -472,6 +472,8 @@ function GraphFloatingDetailsPanel() {
   const isCommentNode = nodeData?.type === 'vvs_comment_node';
   const isRerouteNode = nodeData?.type === 'vvs_reroute_node';
   const nodeRoleChip = selection.type === 'node' ? resolveNodeRoleChip(nodeKindId) : null;
+  const inputCount = nodeData?.data.inputs?.length ?? 0;
+  const outputCount = nodeData?.data.outputs?.length ?? 0;
 
   const selectedEventDeclareStatus = useMemo(() => {
     if (!selectedEvent || !graphDocuments) return null;
@@ -551,6 +553,83 @@ function GraphFloatingDetailsPanel() {
         onSpawnDispatch: () => spawnEventNodeFor(inspectorEvent, 'dispatch'),
       }
     : {};
+
+
+  const renderCompactSubtitle = (): React.ReactNode => {
+    if (isBrokenRefSelection) {
+      return <span className="text-amber-400/90">Unresolved · hover or pin to repair</span>;
+    }
+    if (selection.type === 'variable' && selectedVariable) {
+      const typeLabel =
+        LOGICAL_DATA_TYPE_DESCRIPTORS.find((d) => d.id === selectedVariable.type)?.shortLabel ??
+        selectedVariable.type.replace(/^data_/, '');
+      const extra = selectedVariable.binding !== 'instance' ? ` · ${selectedVariable.binding}` : '';
+      return (
+        <>
+          <span className="text-zinc-400">{typeLabel}</span>
+          {extra}
+        </>
+      );
+    }
+    if (selection.type === 'function' && selectedFunction) {
+      const extra =
+        selectedFunction.overloads.length > 1 ? ` · ${selectedFunction.overloads.length} overloads` : '';
+      return (
+        <>
+          <span className="text-zinc-400">{selectedFunction.binding}</span>
+          {extra}
+        </>
+      );
+    }
+    if (selection.type === 'event' && selectedEvent) {
+      const n = selectedEvent.parameters.length;
+      return `${n} param${n === 1 ? '' : 's'}`;
+    }
+    if (selection.type === 'class' && selectedClass) {
+      return 'Class';
+    }
+    if (selection.type === 'node' && nodeData) {
+      if (eventNodeRole) {
+        return (
+          <>
+            {boundEvent ? eventDisplayName(boundEvent.name) : '—'}
+            {` · ${inputCount + outputCount} pins`}
+          </>
+        );
+      }
+      if (nestedGraphIdForNode(nodeData.data)) {
+        return <>→ {linkedGraphName ?? 'graph'}</>;
+      }
+      const kindHint = nodeKindDef?.title && nodeKindDef.title !== baseTitle
+        ? nodeKindDef.title
+        : nodeKindDef?.category ?? nodeRoleChip;
+      const pinHint =
+        inputCount + outputCount > 0 ? `${inputCount} in · ${outputCount} out` : 'no pins';
+      return (
+        <>
+          {kindHint ? <span className="text-zinc-400">{kindHint}</span> : null}
+          {kindHint ? ' · ' : null}
+          {pinHint}
+          {boundVariable ? (
+            <>
+              {' · '}
+              <span className="text-zinc-400">{boundVariable.name}</span>
+            </>
+          ) : null}
+          {boundFunction && !nodeRoleChip ? (
+            <>
+              {' · '}
+              <span className="text-zinc-400">{boundFunction.name}</span>
+            </>
+          ) : null}
+        </>
+      );
+    }
+    if (selection.type === 'code') {
+      return 'Emit target · language options';
+    }
+    return null;
+  };
 
   const renderExpanded = () => (
     <>
@@ -726,6 +805,7 @@ function GraphFloatingDetailsPanel() {
     <>
       <FloatingPanelShell
         title={title}
+        subtitle={effectiveExpanded ? undefined : renderCompactSubtitle()}
         titleIcon={isBrokenRefSelection ? <AlertTriangle size={13} className="text-amber-400" /> : undefined}
         headerExtra={nodeRoleChip ? <NodeRoleChip role={nodeRoleChip} /> : undefined}
         corner="top-right"
@@ -756,7 +836,7 @@ function GraphFloatingDetailsPanel() {
           <button
             type="button"
             role="menuitem"
-            className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-200 hover:bg-zinc-800"
+            className="w-full text-left px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
             onClick={handleResetLayout}
           >
             Reset size & position

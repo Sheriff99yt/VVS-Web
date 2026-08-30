@@ -239,7 +239,7 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'inspector',
         title: 'Floating details panel',
         description:
-          'Context inspector for nodes, variables, events, functions, and code preview (selection type code); vertical resize; state persists.',
+          'Context inspector for nodes, variables, events, functions, class, and code preview; 13px header matching graph tabs; compact subtitle is kind/pins/bound symbol; vertical resize; state persists.',
         status: 'done',
       },
       {

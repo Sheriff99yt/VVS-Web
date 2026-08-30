@@ -317,7 +317,7 @@ export function FloatingPanelShell({
   return (
     <GraphWheelShield
       ref={shellRef}
-      className={`absolute ${positionClass} z-[45] ${resolvedWidthClass} ${heightClass} flex flex-col bg-zinc-950/96 border border-zinc-800 rounded-md overflow-hidden pointer-events-auto shadow-lg shadow-black/20 ${shellClassName ?? ''}`}
+      className={`absolute ${positionClass} z-[45] ${resolvedWidthClass} ${heightClass} flex flex-col bg-zinc-950 border border-zinc-800/80 rounded-md overflow-hidden pointer-events-auto shadow-lg shadow-black/25 ${shellClassName ?? ''}`}
       style={sizeStyle}
       onMouseEnter={() => onHoverChange?.(true)}
       onMouseLeave={() => onHoverChange?.(false)}
@@ -351,8 +351,8 @@ export function FloatingPanelShell({
         </Tooltip>
       ) : null}
       <div
-        className={`relative flex items-center gap-1 px-2 py-1 shrink-0 min-h-[28px] ${
-          showBody ? 'border-b border-zinc-800/80' : ''
+        className={`relative flex items-center gap-1.5 px-2.5 py-1.5 shrink-0 min-h-[32px] ${
+          showBody ? 'border-b border-zinc-800/60' : ''
         }`}
       >
         {headerTitle ? (
@@ -361,11 +361,11 @@ export function FloatingPanelShell({
           <>
             {titleIcon ? <span className="text-zinc-500 shrink-0">{titleIcon}</span> : null}
             <div className="min-w-0 flex-1 flex flex-col gap-0.5">
-              <span className="text-[10px] font-medium text-zinc-300 truncate leading-tight">
+              <span className="text-[13px] font-medium text-zinc-100 truncate leading-tight">
                 {title}
               </span>
               {!expanded && subtitle ? (
-                <span className="text-[9px] text-zinc-500 truncate leading-tight">{subtitle}</span>
+                <span className="text-[11px] text-zinc-500 truncate leading-tight">{subtitle}</span>
               ) : null}
             </div>
           </>
@@ -382,12 +382,12 @@ export function FloatingPanelShell({
             <button
               type="button"
               onClick={onTogglePinned}
-              className={`p-0.5 rounded hover:bg-zinc-800/80 ${
+              className={`p-1 rounded hover:bg-zinc-800/80 ${
                 pinned ? 'text-indigo-300 hover:text-indigo-200' : 'text-zinc-500 hover:text-zinc-300'
               }`}
               aria-pressed={pinned}
             >
-              {pinned ? <Pin size={12} /> : <PinOff size={12} />}
+              {pinned ? <Pin size={14} /> : <PinOff size={14} />}
             </button>
           </Tooltip>
         ) : onToggleExpanded ? (
@@ -395,9 +395,9 @@ export function FloatingPanelShell({
             <button
               type="button"
               onClick={onToggleExpanded}
-              className="p-0.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
             >
-              {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
           </Tooltip>
         ) : null}
@@ -406,16 +406,16 @@ export function FloatingPanelShell({
             <button
               type="button"
               onClick={onClose}
-              className="p-0.5 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
             >
-              <X size={12} />
+              <X size={14} />
             </button>
           </Tooltip>
         )}
       </div>
       {showBody ? (
         <div
-          className="flex-1 overflow-y-auto px-2 py-1.5 min-h-0 overscroll-contain"
+          className="flex-1 overflow-y-auto px-2.5 py-2 min-h-0 overscroll-contain"
           {...{ [PANEL_SCROLL_ATTR]: '' }}
         >
           {children}

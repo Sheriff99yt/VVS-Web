@@ -16,7 +16,7 @@ interface NodePinsPanelProps {
 
 function PinTypeBadge({ type }: { type: PinDefinition['type'] }) {
   return (
-    <span className="text-[9px] font-semibold uppercase tracking-wide text-zinc-500 bg-zinc-900 border border-zinc-800 px-1 py-0.5 rounded shrink-0">
+    <span className="text-[10px] font-medium text-zinc-500 bg-zinc-900 border border-zinc-800/80 px-1 py-0.5 rounded shrink-0">
       {pinTypeLabel(type)}
     </span>
   );
@@ -120,7 +120,7 @@ export function NodePinsPanel({
     <div className="space-y-3 text-xs text-zinc-300">
       {nodeData.data.linkKind && linkedGraphName ? (
         <div className="space-y-1 pb-2 border-b border-zinc-800/80">
-          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+          <p className="text-[11px] font-medium text-zinc-500">
             {linkedGraphInspectorLabel ?? 'Calls'}
           </p>
           <p className="text-[11px] text-indigo-300 font-medium">{linkedGraphName}</p>
@@ -141,7 +141,7 @@ export function NodePinsPanel({
 
       {execInputs.length > 0 || execOutputs.length > 0 ? (
         <div>
-          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide mb-1">Execution</p>
+          <p className="text-[11px] font-medium text-zinc-500 mb-1">Execution</p>
           {execInputs.map((pin) => (
             <PinRow key={pin.id} pin={pin} direction="input" />
           ))}
@@ -153,7 +153,7 @@ export function NodePinsPanel({
 
       {dataInputs.length > 0 ? (
         <div>
-          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide mb-1">Inputs</p>
+          <p className="text-[11px] font-medium text-zinc-500 mb-1">Inputs</p>
           {dataInputs.map((pin) => (
             <PinRow
               key={pin.id}
@@ -168,7 +168,7 @@ export function NodePinsPanel({
 
       {dataOutputs.length > 0 ? (
         <div>
-          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide mb-1">Outputs</p>
+          <p className="text-[11px] font-medium text-zinc-500 mb-1">Outputs</p>
           {dataOutputs.map((pin) => (
             <PinRow key={pin.id} pin={pin} direction="output" />
           ))}
@@ -176,7 +176,7 @@ export function NodePinsPanel({
       ) : null}
 
       {inputs.length === 0 && outputs.length === 0 && !linkedGraphName ? (
-        <p className="text-[10px] text-zinc-600 py-1">No pins</p>
+        <p className="text-[11px] text-zinc-600 py-1">No pins</p>
       ) : null}
     </div>
   );

@@ -61,8 +61,8 @@ export function PropertySchemaPanel({ fields, values, onChange, fieldOptions, ki
   if (visibleFields.length === 0) return null;
 
   return (
-    <div className="space-y-3 mb-2 pb-2 border-b border-zinc-800/80">
-      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Settings</p>
+    <div className="space-y-2.5 mb-2 pb-2 border-b border-zinc-800/50">
+      <p className="text-[11px] font-medium text-zinc-500">Settings</p>
       {visibleFields.map((field) => {
         const raw = values[field.key];
         const descriptionId = field.description ? `${field.key}-desc` : undefined;
@@ -137,7 +137,7 @@ export function PropertySchemaPanel({ fields, values, onChange, fieldOptions, ki
                 type="number"
                 value={typeof raw === 'number' ? raw : 0}
                 onChange={(e) => onChange(field.key, parseFloat(e.target.value) || 0)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-zinc-600"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
               />
             </div>
           );
@@ -153,7 +153,7 @@ export function PropertySchemaPanel({ fields, values, onChange, fieldOptions, ki
               type="text"
               value={typeof raw === 'string' ? raw : ''}
               onChange={(e) => onChange(field.key, e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-zinc-600"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
               aria-describedby={descriptionId}
             />
             {field.description ? (
