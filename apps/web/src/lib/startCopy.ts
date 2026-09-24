@@ -1,3 +1,3 @@
-/** Locked Start positioning line. Same words on the welcome overlay and the Start hero. */
+/** The first screen describes what a visitor can do before opening a project. */
 export const START_POSITIONING_LINE =
-  'An open visual scripting language, designed to slot into anything and become the global standard.';
+  'Build logic visually. Generate editable code in eight languages.';

@@ -1,0 +1,40 @@
+{
+  "name": "vvs-vscode",
+  "displayName": "VVS",
+  "description": "Open VVS graph files and generate source in a VS Code workspace.",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "publisher": "vvs",
+  "repository": { "type": "git", "url": "https://github.com/Sheriff99yt/VVS-Web.git", "directory": "apps/vscode" },
+  "engines": { "vscode": "^1.95.0" },
+  "categories": ["Other"],
+  "main": "./dist/extension.js",
+  "activationEvents": ["onCommand:vvs.openGraph", "onCommand:vvs.generate"],
+  "contributes": {
+    "commands": [
+      { "command": "vvs.openGraph", "title": "VVS: Open Graph" },
+      { "command": "vvs.generate", "title": "VVS: Generate Source" },
+      { "command": "vvs.openNodeDocs", "title": "VVS: Open Node Docs" }
+    ],
+    "customEditors": [{ "viewType": "vvs.graph", "displayName": "VVS Graph", "selector": [{ "filenamePattern": "*.graph.json" }], "priority": "default" }]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=dist/extension.js",
+    "check": "tsc --noEmit",
+    "package": "bun run build && vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "@vvs/graph-types": "workspace:*",
+    "@vvs/syntax-packs": "workspace:*",
+    "@vvs/syntax-registry": "workspace:*",
+    "@vvs/transpiler": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/vscode": "^1.95.0",
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5"
+  }
+}

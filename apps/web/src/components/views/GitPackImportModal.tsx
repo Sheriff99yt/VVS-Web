@@ -55,7 +55,7 @@ export function GitPackImportModal({
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <p className="text-xs text-zinc-400 leading-relaxed">
-            Enter a GitHub repository URL or <span className="font-mono text-zinc-300">owner/repo</span> path to import custom syntax packs, node definitions, or environment templates directly from GitHub.
+            Enter a public GitHub repository URL or <span className="font-mono text-zinc-300">owner/repo</span>. The repository must publish <span className="font-mono text-zinc-300">catalog/vvs-catalog.json</span> to list its assets here.
           </p>
 
           <div className="space-y-1.5">
@@ -91,7 +91,7 @@ export function GitPackImportModal({
               className="px-4 py-1.5 rounded text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors flex items-center gap-1.5"
             >
               <Download size={13} />
-              Import Catalog Repo
+              Add catalog
             </button>
           </div>
         </form>
