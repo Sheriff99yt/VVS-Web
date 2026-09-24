@@ -398,9 +398,13 @@ export function dispatchRequestGenerate(): void {
 
 function migrateLegacyDetailsPref(prefs: UiPreferences): UiPreferences {
   if (typeof window === 'undefined') return prefs;
-  const legacy = window.localStorage.getItem(LEGACY_DETAILS_KEY);
-  if (legacy === 'true' && !prefs.detailsPanelPinned) {
-    return { ...prefs, detailsPanelPinned: true };
+  try {
+    const legacy = window.localStorage?.getItem(LEGACY_DETAILS_KEY);
+    if (legacy === 'true' && !prefs.detailsPanelPinned) {
+      return { ...prefs, detailsPanelPinned: true };
+    }
+  } catch {
+    // Storage can be unavailable in restricted browser contexts or test stubs.
   }
   return prefs;
 }
