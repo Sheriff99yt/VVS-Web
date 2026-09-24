@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { StandaloneTopBar } from '@/components/layout/StandaloneTopBar';
 import { StartActivityRail } from '@/components/start/StartActivityRail';
-import { StartWelcomeModal } from '@/components/start/StartWelcomeModal';
 import { ProjectFolderBrowserModal } from '@/components/start/ProjectFolderBrowserModal';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { START_POSITIONING_LINE } from '@/lib/startCopy';
@@ -111,7 +110,7 @@ export function StartHomeLayout({
         />
 
         {sidebarOpen ? (
-          <aside className="w-60 shrink-0 border-r border-zinc-800 bg-zinc-950 flex flex-col min-h-0">
+          <aside className="hidden sm:flex w-60 shrink-0 border-r border-zinc-800 bg-zinc-950 flex-col min-h-0">
             <div className="h-9 px-3 flex items-center text-[11px] font-semibold uppercase tracking-widest text-zinc-500 border-b border-zinc-800 shrink-0">
               {sidebarTitle}
             </div>
@@ -145,9 +144,7 @@ export function StartHomeLayout({
                   <div className="pt-3 mt-2 border-t border-zinc-800 text-[11px] font-semibold uppercase tracking-widest text-zinc-600 px-2 py-2">
                     Recent
                   </div>
-                  {recent.length === 0 ? (
-                    <p className="px-2 py-1 text-xs text-zinc-600">No recent projects yet.</p>
-                  ) : (
+                  {recent.length > 0 && (
                     recent.map((entry) => (
                       <button
                         key={entry.id}
@@ -195,14 +192,14 @@ export function StartHomeLayout({
         ) : null}
 
         <main className="flex-1 min-h-0 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-8 py-8 space-y-8">
+          <div className="max-w-3xl mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-8">
             {startActivity === 'start' ? (
               <>
                 <StartHero
                   compact={recent.length > 0}
                   onTrySimple={() => onOpenUsabilityTest('simple')}
                 />
-                {!sidebarOpen ? (
+                <div className={sidebarOpen ? 'sm:hidden' : undefined}>
                   <StartActionButtons
                     folderPickerReady={folderPickerReady}
                     fileInputRef={fileInputRef}
@@ -210,7 +207,7 @@ export function StartHomeLayout({
                     onNewProjectFolder={onNewProjectFolder}
                     onOpenProjectFolder={onOpenProjectFolder}
                   />
-                ) : null}
+                </div>
                 <RecentProjectsPanel
                   recent={recent}
                   folderPickerReady={folderPickerReady}
@@ -228,8 +225,6 @@ export function StartHomeLayout({
           </div>
         </main>
       </div>
-
-      <StartWelcomeModal onTrySimple={() => onOpenUsabilityTest('simple')} />
 
       {folderBrowser ? (
         <ProjectFolderBrowserModal
@@ -258,7 +253,7 @@ function StartHero({
           onClick={onTrySimple}
           className="inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200 transition-colors shrink-0"
         >
-          Try Simple
+          Open Simple example
           <ChevronRight size={14} />
         </button>
       </section>
@@ -270,14 +265,29 @@ function StartHero({
       <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight leading-snug">
         {START_POSITIONING_LINE}
       </h1>
+      <p className="text-sm text-zinc-400 leading-relaxed">
+        Open a sample graph, inspect its nodes, and see the generated source in the Code panel.
+      </p>
       <button
         type="button"
         onClick={onTrySimple}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-indigo-500/40 bg-indigo-500/10 hover:border-indigo-400/60 text-sm text-indigo-200 transition-colors"
       >
-        Try Simple
+        Open Simple example
         <ChevronRight size={16} />
       </button>
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4" aria-label="Example graph and generated code">
+        <p className="text-[11px] uppercase tracking-widest text-zinc-500 mb-3">From graph to code</p>
+        <div className="grid gap-3 sm:grid-cols-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-zinc-300">
+            <span className="rounded border border-indigo-500/30 px-2 py-1.5">Branch · ready</span>
+            <ChevronRight size={14} className="text-zinc-600" aria-hidden="true" />
+            <span className="rounded border border-emerald-500/30 px-2 py-1.5">Print String · Ready</span>
+          </div>
+          <code className="block whitespace-pre-wrap rounded border border-zinc-800 bg-zinc-950 p-2 text-zinc-400">{'if (ready) {\n  console.log("Ready");\n}'}</code>
+        </div>
+        <p className="mt-2 text-[11px] text-zinc-500">Illustrative JavaScript mapping. Open the example to inspect the real graph and output.</p>
+      </div>
     </section>
   );
 }
@@ -349,8 +359,9 @@ function RecentProjectsPanel({
         <Clock size={14} /> Recent projects
       </h2>
       {recent.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-800 px-4 py-10 text-center">
-          <p className="text-sm text-zinc-500">No recent projects yet.</p>
+        <div className="rounded-lg border border-dashed border-zinc-800 px-4 py-6">
+          <p className="text-sm text-zinc-400">Your projects will appear here after you save them.</p>
+          <p className="mt-1 text-xs text-zinc-500">Start with the Simple example above or create a blank project.</p>
         </div>
       ) : (
         <div className="rounded-lg border border-zinc-800 overflow-hidden divide-y divide-zinc-800">

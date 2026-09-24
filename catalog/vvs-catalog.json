@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "vvs-core-node-registry",
+      "title": "VVS core node registry",
+      "author": "VVS",
+      "description": "First-party node definitions used by the web editor and its documentation.",
+      "type": "Node pack",
+      "repoUrl": "https://github.com/Sheriff99yt/VVS-Web",
+      "manifestUrl": "https://raw.githubusercontent.com/Sheriff99yt/VVS-Web/main/packages/syntax-registry/core-pack.json",
+      "tags": ["core", "nodes"],
+      "importKind": "raw_manifest"
+    }
+  ]
+}

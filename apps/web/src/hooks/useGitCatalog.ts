@@ -6,6 +6,7 @@ import {
   GitCatalogAsset,
   parseGitHubUrl,
   buildRawGitHubUrl,
+  fetchPublicGitCatalog,
 } from '@/lib/gitCatalog';
 
 const GIT_CATALOG_STORAGE_KEY = 'vvs_git_catalogs';
@@ -39,6 +40,26 @@ export function useGitCatalog() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [catalogs, setCatalogs] = useState<Record<string, { assets: GitCatalogAsset[]; error?: string }>>({});
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    Promise.all(repos.map(async (repo) => {
+      try {
+        const catalog = await fetchPublicGitCatalog(repo, controller.signal);
+        return [repo.id, { assets: catalog.assets }] as const;
+      } catch (cause) {
+        return [repo.id, { assets: [], error: cause instanceof Error ? cause.message : 'Could not load catalog.' }] as const;
+      }
+    })).then((results) => {
+      if (!controller.signal.aborted) {
+        setCatalogs(Object.fromEntries(results));
+        setLoading(false);
+      }
+    });
+    return () => controller.abort();
+  }, [repos]);
 
   useEffect(() => {
     try {
@@ -57,7 +78,7 @@ export function useGitCatalog() {
     }
 
     const id = `${parsed.owner}-${parsed.repo}`.toLowerCase();
-    if (repos.some((r) => r.id === id)) {
+    if (repos.some((r) => r.owner.toLowerCase() === parsed.owner.toLowerCase() && r.repo.toLowerCase() === parsed.repo.toLowerCase())) {
       setError('Repository already added to custom catalogs');
       return false;
     }
@@ -81,6 +102,7 @@ export function useGitCatalog() {
 
   return {
     repos,
+    catalogs,
     loading,
     error,
     addCatalogRepo,

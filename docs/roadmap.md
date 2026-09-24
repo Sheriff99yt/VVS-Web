@@ -2,6 +2,8 @@
 
 **As of 24 August 2026.** Directional phases ? not schedule commitments.
 
+**September 2026 implementation note:** The Start page now explains graph-to-code with one illustrative preview and no duplicate welcome overlay. Node docs have practical guidance for Branch, Print String, and Math Add. Library Git catalogs can fetch a validated static `catalog/vvs-catalog.json` index and show repository links; automatic community installation is still open. `apps/vscode` contains an initial native VS Code extension with a graph text editor and Generate; full graph editing and extension-host validation remain open. See [development_worklist.md](development_worklist.md).
+
 ## Contents
 
 - [Product law](#product-law)
@@ -22,7 +24,7 @@
 
 **[Selected]** Public catalog = **HTML-first SSG from `syntax-registry` `list()`** on existing GitHub Pages (`https://sheriff99yt.github.io/VVS-Web/`, `basePath` `/VVS-Web`). Playground later. JS-only SPA / hosted-key docs: **Rejected** (empty HTML fails crawlers, GEO, and client-first Pages).
 
-**Partial:** `/docs` catalog + node/feature pages, `docsUrl()`, shared top bar, registry hover on info icons (node + options). Overlay prose and playground not shipped. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). Research card `interactive-node-docs`.
+**Partial:** `/docs` catalog + node/feature pages, `docsUrl()`, shared top bar, registry hover on info icons (node + options), and initial guidance for three common nodes. Remaining prose and playground are open. Architecture: [design/interactive_docs_architecture.md](design/interactive_docs_architecture.md). Research card `interactive-node-docs`.
 
 ### Research
 
@@ -153,7 +155,7 @@ User-facing waves (detail lives in [current_state.md](current_state.md) and the 
 
 | Item | Status | Gate |
 |------|--------|------|
-| Native VS Code plugin (`vscode-native-plugin`) | **Open** — high priority. Research tab. Not an “open Pages” button. No VSIX this pile. iframe Pages reject. | Workspace paths + ordinary Generate |
+| Native VS Code plugin (`vscode-native-plugin`) | **Partial** — initial VSIX in `apps/vscode`. Workspace files + ordinary Generate are implemented; visual editor currently edits positions and inline inputs. Full graph editing and extension-host verification remain open. | Workspace paths + ordinary Generate |
 | Native Unreal Engine 6 plugin (`ue6-native-plugin`) | **Open** — high priority, **after UE6 releases**. Epic public EA end of 2027. Not released as of 22 August 2026. GitHub `ue6` stream is not Alpha. | Do not invent UE6 APIs. Do not start Slate before the engine exists. |
 
 | **5** UE6 plugin | Planned | Same graph to Verse text; not Blueprint VM. Research tab |

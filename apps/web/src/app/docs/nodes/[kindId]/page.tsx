@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { DocsChrome } from '@/components/docs/DocsChrome';
 import { docsCategoryHash, docsPath } from '@/lib/docsUrl';
 import { getNodeDoc, listNodeDocKindIds, relatedNodeDocs } from '@/lib/nodeDocCatalog';
+import { NODE_DOC_GUIDES } from '@/lib/nodeDocGuides';
 
 type PageProps = { params: Promise<{ kindId: string }> };
 
@@ -37,6 +38,7 @@ export default async function NodeDocPage({ params }: PageProps) {
     ...node.outputs.map((pin) => ({ dir: 'out' as const, pin })),
   ];
   const related = relatedNodeDocs(node.kindId);
+  const guide = NODE_DOC_GUIDES[node.kindId];
 
   return (
     <DocsChrome title={node.title} active={{ type: 'node', id: node.kindId }}>
@@ -69,8 +71,7 @@ export default async function NodeDocPage({ params }: PageProps) {
 
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-50">{node.title}</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">
-        {node.title} ({node.kindId}) is a {node.category} node. Semantics: {node.semantics}. Ports and
-        options below are generated from the syntax registry.
+        {guide?.summary ?? `${node.title} (${node.kindId}) is a ${node.category} node. Semantics: ${node.semantics}. Ports and options below are generated from the syntax registry.`}
         {node.status === 'cut'
           ? ' This kind is cut or legacy in the spawn catalog. The page exists so an editor deep link never 404s.'
           : ''}
@@ -99,7 +100,15 @@ export default async function NodeDocPage({ params }: PageProps) {
             <dd className="mt-1 text-[13px] text-zinc-200">CORE_NODE_REGISTRY</dd>
           </div>
         </dl>
-        <p className="mt-3 text-[12px] text-zinc-600">Overlay prose is not shipped yet. Tables are the source of truth.</p>
+        {guide ? (
+          <div className="mt-5 space-y-4 text-sm leading-relaxed text-zinc-400">
+            <div><h3 className="font-medium text-zinc-200">When to use</h3><p className="mt-1">{guide.use}</p></div>
+            <div><h3 className="font-medium text-zinc-200">Graph to code example</h3><p className="mt-1">{guide.example}</p></div>
+            <div><h3 className="font-medium text-zinc-200">Watch for</h3><p className="mt-1">{guide.note}</p></div>
+          </div>
+        ) : (
+          <p className="mt-3 text-[12px] text-zinc-600">Detailed guidance for this kind is still being written. Ports and options below come from the syntax registry.</p>
+        )}
       </section>
 
       <section id="ports" className="mt-10">
