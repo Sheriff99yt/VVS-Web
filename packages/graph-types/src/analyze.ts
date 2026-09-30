@@ -697,7 +697,9 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     const emptyGlobalScope = cls.isGlobalScope && classVariables.length === 0 &&
       classFunctions.length === 0 && classEvents.length === 0 &&
       !doc.nodes.some(node => defineNodeSymbolId(node) === cls.id || node.data.properties?.classId === cls.id);
-    if (!emptyGlobalScope && classRequiresClassDefine(doc) && !classGraphHasClassDefine(doc, cls)) {
+    const fileFunctionLibrary = cls.isGlobalScope && doc.metadata?.compilationUnit?.version === 1 && doc.metadata.compilationUnit.entryPolicy === 'library' &&
+      classVariables.length === 0 && classEvents.length === 0 && classFunctions.every(fn => fn.binding === 'module');
+    if (!emptyGlobalScope && !fileFunctionLibrary && classRequiresClassDefine(doc) && !classGraphHasClassDefine(doc, cls)) {
       messages.push({
         level: 'error',
         message: `Class "${cls.name}" has no Declare Class node on its class graph.`,

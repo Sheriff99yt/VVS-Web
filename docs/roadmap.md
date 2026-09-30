@@ -98,7 +98,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | # | Item | Notes |
 |---|------|--------|
 | **U90** | Library remaining | Templates / git import shipped. **Auth / upload frozen.** Remaining is a public git catalog and browse/search, not an upload form or GoTrue accounts. |
-| **U93** (`code-to-visual-u93`) | Code to visual | Long-term reverse-import **research**. Source-linked, preview-first implementation plan in [code_to_visual_import.md](design/code_to_visual_import.md); experimental class importer in Start; general syntax, standalone functions and re-import remain open. Not a default. |
+| **U93** (`code-to-visual-u93`) | Code to visual | Long-term reverse-import **research**. Source-linked, preview-first implementation plan in [code_to_visual_import.md](design/code_to_visual_import.md); experimental JavaScript class and closed standalone Library-function importer in Start; other languages, module exports, general syntax and re-import remain open. Not a default. |
 
 ### Library (U90)
 

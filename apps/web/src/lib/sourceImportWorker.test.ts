@@ -62,3 +62,19 @@ test('another preview invalidates an earlier acceptance receipt', async () => {
   await service({ id: 2, kind: 'preview', source: config.source });
   expect((await service({ id: 3, kind: 'accept', receipt: review.receipt, snapshotJson: JSON.stringify(review.snapshot), ...config })).ok).toBe(false);
 });
+
+test('worker reviews and accepts standalone Library functions with file-owned provenance', async () => {
+  const service = createSourceImportWorkerService();
+  const config = { source: 'function identity(value) { return value; }', fileName: 'library.js', mapStart: false, entryPolicy: 'library' as const };
+  const response = await service({ id: 1, kind: 'review', regionIndex: 0, ...config });
+  expect(response.ok).toBe(true);
+  const review = structuredClone((response as { result: WorkerGraphReview }).result);
+  expect(review.snapshot).toBeDefined();
+  expect(review.generated).toContain('function identity(value)');
+  expect(review.snapshot!.events).toEqual([]);
+  const nodes = Object.values(review.snapshot!.documents).flatMap(doc => doc.nodes);
+  expect(nodes.some(node => node.data.kindId === 'class_define')).toBe(false);
+  expect(nodes.find(node => node.data.kindId === 'function_define')!.data.properties!.sourceImport).toBeDefined();
+  const accepted = await service({ id: 2, kind: 'accept', receipt: review.receipt, snapshotJson: JSON.stringify(review.snapshot), ...config });
+  expect(accepted.ok).toBe(true);
+});

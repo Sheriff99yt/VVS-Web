@@ -130,6 +130,12 @@
     "EventHandlerClose": {
       "quasi": "    }"
     },
+    "ModuleFunctionDefOpen": {
+      "quasi": "{asyncKw}function {name}({paramList}) {"
+    },
+    "ModuleFunctionDefClose": {
+      "quasi": "}"
+    },
     "FunctionDefOpen": {
       "quasi": "    {staticKw}{asyncKw}{name}({paramList}) {"
     },

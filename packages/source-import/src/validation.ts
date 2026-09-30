@@ -3,7 +3,7 @@ import { transpileProject } from '@vvs/transpiler';
 import { resolve } from '@vvs/syntax-registry';
 import { ImportFailure, IMPORT_LIMITS, MAX_SOURCE_IMPORT_BYTES, type ClassImportPlan, type ImportDiagnostic } from './contracts';
 import { parseJavaScript, type ImportRegion, type SourceImportPreview } from './parser';
-import { planJavaScriptClass } from './javascriptMappings';
+import { planJavaScriptClass, planJavaScriptFunction } from './javascriptMappings';
 import { materializeImportPlan } from './materialize';
 export { MAX_SOURCE_IMPORT_BYTES };
 export interface SourceImportGraphReview {
@@ -54,7 +54,8 @@ export function reviewSourceImportGraph(preview: SourceImportPreview, region: Im
   let generated = ''; let nodeCount = 0;
   const started = performance.now();
   try {
-    const plan: ClassImportPlan = planJavaScriptClass(preview, region, fileName, mapStartAsEntry, entryPolicy);
+    const planner = region.proposedKind === 'standalone-function' ? planJavaScriptFunction : planJavaScriptClass;
+    const plan: ClassImportPlan = planner(preview, region, fileName, mapStartAsEntry, entryPolicy);
     const snapshot = materializeImportPlan(plan);
     nodeCount = Object.values(snapshot.documents).reduce((sum, doc) => sum + doc.nodes.length, 0);
     const validated = validateImportSnapshot(snapshot, plan.selectedSource); generated = validated.generated;

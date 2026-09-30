@@ -71,10 +71,10 @@ export default function SourceImportDialog({ onClose, onAccept }: {
         <h2 id="source-import-title" className="text-lg font-semibold">Import JavaScript source</h2>
         <button type="button" onClick={onClose} className={BUTTON}>Close</button>
       </div>
-      <p className="my-3 text-sm text-zinc-400">Create a new project from one supported class. Review the source, graph and generated code before accepting. Parsing stays in your browser.</p>
+      <p className="my-3 text-sm text-zinc-400">Create a new project from one supported class or standalone function. Review the source, graph and generated code before accepting. Parsing stays in your browser.</p>
       <details className="mb-3 text-sm text-zinc-400">
         <summary className="cursor-pointer">Supported subset and source preservation</summary>
-        <p className="mt-2">Plain named classes with ordinary or static methods, named parameters, literals, arithmetic with provably numeric literal operands, and terminal return or if/else with Boolean literal conditions. Program units require explicit mapping of an existing on_start method; library units retain ordinary methods without requiring an entry. Dynamic arithmetic and truthiness need explicit JavaScript semantics and are blocked. Calls, locals, receiver access, inheritance, exports and embedded comments are blocked. The full original file and its hash are retained on the imported class node. Source outside the selected class is preserved there and is excluded from generated output.</p>
+        <p className="mt-2">Named synchronous standalone functions in Library mode, or plain named classes with ordinary or static methods, named parameters, literals, arithmetic with provably numeric literal operands, and terminal return or if/else with Boolean literal conditions. Program units require explicit mapping of an existing on_start method; library units retain ordinary methods without requiring an entry. Dynamic arithmetic and truthiness need explicit JavaScript semantics and are blocked. Calls, locals, receiver access, inheritance, exports and embedded comments are blocked. Standalone functions require Library mode and retain file scope without a class or entry. The full original file and its hash are retained on the imported class or function declaration. Source outside the selected declaration is preserved there and is excluded from generated output.</p>
         <p className="mt-2">Formatting, quote style, parentheses and empty semicolons may be normalized. All other syntax structure must match. Limits: 128 KiB, 32 methods, 512 nodes and bounded AST depth/analysis time. This is a one-time import; later source edits are not synchronized.</p>
       </details>
       <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -113,9 +113,10 @@ export default function SourceImportDialog({ onClose, onAccept }: {
           {chosen.kind === 'candidate' && <>
             <label className="block text-sm">Compilation unit
               <select className="ml-2 bg-zinc-900 border border-zinc-700 p-1" disabled={busy} value={entryPolicy} onChange={e => { setEntryPolicy(e.target.value as 'program' | 'library'); setMapStart(false); setReview(null); }}>
-                <option value="program">Program — explicit existing entry</option><option value="library">Library — ordinary methods, no required entry</option>
+                <option value="program">Program — explicit existing entry</option><option value="library">Library — functions or methods, no required entry</option>
               </select>
             </label>
+            {chosen.proposedKind === 'standalone-function' && <p className="text-xs text-zinc-400">Choose Library to preserve this standalone function at file scope.</p>}
             {entryPolicy === 'program' && <label className="flex items-start gap-2 text-sm"><input type="checkbox" disabled={busy} checked={mapStart} onChange={e => { setMapStart(e.target.checked); setReview(null); }} />Map the existing on_start method to the VVS program entry event</label>}
             <button type="button" className={BUTTON} disabled={busy} onClick={() => void convert()}>Build and validate preview</button>
           </>}

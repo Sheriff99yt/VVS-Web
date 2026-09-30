@@ -47,7 +47,7 @@ const OPTIONAL_SHELL_BY_FAMILY: Record<
   readonly string[]
 > = {
   python: ['SwitchSelectBind'],
-  javascript: ['ClassModuleClose', 'EventHandlerClose', 'FunctionTabClose'],
+  javascript: ['ClassModuleClose', 'EventHandlerClose', 'FunctionTabClose', 'ModuleFunctionDefOpen', 'ModuleFunctionDefClose'],
   cpp: [
     'ClassModuleClose',
     'ClassPublicSection',

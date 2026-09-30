@@ -79,6 +79,8 @@ function supportedExpression(expression: unknown): boolean {
 
 function supportedStatement(statement: FunctionStatement): boolean {
   switch (statement.type) {
+    case 'EmptyStatement':
+      return true; // Existing round-trip policy allows harmless empty semicolons.
     case 'VariableDeclaration':
       return (statement.kind === 'let' || statement.kind === 'const') &&
         statement.declarations.length === 1 &&
