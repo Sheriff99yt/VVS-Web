@@ -98,22 +98,22 @@ export function reviewSourceImportGraph(preview: SourceImportPreview, region: Im
       if (isEntry) {
         const event = { id: 'import-entry', name: 'start', role: 'entry' as const, parameters, classId: cls.id };
         snapshot.events.push(event);
-        const declare = spawn(home, 'event_member_define', (methodIndex + 1) * 520, 0);
-        declare.data.properties = { symbolId: event.id, eventId: event.id, name: event.name, role: 'entry' };
-        declare.data.label = 'Declare start';
-        wire(home, previousMember, 'exec_out', declare, 'exec_in', 'execution');
-        previousMember = declare;
+        const declarationNode = spawn(home, 'event_member_define', (methodIndex + 1) * 520, 0);
+        declarationNode.data.properties = { symbolId: event.id, eventId: event.id, name: event.name, role: 'entry' };
+        declarationNode.data.label = 'Declare start';
+        wire(home, previousMember, 'exec_out', declarationNode, 'exec_in', 'execution');
+        previousMember = declarationNode;
         entry = spawn(home, 'event_define', 0, 400);
         entry.data = applyEventDefineBinding(entry.data, event);
       } else {
         snapshot.functions.push(func);
-        const declare = spawn(home, 'function_define', (methodIndex + 1) * 520, 0);
-        declare.data = applyFunctionDefineBinding(declare.data, func, 'o1');
+        const declarationNode = spawn(home, 'function_define', (methodIndex + 1) * 520, 0);
+        declarationNode.data = applyFunctionDefineBinding(declarationNode.data, func, 'o1');
         const define = spawn(home, 'function_implement', (methodIndex + 1) * 520 + 240, 0);
         define.data = applyFunctionImplementBinding(define.data, func, 'o1');
         define.data.properties = { ...define.data.properties, isStatic: method.static };
-        wire(home, previousMember, 'exec_out', declare, 'exec_in', 'execution');
-        wire(home, declare, 'exec_out', define, 'exec_in', 'execution');
+        wire(home, previousMember, 'exec_out', declarationNode, 'exec_in', 'execution');
+        wire(home, declarationNode, 'exec_out', define, 'exec_in', 'execution');
         previousMember = define;
         snapshot.documents[func.id] = body;
         snapshot.openTabs.push({ id: func.id, type: 'function', name: `Function: ${name}` });
