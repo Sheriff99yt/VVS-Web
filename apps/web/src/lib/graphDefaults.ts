@@ -1,19 +1,13 @@
 import { VVSNode, VVSEdge } from '@/types/graph';
-import type { TargetLanguage } from '@vvs/graph-types';
 import { codegenMetadataSeed, PROJECT_MAP_CONTAINER_NAME, type ProjectCodegenDefaults, type FunctionSymbol } from '@vvs/graph-types';
 import { applyFunctionEntryBinding, applyFunctionReturnBinding } from './functionHelpers';
 
-export interface GraphTabMetadata {
-  moduleName: string;
-  extendsType: string;
-  description: string;
-  targetLanguage?: TargetLanguage;
-  targetFileExtension?: string;
-}
+export type GraphTabMetadata = import('@vvs/graph-types').GraphTabMetadata;
 
 const GRAPH_CODEGEN_METADATA_KEYS = new Set<keyof GraphTabMetadata>([
   'targetLanguage',
   'targetFileExtension',
+  'compilationUnit',
 ]);
 
 export function isCodegenMetadataPatch(patch: Partial<GraphTabMetadata>): boolean {

@@ -4,9 +4,10 @@ import { isOrgOnlyGraphTab } from './graphTabs';
 import { MAIN_GRAPH_CONTAINER_ID, MAIN_CLASS_ID } from '@vvs/graph-types';
 
 describe('graph codegen tab rules', () => {
-  test('isCodegenMetadataPatch accepts only language and extension keys', () => {
+  test('isCodegenMetadataPatch accepts codegen and compilation-unit keys without renaming the graph', () => {
     expect(isCodegenMetadataPatch({ targetLanguage: 'cpp' })).toBe(true);
     expect(isCodegenMetadataPatch({ targetFileExtension: 'h' })).toBe(true);
+    expect(isCodegenMetadataPatch({ compilationUnit: { version: 1, entryPolicy: 'library' } })).toBe(true);
     expect(isCodegenMetadataPatch({ moduleName: 'Foo' })).toBe(false);
     expect(isCodegenMetadataPatch({ targetLanguage: 'cpp', moduleName: 'Foo' })).toBe(false);
   });

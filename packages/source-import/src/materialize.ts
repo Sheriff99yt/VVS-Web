@@ -16,6 +16,7 @@ export function materializeImportPlan(plan: ClassImportPlan): ProjectSnapshot {
   snapshot.projectDetails = { moduleName: cls.name, extendsType: '', description: `Imported from ${plan.fileName}` };
   snapshot.targetLanguage = 'javascript'; snapshot.events = []; snapshot.variables = []; snapshot.functions = []; snapshot.documents = {};
   const home: GraphDocument = { nodes: [], edges: [], metadata: { moduleName: cls.name, extendsType: '', description: '', targetLanguage: 'javascript' } };
+  if (plan.entryPolicy === 'library') home.metadata!.compilationUnit = { version: 1, entryPolicy: 'library' };
   snapshot.documents[MAIN_GRAPH_CONTAINER_ID] = home;
   let serial = 0;
   function spawn(doc: GraphDocument, kindId: string, x: number, y: number, evidence: MappingEvidence): GraphNode {

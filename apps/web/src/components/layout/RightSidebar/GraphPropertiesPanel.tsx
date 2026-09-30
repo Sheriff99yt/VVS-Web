@@ -85,6 +85,7 @@ export function GraphPropertiesPanel({
   const tabDetails = isMain
     ? projectDetails
     : getActiveTabMetadata() ?? { moduleName: '', extendsType: '', description: '' };
+  const unitPolicy = getActiveTabMetadata()?.compilationUnit?.entryPolicy ?? 'program';
 
   const linkedManifest = getLinkedEnvironmentManifest(environmentId);
   const envSummary = linkedManifest ? summarizeEnvironmentManifest(linkedManifest) : null;
@@ -452,6 +453,21 @@ export function GraphPropertiesPanel({
             Graph details
           </p>
           <div className="space-y-3">
+            {activeTab?.type === 'function' ? null : (
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-zinc-400">Compilation unit</label>
+                <SearchableSelect
+                  value={unitPolicy}
+                  options={[{ value: 'program', label: 'Program — explicit entry required' }, { value: 'library', label: 'Library — no required entry' }]}
+                  onChange={(value) => {
+                    if (value !== 'program' && value !== 'library') return;
+                    updateActiveTabMetadata({ compilationUnit: { version: 1, entryPolicy: value } });
+                    bumpMetadata();
+                  }}
+                />
+                <p className="text-[10px] text-zinc-500">Applies to this graph’s file. Declarations and existing handlers remain visible on the canvas.</p>
+              </div>
+            )}
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium text-zinc-400">Module name</label>
               <input

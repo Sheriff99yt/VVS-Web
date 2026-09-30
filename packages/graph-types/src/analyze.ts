@@ -1038,11 +1038,19 @@ function validateProgramEntry(input: AnalyzeProjectInput): Diagnostic[] {
   for (const cls of classes) {
     const tabId = classHomeGraphId(cls);
     const doc = input.documents[tabId];
+    const policy = doc?.metadata?.compilationUnit;
+    if (policy && (policy.version !== 1 || !['program', 'library'].includes(policy.entryPolicy))) {
+      messages.push({ level: 'error', message: 'Compilation-unit policy is invalid or uses an unsupported version.', tabId,
+        source: 'semantic', code: 'COMPILATION_UNIT_POLICY_INVALID' });
+      continue;
+    }
     if (!classHasSymbols(cls, input.variables ?? [], input.functions, events)) {
       continue;
     }
     const entry = findProgramEntryEvent(events, cls.id);
     if (!entry) {
+      // A library may omit an entry. An existing entry still needs its visible declaration.
+      if (policy?.entryPolicy === 'library') continue;
       messages.push({
         level: 'error',
         message: `Class "${cls.name}" has no program entry event — add one from the Events panel (emits on_start for host runners).`,
