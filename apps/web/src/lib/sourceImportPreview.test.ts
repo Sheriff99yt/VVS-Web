@@ -6,7 +6,7 @@ describe('source import preview', () => {
     const source = 'function add(a, b) {\n  return a + b;\n}\n\nexport const secret = await fetch(url);\n';
     const preview = await previewJavaScriptImport(source);
     expect(preview.regions.map(region => region.text).join('')).toBe(source);
-    expect(preview.regions[0]?.kind).toBe('candidate');
+    expect(preview.regions[0]?.kind).toBe('unresolved'); // Module context cannot be accepted as a script unit.
     expect(preview.regions.find(region => region.text.includes('await fetch'))?.kind).toBe('unresolved');
     expect(preview.sourceSha256).toHaveLength(64);
   });

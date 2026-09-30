@@ -1,0 +1,24 @@
+{
+  "name": "@vvs/source-import",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./validation": "./src/validation.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.29.9",
+    "@vvs/graph-types": "workspace:*",
+    "@vvs/syntax-registry": "workspace:*",
+    "@vvs/transpiler": "workspace:*"
+  },
+  "devDependencies": {
+    "acorn": "^8.17.0"
+  }
+}

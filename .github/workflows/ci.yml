@@ -44,6 +44,10 @@ jobs:
         working-directory: packages/syntax-registry
         run: bun test
 
+      - name: Source import tests
+        working-directory: packages/source-import
+        run: bun test
+
       - name: Tree-sitter parse validation (strict)
         working-directory: packages/syntax-packs
         run: bun run validate:parse -- --strict

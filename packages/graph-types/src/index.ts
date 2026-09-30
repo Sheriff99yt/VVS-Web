@@ -21,3 +21,5 @@ export * from './inheritance';
 export * from './normalizeGraphNodeData';
 export * from './targetFileExtensions';
 export * from './graphCodegen';
+export * from './functionBindings';
+export * from './eventBinding';

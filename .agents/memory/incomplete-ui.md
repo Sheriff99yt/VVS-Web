@@ -303,7 +303,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 | U92 | **New examples** (cross-lang + lang-specific) | **Done** | Five fixtures (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) × 8 langs (40 goldens); Go golden assertion + StartScreen + validate_test_projects_folder.ts |
 | U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; left panel + chrome migrated off native `title=` (section/popover `title` props remain) |
 | U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |
-| U93 | **Long-term: code → visual** | **Open** (long-term) | Experimental JavaScript class import slice implemented 30 September 2026: Start → Import JavaScript source; explicit existing on_start entry mapping; analyzer + AST regeneration gate; new-project acceptance and full source provenance. General standalone/module functions, wider syntax, other languages and re-import remain open. See docs/design/code_to_visual_import.md. |
+| U93 | **Long-term: code → visual** | **Open** (long-term) | Experimental JavaScript class import and stages 0–3 package migration implemented 30 September 2026: Start → Import JavaScript source; explicit existing on_start entry mapping; analyzer + AST regeneration gate; new-project acceptance and full source provenance. General standalone/module functions, wider syntax, other languages and re-import remain open. See docs/design/code_to_visual_import.md and reverse_import_milestone.md; dynamic arithmetic/truthiness conservatively blocked; full-file reverse evidence and sealed acceptance shipped. |
 
 ---
 

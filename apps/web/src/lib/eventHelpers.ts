@@ -165,26 +165,8 @@ export function createEventParameterId(): string {
   return `param-${Date.now()}`;
 }
 
-export function applyEventDefineBinding(
-  data: VVSNodeData,
-  event: ProjectEventDefinition
-): VVSNodeData {
-  const outputs = defineNodeOutputs(event.parameters);
-  return {
-    ...data,
-    kindId: 'event_define',
-    category: 'Events',
-    label: eventDisplayName(event.name),
-    properties: {
-      ...(data.properties ?? {}),
-      eventId: event.id,
-      eventName: event.name,
-      ...(event.role ? { role: event.role } : {}),
-    },
-    inputs: [],
-    outputs,
-  };
-}
+export { applyEventDefineBinding } from '@vvs/graph-types';
+import { applyEventDefineBinding } from '@vvs/graph-types';
 
 export function applyEventDispatchBinding(
   data: VVSNodeData,

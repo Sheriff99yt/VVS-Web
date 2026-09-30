@@ -1,0 +1,150 @@
+{
+  "functions": [
+    {
+      "kind": "function",
+      "id": "f",
+      "name": "identity",
+      "classId": "main-class",
+      "binding": "instance",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "p0",
+              "label": "value",
+              "type": "data_any"
+            }
+          ],
+          "returnType": "data_any",
+          "graphTabId": "f"
+        }
+      ]
+    }
+  ],
+  "homeNodes": [
+    {
+      "id": "shell",
+      "kindId": "class_define"
+    },
+    {
+      "id": "entry-declaration",
+      "kindId": "event_member_define"
+    },
+    {
+      "id": "entry",
+      "kindId": "event_define"
+    },
+    {
+      "id": "entry-return",
+      "kindId": "flow_return",
+      "values": {
+        "value": 0
+      }
+    },
+    {
+      "id": "fn-declaration",
+      "kindId": "function_define",
+      "symbolId": "f"
+    },
+    {
+      "id": "fn-define",
+      "kindId": "function_implement",
+      "symbolId": "f",
+      "isStatic": false
+    }
+  ],
+  "documents": {
+    "f": {
+      "nodes": [
+        {
+          "id": "body-entry",
+          "kindId": "function_entry",
+          "symbolId": "f"
+        },
+        {
+          "id": "ret",
+          "kindId": "flow_return",
+          "symbolId": "f"
+        }
+      ],
+      "edges": [
+        [
+          "body-entry",
+          "exec_out",
+          "ret",
+          "exec_in"
+        ],
+        [
+          "body-entry",
+          "p0",
+          "ret",
+          "return_val"
+        ]
+      ]
+    }
+  },
+  "homeEdges": [
+    [
+      "shell",
+      "exec_out",
+      "entry-declaration",
+      "exec_in"
+    ],
+    [
+      "entry",
+      "exec_out",
+      "entry-return",
+      "exec_in"
+    ],
+    [
+      "entry-declaration",
+      "exec_out",
+      "fn-declaration",
+      "exec_in"
+    ],
+    [
+      "fn-declaration",
+      "exec_out",
+      "fn-define",
+      "exec_in"
+    ]
+  ],
+  "name": "literal-return",
+  "className": "Literal",
+  "source": "class Literal { on_start() { return 0; } identity(value) { return value; } }",
+  "expected": {
+    "className": "Literal",
+    "methods": [
+      [
+        "on_start",
+        false,
+        "entry",
+        [],
+        [
+          "return",
+          [
+            "literal",
+            0
+          ]
+        ]
+      ],
+      [
+        "identity",
+        false,
+        "method",
+        [
+          "value"
+        ],
+        [
+          "return",
+          [
+            "parameter",
+            "value"
+          ]
+        ]
+      ]
+    ]
+  }
+}

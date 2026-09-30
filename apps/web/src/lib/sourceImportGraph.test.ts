@@ -10,7 +10,7 @@ async function review(source: string) {
 
 describe('source import graph', () => {
   test('creates editable class/method nodes and preserves expression grouping', async () => {
-    const source = 'class Calculator { on_start() { return 0; } add(a, b) { return (a + b) * 2; } static text() { return "hello world"; } }';
+    const source = 'class Calculator { on_start() { return 0; } add(a, b) { return (3 + 4) * 2; } static text() { return "hello world"; } }';
     const result = await review(source);
     expect(result.diagnostics).toEqual([]);
     expect(result.snapshot).toBeDefined();
@@ -21,7 +21,7 @@ describe('source import graph', () => {
   });
 
   test('maps terminal if/else without changing control flow', async () => {
-    const result = await review('class Choice { on_start() { return 0; } choose(flag, a, b) { if (flag) { return a; } else { return b; } } }');
+    const result = await review('class Choice { on_start() { return 0; } choose(flag, a, b) { if (true) { return a; } else { return b; } } }');
     expect(result.diagnostics).toEqual([]);
     expect(result.snapshot).toBeDefined();
   });
