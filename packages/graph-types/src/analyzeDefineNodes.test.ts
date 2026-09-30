@@ -377,4 +377,20 @@ describe('analyzeProject define node sync', () => {
     expect(result.diagnostics.filter((d) => d.code === 'ORPHAN_DEFINE_NODE')).toHaveLength(0);
     expect(result.ok).toBe(true);
   });
+  it('does not require a class shell for an empty normalized Global scope sharing another class graph', () => {
+    const cls = createClassSymbol('App', { id: 'main-class', containerId: HOME_GRAPH });
+    const global = createClassSymbol('Global', { id: 'global-scope', containerId: HOME_GRAPH, isGlobalScope: true });
+    const doc = { nodes: [{ id: 'class', type: 'vvs_standard_node', position: { x: 0, y: 0 }, data: {
+      kindId: 'class_define', label: 'Declare App', category: 'Project', inputs: [], outputs: [], inlineValues: {},
+      properties: { classId: cls.id, symbolId: cls.id },
+    } }], edges: [] };
+    const input = { documents: { [HOME_GRAPH]: doc }, classes: [cls, global], functions: [], events: [], variables: [],
+      projectDetails: { extendsType: '' }, targetLanguage: 'javascript' as const };
+    expect(analyzeProject(input).diagnostics.filter(d => d.code === 'DEFINE_NODE_MISSING')).toEqual([]);
+    const variable = createVariableSymbol('GlobalValue', { id: 'global-value', classId: global.id });
+    const missing = analyzeProject({ ...input, variables: [variable] }).diagnostics.filter(d => d.code === 'DEFINE_NODE_MISSING');
+    expect(missing.some(d => d.symbolId === global.id && d.level === 'error')).toBe(true);
+    expect(missing.some(d => d.symbolId === variable.id && d.level === 'error')).toBe(true);
+  });
+
 });

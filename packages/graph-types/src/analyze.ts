@@ -691,7 +691,13 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     const classFunctions = input.functions.filter((f) => symbolClassId(f) === cls.id);
     const classEvents = input.events.filter((e) => symbolClassId(e) === cls.id);
 
-    if (classRequiresClassDefine(doc) && !classGraphHasClassDefine(doc, cls)) {
+    // Normalization adds an empty organizational Global scope for each container.
+    // A different class's member chain does not make that empty scope a declaration.
+    // Owned symbols/nodes still require canvas declarations and keep blocking errors.
+    const emptyGlobalScope = cls.isGlobalScope && classVariables.length === 0 &&
+      classFunctions.length === 0 && classEvents.length === 0 &&
+      !doc.nodes.some(node => defineNodeSymbolId(node) === cls.id || node.data.properties?.classId === cls.id);
+    if (!emptyGlobalScope && classRequiresClassDefine(doc) && !classGraphHasClassDefine(doc, cls)) {
       messages.push({
         level: 'error',
         message: `Class "${cls.name}" has no Declare Class node on its class graph.`,

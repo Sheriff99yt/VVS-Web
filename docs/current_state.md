@@ -518,3 +518,7 @@ These were intentionally removed or relocated during the July 2026 UI revision:
 8. **Shared React Flow provider for edit + reference** → separate providers; `GraphWorkspaceHost` always mounted for documents
 9. **Explorer Symbols/Output tabs** → compact cycle toggle + always-on filter bar; **Ctrl+Space** focuses project filter; class scope row removed (status bar / class list)
 10. **Canvas virtualization (U83)** → `onlyRenderVisibleElements` on edit + reference canvases; see `lib/graphVirtualization.ts`
+
+## Experimental source import (30 September 2026)
+
+Start → Import JavaScript source opens a lazy-loaded local review dialog. One supported plain class becomes a fresh project after normal analyzer and structural Generate round-trip checks. The existing `on_start` method requires explicit entry-role mapping. The first subset covers parameters/literals/arithmetic and terminal Return/If/Else; unsupported constructs block acceptance. Full original source/hash/ranges persist on the Class Declare node. General U93, standalone functions, other languages and re-import remain open. See [code_to_visual_import.md](design/code_to_visual_import.md).
