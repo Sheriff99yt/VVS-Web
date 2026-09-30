@@ -34,10 +34,10 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
     problem:
       'Generate already walks canvas \u2192 IR \u2192 eight language printers. U93 is the missing import: raw source in, graph document out. The Open tab already marks this a research track, not near-term polish. The failure mode is the same one that killed hidden event runtime and fake Function Declare: a guessed node that looks real. Canvas stays source of truth after import, so a wrong Call or a silent rewrite is worse than an honest leftover.',
     constraints: [
-      'Canvas is source of truth after import. Round-trip drift is a bug, not a style choice.',
+      'Canvas is source of truth for accepted imported regions. Other original source stays outside VVS ownership. Behavioral drift must be reported before acceptance.',
       'Client-first: must run on static Pages. WASM / Worker is fine. No dedicated parser server, no product accounts, no source leaving the machine as the default path.',
-      'Reuse the existing IR the printers already emit. Do not invent a second graph model.',
-      'Unknown syntax is an (x) leftover that keeps the original span. Never invent a language API to make import look complete.',
+      'Use a source-linked import plan before graph materialization; graph-derived IR is not a direct parse target.',
+      'Keep unknown syntax verbatim in the original file with a visible span. A generated (x) comment cannot stand in for executable source.',
       'Node / option / pin still hold. Import must not collapse those into one blob node.',
       'Eight shipped printers: Python, JavaScript, C++, Verse, GDScript, Rust, C#, Go. Start with one pack; do not pretend all eight land together.',
       'VVS roles are not plain AST. this.go += this.on_go is Bind, not assign. self.on_go(...) is Dispatch, not a generic Call.',
@@ -45,27 +45,27 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
     options: [
       {
         id: 'deterministic-ir-reverse',
-        title: 'Deterministic IR reverse',
+        title: 'Deterministic source-linked import',
         verdict: 'ship',
         summary:
-          'Parse in the browser with tree-sitter WASM, lower the CST onto the same IR Generate already uses, then materialize nodes, options, pins, and edges. Layout is a separate pass.',
+          'Parse locally, keep exact source spans, and preview supported regions before materializing ordinary VVS graph nodes. Layout is a separate pass.',
         how:
-          "A Worker loads web-tree-sitter plus one grammar. The pack lowerer maps CST kinds onto existing IR (class, function, if/for/return, get/set, call, Bind/Dispatch where the text is that line). IR \u2192 graph document. Unknown CST becomes an (x) leftover that stores the source span. Layout uses ELK or Dagre (same class of engine ASTraFlow uses). Goldens invert today's test_project_goldens: graph \u2192 text \u2192 graph identity, ignoring x/y.",
+          'A browser parser produces a source-linked import plan with accepted and unresolved spans. A closed mapper builds registry-backed nodes, compatible pins, edges, and symbols for complete regions. Run graph analysis and Generate on the candidate; show differences before acceptance. Unsupported source stays in the original file, never silently emitted as a comment.',
         pros: [
-          'Deterministic. The labs can be inverted into goldens the same way Generate already proves printers.',
-          'Runs on hosted Pages. web-tree-sitter is WASM. No server, no key, no source upload.',
-          'Reuses graphToIr and the eight packs. Import is the inverse of a path that already exists.',
-          'Honesty is structural: unmapped syntax stays (x) with the snippet, same rule as Verse GetInput.',
-          'Tree-sitter is incremental and error-tolerant, so a live "import this file" and a later "re-import this function" are the same engine.',
-          'Official or solid grammars exist for Python, JS, C++, Rust, C#, Go, and GDScript. Verse has a community grammar (taku25/tree-sitter-verse), not an Epic-official one.',
+          'Deterministic mapping can be checked on generated fixtures and independent hand-written code.',
+          'Runs on hosted Pages with a browser parser. No server, key, or source upload.',
+          'Reuses graph analysis and Generate after materialization without pretending the graph-derived IR can parse source.',
+          'Honesty is structural: unmapped syntax stays verbatim in the source file and outside the accepted graph.',
+          'A parser can preserve precise source ranges; evaluate candidates before choosing one for the first language.',
+          'Language-specific parsers can be evaluated independently. Verse grammar quality remains a later risk.',
         ],
         cons: [
-          'Eight inverse lowerers is real work. Every printer construct needs a matching CST pattern.',
+          'Each language needs mappings for graph roles, symbol context, order, and unsupported constructs, not only syntax patterns.',
           "x/y, comments, groups, and reroutes are not in the AST. Import will look like a fresh layout, not the author's original canvas.",
           'Ambiguous text needs VVS-aware patterns. += / .on / .connect / on_*() can be Bind, Dispatch, or ordinary code.',
           'C++ preprocessor, macros, templates, Go generics, and Verse effects/fail will have holes on day one.',
           'The Verse grammar is community-maintained and can drift from Epic. Treat Verse as a later pack, not the first slice.',
-          'A broken file still parses, but the mapping will drop pieces. Partial import must be visible, not silent.',
+          'Error recovery does not establish fidelity. Partial import must be visible and must never drop source text.',
         ],
       },
       {
@@ -96,11 +96,11 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
         title: 'Deterministic core + confirmed leftovers',
         verdict: 'later',
         summary:
-          'Option 1 owns structure. The already-shipped in-page Agent may propose a mapping for leftover spans only. The user accepts or keeps (x). The model never writes the canvas unattended.',
+          'Option 1 owns structure. The in-page Agent may suggest a mapping for unresolved spans, but never accepts or writes a graph unattended.',
         how:
-          'Same Worker + lowerer as Option 1. Leftover spans stay (x). The in-page Agent (Worker tools against the live canvas) can patch a leftover into a real kind the way Bind Details already write through. Offline, or with the Agent closed, import is still Option 1. No new hosted AI product.',
+          'The local import plan keeps unresolved source verbatim. The in-page Agent may propose a reviewed node mapping for one span later; offline import remains available. The original file is never overwritten by a suggestion.',
         pros: [
-          'Default path stays honest and offline. Pages + folder/.vvs still work with the Agent tab closed.',
+          'Default path stays honest and offline. Pages and local projects work with the Agent closed.',
           'Long tail (weird Verse, macros, unfamiliar sugar) gets a helper without owning source of truth.',
           'Uses the in-page Agent already shipped. No Cursor sidecar, no hosted MCP, no new account.',
           'Confirmation is the same consume-path rule as Bind / Dispatch Details: a proposal is a patch the user keeps or drops.',
@@ -109,22 +109,21 @@ export const RESEARCH_TOPICS: ResearchTopic[] = [
         cons: [
           'Two systems. The temptation is to let the Agent "fix" structure when a lowerer is incomplete.',
           'Confirmation UI is real work: a diff of proposed nodes, not a silent apply.',
-          'Still need the eight lowerers, or the Agent is doing Option 2 under a friendlier name.',
+          'Still need explicit language mappings; otherwise the Agent becomes the importer under another name.',
           'Layout is still a separate unsolved pass.',
           'Agent quality varies. Treat every proposal as a patch against leftover spans, never as a full-file replace.',
         ],
       },
     ],
     recommendation:
-      'Ship Option 1 as the product path. Start with one pack that already has the richest goldens (Python or JavaScript), invert the lab goldens, and require graph \u2192 text \u2192 graph identity on that set (ignore x/y). Keep Option 3 as a later assist on leftover spans only, through the in-page Agent that already exists. Do not ship Option 2. A guessed graph that Generate then rewrites is how the canvas stops being source of truth.',
+      'Pursue Option 1 as a source-linked, preview-first import. An experimental JavaScript class slice now exists, requiring an explicit mapping of an existing on_start method to program entry and an analyzer/AST regeneration gate. Standalone module functions remain blocked until Generate can preserve their scope; compare parsers before expanding coverage. Test generated fixtures and independent handwritten code for graph validity and output fidelity. Keep Option 3 as a later suggestion path for unresolved spans. One-time import precedes two-way synchronization. See docs/design/code_to_visual_import.md.',
     firstSlice: [
-      'Worker + web-tree-sitter + one grammar (Python or JavaScript).',
-      'CST \u2192 existing IR for a closed set: class, function, if / for / return, get / set, call.',
-      'IR \u2192 graph document + a simple layered layout. No comment / group / reroute recovery in v1.',
-      'Unknown syntax \u2192 (x) leftover that stores the source span and the original text.',
-      'Golden: invert Simple and Complex. graph \u2192 Generate \u2192 import \u2192 same IR (layout ignored).',
-      'VVS-aware patterns from day one for the closed set only. Bind / Dispatch wait until that pack already prints them.',
-      'Verse, C++ macros, and Agent-proposed leftovers are out of the first slice.',
+      'Read-only JavaScript preview: parse locally, retain all source spans, and compare parser size, recovery, and browser behavior.',
+      'Implemented slice: one plain class with an explicitly mapped existing on_start, parameter/literal/arithmetic expressions, and terminal return or if/else. Locals, calls and standalone functions remain later work.',
+      'Materialize ordinary graph nodes, compatible pins, edges, and matching symbols; validate with the existing analyzer and Generate.',
+      'Show unsupported spans as original source outside the accepted graph, never executable code replaced by an (x) comment.',
+      'Test generated fixtures and independent handwritten files; show output differences before acceptance.',
+      'Start → Import JavaScript source builds a one-time new-project import with full source provenance. Re-import and two-way synchronization need a separate design.',
     ],
     sources: [
       { label: 'Tree-sitter (incremental parse, WASM)', href: 'https://tree-sitter.github.io/tree-sitter/' },

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { StartHomeLayout } from '@/components/start/StartHomeLayout';
 import { createEmptyProjectSnapshot } from '@/lib/emptyProject';
@@ -42,6 +42,8 @@ import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { useUiPreference } from '@/hooks/useUiPreference';
 import { readUiPreference } from '@/lib/uiPreferences';
 
+const SourceImportDialog = lazy(() => import('./SourceImportDialog'));
+
 function openLocalInEditor(
   router: ReturnType<typeof useRouter>,
   projectId: string,
@@ -73,6 +75,7 @@ function openFolderInEditor(
 
 export function StartScreen() {
   const router = useRouter();
+  const [sourceImportOpen, setSourceImportOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recent = useRecentProjects();
   const folderPickerReady = useFolderPickerSupported();
@@ -277,6 +280,7 @@ export function StartScreen() {
   };
 
   return (
+    <>
     <StartHomeLayout
       fileInputRef={fileInputRef}
       folderPickerReady={folderPickerReady}
@@ -291,11 +295,18 @@ export function StartScreen() {
       onNewProjectFolder={() => void handleNewProjectFolder()}
       onOpenProjectFolder={() => void handleOpenProjectFolder()}
       onImportFile={handleImportFile}
+      onImportSource={() => setSourceImportOpen(true)}
       onOpenUsabilityTest={handleOpenUsabilityTest}
       onOpenRecent={(entry) => void handleOpenRecent(entry)}
       onDeleteProject={handleDeleteProject}
       onOpenProjectDirectory={(e, entry) => void handleOpenProjectDirectory(e, entry)}
       formatRelative={formatRelative}
     />
+    {sourceImportOpen && <Suspense fallback={<p role="status" className="fixed bottom-4 right-4 text-zinc-300">Loading importer…</p>}><SourceImportDialog onClose={() => setSourceImportOpen(false)} onAccept={snapshot => {
+      const id = createProjectId();
+      openLocalInEditor(router, id, { ...snapshot, projectId: id }, 'import');
+      setSourceImportOpen(false);
+    }} /></Suspense>}
+    </>
   );
 }

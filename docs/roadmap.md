@@ -46,7 +46,7 @@
 
 | Focus | IDs | Notes |
 |-------|-----|--------|
-| Code to visual (reverse of Generate) | U93 | Research tab. Not shipped. Do not advertise "import from existing code" |
+| Code to visual (reverse of Generate) | U93 | Experimental JavaScript class subset; general reverse import remains open. See the supported limits in the import review. |
 | Compile-once-all | COA | `COA_SHIPPED = false`. Single-target Generate only |
 | Session collab | Phase 4 | Planned. Session client/host, not account cloud |
 | UE6 Verse plugin | Phase 5 | Planned. Same graph, Verse text, not Blueprint VM |
@@ -98,7 +98,7 @@ Emit-fidelity findings: **CL-*** log in [`.agents/skills/vvs_cross_language_mapp
 | # | Item | Notes |
 |---|------|--------|
 | **U90** | Library remaining | Templates / git import shipped. **Auth / upload frozen.** Remaining is a public git catalog and browse/search, not an upload form or GoTrue accounts. |
-| **U93** (`code-to-visual-u93`) | Code to visual | Long-term reverse-import **research**. Not a default. |
+| **U93** (`code-to-visual-u93`) | Code to visual | Long-term reverse-import **research**. Source-linked, preview-first implementation plan in [code_to_visual_import.md](design/code_to_visual_import.md); experimental class importer in Start; general syntax, standalone functions and re-import remain open. Not a default. |
 
 ### Library (U90)
 
