@@ -10,6 +10,8 @@ Babel parses and reports exact UTF-16 ranges. A parser receipt freezes the origi
 
 Mapping contracts carry stable IDs/versions, language/version/mode/environment, structural shapes, preconditions, target kinds/versions and pin/edge rules, failures, dependency obligations and evidence. Parameter identities are assigned per method scope before any uses are wired. Expression/statement registry resolution checks all structural matches and rejects ambiguity independent of registration order. Typed plans retain spans and resolved read obligations; no parser AST reaches the graph builder.
 
+Unsaved candidates have an empty `savedAt`; the existing project save boundary assigns the actual timestamp. Materialization therefore does not depend on the wall clock. A regression test compares complete candidates across different mocked dates.
+
 Materialization produces ordinary canvas nodes, compatible pins, edges, symbol indexes and body documents in isolation. Existing entry role requires explicit user consent for an existing ordinary `on_start`. No role is inferred solely from a name. Full source/hash/file/range and mapping version persist on Class Declare; generated nodes retain source-origin spans. The accepted snapshot is the sole editable graph authority, with no persisted parallel AST/import plan.
 
 ## Deliberate semantic tightening

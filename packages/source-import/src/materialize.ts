@@ -9,6 +9,8 @@ import { ImportFailure, IMPORT_LIMITS, type ClassImportPlan, type ExpressionPlan
 /** Transactional deterministic builder. Only typed plans, never parser AST or editor state. */
 export function materializeImportPlan(plan: ClassImportPlan): ProjectSnapshot {
   const snapshot = createEmptyProjectSnapshot();
+  // An isolated candidate is unsaved. The existing project save boundary assigns its timestamp.
+  snapshot.savedAt = '';
   const cls = createClassSymbol(plan.name, { id: MAIN_CLASS_ID, containerId: MAIN_GRAPH_CONTAINER_ID });
   snapshot.classes = [cls]; snapshot.activeClassId = cls.id;
   snapshot.projectDetails = { moduleName: cls.name, extendsType: '', description: `Imported from ${plan.fileName}` };

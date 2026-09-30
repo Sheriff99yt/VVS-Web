@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test, setSystemTime } from 'bun:test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse as parseAcorn } from 'acorn';
@@ -49,6 +49,19 @@ for (const fixture of fixtures) describe(`full-file Rosetta ${fixture.name}`, ()
 });
 
 describe('independent rejection gates', () => {
+  test('materialization is identical across different wall-clock times', async () => {
+    const preview = await previewJavaScriptImport(fixtures[0]!.source);
+    const plan = planJavaScriptClass(preview, preview.regions[0]!, 'fixture.js', true);
+    try {
+      setSystemTime(new Date('2026-09-30T00:00:00Z'));
+      const first = materializeImportPlan(plan);
+      setSystemTime(new Date('2026-10-01T00:00:00Z'));
+      const second = materializeImportPlan(plan);
+      expect(first.savedAt).toBe('');
+      expect(second).toEqual(first);
+      expect(semanticProjection(second)).toEqual(fixtures[0]!.expected);
+    } finally { setSystemTime(); }
+  });
   test('mutated branch polarity, arithmetic operator and parameter binding fail structural gate', async () => {
     const branch = fixtures.find(f => f.name === 'terminal-branch')!;
     const arithmetic = fixtures.find(f => f.name === 'static-arithmetic')!;
