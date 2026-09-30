@@ -5,3 +5,5 @@ export * from './registry';
 export * from './javascriptMappings';
 export * from './materialize';
 export * from './capabilities';
+export * from './adapterContract';
+export * from './sourceOffsets';
