@@ -33,6 +33,8 @@ export interface ClassImportPlan extends MappingEvidence {
   source: string; sourceSha256: string; selectedSource: string;
   methods: MethodPlan[]; dependencies: DependencyObligation[];
   entryPolicy?: 'program' | 'library';
+  /** File-owned functions use organizational Global scope, never a source class. */
+  unitKind?: 'standalone-function';
 }
 export interface MappingContract {
   id: string; version: number; context: ImportContext;

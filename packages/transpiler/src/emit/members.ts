@@ -1,3 +1,4 @@
+import { renderJavaScriptModuleFunctionHeader, renderJavaScriptModuleFunctionClose } from './shell';
 import { type VariableSymbol, parseTypeRef, resolveTypeRef, targetLanguageToFamily } from '@vvs/graph-types';
 import { isFeatureUnsupportedForLanguage, isFunctionRoleEffective, isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import { renderTemplate, requireTemplate, resolvePrintProfile } from '@vvs/syntax-packs';
@@ -708,7 +709,8 @@ function appendFunctionDefinition(
       continue;
     }
     const props = { ...member.properties, overloadId: overload.id };
-    const header = formatFunctionDefHeader(
+    const fileFunction = ir.targetLanguage === 'javascript' && ir.activeClass?.isGlobalScope === true && symbol.binding === 'module';
+    const header = fileFunction ? renderJavaScriptModuleFunctionHeader(symbol, props, functionNeedsAsync(ir, symbol.id)) : formatFunctionDefHeader(
       symbol,
       ir.targetLanguage,
       functionNeedsAsync(ir, symbol.id),
@@ -723,10 +725,10 @@ function appendFunctionDefinition(
     // (C++ prototype or U66 `(x) Declare`), never the Define `def` / method line.
     sink.tagRange(defineNodeId, headerStartLine, headerStartLine, symbol.name);
 
-    appendFunctionBody(sink, ir, overload.tabId, emptyLine, ir.environmentManifest, defineNodeId, undefined, {
+    appendFunctionBody(sink, ir, overload.tabId, emptyLine, ir.environmentManifest, defineNodeId, fileFunction ? '    ' : undefined, {
       onBeforeNode: onBeforeFlowNode,
     });
-    const tabClose = renderFunctionTabClose(ir.targetLanguage);
+    const tabClose = fileFunction ? renderJavaScriptModuleFunctionClose() : renderFunctionTabClose(ir.targetLanguage);
     if (tabClose) {
       sink.appendRaw(tabClose);
     }

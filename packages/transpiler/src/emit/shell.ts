@@ -678,3 +678,11 @@ export function renderFunctionTabClose(lang: TargetLanguage): string | null {
 export function renderFunctionOutOfLineClose(lang: TargetLanguage): string {
   return optionalShell(lang, 'FunctionOutOfLineClose') ?? '}';
 }
+
+/** File-owned JS function shell. The visible Define owns the entire declaration. */
+export function renderJavaScriptModuleFunctionHeader(func: FunctionSymbol, properties?: Record<string, unknown>, isAsync = false): string {
+  return renderShell('javascript', 'ModuleFunctionDefOpen', { asyncKw: isAsync ? 'async ' : '', name: func.name, paramList: functionParamList(func, 'javascript', properties) });
+}
+export function renderJavaScriptModuleFunctionClose(): string {
+  return renderShell('javascript', 'ModuleFunctionDefClose', {});
+}

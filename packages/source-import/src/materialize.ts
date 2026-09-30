@@ -11,11 +11,12 @@ export function materializeImportPlan(plan: ClassImportPlan): ProjectSnapshot {
   const snapshot = createEmptyProjectSnapshot();
   // An isolated candidate is unsaved. The existing project save boundary assigns its timestamp.
   snapshot.savedAt = '';
-  const cls = createClassSymbol(plan.name, { id: MAIN_CLASS_ID, containerId: MAIN_GRAPH_CONTAINER_ID });
+  const fileFunction = plan.unitKind === 'standalone-function';
+  const cls = createClassSymbol(fileFunction ? 'Global' : plan.name, { id: fileFunction ? `global-${MAIN_GRAPH_CONTAINER_ID}` : MAIN_CLASS_ID, containerId: MAIN_GRAPH_CONTAINER_ID, ...(fileFunction ? { isGlobalScope: true } : {}) });
   snapshot.classes = [cls]; snapshot.activeClassId = cls.id;
-  snapshot.projectDetails = { moduleName: cls.name, extendsType: '', description: `Imported from ${plan.fileName}` };
+  snapshot.projectDetails = { moduleName: plan.name, extendsType: '', description: `Imported from ${plan.fileName}` };
   snapshot.targetLanguage = 'javascript'; snapshot.events = []; snapshot.variables = []; snapshot.functions = []; snapshot.documents = {};
-  const home: GraphDocument = { nodes: [], edges: [], metadata: { moduleName: cls.name, extendsType: '', description: '', targetLanguage: 'javascript' } };
+  const home: GraphDocument = { nodes: [], edges: [], metadata: { moduleName: plan.name, extendsType: '', description: '', targetLanguage: 'javascript' } };
   if (plan.entryPolicy === 'library') home.metadata!.compilationUnit = { version: 1, entryPolicy: 'library' };
   snapshot.documents[MAIN_GRAPH_CONTAINER_ID] = home;
   let serial = 0;
@@ -34,15 +35,18 @@ export function materializeImportPlan(plan: ClassImportPlan): ProjectSnapshot {
     doc.edges.push({ id: `import-edge-${doc.edges.length}-${from.id}-${to.id}`, source: from.id, target: to.id,
       sourceHandle: output, targetHandle: input, type: 'vvs_standard_edge', data: { pinType } });
   }
-  const classNode = spawn(home, 'class_define', 0, 0, plan);
-  classNode.data.label = `Declare ${cls.name}`;
-  classNode.data.properties = { ...classNode.data.properties, symbolId: cls.id, classId: cls.id, name: cls.name, extendsType: '', visibility: 'public',
-    sourceImport: { version: 1, language: 'javascript', languageVersion: 'es2022', sourceMode: 'script', environment: 'none', fileName: plan.fileName,
-      source: plan.source, sourceSha256: plan.sourceSha256, start: plan.start, end: plan.end, mappingId: plan.mappingId, mappingVersion: plan.mappingVersion } };
-  let previousMember = classNode;
+  const provenance = { version: 1, language: 'javascript', languageVersion: 'es2022', sourceMode: 'script', environment: 'none', fileName: plan.fileName,
+    source: plan.source, sourceSha256: plan.sourceSha256, start: plan.start, end: plan.end, mappingId: plan.mappingId, mappingVersion: plan.mappingVersion };
+  let previousMember: GraphNode | undefined;
+  if (!fileFunction) {
+    const classNode = spawn(home, 'class_define', 0, 0, plan);
+    classNode.data.label = `Declare ${cls.name}`;
+    classNode.data.properties = { ...classNode.data.properties, symbolId: cls.id, classId: cls.id, name: cls.name, extendsType: '', visibility: 'public', sourceImport: provenance };
+    previousMember = classNode;
+  }
   for (const [methodIndex, method] of plan.methods.entries()) {
     const parameters = method.parameters.map(p => ({ id: p.id, label: p.name, type: 'data_any' as PinType }));
-    const func: FunctionSymbol = { kind: 'function', id: method.id, name: method.name, classId: cls.id, binding: method.isStatic ? 'static' : 'instance', visibility: 'public',
+    const func: FunctionSymbol = { kind: 'function', id: method.id, name: method.name, classId: cls.id, binding: fileFunction ? 'module' : method.isStatic ? 'static' : 'instance', visibility: 'public',
       overloads: [{ id: 'o1', parameters, returnType: 'data_any', graphTabId: method.id }] };
     const isEntry = method.role === 'entry';
     const body: GraphDocument = isEntry ? home : { nodes: [], edges: [], metadata: { moduleName: method.name, extendsType: '', description: '' } };
@@ -53,15 +57,16 @@ export function materializeImportPlan(plan: ClassImportPlan): ProjectSnapshot {
       const declarationNode = spawn(home, 'event_member_define', (methodIndex + 1) * 520, 0, method);
       declarationNode.data.properties = { ...declarationNode.data.properties, symbolId: event.id, eventId: event.id, name: event.name, role: 'entry' };
       declarationNode.data.label = 'Declare start';
-      wire(home, previousMember, 'exec_out', declarationNode, 'exec_in', 'execution'); previousMember = declarationNode;
+      if (previousMember) wire(home, previousMember, 'exec_out', declarationNode, 'exec_in', 'execution'); previousMember = declarationNode;
       entry = spawn(home, 'event_define', 0, 400, method); entry.data = applyEventDefineBinding(entry.data, event);
     } else {
       snapshot.functions.push(func);
       const declarationNode = spawn(home, 'function_define', (methodIndex + 1) * 520, 0, method);
       declarationNode.data = applyFunctionDefineBinding(declarationNode.data, func, 'o1');
+      if (fileFunction) declarationNode.data.properties = { ...declarationNode.data.properties, sourceImport: provenance };
       const define = spawn(home, 'function_implement', (methodIndex + 1) * 520 + 240, 0, method);
       define.data = applyFunctionImplementBinding(define.data, func, 'o1'); define.data.properties = { ...define.data.properties, isStatic: method.isStatic };
-      wire(home, previousMember, 'exec_out', declarationNode, 'exec_in', 'execution'); wire(home, declarationNode, 'exec_out', define, 'exec_in', 'execution'); previousMember = define;
+      if (previousMember) wire(home, previousMember, 'exec_out', declarationNode, 'exec_in', 'execution'); wire(home, declarationNode, 'exec_out', define, 'exec_in', 'execution'); previousMember = define;
       snapshot.documents[func.id] = body; snapshot.openTabs.push({ id: func.id, type: 'function', name: `Function: ${method.name}` });
       entry = spawn(body, 'function_entry', 0, 0, method); entry.data = applyFunctionEntryBinding(entry.data, func, 'o1');
     }

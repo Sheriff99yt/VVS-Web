@@ -66,3 +66,7 @@ Add more mappings one construct at a time, followed by other languages. Source-l
 ## Reviewed package migration (stages 0–3)
 
 See [reverse_import_milestone.md](reverse_import_milestone.md) for the implemented package seam, versioned reverse mappings, scoped plans, full-file Rosetta/Acorn evidence, stale-review acceptance gates and concrete capability matrix. Dynamic arithmetic/truthiness are now conservatively rejected; the earlier broad arithmetic description above is baseline history. General U93 and standalone/module functions remain open.
+
+## Standalone Library pilot
+
+The later file-scope pilot accepts one named synchronous script function in explicit Library mode, with the existing closed parameter/literal/arithmetic/terminal-branch subset. Visible Function Declare/Define nodes own source provenance and emission; organizational Global scope creates no source class. Program-entry mapping, exports, closures, calls, locals and other-language imports remain unsupported. See [bidirectional execution](bidirectional_execution.md).

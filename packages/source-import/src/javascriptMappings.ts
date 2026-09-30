@@ -29,7 +29,9 @@ const terminalBranch = contract('js.terminal-if', 'IfStatement(BlockStatement, B
 export const classContract = contract('js.plain-class', 'ClassDeclaration(ClassMethod*)', ['Named plain class; closed parameter-only bodies; explicit existing entry consent'], ['class_define', 'function_define', 'function_implement', 'event_member_define', 'event_define'], ['ENTRY_CONSENT', 'ENTRY_MISSING', 'SIGNATURE_UNSUPPORTED']);
 export const libraryClassContract = contract('js.library-class', 'ClassDeclaration(ClassMethod*)', ['Named plain class; explicit library unit policy; all methods retain ordinary roles; closed parameter-only bodies'], ['class_define', 'function_define', 'function_implement'], ['ENTRY_POLICY_CONFLICT', 'SIGNATURE_UNSUPPORTED']);
 export const methodContract = contract('js.ordinary-method', 'ClassMethod(kind=method, identifiers)', ['No constructor/getter/async/generator/decorator/default/rest; declaration pass precedes reads'], ['function_define', 'function_implement', 'function_entry'], ['SIGNATURE_UNSUPPORTED']);
-export const JAVASCRIPT_MAPPING_CONTRACTS = [classContract, libraryClassContract, methodContract, literal, parameter, arithmetic, valueReturn, terminalBranch] as const;
+export const standaloneFunctionContract = contract('js.standalone-function', 'FunctionDeclaration(identifier, identifiers, BlockStatement)', ['Explicit Library file; synchronous named function; parameter-only closure; no directives, comments or captures'], ['function_define', 'function_implement', 'function_entry'], ['LIBRARY_POLICY_REQUIRED', 'SIGNATURE_UNSUPPORTED', 'UNRESOLVED_BINDING']);
+standaloneFunctionContract.evidence = ['standaloneUnit.test.ts: fixed canonical file-owned graph', 'standaloneUnit.test.ts: standalone full-file and persistence round trip', 'standaloneUnit.test.ts: unsupported semantics and mutations'];
+export const JAVASCRIPT_MAPPING_CONTRACTS = [standaloneFunctionContract, classContract, libraryClassContract, methodContract, literal, parameter, arithmetic, valueReturn, terminalBranch] as const;
 
 export const javascriptExpressionMappings: readonly ReverseMapping<AstNode, MappingScope, ExpressionPlan>[] = [
   { contract: literal, matches: n => ['NumericLiteral', 'StringLiteral', 'BooleanLiteral'].includes(n.type), map: (n, s) => {
@@ -106,4 +108,21 @@ export function planJavaScriptClass(preview: SourceImportPreview, region: Import
   return { version: 1, context: IMPORT_CONTEXT, mappingId: entryPolicy === 'library' ? libraryClassContract.id : classContract.id, mappingVersion: 1, start: region.start, end: region.end,
     name: declaration.id.name, fileName, source: preview.source, sourceSha256: preview.sourceSha256, selectedSource: region.text, methods, dependencies,
     ...(entryPolicy === 'library' ? { entryPolicy } : {}) };
+}
+
+/** Conservative file-owned function pilot; reuses reviewed expression/flow mappings. */
+export function planJavaScriptFunction(preview: SourceImportPreview, region: ImportRegion, fileName: string, mapStartAsEntry: boolean, entryPolicy: 'program' | 'library'): ClassImportPlan {
+  validateSourceCoverage(preview);
+  if (!preview.regions.includes(region) || region.kind !== 'candidate' || region.proposedKind !== 'standalone-function') throw new ImportFailure('STALE_SOURCE', 'Select a standalone function from the current preview.', region);
+  if (entryPolicy !== 'library' || mapStartAsEntry) throw new ImportFailure('LIBRARY_POLICY_REQUIRED', 'Standalone functions require Library mode without an entry mapping.', region);
+  const ast = parseJavaScript(region.text);
+  const fn = ast.program.body[0];
+  if (ast.program.body.length !== 1 || fn?.type !== 'FunctionDeclaration' || !fn.id || fn.async || fn.generator || fn.params.some(p => p.type !== 'Identifier') || fn.body.directives.length || ast.comments?.length) throw new ImportFailure('SIGNATURE_UNSUPPORTED', 'Only named synchronous functions with plain parameters and no directives or embedded comments are supported.', region);
+  const scopeId = 'function-0';
+  const parameters: ParameterPlan[] = fn.params.map((p, i) => ({ id: `param-${i}`, name: (p as { name: string }).name, scopeId, start: p.start! + region.start, end: p.end! + region.start }));
+  if (new Set(parameters.map(p => p.name)).size !== parameters.length) throw new ImportFailure('DUPLICATE_BINDING', 'Duplicate parameters are not supported.', region);
+  const dependencies: DependencyObligation[] = [];
+  const scope: MappingScope = { scopeId, parameters: new Map(parameters.map(p => [p.name, p])), dependencies, offset: region.start };
+  const method: MethodPlan = { ...evidence(standaloneFunctionContract, fn as unknown as AstNode, scope), id: 'import-function-0', name: fn.id.name, scopeId, isStatic: false, role: 'method', parameters, body: mapBlock(fn.body as unknown as AstNode, scope) };
+  return { ...evidence(standaloneFunctionContract, fn as unknown as AstNode, scope), version: 1, context: IMPORT_CONTEXT, name: fn.id.name, fileName, source: preview.source, sourceSha256: preview.sourceSha256, selectedSource: region.text, methods: [method], dependencies, entryPolicy: 'library', unitKind: 'standalone-function' };
 }
