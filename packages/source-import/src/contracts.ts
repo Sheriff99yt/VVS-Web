@@ -32,6 +32,7 @@ export interface ClassImportPlan extends MappingEvidence {
   version: 1; context: ImportContext; name: string; fileName: string;
   source: string; sourceSha256: string; selectedSource: string;
   methods: MethodPlan[]; dependencies: DependencyObligation[];
+  entryPolicy?: 'program' | 'library';
 }
 export interface MappingContract {
   id: string; version: number; context: ImportContext;

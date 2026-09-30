@@ -514,6 +514,8 @@ export interface GraphTabMetadata {
   moduleName: string;
   extendsType: string;
   description: string;
+  /** Explicit file-level policy. Absent/legacy metadata retains the program entry requirement. */
+  compilationUnit?: { version: 1; entryPolicy: 'program' | 'library' };
   /** Per-graph codegen language; unset inherits project default at emit time. */
   targetLanguage?: TargetLanguage;
   /** Per-graph extension for this graph's target language. */

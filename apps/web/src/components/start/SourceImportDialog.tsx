@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ReactFlow, ReactFlowProvider, Background, Controls } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { ProjectSnapshot } from '@vvs/graph-types';
-import { previewJavaScriptImport, type SourceImportPreview } from '@/lib/sourceImportPreview';
-import { MAX_SOURCE_IMPORT_BYTES, reviewSourceImportGraph, acceptSourceImportReview, type SourceImportGraphReview } from '@/lib/sourceImportGraph';
+import type { SourceImportPreview } from '@/lib/sourceImportPreview';
+import { MAX_SOURCE_IMPORT_BYTES } from '@/lib/sourceImportGraph';
+import { SourceImportWorkerClient, type ImportWorkerPort } from '@/lib/sourceImportWorkerClient';
+import type { WorkerGraphReview } from '@/lib/sourceImportWorkerProtocol';
 
 const EXAMPLE = `class Calculator {
     on_start() { return 0; }
@@ -26,29 +28,39 @@ export default function SourceImportDialog({ onClose, onAccept }: {
   const [preview, setPreview] = useState<SourceImportPreview | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [mapStart, setMapStart] = useState(false);
-  const [review, setReview] = useState<SourceImportGraphReview | null>(null);
+  const [entryPolicy, setEntryPolicy] = useState<'program' | 'library'>('program');
+  const [review, setReview] = useState<WorkerGraphReview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [graphId, setGraphId] = useState('');
-  useEffect(() => { dialog.current?.showModal(); }, []);
+  const client = useRef<SourceImportWorkerClient | null>(null);
+  const getClient = () => {
+    if (!client.current) client.current = new SourceImportWorkerClient(() => new Worker(new URL('../../lib/sourceImportWorker.ts', import.meta.url), { type: 'module' }) as unknown as ImportWorkerPort);
+    return client.current;
+  };
+  useEffect(() => { dialog.current?.showModal(); return () => client.current?.cancel(); }, []);
   const reset = (text: string, name: string) => {
-    setSource(text); setFileName(name); setPreview(null); setSelected(null); setReview(null); setMapStart(false); setError('');
+    client.current?.cancel();
+    setSource(text); setFileName(name); setPreview(null); setSelected(null); setReview(null); setMapStart(false); setEntryPolicy('program'); setError('');
   };
   const analyze = async () => {
     setBusy(true); setReview(null); setError('');
     try {
       if (new TextEncoder().encode(source).length > MAX_SOURCE_IMPORT_BYTES) throw new Error('Choose a source file of at most 128 KiB.');
-      const next = await previewJavaScriptImport(source);
+      const next = await getClient().preview(source);
       setPreview(next);
       setSelected(null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
   };
-  const convert = () => {
+  const convert = async () => {
     if (!preview || selected === null) return;
-    const next = reviewSourceImportGraph(preview, preview.regions[selected]!, fileName, mapStart);
-    setReview(next);
-    setGraphId(next.snapshot?.activeGraphTab ?? '');
+    setBusy(true); setReview(null); setError('');
+    try {
+      const next = await getClient().review(source, selected, fileName, mapStart, entryPolicy);
+      setReview(next); setGraphId(next.snapshot?.activeGraphTab ?? '');
+    } catch (err) { setError(err instanceof Error ? err.message : 'Import review failed.'); }
+    finally { setBusy(false); }
   };
   const chosen = selected !== null ? preview?.regions[selected] : undefined;
   const doc = review?.snapshot?.documents[graphId];
@@ -62,7 +74,7 @@ export default function SourceImportDialog({ onClose, onAccept }: {
       <p className="my-3 text-sm text-zinc-400">Create a new project from one supported class. Review the source, graph and generated code before accepting. Parsing stays in your browser.</p>
       <details className="mb-3 text-sm text-zinc-400">
         <summary className="cursor-pointer">Supported subset and source preservation</summary>
-        <p className="mt-2">Plain named classes with an existing on_start method, ordinary or static methods, named parameters, literals, arithmetic with provably numeric literal operands, and terminal return or if/else with Boolean literal conditions. Dynamic arithmetic and truthiness need explicit JavaScript semantics and are blocked. Calls, locals, receiver access, inheritance, exports and embedded comments are blocked. The full original file and its hash are retained on the imported class node. Source outside the selected class is preserved there and is excluded from generated output.</p>
+        <p className="mt-2">Plain named classes with ordinary or static methods, named parameters, literals, arithmetic with provably numeric literal operands, and terminal return or if/else with Boolean literal conditions. Program units require explicit mapping of an existing on_start method; library units retain ordinary methods without requiring an entry. Dynamic arithmetic and truthiness need explicit JavaScript semantics and are blocked. Calls, locals, receiver access, inheritance, exports and embedded comments are blocked. The full original file and its hash are retained on the imported class node. Source outside the selected class is preserved there and is excluded from generated output.</p>
         <p className="mt-2">Formatting, quote style, parentheses and empty semicolons may be normalized. All other syntax structure must match. Limits: 128 KiB, 32 methods, 512 nodes and bounded AST depth/analysis time. This is a one-time import; later source edits are not synchronized.</p>
       </details>
       <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -83,6 +95,7 @@ export default function SourceImportDialog({ onClose, onAccept }: {
       <textarea id="import-source" value={source} disabled={busy} onChange={e => reset(e.target.value, 'pasted.js')}
         spellCheck={false} className="mt-1 w-full h-44 rounded border border-zinc-700 bg-zinc-900 p-3 font-mono text-xs" />
       <button type="button" onClick={() => void analyze()} disabled={busy || !source.trim()} className={`${BUTTON} mt-2`}>{busy ? 'Reading source…' : 'Analyze source'}</button>
+      {busy && <button type="button" className={`${BUTTON} ml-2`} onClick={() => { client.current?.cancel(); setBusy(false); setReview(null); setError('Import cancelled.'); }}>Cancel import</button>}
       {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
       {preview && <div className="mt-4 space-y-3">
         {preview.diagnostics.map((message, i) => <p role="alert" className="text-sm text-red-300" key={i}>{message}</p>)}
@@ -98,8 +111,13 @@ export default function SourceImportDialog({ onClose, onAccept }: {
         {chosen && <>
           <details><summary className="cursor-pointer text-sm">Selected original region</summary><pre className="mt-2 max-h-48 overflow-auto bg-zinc-900 p-3 text-xs">{chosen.text}</pre></details>
           {chosen.kind === 'candidate' && <>
-            <label className="flex items-start gap-2 text-sm"><input type="checkbox" disabled={busy} checked={mapStart} onChange={e => { setMapStart(e.target.checked); setReview(null); }} />Map the existing on_start method to the VVS program entry event</label>
-            <button type="button" className={BUTTON} disabled={busy} onClick={convert}>Build and validate preview</button>
+            <label className="block text-sm">Compilation unit
+              <select className="ml-2 bg-zinc-900 border border-zinc-700 p-1" disabled={busy} value={entryPolicy} onChange={e => { setEntryPolicy(e.target.value as 'program' | 'library'); setMapStart(false); setReview(null); }}>
+                <option value="program">Program — explicit existing entry</option><option value="library">Library — ordinary methods, no required entry</option>
+              </select>
+            </label>
+            {entryPolicy === 'program' && <label className="flex items-start gap-2 text-sm"><input type="checkbox" disabled={busy} checked={mapStart} onChange={e => { setMapStart(e.target.checked); setReview(null); }} />Map the existing on_start method to the VVS program entry event</label>}
+            <button type="button" className={BUTTON} disabled={busy} onClick={() => void convert()}>Build and validate preview</button>
           </>}
         </>}
         {review && <>
@@ -124,7 +142,7 @@ export default function SourceImportDialog({ onClose, onAccept }: {
           {review.snapshot && <button type="button" className={`${BUTTON} border-blue-500`} disabled={busy} onClick={async () => {
             setBusy(true);
             try {
-              const accepted = await acceptSourceImportReview(review, source, fileName, mapStart);
+              const accepted = await getClient().accept(review, source, fileName, mapStart, entryPolicy);
               if (dialog.current?.open) onAccept(accepted);
             } catch (err) { setError(err instanceof Error ? err.message : 'Could not save the imported project.'); }
             finally { setBusy(false); }

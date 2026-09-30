@@ -48,19 +48,19 @@ export function validateImportSnapshot(snapshot: ProjectSnapshot, selectedSource
   if (JSON.stringify(originals) !== JSON.stringify(copies)) throw new ImportFailure('PROVENANCE_DRIFT', 'Save/load changed immutable original source.');
   return { snapshot: loaded, generated };
 }
-interface ReviewSeal { source: string; fileName: string; mapStart: boolean; snapshot: string; hash: string; selectedSource: string }
+interface ReviewSeal { source: string; fileName: string; mapStart: boolean; entryPolicy: 'program' | 'library'; snapshot: string; hash: string; selectedSource: string }
 const reviews = new WeakMap<SourceImportGraphReview, ReviewSeal>();
-export function reviewSourceImportGraph(preview: SourceImportPreview, region: ImportRegion, fileName: string, mapStartAsEntry = false): SourceImportGraphReview {
+export function reviewSourceImportGraph(preview: SourceImportPreview, region: ImportRegion, fileName: string, mapStartAsEntry = false, entryPolicy: 'program' | 'library' = 'program'): SourceImportGraphReview {
   let generated = ''; let nodeCount = 0;
   const started = performance.now();
   try {
-    const plan: ClassImportPlan = planJavaScriptClass(preview, region, fileName, mapStartAsEntry);
+    const plan: ClassImportPlan = planJavaScriptClass(preview, region, fileName, mapStartAsEntry, entryPolicy);
     const snapshot = materializeImportPlan(plan);
     nodeCount = Object.values(snapshot.documents).reduce((sum, doc) => sum + doc.nodes.length, 0);
     const validated = validateImportSnapshot(snapshot, plan.selectedSource); generated = validated.generated;
     if (performance.now() - started > IMPORT_LIMITS.elapsedMs) throw new ImportFailure('TIME_BUDGET', 'Import review exceeded its analysis time budget.');
     const review = { ...validated, diagnostics: [], issues: [], nodeCount };
-    reviews.set(review, { source: preview.source, fileName, mapStart: mapStartAsEntry, snapshot: JSON.stringify(validated.snapshot), hash: preview.sourceSha256, selectedSource: plan.selectedSource });
+    reviews.set(review, { source: preview.source, fileName, mapStart: mapStartAsEntry, entryPolicy, snapshot: JSON.stringify(validated.snapshot), hash: preview.sourceSha256, selectedSource: plan.selectedSource });
     return review;
   } catch (error) {
     const failure = error instanceof ImportFailure ? error : new ImportFailure('IMPORT_REJECTED', error instanceof Error ? error.message : String(error));
@@ -68,9 +68,9 @@ export function reviewSourceImportGraph(preview: SourceImportPreview, region: Im
   }
 }
 /** Acceptance returns a fresh exact reviewed transaction; callers cannot accept stale source/config/graph. */
-export async function acceptSourceImportReview(review: SourceImportGraphReview, source: string, fileName: string, mapStart: boolean): Promise<ProjectSnapshot> {
+export async function acceptSourceImportReview(review: SourceImportGraphReview, source: string, fileName: string, mapStart: boolean, entryPolicy: 'program' | 'library' = 'program'): Promise<ProjectSnapshot> {
   const seal = reviews.get(review);
-  if (!seal || !review.snapshot || seal.source !== source || seal.fileName !== fileName || seal.mapStart !== mapStart || JSON.stringify(review.snapshot) !== seal.snapshot) throw new ImportFailure('STALE_REVIEW', 'Source, mapping options or reviewed graph changed. Build a fresh preview.');
+  if (!seal || !review.snapshot || seal.source !== source || seal.fileName !== fileName || seal.mapStart !== mapStart || seal.entryPolicy !== entryPolicy || JSON.stringify(review.snapshot) !== seal.snapshot) throw new ImportFailure('STALE_REVIEW', 'Source, mapping options or reviewed graph changed. Build a fresh preview.');
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(source));
   const hash = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
   if (hash !== seal.hash) throw new ImportFailure('SOURCE_HASH', 'Original source hash changed.');

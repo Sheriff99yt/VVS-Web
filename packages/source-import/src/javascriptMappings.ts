@@ -27,8 +27,9 @@ const arithmetic = contract('js.number-arithmetic', 'BinaryExpression(+ | - | * 
 const valueReturn = contract('js.return', 'ReturnStatement(argument)', ['Exactly one terminal statement per block'], ['flow_return'], ['RETURN_REQUIRED']);
 const terminalBranch = contract('js.terminal-if', 'IfStatement(BlockStatement, BlockStatement)', ['Condition provably Boolean; both blocks terminal; preserve polarity'], ['flow_branch'], ['JS_TRUTHINESS', 'TERMINAL_BLOCK_REQUIRED']);
 export const classContract = contract('js.plain-class', 'ClassDeclaration(ClassMethod*)', ['Named plain class; closed parameter-only bodies; explicit existing entry consent'], ['class_define', 'function_define', 'function_implement', 'event_member_define', 'event_define'], ['ENTRY_CONSENT', 'ENTRY_MISSING', 'SIGNATURE_UNSUPPORTED']);
+export const libraryClassContract = contract('js.library-class', 'ClassDeclaration(ClassMethod*)', ['Named plain class; explicit library unit policy; all methods retain ordinary roles; closed parameter-only bodies'], ['class_define', 'function_define', 'function_implement'], ['ENTRY_POLICY_CONFLICT', 'SIGNATURE_UNSUPPORTED']);
 export const methodContract = contract('js.ordinary-method', 'ClassMethod(kind=method, identifiers)', ['No constructor/getter/async/generator/decorator/default/rest; declaration pass precedes reads'], ['function_define', 'function_implement', 'function_entry'], ['SIGNATURE_UNSUPPORTED']);
-export const JAVASCRIPT_MAPPING_CONTRACTS = [classContract, methodContract, literal, parameter, arithmetic, valueReturn, terminalBranch] as const;
+export const JAVASCRIPT_MAPPING_CONTRACTS = [classContract, libraryClassContract, methodContract, literal, parameter, arithmetic, valueReturn, terminalBranch] as const;
 
 export const javascriptExpressionMappings: readonly ReverseMapping<AstNode, MappingScope, ExpressionPlan>[] = [
   { contract: literal, matches: n => ['NumericLiteral', 'StringLiteral', 'BooleanLiteral'].includes(n.type), map: (n, s) => {
@@ -72,11 +73,13 @@ function mapBlock(block: AstNode, scope: MappingScope): StatementPlan {
 }
 
 /** Declare scope identities before definition/use wiring. No ambient name lookup. */
-export function planJavaScriptClass(preview: SourceImportPreview, region: ImportRegion, fileName: string, mapStartAsEntry: boolean): ClassImportPlan {
+export function planJavaScriptClass(preview: SourceImportPreview, region: ImportRegion, fileName: string, mapStartAsEntry: boolean, entryPolicy: 'program' | 'library' = 'program'): ClassImportPlan {
   validateSourceCoverage(preview);
   if (!preview.regions.includes(region) || region.kind !== 'candidate') throw new ImportFailure('STALE_SOURCE', 'Select a candidate from the current source preview.');
   if (region.proposedKind !== 'class') throw new ImportFailure('MODULE_SCOPE_REQUIRED', 'Standalone functions require a reviewed module-scope design.', region);
-  if (!mapStartAsEntry) throw new ImportFailure('ENTRY_CONSENT', 'Confirm the explicit mapping of on_start to the VVS program entry event.', region);
+  if (!['program', 'library'].includes(entryPolicy)) throw new ImportFailure('ENTRY_POLICY_INVALID', 'Select an explicit program or library policy.', region);
+  if (entryPolicy === 'library' && mapStartAsEntry) throw new ImportFailure('ENTRY_POLICY_CONFLICT', 'Library import retains ordinary methods without assigning a program-entry role.', region);
+  if (entryPolicy === 'program' && !mapStartAsEntry) throw new ImportFailure('ENTRY_CONSENT', 'Confirm the explicit mapping of on_start to the VVS program entry event.', region);
   const ast = parseJavaScript(region.text);
   const declaration = ast.program.body[0];
   if (ast.program.body.length !== 1 || declaration?.type !== 'ClassDeclaration' || !declaration.id || declaration.superClass || declaration.decorators?.length || ast.comments?.length) throw new ImportFailure('CLASS_UNSUPPORTED', 'Expected one plain named class without embedded comments.', region);
@@ -92,14 +95,15 @@ export function planJavaScriptClass(preview: SourceImportPreview, region: Import
     if (new Set(parameters.map(p => p.name)).size !== parameters.length) throw new ImportFailure('DUPLICATE_BINDING', 'Duplicate parameter binding.', region);
     return { member, name, scopeId, parameters, id: `import-function-${i}` };
   });
-  if (!declarations.some(d => d.name === 'on_start' && !d.member.static)) throw new ImportFailure('ENTRY_MISSING', 'An ordinary on_start method is required; no entry will be invented.', region);
+  if (entryPolicy === 'program' && !declarations.some(d => d.name === 'on_start' && !d.member.static)) throw new ImportFailure('ENTRY_MISSING', 'An ordinary on_start method is required; no entry will be invented.', region);
   const dependencies: DependencyObligation[] = [];
   const methods: MethodPlan[] = declarations.map(d => {
     const scope: MappingScope = { scopeId: d.scopeId, parameters: new Map(d.parameters.map(p => [p.name, p])), dependencies, offset: region.start };
     return { ...evidence(methodContract, d.member as unknown as AstNode, scope), id: d.id, name: d.name, scopeId: d.scopeId,
-      isStatic: d.member.static, role: d.name === 'on_start' && !d.member.static ? 'entry' : 'method', parameters: d.parameters,
+      isStatic: d.member.static, role: entryPolicy === 'program' && d.name === 'on_start' && !d.member.static ? 'entry' : 'method', parameters: d.parameters,
       body: mapBlock(d.member.body as unknown as AstNode, scope) };
   });
-  return { version: 1, context: IMPORT_CONTEXT, mappingId: classContract.id, mappingVersion: 1, start: region.start, end: region.end,
-    name: declaration.id.name, fileName, source: preview.source, sourceSha256: preview.sourceSha256, selectedSource: region.text, methods, dependencies };
+  return { version: 1, context: IMPORT_CONTEXT, mappingId: entryPolicy === 'library' ? libraryClassContract.id : classContract.id, mappingVersion: 1, start: region.start, end: region.end,
+    name: declaration.id.name, fileName, source: preview.source, sourceSha256: preview.sourceSha256, selectedSource: region.text, methods, dependencies,
+    ...(entryPolicy === 'library' ? { entryPolicy } : {}) };
 }
