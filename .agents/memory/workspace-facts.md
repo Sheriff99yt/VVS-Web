@@ -5,7 +5,7 @@ Stable facts agents should assume without re-exploring the tree.
 ## Repository
 
 - Monorepo root: `VVS Web/` — **public MIT repo** (see `CONTRIBUTING.md`)
-- Implemented packages: `packages/graph-types`, `packages/syntax-registry`, `packages/language-profiles`, `packages/syntax-packs`, `packages/transpiler`, `packages/environment-templates`
+- Implemented packages: `packages/graph-types`, `packages/syntax-registry`, `packages/language-profiles`, `packages/syntax-packs`, `packages/transpiler`, `packages/environment-templates`, `packages/source-import`
 - Go server: `server/` — registry HTTP, project REST, compile, **optional** local MCP sidecar SSE. Hosted agent is `apps/web/src/lib/agent/`. **Phase 2 experiments:** `ProjectStore` (`MemoryStore` | `PostgresStore` via `pgx`), JWT middleware ([deployment.md](../../docs/deployment.md))
 
 ## Frontend entry points
@@ -116,3 +116,5 @@ cd server; go build ./...
 ## Naming (user-facing)
 
 Follow `docs/naming_and_product_direction.md` — use **module name**, **extends**, **Generate** (not Compile in user copy).
+
+- Reverse import: `packages/source-import/src/index.ts` = UI-free core; `src/validation.ts` = analyzer/generator coordinator. Generator never imports it. `packages/syntax-packs/rosetta/full-file/` = explicit reverse corpus; existing body goldens unchanged. Public pure function/event bindings now live in graph-types. Details: `docs/design/reverse_import_milestone.md`.

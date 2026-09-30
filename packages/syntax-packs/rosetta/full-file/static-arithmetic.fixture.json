@@ -1,0 +1,177 @@
+{
+  "functions": [
+    {
+      "kind": "function",
+      "id": "f",
+      "name": "calculate",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [],
+          "returnType": "data_any",
+          "graphTabId": "f"
+        }
+      ]
+    }
+  ],
+  "homeNodes": [
+    {
+      "id": "shell",
+      "kindId": "class_define"
+    },
+    {
+      "id": "entry-declaration",
+      "kindId": "event_member_define"
+    },
+    {
+      "id": "entry",
+      "kindId": "event_define"
+    },
+    {
+      "id": "entry-return",
+      "kindId": "flow_return",
+      "values": {
+        "value": 0
+      }
+    },
+    {
+      "id": "fn-declaration",
+      "kindId": "function_define",
+      "symbolId": "f"
+    },
+    {
+      "id": "fn-define",
+      "kindId": "function_implement",
+      "symbolId": "f",
+      "isStatic": true
+    }
+  ],
+  "documents": {
+    "f": {
+      "nodes": [
+        {
+          "id": "body-entry",
+          "kindId": "function_entry",
+          "symbolId": "f"
+        },
+        {
+          "id": "ret",
+          "kindId": "flow_return",
+          "symbolId": "f"
+        },
+        {
+          "id": "add",
+          "kindId": "math_add",
+          "values": {
+            "a": 2,
+            "b": 3
+          }
+        },
+        {
+          "id": "mul",
+          "kindId": "math_multiply",
+          "values": {
+            "b": 4
+          }
+        }
+      ],
+      "edges": [
+        [
+          "body-entry",
+          "exec_out",
+          "ret",
+          "exec_in"
+        ],
+        [
+          "add",
+          "result",
+          "mul",
+          "a"
+        ],
+        [
+          "mul",
+          "result",
+          "ret",
+          "return_val"
+        ]
+      ]
+    }
+  },
+  "homeEdges": [
+    [
+      "shell",
+      "exec_out",
+      "entry-declaration",
+      "exec_in"
+    ],
+    [
+      "entry",
+      "exec_out",
+      "entry-return",
+      "exec_in"
+    ],
+    [
+      "entry-declaration",
+      "exec_out",
+      "fn-declaration",
+      "exec_in"
+    ],
+    [
+      "fn-declaration",
+      "exec_out",
+      "fn-define",
+      "exec_in"
+    ]
+  ],
+  "name": "static-arithmetic",
+  "className": "Arithmetic",
+  "source": "class Arithmetic { on_start() { return 0; } static calculate() { return (2 + 3) * 4; } }",
+  "expected": {
+    "className": "Arithmetic",
+    "methods": [
+      [
+        "on_start",
+        false,
+        "entry",
+        [],
+        [
+          "return",
+          [
+            "literal",
+            0
+          ]
+        ]
+      ],
+      [
+        "calculate",
+        true,
+        "method",
+        [],
+        [
+          "return",
+          [
+            "*",
+            [
+              "+",
+              [
+                "literal",
+                2
+              ],
+              [
+                "literal",
+                3
+              ]
+            ],
+            [
+              "literal",
+              4
+            ]
+          ]
+        ]
+      ]
+    ]
+  }
+}

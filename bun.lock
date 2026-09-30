@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "vvs-monorepo",
@@ -41,6 +40,7 @@
         "@vvs/environment-templates": "workspace:*",
         "@vvs/graph-types": "workspace:*",
         "@vvs/language-profiles": "workspace:*",
+        "@vvs/source-import": "workspace:*",
         "@vvs/syntax-packs": "workspace:*",
         "@vvs/syntax-registry": "workspace:*",
         "@vvs/transpiler": "workspace:*",
@@ -80,6 +80,19 @@
       "version": "0.1.0",
       "dependencies": {
         "@vvs/graph-types": "workspace:*",
+      },
+    },
+    "packages/source-import": {
+      "name": "@vvs/source-import",
+      "version": "0.1.0",
+      "dependencies": {
+        "@babel/parser": "^7.29.9",
+        "@vvs/graph-types": "workspace:*",
+        "@vvs/syntax-registry": "workspace:*",
+        "@vvs/transpiler": "workspace:*",
+      },
+      "devDependencies": {
+        "acorn": "^8.17.0",
       },
     },
     "packages/syntax-packs": {
@@ -650,6 +663,8 @@
     "@vvs/graph-types": ["@vvs/graph-types@workspace:packages/graph-types"],
 
     "@vvs/language-profiles": ["@vvs/language-profiles@workspace:packages/language-profiles"],
+
+    "@vvs/source-import": ["@vvs/source-import@workspace:packages/source-import"],
 
     "@vvs/syntax-packs": ["@vvs/syntax-packs@workspace:packages/syntax-packs"],
 

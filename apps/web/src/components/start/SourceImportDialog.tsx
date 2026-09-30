@@ -5,13 +5,13 @@ import { ReactFlow, ReactFlowProvider, Background, Controls } from '@xyflow/reac
 import '@xyflow/react/dist/style.css';
 import type { ProjectSnapshot } from '@vvs/graph-types';
 import { previewJavaScriptImport, type SourceImportPreview } from '@/lib/sourceImportPreview';
-import { MAX_SOURCE_IMPORT_BYTES, reviewSourceImportGraph, type SourceImportGraphReview } from '@/lib/sourceImportGraph';
+import { MAX_SOURCE_IMPORT_BYTES, reviewSourceImportGraph, acceptSourceImportReview, type SourceImportGraphReview } from '@/lib/sourceImportGraph';
 
 const EXAMPLE = `class Calculator {
     on_start() { return 0; }
-    add(a, b) { return a + b; }
-    choose(flag, a, b) {
-        if (flag) { return a; } else { return b; }
+    calculate() { return (2 + 3) * 4; }
+    choose(a, b) {
+        if (true) { return a; } else { return b; }
     }
 }`;
 const BUTTON = 'rounded border border-zinc-700 px-3 py-1.5 text-sm hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed';
@@ -62,8 +62,8 @@ export default function SourceImportDialog({ onClose, onAccept }: {
       <p className="my-3 text-sm text-zinc-400">Create a new project from one supported class. Review the source, graph and generated code before accepting. Parsing stays in your browser.</p>
       <details className="mb-3 text-sm text-zinc-400">
         <summary className="cursor-pointer">Supported subset and source preservation</summary>
-        <p className="mt-2">Plain named classes with an existing on_start method, ordinary or static methods, named parameters, literals, arithmetic, and terminal return or if/else. Calls, locals, receiver access, inheritance, exports and embedded comments are blocked. The full original file and its hash are retained on the imported class node. Source outside the selected class is preserved there and is excluded from generated output.</p>
-        <p className="mt-2">Formatting, quote style, parentheses and empty semicolons may be normalized. All other syntax structure must match. Limits: 128 KiB, 32 methods and 512 nodes. This is a one-time import; later source edits are not synchronized.</p>
+        <p className="mt-2">Plain named classes with an existing on_start method, ordinary or static methods, named parameters, literals, arithmetic with provably numeric literal operands, and terminal return or if/else with Boolean literal conditions. Dynamic arithmetic and truthiness need explicit JavaScript semantics and are blocked. Calls, locals, receiver access, inheritance, exports and embedded comments are blocked. The full original file and its hash are retained on the imported class node. Source outside the selected class is preserved there and is excluded from generated output.</p>
+        <p className="mt-2">Formatting, quote style, parentheses and empty semicolons may be normalized. All other syntax structure must match. Limits: 128 KiB, 32 methods, 512 nodes and bounded AST depth/analysis time. This is a one-time import; later source edits are not synchronized.</p>
       </details>
       <div className="flex flex-wrap items-center gap-3 mb-2">
         <label className={BUTTON}>Choose .js file
@@ -88,7 +88,7 @@ export default function SourceImportDialog({ onClose, onAccept }: {
         {preview.diagnostics.map((message, i) => <p role="alert" className="text-sm text-red-300" key={i}>{message}</p>)}
         <h3 className="text-sm font-semibold">Source ranges</h3>
         <div className="max-h-44 overflow-y-auto space-y-1">
-          {preview.regions.map((region, i) => <button type="button" key={i} onClick={() => { setSelected(i); setReview(null); setMapStart(false); }}
+          {preview.regions.map((region, i) => <button type="button" key={i} disabled={busy} onClick={() => { setSelected(i); setReview(null); setMapStart(false); }}
             className={`w-full rounded border px-3 py-2 text-left text-xs ${selected === i ? 'border-blue-400' : 'border-zinc-800'} hover:bg-zinc-900`}>
             <span className="font-semibold">{region.kind === 'candidate' ? 'Mapping candidate' : region.kind === 'trivia' ? 'Whitespace' : 'Preserved outside graph'}</span>
             {' · '}line {preview.source.slice(0, region.start).split('\n').length} · offsets {region.start}–{region.end}
@@ -98,8 +98,8 @@ export default function SourceImportDialog({ onClose, onAccept }: {
         {chosen && <>
           <details><summary className="cursor-pointer text-sm">Selected original region</summary><pre className="mt-2 max-h-48 overflow-auto bg-zinc-900 p-3 text-xs">{chosen.text}</pre></details>
           {chosen.kind === 'candidate' && <>
-            <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={mapStart} onChange={e => { setMapStart(e.target.checked); setReview(null); }} />Map the existing on_start method to the VVS program entry event</label>
-            <button type="button" className={BUTTON} onClick={convert}>Build and validate preview</button>
+            <label className="flex items-start gap-2 text-sm"><input type="checkbox" disabled={busy} checked={mapStart} onChange={e => { setMapStart(e.target.checked); setReview(null); }} />Map the existing on_start method to the VVS program entry event</label>
+            <button type="button" className={BUTTON} disabled={busy} onClick={convert}>Build and validate preview</button>
           </>}
         </>}
         {review && <>
@@ -121,8 +121,13 @@ export default function SourceImportDialog({ onClose, onAccept }: {
             <div><h3 className="text-sm mb-1">Selected source</h3><pre className="max-h-72 overflow-auto bg-zinc-900 p-3 text-xs">{chosen?.text}</pre></div>
             <div><h3 className="text-sm mb-1">Generated code</h3><pre className="max-h-72 overflow-auto bg-zinc-900 p-3 text-xs">{review.generated}</pre></div>
           </div>}
-          {review.snapshot && <button type="button" className={`${BUTTON} border-blue-500`} onClick={() => {
-            try { onAccept(review.snapshot!); } catch (err) { setError(err instanceof Error ? err.message : 'Could not save the imported project.'); }
+          {review.snapshot && <button type="button" className={`${BUTTON} border-blue-500`} disabled={busy} onClick={async () => {
+            setBusy(true);
+            try {
+              const accepted = await acceptSourceImportReview(review, source, fileName, mapStart);
+              if (dialog.current?.open) onAccept(accepted);
+            } catch (err) { setError(err instanceof Error ? err.message : 'Could not save the imported project.'); }
+            finally { setBusy(false); }
           }}>Accept as new project</button>}
         </>}
       </div>}
