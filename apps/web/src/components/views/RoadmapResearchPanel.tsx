@@ -12,15 +12,15 @@ const VERDICT_META: Record<
   { label: string; className: string }
 > = {
   ship: {
-    label: 'Ship this',
+    label: 'Recommended',
     className: 'text-emerald-400/90 bg-emerald-500/10 border-emerald-500/25',
   },
   later: {
-    label: 'Later assist',
+    label: 'Later / gated',
     className: 'text-amber-400/90 bg-amber-500/10 border-amber-500/25',
   },
   reject: {
-    label: 'Reject as product path',
+    label: 'Rejected for this scope',
     className: 'text-zinc-400 bg-zinc-800/50 border-zinc-700/80',
   },
 };
@@ -41,31 +41,33 @@ function OptionCard({ option, index }: { option: ResearchOption; index: number }
         <h3 className="text-sm font-semibold text-zinc-200 tracking-tight">{option.title}</h3>
         <p className="text-xs text-zinc-400 leading-relaxed">{option.summary}</p>
       </header>
-      <div className="px-4 py-3 space-y-3">
-        <p className="text-xs text-zinc-500 leading-relaxed">{option.how}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-emerald-500/80 mb-1.5">
-              Pros
-            </h4>
-            <ul className="text-xs text-zinc-500 leading-relaxed list-disc pl-4 space-y-1">
-              {option.pros.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
-              Cons
-            </h4>
-            <ul className="text-xs text-zinc-500 leading-relaxed list-disc pl-4 space-y-1">
-              {option.cons.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
+      {option.verdict !== 'reject' ? (
+        <div className="px-4 py-3 space-y-3">
+          <p className="text-xs text-zinc-500 leading-relaxed">{option.how}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-emerald-500/80 mb-1.5">
+                Pros
+              </h4>
+              <ul className="text-xs text-zinc-500 leading-relaxed list-disc pl-4 space-y-1">
+                {option.pros.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+                Cons
+              </h4>
+              <ul className="text-xs text-zinc-500 leading-relaxed list-disc pl-4 space-y-1">
+                {option.cons.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </article>
   );
 }
@@ -101,7 +103,7 @@ function TopicBlock({ topic }: { topic: ResearchTopic }) {
 
       <div className="space-y-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
-          First slice
+          Priority, dependencies & acceptance
         </h3>
         <div className="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
           <ol className="text-xs text-zinc-500 leading-relaxed list-decimal pl-4 space-y-1">

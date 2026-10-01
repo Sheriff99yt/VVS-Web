@@ -1437,6 +1437,27 @@ export const SHIPPED_FEATURE_SECTIONS: RoadmapSection[] = [
 /** Open / partial only -- shipped work lives under SHIPPED_FEATURE_SECTIONS (Done tab). */
 export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
   {
+    id: 'research-foundations',
+    title: 'First: protect work and share edit rules',
+    emphasis: 'active',
+    items: [
+      {
+        id: 'revision-safe-persistence',
+        title: 'Save a specific project revision safely',
+        description: 'First (sequence 1). Make the next bounded reliability task revision-aware save completion and recoverable folder persistence. Protecting existing work is a prerequisite for widening imports, native editing or collaboration. Dependencies: An explicit definition of content revision versus selection/layout-only changes; A save coordinator and minimal persisted generation/version schema; no dedicated server. Acceptance: Completing save revision N never labels revision N+1 as saved or generated; Concurrent save clicks and autosave cannot overwrite a later revision with an earlier one; Injected failure after every write yields either the complete old generation or complete new generation on reopen; no mixed symbol and graph set; Permission loss, quota exhaustion and storage denial produce a recoverable error and keep unsaved state; Auto Generate off retains stale-code indication after Save; successful Generate and Save advance their own independent revision markers; Browser recovery works after an abrupt tab/process exit without depending solely on beforeunload. Evidence and proposed experiment: docs/roadmap.md, Research follow-through.',
+        status: 'planned',
+        layer: 'frontend',
+      },
+      {
+        id: 'shared-edit-contract',
+        title: 'Use one graph editing contract across hosts',
+        description: 'Second (sequence 2). Extract the smallest pure edit seam first: connection validation and edge replacement. Extend to symbol lifecycle and command-based history only after parity tests pass. Avoid a wholesale editor rewrite. Dependencies: Stable command and revision identities; Explicit ownership of graph invariants; no change to locked canvas-source-of-truth rules. Acceptance: Self-wire, cyclic wire, missing pin, execution/data mix and incompatible detailed types are rejected identically; Reconnect obeys the same one-input and one-execution-output policy, with policy supplied explicitly; Symbol create, rename and delete keep visible Declare/Define nodes, references and body documents consistent; Undo reverts one user operation without silently reverting unrelated later operations; cross-tab behavior is explicit; Core package imports no React, Next, VS Code or Go and has deterministic replay tests. Evidence and proposed experiment: docs/roadmap.md, Research follow-through.',
+        status: 'planned',
+        layer: 'frontend',
+      },
+    ],
+  },
+  {
     id: 'native-hosts-priority',
     title: 'High priority: native hosts',
     phase: 5,
@@ -1445,17 +1466,15 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'vscode-native-plugin',
         layer: 'frontend',
-        title: 'Native VS Code plugin',
-        description:
-          'High priority. Open VVS graphs from a VS Code workspace with real workspace paths (unlike browser File System Access). Generate still writes ordinary source beside the graph. Do not treat a “open Pages in a browser tab” button as native. Three approaches on the Research tab.',
-        status: 'planned',
+        title: 'Native VS Code plugin: correctness hardening',
+        description: 'Next (sequence 3). A restricted CustomTextEditor already exists. Capture dirty buffers, explicit document/root identity and revision-keyed source maps before expanding node coverage. Depends on revision-safe persistence and shared edit parity. Accept when dirty inputs, two workspace roots, stale maps and output conflicts pass extension-host tests. Research: Native VS Code plugin.',
+        status: 'partial',
       },
       {
         id: 'ue6-native-plugin',
         layer: 'backend',
         title: 'Native Unreal Engine 6 plugin (after UE6 releases)',
-        description:
-          'High priority, gated on Unreal Engine 6 actually shipping (Epic public target: Early Access end of 2027; not released as of August 2026). Same graph schema and ordinary Verse/source. Do not invent UE6 APIs. Do not start a Slate canvas before the engine exists. Sibling Phase 5 items and the existing attach study stay; this row is the native-plugin question after release. Three approaches on the Research tab.',
+        description: 'Release-gated strategic priority. Epic targets Early Access end-2027, not a guaranteed release or stable SDK. Record the released version and whether EA meets the release criterion before implementation. Compare a thin companion, embedded existing web UI and native presentation only against documented APIs; same graph schema, no automatic gameplay launch. Research: Native UE6 plugin.',
         status: 'planned',
       },
     ],
@@ -1470,32 +1489,29 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'start-topbar-consistent',
         layer: 'frontend',
         title: 'Standalone chrome vs in-project page-switch',
-        description:
-          'Standalone routes (`/`, `/library`, `/roadmap`, `/docs`) use the Start activity rail; StandaloneTopBar is brand + Contribute only. In-project the page-switch cluster (Project / References / Library / Roadmap / Packs / Docs) lives on the left activity rail, not TopNav. File/Edit/View, Save, and Generate stay in-project only.',
+        description: 'Standalone routes (`/`, `/library`, `/roadmap`, `/docs`) use the Start activity rail; StandaloneTopBar is brand + Contribute only. In-project the page-switch cluster (Project / References / Library / Roadmap / Packs / Docs) lives on the left activity rail, not TopNav. File/Edit/View, Save, and Generate stay in-project only.',
         status: 'done',
       },
       {
         id: 'verse-getinput-cl014',
         layer: 'frontend',
-        title: 'Verse GetInput (CL-014)',
-        description:
-          'Honest (x) + prompt. Real player/string read is not a plain-class API — do not invent one. Three approaches on the Research tab.',
-        status: 'planned',
+        title: 'Verse GetInput (CL-014): diagnostic truth',
+        description: 'Next (sequence 4). Text and number placeholders (empty string / 0.0) already emit with (x); node effectiveness still needs agreement. Accept when canvas, diagnostics, source mapping and strict portability all identify unsupported input. Documented player-action APIs are a different host contract; no invented blocking text/number API. Research: Verse GetInput.',
+        status: 'partial',
       },
     ],
   },
   {
     id: 'priority-3-ai-and-examples',
-    title: 'Long-term: code → visual (U93)',
+    title: 'Source import: validate and expand',
     phase: 6,
     items: [
       {
         id: 'code-to-visual-u93',
         layer: 'frontend',
-        title: 'Long-term: code → visual (U93)',
-        description:
-          'Research track: read raw source and produce text-shaped graphs (reverse of Generate). Three approaches compared on the Research tab. Must preserve canvas source of truth and fidelity -- not near-term polish.',
-        status: 'planned',
+        title: 'Code → visual (U93): verify JS, then narrow Python pilot',
+        description: 'Next (sequence 5). PR #8 merged: closed standalone JavaScript Library functions join class import, worker review and sealed acceptance. Verify the fresh production-browser flow alongside foundations. Then prove file-level Python ownership/emission and compare parsers with independent CPython parse/compile. Broader syntax, exports, other adapters and re-import stay open. Acceptance and dependencies in Research.',
+        status: 'partial',
       },
     ],
   },
@@ -1508,16 +1524,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'event-listeners-u100',
         layer: 'frontend',
         title: 'Event listeners (U100)',
-        description:
-          'Cut -- hidden subscribe/emit runtime is rejected. Dispatch is the invoke node. Do not spawn event_emit / event_subscribe.',
+        description: 'Cut -- hidden subscribe/emit runtime is rejected. Dispatch is the invoke node. Do not spawn event_emit / event_subscribe.',
         status: 'cut',
       },
       {
         id: 'event-bind-honest',
         layer: 'frontend',
-        title: 'Event Bind (honest registration)',
-        description:
-          'Bind is one node that prints one registration line (C# `+=`, JS `.on`/`addEventListener` when that is the host, GDScript `.connect`). Declare/On/Dispatch unchanged. Extra On illegal until a Bind is on the graph. No `_subscribe` helper, no hidden listener list. Spawn only where a pack can print the line; other langs unspawned or `(x)`. Not U100. C# `+=`, JS `.on`, GDScript `.connect` printers and spawn shipped. Details picker + rename write-through shipped (same path as Dispatch). Other langs unspawned or `(x)` Bind. Still partial — not all targets. Remaining-lang options on the Research tab.',
+        title: 'Event Bind: verify receiver and host contracts',
+        description: 'Next (sequence 4). Three registration printers exist: C# +=, JavaScript .on and GDScript .connect; these are not three validated event systems. Audit receiver/event/callback/duplicate/teardown semantics before one new host adapter. Verse Subscribe/Cancel already exists. Keep registration/cancellation visible and Dispatch distinct from host-event delivery. U100 remains cut. Research: Event Bind.',
         status: 'partial',
       },
     ],
@@ -1529,9 +1543,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'coa-deferred',
         layer: 'backend',
-        title: 'Cross Over Architecture (COA)',
-        description:
-          'Deferred -- COA_SHIPPED false. Prerequisites: multi-target export, documented compile policy. Three approaches compared on the Research tab. Single-target portability warnings + U66/U67 available today.',
+        title: 'Cross Over Architecture (COA): target conformance first',
+        description: 'Next (sequence 4): bounded semantic preflight and complete-file fixtures for two targets; full multi-export later. Unknown capability is unvalidated, printer existence is insufficient, and partial target success cannot claim all-target portability. Depends on environment-aware requirements, native validation and collision-safe outputs. COA_SHIPPED remains false. Research: COA compile/export policy.',
         status: 'planned',
       },
     ],
@@ -1543,9 +1556,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'env-engine-packs',
         layer: 'frontend',
-        title: 'Engine environment packs',
-        description:
-          'UE/Verse and other engine API manifests as installable Library environments -- portability-gated natives. First Phase 5 slice on the Research tab.',
+        title: 'Engine environment packs: one UEFN conformance slice',
+        description: 'Next (sequence 4). Verify one version-pinned creative_device/OnBegin/Print fixture plus inheritance using external UEFN Build Verse Code before widening APIs. Depends on Verse shell correctness, return/effect/lifecycle contracts and generated-file drift protection. Ordinary file handoff first; MCP/native attach later. Research: UE6 / UEFN attach.',
         status: 'planned',
       },
     ],
@@ -1558,16 +1570,14 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'self-hosted-deploy',
         layer: 'backend',
         title: 'Full Supabase Docker on VPS',
-        description:
-          'Out of scope as product. No dedicated VPS / self-hosted Supabase track. Client-first: local/.vvs/git + static Pages. Legacy notes in docs/deployment.md only.',
+        description: 'Out of scope as product. No dedicated VPS / self-hosted Supabase track. Client-first: local/.vvs/git + static Pages. Legacy notes in docs/deployment.md only.',
         status: 'cut',
       },
       {
         id: 'github-oauth',
         layer: 'backend',
         title: 'GitHub OAuth + email auth (hosted)',
-        description:
-          'Out of scope as product default. No VVS accounts required. Code may remain hidden/disabled for experiments.',
+        description: 'Out of scope as product default. No VVS accounts required. Code may remain hidden/disabled for experiments.',
         status: 'cut',
       },
       {
@@ -1581,8 +1591,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'pwa',
         layer: 'frontend',
         title: 'PWA offline sync to Postgres',
-        description:
-          'Out of scope as product. Prefer folder/.vvs + git; do not invent a VVS sync server.',
+        description: 'Out of scope as product. Prefer folder/.vvs + git; do not invent a VVS sync server.',
         status: 'cut',
       },
     ],
@@ -1595,17 +1604,15 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'library-backend',
         layer: 'backend',
-        title: 'Library remaining (U90 auth / upload)',
-        description:
-          'Library page redesign shipped (templates / git import). Auth / upload frozen (client-first; no accounts as product). Remaining Phase 3: vvs-library repo, CI, web UI wiring. Three approaches on the Research tab.',
+        title: 'Library: harden catalogs, then reviewed consumption',
+        description: 'Parallel. Read-only static Git catalogs and repository links already shipped; automatic community installation remains open. Harden limits, stored entries, repository identity and failure isolation first. Then trial one bounded data-only pack with immutable revision/digest, compatibility, license and cancelable project-diff preview. Auth/upload remain frozen. Research: Library U90.',
         status: 'partial',
       },
       {
         id: 'search',
         layer: 'frontend',
-        title: 'Semantic library search',
-        description:
-          'Library search box filters catalog by name/category/language/description via client token match (`librarySearch.ts`). Language chips filter templates by default/supported target; the active chip stays visible at count 0 and empty copy names search + chip. Not embeddings; semantic search backend TBD. Three approaches on the Research tab.',
+        title: 'Library search: consistent asset-level lexical ranking',
+        description: 'Parallel. Fix parent-repository filtering that can hide matching assets; unify query tokens, Unicode, aliases and language/type chips. Compare a small ranker with MiniSearch on held-out queries. Embeddings require opt-in, measured relevance/bytes/latency and lexical fallback. Acceptance: exact IDs and asset-only queries work without filter leaks. Research: Library search.',
         status: 'partial',
       },
     ],
@@ -1618,9 +1625,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'collab',
         layer: 'backend',
-        title: 'Session client / host',
-        description:
-          'Game-lobby style session sync -- not account cloud multiplayer. Three approaches compared on the Research tab. Transport TBD (Go WS is a later fallback, not the default).',
+        title: 'Session client / host: commands before transport',
+        description: 'Later, after shared edit commands and revision identities. Prototype one host/two guests with deduplicated atomic operations, preconditions, resync and conditional undo. Acceptance includes delete-versus-wire races, signature edits, host loss and no stale snapshot undo over peer work. Then compare WebRTC and an optional relay; signaling/TURN costs stay explicit. Research: Session collaboration.',
         status: 'planned',
       },
     ],
@@ -1648,8 +1654,7 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
         id: 'ue-nodes',
         layer: 'frontend',
         title: 'UE API environment packs',
-        description:
-          'Engine environment manifests and data-driven nodes atop @vvs/environment-templates (not Blueprint VM). First Phase 5 slice on the Research tab.',
+        description: 'Engine environment manifests and data-driven nodes atop @vvs/environment-templates (not Blueprint VM). First Phase 5 slice on the Research tab.',
         status: 'planned',
       },
       {
@@ -1669,25 +1674,22 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'mobile',
         layer: 'frontend',
-        title: 'Touch & mobile UX',
-        description:
-          'Agent panel / Bot / StatusBar chip hidden at max-width 768px (`mobileViewport`, `useIsMobile`). Coarse-pointer pin snap 40px vs mouse 20px (`mobileViewport`, `useCoarsePointer`, React Flow `connectionRadius`). Larger TopNav icon hit targets on coarse/mobile (`min-w-11 min-h-11`). Desktop unchanged. Gestures and radial menus still planned. Three approaches on the Research tab.',
+        title: 'Touch & mobile UX: correctness before radial menus',
+        description: 'Parallel. Existing 40px snap tolerance and larger topbar targets remain. Reproduce touchend with no active touches, pan/select and tap-to-connect on Android, iPad and hybrid hardware; reuse the existing Add/catalog path. Accept safe cancellation, single-pointer alternatives and no desktop regressions. Long-press optional; radial actions depend on evidence. Research: Touch gestures.',
         status: 'partial',
       },
       {
         id: 'enterprise',
         layer: 'backend',
         title: 'Enterprise deploy',
-        description:
-          'Out of scope as product. No dedicated enterprise VPS. Client-first local/.vvs/git. Legacy self-host notes may remain in docs/deployment.md.',
+        description: 'Out of scope as product. No dedicated enterprise VPS. Client-first local/.vvs/git. Legacy self-host notes may remain in docs/deployment.md.',
         status: 'cut',
       },
       {
         id: 'folder-os-path',
         layer: 'frontend',
-        title: 'Reveal in Explorer / Finder',
-        description:
-          'Native “open containing folder” from the editor -- blocked today by browser File System Access API (no absolute path exposure). Three approaches on the Research tab.',
+        title: 'Reveal in Explorer / Finder: host-aware locations',
+        description: 'Parallel after native document/root identity. Add browser display/copy of honest relative locations; implement OS reveal for local resources in the existing VS Code host and an IDE Explorer fallback for remote/virtual URIs. Accept correct initiating root, missing-file handling and no guessed absolute paths. No helper or shell solely for reveal. Research: Reveal in Explorer / Finder.',
         status: 'planned',
       },
     ],
@@ -1700,9 +1702,8 @@ export const FUTURE_FEATURE_SECTIONS: RoadmapSection[] = [
       {
         id: 'interactive-node-docs',
         layer: 'frontend',
-        title: 'Interactive documentation (nodes, options, features)',
-        description:
-          'Partial: `/docs` catalog and per-kind pages generated from CORE_NODE_REGISTRY; shared StandaloneTopBar; DocsInfoIcon hover from the registry on node headers and Details options; modifier chips have no `?` (right-click opens `#opt-{key}`); llms.txt + sitemap. Overlay essays and playground later. HTML-first on existing CI + GitHub Pages. Research tab still holds the long plan.',
+        title: 'Documentation: truthful catalog and tested examples',
+        description: 'Parallel. Static kind/feature pages, info links, SEO files and three guides exist. Next align target/context claims, conditional options and dynamic-pin guidance; validate authored examples and actual exported HTML/anchors. Fix SEO regeneration in Pages builds and dotted-kind links from VS Code. Playground, twins and Pagefind stay later, using the same records and no execution. Research: Interactive docs.',
         status: 'partial',
       },
     ],
