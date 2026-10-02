@@ -172,10 +172,11 @@ function FocusCallout() {
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 space-y-1.5">
       <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Current focus</p>
       <p className="text-sm text-zinc-400 leading-relaxed">
-        First-party templates (17 packs), host-file Contents persist, and Refresh line-based 3-way merge
-        are shipped. Search stays token+chips (embeddings later); mobile hide/pin/hit is shipped
-        (gestures/radial later). Open leftover fidelity is Verse GetInput (honest (x)); U93 is long-term
-        and Library auth/upload stays frozen.
+        Research follow-through after PR #8: revision-safe saves, a shared graph-edit contract,
+        native project/buffer correctness, then bounded target/host conformance and a narrow Python
+        import pilot. Library search, touch correctness and docs can progress independently.
+        JavaScript class and standalone Library-function import already exist. Research verdicts
+        are proposed directions and acceptance gates, not newly shipped features.
       </p>
     </div>
   );
@@ -244,7 +245,7 @@ export function RoadmapView() {
       ? 'What is still planned or in progress, grouped frontend vs backend.'
       : tab === 'done'
         ? 'Shipped work. Honest against the code, not a marketing list.'
-        : 'Topics still being decided. Each option has to survive the product law.';
+        : 'Evidence reviewed 30 September 2026 after PR #8. Priorities, dependencies and proposed acceptance gates; product law stays in force.';
 
   return (
     <div className="flex h-full w-full bg-zinc-950 overflow-hidden text-zinc-300 font-sans">
