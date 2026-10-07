@@ -69,8 +69,9 @@ export async function readTextFile(
     const fileHandle = await dir.getFileHandle(fileName);
     const file = await fileHandle.getFile();
     return await file.text();
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'NotFoundError') return null;
+    throw error;
   }
 }
 
@@ -80,11 +81,7 @@ export async function readJsonFile<T>(
 ): Promise<T | null> {
   const text = await readTextFile(root, relativePath);
   if (!text) return null;
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return null;
-  }
+  return JSON.parse(text) as T;
 }
 
 export async function writeTextFile(

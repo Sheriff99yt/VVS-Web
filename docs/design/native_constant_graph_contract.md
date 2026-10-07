@@ -1,0 +1,11 @@
+# Saved native constant graph reconstruction
+
+`analyzeNativeConstantGraph` in graph-types reconstructs Rust/C++/GDScript integer/Boolean constant trees from saved expression nodes and edges, then applies the shared independently verified scalar policies. The caller selects the existing pinned language profile; this is not automatic project/toolchain discovery.
+
+Nodes retain explicit native language/form, literal spelling, Rust literal context where authored, conversion target and operator. Unary negation and parentheses require actual visible operator nodes. Godot direct-negative literal behavior is derived from the child construct, ignoring cached flags. Node and edge IDs, kind/form/arity, exact operand and output handles, conservative data-any ports, single incoming operand ownership and traversal budgets are checked. Inline operands and external symbol bindings are rejected. Cached facts cannot replace authored tokens or wiring.
+
+Returned trees, facts and node identities are immutable/transient. Constants recompute after saved operand/operator/wiring edits; missing nodes, duplicate or hidden operands, cross-language nodes and cycles reject. Unconnected regions remain outside this rooted expression contract. This is not whole-graph validity or function/source ownership.
+
+Saved JSON fixtures reconstruct all non-calibration cases from the existing 121-case constant corpus and compare type/value or rejection with its curated native evidence. Literal negation facts become visible unary nodes, and authored Godot grouped negation becomes a parentheses node. Mutations cover edited values/operators, divide-by-zero, target/port corruption, duplicate IDs, cycles, inline inputs and poisoned cached facts.
+
+The batch uses package tests, pure source-import API types and the complete native-source comparison consumer. Native inputs/profiles are unchanged and their matching compiler evidence is retained. Registry, emit, UI and browser assets are unchanged, retaining those prior checks. Admission remains blocked: native signatures/declarations, actual registry/inspector/IR/packs, canonical Code-panel/native output and import/edit/save/reimport browser proof are still required. Conservative data-any ports are analysis scaffolding until the reviewed mapping contract establishes native result pins.

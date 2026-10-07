@@ -24,19 +24,25 @@ const DEFAULT_CATALOG_REPOS: GitCatalogRepo[] = [
 ];
 
 export function useGitCatalog() {
-  const [repos, setRepos] = useState<GitCatalogRepo[]>(() => {
-    if (typeof window === 'undefined') return DEFAULT_CATALOG_REPOS;
+  const [repos, setRepos] = useState<GitCatalogRepo[]>(DEFAULT_CATALOG_REPOS);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
     try {
-      const stored = localStorage.getItem(GIT_CATALOG_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      const parsed: unknown = JSON.parse(localStorage.getItem(GIT_CATALOG_STORAGE_KEY) ?? 'null');
+      if (Array.isArray(parsed)) {
+        const valid = parsed.filter((repo): repo is GitCatalogRepo => !!repo && typeof repo === 'object' &&
+          typeof repo.id === 'string' && typeof repo.name === 'string' &&
+          repo.id.length <= 256 && repo.name.length <= 4096 &&
+          typeof repo.branch === 'string' && repo.branch.length > 0 && repo.branch.length <= 256 &&
+          typeof repo.addedAt === 'string' &&
+          (repo.description === undefined || typeof repo.description === 'string' && repo.description.length <= 4096) &&
+          typeof repo.owner === 'string' && typeof repo.repo === 'string' &&
+          !!parseGitHubUrl(`${repo.owner}/${repo.repo}`)).slice(0, 32);
+        setRepos(valid.length ? valid : DEFAULT_CATALOG_REPOS);
       }
-    } catch {
-      // fallback
-    }
-    return DEFAULT_CATALOG_REPOS;
-  });
+    } catch { /* Invalid storage falls back to the official catalog. */ }
+    setHydrated(true);
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,12 +68,13 @@ export function useGitCatalog() {
   }, [repos]);
 
   useEffect(() => {
+    if (!hydrated) return;
     try {
       localStorage.setItem(GIT_CATALOG_STORAGE_KEY, JSON.stringify(repos));
     } catch {
       // ignore
     }
-  }, [repos]);
+  }, [repos, hydrated]);
 
   const addCatalogRepo = useCallback((inputUrl: string) => {
     setError(null);

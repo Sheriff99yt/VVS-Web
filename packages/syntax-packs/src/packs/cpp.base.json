@@ -16,6 +16,13 @@
     "emptyFunctionBody": "        // empty"
   },
   "templates": {
+    "DeclareNativeInferredLocal": { "quasi": "{qualifier}auto {name} = {value};" },
+    "DeclareNativeScalarLocal": {
+      "quasi": "{qualifier}{type} {name} = {value};"
+    },
+    "AssignNativeScalarLocal": {
+      "quasi": "{target} = {value};"
+    },
     "Print": {
       "quasi": "std::cout << {value} << std::endl;"
     },
@@ -213,6 +220,36 @@
     },
     "TryClose": {
       "quasi": "}"
+    },
+    "NativeScalarTypedParameter": {
+      "quasi": "{qualifier}{type} {name}"
+    },
+    "NativeScalarFunctionOpen": {
+      "quasi": "{modifiers}{type} {name}({params}) {"
+    },
+    "NativeScalar": {
+      "quasi": "{value}"
+    },
+    "NativeParentheses": {
+      "quasi": "({value})"
+    },
+    "NativeUnary": {
+      "quasi": "{operator}{value}"
+    },
+    "NativeUnarySeparated": {
+      "quasi": "{operator} {value}"
+    },
+    "NativeOperatorBinary": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "NativeNumericConversion": {
+      "quasi": "static_cast<{target}>({value})"
+    },
+    "NativeScalarDeclarator": {
+      "quasi": "{name} = {value}"
+    },
+    "DeclareNativeScalarGroup": {
+      "quasi": "{qualifier}{type} {declarators};"
     }
   }
 }

@@ -22,7 +22,9 @@ export type ClassMemberDeclKind =
   | 'event'
   | 'enum'
   | 'import_module'
-  | 'import_class';
+  | 'import_class'
+  | 'directive'
+  | 'package';
 
 export interface ClassMemberEntry {
   kind: ClassMemberDeclKind;
@@ -57,6 +59,10 @@ function isImportChainKind(kindId: string, linkKind?: string): boolean {
 function memberKindFromNode(node: GraphNode): ClassMemberDeclKind | undefined {
   const kindId = resolveNodeKindId(node.data);
   switch (kindId) {
+    case 'source_package':
+      return 'package';
+    case 'source_directive':
+      return 'directive';
     case 'class_define':
       return 'class';
     case 'var_define':

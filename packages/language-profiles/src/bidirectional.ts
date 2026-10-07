@@ -44,7 +44,7 @@ export const LANGUAGE_ADAPTER_REGISTRY = new LanguageAdapterRegistry();
 [
   { ...proposed('javascript', 'es2022', ['.js', '.mjs'], ['script', 'module'], ['file', 'class', 'function'], 'Acorn'),
     parser: { id: '@babel/parser', version: '7.29.9' }, blocker: 'Only the existing reviewed script/class subset is implemented; behavior and translation certification remain open' },
-  proposed('python', '3.12', ['.py'], ['module'], ['file', 'class', 'function'], 'CPython'),
+  { ...proposed('python', '3.11', ['.py'], ['module'], ['file', 'function'], 'CPython'), parser: { id: '@lezer/python', version: '1.1.18' }, toolchain: { id: 'CPython', version: '3.11.9' }, blocker: 'Only the bounded standalone Library-function pilot has parse/compile and persistence evidence; general import, behavior and translation certification remain open' },
   proposed('cpp', 'c++20', ['.cpp', '.h'], ['translation-unit'], ['file', 'class', 'function'], 'compiler frontend'),
   proposed('verse', 'environment-defined', ['.verse'], ['module'], ['module', 'class', 'function'], 'official Verse toolchain/environment'),
   proposed('gdscript', '4', ['.gd'], ['script'], ['file', 'class', 'function'], 'Godot'),

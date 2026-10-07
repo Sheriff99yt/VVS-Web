@@ -3,19 +3,23 @@ name: VVS UI API Loop
 description: Triggers when wiring frontend UI to APIs, creating api client layers, Go handlers, or replacing mock data with HTTP.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # VVS UI + API Delivery Loop
 
-Read **`docs/ui_api_delivery_loop.md`** before every iteration. Canonical state: **`docs/current_state.md`**. Phase 2 auth/persistence: **`docs/deployment.md`**.
+Read **`docs/ui_api_delivery_loop.md`** when planning the delivery batch (reuse it while unchanged). Canonical state: **`docs/current_state.md`**. Phase 2 auth/persistence: **`docs/deployment.md`**.
 
 ## Hard rules
 
-1. **One backlog slice per session** — finish it end-to-end or report blocked.
+1. **One coherent dependency batch** — group related backlog slices and finish their implementation before validation.
 2. **UI calls `VvsApi` only** — never `MockApi`, never raw `fetch` in components.
 3. **Same types** for mock and HTTP transports (`HealthResponse`, `ProjectListEntry`, etc. in `lib/api/mock.ts`).
 4. **Go**: handlers thin → `internal/core/services/` pure functions → `ProjectStore`.
 5. **Bearer auth**: HTTP client sends `Authorization` via `lib/auth/session.ts` → `client.ts` `apiHeaders()`.
-6. **Verify**: `bun run build` in `apps/web`; `go test ./...` in `server` when Go changes.
-7. **Update** `docs/current_state.md` when a slice completes.
+6. **Verify once per batch**: affected combined-runner stages; include web build and Go tests only when those paths change.
+7. **Update** `docs/current_state.md` when the batch completes.
 
 ## Canvas source of truth (locked)
 
@@ -54,13 +58,13 @@ When Supabase env is set (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON
 
 ## Iteration steps (always in order)
 
-1. Pick first incomplete row from backlog in `ui_api_delivery_loop.md`
+1. Group related incomplete rows into a dependency batch from backlog in `ui_api_delivery_loop.md`
 2. Define contract types + `VvsApi` method
 3. Implement mock transport (`mock.ts`)
 4. Implement HTTP transport (`client.ts`) with `apiHeaders()`
 5. Wire UI (loading/error states; respect auth when required)
 6. Implement Go handler + service (if slice includes backend)
-7. Smoke test + build
+7. Run affected smoke/build/test gates once after the implementation batch; focus any failure retries
 8. Update docs
 
 ## Backlog quick reference (July 2026)
@@ -73,7 +77,7 @@ When Supabase env is set (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON
 | D — WebSocket collab | Not started | Phase 4 — Go WS, not Supabase Realtime |
 | E — VPS deploy | Partial | `PostgresStore` local; Docker Compose + prod checklist TBD |
 
-Pick the **first open row** in `docs/ui_api_delivery_loop.md` — do not re-implement shipped slices.
+Start with the **highest-priority open rows**, grouping related dependencies, in `docs/ui_api_delivery_loop.md` — do not re-implement shipped slices.
 
 ## Do not
 

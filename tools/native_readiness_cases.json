@@ -1,0 +1,237 @@
+{
+  "cpp": [
+    {
+      "id": "values",
+      "valid": true,
+      "source": "constexpr unsigned long long limit = 18446744073709551615ULL; bool compare(int input) { return input < 10; }",
+      "facts": [
+        "limit",
+        "compare",
+        "input"
+      ]
+    },
+    {
+      "id": "bindings",
+      "valid": true,
+      "source": "int binding(int input) { int value = input; { int input = value + 1; value = input; } return value; }",
+      "facts": [
+        "binding",
+        "input",
+        "value"
+      ]
+    },
+    {
+      "id": "branches",
+      "valid": true,
+      "source": "int branch(bool condition) { int value; if (condition) value = 1; else value = 2; return value; }",
+      "facts": [
+        "branch",
+        "condition",
+        "value"
+      ]
+    },
+    {
+      "id": "ownership",
+      "valid": true,
+      "source": "int reference(int& input) { int& alias = input; alias += 1; return input; }",
+      "facts": [
+        "reference",
+        "alias"
+      ]
+    },
+    {
+      "id": "missing-name",
+      "valid": false,
+      "source": "int bad() { return missing; }",
+      "diagnostic": "undeclared identifier"
+    },
+    {
+      "id": "readonly",
+      "valid": false,
+      "source": "int bad() { const int value = 1; value = 2; return value; }",
+      "diagnostic": "const-qualified"
+    },
+    {
+      "id": "type-error",
+      "valid": false,
+      "source": "int bad() { int value = \"text\"; return value; }",
+      "diagnostic": "cannot initialize"
+    },
+    {
+      "id": "scope-error",
+      "valid": false,
+      "source": "int bad() { { int inner = 1; } return inner; }",
+      "diagnostic": "undeclared identifier"
+    },
+    {
+      "id": "complex-types",
+      "valid": true,
+      "source": "template<typename T> struct Boxed { T value; }; template<typename T> T read(Boxed<T> input) { return input.value; } int use() { return read(Boxed<int>{3}); }",
+      "facts": [
+        "read",
+        "use",
+        "input"
+      ]
+    },
+    {
+      "id": "loop-closure",
+      "valid": true,
+      "source": "int accumulate(int input) { int total = 0; auto add = [&total](int value) { total += value; }; for (int i = 0; i < input; ++i) add(i); return total; }",
+      "facts": [
+        "accumulate",
+        "total",
+        "add"
+      ]
+    },
+    {
+      "id": "source-macro",
+      "valid": true,
+      "source": "#define TWICE(value) ((value) + (value))\nnamespace Sample { constexpr int limit = 3; int apply(int input) { return TWICE(input); } }",
+      "facts": [
+        "limit",
+        "apply",
+        "input"
+      ]
+    },
+    {
+      "id": "unicode-trivia",
+      "valid": true,
+      "source": "// 🧭 retained\nconst char* label = u8\"λ🧭\";\n",
+      "facts": [
+        "label"
+      ]
+    }
+  ],
+  "rust": [
+    {
+      "id": "values",
+      "valid": true,
+      "source": "pub const LIMIT: u64 = 18446744073709551615; pub fn compare(input: i32) -> bool { input < 10 }"
+    },
+    {
+      "id": "bindings",
+      "valid": true,
+      "source": "pub fn binding(input: i32) -> i32 { let mut value = input; { let input = value + 1; value = input; } value }"
+    },
+    {
+      "id": "branches",
+      "valid": true,
+      "source": "pub fn branch(condition: bool) -> i32 { let value: i32; if condition { value = 1; } else { value = 2; } value }"
+    },
+    {
+      "id": "ownership",
+      "valid": true,
+      "source": "pub fn reference(input: &mut i32) -> i32 { let alias = &mut *input; *alias += 1; *input }"
+    },
+    {
+      "id": "missing-name",
+      "valid": false,
+      "source": "pub fn bad() -> i32 { missing }",
+      "diagnostic": "E0425"
+    },
+    {
+      "id": "readonly",
+      "valid": false,
+      "source": "pub fn bad() -> i32 { let value = 1; value = 2; value }",
+      "diagnostic": "E0384"
+    },
+    {
+      "id": "type-error",
+      "valid": false,
+      "source": "pub fn bad() -> i32 { let value: i32 = \"text\"; value }",
+      "diagnostic": "E0308"
+    },
+    {
+      "id": "scope-error",
+      "valid": false,
+      "source": "pub fn bad() -> i32 { { let inner = 1; } inner }",
+      "diagnostic": "E0425"
+    },
+    {
+      "id": "complex-types",
+      "valid": true,
+      "source": "pub struct Boxed<T> { pub value: T } pub fn read<T>(input: Boxed<T>) -> T { input.value }"
+    },
+    {
+      "id": "loop-closure",
+      "valid": true,
+      "source": "pub fn accumulate(input: i32) -> i32 { let mut total = 0; for value in 0..input { let mut add = |item| total += item; add(value); } total }"
+    },
+    {
+      "id": "source-macro",
+      "valid": true,
+      "source": "macro_rules! twice { ($value:expr) => { $value + $value }; } pub fn apply(input: i32) -> i32 { twice!(input) }"
+    },
+    {
+      "id": "unicode-trivia",
+      "valid": true,
+      "source": "// 🧭 retained\npub const LABEL: &str = \"λ🧭\";\n"
+    }
+  ],
+  "gdscript": [
+    {
+      "id": "values",
+      "valid": true,
+      "source": "extends RefCounted\nconst LIMIT: int = 9223372036854775807\nfunc compare(input: int) -> bool:\n\treturn input < 10\n"
+    },
+    {
+      "id": "bindings",
+      "valid": true,
+      "source": "extends RefCounted\nfunc binding(input: int) -> int:\n\tvar value: int = input\n\tvalue += 1\n\treturn value\n"
+    },
+    {
+      "id": "branches",
+      "valid": true,
+      "source": "extends RefCounted\nfunc branch(condition: bool) -> int:\n\tvar value: int\n\tif condition:\n\t\tvalue = 1\n\telse:\n\t\tvalue = 2\n\treturn value\n"
+    },
+    {
+      "id": "containers",
+      "valid": true,
+      "source": "extends RefCounted\nfunc container(input: int) -> int:\n\tvar values: Array[int] = [input, 2]\n\treturn values[0]\n"
+    },
+    {
+      "id": "missing-name",
+      "valid": false,
+      "source": "extends RefCounted\nfunc bad() -> int:\n\treturn missing\n",
+      "diagnostic": "not declared"
+    },
+    {
+      "id": "readonly",
+      "valid": false,
+      "source": "extends RefCounted\nfunc bad() -> int:\n\tconst value: int = 1\n\tvalue = 2\n\treturn value\n",
+      "diagnostic": "constant"
+    },
+    {
+      "id": "type-error",
+      "valid": false,
+      "source": "extends RefCounted\nfunc bad() -> int:\n\tvar value: int = \"text\"\n\treturn value\n",
+      "diagnostic": "String"
+    },
+    {
+      "id": "scope-error",
+      "valid": false,
+      "source": "extends RefCounted\nfunc bad() -> int:\n\tif true:\n\t\tvar inner: int = 1\n\treturn inner\n",
+      "diagnostic": "not declared"
+    },
+    {
+      "id": "complex-types",
+      "valid": true,
+      "source": "extends RefCounted\nclass Boxed:\n\tvar value: int\nfunc read(input: Boxed) -> int:\n\treturn input.value\n"
+    },
+    {
+      "id": "loop-closure",
+      "valid": true,
+      "source": "extends RefCounted\nfunc accumulate(input: int) -> int:\n\tvar total: int = 0\n\tfor value in range(input):\n\t\tvar add = func(item: int) -> int: return item + 1\n\t\ttotal += add.call(value)\n\treturn total\n"
+    },
+    {
+      "id": "enum-match",
+      "valid": true,
+      "source": "extends RefCounted\nenum Mode { ON, OFF }\nfunc select(mode: Mode) -> int:\n\tmatch mode:\n\t\tMode.ON:\n\t\t\treturn 1\n\t\t_:\n\t\t\treturn 0\n"
+    },
+    {
+      "id": "unicode-trivia",
+      "valid": true,
+      "source": "# 🧭 retained\nextends RefCounted\nconst LABEL: String = \"λ🧭\"\n"
+    }
+  ]
+}

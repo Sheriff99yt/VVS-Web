@@ -10,7 +10,7 @@ type Counter struct {
 	var Limit float64 = 3
 	var Ready bool = true
 	var CurrentMode Mode = Mode_Run
-func Add(n) data_number {
+func Add(n float64) float64 {
 	self.Total = (self.Total + n)
 	return self.Total
 }

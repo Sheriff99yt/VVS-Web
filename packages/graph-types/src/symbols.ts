@@ -295,7 +295,7 @@ export function normalizeClassSymbols(raw: unknown): ClassSymbol[] {
         graphTabId: typeof cls.graphTabId === 'string' ? cls.graphTabId : undefined,
         containerId:
           typeof cls.containerId === 'string' ? cls.containerId : MAIN_GRAPH_CONTAINER_ID,
-        visibility: cls.visibility === 'private' ? 'private' : 'public',
+        visibility: ['public', 'protected', 'private'].includes(String(cls.visibility)) ? cls.visibility : undefined,
         isGlobalScope: cls.isGlobalScope === true,
       };
     }
@@ -511,6 +511,8 @@ export function createGraphTabId(): string {
 }
 
 export interface GraphTabMetadata {
+  /** Explicit source-file name for a reviewed file-owned compilation unit. */
+  sourceFileName?: string;
   moduleName: string;
   extendsType: string;
   description: string;

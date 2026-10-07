@@ -2,6 +2,13 @@
 
 Choices agents must not undo without explicit user approval.
 
+## Batched agentic delivery (October 6, 2026)
+
+- Plan related updates/edits and acceptance criteria together; implement/review the dependency batch before one consolidated affected validation run.
+- Diagnose failures first and retry affected gates/prerequisites only. Do not repeat unchanged tests/builds per small edit; required fidelity/native evidence and full scope remain intact.
+- Canonical policy: [agentic batch workflow](../../docs/agentic_batch_workflow.md); enforced by project agent rules and relevant skills. Update-only rules/skills use lightweight validation.
+- Reverse-import delivery proceeds by shared feature/dependency waves across all eight languages, rather than completing languages serially. Include native prerequisites in each wave and verify language-specific semantics independently; see [the cross-language batch plan](../../docs/design/reverse_import_cross_language_batches.md).
+
 ## Cross-language mapping skill layout (July 2026)
 
 - **One skill only:** `.agents/skills/vvs_cross_language_mapping/SKILL.md` (parent index + workflow).
@@ -136,7 +143,7 @@ Choices agents must not undo without explicit user approval.
 
 - **UI-first skeleton** with mock data until contracts are stable
 - **Depth-first UI backlog** — complete sections in `incomplete-ui.md` order (1→8); finish open rows in a section before skipping ahead
-- **One slice per API loop iteration** — see `docs/ui_api_delivery_loop.md`
+- **One dependency batch per validation run** — group related API slices, implement together, then run affected checks once; see `docs/ui_api_delivery_loop.md`
 - UI components call **`VvsApi` facade** — TopNav `persistSnapshot` uses `VvsApi.saveProject` in HTTP mode
 - **TopNav → canvas** uses `graphActions` custom events, not synthetic `KeyboardEvent`
 

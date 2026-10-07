@@ -1,5 +1,6 @@
 import { PackTemplateMissingError, renderTemplate, requireTemplate } from '@vvs/syntax-packs';
 import { offsetSpans } from '../codeExpr';
+import { printNativeExpression } from './nativeExpr';
 import type { IrCallExpr, IrExpr } from '../ir/types';
 import type { ExprPrinter, PrintContext, PrintedExpr } from './types';
 import { isPackDrivenFamily, printFromTemplate } from './template';
@@ -20,7 +21,7 @@ function mergeArgs(args: PrintedExpr[]): { text: string; spans: import('../codeE
   return { text: parts.join(', '), spans };
 }
 
-function renderExprTemplate(
+export function renderExprTemplate(
   ctx: PrintContext,
   key: string,
   slots: Record<string, { text: string; spans: PrintedExpr['spans'] }>,
@@ -108,7 +109,7 @@ export function printConvertToStringExpr(expr: IrExpr, ctx: PrintContext, printE
 export function printConvertToNumberExpr(expr: IrExpr, ctx: PrintContext, printExpr: ExprPrinter): PrintedExpr {
   if (expr.kind !== 'ConvertToNumber') throw new Error('expected ConvertToNumber');
   const inner = printExpr(expr.value, ctx);
-  return renderExprTemplate(ctx, 'ConvertToNumber', { value: inner }, expr.sourceGraphNodeId);
+  return renderExprTemplate(ctx, ctx.family === 'javascript' && expr.numberMode === 'number' ? 'ConvertToNumberStrict' : 'ConvertToNumber', { value: inner }, expr.sourceGraphNodeId);
 }
 
 export function printGetInputTempExpr(expr: IrExpr): PrintedExpr {
@@ -152,11 +153,13 @@ export type CallInvocation = {
   sourceGraphNodeId: string;
   calleeName: string;
   args?: IrExpr[];
+  argumentNames?: string[];
   instanceCall: boolean;
   targetClassName?: string;
   crossClass?: boolean;
   inheritedDepth?: number;
   isSuper?: boolean;
+  isSuperConstructor?: boolean;
   parentClassName?: string;
 };
 
@@ -171,7 +174,14 @@ export function printCallInvocation(
   ctx: PrintContext,
   printExpr: ExprPrinter
 ): PrintedExpr {
-  const argsArray = (s.args ?? []).map((expr) => printExpr(expr, ctx));
+  const argsArray = (s.args ?? []).map((expr, index) => {
+    const value = printExpr(expr, ctx);
+    const name = s.argumentNames?.[index];
+    if (!name) return value;
+    if (ctx.family !== 'python' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) throw new Error('NATIVE_CALL_ARGUMENT_NAME');
+    const printed = printFromTemplate(ctx, 'NativeNamedArgument', { name, value }, { noIndent: true });
+    return { text: printed.text, spans: printed.expressionSpans ?? [] };
+  });
   const mergedArgs = mergeArgs(argsArray);
   const { family } = ctx;
 
@@ -190,6 +200,10 @@ export function printCallInvocation(
     };
   };
 
+  if (s.isSuperConstructor) {
+    if (family !== 'javascript' || !s.isSuper) throw new Error('SUPER_CONSTRUCTOR_TARGET');
+    return fromTemplate('CallSuperConstructor', { args: mergedArgs });
+  }
   if (s.isSuper) {
     return fromTemplate('CallSuper', {
       callee: s.calleeName,
@@ -282,12 +296,18 @@ export function createDefaultExprPrinter(): ExprPrinter {
     switch (expr.kind) {
       case 'Literal':
         return printLiteralExpr(expr, ctx);
+      case 'NativeExpression':
+        return printNativeExpression(expr, ctx, printExpr, renderExprTemplate);
       case 'InstanceRef':
         return printInstanceRefExpr(expr, ctx);
       case 'LocalRef':
         return printLocalRefExpr(expr, ctx);
       case 'BinaryOp':
         return printBinaryOpExpr(expr, ctx, printExpr);
+      case 'Comparison': {
+        if (!['javascript', 'python', 'go'].includes(ctx.family) || (expr.mode === 'js-strict' && ctx.family !== 'javascript')) throw new Error('COMPARISON_TARGET_UNSUPPORTED: This comparison mode has no reviewed target semantics.');
+        return renderExprTemplate(ctx, 'Comparison', { left: printExpr(expr.left, ctx), right: printExpr(expr.right, ctx), operator: { text: expr.operator, spans: [] } }, expr.sourceGraphNodeId);
+      }
       case 'ConvertToString':
         return printConvertToStringExpr(expr, ctx, printExpr);
       case 'ConvertToNumber':

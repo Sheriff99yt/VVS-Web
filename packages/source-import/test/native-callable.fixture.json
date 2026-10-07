@@ -1,0 +1,1054 @@
+{
+  "source": "def collect(first=1, *rest):\n    return [first, rest]\ndef use():\n    return [collect(), collect(2, 3, 4), collect(first=5)]\n",
+  "snapshot": {
+    "savedAt": "",
+    "projectDetails": {
+      "moduleName": "collect",
+      "extendsType": "",
+      "description": "Imported from callable.py"
+    },
+    "variables": [],
+    "events": [],
+    "functions": [
+      {
+        "kind": "function",
+        "id": "python-function-1",
+        "name": "collect",
+        "classId": "global-main-graph",
+        "binding": "module",
+        "visibility": "public",
+        "overloads": [
+          {
+            "id": "o1",
+            "parameters": [
+              {
+                "id": "python-parameter-0",
+                "label": "first",
+                "type": "data_any"
+              },
+              {
+                "id": "python-parameter-1",
+                "label": "rest",
+                "type": "data_any"
+              }
+            ],
+            "returnType": "data_any",
+            "graphTabId": "python-function-1"
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "id": "python-function-2",
+        "name": "use",
+        "classId": "global-main-graph",
+        "binding": "module",
+        "visibility": "public",
+        "overloads": [
+          {
+            "id": "o1",
+            "parameters": [],
+            "returnType": "data_any",
+            "graphTabId": "python-function-2"
+          }
+        ]
+      }
+    ],
+    "openTabs": [
+      {
+        "id": "main-graph",
+        "type": "container",
+        "name": "collect"
+      },
+      {
+        "id": "python-function-1",
+        "type": "function",
+        "name": "Function: collect"
+      },
+      {
+        "id": "python-function-2",
+        "type": "function",
+        "name": "Function: use"
+      }
+    ],
+    "activeGraphTab": "main-graph",
+    "targetLanguage": "python",
+    "autoCompile": true,
+    "autoSave": false,
+    "documents": {
+      "main-graph": {
+        "nodes": [
+          {
+            "id": "import-node-1",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 520,
+              "y": 0
+            },
+            "data": {
+              "kindId": "function_define",
+              "kindVersion": 1,
+              "label": "Declare collect",
+              "category": "Project",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 0,
+                  "end": 54,
+                  "mappingId": "python.FunctionDefinition",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "symbolId": "python-function-1",
+                "name": "collect",
+                "overloadId": "o1",
+                "sourceImport": {
+                  "version": 1,
+                  "language": "python",
+                  "languageVersion": "3.11",
+                  "sourceMode": "module",
+                  "environment": "none",
+                  "fileName": "callable.py",
+                  "source": "def collect(first=1, *rest):\n    return [first, rest]\ndef use():\n    return [collect(), collect(2, 3, 4), collect(first=5)]\n",
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b",
+                  "start": 0,
+                  "end": 124,
+                  "mappingId": "python.function-file",
+                  "mappingVersion": 1
+                }
+              },
+              "linkKind": "call_function",
+              "linkedGraphId": "python-function-1",
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              }
+            }
+          },
+          {
+            "id": "import-node-2",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 760,
+              "y": 0
+            },
+            "data": {
+              "kindId": "function_implement",
+              "kindVersion": 1,
+              "label": "Define collect",
+              "category": "Project",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "default-python-parameter-0",
+                  "label": "Default first",
+                  "type": "data_number",
+                  "required": true
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "inlineValues": {
+                "default-python-parameter-0": 1
+              },
+              "properties": {
+                "sourceOrigin": {
+                  "start": 0,
+                  "end": 54,
+                  "mappingId": "python.FunctionDefinition",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "symbolId": "python-function-1",
+                "name": "collect",
+                "graphTabId": "python-function-1",
+                "isStatic": false,
+                "isExported": false,
+                "role": "function",
+                "nativeSignatureLanguage": "python",
+                "nativeParameters": [
+                  {
+                    "id": "python-parameter-0",
+                    "name": "first",
+                    "mode": "positional",
+                    "defaultPin": "default-python-parameter-0"
+                  },
+                  {
+                    "id": "python-parameter-1",
+                    "name": "rest",
+                    "mode": "rest"
+                  }
+                ]
+              },
+              "linkKind": "call_function",
+              "linkedGraphId": "python-function-1",
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              }
+            }
+          },
+          {
+            "id": "import-node-6",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 1040,
+              "y": 0
+            },
+            "data": {
+              "kindId": "function_define",
+              "kindVersion": 1,
+              "label": "Declare use",
+              "category": "Project",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 54,
+                  "end": 124,
+                  "mappingId": "python.FunctionDefinition",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "symbolId": "python-function-2",
+                "name": "use",
+                "overloadId": "o1",
+                "sourceImport": {
+                  "version": 1,
+                  "language": "python",
+                  "languageVersion": "3.11",
+                  "sourceMode": "module",
+                  "environment": "none",
+                  "fileName": "callable.py",
+                  "source": "def collect(first=1, *rest):\n    return [first, rest]\ndef use():\n    return [collect(), collect(2, 3, 4), collect(first=5)]\n",
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b",
+                  "start": 0,
+                  "end": 124,
+                  "mappingId": "python.function-file",
+                  "mappingVersion": 1
+                }
+              },
+              "linkKind": "call_function",
+              "linkedGraphId": "python-function-2",
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-2",
+                "overloadId": "o1"
+              }
+            }
+          },
+          {
+            "id": "import-node-7",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 1280,
+              "y": 0
+            },
+            "data": {
+              "kindId": "function_implement",
+              "kindVersion": 1,
+              "label": "Define use",
+              "category": "Project",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 54,
+                  "end": 124,
+                  "mappingId": "python.FunctionDefinition",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "symbolId": "python-function-2",
+                "name": "use",
+                "graphTabId": "python-function-2",
+                "isStatic": false,
+                "isExported": false,
+                "role": "function",
+                "nativeSignatureLanguage": "python",
+                "nativeParameters": []
+              },
+              "linkKind": "call_function",
+              "linkedGraphId": "python-function-2",
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-2",
+                "overloadId": "o1"
+              }
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "import-edge-0-import-node-1-import-node-2",
+            "source": "import-node-1",
+            "target": "import-node-2",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          },
+          {
+            "id": "import-edge-1-import-node-2-import-node-6",
+            "source": "import-node-2",
+            "target": "import-node-6",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          },
+          {
+            "id": "import-edge-2-import-node-6-import-node-7",
+            "source": "import-node-6",
+            "target": "import-node-7",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          }
+        ],
+        "metadata": {
+          "moduleName": "collect",
+          "extendsType": "",
+          "description": "",
+          "targetLanguage": "python",
+          "compilationUnit": {
+            "version": 1,
+            "entryPolicy": "library"
+          }
+        }
+      },
+      "python-function-1": {
+        "nodes": [
+          {
+            "id": "import-node-3",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "data": {
+              "kindId": "function_entry",
+              "kindVersion": 1,
+              "label": "collect",
+              "category": "Events",
+              "inputs": [],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "python-parameter-0",
+                  "label": "first",
+                  "type": "data_any"
+                },
+                {
+                  "id": "python-parameter-1",
+                  "label": "rest",
+                  "type": "data_any"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 0,
+                  "end": 54,
+                  "mappingId": "python.FunctionDefinition",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "functionId": "python-function-1",
+                "symbolId": "python-function-1",
+                "name": "collect",
+                "overloadId": "o1"
+              },
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              },
+              "linkKind": "call_function"
+            }
+          },
+          {
+            "id": "import-node-4",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 240,
+              "y": 0
+            },
+            "data": {
+              "kindId": "flow_return",
+              "kindVersion": 1,
+              "label": "Return",
+              "category": "Flow Control",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "return_val",
+                  "label": "Return",
+                  "type": "data_any"
+                }
+              ],
+              "outputs": [],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 33,
+                  "end": 53,
+                  "mappingId": "python.ReturnStatement",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "functionId": "python-function-1",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              },
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              },
+              "linkKind": "call_function"
+            }
+          },
+          {
+            "id": "import-node-5",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 480,
+              "y": 160
+            },
+            "data": {
+              "kindId": "expr_native_collection",
+              "kindVersion": 1,
+              "label": "Native Collection",
+              "category": "Native Values",
+              "inputs": [
+                {
+                  "id": "operand-0",
+                  "label": "Operand 1",
+                  "type": "data_any",
+                  "required": true
+                },
+                {
+                  "id": "operand-1",
+                  "label": "Operand 2",
+                  "type": "data_any",
+                  "required": true
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "result",
+                  "label": "Value",
+                  "type": "data_any"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 40,
+                  "end": 53,
+                  "mappingId": "python.ArrayExpression",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "nativeLanguage": "python",
+                "nativeForm": "list",
+                "nativeDomain": "unknown",
+                "payload": "",
+                "memberName": "",
+                "operator": "",
+                "operandCount": 2
+              }
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "import-edge-0-import-node-3-import-node-5",
+            "source": "import-node-3",
+            "target": "import-node-5",
+            "sourceHandle": "python-parameter-0",
+            "targetHandle": "operand-0",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "data_any"
+            }
+          },
+          {
+            "id": "import-edge-1-import-node-3-import-node-5",
+            "source": "import-node-3",
+            "target": "import-node-5",
+            "sourceHandle": "python-parameter-1",
+            "targetHandle": "operand-1",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "data_any"
+            }
+          },
+          {
+            "id": "import-edge-2-import-node-5-import-node-4",
+            "source": "import-node-5",
+            "target": "import-node-4",
+            "sourceHandle": "result",
+            "targetHandle": "return_val",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "data_any"
+            }
+          },
+          {
+            "id": "import-edge-3-import-node-3-import-node-4",
+            "source": "import-node-3",
+            "target": "import-node-4",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          }
+        ],
+        "metadata": {
+          "moduleName": "collect",
+          "extendsType": "",
+          "description": ""
+        }
+      },
+      "python-function-2": {
+        "nodes": [
+          {
+            "id": "import-node-8",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "data": {
+              "kindId": "function_entry",
+              "kindVersion": 1,
+              "label": "use",
+              "category": "Events",
+              "inputs": [],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 54,
+                  "end": 124,
+                  "mappingId": "python.FunctionDefinition",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "functionId": "python-function-2",
+                "symbolId": "python-function-2",
+                "name": "use",
+                "overloadId": "o1"
+              },
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-2",
+                "overloadId": "o1"
+              },
+              "linkKind": "call_function"
+            }
+          },
+          {
+            "id": "import-node-9",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 240,
+              "y": 0
+            },
+            "data": {
+              "kindId": "flow_return",
+              "kindVersion": 1,
+              "label": "Return",
+              "category": "Flow Control",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "return_val",
+                  "label": "Return",
+                  "type": "data_any"
+                }
+              ],
+              "outputs": [],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 69,
+                  "end": 123,
+                  "mappingId": "python.ReturnStatement",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "functionId": "python-function-2",
+                "symbolId": "python-function-2",
+                "overloadId": "o1"
+              },
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-2",
+                "overloadId": "o1"
+              },
+              "linkKind": "call_function"
+            }
+          },
+          {
+            "id": "import-node-10",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 480,
+              "y": 160
+            },
+            "data": {
+              "kindId": "expr_native_collection",
+              "kindVersion": 1,
+              "label": "Native Collection",
+              "category": "Native Values",
+              "inputs": [
+                {
+                  "id": "operand-0",
+                  "label": "Operand 1",
+                  "type": "data_any",
+                  "required": true
+                },
+                {
+                  "id": "operand-1",
+                  "label": "Operand 2",
+                  "type": "data_any",
+                  "required": true
+                },
+                {
+                  "id": "operand-2",
+                  "label": "Operand 3",
+                  "type": "data_any",
+                  "required": true
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "result",
+                  "label": "Value",
+                  "type": "data_any"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 76,
+                  "end": 123,
+                  "mappingId": "python.ArrayExpression",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "nativeLanguage": "python",
+                "nativeForm": "list",
+                "nativeDomain": "unknown",
+                "payload": "",
+                "memberName": "",
+                "operator": "",
+                "operandCount": 3
+              }
+            }
+          },
+          {
+            "id": "import-node-11",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 720,
+              "y": 320
+            },
+            "data": {
+              "kindId": "vvs.project.call_function",
+              "kindVersion": 1,
+              "label": "Call collect",
+              "category": "Project",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "return_val",
+                  "label": "Return",
+                  "type": "data_any"
+                }
+              ],
+              "inlineValues": {},
+              "properties": {
+                "sourceOrigin": {
+                  "start": 77,
+                  "end": 86,
+                  "mappingId": "python.CallExpression",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "functionId": "python-function-1",
+                "functionName": "collect",
+                "overloadId": "o1",
+                "isSuper": false,
+                "isSuperConstructor": false,
+                "nativeCallLanguage": "python",
+                "nativeArgumentCount": 0
+              },
+              "linkKind": "call_function",
+              "linkedGraphId": "python-function-1",
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              }
+            }
+          },
+          {
+            "id": "import-node-12",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 960,
+              "y": 320
+            },
+            "data": {
+              "kindId": "vvs.project.call_function",
+              "kindVersion": 1,
+              "label": "Call collect",
+              "category": "Project",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "arg-0",
+                  "label": "Argument 1",
+                  "type": "data_number",
+                  "required": true
+                },
+                {
+                  "id": "arg-1",
+                  "label": "Argument 2",
+                  "type": "data_number",
+                  "required": true
+                },
+                {
+                  "id": "arg-2",
+                  "label": "Argument 3",
+                  "type": "data_number",
+                  "required": true
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "return_val",
+                  "label": "Return",
+                  "type": "data_any"
+                }
+              ],
+              "inlineValues": {
+                "arg-0": 2,
+                "arg-1": 3,
+                "arg-2": 4
+              },
+              "properties": {
+                "sourceOrigin": {
+                  "start": 88,
+                  "end": 104,
+                  "mappingId": "python.CallExpression",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "functionId": "python-function-1",
+                "functionName": "collect",
+                "overloadId": "o1",
+                "isSuper": false,
+                "isSuperConstructor": false,
+                "nativeCallLanguage": "python",
+                "nativeArgumentCount": 3
+              },
+              "linkKind": "call_function",
+              "linkedGraphId": "python-function-1",
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              }
+            }
+          },
+          {
+            "id": "import-node-13",
+            "type": "vvs_standard_node",
+            "position": {
+              "x": 1200,
+              "y": 320
+            },
+            "data": {
+              "kindId": "vvs.project.call_function",
+              "kindVersion": 1,
+              "label": "Call collect",
+              "category": "Project",
+              "inputs": [
+                {
+                  "id": "exec_in",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "arg-0",
+                  "label": "first",
+                  "type": "data_number",
+                  "required": true
+                }
+              ],
+              "outputs": [
+                {
+                  "id": "exec_out",
+                  "label": "",
+                  "type": "execution"
+                },
+                {
+                  "id": "return_val",
+                  "label": "Return",
+                  "type": "data_any"
+                }
+              ],
+              "inlineValues": {
+                "arg-0": 5
+              },
+              "properties": {
+                "sourceOrigin": {
+                  "start": 106,
+                  "end": 122,
+                  "mappingId": "python.CallExpression",
+                  "mappingVersion": 1,
+                  "sourceSha256": "85de95e7ec0235ff20e82c11a1ab585248dc9088c4a15b284adda8af1df6da2b"
+                },
+                "functionId": "python-function-1",
+                "functionName": "collect",
+                "overloadId": "o1",
+                "isSuper": false,
+                "isSuperConstructor": false,
+                "nativeCallLanguage": "python",
+                "nativeArgumentCount": 1,
+                "nativeArgumentNames": [
+                  "first"
+                ]
+              },
+              "linkKind": "call_function",
+              "linkedGraphId": "python-function-1",
+              "graphBinding": {
+                "kind": "call_function",
+                "symbolId": "python-function-1",
+                "overloadId": "o1"
+              }
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "import-edge-0-import-node-11-import-node-10",
+            "source": "import-node-11",
+            "target": "import-node-10",
+            "sourceHandle": "return_val",
+            "targetHandle": "operand-0",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "data_any"
+            }
+          },
+          {
+            "id": "import-edge-1-import-node-12-import-node-10",
+            "source": "import-node-12",
+            "target": "import-node-10",
+            "sourceHandle": "return_val",
+            "targetHandle": "operand-1",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "data_any"
+            }
+          },
+          {
+            "id": "import-edge-2-import-node-13-import-node-10",
+            "source": "import-node-13",
+            "target": "import-node-10",
+            "sourceHandle": "return_val",
+            "targetHandle": "operand-2",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "data_any"
+            }
+          },
+          {
+            "id": "import-edge-3-import-node-10-import-node-9",
+            "source": "import-node-10",
+            "target": "import-node-9",
+            "sourceHandle": "result",
+            "targetHandle": "return_val",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "data_any"
+            }
+          },
+          {
+            "id": "import-edge-4-import-node-8-import-node-11",
+            "source": "import-node-8",
+            "target": "import-node-11",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          },
+          {
+            "id": "import-edge-5-import-node-11-import-node-12",
+            "source": "import-node-11",
+            "target": "import-node-12",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          },
+          {
+            "id": "import-edge-6-import-node-12-import-node-13",
+            "source": "import-node-12",
+            "target": "import-node-13",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          },
+          {
+            "id": "import-edge-7-import-node-13-import-node-9",
+            "source": "import-node-13",
+            "target": "import-node-9",
+            "sourceHandle": "exec_out",
+            "targetHandle": "exec_in",
+            "type": "vvs_standard_edge",
+            "data": {
+              "pinType": "execution"
+            }
+          }
+        ],
+        "metadata": {
+          "moduleName": "use",
+          "extendsType": "",
+          "description": ""
+        }
+      }
+    },
+    "installedLibrary": [],
+    "targetFileExtensions": {},
+    "version": 3,
+    "classes": [
+      {
+        "kind": "class",
+        "id": "global-main-graph",
+        "name": "Global",
+        "containerId": "main-graph",
+        "visibility": "public",
+        "isGlobalScope": true
+      }
+    ],
+    "activeClassId": "global-main-graph",
+    "graphContainers": [
+      {
+        "id": "main-graph",
+        "name": "collect"
+      }
+    ]
+  }
+}

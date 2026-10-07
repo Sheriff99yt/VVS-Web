@@ -6,6 +6,7 @@ import type { FunctionSymbol, TargetLanguage, VariableSymbol } from '@/types/gra
 /** Stable React key for spawn menu rows (kindId alone is not unique for dynamic symbols). */
 export function spawnMenuItemKey(item: LibraryNodeTemplate, index: number): string {
   const symbolId = item.linkedGraphId ?? item.graphBinding?.symbolId;
+  if (symbolId && item.graphBinding?.kind === 'parameter_ref') return `${item.type}:${symbolId}:${item.graphBinding.overloadId}:${item.graphBinding.parameterId}`;
   if (symbolId) return `${item.type}:${symbolId}`;
   return `${item.type}:${item.label}:${index}`;
 }

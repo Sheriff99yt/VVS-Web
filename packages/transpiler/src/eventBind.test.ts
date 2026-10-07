@@ -3,6 +3,8 @@ import type { TargetLanguage } from '@vvs/graph-types';
 import { list } from '@vvs/syntax-registry';
 import { transpileGraphCode } from './generate';
 import { withTestEntryGraph } from './testEntryGraph';
+import { EventEmitter } from 'node:events';
+import { runInNewContext } from 'node:vm';
 
 const EXEC_IN = { id: 'exec_in', label: '', type: 'execution' as const };
 const EXEC_OUT = { id: 'exec_out', label: '', type: 'execution' as const };
@@ -42,6 +44,25 @@ function bindGraph(lang: TargetLanguage) {
 }
 
 describe('event_bind honest registration', () => {
+  test('trusted generated JS registration follows EventEmitter receiver, duplicate and removal contracts', () => {
+    const code = transpileGraphCode(bindGraph('javascript'));
+    const registration = code.split('\n').find(line => line.trim() === 'this.on("go", this.on_go);');
+    expect(registration).toBeDefined();
+    const source = new EventEmitter();
+    const calls: unknown[][] = [];
+    const handler = function (this: unknown, ...args: unknown[]) { calls.push([this, ...args]); };
+    Object.assign(source, { on_go: handler });
+    // Only a checked-in fixture's generated statement is executed, never user input.
+    runInNewContext(`(function () { ${registration} }).call(source)`, { source }, { timeout: 1000 });
+    source.emit('go', 7);
+    expect(calls).toEqual([[source, 7]]);
+    runInNewContext(`(function () { ${registration} }).call(source)`, { source }, { timeout: 1000 });
+    expect(source.listenerCount('go')).toBe(2);
+    source.removeListener('go', handler);
+    expect(source.listenerCount('go')).toBe(1);
+    source.removeListener('go', handler);
+    expect(source.listenerCount('go')).toBe(0);
+  });
   test('csharp prints one += line', () => {
     const code = transpileGraphCode(bindGraph('csharp'));
     expect(code).toContain('this.go += this.on_go;');

@@ -235,6 +235,11 @@
           "id": "false_exec",
           "label": "False",
           "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "After",
+          "type": "execution"
         }
       ]
     },
@@ -259,6 +264,16 @@
           "id": "last",
           "label": "Last",
           "type": "data_number"
+        },
+        {
+          "id": "condition",
+          "label": "Condition",
+          "type": "data_boolean"
+        },
+        {
+          "id": "step",
+          "label": "Step",
+          "type": "data_number"
         }
       ],
       "outputs": [
@@ -276,6 +291,48 @@
           "id": "index",
           "label": "Index",
           "type": "data_number"
+        },
+        {
+          "id": "init_exec",
+          "label": "Initializer",
+          "type": "execution"
+        },
+        {
+          "id": "update_exec",
+          "label": "Update",
+          "type": "execution"
+        },
+        {
+          "id": "condition_exec",
+          "label": "Condition evaluation",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "headerMode",
+          "type": "enum",
+          "label": "Header",
+          "default": "range",
+          "enumValues": [
+            "range",
+            "structured",
+            "python-range"
+          ]
+        },
+        {
+          "key": "rangeArgumentCount",
+          "type": "enum",
+          "label": "Range arguments (Python)",
+          "default": "1",
+          "enumValues": [
+            "1",
+            "2",
+            "3"
+          ],
+          "when": {
+            "headerMode": "python-range"
+          }
         }
       ]
     },
@@ -306,6 +363,11 @@
         {
           "id": "exec_out",
           "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "condition_exec",
+          "label": "Condition evaluation",
           "type": "execution"
         }
       ]
@@ -424,7 +486,22 @@
           "type": "data_any"
         }
       ],
-      "outputs": []
+      "outputs": [],
+      "propertySchema": [
+        {
+          "key": "nativeReturnStyle",
+          "label": "Return spelling",
+          "type": "enum",
+          "default": "explicit",
+          "enumValues": [
+            "explicit",
+            "rust-tail"
+          ],
+          "when": {
+            "nativeReturnLanguage": "rust"
+          }
+        }
+      ]
     },
     {
       "kindId": "flow_break",
@@ -709,6 +786,19 @@
           "label": "Number",
           "type": "data_number"
         }
+      ],
+      "propertySchema": [
+        {
+          "key": "numberMode",
+          "label": "JavaScript number conversion",
+          "type": "enum",
+          "enumValues": [
+            "parseFloat",
+            "number"
+          ],
+          "default": "parseFloat",
+          "description": "parseFloat accepts a numeric prefix; Number converts the entire value. Other targets retain their native conversion."
+        }
       ]
     },
     {
@@ -773,6 +863,18 @@
           "label": "Result",
           "type": "data_number"
         }
+      ],
+      "propertySchema": [
+        {
+          "key": "numberDomain",
+          "type": "enum",
+          "label": "Number semantics",
+          "default": "number",
+          "enumValues": [
+            "number",
+            "python-integer"
+          ]
+        }
       ]
     },
     {
@@ -800,6 +902,18 @@
           "label": "Result",
           "type": "data_number"
         }
+      ],
+      "propertySchema": [
+        {
+          "key": "numberDomain",
+          "type": "enum",
+          "label": "Number semantics",
+          "default": "number",
+          "enumValues": [
+            "number",
+            "python-integer"
+          ]
+        }
       ]
     },
     {
@@ -826,6 +940,18 @@
           "id": "result",
           "label": "Result",
           "type": "data_number"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "numberDomain",
+          "type": "enum",
+          "label": "Number semantics",
+          "default": "number",
+          "enumValues": [
+            "number",
+            "python-integer"
+          ]
         }
       ]
     },
@@ -895,6 +1021,100 @@
           "label": "",
           "type": "execution"
         }
+      ],
+      "propertySchema": [
+        {
+          "key": "assignmentOperator",
+          "type": "enum",
+          "label": "Assignment operator",
+          "default": "=",
+          "enumValues": [
+            "=",
+            "+=",
+            "-=",
+            "*=",
+            "/=",
+            "++",
+            "--",
+            "%=",
+            "&=",
+            "|=",
+            "^=",
+            "&^=",
+            "<<=",
+            ">>=",
+            ">>>="
+          ]
+        },
+        {
+          "key": "prefix",
+          "type": "boolean",
+          "label": "Prefix update",
+          "default": false
+        }
+      ]
+    },
+    {
+      "kindId": "parameter_set",
+      "kindVersion": 1,
+      "category": "Parameters",
+      "title": "Set Parameter",
+      "semantics": "parameter.set",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        },
+        {
+          "id": "val",
+          "label": "New Value",
+          "type": "data_any"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "parameterId",
+          "type": "enum",
+          "label": "Parameter",
+          "enumValues": []
+        },
+        {
+          "key": "assignmentOperator",
+          "type": "enum",
+          "label": "Assignment operator",
+          "default": "=",
+          "enumValues": [
+            "=",
+            "+=",
+            "-=",
+            "*=",
+            "/=",
+            "++",
+            "--",
+            "%=",
+            "&=",
+            "|=",
+            "^=",
+            "&^=",
+            "<<=",
+            ">>=",
+            ">>>="
+          ]
+        },
+        {
+          "key": "prefix",
+          "type": "boolean",
+          "label": "Prefix update",
+          "default": false
+        }
       ]
     },
     {
@@ -942,7 +1162,7 @@
           "label": "Extends",
           "type": "class",
           "default": "",
-          "description": "Parent class from this project. Inherited fields and methods stay on the parent Declare chain \u2014 use Get / Set / Call."
+          "description": "Parent class from this project. Inherited fields and methods stay on the parent Declare chain â€” use Get / Set / Call."
         },
         {
           "key": "visibility",
@@ -975,6 +1195,11 @@
           "id": "exec_in",
           "label": "",
           "type": "execution"
+        },
+        {
+          "id": "value",
+          "label": "Initializer",
+          "type": "data_any"
         }
       ],
       "outputs": [
@@ -1050,6 +1275,81 @@
           "label": "Const / Readonly",
           "type": "boolean",
           "default": false
+        },
+        {
+          "key": "hasInitializer",
+          "label": "Local initializer",
+          "type": "boolean",
+          "default": false,
+          "description": "Emit the Initializer pin on a scoped local declaration."
+        },
+        {
+          "key": "declarationKind",
+          "label": "Local declaration kind",
+          "type": "enum",
+          "enumValues": [
+            "let",
+            "const",
+            "var"
+          ],
+          "default": "let",
+          "description": "JavaScript scoped declaration keyword. Other targets use their native declaration syntax."
+        },
+        {
+          "key": "numberDomain",
+          "type": "enum",
+          "label": "Number semantics",
+          "default": "number",
+          "enumValues": [
+            "number",
+            "python-integer"
+          ]
+        },
+        {
+          "key": "declarationOnly",
+          "label": "Constructor-owned field (Python)",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "nativeLocalStyle",
+          "label": "Native local declaration",
+          "type": "enum",
+          "default": "",
+          "enumValues": [
+            "",
+            "go-short",
+            "go-var",
+            "go-const"
+          ],
+          "description": "Go local declaration: inferred :=, explicitly typed var, or readonly typed/untyped const."
+        },
+        {
+          "key": "nativeType",
+          "label": "Native scalar type",
+          "type": "enum",
+          "default": "",
+          "enumValues": [
+            "",
+            "float64",
+            "string",
+            "bool",
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64",
+            "byte",
+            "rune",
+            "int",
+            "uint",
+            "uintptr",
+            "float32",
+            "untyped"
+          ]
         }
       ]
     },
@@ -1230,6 +1530,12 @@
           "label": "Body graph tab",
           "type": "string",
           "default": ""
+        },
+        {
+          "key": "isExported",
+          "label": "Named export (JavaScript module)",
+          "type": "boolean",
+          "default": false
         }
       ]
     },
@@ -1362,6 +1668,23 @@
           "type": "boolean",
           "default": false,
           "description": "Call the parent implementation (super / base / Parent::). Only when the class Extends a parent."
+        },
+        {
+          "key": "isSuperConstructor",
+          "label": "Parent constructor call (JavaScript)",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "key": "callPlacement",
+          "label": "Call placement",
+          "type": "enum",
+          "default": "statement",
+          "enumValues": [
+            "statement",
+            "expression"
+          ],
+          "description": "Go expression calls belong to one value-expression path and have no execution pins. Use a visible local to reuse a result."
         }
       ]
     },
@@ -1403,7 +1726,7 @@
             "include_system"
           ],
           "default": "module",
-          "description": "module = pack ModuleImport; from = named import; include_system = #include <\u2026>"
+          "description": "module = pack ModuleImport; from = named import; include_system = #include <â€¦>"
         },
         {
           "key": "importNames",
@@ -1632,6 +1955,691 @@
           "id": "result",
           "label": "Result",
           "type": "data_string"
+        }
+      ]
+    },
+    {
+      "kindId": "expr_compare",
+      "kindVersion": 1,
+      "category": "Logic",
+      "title": "Comparison",
+      "semantics": "expr.compare",
+      "inputs": [
+        {
+          "id": "a",
+          "label": "A",
+          "type": "data_any"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "type": "data_any"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Result",
+          "type": "data_boolean"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "comparisonMode",
+          "type": "enum",
+          "label": "Operand semantics",
+          "default": "number",
+          "enumValues": [
+            "number",
+            "string",
+            "boolean",
+            "js-strict"
+          ]
+        },
+        {
+          "key": "operator",
+          "type": "enum",
+          "label": "Operator",
+          "default": "<",
+          "enumValues": [
+            "===",
+            "!==",
+            "==",
+            "!=",
+            "<",
+            "<=",
+            ">",
+            ">="
+          ]
+        }
+      ]
+    },
+    {
+      "kindId": "source_directive",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Language Directive",
+      "semantics": "source.directive",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "directive",
+          "label": "Directive",
+          "type": "string",
+          "default": "use strict"
+        }
+      ]
+    },
+    {
+      "kindId": "expr_native_literal",
+      "kindVersion": 1,
+      "category": "Native Values",
+      "title": "Native Literal",
+      "semantics": "expr.native",
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Value",
+          "type": "data_number"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "nativeLanguage",
+          "label": "Native language",
+          "type": "enum",
+          "default": "javascript",
+          "enumValues": [
+            "javascript",
+            "python",
+            "go",
+            "csharp",
+            "cpp",
+            "rust",
+            "gdscript"
+          ]
+        },
+        {
+          "key": "nativeForm",
+          "label": "Construct",
+          "type": "enum",
+          "default": "scalar",
+          "enumValues": [
+            "scalar"
+          ]
+        },
+        {
+          "key": "operandCount",
+          "label": "Operand count",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "key": "nativeDomain",
+          "label": "Literal kind",
+          "type": "enum",
+          "default": "javascript-number",
+          "enumValues": [
+            "javascript-number",
+            "javascript-bigint",
+            "javascript-null",
+            "python-integer",
+            "python-float",
+            "python-none",
+            "string",
+            "go-integer",
+            "go-float",
+            "go-number",
+            "csharp-integer",
+            "csharp-bool",
+            "native-integer",
+            "native-bool"
+          ]
+        },
+        {
+          "key": "payload",
+          "label": "Value",
+          "type": "string",
+          "default": "0"
+        }
+      ]
+    },
+    {
+      "kindId": "expr_native_collection",
+      "kindVersion": 1,
+      "category": "Native Values",
+      "title": "Native Collection",
+      "semantics": "expr.native",
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "nativeLanguage",
+          "label": "Native language",
+          "type": "enum",
+          "default": "javascript",
+          "enumValues": [
+            "javascript",
+            "python",
+            "go"
+          ]
+        },
+        {
+          "key": "nativeForm",
+          "label": "Construct",
+          "type": "enum",
+          "default": "array",
+          "enumValues": [
+            "array",
+            "object",
+            "list",
+            "tuple",
+            "set",
+            "dict",
+            "named-entry",
+            "quoted-entry",
+            "computed-entry",
+            "dict-entry",
+            "shorthand-entry",
+            "spread",
+            "dict-spread",
+            "hole"
+          ]
+        },
+        {
+          "key": "operandCount",
+          "label": "Operand count",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "key": "memberName",
+          "label": "Member or named key",
+          "type": "string",
+          "default": "value"
+        }
+      ]
+    },
+    {
+      "kindId": "expr_native_access",
+      "kindVersion": 1,
+      "category": "Native Values",
+      "title": "Native Access",
+      "semantics": "expr.native",
+      "inputs": [
+        {
+          "id": "operand-0",
+          "label": "Operand 1",
+          "type": "data_any",
+          "required": true
+        },
+        {
+          "id": "operand-1",
+          "label": "Operand 2",
+          "type": "data_any",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "nativeLanguage",
+          "label": "Native language",
+          "type": "enum",
+          "default": "javascript",
+          "enumValues": [
+            "javascript",
+            "python",
+            "go"
+          ]
+        },
+        {
+          "key": "nativeForm",
+          "label": "Construct",
+          "type": "enum",
+          "default": "index",
+          "enumValues": [
+            "index",
+            "member",
+            "slice"
+          ]
+        },
+        {
+          "key": "operandCount",
+          "label": "Operand count",
+          "type": "number",
+          "default": 2
+        },
+        {
+          "key": "memberName",
+          "label": "Member or named key",
+          "type": "string",
+          "default": "value"
+        },
+        {
+          "key": "payload",
+          "label": "Present slice bounds (start/stop/step)",
+          "type": "enum",
+          "default": "00",
+          "enumValues": [
+            "00",
+            "10",
+            "01",
+            "11",
+            "000",
+            "100",
+            "010",
+            "001",
+            "110",
+            "101",
+            "011",
+            "111"
+          ],
+          "when": {
+            "nativeForm": "slice"
+          }
+        }
+      ]
+    },
+    {
+      "kindId": "expr_native_operator",
+      "kindVersion": 1,
+      "category": "Native Values",
+      "title": "Native Operator",
+      "semantics": "expr.native",
+      "inputs": [
+        {
+          "id": "operand-0",
+          "label": "Operand 1",
+          "type": "data_any",
+          "required": true
+        },
+        {
+          "id": "operand-1",
+          "label": "Operand 2",
+          "type": "data_any",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "label": "Value",
+          "type": "data_any"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "nativeLanguage",
+          "label": "Native language",
+          "type": "enum",
+          "default": "javascript",
+          "enumValues": [
+            "javascript",
+            "python",
+            "go",
+            "csharp",
+            "cpp",
+            "rust",
+            "gdscript"
+          ]
+        },
+        {
+          "key": "nativeForm",
+          "label": "Construct",
+          "type": "enum",
+          "default": "binary",
+          "enumValues": [
+            "binary",
+            "unary",
+            "conversion",
+            "parentheses",
+            "overflow"
+          ]
+        },
+        {
+          "key": "operandCount",
+          "label": "Operand count",
+          "type": "number",
+          "default": 2
+        },
+        {
+          "key": "operator",
+          "label": "Operator",
+          "type": "enum",
+          "default": "+",
+          "enumValues": [
+            "+",
+            "-",
+            "*",
+            "/",
+            "//",
+            "%",
+            "**",
+            "==",
+            "!=",
+            "===",
+            "!==",
+            "<",
+            "<=",
+            ">",
+            ">=",
+            "&",
+            "|",
+            "^",
+            "<<",
+            ">>",
+            ">>>",
+            "in",
+            "not in",
+            "is",
+            "is not",
+            "instanceof",
+            "&^",
+            "!",
+            "&&",
+            "||",
+            "~"
+          ],
+          "when": {
+            "nativeForm": [
+              "binary",
+              "unary"
+            ]
+          }
+        },
+        {
+          "key": "nativeDomain",
+          "type": "enum",
+          "label": "Operand evidence",
+          "default": "unknown",
+          "enumValues": [
+            "unknown",
+            "number",
+            "go-integer",
+            "go-float",
+            "go-number",
+            "csharp-integer",
+            "csharp-bool",
+            "native-integer",
+            "native-bool"
+          ],
+          "description": "Number requires numeric input evidence; unknown retains native dynamic dispatch."
+        },
+        {
+          "key": "nativeTargetType",
+          "label": "Convert to",
+          "type": "enum",
+          "default": "",
+          "enumValues": [
+            "int",
+            "uint",
+            "uintptr",
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64",
+            "byte",
+            "rune",
+            "float32",
+            "float64",
+            "sbyte",
+            "short",
+            "ushort",
+            "long",
+            "ulong",
+            "char",
+            "bool",
+            "unsigned int",
+            "signed char",
+            "unsigned char",
+            "unsigned short",
+            "unsigned long",
+            "long long",
+            "unsigned long long",
+            "i8",
+            "u8",
+            "i16",
+            "u16",
+            "i32",
+            "u32",
+            "i64",
+            "u64",
+            "i128",
+            "u128",
+            "isize",
+            "usize"
+          ],
+          "when": {
+            "nativeLanguage": [
+              "go",
+              "csharp",
+              "cpp",
+              "rust",
+              "gdscript"
+            ],
+            "nativeForm": "conversion"
+          },
+          "description": "Explicit native numeric conversion; preserves runtime conversion and checks constant representability."
+        },
+        {
+          "key": "payload",
+          "label": "Overflow context",
+          "type": "enum",
+          "default": "checked",
+          "enumValues": [
+            "checked",
+            "unchecked"
+          ],
+          "when": {
+            "nativeLanguage": "csharp",
+            "nativeForm": "overflow"
+          },
+          "description": "Visible expression overflow context; nested contexts keep their own ownership."
+        }
+      ]
+    },
+    {
+      "kindId": "source_package",
+      "kindVersion": 1,
+      "category": "Source Structure",
+      "title": "Package Clause",
+      "semantics": "source.package",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "packageName",
+          "label": "Package name",
+          "type": "string",
+          "default": "main"
+        },
+        {
+          "key": "goWordBits",
+          "label": "Go target word size",
+          "type": "enum",
+          "default": "64",
+          "enumValues": [
+            "32",
+            "64"
+          ],
+          "description": "Explicit Go integer target: 32-bit (386) or 64-bit (amd64). Retained during re-import."
+        }
+      ]
+    },
+    {
+      "kindId": "csharp_scope",
+      "kindVersion": 1,
+      "category": "Flow Control",
+      "title": "Scope",
+      "semantics": "flow.scope",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "body_exec",
+          "label": "Body",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "overflowContext",
+          "type": "enum",
+          "label": "Overflow context",
+          "enumValues": [
+            "default",
+            "checked",
+            "unchecked"
+          ],
+          "default": "default"
+        }
+      ]
+    },
+    {
+      "kindId": "csharp_declaration_group",
+      "kindVersion": 1,
+      "category": "Variables",
+      "title": "Declaration Group",
+      "semantics": "declaration.group",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "declarations_exec",
+          "label": "Declarators",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "nativeType",
+          "type": "enum",
+          "label": "Native type",
+          "enumValues": [
+            "sbyte",
+            "byte",
+            "short",
+            "ushort",
+            "int",
+            "uint",
+            "long",
+            "ulong",
+            "char"
+          ],
+          "default": "int"
+        },
+        {
+          "key": "groupStyle",
+          "type": "enum",
+          "label": "Group style",
+          "enumValues": [
+            "typed",
+            "const"
+          ],
+          "default": "typed"
+        }
+      ]
+    },
+    {
+      "kindId": "native_declaration_group",
+      "kindVersion": 1,
+      "category": "Variables",
+      "title": "Native Declaration Group",
+      "semantics": "declaration.group",
+      "inputs": [
+        {
+          "id": "exec_in",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "declarations_exec",
+          "label": "Declarators",
+          "type": "execution"
+        },
+        {
+          "id": "exec_out",
+          "label": "",
+          "type": "execution"
+        }
+      ],
+      "propertySchema": [
+        {
+          "key": "nativeAuthoredType",
+          "type": "string",
+          "label": "Native type",
+          "default": "int"
+        },
+        {
+          "key": "nativeMutable",
+          "type": "boolean",
+          "label": "Mutable",
+          "default": true
         }
       ]
     }

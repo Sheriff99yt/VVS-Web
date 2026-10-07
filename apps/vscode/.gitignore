@@ -1,1 +1,4 @@
 *.vsix
+.vscode-test/
+dist/
+native-download.log

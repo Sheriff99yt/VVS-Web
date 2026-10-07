@@ -1,0 +1,25 @@
+{
+  "grammarPackage": "tree-sitter-gdscript",
+  "grammarVersion": "6.1.0",
+  "sourceIntegrity": "sha512-Uy5+GWLkec2JaS1mamiJYsC9j/JoW2FxFq4bnji95gyTtMTsqO6+RSVIaBTU/vRGSNEi3PVDZzyV0j3B4RdntA==",
+  "abi": 14,
+  "sha256": "24e7a0d164b8c4d3068b7ff9cf665a977c16b3cca6cb13125f4a036d9e72dc90",
+  "emsdkCommit": "96c657fc60920d2a6a82318aa50e0abf82749604",
+  "emsdkArchiveSha256": "e1e547e3c7eda7e50c4731350e6f32422baf2fdd7159713a23af215bef9cc52d",
+  "sdkRelease": "41d2106c68c28e101e6252a48e22c78b07722508",
+  "emscriptenVersion": "4.0.17",
+  "toolPins": {
+    "upstream/emscripten/emcc.py": "36a652b391823c9fc51dbca1fbd8cf88198eb478f68164780b2340a3a237a668",
+    "upstream/bin/clang.exe": "e001a33514a0cd00c5337bdf23969e3799359242c79f830392654589bc202f19",
+    "upstream/bin/wasm-ld.exe": "93903ed8bdded0e1aa142e48cdcc2521c1aaa52ae2766dccba8f2742d30743b2",
+    "upstream/bin/wasm-opt.exe": "ef9acd7f8b91c2a596339681e9ab2c69667ea96dba253a3f08cf6e518f664c17"
+  },
+  "platform": "Windows-x64",
+  "flags": [
+    "-O2",
+    "-sSIDE_MODULE=2",
+    "-sEXPORTED_FUNCTIONS=['_tree_sitter_gdscript']",
+    "-ffile-prefix-map=<source>=tree-sitter-gdscript"
+  ],
+  "reproduce": "python tools/build_gdscript_grammar.py"
+}

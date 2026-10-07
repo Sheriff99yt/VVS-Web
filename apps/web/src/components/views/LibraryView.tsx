@@ -91,8 +91,11 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
   );
 
   const filteredGitRepos = useMemo(
-    () => filterGitReposBySearch(gitRepos, searchQuery),
-    [gitRepos, searchQuery]
+    () => {
+      const matches = new Set(filterGitReposBySearch(gitRepos, searchQuery).map(repo => repo.id));
+      return gitRepos.filter(repo => matches.has(repo.id) || filterLibraryAssetsBySearch(gitCatalogs[repo.id]?.assets ?? [], searchQuery).length > 0);
+    },
+    [gitRepos, gitCatalogs, searchQuery]
   );
 
   const communityCatalog = COMMUNITY_LIBRARY_CATALOG;
@@ -413,9 +416,7 @@ export function LibraryView({ browseMode = false }: { browseMode?: boolean } = {
                         {gitCatalogs[repo.id]?.error ? (
                           <p role="status" className="text-xs text-amber-400">{gitCatalogs[repo.id].error} The repository needs catalog/vvs-catalog.json.</p>
                         ) : null}
-                        {gitCatalogs[repo.id]?.assets.filter((asset) =>
-                          [asset.title, asset.description, ...asset.tags].join(' ').toLowerCase().includes(searchQuery.trim().toLowerCase())
-                        ).map((asset) => (
+                        {filterLibraryAssetsBySearch(gitCatalogs[repo.id]?.assets ?? [], searchQuery).map((asset) => (
                           <a key={asset.id} href={asset.repoUrl} target="_blank" rel="noreferrer"
                             className="block rounded border border-zinc-800 p-2 hover:border-zinc-600">
                             <span className="block text-xs font-medium text-zinc-200">{asset.title} · {asset.type}</span>

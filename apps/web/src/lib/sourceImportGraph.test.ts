@@ -30,7 +30,7 @@ describe('source import graph', () => {
     for (const source of [
       'class Bad { on_start() { return 0; } f(a) { return external(a); } }',
       'class Bad { on_start() { return 0; } f() { return captured; } }',
-      'class Bad { on_start() { return 0; } f(a) { let x = a; return x; } }',
+      'class Bad { on_start() { return 0; } f(a) { let x = a; x = missing; return x; } }',
       'class Bad { on_start() { return 0; } f(a) { return a; } f(b) { return b; } }',
       'function f(a) { return a; }',
     ]) {
@@ -58,12 +58,12 @@ describe('source import graph', () => {
     expect((await review('class NoEntry { f() { return 0; } }')).snapshot).toBeUndefined();
   });
 
-  test('blocks emitter string escaping drift and retains source on rejection', async () => {
+  test('maps exact escaped strings and retains original provenance', async () => {
     const source = 'class Escaped { on_start() { return "line\\nnext"; } }';
     const preview = await previewJavaScriptImport(source);
     const result = reviewSourceImportGraph(preview, preview.regions[0]!, 'x.js', true);
-    expect(result.snapshot).toBeUndefined();
-    expect(result.diagnostics.length).toBeGreaterThan(0);
+    expect(result.snapshot).toBeDefined();
+    expect(result.diagnostics).toEqual([]);
     expect(preview.source).toBe(source);
   });
 

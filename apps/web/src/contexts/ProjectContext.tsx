@@ -172,7 +172,7 @@ export function ProjectProvider({
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(snapshot.savedAt ?? null);
 
   const markTabDirty = useCallback((tabId: string) => {
-    setDirtyTabIds((prev) => (prev[tabId] ? prev : { ...prev, [tabId]: true }));
+    setDirtyTabIds((prev) => ({ ...prev, [tabId]: true }));
   }, []);
 
   const markTabClean = useCallback((tabId: string) => {

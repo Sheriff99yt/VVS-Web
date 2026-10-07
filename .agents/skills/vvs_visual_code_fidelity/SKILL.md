@@ -6,6 +6,10 @@ description: >-
   DEFINE_NODE_MISSING, DECLARATION_NOT_ON_CANVAS, or visual-only codegen fidelity.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Canvas source of truth (read first)
 
 **Canonical:** `docs/visual_to_text_fidelity.md` § Canvas is the source of truth · **Streamline:** `docs/design/fidelity_streamline.md`

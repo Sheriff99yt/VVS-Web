@@ -4,6 +4,7 @@ import { expandEnvironmentSymbols as expandEnvSymbols } from '@vvs/environment-t
 import corePack from '../core-pack.json';
 
 export type NodeSemantics =
+  | 'expr.native'
   | 'event.entry.start'
   | 'event.entry.update'
   | 'event.custom'
@@ -17,6 +18,8 @@ export type NodeSemantics =
   | 'flow.while'
   | 'flow.switch'
   | 'flow.sequence'
+  | 'flow.scope'
+  | 'declaration.group'
   | 'flow.try'
   | 'expr.lambda'
   | 'action.print'
@@ -26,8 +29,12 @@ export type NodeSemantics =
   | 'convert.to_string'
   | 'convert.to_number'
   | 'math.binary'
+  | 'expr.compare'
+  | 'source.directive'
+  | 'source.package'
   | 'variable.get'
   | 'variable.set'
+  | 'parameter.set'
   | 'variable.define'
   | 'class.define'
   | 'function.define'
@@ -543,6 +550,7 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
   const { namingConvention, targetLanguage } = options;
 
   for (const kind of listCoreKinds()) {
+    if (kind.kindId === 'parameter_set') continue; // Bound rows are supplied by the owning signature.
     if (kind.kindId === 'function_define' && !functionDeclareIsSpawnable(targetLanguage)) {
       continue;
     }
@@ -569,6 +577,18 @@ export function list(options: ListRegistryOptions): LibraryCategory[] {
     items.push(kindToSpawnTemplate(kind, namingConvention, targetLanguage));
     items.push(...extraFunctionRoleSpawnRows(kind, namingConvention, targetLanguage));
     coreByCategory.set(categoryName, items);
+  }
+
+  if (targetLanguage === 'csharp') {
+    const items = coreByCategory.get('Set') ?? [];
+    for (const fn of options.functions) for (const overload of fn.overloads) {
+      if ((overload.graphTabId ?? fn.id) !== options.currentGraphId) continue;
+      for (const parameter of overload.parameters.filter(parameter => parameter.type === 'data_number')) {
+        const item: SpawnNodeTemplate = { type: 'parameter_set', kindId: 'parameter_set', kindVersion: 1, label: `Set parameter ${parameter.label}`, category: 'Parameters', inputs: [EXEC_IN, { id: 'val', label: 'New Value', type: parameter.type, required: true }], outputs: [EXEC_OUT], graphBinding: { kind: 'parameter_ref', symbolId: fn.id, overloadId: overload.id, parameterId: parameter.id }, properties: { functionId: fn.id, overloadId: overload.id, parameterId: parameter.id, parameterName: parameter.label, assignmentOperator: '=', prefix: false } };
+        if (!options.filterPin || item.inputs.some(pin => pinsMatchFilter(pin, options.filterPin))) items.push(item);
+      }
+    }
+    if (items.length) coreByCategory.set('Set', items);
   }
 
   const missingDeclares = expandMissingDeclareRows(options);

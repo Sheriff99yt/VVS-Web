@@ -10,13 +10,23 @@
     "./validation": "./src/validation.ts"
   },
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "report:expansion": "bun scripts/report-expansion.ts --write",
+    "report:coverage": "bun scripts/report-coverage.ts --write"
   },
   "dependencies": {
     "@babel/parser": "^7.29.9",
+    "@lezer/python": "1.1.18",
     "@vvs/graph-types": "workspace:*",
+    "@vvs/syntax-packs": "workspace:*",
     "@vvs/syntax-registry": "workspace:*",
-    "@vvs/transpiler": "workspace:*"
+    "@vvs/transpiler": "workspace:*",
+    "tree-sitter-c-sharp": "0.23.5",
+    "tree-sitter-cpp": "0.23.4",
+    "tree-sitter-gdscript": "6.1.0",
+    "tree-sitter-go": "0.25.0",
+    "tree-sitter-rust": "0.24.0",
+    "web-tree-sitter": "0.27.0"
   },
   "devDependencies": {
     "acorn": "^8.17.0"

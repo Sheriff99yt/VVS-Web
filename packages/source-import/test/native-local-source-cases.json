@@ -1,0 +1,26 @@
+{
+  "cpp": [
+    { "id": "composed", "source": "int accumulate(int a, int b) { const int first = a + b; int result = (first * 2); result = result + b; return result; }\nbool condition(int a, int b) { bool flag = a < b; bool result = !flag || a == b; return result; }\nint converted(bool a) { const int result = static_cast<int>(a); return result + 1; }\n", "valid": true, "mapped": true },
+    { "id": "grouped", "source": "int grouped(int a) { int first = a, second = first + 1; return second; }\n", "valid": true, "mapped": true },
+    { "id": "readonly", "source": "int readonly(int a) { const int value = a; value = 2; return value; }\n", "valid": false, "mapped": false, "diagnostic": "READONLY_ASSIGNMENT" },
+    { "id": "missing", "source": "int missing(int a) { int value = MissingValue; return value; }\n", "valid": false, "mapped": false, "diagnostic": "UNRESOLVED_NAME" },
+    { "id": "implicit", "source": "short implicit(int a) { short value = a; return value; }\n", "valid": true, "mapped": false, "diagnostic": "ASSIGNED_TYPE_CONTEXT_REQUIRED" },
+    { "id": "own-initializer", "source": "int own(int value) { { int value = value; return value; } }\n", "valid": true, "mapped": false, "diagnostic": "UNINITIALIZED_READ" }
+  ],
+  "rust": [
+    { "id": "composed", "source": "fn accumulate(a: i32, b: i32) -> i32 { let first: i32 = a + b; let mut result: i32 = (first * 2); result = result + b; result }\nfn condition(a: i32, b: i32) -> bool { let flag: bool = a < b; let result: bool = !flag || a == b; result }\nfn converted(a: bool) -> i32 { let result: i32 = a as i32; result + 1 }\n", "valid": true, "mapped": true },
+    { "id": "shadow", "source": "fn shadow(value: i32) -> i32 { let value: i32 = value + 1; let value: i32 = value + 2; value }\n", "valid": true, "mapped": true },
+    { "id": "readonly", "source": "fn readonly(a: i32) -> i32 { let value: i32 = a; value = 2; value }\n", "valid": false, "mapped": false, "diagnostic": "READONLY_ASSIGNMENT" },
+    { "id": "missing", "source": "fn missing(a: i32) -> i32 { let value: i32 = MissingValue; value }\n", "valid": false, "mapped": false, "diagnostic": "UNRESOLVED_NAME" },
+    { "id": "implicit", "source": "fn implicit(a: i32) -> i8 { let value: i8 = a; value }\n", "valid": false, "mapped": false, "diagnostic": "ASSIGNED_TYPE_CONTEXT_REQUIRED" },
+    { "id": "discarded", "source": "fn discarded(a: i32) -> i32 { let value: i32 = a; value; }\n", "valid": false, "mapped": false, "diagnostic": "RETURN_CONTEXT" }
+  ],
+  "gdscript": [
+    { "id": "composed", "source": "func accumulate(a: int, b: int) -> int:\n    var first: int = a + b\n    var result: int = (first * 2)\n    result = result + b\n    return result\nfunc condition(a: int, b: int) -> bool:\n    var flag: bool = a < b\n    var result: bool = not flag or a == b\n    return result\nfunc converted(a: bool) -> int:\n    var result: int = int(a)\n    return result + 1\n", "valid": true, "mapped": true },
+    { "id": "constant", "source": "func constant(a: int) -> int:\n    const value: int = 2\n    var result: int = value + a\n    return result\n", "valid": true, "mapped": true },
+    { "id": "readonly", "source": "func readonly(a: int) -> int:\n    const value: int = 2\n    value = a\n    return value\n", "valid": false, "mapped": false, "diagnostic": "READONLY_ASSIGNMENT" },
+    { "id": "missing", "source": "func missing(a: int) -> int:\n    var value: int = MissingValue\n    return value\n", "valid": false, "mapped": false, "diagnostic": "UNRESOLVED_NAME" },
+    { "id": "wider", "source": "func wider(a: int) -> int:\n    var value: float = a\n    return a\n", "valid": true, "mapped": false, "diagnostic": "TYPED_INITIALIZER_REQUIRED" },
+    { "id": "shadow", "source": "func shadow(value: int) -> int:\n    var value: int = value + 1\n    return value\n", "valid": false, "mapped": false, "diagnostic": "DUPLICATE_LOCAL" }
+  ]
+}

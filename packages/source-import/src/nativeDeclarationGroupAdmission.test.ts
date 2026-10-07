@@ -1,0 +1,26 @@
+import { expect, test } from 'bun:test';
+import { transactNativeScalarDeclarationGroup, normalizeProjectSnapshot } from '@vvs/graph-types';
+import { reviewNativeScalarImportGraph, acceptSourceImportReview, reviewSourceReimport, acceptSourceReimport } from './validation';
+import { configureNativeInventoryRuntime } from '../test/nativeInventoryRuntime';
+configureNativeInventoryRuntime();
+test('C++ complete grouped module seals, coordinated edits and reimport choices', async () => {
+  const source = 'int grouped(int a) { int first = a, second = first + 1; second = second + a; return second; }\n';
+  const review = await reviewNativeScalarImportGraph(source, 'cpp', 'grouped.cpp');
+  expect(review.diagnostics).toEqual([]);
+  const accepted = await acceptSourceImportReview(review, source, 'grouped.cpp', false, 'library');
+  const snapshot = normalizeProjectSnapshot(JSON.parse(JSON.stringify(accepted)))!;
+  const group = Object.values(snapshot.documents).flatMap(doc => doc.nodes).find(node => node.data.kindId === 'native_declaration_group')!;
+  const edited = { ...snapshot, ...transactNativeScalarDeclarationGroup(snapshot, group.id, { authoredType: 'signed int' }) };
+  const unchanged = await reviewSourceReimport(edited, source, 'grouped.cpp');
+  expect(unchanged.diagnostics).toEqual([]); expect(unchanged.conflicts).toEqual([]);
+  expect(acceptSourceReimport(unchanged, edited, source).documents).toEqual(edited.documents);
+  const incoming = source.replace('first + 1', 'first + 2');
+  const conflict = await reviewSourceReimport(edited, incoming, 'grouped.cpp');
+  expect(conflict.diagnostics).toEqual([]); expect(conflict.conflicts).toHaveLength(1);
+  expect(acceptSourceReimport(conflict, edited, incoming, 'keep-graph').variables).toEqual(edited.variables);
+  expect(Object.values(acceptSourceReimport(conflict, edited, incoming, 'use-source').documents).flatMap(doc => doc.nodes).some(node => node.data.properties?.payload === '2')).toBe(true);
+  const readonly = { ...snapshot, ...transactNativeScalarDeclarationGroup(snapshot, group.id, { mutable: false }) };
+  expect(readonly.variables.every(variable => variable.flags?.readonly)).toBe(true);
+  const recovered = { ...readonly, ...transactNativeScalarDeclarationGroup(readonly, group.id, { mutable: true }) };
+  expect(recovered.documents).toEqual(snapshot.documents);
+});

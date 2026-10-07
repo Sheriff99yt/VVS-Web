@@ -3,6 +3,10 @@ name: VVS Backend Development
 description: Triggers when writing Go code, API handlers, or MCP tools in the server directory.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Current State
 
 **Phase 2 (partial, optional sidecar):** REST project API, registry HTTP, optional local MCP SSE. Hosted agent is the in-page TS runtime — Go MCP is not the product path. Canonical snapshot: [`docs/current_state.md`](../../../docs/current_state.md). Deploy topology: [`docs/deployment.md`](../../../docs/deployment.md).

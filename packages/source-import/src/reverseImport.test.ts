@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { describe, expect, test, setSystemTime } from 'bun:test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -9,7 +10,7 @@ import { reviewSourceImportGraph, normalizedImportSyntax, validateImportSnapshot
 import { fullFileSnapshot, type FullFileFixture } from '../test/fullFileFixture';
 import { semanticProjection } from '../test/semanticProjection';
 
-const fixtureDir = new URL('../../syntax-packs/rosetta/full-file/', import.meta.url).pathname;
+const fixtureDir = fileURLToPath(new URL('../../syntax-packs/rosetta/full-file/', import.meta.url));
 const fixtures: FullFileFixture[] = readdirSync(fixtureDir).filter(name => name.endsWith('.fixture.json')).map(name => JSON.parse(readFileSync(join(fixtureDir, name), 'utf8')));
 async function review(source: string) {
   const preview = await previewJavaScriptImport(source);
@@ -93,16 +94,16 @@ describe('independent rejection gates', () => {
   test('ordered side effects cannot be accepted or silently converted to comments', async () => {
     for (const body of ['first(); second(); return 0;', 'second(); first(); return 0;']) {
       const result = await review(`class Effects { on_start() { ${body} } }`);
-      expect(result.snapshot).toBeUndefined(); expect(result.diagnostics.join()).toContain('TERMINAL_BLOCK_REQUIRED');
+      expect(result.snapshot).toBeUndefined(); expect(result.diagnostics.join()).toContain('CALL_SIGNATURE_UNRESOLVED');
     }
   });
-  test('dynamic operators and truthiness are explicit capability gaps', async () => {
-    for (const body of ['return a + b;', 'return a * b;', 'return "a" + "b";', 'if (a) { return a; } else { return b; }']) {
+  test('unknown truthiness remains an explicit capability gap', async () => {
+    for (const body of ['if (a) { return a; } else { return b; }']) {
       const result = await review(`class Dynamic { on_start() { return 0; } f(a,b) { ${body} } }`);
       expect(result.snapshot).toBeUndefined(); expect(result.diagnostics.join()).toMatch(/JS_DYNAMIC_OPERATOR|JS_TRUTHINESS/);
     }
   });
-  test('rejects captures, shadowing, receiver access, directives, module context, defaults, async and negative zero', async () => {
+  test('rejects captures, shadowing, receiver access, directives, module context, defaults and async', async () => {
     for (const source of [
       'class C { on_start(){return 0;} f(a){return captured;} }',
       'class C { on_start(){return 0;} f(a){let a=1;return a;} }',
@@ -112,7 +113,6 @@ describe('independent rejection gates', () => {
       'export class C { on_start(){return 0;} }',
       'class C { on_start(){return 0;} f(a=1){return a;} }',
       'class C { async on_start(){return 0;} }',
-      'class C { on_start(){return -0;} }',
     ]) expect((await review(source)).snapshot).toBeUndefined();
   });
   test('UTF-16 ranges and scoped reads are exact, including astral text outside selected unit', async () => {

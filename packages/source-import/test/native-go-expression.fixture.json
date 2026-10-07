@@ -1,0 +1,1077 @@
+{
+  "savedAt": "",
+  "projectDetails": {
+    "moduleName": "sample",
+    "extendsType": "",
+    "description": "Imported from sample.go"
+  },
+  "variables": [],
+  "events": [],
+  "functions": [
+    {
+      "kind": "function",
+      "id": "go-function-0",
+      "name": "check",
+      "classId": "global-main-graph",
+      "binding": "module",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "go-param-0",
+              "label": "flag",
+              "type": "data_boolean"
+            }
+          ],
+          "returnType": "data_boolean",
+          "graphTabId": "go-function-0"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "go-function-1",
+      "name": "nested",
+      "classId": "global-main-graph",
+      "binding": "module",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "go-param-0",
+              "label": "first",
+              "type": "data_boolean"
+            },
+            {
+              "id": "go-param-1",
+              "label": "second",
+              "type": "data_boolean"
+            },
+            {
+              "id": "go-param-2",
+              "label": "third",
+              "type": "data_boolean"
+            }
+          ],
+          "returnType": "data_boolean",
+          "graphTabId": "go-function-1"
+        }
+      ]
+    }
+  ],
+  "openTabs": [
+    {
+      "id": "main-graph",
+      "type": "container",
+      "name": "sample"
+    },
+    {
+      "id": "go-function-0",
+      "type": "function",
+      "name": "Function: check"
+    },
+    {
+      "id": "go-function-1",
+      "type": "function",
+      "name": "Function: nested"
+    }
+  ],
+  "activeGraphTab": "main-graph",
+  "targetLanguage": "go",
+  "autoCompile": true,
+  "autoSave": false,
+  "documents": {
+    "main-graph": {
+      "nodes": [
+        {
+          "id": "import-node-1",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "source_package",
+            "kindVersion": 1,
+            "label": "Package Clause",
+            "category": "Source Structure",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 0,
+                "end": 14,
+                "mappingId": "go.package_clause",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "packageName": "sample",
+              "goWordBits": "64",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc check(flag bool) bool { return flag }\nfunc nested(first bool, second bool, third bool) bool { return check(first) || (check(second) && check(third)) }",
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0",
+                "start": 0,
+                "end": 170,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "import-node-2",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 520,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_define",
+            "kindVersion": 1,
+            "label": "Declare check",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 57,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "symbolId": "go-function-0",
+              "name": "check",
+              "overloadId": "o1",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc check(flag bool) bool { return flag }\nfunc nested(first bool, second bool, third bool) bool { return check(first) || (check(second) && check(third)) }",
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0",
+                "start": 0,
+                "end": 170,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-3",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 760,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_implement",
+            "kindVersion": 1,
+            "label": "Define check",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 57,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "symbolId": "go-function-0",
+              "name": "check",
+              "graphTabId": "go-function-0",
+              "isStatic": false,
+              "isExported": false,
+              "role": "function",
+              "nativeSignatureLanguage": "go",
+              "nativeReturnType": "bool",
+              "nativeParameters": [
+                {
+                  "id": "go-param-0",
+                  "name": "flag",
+                  "mode": "positional",
+                  "nativeType": "bool"
+                }
+              ]
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-6",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1040,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_define",
+            "kindVersion": 1,
+            "label": "Declare nested",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 58,
+                "end": 170,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "symbolId": "go-function-1",
+              "name": "nested",
+              "overloadId": "o1",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc check(flag bool) bool { return flag }\nfunc nested(first bool, second bool, third bool) bool { return check(first) || (check(second) && check(third)) }",
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0",
+                "start": 0,
+                "end": 170,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-1",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-7",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1280,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_implement",
+            "kindVersion": 1,
+            "label": "Define nested",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 58,
+                "end": 170,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "symbolId": "go-function-1",
+              "name": "nested",
+              "graphTabId": "go-function-1",
+              "isStatic": false,
+              "isExported": false,
+              "role": "function",
+              "nativeSignatureLanguage": "go",
+              "nativeReturnType": "bool",
+              "nativeParameters": [
+                {
+                  "id": "go-param-0",
+                  "name": "first",
+                  "mode": "positional",
+                  "nativeType": "bool"
+                },
+                {
+                  "id": "go-param-1",
+                  "name": "second",
+                  "mode": "positional",
+                  "nativeType": "bool"
+                },
+                {
+                  "id": "go-param-2",
+                  "name": "third",
+                  "mode": "positional",
+                  "nativeType": "bool"
+                }
+              ]
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-1",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-1-import-node-2",
+          "source": "import-node-1",
+          "target": "import-node-2",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-2-import-node-3",
+          "source": "import-node-2",
+          "target": "import-node-3",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-2-import-node-3-import-node-6",
+          "source": "import-node-3",
+          "target": "import-node-6",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-3-import-node-6-import-node-7",
+          "source": "import-node-6",
+          "target": "import-node-7",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "sample",
+        "extendsType": "",
+        "description": "",
+        "targetLanguage": "go",
+        "compilationUnit": {
+          "version": 1,
+          "entryPolicy": "library"
+        }
+      }
+    },
+    "go-function-0": {
+      "nodes": [
+        {
+          "id": "import-node-4",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "check",
+            "category": "Events",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "go-param-0",
+                "label": "flag",
+                "type": "data_boolean"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 57,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "functionId": "go-function-0",
+              "symbolId": "go-function-0",
+              "name": "check",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-5",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 240,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "Return",
+            "category": "Flow Control",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_boolean"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 44,
+                "end": 55,
+                "mappingId": "go.return_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "functionId": "go-function-0",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-4-import-node-5",
+          "source": "import-node-4",
+          "target": "import-node-5",
+          "sourceHandle": "go-param-0",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-4-import-node-5",
+          "source": "import-node-4",
+          "target": "import-node-5",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "check",
+        "extendsType": "",
+        "description": ""
+      }
+    },
+    "go-function-1": {
+      "nodes": [
+        {
+          "id": "import-node-8",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "nested",
+            "category": "Events",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "go-param-0",
+                "label": "first",
+                "type": "data_boolean"
+              },
+              {
+                "id": "go-param-1",
+                "label": "second",
+                "type": "data_boolean"
+              },
+              {
+                "id": "go-param-2",
+                "label": "third",
+                "type": "data_boolean"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 58,
+                "end": 170,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "functionId": "go-function-1",
+              "symbolId": "go-function-1",
+              "name": "nested",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-9",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 240,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "Return",
+            "category": "Flow Control",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_boolean"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 114,
+                "end": 168,
+                "mappingId": "go.return_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "functionId": "go-function-1",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-10",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 480,
+            "y": 160
+          },
+          "data": {
+            "kindId": "expr_native_operator",
+            "kindVersion": 1,
+            "label": "Native Operator",
+            "category": "Native Values",
+            "inputs": [
+              {
+                "id": "operand-0",
+                "label": "Operand 1",
+                "type": "data_any",
+                "required": true
+              },
+              {
+                "id": "operand-1",
+                "label": "Operand 2",
+                "type": "data_any",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_boolean"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 121,
+                "end": 168,
+                "mappingId": "go.binary_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "nativeLanguage": "go",
+              "nativeForm": "binary",
+              "nativeDomain": "go-bool",
+              "payload": "",
+              "memberName": "",
+              "operator": "||",
+              "operandCount": 2
+            }
+          }
+        },
+        {
+          "id": "import-node-11",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 720,
+            "y": 320
+          },
+          "data": {
+            "kindId": "vvs.project.call_function",
+            "kindVersion": 1,
+            "label": "Call check (expression)",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "go-param-0",
+                "label": "flag",
+                "type": "data_boolean"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_boolean"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 121,
+                "end": 133,
+                "mappingId": "go.call_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "callPlacement": "expression",
+              "functionId": "go-function-0",
+              "functionName": "check",
+              "overloadId": "o1",
+              "isSuper": false,
+              "isSuperConstructor": false
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-12",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 960,
+            "y": 320
+          },
+          "data": {
+            "kindId": "expr_native_operator",
+            "kindVersion": 1,
+            "label": "Native Operator",
+            "category": "Native Values",
+            "inputs": [
+              {
+                "id": "operand-0",
+                "label": "Operand 1",
+                "type": "data_any",
+                "required": true
+              },
+              {
+                "id": "operand-1",
+                "label": "Operand 2",
+                "type": "data_any",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_boolean"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 138,
+                "end": 167,
+                "mappingId": "go.binary_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "nativeLanguage": "go",
+              "nativeForm": "binary",
+              "nativeDomain": "go-bool",
+              "payload": "",
+              "memberName": "",
+              "operator": "&&",
+              "operandCount": 2
+            }
+          }
+        },
+        {
+          "id": "import-node-13",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1200,
+            "y": 480
+          },
+          "data": {
+            "kindId": "vvs.project.call_function",
+            "kindVersion": 1,
+            "label": "Call check (expression)",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "go-param-0",
+                "label": "flag",
+                "type": "data_boolean"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_boolean"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 138,
+                "end": 151,
+                "mappingId": "go.call_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "callPlacement": "expression",
+              "functionId": "go-function-0",
+              "functionName": "check",
+              "overloadId": "o1",
+              "isSuper": false,
+              "isSuperConstructor": false
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-14",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1440,
+            "y": 480
+          },
+          "data": {
+            "kindId": "vvs.project.call_function",
+            "kindVersion": 1,
+            "label": "Call check (expression)",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "go-param-0",
+                "label": "flag",
+                "type": "data_boolean"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_boolean"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 155,
+                "end": 167,
+                "mappingId": "go.call_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "90a077dc913993dfd3b37c6dcecf3f6df08cb2224bc78212d95fc5ebdfd000a0"
+              },
+              "callPlacement": "expression",
+              "functionId": "go-function-0",
+              "functionName": "check",
+              "overloadId": "o1",
+              "isSuper": false,
+              "isSuperConstructor": false
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-8-import-node-11",
+          "source": "import-node-8",
+          "target": "import-node-11",
+          "sourceHandle": "go-param-0",
+          "targetHandle": "go-param-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-11-import-node-10",
+          "source": "import-node-11",
+          "target": "import-node-10",
+          "sourceHandle": "return_val",
+          "targetHandle": "operand-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_boolean"
+          }
+        },
+        {
+          "id": "import-edge-2-import-node-8-import-node-13",
+          "source": "import-node-8",
+          "target": "import-node-13",
+          "sourceHandle": "go-param-1",
+          "targetHandle": "go-param-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-3-import-node-13-import-node-12",
+          "source": "import-node-13",
+          "target": "import-node-12",
+          "sourceHandle": "return_val",
+          "targetHandle": "operand-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_boolean"
+          }
+        },
+        {
+          "id": "import-edge-4-import-node-8-import-node-14",
+          "source": "import-node-8",
+          "target": "import-node-14",
+          "sourceHandle": "go-param-2",
+          "targetHandle": "go-param-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-5-import-node-14-import-node-12",
+          "source": "import-node-14",
+          "target": "import-node-12",
+          "sourceHandle": "return_val",
+          "targetHandle": "operand-1",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_boolean"
+          }
+        },
+        {
+          "id": "import-edge-6-import-node-12-import-node-10",
+          "source": "import-node-12",
+          "target": "import-node-10",
+          "sourceHandle": "result",
+          "targetHandle": "operand-1",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_boolean"
+          }
+        },
+        {
+          "id": "import-edge-7-import-node-10-import-node-9",
+          "source": "import-node-10",
+          "target": "import-node-9",
+          "sourceHandle": "result",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_boolean"
+          }
+        },
+        {
+          "id": "import-edge-8-import-node-8-import-node-9",
+          "source": "import-node-8",
+          "target": "import-node-9",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "nested",
+        "extendsType": "",
+        "description": ""
+      }
+    }
+  },
+  "installedLibrary": [],
+  "targetFileExtensions": {},
+  "version": 3,
+  "classes": [
+    {
+      "kind": "class",
+      "id": "global-main-graph",
+      "name": "Global",
+      "containerId": "main-graph",
+      "visibility": "public",
+      "isGlobalScope": true
+    }
+  ],
+  "activeClassId": "global-main-graph",
+  "graphContainers": [
+    {
+      "id": "main-graph",
+      "name": "sample"
+    }
+  ]
+}

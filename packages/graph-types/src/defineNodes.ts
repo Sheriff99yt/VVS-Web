@@ -19,6 +19,8 @@ export type MemberDefineKind = (typeof MEMBER_DEFINE_KINDS)[number];
 export const MEMBER_CHAIN_KINDS = [
   ...MEMBER_DEFINE_KINDS,
   'function_implement',
+  'source_directive',
+  'source_package',
 ] as const;
 
 export type MemberChainKind = (typeof MEMBER_CHAIN_KINDS)[number];
@@ -247,6 +249,7 @@ export function collectMemberDefineNodeIds(
   const importNodes = doc.nodes.filter((n) => {
     const kindId = resolveNodeKindId(n.data);
     return (
+      kindId === 'source_directive' || kindId === 'source_package' ||
       kindId === 'vvs.project.import_module' ||
       kindId.startsWith('import_module_') ||
       kindId === 'import_class' ||
@@ -256,6 +259,7 @@ export function collectMemberDefineNodeIds(
   const isImportChainNode = (n: GraphNode): boolean => {
     const kindId = resolveNodeKindId(n.data);
     return (
+      kindId === 'source_directive' || kindId === 'source_package' ||
       kindId === 'vvs.project.import_module' ||
       kindId.startsWith('import_module_') ||
       kindId === 'import_class' ||

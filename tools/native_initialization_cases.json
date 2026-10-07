@@ -1,0 +1,532 @@
+{
+  "cpp": [
+    {
+      "id": "discarded-local",
+      "source": "// λ🧭 initialization probe\nint sample() { int value; value; return 0; }",
+      "valid": true,
+      "reads": [],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "discarded-parenthesized",
+      "source": "// λ🧭 initialization probe\nint sample() { int value; (value); return 0; }",
+      "valid": true,
+      "reads": [],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "initialized",
+      "source": "// λ🧭 initialization probe\nint sample(int input) { int value=input; return value; }",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "deferred-read",
+      "source": "// λ🧭 initialization probe\nint sample() { int value; return value; }",
+      "valid": false,
+      "reads": [
+        false
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "unsafe",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "first-assignment",
+      "source": "// λ🧭 initialization probe\nint sample() { int value; value=2; return value; }",
+      "valid": true,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "both-arms",
+      "source": "// λ🧭 initialization probe\nint sample(bool condition) { int value; if(condition) { value=1; } else { value=2; } return value; }",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "one-arm",
+      "source": "// λ🧭 initialization probe\nint sample(bool condition) { int value; if(condition) { value=1; } return value; }",
+      "valid": false,
+      "reads": [
+        true,
+        false
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "unsafe",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "returning-arm",
+      "source": "// λ🧭 initialization probe\nint sample(bool condition) { int value; if(condition) { return 1; } else { value=2; } return value; }",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "rhs-before-write",
+      "source": "// λ🧭 initialization probe\nint sample() { int value; value=value+1; return value; }",
+      "valid": false,
+      "reads": [
+        false,
+        true
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "unsafe",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "compound-read",
+      "source": "// λ🧭 initialization probe\nint sample() { int value; value+=1; return value; }",
+      "valid": false,
+      "reads": [
+        false,
+        true
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "unsafe",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "readonly-twice",
+      "source": "// λ🧭 initialization probe\nint sample() { const int value=1; value=2; return value; }",
+      "valid": false,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": "READONLY_ASSIGNMENT",
+      "modelStatus": "invalid",
+      "diagnostic": "assign"
+    },
+    {
+      "id": "parameter-readonly",
+      "source": "// λ🧭 initialization probe\nint sample(const int input) { input=2; return input; }",
+      "valid": false,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": "READONLY_ASSIGNMENT",
+      "modelStatus": "invalid",
+      "diagnostic": "assign"
+    },
+    {
+      "id": "ordered-declarations",
+      "source": "// λ🧭 initialization probe\nint sample(int input) { int first=input, second=first; return second; }",
+      "valid": true,
+      "reads": [
+        true,
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "shadow-initializer",
+      "source": "// λ🧭 initialization probe\nint sample(int input) { int value=input; { int value=value; return value; } }",
+      "valid": false,
+      "reads": [
+        true,
+        false,
+        true
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "unsafe",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "possible-reassignment",
+      "source": "// λ🧭 initialization probe\nint sample(bool condition) { int value; if(condition) { value=1; } value=2; return value; }",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    }
+  ],
+  "rust": [
+    {
+      "id": "discarded-local",
+      "source": "// λ🧭 initialization probe\nfn sample()->i32 { let value:i32; value; return 0; }",
+      "valid": false,
+      "reads": [
+        false
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "invalid",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "discarded-parenthesized",
+      "source": "// λ🧭 initialization probe\nfn sample()->i32 { let value:i32; (value); return 0; }",
+      "valid": false,
+      "reads": [
+        false
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "invalid",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "initialized",
+      "source": "// λ🧭 initialization probe\nfn sample(input:i32)->i32 { let value=input; return value; }",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "deferred-read",
+      "source": "// λ🧭 initialization probe\nfn sample()->i32 { let value:i32; return value; }",
+      "valid": false,
+      "reads": [
+        false
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "invalid",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "first-assignment",
+      "source": "// λ🧭 initialization probe\nfn sample()->i32 { let value:i32; value=2; return value; }",
+      "valid": true,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "both-arms",
+      "source": "// λ🧭 initialization probe\nfn sample(condition:bool)->i32 { let value:i32; if condition { value=1; } else { value=2; } return value; }",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "one-arm",
+      "source": "// λ🧭 initialization probe\nfn sample(condition:bool)->i32 { let value:i32; if condition { value=1; } return value; }",
+      "valid": false,
+      "reads": [
+        true,
+        false
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "invalid",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "returning-arm",
+      "source": "// λ🧭 initialization probe\nfn sample(condition:bool)->i32 { let value:i32; if condition { return 1; } else { value=2; } return value; }",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "rhs-before-write",
+      "source": "// λ🧭 initialization probe\nfn sample()->i32 { let mut value:i32; value=value+1; return value; }",
+      "valid": false,
+      "reads": [
+        false,
+        true
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "invalid",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "compound-read",
+      "source": "// λ🧭 initialization probe\nfn sample()->i32 { let mut value:i32; value+=1; return value; }",
+      "valid": false,
+      "reads": [
+        false,
+        true
+      ],
+      "modelDiagnostic": "UNINITIALIZED_READ",
+      "modelStatus": "invalid",
+      "diagnostic": "uninitialized"
+    },
+    {
+      "id": "readonly-twice",
+      "source": "// λ🧭 initialization probe\nfn sample()->i32 { let value:i32; value=1; value=2; return value; }",
+      "valid": false,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": "READONLY_ASSIGNMENT",
+      "modelStatus": "invalid",
+      "diagnostic": "assign"
+    },
+    {
+      "id": "parameter-readonly",
+      "source": "// λ🧭 initialization probe\nfn sample(input:i32)->i32 { input=2; return input; }",
+      "valid": false,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": "READONLY_ASSIGNMENT",
+      "modelStatus": "invalid",
+      "diagnostic": "assign"
+    },
+    {
+      "id": "ordered-declarations",
+      "source": "// λ🧭 initialization probe\nfn sample(input:i32)->i32 { let first=input; let second=first; return second; }",
+      "valid": true,
+      "reads": [
+        true,
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "shadow-initializer",
+      "source": "// λ🧭 initialization probe\nfn sample(input:i32)->i32 { let value=input; { let value=value; return value; } }",
+      "valid": true,
+      "reads": [
+        true,
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "possible-reassignment",
+      "source": "// λ🧭 initialization probe\nfn sample(condition:bool)->i32 { let value:i32; if condition { value=1; } value=2; return value; }",
+      "valid": false,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": "READONLY_ASSIGNMENT",
+      "modelStatus": "invalid",
+      "diagnostic": "assign"
+    }
+  ],
+  "gdscript": [
+    {
+      "id": "discarded-local",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample()->int:\n\tvar value:int\n\tvalue\n\treturn 0\n",
+      "valid": true,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "discarded-parenthesized",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample()->int:\n\tvar value:int\n\t(value)\n\treturn 0\n",
+      "valid": true,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "initialized",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar value:int=input\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "deferred-read",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample()->int:\n\tvar value:int\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "first-assignment",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample()->int:\n\tvar value:int\n\tvalue=2\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "both-arms",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(condition:bool)->int:\n\tvar value:int\n\tif condition:\n\t\tvalue=1\n\telse:\n\t\tvalue=2\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "one-arm",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(condition:bool)->int:\n\tvar value:int\n\tif condition:\n\t\tvalue=1\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "returning-arm",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(condition:bool)->int:\n\tvar value:int\n\tif condition:\n\t\treturn 1\n\telse:\n\t\tvalue=2\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "rhs-before-write",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample()->int:\n\tvar value:int\n\tvalue=value+1\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "compound-read",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample()->int:\n\tvar value:int\n\tvalue+=1\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "readonly-twice",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample()->int:\n\tconst value:int=1\n\tvalue=2\n\treturn value\n",
+      "valid": false,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": "READONLY_ASSIGNMENT",
+      "modelStatus": "invalid",
+      "diagnostic": "assign"
+    },
+    {
+      "id": "parameter-readonly",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tinput=2\n\treturn input\n",
+      "valid": true,
+      "reads": [
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "ordered-declarations",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar first:int=input\n\tvar second:int=first\n\treturn second\n",
+      "valid": true,
+      "reads": [
+        true,
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "shadow-initializer",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar value:int=input\n\tvar other:int=value\n\treturn other\n",
+      "valid": true,
+      "reads": [
+        true,
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    },
+    {
+      "id": "possible-reassignment",
+      "source": "# λ🧭 initialization probe\nextends RefCounted\nfunc sample(condition:bool)->int:\n\tvar value:int\n\tif condition:\n\t\tvalue=1\n\tvalue=2\n\treturn value\n",
+      "valid": true,
+      "reads": [
+        true,
+        true
+      ],
+      "modelDiagnostic": null,
+      "modelStatus": null,
+      "diagnostic": null
+    }
+  ]
+}

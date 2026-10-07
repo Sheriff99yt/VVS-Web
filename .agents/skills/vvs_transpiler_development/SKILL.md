@@ -3,6 +3,10 @@ name: VVS Transpiler Development
 description: Triggers when modifying or building the TypeScript code generation engine in packages/transpiler.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Transpiler Boundaries & Testing
 
 - The transpiler MUST be pure TypeScript with zero React dependencies, living in `packages/transpiler`. It must run fully offline in the browser.

@@ -1,0 +1,5 @@
+class Demo:
+    def on_start(self):
+        for index in range(4, 0, -1):
+            return 1
+        return 0

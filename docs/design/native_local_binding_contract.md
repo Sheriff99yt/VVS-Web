@@ -1,0 +1,29 @@
+# XL-01 local binding identity across Rust, C++ and GDScript
+
+This packet establishes transient lexical facts for ordinary function parameters, simple local declarators, nested blocks, if/else regions and identifier read/write targets. It does not prove native values, definite assignment, effects, type inference or graph admission. Reports retain separate scope/declaration/reference IDs and exact UTF-16 spans, authored type spelling and mutability. Frozen facts serialize without parser trees or compiler pointers. IDs repeat for the same structural packet and survive trivia changes; structural reimport identity matching remains a separate required contract.
+
+## Native policies and independent evidence
+
+| Profile | Declaration/reference policy | Independent proof boundary |
+|---|---|---|
+| C++17 / Clang19.1.5 | Simple declarators introduce the new local before its initializer. Same-scope/outermost parameter duplicates are invalid; child blocks may shadow. Ordered comma declarators see preceding declarations. | Direct Clang `DeclRefExpr` target IDs and declaration-name locations, translated from UTF-8 byte offsets to review UTF-16 |
+| Rust edition2021 / rustc1.99 | Let initializers see preceding bindings, then the new pattern binding shadows them. Parameter/same-block shadowing and independent sibling scopes retain distinct identities. | Pinned compiler contrast probes; no claim of a stable native source-reference API or full ownership/type/effect semantics |
+| Godot4.5.2 / GDScript | Initializers do not see their newly introduced local. Active ancestor/parameter shadowing is rejected; sibling reuse and later parent declarations are accepted by the pinned compiler. | Controlled check-only contrast probes, not a native symbol-table API; class/global/engine lookup remains unmodeled |
+
+[Rust documents the scope of let bindings](https://doc.rust-lang.org/reference/names/scopes.html). [The C++ draft describes declarator introduction before initialization](https://eel.is/c++draft/basic.scope.pdecl); compiler acceptance of a self-read does not prove defined behavior. [GDScript documents local, member and global lookup priority](https://docs.godotengine.org/en/4.5/tutorials/scripting/gdscript/gdscript_basics.html). The stricter local shadowing distinctions are verified against the pinned Godot compiler, rather than inferred from another language.
+
+`tools/native_binding_cases.json` adds ten corresponding cases per language: local reads/writes, parameter/nested shadowing, sibling and later-parent reuse, own/shadow initializer references, scope leaks, readonly writes and ordered declarations. Every case has Unicode before its identifiers so independent C++ byte offsets cannot be mistaken for UTF-16. Native-invalid readonly source still has lexical identities: value/mutation validation must remain unvalidated rather than promoting a clean binding report to compiler validity. Unresolved names and unmodeled expressions retain explicit unsupported diagnostics and partial facts. Lambdas/captures, patterns, embedded control scopes, calls, macros, project and host context remain required.
+
+The native harness previously read fixture JSON using Windows' default code page. Three Unicode fixture hashes differed from the UTF-8 sources used by package/browser checks. The harness now reads UTF-8 explicitly; `validate-native-bindings.ts` requires all 66 native/curated source hashes to agree before comparing binding facts. Clang references must resolve to the exact independently reported declaration span; Rust/GDScript evidence is labeled as contrast probes.
+
+## Consolidated acceptance
+
+October 6 verified evidence: 66 exact-source compiler cases (42 valid/24 rejected), 30 lexical fixtures, 23 direct Clang declaration/reference matches and 3,425 package tests pass. Both host and pure source-import type gates pass; the pure gate uses the ES2023 library required by existing Go code. Frozen identities/roles, native shadowing differences and unsupported boundaries are tested. No mapping/UI/asset changes required repeated application/browser validation.
+
+The compiler input check also preserves LF explicitly and hashes actual written bytes, preventing Windows newline conversion from shifting independent byte spans. Bun1.3.1 erased standalone runtime calls to a helper named `declare`; `addBinding` avoids the contextual-keyword issue. C++ condition clauses and Rust expression-statement if wrappers are handled explicitly. Failed/affected package/type/binding gates were retried; native compiler cases were rerun only when input bytes changed.
+
+Use explicit `native-readiness,native-bindings` stages together, plus affected package/type tests. Native-bindings consumes the complete pinned compile-only report and fails on missing/stale source evidence. No fixture programs execute. The original 36 syntax fixtures remain distinct from the new 30 binding probes. Immutable identities, read/write roles, shadowing differences, invalid/unsupported diagnostics, repeatability, mutability and method/source budgets are package-tested. Browser/assets and visible mappings are unchanged in this analysis-only packet; prior browser evidence is retained for its preceding subsets.
+
+## Next shared wave
+
+Build native value/operator/initialization and effect contracts on these identities before graph admission; then implement visible declaration/condition/control ownership, inspector recovery, Code-panel spans, persistence and conflict-aware reimport. Continue ready JS/Python/C#/Go condition/control work in the same feature wave. Rust ownership/pattern/trait/macro contexts, C++ preprocessing/templates/lifetimes/compile databases, GDScript members/resources/engine context and Verse authoritative host/grammar/native validation stay on the full eight-language plan.

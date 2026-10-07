@@ -1,0 +1,5 @@
+{
+  "cpp": "int arithmetic(short a, int b) {\n        return (((a + b)) * 2);\n    }\nbool condition(int a, int b) {\n        return (!((a < b)) || (a == b));\n    }\nint converted(bool a) {\n        return static_cast<int>(a);\n    }",
+  "rust": "fn arithmetic(a: i8, b: i8) -> i8 {\n        (((a + b)) * 2)\n    }\nfn condition(a: i8, b: i8) -> bool {\n        (!((a < b)) || (a == b))\n    }\nfn converted(a: bool) -> i32 {\n        (a as i32)\n    }",
+  "gdscript": "func arithmetic(a: int, b: int) -> int:\n        return (((a + b)) * 2)\nfunc condition(a: int, b: int) -> bool:\n        return (not ((a < b)) or (a == b))\nfunc converted(a: bool) -> int:\n        return int(a)"
+}

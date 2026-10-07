@@ -22,6 +22,7 @@ export interface ProjectTranspileBundle {
   result: TranspileResult;
   /** Maps emitted file path → graph tab id that produced it. */
   fileOwners: Record<string, string>;
+  error?: string;
 }
 
 /** Project-wide codegen — same path as Generate / extract script (U56). */
@@ -114,6 +115,11 @@ export function useProjectTranspileResult(): ProjectTranspileBundle {
     }).then((result) => {
       if (cancelled) return;
       const next = { result, fileOwners: fileOwnersForEmitResult(snapshot, result) };
+      liveBundleRef.current = next;
+      setBundle(next);
+    }).catch((error: unknown) => {
+      if (cancelled) return;
+      const next = { result: { ...EMPTY_RESULT, language: targetLanguage }, fileOwners: {}, error: error instanceof Error ? error.message : String(error) };
       liveBundleRef.current = next;
       setBundle(next);
     });

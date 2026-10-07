@@ -1,6 +1,6 @@
 # VVS UI + API Delivery Loop
 
-How to move from **UI skeleton with mocks** to a **wired frontend with real APIs**, one vertical slice at a time — without drift between UI, mock, and Go backend.
+How to move from **UI skeleton with mocks** to a **wired frontend with real APIs**, in coherent dependency batches — without drift between UI, mock, and Go backend.
 
 > **Product law:** default persist is mock / local / folder. Go HTTP + DB is an optional experiment, not a required app server.
 
@@ -49,26 +49,25 @@ Go handlers stay thin: parse → call service → JSON. Business logic lives in 
 
 ---
 
-## The loop (one slice per iteration)
+## The loop (one dependency batch per validation run)
 
-Each agent or dev session completes **exactly one slice** end-to-end, then stops and reports.
+Group related backlog slices by shared contracts and dependencies. Follow [the batch workflow](agentic_batch_workflow.md), complete implementation and review together, then run affected checks once. Continue authorized work after recording the batch outcome; do not impose a one-slice session limit.
 
 ```mermaid
 flowchart LR
-    A[1. Pick slice] --> B[2. Contract]
-    B --> C[3. Mock impl]
-    C --> D[4. UI wire]
-    D --> E[5. Go handler]
-    E --> F[6. Verify]
-    F --> G[7. Update docs]
-    G --> H{Build green?}
-    H -->|yes| I[Done — next slice]
-    H -->|no| B
+    A[Plan related items and gates] --> B[Implement contracts, UI and integration]
+    B --> C[Review complete batch]
+    C --> D[Run consolidated checks once]
+    D --> E{Pass?}
+    E -->|yes| F[Record evidence and next batch]
+    E -->|no| G[Diagnose and repair affected path]
+    G --> H[Focused checks and prerequisites]
+    H --> E
 ```
 
-### Step 1 — Pick slice
+### Step 1 — Plan the dependency batch
 
-Take the **first incomplete** item from the backlog below. Do not start two slices in one iteration.
+Start with the highest-priority incomplete items and group related dependencies into a reviewable batch. Record acceptance criteria and one affected validation set; unrelated work stays in later batches.
 
 ### Step 2 — Contract
 
@@ -96,30 +95,22 @@ Take the **first incomplete** item from the backlog below. Do not start two slic
 - CORS for `http://localhost:3000`
 - Return JSON matching the TypeScript contract exactly
 
-### Step 6 — Verify
+### Step 6 — Verify the batch
 
-```powershell
-cd apps/web; bun run build
-cd server; go build ./...
-```
-
-Manual smoke (when HTTP slice):
-
-- `curl http://localhost:8080/health`
-- Exercise the UI action that calls the new endpoint
+Run the affected combined-runner gates once, for example `bun tools/validate_batch.ts --only=web,lint,build` for frontend changes. Add `server-build,server-tests` when the optional Go paths change and relevant browser checks for user-visible integration. Do not build the untouched server or repeat the same web build for each endpoint. Inspect failures and retry the affected checks with their prerequisites. Update-only documentation/rules use lightweight checks.
 
 ### Step 7 — Update docs
 
-- `docs/current_state.md` — mark slice done, note new endpoints
+- `docs/current_state.md` — mark the completed batch items done, note new endpoints
 - If UI shell changed, update `vvs_ui_development` skill
 
-### Definition of done (per slice)
+### Definition of done (each item, validated together)
 
 - [ ] Types defined in `types/api/`
 - [ ] `VvsApi` method exists; UI uses it (no direct mock imports in components)
 - [ ] Mock implementation works offline
 - [ ] Go endpoint works (if in scope for this slice)
-- [ ] `bun run build` passes
+- [ ] Required affected batch gates pass; reuse the shared build result across items
 - [ ] `current_state.md` updated
 
 ---
@@ -159,24 +150,10 @@ UI should show **Disconnected** when `http` mode cannot reach `/health`.
 
 ## Cursor loop prompts
 
-Use these in Agent chat. Run **one slice per invocation**.
-
-### Fixed interval (every 30 minutes)
+Use an authorized delivery loop to complete coherent batches, not one row per invocation:
 
 ```text
-/loop 30m Run VVS UI+API delivery loop — read docs/ui_api_delivery_loop.md and docs/current_state.md. Complete exactly ONE highest-priority incomplete backlog slice. Follow all 7 steps. Run bun run build. Update current_state.md. Report: slice name, files changed, how to test, next slice.
-```
-
-### Dynamic (agent picks pacing)
-
-```text
-/loop dynamic Run VVS UI+API delivery loop — read docs/ui_api_delivery_loop.md. One backlog slice per wake. Build must pass before reporting done. If blocked, say why and do not start another slice.
-```
-
-### Babysit-style (until backlog phase complete)
-
-```text
-/loop 45m Continue VVS Phase B editor persistence: read ui_api_delivery_loop.md backlog rows B1–B6. Each tick: finish the next incomplete row only. No new UI tabs. No direct MockApi in components. Stop tick early if build fails and fix before moving on.
+Continue the authorized VVS delivery scope. Read current_state and the batch workflow, group related backlog items and acceptance criteria, implement/review the whole batch, then run affected checks once. Diagnose failures before focused retries. Record exact fresh/reused/focused evidence and roadmap gaps, then continue the next authorized batch. Do not create a schedule unless explicitly requested.
 ```
 
 ---

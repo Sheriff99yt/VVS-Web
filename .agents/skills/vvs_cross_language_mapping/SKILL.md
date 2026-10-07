@@ -7,6 +7,10 @@ description: >-
   language doc (<lang>.md) — one document per language, not separate skills.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # VVS Cross Language Mapping Guide
 
 Parent skill for **visual → code** fidelity. **One markdown file per language**

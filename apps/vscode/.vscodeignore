@@ -2,3 +2,6 @@ src/**
 node_modules/**
 tsconfig.json
 *.vsix
+
+test/**
+dist/smoke.cjs

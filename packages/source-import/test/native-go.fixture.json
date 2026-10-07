@@ -1,0 +1,904 @@
+{
+  "savedAt": "",
+  "projectDetails": {
+    "moduleName": "sample",
+    "extendsType": "",
+    "description": "Imported from sample.go"
+  },
+  "variables": [],
+  "events": [],
+  "functions": [
+    {
+      "kind": "function",
+      "id": "go-function-0",
+      "name": "scale",
+      "classId": "global-main-graph",
+      "binding": "module",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "go-param-0",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "go-function-0"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "go-function-1",
+      "name": "pipeline",
+      "classId": "global-main-graph",
+      "binding": "module",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "go-param-0",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "go-function-1"
+        }
+      ]
+    }
+  ],
+  "openTabs": [
+    {
+      "id": "main-graph",
+      "type": "container",
+      "name": "sample"
+    },
+    {
+      "id": "go-function-0",
+      "type": "function",
+      "name": "Function: scale"
+    },
+    {
+      "id": "go-function-1",
+      "type": "function",
+      "name": "Function: pipeline"
+    }
+  ],
+  "activeGraphTab": "main-graph",
+  "targetLanguage": "go",
+  "autoCompile": true,
+  "autoSave": false,
+  "documents": {
+    "main-graph": {
+      "nodes": [
+        {
+          "id": "import-node-1",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "source_package",
+            "kindVersion": 1,
+            "label": "Package Clause",
+            "category": "Source Structure",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 0,
+                "end": 14,
+                "mappingId": "go.package_clause",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "packageName": "sample",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc scale(value float64) float64 { return value * 2 }\nfunc pipeline(value float64) float64 { return scale(value + 1) }",
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865",
+                "start": 0,
+                "end": 134,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "import-node-2",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 520,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_define",
+            "kindVersion": 1,
+            "label": "Declare scale",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 69,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "symbolId": "go-function-0",
+              "name": "scale",
+              "overloadId": "o1",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc scale(value float64) float64 { return value * 2 }\nfunc pipeline(value float64) float64 { return scale(value + 1) }",
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865",
+                "start": 0,
+                "end": 134,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-3",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 760,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_implement",
+            "kindVersion": 1,
+            "label": "Define scale",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 69,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "symbolId": "go-function-0",
+              "name": "scale",
+              "graphTabId": "go-function-0",
+              "isStatic": false,
+              "isExported": false,
+              "role": "function",
+              "nativeSignatureLanguage": "go",
+              "nativeReturnType": "float64",
+              "nativeParameters": [
+                {
+                  "id": "go-param-0",
+                  "name": "value",
+                  "mode": "positional",
+                  "nativeType": "float64"
+                }
+              ]
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-7",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1040,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_define",
+            "kindVersion": 1,
+            "label": "Declare pipeline",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 70,
+                "end": 134,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "symbolId": "go-function-1",
+              "name": "pipeline",
+              "overloadId": "o1",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc scale(value float64) float64 { return value * 2 }\nfunc pipeline(value float64) float64 { return scale(value + 1) }",
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865",
+                "start": 0,
+                "end": 134,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-1",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-8",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1280,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_implement",
+            "kindVersion": 1,
+            "label": "Define pipeline",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 70,
+                "end": 134,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "symbolId": "go-function-1",
+              "name": "pipeline",
+              "graphTabId": "go-function-1",
+              "isStatic": false,
+              "isExported": false,
+              "role": "function",
+              "nativeSignatureLanguage": "go",
+              "nativeReturnType": "float64",
+              "nativeParameters": [
+                {
+                  "id": "go-param-0",
+                  "name": "value",
+                  "mode": "positional",
+                  "nativeType": "float64"
+                }
+              ]
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-1",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-1-import-node-2",
+          "source": "import-node-1",
+          "target": "import-node-2",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-2-import-node-3",
+          "source": "import-node-2",
+          "target": "import-node-3",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-2-import-node-3-import-node-7",
+          "source": "import-node-3",
+          "target": "import-node-7",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-3-import-node-7-import-node-8",
+          "source": "import-node-7",
+          "target": "import-node-8",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "sample",
+        "extendsType": "",
+        "description": "",
+        "targetLanguage": "go",
+        "compilationUnit": {
+          "version": 1,
+          "entryPolicy": "library"
+        }
+      }
+    },
+    "go-function-0": {
+      "nodes": [
+        {
+          "id": "import-node-4",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "scale",
+            "category": "Events",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "go-param-0",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 69,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "functionId": "go-function-0",
+              "symbolId": "go-function-0",
+              "name": "scale",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-5",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 240,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "Return",
+            "category": "Flow Control",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 51,
+                "end": 67,
+                "mappingId": "go.return_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "functionId": "go-function-0",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-6",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 480,
+            "y": 160
+          },
+          "data": {
+            "kindId": "math_multiply",
+            "kindVersion": 1,
+            "label": "Math Multiply",
+            "category": "Math",
+            "inputs": [
+              {
+                "id": "a",
+                "label": "A",
+                "type": "data_number"
+              },
+              {
+                "id": "b",
+                "label": "B",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Result",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {
+              "b": 2
+            },
+            "properties": {
+              "sourceOrigin": {
+                "start": 58,
+                "end": 67,
+                "mappingId": "go.binary_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              }
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-4-import-node-6",
+          "source": "import-node-4",
+          "target": "import-node-6",
+          "sourceHandle": "go-param-0",
+          "targetHandle": "a",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-6-import-node-5",
+          "source": "import-node-6",
+          "target": "import-node-5",
+          "sourceHandle": "result",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-2-import-node-4-import-node-5",
+          "source": "import-node-4",
+          "target": "import-node-5",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "scale",
+        "extendsType": "",
+        "description": ""
+      }
+    },
+    "go-function-1": {
+      "nodes": [
+        {
+          "id": "import-node-9",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "pipeline",
+            "category": "Events",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "go-param-0",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 70,
+                "end": 134,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "functionId": "go-function-1",
+              "symbolId": "go-function-1",
+              "name": "pipeline",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-10",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 240,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "Return",
+            "category": "Flow Control",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 109,
+                "end": 132,
+                "mappingId": "go.return_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "functionId": "go-function-1",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-1",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-11",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 480,
+            "y": 160
+          },
+          "data": {
+            "kindId": "vvs.project.call_function",
+            "kindVersion": 1,
+            "label": "Call scale",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "go-param-0",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 116,
+                "end": 132,
+                "mappingId": "go.call_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              },
+              "functionId": "go-function-0",
+              "functionName": "scale",
+              "overloadId": "o1",
+              "isSuper": false,
+              "isSuperConstructor": false
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-12",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 720,
+            "y": 320
+          },
+          "data": {
+            "kindId": "math_add",
+            "kindVersion": 1,
+            "label": "Math Add",
+            "category": "Math",
+            "inputs": [
+              {
+                "id": "a",
+                "label": "A",
+                "type": "data_number"
+              },
+              {
+                "id": "b",
+                "label": "B",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Result",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {
+              "b": 1
+            },
+            "properties": {
+              "sourceOrigin": {
+                "start": 122,
+                "end": 131,
+                "mappingId": "go.binary_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "d0538f2fc37a642699686d9d444f73e14d4454a985e7e1603108302701e43865"
+              }
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-9-import-node-12",
+          "source": "import-node-9",
+          "target": "import-node-12",
+          "sourceHandle": "go-param-0",
+          "targetHandle": "a",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-12-import-node-11",
+          "source": "import-node-12",
+          "target": "import-node-11",
+          "sourceHandle": "result",
+          "targetHandle": "go-param-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-2-import-node-11-import-node-10",
+          "source": "import-node-11",
+          "target": "import-node-10",
+          "sourceHandle": "return_val",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-3-import-node-9-import-node-11",
+          "source": "import-node-9",
+          "target": "import-node-11",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-4-import-node-11-import-node-10",
+          "source": "import-node-11",
+          "target": "import-node-10",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "pipeline",
+        "extendsType": "",
+        "description": ""
+      }
+    }
+  },
+  "installedLibrary": [],
+  "targetFileExtensions": {},
+  "version": 3,
+  "classes": [
+    {
+      "kind": "class",
+      "id": "global-main-graph",
+      "name": "Global",
+      "containerId": "main-graph",
+      "visibility": "public",
+      "isGlobalScope": true
+    }
+  ],
+  "activeClassId": "global-main-graph",
+  "graphContainers": [
+    {
+      "id": "main-graph",
+      "name": "sample"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 'use client';
+import { connectionEndPoint } from '@/lib/connectionEndPoint';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, BackgroundVariant, useReactFlow, Connection, Edge } from '@xyflow/react';
@@ -765,7 +766,9 @@ function GraphCanvasInner() {
     (event: MouseEvent | TouchEvent, connectionState: unknown) => {
       const state = connectionState as import('@xyflow/react').ConnectionState;
       if (!state.isValid && state.fromNode) {
-        const { clientX, clientY } = 'touches' in event ? event.touches[0] : event;
+        const point = connectionEndPoint(event);
+        if (!point) return;
+        const { x: clientX, y: clientY } = point;
         const flowPosition = screenToFlowPosition({ x: clientX, y: clientY });
 
         const sourceNode = state.fromNode as unknown as VVSNodeType;

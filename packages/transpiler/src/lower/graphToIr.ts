@@ -1,6 +1,8 @@
 import type { GraphNode, GraphEdge, ProjectEventDefinition, ClassSymbol, FunctionSymbol, TargetLanguage } from '@vvs/graph-types';
 import { isModifierInteractive } from '@vvs/language-profiles';
 import { MAIN_CLASS_ID, MAIN_GRAPH_CONTAINER_ID } from '@vvs/graph-types';
+import { nativeScalarDeclarationGroup } from '@vvs/graph-types';
+import { NATIVE_EXPRESSION_KINDS, nativeExpressionProblem, nativeExpressionSettings, validateControlFlowSemantics } from '@vvs/graph-types';
 import { buildExecutionOrder, findAllExecutionHeads } from '../analyze/graphOrder';
 import { getInputKind, inputTempVarName } from '../inputHelpers';
 import {
@@ -183,6 +185,11 @@ function resolveNodeOutputExpr(
   const { nodes, edges } = ctx;
   const kindId = resolveNodeKindId(node.data);
   const varName = getVariableName(node.data);
+  if (NATIVE_EXPRESSION_KINDS.includes(kindId as typeof NATIVE_EXPRESSION_KINDS[number])) {
+    const problem = nativeExpressionProblem(node.data, ctx.targetLanguage ?? 'javascript');
+    if (problem) throw new Error(`NATIVE_EXPRESSION_INVALID: ${problem}`);
+    return { kind: 'NativeExpression', sourceGraphNodeId: node.id, settings: nativeExpressionSettings(node.data), operands: node.data.inputs.map(pin => resolvePinValueExpr(node, pin.id, ctx, depth + 1)) };
+  }
 
   if (kindId === 'literal_number' || kindId === 'literal_string' || kindId === 'literal_boolean') {
     const val = node.data.properties?.value ?? node.data.inlineValues?.value ?? node.data.inlineValues?.val;
@@ -206,6 +213,13 @@ function resolveNodeOutputExpr(
   }
 
   if (kindId === 'flow_for' && pinId === 'index') {
+    if (node.data.properties?.headerMode === 'structured') {
+      const edge = ctx.edges.find(edge => edge.source === node.id && edge.sourceHandle === 'init_exec');
+      const initializer = ctx.nodes.find(initializer => initializer.id === edge?.target);
+      const name = initializer && getVariableName(initializer.data);
+      if (!name) throw new Error('FOR_HEADER_INVALID: Index requires its visible initializer declaration.');
+      return { kind: 'LocalRef', sourceGraphNodeId: node.id, name };
+    }
     return { kind: 'LocalRef', sourceGraphNodeId: node.id, name: forIndexVarName(node.id) };
   }
 
@@ -219,6 +233,13 @@ function resolveNodeOutputExpr(
     return binaryOpIr(node.id, '+', a, b);
   }
 
+  if (kindId === 'expr_compare' && pinId === 'result') {
+    return { kind: 'Comparison', sourceGraphNodeId: node.id,
+      operator: (node.data.properties?.operator ?? '<') as import('../ir/types').IrComparison['operator'],
+      mode: (node.data.properties?.comparisonMode ?? 'number') as import('../ir/types').IrComparison['mode'],
+      left: resolvePinValueExpr(node, 'a', ctx, depth + 1), right: resolvePinValueExpr(node, 'b', ctx, depth + 1) };
+  }
+
   if (kindId === 'convert_to_string' && pinId === 'result') {
     const inner = resolvePinValueExpr(node, 'value', ctx, depth + 1);
     return toStringIrExpr(node.id, inner);
@@ -226,7 +247,7 @@ function resolveNodeOutputExpr(
 
   if (kindId === 'convert_to_number' && pinId === 'result') {
     const inner = resolvePinValueExpr(node, 'value', ctx, depth + 1);
-    return toNumberIrExpr(node.id, inner);
+    return { ...toNumberIrExpr(node.id, inner), ...(node.data.properties?.numberMode === 'number' ? { numberMode: 'number' as const } : {}) };
   }
 
   if (kindId === 'lambda_define' && (pinId === 'result' || pinId === 'val' || !pinId)) {
@@ -268,6 +289,14 @@ function resolveNodeOutputExpr(
     return binaryOpIr(node.id, op, a, b);
   }
 
+  if (kindId === 'function_entry' && ctx.targetLanguage && ['csharp', 'cpp', 'rust', 'gdscript'].includes(ctx.targetLanguage) && node.data.properties?.nativeSignatureLanguage === ctx.targetLanguage) {
+    const fn = ctx.functions.find(fn => fn.id === (node.data.graphBinding?.symbolId ?? node.data.properties?.symbolId));
+    const overload = fn?.overloads.find(overload => overload.id === (node.data.graphBinding?.overloadId ?? node.data.properties?.overloadId)) ?? fn?.overloads[0];
+    const parameter = overload?.parameters.find(parameter => parameter.id === pinId);
+    if (!parameter) throw new Error('NATIVE_CSHARP_PARAMETER_BINDING');
+    return { kind: 'LocalRef', sourceGraphNodeId: node.id, name: parameter.label };
+  }
+
   if (node.data.category === 'Events') {
     const pin = node.data.outputs?.find((p) => p.id === pinId);
     const text = pin?.label ? pin.label.replace(/\s+/g, '_').toLowerCase() : 'event_value';
@@ -305,13 +334,13 @@ function yieldValueFromPin(node: GraphNode, ctx: LowerContext): IrExpr | undefin
   return isPresentYieldValue(alt) ? alt : undefined;
 }
 
-function resolvePinValueExpr(
+export function resolvePinValueExpr(
   node: GraphNode,
   pinId: string,
   ctx: LowerContext,
   depth = 0
 ): IrExpr {
-  if (depth > 8) return literalIr(node.id, '/* cycle */', 'string');
+  if (depth > 128) throw new Error('EXPRESSION_DEPTH_OR_CYCLE: Expression graph exceeds the reviewed depth budget.');
 
   const { nodes, edges } = ctx;
   const edge = getDataEdgeToPin(edges, node.id, pinId);
@@ -496,6 +525,9 @@ const CONTROL_FLOW_KINDS = new Set([
   'flow_while',
   'flow_switch',
   'flow_sequence',
+  'csharp_scope',
+  'csharp_declaration_group',
+  'native_declaration_group',
   'flow_try',
 ]);
 
@@ -533,6 +565,7 @@ function callFunctionArgExprs(
   const overload =
     (fn && overloadId ? fn.overloads.find((o) => o.id === overloadId) : undefined) ??
     fn?.overloads[0];
+  if (node.data.properties?.nativeArgumentCount !== undefined) return node.data.inputs.filter(pin => pin.type !== 'execution').map(pin => resolvePinValueExpr(node, pin.id, ctx, 0));
   if (overload) {
     return overload.parameters.map((p) => resolvePinValueExpr(node, p.id, ctx, 0));
   }
@@ -585,11 +618,13 @@ type CallFields = {
   sourceGraphNodeId: string;
   calleeName: string;
   args: IrExpr[];
+  argumentNames?: string[];
   instanceCall: boolean;
   crossClass: boolean;
   targetClassName?: string;
   inheritedDepth?: number;
   isSuper?: boolean;
+  isSuperConstructor?: boolean;
   parentClassName?: string;
 };
 
@@ -613,13 +648,15 @@ function lowerCallFields(node: GraphNode, ctx: LowerContext): CallFields | null 
   const isSuper = nodeWantsSuper(node) && Boolean(activeParentClassName(ctx));
   return {
     sourceGraphNodeId: node.id,
-    calleeName: name,
+    calleeName: fn?.binding === 'module' && typeof node.data.properties?.importedName === 'string' ? node.data.properties.importedName : name,
     args,
+    argumentNames: node.data.properties?.nativeArgumentNames as string[] | undefined,
     instanceCall: !staticCall,
-    crossClass: crossClass && !inheritedCall && !isSuper,
+    crossClass: crossClass && fn?.binding !== 'module' && !inheritedCall && !isSuper,
     targetClassName,
     inheritedDepth: inheritedDepth || undefined,
     isSuper: isSuper || undefined,
+    isSuperConstructor: node.data.properties?.isSuperConstructor === true,
     parentClassName: isSuper ? activeParentClassName(ctx) : undefined,
   };
 }
@@ -639,6 +676,8 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   if (kindId === 'flow_while') return 'WhileLoop';
   if (kindId === 'flow_switch') return 'Switch';
   if (kindId === 'flow_sequence') return 'Sequence';
+  if (kindId === 'csharp_scope') return 'ScopeBlock';
+  if (kindId === 'csharp_declaration_group' || kindId === 'native_declaration_group') return 'DeclarationGroup';
   if (kindId === 'flow_try') return 'Try';
   if (kindId === 'yield_stmt') return 'Yield';
   if (kindId === 'action_print') return 'Print';
@@ -646,7 +685,7 @@ function stmtKindForNode(node: GraphNode): IrStmtKind | null {
   if (kindId === 'flow_break' || kindId === 'action_break') return 'Break';
   if (kindId === 'flow_continue' || kindId === 'action_continue') return 'Continue';
   if (kindId === 'env.call_native') return 'CallNative';
-  if (kindId === 'action_get_input' || kindId === 'variable_set') return 'AssignVariable';
+  if (kindId === 'action_get_input' || kindId === 'variable_set' || kindId === 'parameter_set') return 'AssignVariable';
   return null;
 }
 
@@ -703,7 +742,7 @@ function lowerStatement(
   if (kindId === 'var_define') {
     const varName = getVariableName(node.data);
     if (varName) {
-      const symbol = ctx.variables.find((v) => v.name === varName);
+      const symbol = variableSymbolFromNode(node, ctx, varName);
       if (symbol?.graphTabId || symbol?.scopedNodeId) {
         return {
           kind: 'DeclareLocal',
@@ -711,6 +750,13 @@ function lowerStatement(
           name: varName,
           variableType: symbol.type,
           defaultValue: symbol.defaultValue,
+          nativeLocalStyle: node.data.properties?.nativeLocalStyle as import('../ir/types').IrDeclareLocal['nativeLocalStyle'],
+          nativeType: node.data.properties?.nativeType as import('../ir/types').IrDeclareLocal['nativeType'],
+          nativeAuthoredType: node.data.properties?.nativeAuthoredType as string | undefined,
+          nativeInferenceMode: node.data.properties?.nativeInferenceMode as import('../ir/types').IrDeclareLocal['nativeInferenceMode'],
+          nativeMutable: node.data.properties?.nativeMutable as boolean | undefined,
+          ...(node.data.properties?.hasInitializer === true ? { initializer: resolvePinValueExpr(node, 'value', ctx, 0) } : {}),
+          declarationKind: node.data.properties?.declarationKind === 'const' ? 'const' : node.data.properties?.declarationKind === 'var' ? 'var' : 'let',
         };
       }
     }
@@ -765,6 +811,7 @@ function lowerStatement(
       crossClass: crossClass && !inheritedDispatch && !isSuper,
       targetClassName,
       isSuper: isSuper || undefined,
+    isSuperConstructor: node.data.properties?.isSuperConstructor === true,
       parentClassName: isSuper ? activeParentClassName(ctx) : undefined,
     };
   }
@@ -831,9 +878,12 @@ function lowerStatement(
     return {
       kind: 'Return',
       sourceGraphNodeId: node.id,
+      ...(node.data.properties?.nativeReturnStyle === 'rust-tail' ? { nativeStyle: 'rust-tail' as const } : {}),
       ...(valueExpr ? { value: valueExpr } : {}),
     };
   }
+
+  if (kindId === 'source_directive') return { kind: 'LanguageDirective', sourceGraphNodeId: node.id, value: String(node.data.properties?.directive ?? '') };
 
   if (kindId === 'flow_break' || kindId === 'action_break') {
     return {
@@ -859,7 +909,7 @@ function lowerStatement(
   }
 
 
-  if (kindId === 'variable_get' || kindId.startsWith('math_') || kindId === 'string_concat' || isConvertKindId(kindId)) return null;
+  if (kindId.startsWith('expr_native_') || kindId === 'variable_get' || kindId === 'expr_compare' || kindId.startsWith('math_') || kindId === 'string_concat' || isConvertKindId(kindId)) return null;
 
   if (kindId === 'flow_branch') {
     const condition = resolvePinValueExpr(node, 'condition', ctx, 0);
@@ -898,6 +948,23 @@ function lowerStatement(
   }
 
   if (kindId === 'flow_for') {
+    if (node.data.properties?.headerMode === 'python-range') {
+      const edge = edges.find(edge => edge.source === node.id && edge.sourceHandle === 'init_exec');
+      const declaration = nodes.find(item => item.id === edge?.target);
+      if (!declaration || declaration.data.kindId !== 'var_define') throw new Error('RANGE_INDEX_DECLARATION');
+      const args = ['first', 'last', 'step'].slice(0, Number(node.data.properties.rangeArgumentCount)).map(pin => resolvePinValueExpr(node, pin, ctx, 0));
+      return { kind: 'ForLoop', sourceGraphNodeId: node.id, indexVar: getVariableName(declaration.data)!, first: nullIr(node.id), last: nullIr(node.id), range: { args, indexNodeId: declaration.id }, body: buildIrStatements(followExecFromHandle(node.id, 'body_exec', nodes, edges), ctx, new Set()) };
+    }
+    if (node.data.properties?.headerMode === 'structured') {
+      const initializers = buildIrStatements(followExecFromHandle(node.id, 'init_exec', nodes, edges), ctx, new Set());
+      const updates = buildIrStatements(followExecFromHandle(node.id, 'update_exec', nodes, edges), ctx, new Set());
+      if (initializers.length !== 1 || initializers[0].kind !== 'DeclareLocal' || updates.length !== 1 || updates[0].kind !== 'AssignVariable') throw new Error('FOR_HEADER_INVALID: Expected one local initializer and update.');
+      const condition = resolvePinValueExpr(node, 'condition', ctx, 0);
+      return { kind: 'ForLoop', sourceGraphNodeId: node.id, indexVar: initializers[0].name,
+        first: nullIr(node.id), last: nullIr(node.id),
+        header: { initializer: initializers[0], condition, update: updates[0] },
+        body: buildIrStatements(followExecFromHandle(node.id, 'body_exec', nodes, edges), ctx, new Set()) };
+    }
     if (flowForIsForEach(node)) {
       const collection = resolvePinValueExpr(node, 'array', ctx, 0);
       const bodyOrder = followExecFromHandle(node.id, 'loop_body', nodes, edges);
@@ -980,6 +1047,25 @@ function lowerStatement(
     };
   }
 
+  if (kindId === 'native_declaration_group') {
+    const group = nativeScalarDeclarationGroup({ nodes, edges }, node.id, 'cpp', String(node.data.properties?.nativeOwnerId));
+    const body = buildIrStatements(followExecFromHandle(node.id, 'declarations_exec', nodes, edges), ctx, new Set());
+    if (body.length !== group.declarations.length || body.some(statement => statement.kind !== 'DeclareLocal')) throw new Error('NATIVE_CPP_GROUP_BODY');
+    return { kind: 'DeclarationGroup', sourceGraphNodeId: node.id, nativeLanguage: 'cpp', nativeType: group.nativeType as import('@vvs/graph-types').NativeScalarSignatureType, nativeAuthoredType: group.authoredType, ...(group.inferenceMode ? { nativeInferenceMode: group.inferenceMode } : {}), isConst: !group.mutable, body: body as import('../ir/types').IrDeclareLocal[] };
+  }
+
+  if (kindId === 'csharp_declaration_group') {
+    const body = buildIrStatements(followExecFromHandle(node.id, 'declarations_exec', nodes, edges), ctx, new Set());
+    if (body.length < 2 || body.some(statement => statement.kind !== 'DeclareLocal')) throw new Error('NATIVE_CSHARP_GROUP_BODY');
+    return { kind: 'DeclarationGroup', sourceGraphNodeId: node.id, nativeType: node.data.properties?.nativeType as import('@vvs/graph-types').CSharpIntegerType, isConst: node.data.properties?.groupStyle === 'const', body: body as import('../ir/types').IrDeclareLocal[] };
+  }
+
+  if (kindId === 'csharp_scope') {
+    const context = node.data.properties?.overflowContext;
+    if (!['default', 'checked', 'unchecked'].includes(String(context))) throw new Error('NATIVE_CSHARP_SCOPE_CONTEXT');
+    return { kind: 'ScopeBlock', sourceGraphNodeId: node.id, overflowContext: context as 'default' | 'checked' | 'unchecked', body: buildIrStatements(followExecFromHandle(node.id, 'body_exec', nodes, edges), ctx, new Set()) };
+  }
+
   if (kindId === 'flow_sequence') {
     const steps = ['then_0', 'then_1', 'then_2'].map((handle) => {
       const stepOrder = followExecFromHandle(node.id, handle, nodes, edges);
@@ -1013,19 +1099,23 @@ function lowerStatement(
     };
   }
 
-  if (kindId === 'variable_set') {
-    const varName = getVariableName(node.data);
+  if (kindId === 'variable_set' || kindId === 'parameter_set') {
+    const parameter = kindId === 'parameter_set';
+    const varName = parameter ? String(node.data.properties?.parameterName ?? '') : getVariableName(node.data);
     if (!varName) return commentFallback(node.id, 'AssignVariable', 'set (no variable)');
     const pinId = firstInputPinId(node, ['val', 'in_val', 'value']);
     const value = pinId ? resolvePinValueExpr(node, pinId, ctx, 0) : nullIr(node.id);
     const symbol = variableSymbolFromNode(node, ctx, varName);
-    const targetBinding = symbol?.graphTabId || symbol?.scopedNodeId ? 'local' : 'instance';
+    const targetBinding = parameter || symbol?.graphTabId || symbol?.scopedNodeId ? 'local' : 'instance';
     const inheritedDepth =
       targetBinding === 'instance' ? inheritedMemberDepth(symbol?.classId, ctx) : 0;
     return {
       kind: 'AssignVariable',
       sourceGraphNodeId: node.id,
       assignKind: 'variable_set',
+      nativeLocalLanguage: !parameter ? nodes.find(candidate => resolveNodeKindId(candidate.data) === 'var_define' && candidate.data.properties?.symbolId === symbol?.id)?.data.properties?.nativeLocalLanguage as import('../ir/types').IrAssignVariable['nativeLocalLanguage'] : undefined,
+      operator: node.data.properties?.assignmentOperator as import('../ir/types').IrAssignVariable['operator'],
+      prefix: node.data.properties?.prefix === true,
       targetName: varName,
       targetBinding,
       inheritedDepth: inheritedDepth || undefined,
@@ -1260,7 +1350,7 @@ function collectAwaitWaits(stmts: IrStatement[], out: IrAwaitWait[]): void {
       collectAwaitWaits(stmt.tryBody, out);
       collectAwaitWaits(stmt.catchBody, out);
       if (stmt.finallyBody) collectAwaitWaits(stmt.finallyBody, out);
-    } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+    } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop' || stmt.kind === 'ScopeBlock' || stmt.kind === 'DeclarationGroup') {
       collectAwaitWaits(stmt.body, out);
     } else if (stmt.kind === 'Switch') {
       for (const c of stmt.cases) collectAwaitWaits(c.body, out);
@@ -1360,6 +1450,12 @@ function appendWaitStdlibImports(
 }
 
 export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
+  const rawDocuments = { ...(ctx.documents ?? {}), [ctx.tabId ?? 'main']: { nodes: ctx.nodes ?? [], edges: ctx.edges } };
+  if (Object.values(rawDocuments).some(doc => doc.nodes.some(node => NATIVE_EXPRESSION_KINDS.includes(node.data.kindId as typeof NATIVE_EXPRESSION_KINDS[number]) || node.data.kindId === 'source_package' || node.data.properties?.nativeParameters !== undefined || node.data.properties?.nativeArgumentCount !== undefined))) {
+    const errors = validateControlFlowSemantics({ documents: rawDocuments, projectDetails: { extendsType: ctx.extendsType ?? '' }, functions: ctx.functions ?? [], events: ctx.projectEvents ?? [], variables: ctx.variables ?? [], classes: ctx.classes ?? [], targetLanguage: ctx.targetLanguage }).filter(diagnostic => diagnostic.level === 'error');
+    if (errors.length) throw new Error(errors.map(diagnostic => `${diagnostic.code}: ${diagnostic.message}`).join('; '));
+  }
+
   const {
     nodes,
     edges,
@@ -1486,7 +1582,7 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
         collectFlowImportIds(stmt.tryBody);
         collectFlowImportIds(stmt.catchBody);
         if (stmt.finallyBody) collectFlowImportIds(stmt.finallyBody);
-      } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+      } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop' || stmt.kind === 'ScopeBlock' || stmt.kind === 'DeclarationGroup') {
         collectFlowImportIds(stmt.body);
       } else if (stmt.kind === 'Switch') {
         for (const c of stmt.cases) collectFlowImportIds(c.body);
@@ -1544,7 +1640,7 @@ export function graphToIr(ctx: CodegenContext, filePath: string): IrModule {
     activeClass,
     emitUnsupportedComments: ctx.emitUnsupportedComments !== false,
     emitUserComments: ctx.emitUserComments !== false,
-    userComments: collectUserComments(nodes),
+    userComments: collectUserComments([...nodes, ...functions.filter(fn => (fn.classId ?? MAIN_CLASS_ID) === activeClass?.id).flatMap(fn => fn.overloads.flatMap(overload => documents?.[overload.graphTabId ?? fn.id]?.nodes ?? []))]),
   };
 }
 

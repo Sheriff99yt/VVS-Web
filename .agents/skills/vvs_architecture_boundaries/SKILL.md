@@ -3,6 +3,10 @@ name: VVS Architecture Boundaries
 description: Triggers when creating new modules, adding dependencies, or establishing communication between different packages in the monorepo.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Strict Monorepo Boundaries
 
 - The transpiler (`packages/transpiler`) MUST be pure TypeScript with zero React dependencies.

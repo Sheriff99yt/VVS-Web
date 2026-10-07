@@ -37,9 +37,10 @@ export function formatFunctionDefHeader(
   targetLanguage: TargetLanguage,
   isAsync = false,
   properties?: Record<string, unknown>,
-  className?: string
+  className?: string,
+  nativeParamList?: string
 ): string {
-  return renderFunctionDefHeader(func, targetLanguage, isAsync, properties, className);
+  return renderFunctionDefHeader(func, targetLanguage, isAsync, properties, className, nativeParamList);
 }
 
 /** C++ out-of-line `void Class::Name(...) {` — requires FunctionDefOutOfLineOpen pack slot. */

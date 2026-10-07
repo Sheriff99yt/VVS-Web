@@ -6,6 +6,7 @@ import type {
   IrForLoop,
   IrIfBranch,
   IrSequence,
+  IrScopeBlock,
   IrStatement,
   IrSwitch,
   IrTry,
@@ -37,7 +38,7 @@ import type { TargetLanguage } from '@vvs/graph-types';
 import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import type { IrModuleImport } from '../ir/types';
 
-const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'ForEach', 'WhileLoop', 'Switch', 'Sequence', 'Try']);
+const NESTED_BODY_KINDS = new Set(['IfBranch', 'ForLoop', 'ForEach', 'WhileLoop', 'Switch', 'Sequence', 'ScopeBlock', 'Try']);
 const IMPORT_MODULE_KIND = 'vvs.project.import_module';
 
 export type AppendIrStatementsOptions = {
@@ -146,6 +147,32 @@ function appendForLoop(
   const inner = innerIndentCtx(ctx);
   const startLine = sink.lineCount + 1;
   const placeholder = `${inner.indent}${blockPlaceholder(ctx)}`;
+
+  if (stmt.range) {
+    if (ctx.family !== 'python') throw new Error('RANGE_TARGET_UNSUPPORTED');
+    const args = stmt.range.args.map(argument => printExpr(argument, ctx));
+    let offset = 0;
+    const spans = args.flatMap(argument => { const result = offsetSpans(argument.spans, offset); offset += argument.text.length + 2; return result; });
+    const header = printFromTemplate(ctx, 'ForNativeRangeHeader', { index: { text: stmt.indexVar, spans: [{ nodeId: stmt.range.indexNodeId, start: 0, end: stmt.indexVar.length }] }, args: { text: args.map(argument => argument.text).join(', '), spans } });
+    appendRawWithExprSpans(sink, header.text, header.expressionSpans ?? [], 0);
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
+    sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `for ${stmt.indexVar}`); return;
+  }
+  if (stmt.header) {
+    if (!['javascript', 'go'].includes(ctx.family)) throw new Error('FOR_HEADER_TARGET_UNSUPPORTED: Structured counted headers are JavaScript-only.');
+    const headerCtx = { ...ctx, indent: '' };
+    const slot = (item: import('../ir/types').IrDeclareLocal | import('../ir/types').IrAssignVariable) => {
+      const printed = printStatement(item, headerCtx);
+      const text = printed.text.replace(/;$/, '');
+      return { text, spans: [{ nodeId: item.sourceGraphNodeId, start: 0, end: text.length }, ...(printed.expressionSpans ?? [])] };
+    };
+    const header = printFromTemplate(ctx, 'ForStructuredHeader', { initializer: slot(stmt.header.initializer), condition: printExpr(stmt.header.condition, ctx), update: slot(stmt.header.update) });
+    appendRawWithExprSpans(sink, header.text, header.expressionSpans ?? [], 0);
+    appendBodyOrPlaceholder(sink, stmt.body, inner, placeholder, options);
+    sink.appendRaw(blockCloseLine(ctx, 'ForLoopClose'));
+    sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, `for ${stmt.indexVar}`);
+    return;
+  }
 
   if (isPackDrivenFamily(ctx.family)) {
     const header = printFromTemplate(ctx, 'ForLoopHeader', {
@@ -570,12 +597,25 @@ function appendTry(
   sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'try');
 }
 
+function appendScopeBlock(sink: CodeSink, stmt: IrScopeBlock, ctx: PrintContext, options?: AppendIrStatementsOptions): void {
+  if (ctx.family !== 'csharp') throw new Error('NATIVE_CSHARP_SCOPE_LANGUAGE');
+  const startLine = sink.lineCount + 1;
+  sink.appendRaw(printFromTemplate(ctx, 'ScopeOpen', { context: stmt.overflowContext === 'default' ? '' : `${stmt.overflowContext} ` }).text);
+  appendIrStatements(sink, stmt.body, innerIndentCtx(ctx), options);
+  sink.appendRaw(printFromTemplate(ctx, 'ScopeClose', {}).text);
+  sink.tagRange(stmt.sourceGraphNodeId, startLine, sink.lineCount, 'scope');
+}
+
 function appendIrStatement(
   sink: CodeSink,
   stmt: IrStatement,
   ctx: PrintContext,
   options?: AppendIrStatementsOptions
 ): void {
+  if (stmt.kind === 'ScopeBlock') {
+    appendScopeBlock(sink, stmt, ctx, options);
+    return;
+  }
   if (stmt.kind === 'IfBranch') {
     appendIfBranch(sink, stmt as IrIfBranch, ctx, options);
     return;

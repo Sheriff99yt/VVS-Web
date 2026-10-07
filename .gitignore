@@ -84,7 +84,7 @@ coverage/
 apps/web/next-env.d.ts
 
 # Agent / local scratch (optional local-only)
-.cursor/
+.cursor/*
 !.cursor/rules/
 !.cursor/rules/**
 
@@ -94,3 +94,7 @@ tools/publish_github.ps1
 
 # Temp local scratch (never commit)
 scratch/
+
+# Python validation caches
+__pycache__/
+*.py[cod]

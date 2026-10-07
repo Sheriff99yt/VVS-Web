@@ -1,4 +1,5 @@
 import { readdirSync } from 'fs';
+import { join } from 'path';
 import { createRequire } from 'module';
 import {
   type LanguageFamily,
@@ -56,10 +57,10 @@ type LoadedParser = {
 const parserCache = new Map<LanguageFamily, LoadedParser | null>();
 
 function allFixtureNames(): string[] {
-  return readdirSync(rosettaDir())
-    .filter((f) => f.endsWith('.fixture.json'))
-    .map((f) => f.replace('.fixture.json', ''))
-    .sort();
+  // full-file/ contains source-import cases, not Rosetta graph fixtures.
+  return ['', 'target-scoped/'].flatMap(prefix => readdirSync(join(rosettaDir(), prefix))
+    .filter(name => name.endsWith('.fixture.json'))
+    .map(name => `${prefix}${name.replace('.fixture.json', '')}`)).sort();
 }
 
 function parserForFamily(family: LanguageFamily): LoadedParser | null {
@@ -121,6 +122,7 @@ export function validateGeneratedParse(filter: ParseValidationFilter = {}): Pars
   for (const fixtureName of fixtures) {
     const fixture = loadRosettaFixture(fixtureName);
     for (const family of requestedFamilies) {
+      if (fixture.families && !fixture.families.includes(family)) continue;
       const parser = parserForFamily(family);
       if (!parser) {
         results.push({

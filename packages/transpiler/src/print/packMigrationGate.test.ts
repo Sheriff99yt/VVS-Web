@@ -39,7 +39,7 @@ describe('pack migration CI gate', () => {
   });
 
   test('sinkStatements.ts uses shared blockHelpers', () => {
-    const source = readFileSync(join(import.meta.dir, '..', 'emit', 'sinkStatements.ts'), 'utf8');
+    const source = readFileSync(join(import.meta.dir, '..', 'emit', 'sinkStatements.ts'), 'utf8').replace(/\r\n/g, '\n');
     expect(source.includes('blockCloseLine')).toBe(true);
     expect(source.includes('ifElseLine')).toBe(true);
     expect(source.includes('condSpanOffset')).toBe(true);
@@ -54,7 +54,7 @@ describe('pack migration CI gate', () => {
   });
 
   test('U71 — sink owns nested control-flow (no nest-as-text leaf emit)', () => {
-    const source = readFileSync(join(import.meta.dir, '..', 'emit', 'sinkStatements.ts'), 'utf8');
+    const source = readFileSync(join(import.meta.dir, '..', 'emit', 'sinkStatements.ts'), 'utf8').replace(/\r\n/g, '\n');
     // Structured helpers must stay on the live CodeSink path.
     for (const name of [
       'function appendIfBranch',

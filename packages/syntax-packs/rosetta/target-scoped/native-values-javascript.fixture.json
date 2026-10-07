@@ -1,0 +1,277 @@
+{
+  "name": "native-values-javascript",
+  "families": [
+    "javascript"
+  ],
+  "moduleName": "Demo",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "event_on_start",
+        "label": "On Start",
+        "category": "Events",
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "exact",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "expr_native_literal",
+        "kindVersion": 1,
+        "label": "exact",
+        "category": "Native Values",
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "result",
+            "label": "Value",
+            "type": "data_any"
+          }
+        ],
+        "properties": {
+          "nativeLanguage": "javascript",
+          "nativeForm": "scalar",
+          "operandCount": 0,
+          "nativeDomain": "javascript-bigint",
+          "payload": "9007199254740993"
+        },
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "values",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "expr_native_collection",
+        "kindVersion": 1,
+        "label": "values",
+        "category": "Native Values",
+        "inputs": [
+          {
+            "id": "operand-0",
+            "label": "Operand 1",
+            "type": "data_any",
+            "required": true
+          },
+          {
+            "id": "operand-1",
+            "label": "Operand 2",
+            "type": "data_any",
+            "required": true
+          }
+        ],
+        "outputs": [
+          {
+            "id": "result",
+            "label": "Value",
+            "type": "data_any"
+          }
+        ],
+        "properties": {
+          "nativeLanguage": "javascript",
+          "nativeForm": "array",
+          "operandCount": 2
+        },
+        "inlineValues": {
+          "operand-1": 1
+        }
+      }
+    },
+    {
+      "id": "index",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "expr_native_access",
+        "kindVersion": 1,
+        "label": "index",
+        "category": "Native Values",
+        "inputs": [
+          {
+            "id": "operand-0",
+            "label": "Operand 1",
+            "type": "data_any",
+            "required": true
+          },
+          {
+            "id": "operand-1",
+            "label": "Operand 2",
+            "type": "data_any",
+            "required": true
+          }
+        ],
+        "outputs": [
+          {
+            "id": "result",
+            "label": "Value",
+            "type": "data_any"
+          }
+        ],
+        "properties": {
+          "nativeLanguage": "javascript",
+          "nativeForm": "index",
+          "operandCount": 2
+        },
+        "inlineValues": {
+          "operand-1": 0
+        }
+      }
+    },
+    {
+      "id": "native-op",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "expr_native_operator",
+        "kindVersion": 1,
+        "label": "native-op",
+        "category": "Native Values",
+        "inputs": [
+          {
+            "id": "operand-0",
+            "label": "Operand 1",
+            "type": "data_any",
+            "required": true
+          },
+          {
+            "id": "operand-1",
+            "label": "Operand 2",
+            "type": "data_any",
+            "required": true
+          }
+        ],
+        "outputs": [
+          {
+            "id": "result",
+            "label": "Value",
+            "type": "data_any"
+          }
+        ],
+        "properties": {
+          "nativeLanguage": "javascript",
+          "nativeForm": "binary",
+          "operandCount": 2,
+          "operator": "+"
+        },
+        "inlineValues": {
+          "operand-1": 1
+        }
+      }
+    },
+    {
+      "id": "return",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "flow_return",
+        "kindVersion": 1,
+        "label": "Return",
+        "category": "Flow Control",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "",
+            "type": "execution"
+          },
+          {
+            "id": "value",
+            "label": "Value",
+            "type": "data_any"
+          }
+        ],
+        "outputs": [],
+        "properties": {},
+        "inlineValues": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "exact-values-operand-0",
+      "source": "exact",
+      "sourceHandle": "result",
+      "target": "values",
+      "targetHandle": "operand-0",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "data_any"
+      }
+    },
+    {
+      "id": "values-index-operand-0",
+      "source": "values",
+      "sourceHandle": "result",
+      "target": "index",
+      "targetHandle": "operand-0",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "data_any"
+      }
+    },
+    {
+      "id": "index-native-op-operand-0",
+      "source": "index",
+      "sourceHandle": "result",
+      "target": "native-op",
+      "targetHandle": "operand-0",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "data_any"
+      }
+    },
+    {
+      "id": "native-op-return-value",
+      "source": "native-op",
+      "sourceHandle": "result",
+      "target": "return",
+      "targetHandle": "value",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "data_any"
+      }
+    },
+    {
+      "id": "start-return",
+      "source": "start",
+      "sourceHandle": "exec_out",
+      "target": "return",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    }
+  ]
+}

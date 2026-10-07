@@ -1,0 +1,5 @@
+{
+  "cpp": "int Value(const int value) {\n        return value;\n    }\nconstexpr int value() {\n        return -(-5);\n    }\nbool comparison() {\n        return ((2 < 3));\n    }\nvoid empty() {\n        return;\n    }",
+  "rust": "fn Value(value: i32) -> i32 {\n        value\n    }\nconst fn value() -> i32 {\n        -(-5)\n    }\nfn comparison() -> bool {\n        return (2 < 3);\n    }\nfn empty() -> () {\n        return;\n    }",
+  "gdscript": "func Value(value: int) -> int:\n        return value\nfunc value() -> int:\n        return -(-5)\nfunc comparison() -> bool:\n        return not false\nfunc empty() -> void:\n        return"
+}

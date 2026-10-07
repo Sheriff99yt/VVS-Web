@@ -1,3 +1,4 @@
+import { CSHARP_ASSIGNMENT_OPERATORS } from '@vvs/graph-types';
 import type { TargetLanguage } from '@vvs/graph-types';
 import { isModifierEffective } from './modifierEffectiveness';
 
@@ -117,6 +118,8 @@ export function nodeEffectiveness(
   const lang = targetLanguage.trim().toLowerCase();
   const gates = parseNodeTargetLanguages(properties);
 
+  if (kindId === 'action_get_input' && lang === 'verse') return 'ineffective';
+
   if (options?.isGlobalScope && lang === 'csharp') {
     if (
       isFunctionDeclareKind(kindId) ||
@@ -153,6 +156,17 @@ export function nodeEffectiveness(
     return EVENT_BIND_LANGS.has(lang) ? 'effective' : 'ineffective';
   }
 
+  if (kindId === 'source_directive') return lang === 'javascript' ? 'effective' : 'ineffective';
+  if (properties?.numberDomain === 'python-integer') return lang === 'python' ? 'effective' : 'ineffective';
+  if (kindId === 'flow_for' && properties?.headerMode === 'python-range') return lang === 'python' ? 'effective' : 'ineffective';
+  if (kindId === 'var_define' && properties?.declarationOnly === true) return 'ineffective';
+  if (kindId === 'expr_compare') return (properties?.comparisonMode === 'js-strict' ? lang === 'javascript' : ['javascript', 'python', 'go'].includes(lang)) ? 'effective' : 'ineffective';
+  if (kindId === 'flow_for' && properties?.headerMode === 'structured') return ['javascript', 'go'].includes(lang) ? 'effective' : 'ineffective';
+  if (kindId === 'parameter_set') return lang === 'csharp' ? 'effective' : 'ineffective';
+  if (kindId === 'csharp_scope') return lang === 'csharp' ? 'effective' : 'ineffective';
+  if (kindId === 'csharp_declaration_group') return lang === 'csharp' ? 'effective' : 'ineffective';
+  if (kindId === 'variable_set' && properties?.assignmentOperator && properties.assignmentOperator !== '=') return ['javascript', 'go'].includes(lang) || lang === 'csharp' && (CSHARP_ASSIGNMENT_OPERATORS as readonly string[]).includes(String(properties.assignmentOperator)) ? 'effective' : 'ineffective';
+
   return 'effective';
 }
 
@@ -173,6 +187,7 @@ export function nodeIneffectiveTooltip(
 ): string {
   if (isNodeEffectiveForLanguage(kindId, properties, targetLanguage, options)) return '';
   const lang = (targetLanguage.trim() || 'this language') as TargetLanguage | string;
+  if (kindId === 'action_get_input' && String(lang).toLowerCase() === 'verse') return 'Verse input is unsupported: Generate emits the prompt and a typed placeholder, not a real input read.';
   if (options?.isGlobalScope && String(lang).toLowerCase() === 'csharp') {
     if (
       isFunctionDeclareKind(kindId) ||

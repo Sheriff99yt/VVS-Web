@@ -1,3 +1,4 @@
+import { nativeSignature } from '@vvs/graph-types';
 import type {
   ClassSymbol,
   FunctionSymbol,
@@ -23,7 +24,7 @@ import { buildExecutionOrder } from '../analyze/graphOrder';
 import type { CodegenContext } from '../generate';
 import type { IrMemberDecl, IrStatement } from '../ir/types';
 import { parameterCodegenName, resolveEventForNode as resolveEventForNodeHelper } from '../nodeHelpers';
-import { buildIrStatements } from './graphToIr';
+import { buildIrStatements, resolvePinValueExpr } from './graphToIr';
 
 interface BuildMembersContext {
   nodes: GraphNode[];
@@ -156,6 +157,10 @@ function memberDeclFromEntry(
   documents?: Record<string, GraphDocument>
 ): IrMemberDecl | undefined {
   switch (entry.kind) {
+    case 'package':
+      return { kind: 'PackageDecl', sourceGraphNodeId: node.id, name: String(node.data.properties?.packageName ?? ''), ...(node.data.properties?.goWordBits ? { wordBits: Number(node.data.properties.goWordBits) as import('@vvs/graph-types').GoWordBits } : {}) };
+    case 'directive':
+      return { kind: 'LanguageDirective', sourceGraphNodeId: node.id, value: String(node.data.properties?.directive ?? '') };
     case 'class': {
       const nodeProps = { ...(node.data.properties ?? {}) };
       const nodeImplements = syncClassImplementsFields(nodeProps.implementsTypes).implementsTypes;
@@ -175,10 +180,11 @@ function memberDeclFromEntry(
     case 'variable': {
       const symbol = variables.find((v) => v.id === entry.symbolId);
       if (!symbol) return undefined;
+      if (symbol.graphTabId || symbol.scopedNodeId) return undefined;
       return {
         kind: 'VariableDecl',
         sourceGraphNodeId: entry.nodeId,
-        symbol,
+        symbol: node.data.properties?.hasInitializer === true ? { ...symbol, defaultValue: node.data.inlineValues?.value } : symbol,
         properties: node.data.properties,
       };
     }
@@ -208,6 +214,7 @@ function memberDeclFromEntry(
         declareSourceGraphNodeId: declareNode?.id,
         implementSourceGraphNodeId: entry.nodeId,
         emitBody: true,
+        nativeParameters: nativeSignature(node.data)?.map(parameter => ({ ...parameter, ...(parameter.defaultPin ? { defaultExpression: resolvePinValueExpr(node, parameter.defaultPin, { ...lowerCtx, nodes: graphNodes, edges }, 0) } : {}) })),
         symbol,
         overloads: symbol.overloads.map((o) => ({ id: o.id, tabId: o.graphTabId ?? symbol.id })),
         properties: {
@@ -355,6 +362,11 @@ function entriesFromOrderedIds(
     const node = nodeById.get(nodeId);
     if (!node) continue;
     const kindId = resolveNodeKindId(node.data);
+    if (kindId === 'source_package') { members.push({ kind: 'package', nodeId }); continue; }
+    if (kindId === 'source_directive') {
+      members.push({ kind: 'directive', nodeId });
+      continue;
+    }
     if (kindId === 'function_implement') {
       const symbolId =
         (typeof node.data.properties?.symbolId === 'string' && node.data.properties.symbolId) ||

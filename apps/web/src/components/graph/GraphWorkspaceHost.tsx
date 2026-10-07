@@ -366,7 +366,7 @@ export function GraphWorkspaceHost({
   const patchAllDocumentsWithDirty = useCallback(
     (
       updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
+      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string; selectedNodeId?: string }
     ) => {
       const affected = tabSyncRef.current.patchAllDocuments(updater, options);
       for (const tabId of affected) {

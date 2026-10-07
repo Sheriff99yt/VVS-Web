@@ -1,5 +1,6 @@
 import { parse } from '@babel/parser';
 import { ImportFailure, IMPORT_LIMITS } from './contracts';
+import { NATIVE_OPERATORS } from '@vvs/graph-types';
 
 const trustedPreviews = new WeakSet<SourceImportPreview>();
 export const isTrustedPreview = (preview: SourceImportPreview) => trustedPreviews.has(preview);
@@ -43,11 +44,12 @@ export interface ImportRegion {
   text: string;
   reason?: string;
   /** Candidate status means eligible for a mapper, never safe to import yet. */
-  proposedKind?: 'standalone-function' | 'class';
+  proposedKind?: 'standalone-function' | 'function-file' | 'module-file' | 'class-file' | 'class';
 }
 
 export interface SourceImportPreview {
-  language: 'javascript';
+  goWordBits?: import('@vvs/graph-types').GoWordBits;
+  language: 'javascript' | 'python' | 'go';
   source: string;
   sourceSha256: string;
   regions: ImportRegion[];
@@ -65,12 +67,26 @@ function supportedExpression(expression: unknown): boolean {
     case 'NumericLiteral':
     case 'StringLiteral':
     case 'BooleanLiteral':
+    case 'BigIntLiteral':
+    case 'NullLiteral':
       return true;
+    case 'UnaryExpression':
+      return ['-', '+'].includes(String(node.operator)) && ['NumericLiteral', 'BigIntLiteral'].includes((node.argument as { type?: string })?.type ?? '');
+    case 'ArrayExpression':
+      return Array.isArray(node.elements) && node.elements.every(element => element === null || supportedExpression(element));
+    case 'ObjectExpression':
+      return Array.isArray(node.properties) && node.properties.every(supportedExpression);
+    case 'SpreadElement':
+      return supportedExpression(node.argument);
+    case 'ObjectProperty':
+      return supportedExpression(node.value) && supportedExpression(node.key);
+    case 'MemberExpression':
+      return ((node.object as { type?: string })?.type === 'ThisExpression' || supportedExpression(node.object)) && supportedExpression(node.property);
     case 'BinaryExpression':
-      return ['+', '-', '*', '/'].includes(String(node.operator)) &&
+      return NATIVE_OPERATORS.javascript.includes(String(node.operator)) &&
         supportedExpression(node.left) && supportedExpression(node.right);
     case 'CallExpression':
-      return (node.callee as { type?: string })?.type === 'Identifier' &&
+      return ((node.callee as { type?: string })?.type === 'Identifier' || supportedExpression(node.callee)) &&
         Array.isArray(node.arguments) && node.arguments.every(supportedExpression);
     default:
       return false;
@@ -79,6 +95,9 @@ function supportedExpression(expression: unknown): boolean {
 
 function supportedStatement(statement: FunctionStatement): boolean {
   switch (statement.type) {
+    case 'BreakStatement':
+    case 'ContinueStatement':
+      return !statement.label;
     case 'EmptyStatement':
       return true; // Existing round-trip policy allows harmless empty semicolons.
     case 'VariableDeclaration':
@@ -89,8 +108,9 @@ function supportedStatement(statement: FunctionStatement): boolean {
     case 'ExpressionStatement': {
       const expression = statement.expression;
       if (expression.type === 'CallExpression') return supportedExpression(expression);
-      return expression.type === 'AssignmentExpression' && expression.operator === '=' &&
-        expression.left.type === 'Identifier' && supportedExpression(expression.right);
+      if (expression.type === 'UpdateExpression') return expression.argument.type === 'Identifier' && ['++', '--'].includes(expression.operator);
+      return expression.type === 'AssignmentExpression' && ['=', '+=', '-=', '*=', '/='].includes(expression.operator) &&
+        (expression.left.type === 'Identifier' || supportedExpression(expression.left)) && supportedExpression(expression.right);
     }
     case 'IfStatement':
       return supportedExpression(statement.test) && statement.consequent.type === 'BlockStatement' &&
@@ -99,6 +119,12 @@ function supportedStatement(statement: FunctionStatement): boolean {
           statement.alternate.body.every(supportedStatement)));
     case 'ReturnStatement':
       return statement.argument === null || supportedExpression(statement.argument);
+    case 'WhileStatement':
+      return supportedExpression(statement.test) && statement.body.type === 'BlockStatement' && statement.body.body.every(supportedStatement);
+    case 'ForStatement':
+      return statement.init?.type === 'VariableDeclaration' && supportedStatement(statement.init) && supportedExpression(statement.test) && !!statement.update &&
+        ((statement.update.type === 'UpdateExpression' && statement.update.argument.type === 'Identifier') || (statement.update.type === 'AssignmentExpression' && statement.update.left.type === 'Identifier' && supportedExpression(statement.update.right))) &&
+        statement.body.type === 'BlockStatement' && statement.body.body.every(supportedStatement);
     default:
       return false;
   }
@@ -106,17 +132,17 @@ function supportedStatement(statement: FunctionStatement): boolean {
 
 function candidateReason(statement: ProgramStatement, source: string, comments: { start?: number | null; end?: number | null }[]): string | null {
   if (statement.type === 'ClassDeclaration') {
-    if (!statement.id || statement.superClass || statement.decorators?.length) return 'Class inheritance or decorators need a mapping review';
+    if (!statement.id || (statement.superClass && statement.superClass.type !== 'Identifier') || statement.decorators?.length) return 'Class inheritance or decorators need a mapping review';
     if (comments.some(c => typeof c.start === 'number' && typeof c.end === 'number' && c.start >= (statement.start ?? 0) && c.end <= (statement.end ?? 0))) return 'Comments inside the class need a placement rule';
     if (!statement.body.body.length) return 'Empty class needs an explicit body rule';
-    if (!statement.body.body.every(member => member.type === 'ClassMethod' && member.kind === 'method' && !member.computed && !member.async && !member.generator && member.key.type === 'Identifier' && member.params.every(p => p.type === 'Identifier'))) return 'Class contains an unsupported member or signature';
+    if (!statement.body.body.every(member => (member.type === 'ClassProperty' && !member.computed && member.key.type === 'Identifier' && supportedExpression(member.value)) || member.type === 'ClassMethod' && ['method', 'constructor'].includes(member.kind) && !member.computed && !member.async && !member.generator && member.key.type === 'Identifier' && member.params.every(p => p.type === 'Identifier'))) return 'Class contains an unsupported member or signature';
     return null;
   }
   if (statement.type !== 'FunctionDeclaration') return 'Unsupported top-level construct';
   if (statement.start == null || statement.end == null) return 'Function has no reliable source span';
   const functionStart = statement.start;
   const functionEnd = statement.end;
-  if (!statement.id || statement.async || statement.generator || statement.params.some(p => p.type !== 'Identifier')) {
+  if (!statement.id || statement.async || statement.generator || statement.params.some(p => p.type !== 'Identifier' && !(p.type === 'AssignmentPattern' && p.left.type === 'Identifier' && supportedExpression(p.right)) && !(p.type === 'RestElement' && p.argument.type === 'Identifier'))) {
     return 'Function signature needs a mapping review';
   }
   if (comments.some(c => typeof c.start === 'number' && typeof c.end === 'number' && c.start >= functionStart && c.end <= functionEnd)) {
@@ -124,7 +150,6 @@ function candidateReason(statement: ProgramStatement, source: string, comments: 
   }
   if (!statement.body.body.length) return 'Empty function needs an explicit body rule';
   if (!statement.body.body.every(supportedStatement)) return 'Function contains unsupported syntax or expression';
-  if (source.slice(statement.start, statement.end).includes('\r')) return 'Line endings need a preservation check';
   return null;
 }
 
@@ -147,6 +172,14 @@ export async function previewJavaScriptImport(source: string): Promise<SourceImp
     ] : [] });
   }
   for (const error of (parsed.errors ?? []).slice(0, IMPORT_LIMITS.diagnostics)) diagnostics.push(`Parse error: ${error.message}`);
+  if (!diagnostics.length && parsed.program.body.length > 1 && parsed.program.body.every(statement => statement.type === 'ClassDeclaration' && !candidateReason(statement, source, parsed.comments ?? []))) return sealPreview({ language: 'javascript', source, sourceSha256, diagnostics, regions: [{ kind: 'candidate', start: 0, end: source.length, text: source, proposedKind: 'class-file' }] });
+  if (!diagnostics.length && parsed.program.body.length && parsed.program.body.every(statement => statement.type === 'FunctionDeclaration' || statement.type === 'ImportDeclaration' || (statement.type === 'ExportNamedDeclaration' && statement.declaration?.type === 'FunctionDeclaration'))) {
+    const whole = parsed.program.sourceType === 'module' || parsed.comments?.length || parsed.program.directives.length || parsed.program.body.some(statement => statement.type === 'FunctionDeclaration' && statement.body.directives.length);
+    if (whole) return sealPreview({ language: 'javascript', source, sourceSha256, diagnostics, regions: [{ kind: 'candidate', start: 0, end: source.length, text: source, proposedKind: parsed.program.sourceType === 'module' ? 'module-file' : 'function-file' }] });
+  }
+  if (!diagnostics.length && parsed.program.sourceType === 'script' && !parsed.program.directives.length && !parsed.comments?.length && parsed.program.body.length > 1 && parsed.program.body.every(statement => statement.type === 'FunctionDeclaration' && !candidateReason(statement, source, []))) {
+    return sealPreview({ language: 'javascript', source, sourceSha256, diagnostics, regions: [{ kind: 'candidate', start: 0, end: source.length, text: source, proposedKind: 'function-file' }] });
+  }
   let cursor = 0;
   const add = (kind: ImportRegionKind, start: number, end: number, reason?: string, proposedKind: ImportRegion['proposedKind'] = 'standalone-function') => {
     if (end <= start) return;

@@ -32,7 +32,7 @@ if (!result.runtimeAvailable) {
   const message =
     'Tree-sitter native runtime unavailable — skipped parse validation (install/rebuild tree-sitter prebuilds for CI).';
   console.warn(message);
-  process.exit(0);
+  process.exit(strict ? 1 : 0);
 }
 
 process.exit(result.ok ? 0 : 1);

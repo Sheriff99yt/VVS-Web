@@ -3,6 +3,10 @@ name: VVS Syntax Packs
 description: Triggers when editing syntax packs, print templates, Rosetta fixtures, capability overlays, or deciding whether a codegen change belongs in packs vs IR vs lowering.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Canonical spec
 
 - **`docs/syntax_pack_architecture.md`** — layers, pack inheritance, hybrid emit, agent workflow, fidelity linter
@@ -50,7 +54,7 @@ Does the graph meaning change?
 - **Lego rows:** `{ type: "static" | "slot", val }` + layout tokens `\x01`–`\x05` per `project_requirements.md` §2.3–2.4
 - **Quasi-quotes** for expressions: `{receiver}.{callee}({args})`
 
-# Required gates (every pack change)
+# Required gates (once per completed pack-change batch)
 
 1. **Rosetta golden** — strict string compare for affected `(fixture × family)`
 2. **Span invariants** — behavioral node IDs in `sourceMap`; `expressionSpans` cover expected substrings

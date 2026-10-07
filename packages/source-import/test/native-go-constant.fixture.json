@@ -1,0 +1,755 @@
+{
+  "savedAt": "",
+  "projectDetails": {
+    "moduleName": "sample",
+    "extendsType": "",
+    "description": "Imported from sample.go"
+  },
+  "variables": [
+    {
+      "kind": "variable",
+      "id": "go-function-0-local-0",
+      "name": "tenth",
+      "type": "data_number",
+      "typeRef": {
+        "kind": "builtin",
+        "id": "data_number"
+      },
+      "binding": "instance",
+      "visibility": "private",
+      "flags": {
+        "readonly": true
+      },
+      "classId": "global-main-graph",
+      "graphTabId": "go-function-0"
+    },
+    {
+      "kind": "variable",
+      "id": "go-function-0-local-1",
+      "name": "copy",
+      "type": "data_number",
+      "typeRef": {
+        "kind": "builtin",
+        "id": "data_number"
+      },
+      "binding": "instance",
+      "visibility": "private",
+      "flags": {
+        "readonly": true
+      },
+      "classId": "global-main-graph",
+      "graphTabId": "go-function-0"
+    }
+  ],
+  "events": [],
+  "functions": [
+    {
+      "kind": "function",
+      "id": "go-function-0",
+      "name": "exact",
+      "classId": "global-main-graph",
+      "binding": "module",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [],
+          "returnType": "data_number",
+          "graphTabId": "go-function-0"
+        }
+      ]
+    }
+  ],
+  "openTabs": [
+    {
+      "id": "main-graph",
+      "type": "container",
+      "name": "sample"
+    },
+    {
+      "id": "go-function-0",
+      "type": "function",
+      "name": "Function: exact"
+    }
+  ],
+  "activeGraphTab": "main-graph",
+  "targetLanguage": "go",
+  "autoCompile": true,
+  "autoSave": false,
+  "documents": {
+    "main-graph": {
+      "nodes": [
+        {
+          "id": "import-node-1",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "source_package",
+            "kindVersion": 1,
+            "label": "Package Clause",
+            "category": "Source Structure",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 0,
+                "end": 14,
+                "mappingId": "go.package_clause",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "packageName": "sample",
+              "goWordBits": "64",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc exact() float64 { const tenth float32 = .1; const copy = tenth; return float64(copy) }",
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55",
+                "start": 0,
+                "end": 106,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "import-node-2",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 520,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_define",
+            "kindVersion": 1,
+            "label": "Declare exact",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 106,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "symbolId": "go-function-0",
+              "name": "exact",
+              "overloadId": "o1",
+              "sourceImport": {
+                "version": 1,
+                "language": "go",
+                "languageVersion": "1.26",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "sample.go",
+                "source": "package sample\nfunc exact() float64 { const tenth float32 = .1; const copy = tenth; return float64(copy) }",
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55",
+                "start": 0,
+                "end": 106,
+                "mappingId": "go.source_file",
+                "mappingVersion": 1
+              }
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-3",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 760,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_implement",
+            "kindVersion": 1,
+            "label": "Define exact",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 106,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "symbolId": "go-function-0",
+              "name": "exact",
+              "graphTabId": "go-function-0",
+              "isStatic": false,
+              "isExported": false,
+              "role": "function",
+              "nativeSignatureLanguage": "go",
+              "nativeReturnType": "float64",
+              "nativeParameters": []
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "go-function-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-1-import-node-2",
+          "source": "import-node-1",
+          "target": "import-node-2",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-2-import-node-3",
+          "source": "import-node-2",
+          "target": "import-node-3",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "sample",
+        "extendsType": "",
+        "description": "",
+        "targetLanguage": "go",
+        "compilationUnit": {
+          "version": 1,
+          "entryPolicy": "library"
+        }
+      }
+    },
+    "go-function-0": {
+      "nodes": [
+        {
+          "id": "import-node-4",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "exact",
+            "category": "Events",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 15,
+                "end": 106,
+                "mappingId": "go.function_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "functionId": "go-function-0",
+              "symbolId": "go-function-0",
+              "name": "exact",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-5",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 240,
+            "y": 0
+          },
+          "data": {
+            "kindId": "var_define",
+            "kindVersion": 1,
+            "label": "Declare tenth",
+            "category": "Variables",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "Initializer",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 38,
+                "end": 62,
+                "mappingId": "go.const_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "symbolId": "go-function-0-local-0",
+              "name": "tenth",
+              "type": "data_number",
+              "hasInitializer": true,
+              "declarationKind": "const",
+              "nativeLocalStyle": "go-const",
+              "nativeType": "float32",
+              "isConst": true
+            }
+          }
+        },
+        {
+          "id": "import-node-6",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 480,
+            "y": 160
+          },
+          "data": {
+            "kindId": "expr_native_literal",
+            "kindVersion": 1,
+            "label": "Native Literal",
+            "category": "Native Values",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 60,
+                "end": 62,
+                "mappingId": "go.float_literal",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "nativeLanguage": "go",
+              "nativeForm": "scalar",
+              "nativeDomain": "go-float",
+              "payload": ".1",
+              "memberName": "",
+              "operator": "",
+              "operandCount": 0
+            }
+          }
+        },
+        {
+          "id": "import-node-7",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 720,
+            "y": 0
+          },
+          "data": {
+            "kindId": "var_define",
+            "kindVersion": 1,
+            "label": "Declare copy",
+            "category": "Variables",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "Initializer",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 64,
+                "end": 82,
+                "mappingId": "go.const_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "symbolId": "go-function-0-local-1",
+              "name": "copy",
+              "type": "data_number",
+              "hasInitializer": true,
+              "declarationKind": "const",
+              "nativeLocalStyle": "go-const",
+              "nativeType": "untyped",
+              "isConst": true
+            }
+          }
+        },
+        {
+          "id": "import-node-8",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 960,
+            "y": 160
+          },
+          "data": {
+            "kindId": "variable_get",
+            "kindVersion": 1,
+            "label": "Get tenth",
+            "category": "Variables",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "val",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 77,
+                "end": 82,
+                "mappingId": "go.identifier",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "symbolId": "go-function-0-local-0",
+              "name": "tenth",
+              "variableName": "tenth"
+            },
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "go-function-0-local-0"
+            },
+            "linkKind": "variable_ref"
+          }
+        },
+        {
+          "id": "import-node-9",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1200,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "Return",
+            "category": "Flow Control",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 84,
+                "end": 104,
+                "mappingId": "go.return_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "functionId": "go-function-0",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "go-function-0",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function"
+          }
+        },
+        {
+          "id": "import-node-10",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1440,
+            "y": 160
+          },
+          "data": {
+            "kindId": "expr_native_operator",
+            "kindVersion": 1,
+            "label": "Convert to float64",
+            "category": "Native Values",
+            "inputs": [
+              {
+                "id": "operand-0",
+                "label": "Operand 1",
+                "type": "data_any",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 91,
+                "end": 104,
+                "mappingId": "go.call_expression",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "nativeLanguage": "go",
+              "nativeForm": "conversion",
+              "nativeDomain": "go-number",
+              "payload": "",
+              "memberName": "",
+              "operator": "",
+              "nativeTargetType": "float64",
+              "operandCount": 1
+            }
+          }
+        },
+        {
+          "id": "import-node-11",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1680,
+            "y": 320
+          },
+          "data": {
+            "kindId": "variable_get",
+            "kindVersion": 1,
+            "label": "Get copy",
+            "category": "Variables",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "val",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 99,
+                "end": 103,
+                "mappingId": "go.identifier",
+                "mappingVersion": 1,
+                "sourceSha256": "0a3ed902aacf674d5ecdb9bc5ce26ec01e0300ea117f7e6abd08da79a1928f55"
+              },
+              "symbolId": "go-function-0-local-1",
+              "name": "copy",
+              "variableName": "copy"
+            },
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "go-function-0-local-1"
+            },
+            "linkKind": "variable_ref"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-6-import-node-5",
+          "source": "import-node-6",
+          "target": "import-node-5",
+          "sourceHandle": "result",
+          "targetHandle": "value",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-4-import-node-5",
+          "source": "import-node-4",
+          "target": "import-node-5",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-2-import-node-8-import-node-7",
+          "source": "import-node-8",
+          "target": "import-node-7",
+          "sourceHandle": "val",
+          "targetHandle": "value",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-3-import-node-5-import-node-7",
+          "source": "import-node-5",
+          "target": "import-node-7",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-4-import-node-11-import-node-10",
+          "source": "import-node-11",
+          "target": "import-node-10",
+          "sourceHandle": "val",
+          "targetHandle": "operand-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-5-import-node-10-import-node-9",
+          "source": "import-node-10",
+          "target": "import-node-9",
+          "sourceHandle": "result",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-6-import-node-7-import-node-9",
+          "source": "import-node-7",
+          "target": "import-node-9",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "exact",
+        "extendsType": "",
+        "description": ""
+      }
+    }
+  },
+  "installedLibrary": [],
+  "targetFileExtensions": {},
+  "version": 3,
+  "classes": [
+    {
+      "kind": "class",
+      "id": "global-main-graph",
+      "name": "Global",
+      "containerId": "main-graph",
+      "visibility": "public",
+      "isGlobalScope": true
+    }
+  ],
+  "activeClassId": "global-main-graph",
+  "graphContainers": [
+    {
+      "id": "main-graph",
+      "name": "sample"
+    }
+  ]
+}

@@ -131,7 +131,7 @@ export function StartHomeLayout({
                       </button>
                     </>
                   ) : null}
-                  <button type="button" onClick={onImportSource} className={SIDEBAR_BTN}><Upload size={16} />Import JavaScript source…</button>
+                  <button type="button" onClick={onImportSource} className={SIDEBAR_BTN}><Upload size={16} />Import source…</button>
                   <button type="button" onClick={onNewProject} className={SIDEBAR_BTN}>
                     <FilePlus size={14} className="text-emerald-400 shrink-0" />
                     New blank
@@ -315,7 +315,7 @@ function StartActionButtons({
     <section>
       <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Start</h2>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={onImportSource} className={MAIN_BTN}><Upload size={16} />Import JavaScript source…</button>
+        <button type="button" onClick={onImportSource} className={MAIN_BTN}><Upload size={16} />Import source…</button>
         {folderPickerReady ? (
           <>
             <button

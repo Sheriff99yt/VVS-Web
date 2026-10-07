@@ -9,11 +9,14 @@ export interface GraphBinding {
     | 'import_module'
     | 'import_class'
     | 'variable_ref'
+    | 'parameter_ref'
     | 'env_native'
     | 'env_event'
     | 'graph_ref';
   symbolId: string;
   overloadId?: string;
+  /** Stable parameter slot on a function-owned parameter reference. */
+  parameterId?: string;
   /** Target class for cross-class import/call nodes. */
   targetClassId?: string;
   /** Manifest method id for env_native / overrideable handlers */

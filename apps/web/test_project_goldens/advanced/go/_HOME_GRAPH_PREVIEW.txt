@@ -5,13 +5,13 @@ import "bufio"
 import "os"
 type Machine struct {
 	var Label string = "ok"
-func Diagnose() void {
+func Diagnose()  {
 	fmt.Println(self.Label)
 }
 }
 type Sensor struct {
 	var Operator string = ""
-func Diagnose() void {
+func Diagnose()  {
 	fmt.Println("sensor")
 	self.Machine.Diagnose()
 }

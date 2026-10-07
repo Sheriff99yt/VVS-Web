@@ -1,5 +1,5 @@
 import { ProjectSnapshot } from '@/types/projectSnapshot';
-import { GraphTab, TargetLanguage, ClassSymbol } from '@/contexts/ProjectContext';
+import { GraphTab, TargetLanguage, ClassSymbol, type GraphContainer } from '@/contexts/ProjectContext';
 import { GraphVariable, ProjectEventDefinition, FunctionSymbol } from '@/types/graph';
 import { GraphDocument } from '@/lib/graphDefaults';
 import { InstalledLibraryEntry } from '@/types/libraryAsset';
@@ -7,6 +7,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { createDefaultIntegration, normalizeProjectSnapshot, type ProjectIntegrationConfig, type SyntaxPackLock, type CodegenCapabilities, type TargetFileExtensions, normalizeTargetFileExtensions } from '@vvs/graph-types';
 
 export interface SnapshotApplyTarget {
+  setGraphContainers?: Dispatch<SetStateAction<GraphContainer[]>>;
   setVariables: Dispatch<SetStateAction<GraphVariable[]>>;
   setEvents: Dispatch<SetStateAction<ProjectEventDefinition[]>>;
   setFunctions: Dispatch<SetStateAction<FunctionSymbol[]>>;
@@ -38,6 +39,7 @@ export function applyProjectSnapshot(snapshot: ProjectSnapshot, target: Snapshot
   target.setEvents(normalized.events ?? []);
   target.setFunctions(normalized.functions);
   target.setClasses(normalized.classes);
+  target.setGraphContainers?.(normalized.graphContainers);
   target.setActiveClassId(normalized.activeClassId);
   target.setOpenTabs(
     normalized.openTabs.length > 0 ? normalized.openTabs : [{ id: 'main', type: 'main', name: 'Main graph' }]

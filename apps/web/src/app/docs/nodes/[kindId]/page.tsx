@@ -64,7 +64,7 @@ export default async function NodeDocPage({ params }: PageProps) {
           </span>
         ) : (
           <span className="rounded-full border border-zinc-800 px-2 py-0.5 text-[11px] uppercase tracking-wide text-zinc-500">
-            stable
+            registry-listed
           </span>
         )}
       </div>
@@ -77,6 +77,7 @@ export default async function NodeDocPage({ params }: PageProps) {
           : ''}
       </p>
 
+      <p className="mt-3 text-xs text-zinc-500">Registry listing does not certify support for every language or host environment. Check the selected target’s diagnostics and generated output.</p>
       <nav className="mt-6 flex flex-wrap gap-3 text-[12px] text-zinc-500">
         <a href="#overview" className="hover:text-zinc-200">Overview</a>
         <a href="#ports" className="hover:text-zinc-200">Ports ({ports.length})</a>
@@ -173,7 +174,7 @@ export default async function NodeDocPage({ params }: PageProps) {
                       {opt.default === undefined ? '-' : String(opt.default)}
                     </td>
                     <td className="px-3 py-2 text-zinc-400">
-                      {opt.enumValues?.length ? `enum: ${opt.enumValues.join(', ')}` : opt.description || '-'}
+                      {opt.description || '-'}{opt.enumValues?.length ? ` · enum: ${opt.enumValues.join(', ')}` : ''}
                     </td>
                   </tr>
                 ))

@@ -27,6 +27,8 @@ export const ROSETTA_FAMILIES: LanguageFamily[] = [
 
 export interface RosettaFixture {
   name: string;
+  /** Target-scoped fixtures certify only these families; absence retains the full matrix. */
+  families?: LanguageFamily[];
   description?: string;
   moduleName: string;
   extendsType?: string;

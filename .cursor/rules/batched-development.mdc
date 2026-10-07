@@ -1,0 +1,8 @@
+---
+description: Plan, implement and validate coherent dependency batches across the VVS project
+alwaysApply: true
+---
+
+Follow [.agents/AGENTS.md](../../.agents/AGENTS.md) and [the shared batch workflow](../../docs/agentic_batch_workflow.md). Group related edits, complete implementation/review before expensive validation, run affected gates once and retry only failed/affected checks with their prerequisites. Preserve required fidelity/native evidence and the user's full scope. Do not run app builds/browser suites for rules-only changes. This supersedes legacy one-slice/per-edit validation pacing.
+
+Reverse-import work uses feature batches across all eight languages: consider equivalent examples together, implement shared and ready native fixes together, then run one consolidated affected validation matrix. Keep language-specific semantic checks and unmet prerequisites explicit; do not perform a full test cycle per language. See [the cross-language plan](../../docs/design/reverse_import_cross_language_batches.md).

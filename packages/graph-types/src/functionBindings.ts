@@ -1,10 +1,26 @@
+import { GO_SCALAR_PINS, CSHARP_INTEGRAL_PINS, CSHARP_RETURN_PINS, type GoScalarType, nativeSignature, withNativeParameters } from './nativeSignatures';
 import type { PinDefinition } from './pins';
 import type { FunctionSymbol } from './symbols';
 import type { VVSNodeData } from './nodes';
 import { overloadReturnParameters } from './symbols';
+import { canonicalNativeScalarSignatureType, nativeScalarSignaturePin } from './nativeScalarSignatures';
+import { nativeScalarSignatureEditorProfile } from './nativeScalarSignatureEdits';
 
 const EXEC_IN: PinDefinition = { id: 'exec_in', label: '', type: 'execution' };
 const EXEC_OUT: PinDefinition = { id: 'exec_out', label: '', type: 'execution' };
+
+/** Rebind a visible parameter write after signature edits, preserving its
+ * statement operator and RHS connections. Deleted slots stay invalid. */
+export function applyParameterSetBinding(data: VVSNodeData, func: FunctionSymbol, overloadId?: string): VVSNodeData {
+  const overload = func.overloads.find(overload => overload.id === (overloadId ?? data.graphBinding?.overloadId));
+  const parameter = overload?.parameters.find(parameter => parameter.id === data.graphBinding?.parameterId);
+  if (!overload || !parameter) return data;
+  const update = ['++', '--'].includes(String(data.properties?.assignmentOperator));
+  return { ...data, kindId: 'parameter_set', label: `Set parameter ${parameter.label}`, category: 'Parameters',
+    graphBinding: { kind: 'parameter_ref', symbolId: func.id, overloadId: overload.id, parameterId: parameter.id },
+    properties: { ...data.properties, functionId: func.id, overloadId: overload.id, parameterId: parameter.id, parameterName: parameter.label },
+    inputs: update ? [EXEC_IN] : [EXEC_IN, { id: 'val', label: 'New Value', type: parameter.type, required: true }], outputs: [EXEC_OUT] };
+}
 
 export function resolveFunctionForNode(
   data: VVSNodeData,
@@ -152,6 +168,14 @@ export function applyFunctionImplementBinding(
   overloadId?: string
 ): VVSNodeData {
   const overload = resolveOverloadForCall(func, overloadId ?? data.graphBinding?.overloadId);
+  const goTypes = { data_number: 'float64', data_string: 'string', data_boolean: 'bool' } as const;
+  const retainedType = (previous: unknown, pin: string | undefined) => typeof previous === 'string' && pin !== undefined && GO_SCALAR_PINS[previous as GoScalarType] === pin ? previous as GoScalarType : goTypes[pin as keyof typeof goTypes];
+  const csharpTypes = data.properties?.nativeSignatureLanguage === 'csharp';
+  const retainedNativeType = (previous: unknown, pin: string | undefined) => csharpTypes ? (typeof previous === 'string' && pin === CSHARP_INTEGRAL_PINS[previous as keyof typeof CSHARP_INTEGRAL_PINS] ? previous as keyof typeof CSHARP_INTEGRAL_PINS : undefined) : retainedType(previous, pin);
+  const signature = nativeSignature(data);
+  const scalarProfile = nativeScalarSignatureEditorProfile(data);
+  const retainedScalarType = (previous: unknown, authored: unknown, pin: string | undefined) => scalarProfile && typeof previous === 'string' && typeof authored === 'string' && canonicalNativeScalarSignatureType(authored, scalarProfile.language) === previous && nativeScalarSignaturePin(previous, scalarProfile.language) === pin ? previous as import('./nativeScalarSignatures').NativeScalarSignatureType : undefined;
+  if (signature?.every(parameter => parameter && typeof parameter.id === 'string')) data = withNativeParameters(data, overload.parameters.map(parameter => ({ ...signature.find(previous => previous.id === parameter.id), id: parameter.id, name: parameter.label, mode: signature.find(previous => previous.id === parameter.id)?.mode ?? 'positional', ...(scalarProfile ? { nativeType: retainedScalarType(signature.find(previous => previous.id === parameter.id)?.nativeType, signature.find(previous => previous.id === parameter.id)?.authoredType, parameter.type) } : ['go', 'csharp'].includes(String(data.properties?.nativeSignatureLanguage)) ? { nativeType: retainedNativeType(signature.find(previous => previous.id === parameter.id)?.nativeType, parameter.type) } : {}) })));
   return {
     ...data,
     label: `Define ${func.name}`,
@@ -169,10 +193,12 @@ export function applyFunctionImplementBinding(
       symbolId: func.id,
       name: func.name,
       graphTabId: overload.graphTabId ?? func.id,
+      ...(scalarProfile ? { functionName: func.name, nativeReturnType: overload.returnType === 'void' ? data.properties?.nativeReturnType === scalarProfile.unit && data.properties?.nativeAuthoredReturnType === scalarProfile.unit ? scalarProfile.unit : undefined : retainedScalarType(data.properties?.nativeReturnType, data.properties?.nativeAuthoredReturnType, overload.returnType) } : {}),
+      ...(['go', 'csharp'].includes(String(data.properties?.nativeSignatureLanguage)) ? { nativeReturnType: overload.returnType === 'void' ? 'void' : csharpTypes && data.properties?.nativeReturnType === 'bool' && overload.returnType === CSHARP_RETURN_PINS.bool ? 'bool' : retainedNativeType(data.properties?.nativeReturnType, overload.returnType) } : {}),
       ...(func.flags?.virtual ? { isVirtual: true } : {}),
       ...(func.flags?.override ? { isOverride: true } : {}),
     },
-    inputs: implementNodeInputs(func, overload.id),
+    inputs: [...implementNodeInputs(func, overload.id), ...(Array.isArray(data.properties?.nativeParameters) ? data.inputs.filter(pin => pin.id.startsWith('default-')) : [])],
     outputs: implementNodeOutputs(func, overload.id),
   };
 }
@@ -262,7 +288,7 @@ export function applyFunctionCallBinding(
   const overload = resolveOverloadForCall(func, overloadId ?? data.graphBinding?.overloadId);
   return {
     ...data,
-    label: `Call ${func.name}`,
+    label: `Call ${func.name}${data.properties?.callPlacement === 'expression' ? ' (expression)' : ''}`,
     kindId: 'vvs.project.call_function',
     linkKind: 'call_function',
     linkedGraphId: func.id,
@@ -277,8 +303,9 @@ export function applyFunctionCallBinding(
       functionName: func.name,
       overloadId: overload.id,
     },
-    inputs: callNodeInputs(func, overload.id),
-    outputs: callNodeOutputs(func, overload.id),
+    inputs: (data.properties?.nativeArgumentCount !== undefined
+      ? [...callNodeInputs(func, overload.id).filter(pin => pin.type === 'execution'), ...data.inputs.filter(pin => pin.type !== 'execution')]
+      : callNodeInputs(func, overload.id)).filter(pin => data.properties?.callPlacement !== 'expression' || pin.type !== 'execution'),
+    outputs: callNodeOutputs(func, overload.id).filter(pin => data.properties?.callPlacement !== 'expression' || pin.type !== 'execution'),
   };
 }
-

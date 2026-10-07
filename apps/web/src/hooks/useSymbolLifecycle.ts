@@ -35,6 +35,8 @@ import {
   type ClassSymbol,
 } from '@vvs/graph-types';
 import { openGraphContainerTab } from '@/lib/graphTabs';
+import { editCSharpDeclarationGroup, editCSharpLocalInitializer, type CSharpIntegerType } from '@vvs/graph-types';
+import { transactNativeScalarSignature, transactNativeScalarLocal, transactNativeScalarDeclarationMode, type NativeScalarDeclarationModeEdit, transactNativeScalarDeclarationGroup, type NativeScalarGroupEdit, type NativeScalarLocalEdit, type VVSNodeData } from '@vvs/graph-types';
 
 export function useSymbolLifecycle() {
   const {
@@ -66,7 +68,7 @@ export function useSymbolLifecycle() {
   const applyDocuments = useCallback(
     (
       nextDocuments: Record<string, GraphDocument>,
-      options?: { preserveHistory?: boolean; viewTabId?: string }
+      options?: { preserveHistory?: boolean; viewTabId?: string; selectedNodeId?: string }
     ) => {
       patchAllDocuments(() => nextDocuments, options);
     },
@@ -352,7 +354,7 @@ export function useSymbolLifecycle() {
   );
 
   const renameVariable = useCallback(
-    (variable: VariableSymbol) => {
+    (variable: VariableSymbol, declarationEdit?: { nodeId: string; properties: Record<string, unknown> }) => {
       const prev = variables.find((v) => v.id === variable.id);
       if (!prev) return;
       const documents = getDocuments();
@@ -363,12 +365,30 @@ export function useSymbolLifecycle() {
         recordSymbolHistory(`Update variable ${variable.name}`);
       }
       setVariables((list) => list.map((v) => (v.id === variable.id ? variable : v)));
-      applyDocuments(applyVariableRenameToDocuments(documents, variable), {
-        preserveHistory: true,
+      applyDocuments(applyVariableRenameToDocuments(documents, variable, declarationEdit), {
+        preserveHistory: true, selectedNodeId: declarationEdit?.nodeId,
       });
     },
     [variables, setVariables, getDocuments, applyDocuments, recordSymbolHistory]
   );
+
+  const updateCSharpDeclarationGroup = useCallback((nodeId: string, nativeType: CSharpIntegerType, groupStyle: 'typed' | 'const', selectedNodeId = nodeId) => {
+    const documents = getDocuments();
+    const document = documents?.[activeGraphTab];
+    if (!documents || !document) return;
+    const edit = editCSharpDeclarationGroup(document, variables, nodeId, nativeType, groupStyle);
+    recordSymbolHistory('Edit C# declaration group');
+    setVariables(edit.variables);
+    applyDocuments({ ...documents, [activeGraphTab]: edit.document }, { preserveHistory: true, selectedNodeId });
+  }, [activeGraphTab, getDocuments, variables, recordSymbolHistory, setVariables, applyDocuments]);
+
+  const updateCSharpLocalInitializer = useCallback((nodeId: string, enabled: boolean) => {
+    const documents = getDocuments(), document = documents?.[activeGraphTab];
+    if (!documents || !document) return;
+    const next = editCSharpLocalInitializer(document, nodeId, enabled);
+    recordSymbolHistory('Edit local initializer');
+    applyDocuments({ ...documents, [activeGraphTab]: next }, { preserveHistory: true, selectedNodeId: nodeId });
+  }, [activeGraphTab, getDocuments, recordSymbolHistory, applyDocuments]);
 
   const renameFunction = useCallback(
     (func: FunctionSymbol) => {
@@ -495,11 +515,51 @@ export function useSymbolLifecycle() {
     ]
   );
 
+  const updateNativeScalarSignature = useCallback((definitionId: string, edited: VVSNodeData) => {
+    const documents = getDocuments();
+    if (!documents) throw new Error('NATIVE_SCALAR_SIGNATURE_TRANSACTION_DOCUMENTS');
+    const next = transactNativeScalarSignature({ functions, documents }, definitionId, edited);
+    recordSymbolHistory('Edit native function signature');
+    setFunctions(next.functions);
+    applyDocuments(next.documents, { preserveHistory: true, selectedNodeId: definitionId, viewTabId: activeGraphTab });
+  }, [functions, getDocuments, recordSymbolHistory, setFunctions, applyDocuments, activeGraphTab]);
+
+  const updateNativeScalarLocal = useCallback((declarationId: string, edit: NativeScalarLocalEdit | NativeScalarDeclarationModeEdit) => {
+    const documents = getDocuments();
+    if (!documents) throw new Error('NATIVE_SCALAR_LOCAL_TRANSACTION_DOCUMENTS');
+    const declaration = Object.values(documents).flatMap(doc => doc.nodes).find(node => node.id === declarationId);
+    const groupId = declaration?.data.properties?.groupOwnerId;
+    const modeEdit = 'declarationMode' in edit;
+    const localEdit: NativeScalarLocalEdit = modeEdit ? {} : edit;
+    let next = modeEdit ? transactNativeScalarDeclarationMode({ variables, functions, documents }, declarationId, edit)
+      : typeof groupId === 'string' && (localEdit.authoredType !== undefined || localEdit.mutable !== undefined)
+      ? transactNativeScalarDeclarationGroup({ variables, functions, documents }, groupId, { ...(localEdit.authoredType !== undefined ? { authoredType: localEdit.authoredType } : {}), ...(localEdit.mutable !== undefined ? { mutable: localEdit.mutable } : {}) })
+      : transactNativeScalarLocal({ variables, functions, documents }, declarationId, localEdit);
+    if (!modeEdit && typeof groupId === 'string' && (localEdit.authoredType !== undefined || localEdit.mutable !== undefined) && localEdit.name !== undefined) next = transactNativeScalarLocal({ ...next, functions }, declarationId, { name: localEdit.name });
+    recordSymbolHistory('Edit native local declaration');
+    setVariables(next.variables);
+    applyDocuments(next.documents, { preserveHistory: true, viewTabId: activeGraphTab, selectedNodeId: selection.type === 'node' ? selection.id ?? undefined : undefined });
+  }, [variables, functions, getDocuments, recordSymbolHistory, setVariables, applyDocuments, activeGraphTab, selection]);
+
+  const updateNativeScalarGroup = useCallback((groupId: string, edit: NativeScalarGroupEdit | NativeScalarDeclarationModeEdit) => {
+    const documents = getDocuments();
+    if (!documents) throw new Error('NATIVE_SCALAR_GROUP_TRANSACTION_DOCUMENTS');
+    const next = 'declarationMode' in edit ? transactNativeScalarDeclarationMode({ variables, functions, documents }, groupId, edit) : transactNativeScalarDeclarationGroup({ variables, functions, documents }, groupId, edit);
+    recordSymbolHistory('Edit native declaration group');
+    setVariables(next.variables);
+    applyDocuments(next.documents, { preserveHistory: true, viewTabId: activeGraphTab, selectedNodeId: selection.type === 'node' ? selection.id ?? undefined : undefined });
+  }, [variables, functions, getDocuments, recordSymbolHistory, setVariables, applyDocuments, activeGraphTab, selection]);
+
   return {
     deleteSymbol,
     getUsageSummary,
     renameVariable,
+    updateCSharpDeclarationGroup,
+    updateCSharpLocalInitializer,
     renameFunction,
+    updateNativeScalarSignature,
+    updateNativeScalarLocal,
+    updateNativeScalarGroup,
     renameEvent,
     deleteBrokenNode,
     deleteAllBrokenForRef,

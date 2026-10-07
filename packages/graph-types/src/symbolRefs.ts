@@ -62,7 +62,7 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
       data.graphBinding?.kind === 'variable_ref'
         ? data.graphBinding.symbolId
         : undefined;
-    if (!symbolId) {
+    if (symbolId === undefined && !data.graphBinding) {
       const name =
         typeof data.properties?.variableName === 'string'
           ? data.properties.variableName
@@ -70,11 +70,11 @@ export function resolveNodeSymbolRef(node: GraphNode): ResolvedSymbolRef | null 
       if (!name) return null;
       return { kind: 'variable', symbolId: `name:${name.toLowerCase()}`, displayName: name };
     }
-    return { kind: 'variable', symbolId };
+    return { kind: 'variable', symbolId: symbolId ?? '' };
   }
 
   if (
-    kindId === 'vvs.project.call_function' ||
+    kindId === 'vvs.project.call_function' || kindId === 'parameter_set' || data.graphBinding?.kind === 'parameter_ref' ||
     data.linkKind === 'call_function' ||
     data.graphBinding?.kind === 'call_function'
   ) {
@@ -201,7 +201,7 @@ function symbolExists(ref: ResolvedSymbolRef, index: ProjectSymbolIndex): boolea
     case 'variable':
       if (ref.symbolId.startsWith('name:')) {
         const key = ref.symbolId.slice(5);
-        return index.variables.some((v) => v.name.toLowerCase() === key);
+        return index.variables.filter((v) => v.name.toLowerCase() === key).length === 1;
       }
       return index.variables.some((v) => v.id === ref.symbolId);
     case 'function':

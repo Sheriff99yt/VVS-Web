@@ -18,6 +18,9 @@
     }
   },
   "templates": {
+    "DeclareNativeInferredLocal": { "quasi": "var {name} := {value}" },
+    "DeclareNativeScalarLocal": { "quasi": "{keyword} {name}: {type} = {value}" },
+    "AssignNativeScalarLocal": { "quasi": "{target} = {value}" },
     "Print": {
       "quasi": "print({value})"
     },
@@ -173,6 +176,19 @@
     },
     "TryFinallyHeader": {
       "quasi": "finally:"
-    }
+    },
+    "NativeScalarTypedParameter": {
+      "quasi": "{name}: {type}"
+    },
+    "NativeScalarFunctionOpen": {
+      "quasi": "{modifiers}func {name}({params}) -> {type}:"
+    },
+    "NativeScalar": {"quasi": "{value}"},
+    "NativeParentheses": {"quasi": "({value})"},
+    "NativeUnary": {"quasi": "{operator}{value}"},
+    "NativeUnarySeparated": {"quasi": "{operator} {value}"},
+    "NativeLogicalNot": {"quasi": "not {value}"},
+    "NativeOperatorBinary": {"quasi": "({left} {operator} {right})"},
+    "NativeNumericConversion": {"quasi": "{target}({value})"}
   }
 }

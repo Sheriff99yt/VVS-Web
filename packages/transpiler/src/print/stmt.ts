@@ -1,3 +1,4 @@
+import { GO_SCALAR_PINS, CSHARP_INTEGRAL_PINS, canonicalNativeScalarSignatureType, nativeScalarInferenceSpelling } from '@vvs/graph-types';
 import type {
   IrAssignVariable,
   IrAwaitWait,
@@ -27,7 +28,7 @@ import { PackTemplateMissingError } from '@vvs/syntax-packs';
 import { offsetSpans } from '../codeExpr';
 import type { ExprPrinter } from './types';
 import { createDefaultExprPrinter, mergeArgs, printCallInvocation, rustInheritedBasePath } from './expr';
-import { builtBlockToText, buildForLoop, buildIfBranch, buildSequence, buildTry, buildWhileLoop } from './blocks';
+import { builtBlockToText, buildForLoop, buildIfBranch, buildSequence, buildTry, buildWhileLoop, innerIndentCtx } from './blocks';
 import {
   commentPrefixFromPack,
   instanceReceiver,
@@ -73,6 +74,10 @@ export function createStmtPrinters(
     Return: (stmt, ctx) => {
       if (stmt.kind !== 'Return') return null;
       const s = stmt as IrReturn;
+      if (s.nativeStyle === 'rust-tail') {
+        if (ctx.family !== 'rust' || !s.value || s.values?.length) throw new Error('NATIVE_RETURN_STYLE');
+        return printFromTemplate(ctx, 'NativeTailReturn', { value: printExpr(s.value, ctx) });
+      }
       if (s.values && s.values.length > 0) {
         const valTexts = s.values.map((v) => printExpr(v, ctx).text);
         let tupleStr = valTexts.join(', ');
@@ -92,6 +97,12 @@ export function createStmtPrinters(
         };
       }
       return printFromTemplate(ctx, 'ReturnVoid', {});
+    },
+
+    LanguageDirective: (stmt, ctx) => {
+      if (stmt.kind !== 'LanguageDirective') return null;
+      if (ctx.family !== 'javascript') throw new Error('DIRECTIVE_TARGET_UNSUPPORTED');
+      return printFromTemplate(ctx, 'LanguageDirective', { value: JSON.stringify(stmt.value) });
     },
 
     Break: (stmt, ctx) => {
@@ -127,6 +138,17 @@ export function createStmtPrinters(
       if (stmt.kind !== 'AssignVariable') return null;
       const s = stmt as IrAssignVariable;
       if (s.assignKind === 'get_input') return null;
+      if (s.nativeLocalLanguage) {
+        if (s.nativeLocalLanguage !== ctx.family || s.targetBinding !== 'local' || s.operator !== '=' || !s.value) throw new Error('NATIVE_SCALAR_ASSIGNMENT_INVALID');
+        return printFromTemplate(ctx, 'AssignNativeScalarLocal', { target: s.targetName, value: printExpr(s.value, ctx) });
+      }
+
+      if (s.operator && s.operator !== '=') {
+        if (!['javascript', 'go', 'csharp'].includes(ctx.family) || (ctx.family === 'go' && s.prefix)) throw new Error('ASSIGN_OPERATOR_UNSUPPORTED: Explicit update operators require a supported target.');
+        const target = s.targetBinding === 'instance' ? `this.${s.targetName}` : s.targetName;
+        if (s.operator === '++' || s.operator === '--') return printFromTemplate(ctx, s.prefix ? 'UpdatePrefix' : 'UpdatePostfix', { target, operator: s.operator });
+        return printFromTemplate(ctx, 'AssignCompound', { target, operator: s.operator, value: printExpr(s.value!, ctx) });
+      }
 
       const val = s.value ? printExpr(s.value, ctx) : { text: 'null', spans: [] };
       const { family } = ctx;
@@ -157,6 +179,27 @@ export function createStmtPrinters(
 
     ForLoop: (stmt, ctx) => {
       if (stmt.kind !== 'ForLoop') return null;
+      if (stmt.range) {
+        if (ctx.family !== 'python') throw new Error('RANGE_TARGET_UNSUPPORTED');
+        const args = stmt.range.args.map(argument => printExpr(argument, ctx));
+        const header = printFromTemplate(ctx, 'ForNativeRangeHeader', { index: stmt.indexVar, args: args.map(argument => argument.text).join(', ') });
+        const body = printStatements(stmt.body, { ...ctx, indent: ctx.indent + '    ' });
+        return { text: [header.text, ...body.map(statement => statement.text)].join('\n'), expressionSpans: header.expressionSpans };
+      }
+      if (stmt.header) {
+        if (ctx.family !== 'javascript') throw new Error('FOR_HEADER_TARGET_UNSUPPORTED: Structured counted headers are JavaScript-only.');
+        const headerContext = { ...ctx, indent: '' };
+        const initializer = printStatements([stmt.header.initializer], headerContext)[0];
+        const update = printStatements([stmt.header.update], headerContext)[0];
+        const slot = (printed: PrintedStmt, nodeId: string) => {
+          const text = printed.text.trim().replace(/;$/, '');
+          return { text, spans: [{ nodeId, start: 0, end: text.length }, ...(printed.expressionSpans ?? [])] };
+        };
+        const header = printFromTemplate(ctx, 'ForStructuredHeader', { initializer: slot(initializer, stmt.header.initializer.sourceGraphNodeId), condition: printExpr(stmt.header.condition, ctx), update: slot(update, stmt.header.update.sourceGraphNodeId) });
+        const body = printStatements(stmt.body, { ...ctx, indent: `${ctx.indent}${ctx.profile?.layout?.indentUnit ?? '    '}` });
+        const text = [header.text, ...body.map(item => item.text), `${ctx.indent}}`].join('\n');
+        return { text, expressionSpans: header.expressionSpans };
+      }
       const block = buildForLoop(stmt as IrForLoop, ctx, (body, c) =>
         printStatements(body, c).map((p) => p.text)
       );
@@ -175,6 +218,30 @@ export function createStmtPrinters(
       if (stmt.kind !== 'Switch') return null;
       if (isPackDrivenFamily(ctx.family)) return null;
       return { text: `${ctx.indent}// switch`, expressionSpans: [] };
+    },
+
+    DeclarationGroup: (stmt, ctx) => {
+      if (stmt.kind !== 'DeclarationGroup') return null;
+      if (stmt.nativeLanguage === 'cpp') {
+        if (ctx.family !== 'cpp' || stmt.body.length < 2 || !stmt.nativeAuthoredType || (stmt.nativeInferenceMode !== undefined && (stmt.nativeInferenceMode !== 'cpp-auto' || stmt.nativeAuthoredType !== 'auto')) || stmt.body.some(declaration => !declaration.initializer || declaration.nativeLocalStyle !== 'cpp-scalar' || declaration.nativeType !== stmt.nativeType || declaration.nativeAuthoredType !== stmt.nativeAuthoredType || declaration.nativeInferenceMode !== stmt.nativeInferenceMode || declaration.nativeMutable !== !stmt.isConst)) throw new Error('NATIVE_CPP_GROUP_CONTEXT');
+        const declarators = mergeArgs(stmt.body.map(declaration => {
+          const rendered = printFromTemplate(ctx, 'NativeScalarDeclarator', { name: declaration.name, value: printExpr(declaration.initializer!, ctx) }, { noIndent: true });
+          return { text: rendered.text, spans: [{ nodeId: declaration.sourceGraphNodeId, start: 0, end: rendered.text.length }, ...rendered.expressionSpans] };
+        }));
+        return printFromTemplate(ctx, 'DeclareNativeScalarGroup', { qualifier: stmt.isConst ? 'const ' : '', type: stmt.nativeAuthoredType, declarators });
+      }
+      if (ctx.family !== 'csharp' || stmt.body.length < 2) throw new Error('NATIVE_CSHARP_GROUP_LANGUAGE');
+      const declarators = mergeArgs(stmt.body.map(declaration => {
+        const rendered = declaration.initializer ? printFromTemplate(ctx, 'CSharpDeclarator', { name: declaration.name, value: printExpr(declaration.initializer, ctx) }, { noIndent: true }) : printFromTemplate(ctx, 'CSharpDeclaratorUninitialized', { name: declaration.name }, { noIndent: true });
+        return { text: rendered.text, spans: [{ nodeId: declaration.sourceGraphNodeId, start: 0, end: rendered.text.length }, ...rendered.expressionSpans] };
+      }));
+      return printFromTemplate(ctx, 'DeclareCSharpGroup', { keyword: stmt.isConst ? 'const ' : '', type: stmt.nativeType, declarators });
+    },
+
+    ScopeBlock: (stmt, ctx) => {
+      if (stmt.kind !== 'ScopeBlock') return null;
+      if (ctx.family !== 'csharp') throw new Error('NATIVE_CSHARP_SCOPE_LANGUAGE');
+      return { text: [printFromTemplate(ctx, 'ScopeOpen', { context: stmt.overflowContext === 'default' ? '' : `${stmt.overflowContext} ` }).text, ...printStatements(stmt.body, innerIndentCtx(ctx)).map(line => line.text), printFromTemplate(ctx, 'ScopeClose', {}).text].join('\n'), expressionSpans: [] };
     },
 
     Sequence: (stmt, ctx) => {
@@ -353,6 +420,25 @@ export function createStmtPrinters(
       if (stmt.kind !== 'DeclareLocal') return null;
       const s = stmt as IrDeclareLocal;
       const { family } = ctx;
+      if (s.nativeLocalStyle) {
+        if (['cpp-scalar', 'rust-scalar', 'gdscript-scalar'].includes(s.nativeLocalStyle)) {
+          if (!['cpp', 'rust', 'gdscript'].includes(family) || s.nativeLocalStyle !== `${family}-scalar` || !s.initializer
+            || typeof s.nativeAuthoredType !== 'string' || typeof s.nativeMutable !== 'boolean'
+            || (s.nativeInferenceMode === undefined ? canonicalNativeScalarSignatureType(s.nativeAuthoredType, family as 'cpp' | 'rust' | 'gdscript') !== s.nativeType : nativeScalarInferenceSpelling(s.nativeInferenceMode, family as 'cpp' | 'rust' | 'gdscript') !== s.nativeAuthoredType || !canonicalNativeScalarSignatureType(String(s.nativeType), family as 'cpp' | 'rust' | 'gdscript') || family === 'gdscript' && !s.nativeMutable)) throw new Error('NATIVE_SCALAR_LOCAL_INVALID');
+          return printFromTemplate(ctx, s.nativeInferenceMode ? 'DeclareNativeInferredLocal' : 'DeclareNativeScalarLocal', { name: s.name, type: s.nativeAuthoredType, qualifier: s.nativeMutable ? '' : 'const ', mutability: s.nativeMutable ? 'mut ' : '', keyword: s.nativeMutable ? 'var' : 'const', value: printExpr(s.initializer, ctx) });
+        }
+        if (s.nativeLocalStyle.startsWith('csharp-')) {
+          if (family !== 'csharp' || !s.initializer && s.nativeLocalStyle !== 'csharp-typed' || !s.nativeType || (s.nativeLocalStyle === 'csharp-var' ? s.nativeType !== 'var' : !Object.hasOwn(CSHARP_INTEGRAL_PINS, s.nativeType)) || (s.nativeLocalStyle === 'csharp-const') !== (s.declarationKind === 'const')) throw new Error('NATIVE_CSHARP_LOCAL_INVALID');
+          if (!s.initializer) return printFromTemplate(ctx, 'DeclareCSharpUninitialized', { name: s.name, type: s.nativeType });
+          return printFromTemplate(ctx, s.nativeLocalStyle === 'csharp-const' ? 'DeclareCSharpConstant' : 'DeclareCSharpLocal', { name: s.name, type: s.nativeType, value: printExpr(s.initializer, ctx) });
+        }
+        if (family !== 'go' || !s.initializer || !s.nativeType || !(Object.hasOwn(GO_SCALAR_PINS, s.nativeType) || (s.nativeLocalStyle === 'go-const' && s.nativeType === 'untyped'))) throw new Error('NATIVE_GO_LOCAL_INVALID');
+        return printFromTemplate(ctx, s.nativeLocalStyle === 'go-const' ? (s.nativeType === 'untyped' ? 'DeclareGoConstant' : 'DeclareGoTypedConstant') : s.nativeLocalStyle === 'go-short' ? 'DeclareGoShort' : 'DeclareGoTyped', { name: s.name, type: s.nativeType, value: printExpr(s.initializer, ctx) });
+      }
+      if (s.initializer && (family === 'javascript' || family === 'python')) {
+        const value = printExpr(s.initializer, ctx);
+        return printFromTemplate(ctx, 'DeclareLocalInitialized', { name: s.name, keyword: s.declarationKind ?? 'let', value: { text: value.text, spans: value.spans } });
+      }
       if (family === 'javascript' || family === 'verse') {
         return printFromTemplate(ctx, 'DeclareLocal', { name: s.name, type: s.variableType });
       }

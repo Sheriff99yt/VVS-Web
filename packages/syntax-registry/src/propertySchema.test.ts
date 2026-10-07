@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { resolve } from './registry';
 import {
   defaultPropertiesFromSchema,
   isPropertyFieldVisible,
@@ -24,6 +25,12 @@ const SAMPLE_SCHEMA: PropertyFieldDefinition[] = [
 ];
 
 describe('propertySchema', () => {
+  test('Set prefix field uses the Boolean inspector contract and preserves true edits', () => {
+    const fields = resolve('variable_set')!.propertySchema!;
+    expect(fields.find(field => field.key === 'prefix')?.type).toBe('boolean');
+    expect(defaultPropertiesFromSchema(fields).prefix).toBe(false);
+    expect(mergePropertyDefaults(fields, { prefix: true }).prefix).toBe(true);
+  });
   test('defaultPropertiesFromSchema fills enum and string defaults', () => {
     expect(defaultPropertiesFromSchema(SAMPLE_SCHEMA)).toEqual({
       inputKind: 'text',

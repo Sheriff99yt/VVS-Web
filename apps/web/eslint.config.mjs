@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // Generated / fixture outputs — not app source
+    "public/source-parsers/**", // Copied pinned third-party runtime; licenses preserved.
     "test_project_outputs/**",
     "test_project_goldens/**",
   ]),

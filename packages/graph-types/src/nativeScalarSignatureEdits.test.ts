@@ -1,0 +1,35 @@
+import { expect, test } from 'bun:test';
+import { applyFunctionImplementBinding } from './functionBindings';
+import { editNativeScalarParameterType, editNativeScalarReturnType, editNativeScalarParameterMutability } from './nativeScalarSignatureEdits';
+import { nativeSignature } from './nativeSignatures';
+import type { VVSNodeData } from './nodes';
+import type { FunctionSymbol } from './symbols';
+
+for (const language of ['cpp', 'rust', 'gdscript'] as const) test(`native signature edits and refresh ${language}`, () => {
+  const type = language === 'rust' ? 'i8' : 'int';
+  const data: VVSNodeData = { label: 'sample', kindId: 'function_implement', category: 'Functions', inputs: [], outputs: [], inlineValues: {}, properties: { nativeSignatureLanguage: language, nativeParameters: [{ id: 'a', name: 'first', mode: 'positional', nativeType: type, authoredType: type, mutable: language !== 'rust' }, { id: 'b', name: 'second', mode: 'positional', nativeType: type, authoredType: type, mutable: true }], nativeAuthoredReturnType: type, nativeReturnType: type } };
+  const symbol: FunctionSymbol = { kind: 'function', id: 'sample', name: 'renamed', binding: 'module', overloads: [{ id: 'o1', returnType: 'data_number', parameters: [{ id: 'b', label: 'renamed_second', type: 'data_number' }, { id: 'a', label: 'renamed_first', type: 'data_number' }] }] };
+  const refreshed = applyFunctionImplementBinding(JSON.parse(JSON.stringify(data)), symbol);
+  expect(refreshed.properties!.functionName).toBe('renamed');
+  expect(nativeSignature(refreshed)!.map(parameter => [parameter.id, parameter.name, parameter.authoredType, parameter.nativeType, parameter.mutable])).toEqual([['b', 'renamed_second', type, type, true], ['a', 'renamed_first', type, type, language !== 'rust']]);
+  expect(refreshed.properties!.nativeReturnType).toBe(type);
+  const edited = editNativeScalarParameterType(refreshed, 'b', 'bool');
+  expect(nativeSignature(edited)![0]).toMatchObject({ nativeType: 'bool', authoredType: 'bool' });
+  expect(nativeSignature(refreshed)![0].nativeType).toBe(type);
+  expect(editNativeScalarReturnType(edited, 'bool').properties).toMatchObject({ nativeReturnType: 'bool', nativeAuthoredReturnType: 'bool' });
+  const unit = language === 'rust' ? '()' : 'void';
+  expect(editNativeScalarReturnType(edited, unit).properties).toMatchObject({ nativeReturnType: unit, nativeAuthoredReturnType: unit });
+  if (language !== 'gdscript') expect(nativeSignature(editNativeScalarParameterMutability(edited, 'a', true))![1].mutable).toBe(true);
+  else expect(() => editNativeScalarParameterMutability(edited, 'a', false)).toThrow('MUTABILITY');
+  symbol.overloads[0].parameters[0].type = 'data_string';
+  symbol.overloads[0].parameters.push({ id: 'new', label: 'new_value', type: 'data_number' });
+  symbol.overloads[0].returnType = 'data_boolean';
+  const invalid = applyFunctionImplementBinding(refreshed, symbol);
+  expect(nativeSignature(invalid)![0].nativeType).toBeUndefined();
+  expect(nativeSignature(invalid)![0].authoredType).toBe(type);
+  expect(nativeSignature(invalid)![2].nativeType).toBeUndefined();
+  expect(invalid.properties!.nativeReturnType).toBeUndefined();
+  expect(invalid.properties!.nativeAuthoredReturnType).toBe(type);
+  expect(() => editNativeScalarParameterType(refreshed, 'missing', type)).toThrow('EDIT_TYPE');
+  expect(() => editNativeScalarParameterType(refreshed, 'a', 'call()')).toThrow('EDIT_TYPE');
+});

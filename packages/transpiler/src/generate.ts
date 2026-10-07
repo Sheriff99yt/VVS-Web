@@ -22,6 +22,8 @@ import {
   classGraphHasDefineNodes,
   resolveCodegenTarget,
   resolveGraphCodegenSettings,
+  validateNativeScalarSignatureBodies,
+  validateSourceFilePaths,
 } from '@vvs/graph-types';
 import type { ProjectEnvironmentManifest } from '@vvs/environment-templates';
 import { loadEnvironmentManifest, generateHostFiles } from '@vvs/environment-templates';
@@ -387,7 +389,7 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
       if (stmt.kind === 'IfBranch') {
         collectWaitIds(stmt.trueBody);
         collectWaitIds(stmt.falseBody);
-      } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+      } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop' || stmt.kind === 'ScopeBlock' || stmt.kind === 'DeclarationGroup') {
         collectWaitIds(stmt.body);
       } else if (stmt.kind === 'Switch') {
         for (const c of stmt.cases) collectWaitIds(c.body);
@@ -450,6 +452,10 @@ export function emitMergedHomeGraphModules(filePath: string, classIrs: IrModule[
 
 /** Emit one module file per container graph (all classes on that graph). Function bodies inline via Define. */
 export function transpileProject(input: ProjectTranspileInput): TranspileResult {
+  // Validate definition ownership before file selection can omit a malformed home.
+  const validationInput = { ...input, events: input.projectEvents ?? [] };
+  const nativeErrors = [...validateSourceFilePaths(validationInput), ...validateNativeScalarSignatureBodies(validationInput)].filter(item => item.level === 'error');
+  if (nativeErrors.length) throw new Error(nativeErrors.map(item => `${item.code}: ${item.message}`).join('; '));
   const results: TranspileResult[] = [];
   const emittedHomes = new Set<string>();
 
@@ -482,7 +488,7 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
   for (const cls of input.classes ?? []) {
     const homeId = classHomeGraphId(cls);
     const doc = input.documents[homeId];
-    if (!doc || (!classGraphHasDefineNodes(doc) && cls.id !== MAIN_CLASS_ID)) continue;
+    if (!doc || (!classGraphHasDefineNodes(doc) && cls.id !== MAIN_CLASS_ID && !(cls.isGlobalScope && documentHasFunctionImplement(doc)))) continue;
     const list = classesByHome.get(homeId) ?? [];
     list.push(cls);
     classesByHome.set(homeId, list);
@@ -509,7 +515,7 @@ export function transpileProject(input: ProjectTranspileInput): TranspileResult 
     const sorted = sortClassesByDefineY(doc, homeClasses);
     const projectModuleName = input.projectDetails.moduleName.trim() || sorted[0]!.name;
     const tab = input.openTabs?.find((t) => t.id === homeId);
-    const filePath = resolveModuleEmitPath(input.integration, codegen.targetLanguage, {
+    const filePath = doc.metadata?.sourceFileName ?? resolveModuleEmitPath(input.integration, codegen.targetLanguage, {
       tabKind: 'main',
       moduleName: projectModuleName,
       fallbackFileName: generatedFileName(

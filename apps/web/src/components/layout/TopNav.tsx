@@ -15,7 +15,7 @@ import { dispatchEditorNavigate } from '@/lib/editorNavigate';
 import { useRouter } from 'next/navigation';
 import { isProjectDraftOnly, removeProjectDraft } from '@/lib/projectStore';
 import { persistEditorSnapshot, flushBrowserSnapshotSync } from '@/lib/projectPersistence';
-import { writeGeneratedFilesToFolder, saveProjectToFolder } from '@/lib/projectFolder';
+import { saveProjectToFolder } from '@/lib/projectFolder';
 import { emitProjectLikeCodePanelOffThread } from '@/lib/emitProjectCode';
 import { useFolderPickerSupported } from '@/hooks/useFolderPickerSupported';
 import { useCoarsePointer, useIsMobile } from '@/hooks/useIsMobile';
@@ -37,7 +37,9 @@ import { logActivity } from '@/lib/actionActivityLog';
 import { playAudioCue } from '@/lib/audioFeedback';
 import { PRODUCT_NAME } from '@/lib/productName';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { SaveCoordinator, snapshotRevision } from '@/lib/saveCoordinator';
 import { useActiveGraphCodegenSettings } from '@/hooks/useGraphCodegenSettings';
+const SourceReimportDialog = React.lazy(() => import('@/components/start/SourceReimportDialog'));
 
 function MenuTip({
   tip,
@@ -77,6 +79,8 @@ export function TopNav({ activeTab }: TopNavProps) {
   const [saveOnDiskPromptMode, setSaveOnDiskPromptMode] = useState<'close' | 'manual'>('close');
   const [saveOnDiskBusy, setSaveOnDiskBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [reimportOpen, setReimportOpen] = useState(false);
+  const { markTabDirty } = useProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderPickerAvailable = useFolderPickerSupported();
 
@@ -92,7 +96,7 @@ export function TopNav({ activeTab }: TopNavProps) {
     events, setEvents,
     functions, setFunctions,
     classes, setClasses,
-    graphContainers,
+    graphContainers, setGraphContainers,
     activeClassId, setActiveClassId,
     openTabs, setOpenTabs,
     activeGraphTab, setActiveGraphTab,
@@ -110,7 +114,6 @@ export function TopNav({ activeTab }: TopNavProps) {
     installedLibrary,
     projectId,
     projectSource,
-    markTabClean,
     setLastSavedAt,
     isTabDirty,
     resetDirtyTabs,
@@ -140,6 +143,7 @@ export function TopNav({ activeTab }: TopNavProps) {
       setEvents,
       setFunctions,
       setClasses,
+      setGraphContainers,
       setActiveClassId,
       setOpenTabs,
       setActiveGraphTab,
@@ -162,6 +166,7 @@ export function TopNav({ activeTab }: TopNavProps) {
       setEvents,
       setFunctions,
       setClasses,
+      setGraphContainers,
       setActiveClassId,
       setOpenTabs,
       setActiveGraphTab,
@@ -269,6 +274,16 @@ export function TopNav({ activeTab }: TopNavProps) {
     workspaceFiles,
   ]);
 
+  const buildSnapshotRef = useRef(buildSnapshot);
+  React.useLayoutEffect(() => { buildSnapshotRef.current = buildSnapshot; });
+  const saveQueue = useRef(new SaveCoordinator());
+  const compilingRef = useRef(false);
+  const generatedRevisionRef = useRef<string | null>(null);
+  const isCurrentSnapshot = useCallback((captured: ProjectSnapshot) => {
+    const current = buildSnapshotRef.current();
+    return current !== null && snapshotRevision(current) === snapshotRevision(captured);
+  }, []);
+
   const handleSave = useCallback(async () => {
     const snapshot = buildSnapshot();
     if (!snapshot) {
@@ -277,9 +292,9 @@ export function TopNav({ activeTab }: TopNavProps) {
     }
     setSaveBusy(true);
     try {
-      const savedAt = await persistSnapshot(snapshot);
+      const savedAt = await saveQueue.current.run(() => persistSnapshot(snapshot));
       setLastSavedAt(savedAt);
-      resetDirtyTabs();
+      if (isCurrentSnapshot(snapshot)) resetDirtyTabs();
       setOpenMenu(null);
       logActivity('save', 'Saved project');
       playAudioCue('save');
@@ -288,10 +303,10 @@ export function TopNav({ activeTab }: TopNavProps) {
     } finally {
       setSaveBusy(false);
     }
-  }, [buildSnapshot, persistSnapshot, setLastSavedAt, resetDirtyTabs]);
+  }, [buildSnapshot, persistSnapshot, setLastSavedAt, resetDirtyTabs, isCurrentSnapshot]);
 
   const handleCompile = useCallback(async () => {
-    if (compileState === 'compiling') return;
+    if (compilingRef.current) return;
 
     const snapshot = buildSnapshot();
     if (!snapshot) return;
@@ -331,26 +346,33 @@ export function TopNav({ activeTab }: TopNavProps) {
     setValidationErrors([]);
     setValidationWarnings(analysis.warnings);
     setCompileState('compiling');
+    compilingRef.current = true;
     try {
       // Same emit as Code | Files (graph → file) before API / disk write (U56).
       const emitResult = await emitProjectLikeCodePanelOffThread(snapshot, {
         emitUnsupportedComments: readUiPreference('showUnsupportedComments'),
       });
+      if (!isCurrentSnapshot(snapshot)) {
+        setCompileState('dirty');
+        return;
+      }
       if (isFolderProject && folderHandle) {
-        await writeGeneratedFilesToFolder(folderHandle, emitResult, snapshot.integration);
-        await saveProjectToFolder(folderHandle, snapshot);
-        resetDirtyTabs();
+        await saveQueue.current.run(async () => {
+          if (!isCurrentSnapshot(snapshot)) throw new Error('Project changed before Generate could save. Generate again.');
+          await saveProjectToFolder(folderHandle, snapshot, emitResult);
+        });
+        if (isCurrentSnapshot(snapshot)) resetDirtyTabs();
       }
       if (getApiMode() === 'http') {
         const savedAt = await persistSnapshot(snapshot, { requireApiSave: true });
         setLastSavedAt(savedAt);
-        resetDirtyTabs();
+        if (isCurrentSnapshot(snapshot)) resetDirtyTabs();
       }
       await VvsApi.compileProject(projectId);
       setValidationErrors([]);
       setValidationWarnings(analysis.warnings);
-      markTabClean(activeGraphTab);
-      setCompileState('success');
+      generatedRevisionRef.current = snapshotRevision(snapshot);
+      setCompileState(isCurrentSnapshot(snapshot) ? 'success' : 'dirty');
       logActivity('generate', 'Generated code');
       playAudioCue('generate');
     } catch (err) {
@@ -364,8 +386,15 @@ export function TopNav({ activeTab }: TopNavProps) {
             ? err.message
             : 'Generate failed.';
       setValidationErrors([{ level: 'error', message }]);
+    } finally {
+      compilingRef.current = false;
+      if (autoCompile && !isCurrentSnapshot(snapshot)) {
+        window.setTimeout(() => void handleCompileRef.current(), 500);
+      }
     }
   }, [
+    autoCompile,
+    isCurrentSnapshot,
     activeGraphTab,
     activeGraphLanguage,
     buildSnapshot,
@@ -375,7 +404,6 @@ export function TopNav({ activeTab }: TopNavProps) {
     folderHandle,
     functions,
     isFolderProject,
-    markTabClean,
     resetDirtyTabs,
     persistSnapshot,
     projectDetails,
@@ -418,7 +446,8 @@ export function TopNav({ activeTab }: TopNavProps) {
     if (!autoCompile) return;
     if (Object.keys(dirtyTabIds).length === 0) return;
     const timer = window.setTimeout(() => {
-      void handleCompileRef.current();
+      const current = buildSnapshotRef.current();
+      if (current && snapshotRevision(current) !== generatedRevisionRef.current) void handleCompileRef.current();
     }, 500);
     return () => window.clearTimeout(timer);
   }, [autoCompile, dirtyTabIds]);
@@ -465,7 +494,7 @@ export function TopNav({ activeTab }: TopNavProps) {
         return;
       }
       try {
-        const savedAt = await persistSnapshot(snapshot);
+        const savedAt = await saveQueue.current.run(() => persistSnapshot(snapshot));
         setLastSavedAt(savedAt);
         resetDirtyTabs();
       } catch (err) {
@@ -669,6 +698,7 @@ export function TopNav({ activeTab }: TopNavProps) {
                     <FileUp size={12} className="shrink-0 opacity-70" />
                     Import
                   </button>
+                  <button onClick={() => { setOpenMenu(null); setReimportOpen(true); }} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"><RefreshCw size={12} className="shrink-0 opacity-70" />Re-import source…</button>
                   <div className="h-px bg-zinc-800 my-1" />
                   <button onClick={handleCloseProject} className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
                     <FolderOutput size={12} className="shrink-0 opacity-70" />
@@ -1001,6 +1031,11 @@ export function TopNav({ activeTab }: TopNavProps) {
       </header>
 
       <AgentPanel open={showAgentPanel && agentPanelAllowed} onClose={() => setShowAgentPanel(false)} />
+      {reimportOpen && <React.Suspense fallback={<p role="status">Loading re-import review…</p>}><SourceReimportDialog getSnapshot={buildSnapshot} onClose={() => setReimportOpen(false)} onAccept={snapshot => {
+        applyProjectSnapshot(snapshot, snapshotTarget());
+        snapshot.openTabs.forEach(tab => markTabDirty(tab.id)); setCompileState('dirty'); setReimportOpen(false);
+        logActivity('import', 'Applied reviewed source re-import');
+      }} /></React.Suspense>}
       <SaveOnDiskPromptDialog
         open={saveOnDiskPromptOpen}
         projectName={projectDetails.moduleName || 'Untitled'}

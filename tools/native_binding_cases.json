@@ -1,0 +1,337 @@
+{
+  "cpp": [
+    {
+      "id": "binding-simple",
+      "source": "// λ🧭 binding probe\nint sample(int input) { int value = input; value = value + input; return value; }",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        1,
+        0,
+        1
+      ],
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-parameter-shadow",
+      "source": "// λ🧭 binding probe\nint sample(int input) { int input = 2; return input; }",
+      "valid": false,
+      "targets": [],
+      "diagnostic": "redefinition",
+      "modelDiagnostic": "DUPLICATE_LOCAL",
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-nested-shadow",
+      "source": "// λ🧭 binding probe\nint sample(int input) { int value=input; { int value=2; int inner=value; inner; } return value; }",
+      "valid": true,
+      "targets": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-siblings",
+      "source": "// λ🧭 binding probe\nint sample(bool condition) { if(condition) { int value=1; return value; } else { int value=2; return value; } }",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        2
+      ],
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-later-parent",
+      "source": "// λ🧭 binding probe\nint sample(bool condition) { if(condition) { int value=1; } int value=2; return value; }",
+      "valid": true,
+      "targets": [
+        0,
+        2
+      ],
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-own-initializer",
+      "source": "// λ🧭 binding probe\nint sample() { int value=value; return value; }",
+      "valid": true,
+      "targets": [
+        0,
+        0
+      ],
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-initializer-shadow",
+      "source": "// λ🧭 binding probe\nint sample(int input) { int value=input; { int value=value; value; } return value; }",
+      "valid": true,
+      "targets": [
+        0,
+        2,
+        2,
+        1
+      ],
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-scope-leak",
+      "source": "// λ🧭 binding probe\nint sample(bool condition) { if(condition) { int inner=1; } return inner; }",
+      "valid": false,
+      "targets": [
+        0
+      ],
+      "diagnostic": "undeclared identifier",
+      "modelDiagnostic": "UNSUPPORTED_UNRESOLVED_NAME",
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-readonly",
+      "source": "// λ🧭 binding probe\nint sample(int input) { const int value=input; value=2; return value; }",
+      "valid": false,
+      "targets": [
+        0,
+        1,
+        1
+      ],
+      "diagnostic": "const-qualified",
+      "facts": [
+        "sample"
+      ]
+    },
+    {
+      "id": "binding-ordered-group",
+      "source": "// λ🧭 binding probe\nint sample(int input) { int value=input, other=value; return other; }",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        2
+      ],
+      "facts": [
+        "sample"
+      ]
+    }
+  ],
+  "rust": [
+    {
+      "id": "binding-simple",
+      "source": "// λ🧭 binding probe\npub fn sample(input:i32)->i32 { let mut value = input; value = value + input; value }",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "binding-parameter-shadow",
+      "source": "// λ🧭 binding probe\npub fn sample(input:i32)->i32 { let input = 2; input }",
+      "valid": true,
+      "targets": [
+        1
+      ]
+    },
+    {
+      "id": "binding-nested-shadow",
+      "source": "// λ🧭 binding probe\npub fn sample(input:i32)->i32 { let value=input; { let value=2; let inner=value; inner; } value }",
+      "valid": true,
+      "targets": [
+        0,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "id": "binding-siblings",
+      "source": "// λ🧭 binding probe\npub fn sample(condition:bool)->i32 { if condition { let value=1; value } else { let value=2; value } }",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "id": "binding-later-parent",
+      "source": "// λ🧭 binding probe\npub fn sample(condition:bool)->i32 { if condition { let value=1; } let value=2; value }",
+      "valid": true,
+      "targets": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": "binding-own-initializer",
+      "source": "// λ🧭 binding probe\npub fn sample()->i32 { let value=value; value }",
+      "valid": false,
+      "targets": [],
+      "diagnostic": "E0425",
+      "modelDiagnostic": "UNSUPPORTED_UNRESOLVED_NAME"
+    },
+    {
+      "id": "binding-initializer-shadow",
+      "source": "// λ🧭 binding probe\npub fn sample(input:i32)->i32 { let value=input; { let value=value; value; } value }",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        2,
+        1
+      ]
+    },
+    {
+      "id": "binding-scope-leak",
+      "source": "// λ🧭 binding probe\npub fn sample(condition:bool)->i32 { if condition { let inner=1; } inner }",
+      "valid": false,
+      "targets": [
+        0
+      ],
+      "diagnostic": "E0425",
+      "modelDiagnostic": "UNSUPPORTED_UNRESOLVED_NAME"
+    },
+    {
+      "id": "binding-readonly",
+      "source": "// λ🧭 binding probe\npub fn sample(input:i32)->i32 { let value=input; value=2; value }",
+      "valid": false,
+      "targets": [
+        0,
+        1,
+        1
+      ],
+      "diagnostic": "E0384"
+    },
+    {
+      "id": "binding-ordered-group",
+      "source": "// λ🧭 binding probe\npub fn sample(input:i32)->i32 { let value=input; let other=value; other }",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        2
+      ]
+    }
+  ],
+  "gdscript": [
+    {
+      "id": "binding-simple",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar value:int = input\n\tvalue = value + input\n\treturn value\n",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "binding-parameter-shadow",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar input:int = 2\n\treturn input\n",
+      "valid": false,
+      "targets": [],
+      "diagnostic": "already a parameter",
+      "modelDiagnostic": "DUPLICATE_LOCAL"
+    },
+    {
+      "id": "binding-nested-shadow",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar value:int=input\n\tif true:\n\t\tvar value:int=2\n\t\tvar inner:int=value\n\treturn value\n",
+      "valid": false,
+      "targets": [
+        0
+      ],
+      "diagnostic": "already a variable",
+      "modelDiagnostic": "DUPLICATE_LOCAL"
+    },
+    {
+      "id": "binding-siblings",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(condition:bool)->int:\n\tif condition:\n\t\tvar value:int=1\n\t\treturn value\n\telse:\n\t\tvar value:int=2\n\t\treturn value\n",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "id": "binding-later-parent",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(condition:bool)->int:\n\tif condition:\n\t\tvar value:int=1\n\tvar value:int=2\n\treturn value\n",
+      "valid": true,
+      "targets": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": "binding-own-initializer",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample()->int:\n\tvar value:int=value\n\treturn value\n",
+      "valid": false,
+      "targets": [],
+      "diagnostic": "not declared",
+      "modelDiagnostic": "UNSUPPORTED_UNRESOLVED_NAME"
+    },
+    {
+      "id": "binding-initializer-shadow",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar value:int=input\n\tif true:\n\t\tvar value:int=value\n\treturn value\n",
+      "valid": false,
+      "targets": [
+        0,
+        1
+      ],
+      "diagnostic": "already a variable",
+      "modelDiagnostic": "DUPLICATE_LOCAL"
+    },
+    {
+      "id": "binding-scope-leak",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(condition:bool)->int:\n\tif condition:\n\t\tvar inner:int=1\n\treturn inner\n",
+      "valid": false,
+      "targets": [
+        0
+      ],
+      "diagnostic": "not declared",
+      "modelDiagnostic": "UNSUPPORTED_UNRESOLVED_NAME"
+    },
+    {
+      "id": "binding-readonly",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tconst value:int=1\n\tvalue=2\n\treturn value\n",
+      "valid": false,
+      "targets": [
+        1,
+        1
+      ],
+      "diagnostic": "constant"
+    },
+    {
+      "id": "binding-ordered-group",
+      "source": "# λ🧭 binding probe\nextends RefCounted\nfunc sample(input:int)->int:\n\tvar value:int=input\n\tvar other:int=value\n\treturn other\n",
+      "valid": true,
+      "targets": [
+        0,
+        1,
+        2
+      ]
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 Tracked gaps between **what the shell shows** and **what the UI skill / product matrix requires**.  
 Canonical implementation snapshot: [`docs/current_state.md`](../../docs/current_state.md) — this file is the **agent work queue** for UI-only slices.
 
-**Last updated:** 2026-08-16  
+**Last updated:** 2026-10-05
 **Depth-first:** Sections **1–14** complete. **§13–§14** — U68–U83 done. **§16** — U84–U90 / U96 done. **§17** — in-page TS agent + U92 / U94 / U95 done; U91 dual-consent / MCP Ready **not** product chrome; U93 long-term. **§18** — U97–U99 / U101–U102 / U104–U119 done; U100 cut; Event Bind partial; U103 locked (Component = Class — not remaining). Function constructor/destructor role + leftover-role locks + settings search audit shipped. Code-panel hover nav + [code_panel.md](../../docs/code_panel.md) shipped (U71 follow-on).  
 **Public roadmap:** [`docs/roadmap.md`](../../docs/roadmap.md) · in-app Open/Done: `developmentRoadmap.ts`  
 **Score:** 58 / 58 UI (§10–11) · §12 **2 / 2** · §13 **10 / 10** · §14 **U77 / U78 / U83 done** · U64–U82 shipped · **U84–U90 / U92 / U94–U97 / U102 / U107 / U108–U119 done** · in-page TS agent shipped · U91 dual-consent / MCP Ready downgraded · U93 long-term · U103 locked (not remaining) · U100 cut · Event Bind partial · ctor/dtor role shipped
@@ -303,7 +303,7 @@ Public: [`docs/roadmap.md`](../../docs/roadmap.md) § Next · in-app `developmen
 | U92 | **New examples** (cross-lang + lang-specific) | **Done** | Five fixtures (First Graph, Branch Lab, Coverage Lab, New Features Lab, Inheritance Lab) × 8 langs (40 goldens); Go golden assertion + StartScreen + validate_test_projects_folder.ts |
 | U94 | **Custom tooltip** widget | **Done** | App-default `Tooltip.tsx` — Esc + clamp; left panel + chrome migrated off native `title=` (section/popover `title` props remain) |
 | U95 | First graph open → **help** | **Done** | Already shipped: `canvasWelcomeDismissed` auto-opens shortcuts help on first canvas visit |
-| U93 | **Long-term: code → visual** | **Open** (long-term) | Experimental JavaScript class import and stages 0–3 package migration implemented 30 September 2026: Start → Import JavaScript source; explicit existing on_start entry mapping; analyzer + AST regeneration gate; new-project acceptance and full source provenance. General standalone/module functions, wider syntax, other languages and re-import remain open. See docs/design/code_to_visual_import.md and reverse_import_milestone.md; dynamic arithmetic/truthiness conservatively blocked; full-file reverse evidence and sealed acceptance shipped. |
+| U93 | **Long-term: code → visual** | **Open** (long-term) | JS/Python bounded native values, signatures and project/re-import foundations plus Go native scalar/local/loop/numeric mappings are implemented subsets. Go typed/untyped local constants, current/cancelled Code-preview error handling and visible conditional expression-call placement are verified (all 18 stages pass); inspector invalid edits/recovery, reload and conflict-aware reimport are covered. C# has a pinned 41-probe native oracle before acceptance; its browser grammar/graph mappings remain open. Other language adapters and full semantic/project coverage remain open. Exact scope, native/browser evidence and reproduced prerequisites are in docs/current_state.md and docs/design/code_visual_master_plan.md. |
 
 ---
 
@@ -348,3 +348,21 @@ Add-menu honesty, function/event pin fidelity, language-neutral async, symbols c
 ```text
 Read .agents/memory/incomplete-ui.md. Depth-first: complete open rows in the current section before advancing. One row per iteration (UI only unless row says API). Follow vvs_ui_development skill. bun run build. Update this file. Sync docs/current_state.md if user-visible behavior changed.
 ```
+
+## Native reverse-import local inspector checkpoint (October 7, 2026)
+
+- Rust/C++/GDScript typed local name/type/mutability controls now use coordinated declaration/index/read/write transactions and a collapsed dedicated panel. Unit/rendering, normalized output, pinned renamed modules and production build pass.
+- Live local worker import, inspector invalid/recovery, production/Pages save/reload and conflict-aware reimport remain pending. Do not promote this checkpoint into the historical shell UI completion score.
+- Contract: [native local transactions](../../docs/design/native_local_transaction_contract.md); continue [shared local admission batch](../../docs/design/native_local_graph_batch.md).
+
+## Native typed local browser acceptance (October 7, 2026)
+
+- The pending local inspector/worker/browser boundary above is now verified for Rust/C++/GDScript ordinary typed scalar Library fixtures: rename, readonly/type recovery, invalid type save/reload/recovery, valid persistence and both reimport choices pass actual production/Pages workflows.
+- Shared declaration lookup and structured typeRef synchronization are repaired. Broader reverse-import language UI, grouped/inferred declarations/control/project contexts remain open; the legacy shell score is unchanged.
+- Contract: [local source admission](../../docs/design/native_local_source_admission_contract.md).
+
+## Native declaration-group inspector checkpoint (October 7, 2026)
+
+C++ group type/mutability and individual child name/type edits now pass actual production and Pages invalid/recovery, invalid-type reload, persistence and both reimport choices. Shared native-local workflows pass all3 adapters. C++ typed initialized comma declarations now import as a visible group owner with ordered declaration children, exact binding identities and separate group/child source spans. Saved readers reconstruct actual order and initialization; IR v20 and C++ pack templates preserve authored grouping while retaining the C# contract. Coordinated group and child type/mutability edits update indexes/ports together and retain incompatible wiring for blocking diagnostics and recovery. Sealed worker acceptance, invalid-type save/reload/recovery, individual rename, valid persistence, unchanged reimport and both conflict choices pass in production and Pages. Shared typed-local workflows also pass for C++/Rust/GDScript in both artifacts. Combined 4,355 package tests, 1,312 web tests, public API types, lint (99 existing warnings), production and Pages builds pass. Native source/Code-panel checks pass all63 inputs:6 fresh C++ composed original/generated/renamed/alias/incoming/const-write-rejection checks and57 exact retained inputs. Earlier foundation compiled4 group inputs while retaining53; initial goldens/canonical disk extraction passed and remain retained. No fixture source executes. This closes only the supported C++ group packet; inferred/deferred/default bindings, membership/split/merge, conversions, broader control/effects/types/projects, existing-adapter audits and authoritative Verse access remain open. The full eight-language goal remains active.
+
+[Group packet](../../docs/design/native_declaration_groups_batch.md); [next cross-language batch](../../docs/design/native_inferred_initialization_batch.md).

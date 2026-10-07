@@ -1,4 +1,5 @@
 import { CodeSink } from '../codeSink';
+import { resolveNodeKindId } from '@vvs/graph-types';
 import { isNodeEffectiveForLanguage } from '@vvs/language-profiles';
 import type { IrMemberDecl, IrModule } from '../ir/types';
 import {
@@ -175,7 +176,7 @@ export function emitClassModule(
     onBeforeMemberNode: beforeUserComment,
     onBeforeFlowNode: beforeUserComment,
     deferCppOutOfLineMethod: (member) => {
-      if (lang !== 'cpp') return false;
+      if (lang !== 'cpp' || ir.activeClass?.isGlobalScope) return false;
       cppOutOfLine.push(member);
       return true;
     },
@@ -258,21 +259,33 @@ export function emitFunctionTab(sink: CodeSink, ir: IrModule): void {
   };
   emitOrphanUserComments(sink, ir, userCommentState);
 
-  sink.appendRaw(
-    formatFunctionDefHeader(func, lang, functionNeedsAsync(ir, func.id, {
+  // Native signatures belong to the visible definition, including in a body-tab preview.
+  const nativeOwners = Object.values(ir.documents ?? {}).flatMap(document => document.nodes).filter(node =>
+    resolveNodeKindId(node.data) === 'function_implement' &&
+    (node.data.properties?.symbolId || node.data.graphBinding?.symbolId) === func.id &&
+    node.data.properties?.nativeSignatureLanguage === lang
+  );
+  if (nativeOwners.length > 1) throw new Error('NATIVE_SIGNATURE_DUPLICATE_DEFINITION');
+  const definitionProperties = nativeOwners[0]?.data.properties;
+
+  const header = formatFunctionDefHeader(func, lang, functionNeedsAsync(ir, func.id, {
       isAsync: Boolean(func.flags?.async),
       isVirtual: Boolean(func.flags?.virtual),
       visibility: func.visibility,
       binding: func.binding,
+      ...definitionProperties,
     }), {
       isVirtual: Boolean(func.flags?.virtual),
       isAsync: Boolean(func.flags?.async),
       visibility: func.visibility,
       binding: func.binding,
-    })
-  );
+      ...definitionProperties,
+    });
+  const definitionNodeId = nativeOwners[0]?.id;
+  if (definitionNodeId) sink.appendTagged({ nodeId: definitionNodeId, text: header });
+  else sink.appendRaw(header);
 
-  appendFunctionBody(sink, ir, func.id, emptyLine, ir.environmentManifest, undefined, undefined, {
+  appendFunctionBody(sink, ir, func.id, emptyLine, ir.environmentManifest, definitionNodeId, undefined, {
     onBeforeNode: beforeUserComment,
   });
 

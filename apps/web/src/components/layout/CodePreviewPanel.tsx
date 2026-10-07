@@ -163,7 +163,8 @@ export function CodePreviewPanel({
     dirtyTabIds,
   } = useProject();
   const documents = useGraphDocuments();
-  const { result: projectResult, fileOwners } = useProjectTranspileResult();
+  const { result: projectResult, fileOwners, error: projectError } = useProjectTranspileResult();
+  const [liveError, setLiveError] = useState<string>();
 
   const [lastCleanResult, setLastCleanResult] = useState<TranspileResult | null>(null);
   const [heldResult, setHeldResult] = useState<TranspileResult | null>(null);
@@ -258,6 +259,7 @@ export function CodePreviewPanel({
     }
 
     if (isOrgGraph) {
+      setLiveError(undefined);
       const empty: TranspileResult = {
         language: projectTargetLanguage,
         files: [],
@@ -281,8 +283,14 @@ export function CodePreviewPanel({
     // Container / class-home graphs: show project emit (one graph → one file),
     // except JSON — always dump via transpileGraph so the panel matches the lang picker.
     if (!isFunctionTab && isModuleGraph && targetLanguage !== 'json') {
+      if (projectError) {
+        setLiveError(projectError);
+        setLiveResult({ language: targetLanguage, files: [], sourceMap: {} });
+        return;
+      }
       const ownedFiles = projectResult.files.filter((file) => fileOwners[file.path] === previewTabId);
       if (ownedFiles.length > 0) {
+        setLiveError(undefined);
         const next = {
           language: projectResult.language,
           files: ownedFiles,
@@ -324,8 +332,15 @@ export function CodePreviewPanel({
       })
     ).then((next) => {
       if (cancelled) return;
+      setLiveError(undefined);
       pausedLiveRef.current = next;
       setLiveResult(next);
+    }).catch((error: unknown) => {
+      if (cancelled) return;
+      const empty = { language: targetLanguage, files: [], sourceMap: {} };
+      pausedLiveRef.current = empty;
+      setLiveResult(empty);
+      setLiveError(error instanceof Error ? error.message : String(error));
     });
     return () => {
       cancelled = true;
@@ -352,6 +367,7 @@ export function CodePreviewPanel({
     codegenCapabilities,
     syntaxPackLock,
     projectResult,
+    projectError,
     fileOwners,
     showUnsupportedComments,
     showUserComments,
@@ -752,6 +768,7 @@ export function CodePreviewPanel({
   }, [activeGraphTab, filePath]);
 
   const isEmpty = !displayCode.trim();
+  const generationError = liveError || (selectedFilePath ? projectError : undefined);
 
   const mappedErrorCount = errorNodeIds.filter((id) => Boolean(sourceMap[id]?.length)).length;
   const mappedWarningCount = warningNodeIds.filter((id) => Boolean(sourceMap[id]?.length)).length;
@@ -843,7 +860,8 @@ export function CodePreviewPanel({
                 selectCodePreview();
                 void handleCopy();
               }}
-              disabled={isEmpty}
+              disabled={isEmpty || !!generationError}
+              aria-label="Copy code"
               className={`${BAR_BTN} disabled:opacity-40 disabled:pointer-events-none`}
             >
               {copied ? <Check size={12} className="text-zinc-200" /> : <Copy size={12} />}
@@ -857,7 +875,13 @@ export function CodePreviewPanel({
           <div className="absolute inset-x-0 top-0 z-10 h-px bg-zinc-600/80" />
         ) : null}
 
-        {isEmpty ? (
+        {generationError ? (
+          <div role="alert" className="overflow-auto px-4 py-3 text-xs text-red-400">
+            <p>Code generation blocked</p>
+            <pre className="mt-2 whitespace-pre-wrap break-words font-mono">{generationError}</pre>
+          </div>
+        ) : null}
+        {isEmpty && !generationError ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">
             <FileCode2 size={20} className="text-zinc-700" />
             <p className="text-[11px] text-zinc-500">
@@ -870,7 +894,7 @@ export function CodePreviewPanel({
           </div>
         ) : null}
 
-        {!isEmpty ? (
+        {!isEmpty && !generationError ? (
           <Tooltip
             content="Hover to highlight the node · Double-click to select it"
             placement="top"
@@ -896,7 +920,7 @@ export function CodePreviewPanel({
           </Tooltip>
         ) : null}
 
-        {isStale && !isEmpty ? (
+        {isStale && !isEmpty && !generationError ? (
           <Tooltip content="Preview paused" placement="left">
             <div className="absolute top-2 right-2 z-10 pointer-events-none">
               <AlertTriangle size={12} className="text-zinc-500" />

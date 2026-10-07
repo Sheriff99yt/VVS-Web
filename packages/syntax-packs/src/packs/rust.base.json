@@ -16,6 +16,9 @@
     "emptyFunctionBody": "        // empty"
   },
   "templates": {
+    "DeclareNativeInferredLocal": { "quasi": "let {mutability}{name} = {value};" },
+    "DeclareNativeScalarLocal": { "quasi": "let {mutability}{name}: {type} = {value};" },
+    "AssignNativeScalarLocal": { "quasi": "{target} = {value};" },
     "Print": {
       "quasi": "println!(\"{}\", {value});"
     },
@@ -207,6 +210,19 @@
     },
     "LambdaMove": {
       "quasi": "move |{params}| {body}"
-    }
+    },
+    "NativeScalarTypedParameter": {
+      "quasi": "{qualifier}{name}: {type}"
+    },
+    "NativeScalarFunctionOpen": {
+      "quasi": "{modifiers}fn {name}({params}){returnClause} {"
+    },
+    "NativeScalar": {"quasi": "{value}"},
+    "NativeTailReturn": {"quasi": "{value}"},
+    "NativeParentheses": {"quasi": "({value})"},
+    "NativeUnary": {"quasi": "{operator}{value}"},
+    "NativeUnarySeparated": {"quasi": "{operator} {value}"},
+    "NativeOperatorBinary": {"quasi": "({left} {operator} {right})"},
+    "NativeNumericConversion": {"quasi": "({value} as {target})"}
   }
 }

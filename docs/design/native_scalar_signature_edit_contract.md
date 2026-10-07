@@ -1,0 +1,9 @@
+# Native scalar signature refresh and editing
+
+Rust/C++/GDScript signature refresh now retains authored/native types and mutability by stable parameter slot ID across declaration renames/reorders/deletions. It refreshes the definition's function name. Added slots and incompatible neutral pin changes invalidate native types instead of substituting Go float64 or another language's default; authored spelling is retained for review. Unit returns remain language-specific and require consistent authored/native identity.
+
+The existing collapsed Native Signature inspector shows reviewed scalar parameter/return types for these three profiles, Rust/C++ mutability and explicit missing-type placeholders. Explicit type edits update authored/canonical type together; qualifiers remain stable. GDScript exposes no unsupported readonly parameter toggle. Defaults/rest remain disabled for typed signatures. Pure shared edit functions power the UI and preserve unrelated records without mutating prior snapshots.
+
+This is draft signature editing/refresh infrastructure. Existing global native-signature admission still excludes the new three adapters. Complete registry/native result ports, symbol/body/IR consistency, canonical native function Code-panel output and new-language import/edit/save/reimport browser proof remain required. UI rendering tests are component markup checks, not browser interaction evidence; existing browser imports provide regression evidence only.
+
+Batch gates: packages, web tests, source-import/host types, lint, production build and existing browser-import regression. Native inputs/profiles and print templates are unchanged; prior native header/compiler/Code-panel evidence is retained. A production build includes the changed client inspector; do not overlap it with browser checks or Pages builds.

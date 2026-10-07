@@ -119,6 +119,7 @@ export function renderLego(
   const indentUnit = layout?.indentUnit ?? '    ';
   const lines: string[] = [];
   let currentLine = '';
+  const expressionSpans: RenderedFragment['expressionSpans'] = [];
 
   const flushLine = () => {
     if (currentLine.length > 0 || lines.length === 0) {
@@ -154,12 +155,19 @@ export function renderLego(
       if (currentLine.length === 0 && indentLevel > 0) {
         currentLine = indentUnit.repeat(indentLevel);
       }
+      if (row.kind !== 'static') {
+        const value = slots[row.name];
+        if (value && typeof value !== 'string') {
+          const offset = lines.reduce((total, line) => total + line.length + 1, 0) + currentLine.length;
+          expressionSpans.push(...(value.spans ?? []).map(span => ({ ...span, start: span.start + offset, end: span.end + offset })));
+        }
+      }
       currentLine += fragment;
     }
   }
   flushLine();
 
-  return { text: lines.join('\n'), expressionSpans: [] };
+  return { text: lines.join('\n'), expressionSpans };
 }
 
 /** Render a template row (quasi or lego). */

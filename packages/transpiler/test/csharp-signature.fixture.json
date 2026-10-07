@@ -1,0 +1,2192 @@
+{
+  "moduleName": "IntegralSignatures",
+  "extendsType": "",
+  "targetLanguage": "csharp",
+  "variables": [],
+  "functions": [
+    {
+      "kind": "function",
+      "id": "identity-sbyte",
+      "name": "Identity_sbyte",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-sbyte"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-byte",
+      "name": "Identity_byte",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-byte"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-short",
+      "name": "Identity_short",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-short"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-ushort",
+      "name": "Identity_ushort",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-ushort"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-int",
+      "name": "Identity_int",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-int"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-uint",
+      "name": "Identity_uint",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-uint"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-long",
+      "name": "Identity_long",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-long"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-ulong",
+      "name": "Identity_ulong",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-ulong"
+        }
+      ]
+    },
+    {
+      "kind": "function",
+      "id": "identity-char",
+      "name": "Identity_char",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "value",
+              "label": "value",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "identity-char"
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "class",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "class_define",
+        "kindVersion": 1,
+        "label": "IntegralSignatures",
+        "category": "Project",
+        "properties": {
+          "symbolId": "main-class",
+          "classId": "main-class",
+          "name": "IntegralSignatures"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "identity-sbyte-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_sbyte",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-sbyte",
+          "name": "Identity_sbyte",
+          "graphTabId": "identity-sbyte",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-sbyte",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-sbyte"
+      }
+    },
+    {
+      "id": "identity-sbyte-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_sbyte",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-sbyte",
+          "name": "Identity_sbyte",
+          "graphTabId": "identity-sbyte",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "sbyte",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "sbyte"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-sbyte",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-sbyte"
+      }
+    },
+    {
+      "id": "identity-byte-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_byte",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-byte",
+          "name": "Identity_byte",
+          "graphTabId": "identity-byte",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-byte",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-byte"
+      }
+    },
+    {
+      "id": "identity-byte-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_byte",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-byte",
+          "name": "Identity_byte",
+          "graphTabId": "identity-byte",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "byte",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "byte"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-byte",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-byte"
+      }
+    },
+    {
+      "id": "identity-short-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_short",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-short",
+          "name": "Identity_short",
+          "graphTabId": "identity-short",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-short",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-short"
+      }
+    },
+    {
+      "id": "identity-short-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_short",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-short",
+          "name": "Identity_short",
+          "graphTabId": "identity-short",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "short",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "short"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-short",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-short"
+      }
+    },
+    {
+      "id": "identity-ushort-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_ushort",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-ushort",
+          "name": "Identity_ushort",
+          "graphTabId": "identity-ushort",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-ushort",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-ushort"
+      }
+    },
+    {
+      "id": "identity-ushort-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_ushort",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-ushort",
+          "name": "Identity_ushort",
+          "graphTabId": "identity-ushort",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "ushort",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "ushort"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-ushort",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-ushort"
+      }
+    },
+    {
+      "id": "identity-int-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_int",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-int",
+          "name": "Identity_int",
+          "graphTabId": "identity-int",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-int",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-int"
+      }
+    },
+    {
+      "id": "identity-int-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_int",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-int",
+          "name": "Identity_int",
+          "graphTabId": "identity-int",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "int",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "int"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-int",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-int"
+      }
+    },
+    {
+      "id": "identity-uint-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_uint",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-uint",
+          "name": "Identity_uint",
+          "graphTabId": "identity-uint",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-uint",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-uint"
+      }
+    },
+    {
+      "id": "identity-uint-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_uint",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-uint",
+          "name": "Identity_uint",
+          "graphTabId": "identity-uint",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "uint",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "uint"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-uint",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-uint"
+      }
+    },
+    {
+      "id": "identity-long-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_long",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-long",
+          "name": "Identity_long",
+          "graphTabId": "identity-long",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-long",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-long"
+      }
+    },
+    {
+      "id": "identity-long-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_long",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-long",
+          "name": "Identity_long",
+          "graphTabId": "identity-long",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "long",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "long"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-long",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-long"
+      }
+    },
+    {
+      "id": "identity-ulong-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_ulong",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-ulong",
+          "name": "Identity_ulong",
+          "graphTabId": "identity-ulong",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-ulong",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-ulong"
+      }
+    },
+    {
+      "id": "identity-ulong-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_ulong",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-ulong",
+          "name": "Identity_ulong",
+          "graphTabId": "identity-ulong",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "ulong",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "ulong"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-ulong",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-ulong"
+      }
+    },
+    {
+      "id": "identity-char-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_char",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-char",
+          "name": "Identity_char",
+          "graphTabId": "identity-char",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-char",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-char"
+      }
+    },
+    {
+      "id": "identity-char-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_char",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-char",
+          "name": "Identity_char",
+          "graphTabId": "identity-char",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "char",
+          "nativeParameters": [
+            {
+              "id": "value",
+              "name": "value",
+              "mode": "positional",
+              "nativeType": "char"
+            }
+          ]
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-char",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-char"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "class-identity-sbyte-declare-exec_out",
+      "source": "class",
+      "target": "identity-sbyte-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-sbyte-declare-identity-sbyte-define-exec_out",
+      "source": "identity-sbyte-declare",
+      "target": "identity-sbyte-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-sbyte-define-identity-byte-declare-exec_out",
+      "source": "identity-sbyte-define",
+      "target": "identity-byte-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-byte-declare-identity-byte-define-exec_out",
+      "source": "identity-byte-declare",
+      "target": "identity-byte-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-byte-define-identity-short-declare-exec_out",
+      "source": "identity-byte-define",
+      "target": "identity-short-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-short-declare-identity-short-define-exec_out",
+      "source": "identity-short-declare",
+      "target": "identity-short-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-short-define-identity-ushort-declare-exec_out",
+      "source": "identity-short-define",
+      "target": "identity-ushort-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-ushort-declare-identity-ushort-define-exec_out",
+      "source": "identity-ushort-declare",
+      "target": "identity-ushort-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-ushort-define-identity-int-declare-exec_out",
+      "source": "identity-ushort-define",
+      "target": "identity-int-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-int-declare-identity-int-define-exec_out",
+      "source": "identity-int-declare",
+      "target": "identity-int-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-int-define-identity-uint-declare-exec_out",
+      "source": "identity-int-define",
+      "target": "identity-uint-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-uint-declare-identity-uint-define-exec_out",
+      "source": "identity-uint-declare",
+      "target": "identity-uint-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-uint-define-identity-long-declare-exec_out",
+      "source": "identity-uint-define",
+      "target": "identity-long-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-long-declare-identity-long-define-exec_out",
+      "source": "identity-long-declare",
+      "target": "identity-long-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-long-define-identity-ulong-declare-exec_out",
+      "source": "identity-long-define",
+      "target": "identity-ulong-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-ulong-declare-identity-ulong-define-exec_out",
+      "source": "identity-ulong-declare",
+      "target": "identity-ulong-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-ulong-define-identity-char-declare-exec_out",
+      "source": "identity-ulong-define",
+      "target": "identity-char-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "identity-char-declare-identity-char-define-exec_out",
+      "source": "identity-char-declare",
+      "target": "identity-char-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    }
+  ],
+  "documents": {
+    "identity-sbyte": {
+      "nodes": [
+        {
+          "id": "identity-sbyte-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_sbyte",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-sbyte",
+              "symbolId": "identity-sbyte",
+              "name": "Identity_sbyte",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-sbyte",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-sbyte-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-sbyte",
+              "symbolId": "identity-sbyte",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-sbyte-entry-identity-sbyte-return-exec_out",
+          "source": "identity-sbyte-entry",
+          "target": "identity-sbyte-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-sbyte-entry-identity-sbyte-return-value",
+          "source": "identity-sbyte-entry",
+          "target": "identity-sbyte-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-byte": {
+      "nodes": [
+        {
+          "id": "identity-byte-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_byte",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-byte",
+              "symbolId": "identity-byte",
+              "name": "Identity_byte",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-byte",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-byte-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-byte",
+              "symbolId": "identity-byte",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-byte-entry-identity-byte-return-exec_out",
+          "source": "identity-byte-entry",
+          "target": "identity-byte-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-byte-entry-identity-byte-return-value",
+          "source": "identity-byte-entry",
+          "target": "identity-byte-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-short": {
+      "nodes": [
+        {
+          "id": "identity-short-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_short",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-short",
+              "symbolId": "identity-short",
+              "name": "Identity_short",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-short",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-short-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-short",
+              "symbolId": "identity-short",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-short-entry-identity-short-return-exec_out",
+          "source": "identity-short-entry",
+          "target": "identity-short-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-short-entry-identity-short-return-value",
+          "source": "identity-short-entry",
+          "target": "identity-short-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-ushort": {
+      "nodes": [
+        {
+          "id": "identity-ushort-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_ushort",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-ushort",
+              "symbolId": "identity-ushort",
+              "name": "Identity_ushort",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-ushort",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-ushort-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-ushort",
+              "symbolId": "identity-ushort",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-ushort-entry-identity-ushort-return-exec_out",
+          "source": "identity-ushort-entry",
+          "target": "identity-ushort-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-ushort-entry-identity-ushort-return-value",
+          "source": "identity-ushort-entry",
+          "target": "identity-ushort-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-int": {
+      "nodes": [
+        {
+          "id": "identity-int-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_int",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-int",
+              "symbolId": "identity-int",
+              "name": "Identity_int",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-int",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-int-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-int",
+              "symbolId": "identity-int",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-int-entry-identity-int-return-exec_out",
+          "source": "identity-int-entry",
+          "target": "identity-int-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-int-entry-identity-int-return-value",
+          "source": "identity-int-entry",
+          "target": "identity-int-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-uint": {
+      "nodes": [
+        {
+          "id": "identity-uint-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_uint",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-uint",
+              "symbolId": "identity-uint",
+              "name": "Identity_uint",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-uint",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-uint-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-uint",
+              "symbolId": "identity-uint",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-uint-entry-identity-uint-return-exec_out",
+          "source": "identity-uint-entry",
+          "target": "identity-uint-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-uint-entry-identity-uint-return-value",
+          "source": "identity-uint-entry",
+          "target": "identity-uint-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-long": {
+      "nodes": [
+        {
+          "id": "identity-long-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_long",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-long",
+              "symbolId": "identity-long",
+              "name": "Identity_long",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-long",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-long-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-long",
+              "symbolId": "identity-long",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-long-entry-identity-long-return-exec_out",
+          "source": "identity-long-entry",
+          "target": "identity-long-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-long-entry-identity-long-return-value",
+          "source": "identity-long-entry",
+          "target": "identity-long-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-ulong": {
+      "nodes": [
+        {
+          "id": "identity-ulong-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_ulong",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-ulong",
+              "symbolId": "identity-ulong",
+              "name": "Identity_ulong",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-ulong",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-ulong-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-ulong",
+              "symbolId": "identity-ulong",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-ulong-entry-identity-ulong-return-exec_out",
+          "source": "identity-ulong-entry",
+          "target": "identity-ulong-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-ulong-entry-identity-ulong-return-value",
+          "source": "identity-ulong-entry",
+          "target": "identity-ulong-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    },
+    "identity-char": {
+      "nodes": [
+        {
+          "id": "identity-char-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_char",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-char",
+              "symbolId": "identity-char",
+              "name": "Identity_char",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "exec_out",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-char",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-char-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-char",
+              "symbolId": "identity-char",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "identity-char-entry-identity-char-return-exec_out",
+          "source": "identity-char-entry",
+          "target": "identity-char-return",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "identity-char-entry-identity-char-return-value",
+          "source": "identity-char-entry",
+          "target": "identity-char-return",
+          "sourceHandle": "value",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    }
+  },
+  "projectEvents": [],
+  "classes": [
+    {
+      "kind": "class",
+      "id": "main-class",
+      "name": "IntegralSignatures",
+      "containerId": "main-graph"
+    }
+  ],
+  "activeClassId": "main-class",
+  "tabId": "main-graph"
+}

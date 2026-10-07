@@ -222,6 +222,7 @@ export function getNodeDisplayTitle(data: VVSNodeData, activeLanguage?: string):
     }
     return def?.title ?? data.label;
   }
+  if (kindId === 'expr_native_operator' && data.properties?.nativeForm === 'conversion' && typeof data.properties.nativeTargetType === 'string') return `Convert to ${data.properties.nativeTargetType}`;
   if (kindId === 'action_get_input') {
     const kindLabel = getInputKindLabel(data);
     return kindLabel ? `${def?.title ?? 'Get User Input'} · ${kindLabel}` : def?.title ?? data.label;

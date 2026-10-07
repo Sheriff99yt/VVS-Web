@@ -13,6 +13,8 @@ import {
   functionNeedsAsync,
   printContextForIr,
 } from './helpers';
+import { printStatement, createDefaultExprPrinter } from '../print';
+import { offsetSpans, type ExprSpan } from '../codeExpr';
 import { emptyFunctionBodyLine } from './layout';
 import {
   appendEventHandlerDefinition,
@@ -24,6 +26,7 @@ import {
 import { typeNameForTypeRef } from './emitTypes';
 import { formatEnumMemberAccess, parseLegacyEnumMember } from './enumAccess';
 import { commentPrefixFromPack, memberChainIndentFor } from '../print/template';
+import { printNativeScalarParameter } from '../print/nativeScalarSignature';
 
 export interface MemberState {
   cppVisibility: string;
@@ -124,7 +127,7 @@ function walkIrStatements(stmts: IrStatement[] | undefined, visit: (s: IrStateme
     if (stmt.kind === 'IfBranch') {
       walkIrStatements(stmt.trueBody, visit);
       walkIrStatements(stmt.falseBody, visit);
-    } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop') {
+    } else if (stmt.kind === 'ForLoop' || stmt.kind === 'ForEach' || stmt.kind === 'WhileLoop' || stmt.kind === 'ScopeBlock' || stmt.kind === 'DeclarationGroup') {
       walkIrStatements(stmt.body, visit);
     } else if (stmt.kind === 'Switch') {
       for (const c of stmt.cases) walkIrStatements(c.body, visit);
@@ -474,6 +477,13 @@ function appendVariableDecl(
     }
   }
 
+  if (member.properties?.declarationOnly === true) {
+    if (ir.targetLanguage !== 'python') throw new Error('FIELD_DECLARATION_TARGET: Constructor-owned declarations currently require Python.');
+    const ctx = printContextForIr(ir, '    ', ir.environmentManifest);
+    sink.appendTagged({ nodeId: sourceGraphNodeId, text: `${ctx.indent}${commentPrefixFromPack(ctx)}(x) Declare ${symbol.name}` });
+    return;
+  }
+
   if (ir.targetLanguage === 'cpp') {
     const vis = String(member.properties?.visibility ?? symbol.visibility ?? '');
     ensureCppVisibility(sink, ir, state, vis);
@@ -709,17 +719,41 @@ function appendFunctionDefinition(
       continue;
     }
     const props = { ...member.properties, overloadId: overload.id };
-    const fileFunction = ir.targetLanguage === 'javascript' && ir.activeClass?.isGlobalScope === true && symbol.binding === 'module';
-    const header = fileFunction ? renderJavaScriptModuleFunctionHeader(symbol, props, functionNeedsAsync(ir, symbol.id)) : formatFunctionDefHeader(
+    const fileFunction = ['javascript', 'python'].includes(ir.targetLanguage) && ir.activeClass?.isGlobalScope === true && symbol.binding === 'module';
+    const parameterSpans: ExprSpan[] = [];
+    let nativeParamList: string | undefined;
+    if (member.nativeParameters) {
+      if (!['javascript', 'python', 'go', 'csharp', 'cpp', 'rust', 'gdscript'].includes(ir.targetLanguage)) throw new Error('NATIVE_SIGNATURE_TARGET');
+      const parts: string[] = [];
+      if (ir.targetLanguage === 'python' && !fileFunction && symbol.binding !== 'static') parts.push('self');
+      for (const parameter of member.nativeParameters) {
+        let part = parameter.mode === 'rest' ? `${ir.targetLanguage === 'javascript' ? '...' : '*'}${parameter.name}` : parameter.name;
+        if (ir.targetLanguage === 'go' || ir.targetLanguage === 'csharp') {
+          const ctx = printContextForIr(ir, '', ir.environmentManifest);
+          part = renderTemplate(requireTemplate(ctx.profile ?? resolvePrintProfile(ir.targetLanguage), 'NativeTypedParameter', ir.targetLanguage), { name: parameter.name, type: parameter.nativeType ?? '' }, ctx.profile?.layout).text;
+        }
+        if (['cpp', 'rust', 'gdscript'].includes(ir.targetLanguage)) part = printNativeScalarParameter(parameter as import('@vvs/graph-types').NativeScalarParameter, ir.targetLanguage as import('@vvs/graph-types').NativeScalarLanguage);
+        if (parameter.defaultExpression) {
+          const value = createDefaultExprPrinter()(parameter.defaultExpression, printContextForIr(ir, '', ir.environmentManifest));
+          const prefix = `${part} = `;
+          parameterSpans.push(...offsetSpans(value.spans, parts.join(', ').length + (parts.length ? 2 : 0) + prefix.length));
+          part = prefix + value.text;
+        }
+        parts.push(part);
+      }
+      nativeParamList = parts.join(', ');
+    }
+    const header = fileFunction && ir.targetLanguage === 'javascript' ? renderJavaScriptModuleFunctionHeader(symbol, props, functionNeedsAsync(ir, symbol.id), nativeParamList) : fileFunction ? formatFunctionDefHeader(symbol, 'python', false, props, undefined, nativeParamList).trimStart() : formatFunctionDefHeader(
       symbol,
       ir.targetLanguage,
       functionNeedsAsync(ir, symbol.id),
       props,
-      irClassName(ir)
+      irClassName(ir),
+      nativeParamList
     );
 
     const headerStartLine = sink.lineCount + 1;
-    sink.appendRaw(header);
+    sink.appendTagged({ nodeId: defineNodeId, text: header, expressionSpans: nativeParamList ? offsetSpans(parameterSpans, header.indexOf(nativeParamList)) : [] });
 
     // Define owns the emitted header + body. Declare only maps to its own emit
     // (C++ prototype or U66 `(x) Declare`), never the Define `def` / method line.
@@ -728,7 +762,7 @@ function appendFunctionDefinition(
     appendFunctionBody(sink, ir, overload.tabId, emptyLine, ir.environmentManifest, defineNodeId, fileFunction ? '    ' : undefined, {
       onBeforeNode: onBeforeFlowNode,
     });
-    const tabClose = fileFunction ? renderJavaScriptModuleFunctionClose() : renderFunctionTabClose(ir.targetLanguage);
+    const tabClose = fileFunction && ir.targetLanguage === 'javascript' ? renderJavaScriptModuleFunctionClose() : renderFunctionTabClose(ir.targetLanguage);
     if (tabClose) {
       sink.appendRaw(tabClose);
     }
@@ -894,6 +928,16 @@ export function appendIrMembersInOrder(
     }
 
     switch (member.kind) {
+      case 'PackageDecl': {
+        if (ir.targetLanguage !== 'go' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(member.name)) throw new Error('NATIVE_PACKAGE_TARGET');
+        const ctx = printContextForIr(ir, '', ir.environmentManifest);
+        const template = requireTemplate(ctx.profile ?? resolvePrintProfile('go'), 'SourcePackage', 'go');
+        sink.appendTagged({ nodeId: member.sourceGraphNodeId, text: renderTemplate(template, { name: member.name }, ctx.profile?.layout).text }); break;
+      }
+      case 'LanguageDirective': {
+        const printed = printStatement(member, printContextForIr(ir, '', ir.environmentManifest));
+        sink.appendTagged({ nodeId: member.sourceGraphNodeId, ...printed }); break;
+      }
       case 'ModuleImport':
       case 'ImportClass':
         // File-scope at chain position — before/between classes as drawn on canvas.
@@ -920,7 +964,7 @@ export function appendIrMembersInOrder(
           break;
         }
         hooks.onBeforeMethod?.();
-        if (ir.targetLanguage === 'cpp') {
+        if (ir.targetLanguage === 'cpp' && !ir.activeClass?.isGlobalScope) {
           const vis = String(
             member.properties?.visibility ??
               (member.symbol as { visibility?: string }).visibility ??
@@ -970,7 +1014,7 @@ export function appendIrMembersInOrder(
           break;
         }
         hooks.onBeforeMethod?.();
-        if (ir.targetLanguage === 'cpp') {
+        if (ir.targetLanguage === 'cpp' && !ir.activeClass?.isGlobalScope) {
           const vis = String(
             member.properties?.visibility ??
               (member.symbol as { visibility?: string }).visibility ??

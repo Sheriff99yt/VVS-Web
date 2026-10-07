@@ -76,3 +76,9 @@ describe('renderTemplate', () => {
     expect(result.text).toBe('self.Count = 0');
   });
 });
+
+test('Lego expressions retain nested spans through literal braces, indentation and newlines', () => {
+  const result = renderLego([{ kind: 'static', name: '{' }, { kind: 'slot', name: 'items' }, { kind: 'static', name: '}' }], { items: { text: 'key: value', spans: [{ nodeId: 'entry', start: 0, end: 10 }, { nodeId: 'value', start: 5, end: 10 }] } });
+  expect(result.text).toBe('{key: value}');
+  expect(result.expressionSpans).toEqual([{ nodeId: 'entry', start: 1, end: 11 }, { nodeId: 'value', start: 6, end: 11 }]);
+});

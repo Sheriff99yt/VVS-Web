@@ -16,6 +16,22 @@ const emptyIndex = buildProjectSymbolIndex({
   events: [],
 });
 
+test('legacy variable names require a unique index and explicit broken IDs never fall back to names', () => {
+  const first = createVariableSymbol('Value', { id: 'first' }), second = createVariableSymbol('value', { id: 'second' });
+  const node = { id: 'legacy', type: 'vvs_standard_node' as const, position: { x: 0, y: 0 }, data: { kindId: 'variable_get', label: 'Get Value', category: 'Variables', properties: { variableName: 'Value' }, inputs: [], outputs: [], inlineValues: {} } };
+  const index = (variables: typeof first[]) => buildProjectSymbolIndex({ variables, functions: [], events: [] });
+  expect(isUnresolvedSymbolRef(node, index([first]))).toBeNull();
+  expect(isUnresolvedSymbolRef(node, index([first, second]))).toMatchObject({ kind: 'variable', symbolId: 'name:value' });
+  const explicit = { ...node, data: { ...node.data, graphBinding: { kind: 'variable_ref' as const, symbolId: second.id } } };
+  expect(isUnresolvedSymbolRef(explicit, index([first, second]))).toBeNull();
+  explicit.data.graphBinding.symbolId = '';
+  expect(isUnresolvedSymbolRef(explicit, index([first]))).toMatchObject({ kind: 'variable', symbolId: '' });
+  const missing = JSON.parse(JSON.stringify({ ...node, data: { ...node.data, graphBinding: { kind: 'variable_ref' } } }));
+  expect(isUnresolvedSymbolRef(missing, index([first]))).toMatchObject({ kind: 'variable', symbolId: '' });
+  const foreign = { ...node, data: { ...node.data, graphBinding: { kind: 'call_function' as const, symbolId: first.id } } };
+  expect(isUnresolvedSymbolRef(foreign, index([first]))).toMatchObject({ kind: 'variable', symbolId: '' });
+});
+
 describe('resolveNodeSymbolRef', () => {
   test('resolves variable get by graphBinding', () => {
     const node = {

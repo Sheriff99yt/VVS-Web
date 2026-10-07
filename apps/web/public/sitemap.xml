@@ -12,6 +12,8 @@
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/class_define</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/convert_to_number</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/convert_to_string</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/csharp_declaration_group</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/csharp_scope</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/enum_define</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/event_bind</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/event_define</loc></url>
@@ -21,7 +23,12 @@
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/event_on_start</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/event_on_update</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/event_subscribe</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/expr_compare</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/expr_enum_member</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/expr_native_access</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/expr_native_collection</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/expr_native_literal</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/expr_native_operator</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/flow_branch</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/flow_break</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/flow_continue</loc></url>
@@ -41,6 +48,10 @@
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/math_divide</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/math_multiply</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/math_subtract</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/native_declaration_group</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/parameter_set</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/source_directive</loc></url>
+  <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/source_package</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/string_concat</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/var_define</loc></url>
   <url><loc>https://sheriff99yt.github.io/VVS-Web/docs/nodes/variable_get</loc></url>

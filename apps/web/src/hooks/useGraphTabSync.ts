@@ -371,7 +371,7 @@ export function useGraphTabSync({
   const patchAllDocuments = useCallback(
     (
       updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
+      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string; selectedNodeId?: string }
     ): string[] => {
       flushCurrentTab();
       const current: Record<string, GraphDocument> = {};
@@ -388,7 +388,8 @@ export function useGraphTabSync({
       }
       const activeDoc = documentsRef.current.get(tabToShow) ?? { nodes: [], edges: [] };
       const loaded = cloneDocument(activeDoc);
-      setNodes(clearNodeSelectionFlags(normalizeParenting(loaded.nodes)));
+      const nextNodes = clearNodeSelectionFlags(normalizeParenting(loaded.nodes));
+      setNodes(options?.selectedNodeId ? nextNodes.map(node => ({ ...node, selected: node.id === options.selectedNodeId })) : nextNodes);
       setEdges(clearEdgeSelectionFlags(loaded.edges));
       if (!options?.preserveHistory) {
         maybeClearHistory();

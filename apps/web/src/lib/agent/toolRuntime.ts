@@ -2,7 +2,7 @@ import {
   classHomeGraphId,
   createClassSymbol,
   createProgramEntryEvent,
-  pinsAreCompatible,
+  applyWireConnection,
   type GraphDocument,
   type GraphEdge,
   type GraphNode,
@@ -268,39 +268,15 @@ function connectPins(
   const targetHandle = requireString(args, 'target_handle');
   const tabId = resolveTabId(snapshot, args);
   const doc = documentForTab(snapshot, tabId);
-  const sourceNode = doc.nodes.find((n) => n.id === sourceId);
-  const targetNode = doc.nodes.find((n) => n.id === targetId);
-  if (!sourceNode || !targetNode) throw new Error('node not found');
-  const sourcePin = sourceNode.data.outputs?.find((p) => p.id === sourceHandle);
-  const targetPin = targetNode.data.inputs?.find((p) => p.id === targetHandle);
-  if (!sourcePin || !targetPin) throw new Error('pin not found');
-  if (!pinsAreCompatible(sourcePin.type as PinType, targetPin.type as PinType)) {
-    throw new Error('incompatible pin types');
-  }
-  const duplicate = doc.edges.some(
-    (e) =>
-      e.source === sourceId &&
-      e.target === targetId &&
-      e.sourceHandle === sourceHandle &&
-      e.targetHandle === targetHandle
-  );
-  if (duplicate) throw new Error('edge already exists');
-
-  const edge: GraphEdge = {
-    id: nextId('edge'),
-    source: sourceId,
-    target: targetId,
-    sourceHandle,
-    targetHandle,
-    type: 'vvs_standard_edge',
-    data: { pinType: sourcePin.type as PinType },
-  };
+  const result = applyWireConnection({ source: sourceId, target: targetId, sourceHandle, targetHandle }, doc.nodes, doc.edges, nextId('edge'));
+  if ('error' in result) throw new Error(`Connection rejected: ${result.error}`);
+  const edge = result.edge;
   return {
     edge,
     tabId,
     snapshot: patchDocument(snapshot, tabId, {
       ...doc,
-      edges: [...doc.edges, edge],
+      edges: result.edges,
     }),
   };
 }

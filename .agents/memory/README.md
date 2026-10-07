@@ -14,14 +14,14 @@ Durable, agent-oriented context for VVS Web. This directory is **not** a substit
 
 | File | Purpose | Update when |
 |------|---------|-------------|
-| [`incomplete-ui.md`](incomplete-ui.md) | **Open UI backlog** — partial/skeleton items with file pointers | After each UI loop tick or audit |
+| [`incomplete-ui.md`](incomplete-ui.md) | **Open UI backlog** — partial/skeleton items with file pointers | After a completed dependency batch or audit |
 | [`workspace-facts.md`](workspace-facts.md) | Stable repo layout, entry points, conventions | Structure or tooling changes |
 | [`decisions.md`](decisions.md) | Locked product/architecture choices | A decision is finalized and must not regress |
 | [`index.json`](index.json) | File registry + last-updated metadata | Any memory file changes |
 
-## Depth-first UI workflow
+## Batched UI workflow
 
-Work `incomplete-ui.md` **by section number** (1 → 8). Mark rows **Done** in that file after each iteration. Do not skip to API slices until the current UI section is finished or explicitly deprioritized.
+Respect priority and section order in `incomplete-ui.md`, grouping related dependencies into implementation batches. Follow [the shared workflow](../../docs/agentic_batch_workflow.md) and mark rows **Done** at completed batch boundaries. Do not skip to API slices until the current UI section is finished or explicitly deprioritized.
 
 ## Write rules
 

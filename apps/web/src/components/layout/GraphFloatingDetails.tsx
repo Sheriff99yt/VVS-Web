@@ -11,7 +11,7 @@ import { resolveImportableGraphName } from '@/lib/projectNodeCatalog';
 import { CallNodeOverloadPanel } from './RightSidebar/CallNodeOverloadPanel';
 import { SwitchNodePanel } from './RightSidebar/SwitchNodePanel';
 import { applyDefinePropertyToVariable, resolveVariableForNode } from '@/lib/variableHelpers';
-import { resolveFunctionForNode } from '@/lib/functionHelpers';
+import { resolveFunctionForNode, applyFunctionCallBinding } from '@/lib/functionHelpers';
 import { normalizeNodeData, resolveNodeKindId } from '@/lib/nodeKind';
 import { getNodeKindDefinition } from '@/lib/nodeRegistry';
 import {
@@ -22,11 +22,15 @@ import {
   type EventNodeRole,
 } from '@/lib/eventHelpers';
 import type { ClassSymbol, FunctionSymbol, ProjectEventDefinition, VVSNode, VVSNodeData, VariableSymbol } from '@/types/graph';
-import { buildProjectSymbolIndex, isUnresolvedSymbolRef, LOGICAL_DATA_TYPE_DESCRIPTORS, syncClassExtendsFields } from '@vvs/graph-types';
+import { applyParameterSetBinding, buildProjectSymbolIndex, isUnresolvedSymbolRef, LOGICAL_DATA_TYPE_DESCRIPTORS, syncClassExtendsFields, CSHARP_INTEGRAL_PINS, CSHARP_ASSIGNMENT_OPERATORS, NATIVE_OPERATORS, csharpLocalStylePatch, inferCSharpLocalForEdit, nativeSignature, type CSharpLocalStyle, type GraphDocument } from '@vvs/graph-types';
 import { VariablePropertiesPanel } from './RightSidebar/VariablePropertiesPanel';
 import { EventPropertiesPanel } from './RightSidebar/EventPropertiesPanel';
 import { EventNodeBindingPanel } from './RightSidebar/EventNodeBindingPanel';
 import { filterDetailsPropertySchema } from './detailsPropertySchema';
+import { NativeSignaturePanel } from './RightSidebar/NativeSignaturePanel';
+import { NativeLocalPanel } from './RightSidebar/NativeLocalPanel';
+import { NativeDeclarationGroupPanel } from './RightSidebar/NativeDeclarationGroupPanel';
+import { nativeScalarLocalEditorProfile, type NativeScalarLocalEdit, type NativeScalarDeclarationModeEdit } from '@vvs/graph-types';
 import { NodePinsPanel } from './RightSidebar/NodePinsPanel';
 import { markNavNodeOptions } from '@/lib/navActivityFlags';
 import { PropertySchemaPanel } from './RightSidebar/PropertySchemaPanel';
@@ -114,7 +118,12 @@ function GraphFloatingDetailsPanel() {
   const graphDocuments = useGraphDocuments();
   const {
     renameVariable,
+    updateCSharpDeclarationGroup,
+    updateCSharpLocalInitializer,
     renameFunction,
+    updateNativeScalarSignature,
+    updateNativeScalarLocal,
+    updateNativeScalarGroup,
     renameEvent,
     deleteBrokenNode,
     deleteAllBrokenForRef,
@@ -123,6 +132,7 @@ function GraphFloatingDetailsPanel() {
   } = useSymbolLifecycle();
   const { renameClass } = useClassLifecycle();
 
+  const [localStyleError, setLocalStyleError] = useState<string | null>(null);
   const [pinned, setPinned] = useUiPreference('detailsPanelPinned');
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const [selectionExpanded, setSelectionExpanded] = useState(true);
@@ -142,7 +152,7 @@ function GraphFloatingDetailsPanel() {
 
   const selectedNodeId = selection.type === 'node' ? selection.id : null;
   const nodeData = useNodesData<VVSNode>(selectedNodeId || '');
-  const { updateNodeData } = useReactFlow();
+  const { updateNodeData, setEdges, getNodes, getEdges } = useReactFlow<VVSNode>();
 
   // New selection → show editors immediately (no hover wait). Pin still wins after leave.
   useEffect(() => {
@@ -151,11 +161,14 @@ function GraphFloatingDetailsPanel() {
       hoverTimerRef.current = null;
     }
     setHoverExpanded(false);
+    setLocalStyleError(null);
     setSelectionExpanded(true);
   }, [selection.type, selection.id]);
 
   const selectedVariable =
     selection.type === 'variable' ? variables.find((v) => v.id === selection.id) : null;
+  const selectedNativeLocal = selectedVariable ? Object.values(graphDocuments ?? {}).flatMap(doc => doc.nodes)
+    .find(node => node.data.properties?.symbolId === selectedVariable.id && nativeScalarLocalEditorProfile(node.data)) : undefined;
   const selectedFunction =
     selection.type === 'function' ? functions.find((f) => f.id === selection.id) : null;
   const selectedEvent =
@@ -349,15 +362,62 @@ function GraphFloatingDetailsPanel() {
   const handleNodePropertyChange = (key: string, value: string | number | boolean) => {
     if (!selectedNodeId || !nodeData) return;
     markNavNodeOptions();
-    const patch = normalizeNodeData({
+    setLocalStyleError(null);
+    if (nodeKindId === 'parameter_set' && key === 'parameterId') {
+      const fn = functions.find(fn => fn.id === nodeData.data.graphBinding?.symbolId);
+      const overload = fn?.overloads.find(overload => overload.id === nodeData.data.graphBinding?.overloadId);
+      if (!fn || !overload?.parameters.some(parameter => parameter.id === value)) return;
+      updateNodeData(selectedNodeId, applyParameterSetBinding({ ...nodeData.data, graphBinding: { ...nodeData.data.graphBinding!, parameterId: String(value) } }, fn, overload.id));
+      return;
+    }
+    if (nodeKindId === 'var_define' && String(nodeData.data.properties?.nativeLocalStyle).startsWith('csharp-') && key === 'hasInitializer') {
+      try { updateCSharpLocalInitializer(selectedNodeId, value === true); setLocalStyleError(null); }
+      catch { setLocalStyleError('Choose a typed declaration before changing its initializer.'); }
+      return;
+    }
+    if (nodeKindId === 'var_define' && nodeData.data.properties?.groupOwnerId && ['nativeType', 'nativeLocalStyle'].includes(key)) {
+      const properties = nodeData.data.properties;
+      if (value === 'csharp-var') return;
+      updateCSharpDeclarationGroup(String(properties.groupOwnerId), (key === 'nativeType' ? value : properties.nativeType) as import('@vvs/graph-types').CSharpIntegerType, (key === 'nativeLocalStyle' ? value === 'csharp-const' : properties.nativeLocalStyle === 'csharp-const') ? 'const' : 'typed', selectedNodeId);
+      return;
+    }
+    if (nodeKindId === 'csharp_declaration_group' && ['nativeType', 'groupStyle'].includes(key)) {
+      const properties = nodeData.data.properties ?? {};
+      updateCSharpDeclarationGroup(selectedNodeId, (key === 'nativeType' ? value : properties.nativeType) as import('@vvs/graph-types').CSharpIntegerType, (key === 'groupStyle' ? value : properties.groupStyle) as 'typed' | 'const');
+      return;
+    }
+    if (nodeKindId === 'var_define' && key === 'nativeLocalStyle' && String(nodeData.data.properties?.nativeLocalStyle).startsWith('csharp-')) {
+      const properties = nodeData.data.properties ?? {};
+      const variable = variables.find(item => item.id === properties.symbolId);
+      if (!variable) return;
+      const doc = { nodes: getNodes().map(node => ({ ...node, data: { ...node.data, kindId: resolveNodeKindId(node.data) ?? undefined } })), edges: getEdges() } as GraphDocument;
+      const entry = doc.nodes.find(node => node.data.kindId === 'function_entry');
+      const nativeOwner = entry && Object.values(graphDocuments ?? {}).flatMap(doc => doc.nodes).find(node => node.data.kindId === 'function_implement' && node.data.graphBinding?.symbolId === entry.data.graphBinding?.symbolId && node.data.graphBinding?.overloadId === entry.data.graphBinding?.overloadId);
+      try {
+        const inferred = properties.nativeType === 'var' && entry
+          ? inferCSharpLocalForEdit(doc, nativeSignature(nativeOwner?.data ?? entry.data) ?? [], entry.id, selectedNodeId).type
+          : undefined;
+        const patch = csharpLocalStylePatch(properties, value as CSharpLocalStyle, inferred);
+        renameVariable(applyDefinePropertyToVariable(variable, 'isConst', patch.isConst), { nodeId: selectedNodeId, properties: patch });
+        setLocalStyleError(null);
+      } catch { setLocalStyleError('Repair this declaration’s initializer or preceding bindings before changing its style.'); }
+      return;
+    }
+    let patch = normalizeNodeData({
       ...nodeData.data,
       properties: {
         ...(nodeData.data.properties ?? {}),
         [key]: value,
       },
     });
+    if (nodeData.data.kindId === 'vvs.project.call_function' && key === 'callPlacement') {
+      const func = resolveFunctionForNode(nodeData.data, functions);
+      if (func) patch = applyFunctionCallBinding(patch, func);
+      setEdges(edges => edges.filter(edge => (edge.source !== selectedNodeId || patch.outputs.some(pin => pin.id === edge.sourceHandle)) && (edge.target !== selectedNodeId || patch.inputs.some(pin => pin.id === edge.targetHandle))));
+    }
     updateNodeData(selectedNodeId, {
       properties: patch.properties,
+      inputs: patch.inputs,
       outputs: patch.outputs,
       label: patch.label,
     });
@@ -416,6 +476,11 @@ function GraphFloatingDetailsPanel() {
     renameVariable(next);
   };
 
+  const handleNativeLocalChange = (declarationId: string, edit: NativeScalarLocalEdit | NativeScalarDeclarationModeEdit) => {
+    try { updateNativeScalarLocal(declarationId, edit); setLocalStyleError(null); }
+    catch (error) { setLocalStyleError(error instanceof Error ? error.message : String(error)); }
+  };
+
   const handleEventChange = (next: ProjectEventDefinition) => {
     renameEvent(next);
   };
@@ -464,10 +529,11 @@ function GraphFloatingDetailsPanel() {
     nodeKindId === 'vvs.project.import_module' ||
     nodeData?.data.linkKind === 'import_module';
 
-  const filteredPropertySchema = useMemo(
-    () => filterDetailsPropertySchema(nodeKindDef?.propertySchema, nodeKindId),
-    [nodeKindDef?.propertySchema, nodeKindId]
-  );
+  const filteredPropertySchema = filterDetailsPropertySchema(nodeKindDef?.propertySchema, nodeKindId)
+    .filter(() => nodeKindId !== 'native_declaration_group')
+    .filter(field => !nodeData || !nativeScalarLocalEditorProfile(nodeData.data) || !['name', 'type', 'isConst', 'defaultValue', 'hasInitializer', 'binding', 'visibility', 'declarationKind', 'nativeLocalStyle', 'nativeType', 'nativeAuthoredType', 'nativeMutable'].includes(field.key))
+    .filter(field => field.key !== 'callPlacement' || targetLanguage === 'go' || nodeData?.data.properties?.callPlacement === 'expression')
+    .filter(field => targetLanguage !== 'csharp' || !['variable_set', 'parameter_set'].includes(nodeKindId ?? '') || field.key !== 'prefix' || ['++', '--'].includes(String(nodeData?.data.properties?.assignmentOperator)));
   const boundVariable = nodeData ? resolveVariableForNode(nodeData.data, variables) : undefined;
   const isCommentNode = nodeData?.type === 'vvs_comment_node';
   const isRerouteNode = nodeData?.type === 'vvs_reroute_node';
@@ -644,7 +710,9 @@ function GraphFloatingDetailsPanel() {
       ) : null}
 
       {selection.type === 'variable' && selectedVariable && (
-        <VariablePropertiesPanel variable={selectedVariable} onChange={handleVariableChange} />
+        selectedNativeLocal ? <><NativeLocalPanel data={selectedNativeLocal.data} onChange={edit => handleNativeLocalChange(selectedNativeLocal.id, edit)} />
+          {localStyleError ? <p role="alert" className="text-xs text-amber-400">{localStyleError}</p> : null}</>
+          : <VariablePropertiesPanel variable={selectedVariable} onChange={handleVariableChange} />
       )}
 
       {selection.type === 'function' && selectedFunction && (
@@ -678,9 +746,15 @@ function GraphFloatingDetailsPanel() {
 
       {selection.type === 'node' && nodeData && selectedNodeId && (
         <>
+          <NativeDeclarationGroupPanel data={nodeData.data} onChange={edit => {
+            try { updateNativeScalarGroup(selectedNodeId, edit); setLocalStyleError(null); }
+            catch (error) { setLocalStyleError(error instanceof Error ? error.message : String(error)); }
+          }} />
           {isVarDefineNode && boundVariable ? (
             <div className="mb-2 pb-2 border-b border-zinc-800/80">
-              <VariablePropertiesPanel variable={boundVariable} onChange={handleVariableChange} />
+              {nativeScalarLocalEditorProfile(nodeData.data)
+                ? <NativeLocalPanel data={nodeData.data} onChange={edit => handleNativeLocalChange(selectedNodeId, edit)} />
+                : <VariablePropertiesPanel variable={boundVariable} onChange={handleVariableChange} />}
             </div>
           ) : null}
 
@@ -778,12 +852,46 @@ function GraphFloatingDetailsPanel() {
               values={(nodeData.data.properties ?? {}) as Record<string, unknown>}
               onChange={handleNodePropertyChange}
               fieldOptions={{
+                ...(nodeKindId === 'parameter_set'
+                  ? { parameterId: (boundFunction?.overloads.find(overload => overload.id === nodeData.data.graphBinding?.overloadId)?.parameters ?? []).map(parameter => ({ value: parameter.id, label: parameter.label })) }
+                  : {}),
+                ...(targetLanguage === 'csharp' && ['variable_set', 'parameter_set'].includes(nodeKindId ?? '')
+                  ? { assignmentOperator: CSHARP_ASSIGNMENT_OPERATORS.filter(value =>
+                    ['++', '--'].includes(String(nodeData.data.properties?.assignmentOperator))
+                      ? ['++', '--'].includes(value) : !['++', '--'].includes(value)
+                  ).map(value => ({ value, label: value })) }
+                  : {}),
+                ...(nodeKindId === 'var_define' && String(nodeData.data.properties?.nativeLocalStyle ?? '').startsWith('csharp-')
+                  ? {
+                    nativeType: (nodeData.data.properties?.nativeLocalStyle === 'csharp-var' ? ['var'] : Object.keys(CSHARP_INTEGRAL_PINS)).map(value => ({ value, label: value })),
+                    nativeLocalStyle: (nodeData.data.properties?.groupOwnerId ? ['csharp-typed', 'csharp-const'] : nodeData.data.properties?.hasInitializer === false ? ['csharp-typed'] : ['csharp-typed', 'csharp-var', 'csharp-const']).map(value => ({ value, label: value })),
+                  }
+                  : {}),
+                ...(nodeKindId === 'expr_native_operator' && nodeData.data.properties?.nativeLanguage === 'csharp'
+                  ? {
+                    nativeTargetType: Object.keys(CSHARP_INTEGRAL_PINS).map(value => ({ value, label: value })),
+                    operator: (nodeData.data.properties?.nativeDomain === 'csharp-bool' ? nodeData.data.properties?.nativeForm === 'unary' ? ['!'] : ['==', '!=', '<', '<=', '>', '>=', '&&', '||', '&', '|', '^'] : nodeData.data.properties?.nativeForm === 'unary' ? ['+', '-', '~'] : NATIVE_OPERATORS.csharp.filter(value => !['==', '!=', '<', '<=', '>', '>=', '&&', '||'].includes(value))).map(value => ({ value, label: value })),
+                    nativeDomain: [{ value: String(nodeData.data.properties?.nativeDomain ?? 'csharp-integer'), label: String(nodeData.data.properties?.nativeDomain ?? 'csharp-integer') }],
+                  }
+                  : {}),
                 ...(nodeKindId === 'function_implement' || nodeKindId === 'function_define'
                   ? { role: functionRoleFieldOptions(targetLanguage) }
                   : {}),
               }}
             />
           ) : null}
+
+          {localStyleError ? <p role="alert" className="text-xs text-amber-400">{localStyleError}</p> : null}
+
+          <NativeSignaturePanel data={nodeData.data} onChange={next => {
+            if (nodeData.data.kindId === 'function_implement' && ['cpp', 'rust', 'gdscript'].includes(String(nodeData.data.properties?.nativeSignatureLanguage))) {
+              try { updateNativeScalarSignature(selectedNodeId, next); setLocalStyleError(null); }
+              catch (error) { setLocalStyleError(error instanceof Error ? error.message : String(error)); }
+              return;
+            }
+            updateNodeData(selectedNodeId, next);
+            setEdges(edges => edges.filter(edge => edge.target !== selectedNodeId || next.inputs.some(pin => pin.id === edge.targetHandle)));
+          }} />
 
           <NodePinsPanel
             nodeData={nodeData}

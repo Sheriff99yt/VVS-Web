@@ -90,6 +90,8 @@ export function collectIrEmitNodeIds(parts: {
         case 'ForLoop':
         case 'ForEach':
         case 'WhileLoop':
+        case 'ScopeBlock':
+        case 'DeclarationGroup':
           walkStatements(stmt.body);
           break;
         case 'Sequence':

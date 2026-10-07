@@ -1,0 +1,3354 @@
+{
+  "cpp": [
+    {
+      "id": "add",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 + 5)",
+      "nativeType": "int",
+      "payload": "12",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 + 5);\nstatic_assert(SAME<decltype((7 + 5)),int>);\nstatic_assert(VALUE==12LL);\n"
+    },
+    {
+      "id": "subtract",
+      "tree": {
+        "kind": "binary",
+        "operator": "-",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 - 5)",
+      "nativeType": "int",
+      "payload": "2",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 - 5);\nstatic_assert(SAME<decltype((7 - 5)),int>);\nstatic_assert(VALUE==2LL);\n"
+    },
+    {
+      "id": "multiply",
+      "tree": {
+        "kind": "binary",
+        "operator": "*",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 * 5)",
+      "nativeType": "int",
+      "payload": "35",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 * 5);\nstatic_assert(SAME<decltype((7 * 5)),int>);\nstatic_assert(VALUE==35LL);\n"
+    },
+    {
+      "id": "divide",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 / 2)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 / 2);\nstatic_assert(SAME<decltype((7 / 2)),int>);\nstatic_assert(VALUE==3LL);\n"
+    },
+    {
+      "id": "remainder",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 % 2)",
+      "nativeType": "int",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 % 2);\nstatic_assert(SAME<decltype((7 % 2)),int>);\nstatic_assert(VALUE==1LL);\n"
+    },
+    {
+      "id": "and",
+      "tree": {
+        "kind": "binary",
+        "operator": "&",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 & 3)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 & 3);\nstatic_assert(SAME<decltype((7 & 3)),int>);\nstatic_assert(VALUE==3LL);\n"
+    },
+    {
+      "id": "or",
+      "tree": {
+        "kind": "binary",
+        "operator": "|",
+        "left": {
+          "kind": "literal",
+          "token": "4",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(4 | 3)",
+      "nativeType": "int",
+      "payload": "7",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(4 | 3);\nstatic_assert(SAME<decltype((4 | 3)),int>);\nstatic_assert(VALUE==7LL);\n"
+    },
+    {
+      "id": "xor",
+      "tree": {
+        "kind": "binary",
+        "operator": "^",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 ^ 3)",
+      "nativeType": "int",
+      "payload": "4",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 ^ 3);\nstatic_assert(SAME<decltype((7 ^ 3)),int>);\nstatic_assert(VALUE==4LL);\n"
+    },
+    {
+      "id": "shift-left",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(3 << 2)",
+      "nativeType": "int",
+      "payload": "12",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(3 << 2);\nstatic_assert(SAME<decltype((3 << 2)),int>);\nstatic_assert(VALUE==12LL);\n"
+    },
+    {
+      "id": "shift-right",
+      "tree": {
+        "kind": "binary",
+        "operator": ">>",
+        "left": {
+          "kind": "literal",
+          "token": "12",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(12 >> 2)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(12 >> 2);\nstatic_assert(SAME<decltype((12 >> 2)),int>);\nstatic_assert(VALUE==3LL);\n"
+    },
+    {
+      "id": "negative-division",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 / 2)",
+      "nativeType": "int",
+      "payload": "-3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-7 / 2);\nstatic_assert(SAME<decltype((-7 / 2)),int>);\nstatic_assert(VALUE==-3LL);\n"
+    },
+    {
+      "id": "negative-remainder",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 % 2)",
+      "nativeType": "int",
+      "payload": "-1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-7 % 2);\nstatic_assert(SAME<decltype((-7 % 2)),int>);\nstatic_assert(VALUE==-1LL);\n"
+    },
+    {
+      "id": "composed",
+      "tree": {
+        "kind": "binary",
+        "operator": "*",
+        "left": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "7",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "5",
+            "options": {
+              "negated": false
+            }
+          }
+        },
+        "right": {
+          "kind": "binary",
+          "operator": "-",
+          "left": {
+            "kind": "literal",
+            "token": "9",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false
+            }
+          }
+        }
+      },
+      "expression": "((7 + 5) * (9 - 2))",
+      "nativeType": "int",
+      "payload": "84",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=((7 + 5) * (9 - 2));\nstatic_assert(SAME<decltype(((7 + 5) * (9 - 2))),int>);\nstatic_assert(VALUE==84LL);\n"
+    },
+    {
+      "id": "compare-eq",
+      "tree": {
+        "kind": "binary",
+        "operator": "==",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 == 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2 == 7);\nstatic_assert(SAME<decltype((2 == 7)),bool>);\nstatic_assert(VALUE==false);\n"
+    },
+    {
+      "id": "compare-ne",
+      "tree": {
+        "kind": "binary",
+        "operator": "!=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 != 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2 != 7);\nstatic_assert(SAME<decltype((2 != 7)),bool>);\nstatic_assert(VALUE==true);\n"
+    },
+    {
+      "id": "compare-lt",
+      "tree": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 < 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2 < 7);\nstatic_assert(SAME<decltype((2 < 7)),bool>);\nstatic_assert(VALUE==true);\n"
+    },
+    {
+      "id": "compare-le",
+      "tree": {
+        "kind": "binary",
+        "operator": "<=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 <= 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2 <= 7);\nstatic_assert(SAME<decltype((2 <= 7)),bool>);\nstatic_assert(VALUE==true);\n"
+    },
+    {
+      "id": "compare-gt",
+      "tree": {
+        "kind": "binary",
+        "operator": ">",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 > 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2 > 7);\nstatic_assert(SAME<decltype((2 > 7)),bool>);\nstatic_assert(VALUE==false);\n"
+    },
+    {
+      "id": "compare-ge",
+      "tree": {
+        "kind": "binary",
+        "operator": ">=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 >= 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2 >= 7);\nstatic_assert(SAME<decltype((2 >= 7)),bool>);\nstatic_assert(VALUE==false);\n"
+    },
+    {
+      "id": "bool-equal",
+      "tree": {
+        "kind": "binary",
+        "operator": "==",
+        "left": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "false",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(true == false)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(true == false);\nstatic_assert(SAME<decltype((true == false)),bool>);\nstatic_assert(VALUE==false);\n"
+    },
+    {
+      "id": "not-bool",
+      "tree": {
+        "kind": "unary",
+        "operator": "!",
+        "operand": {
+          "kind": "literal",
+          "token": "false",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(!(false))",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(!(false));\nstatic_assert(SAME<decltype((!(false))),bool>);\nstatic_assert(VALUE==true);\n"
+    },
+    {
+      "id": "negative-composed",
+      "tree": {
+        "kind": "unary",
+        "operator": "-",
+        "operand": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "3",
+            "options": {
+              "negated": false
+            }
+          }
+        }
+      },
+      "expression": "(-((2 + 3)))",
+      "nativeType": "int",
+      "payload": "-5",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-((2 + 3)));\nstatic_assert(SAME<decltype((-((2 + 3)))),int>);\nstatic_assert(VALUE==-5LL);\n"
+    },
+    {
+      "id": "bit-not",
+      "tree": {
+        "kind": "unary",
+        "operator": "~",
+        "operand": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(~(7))",
+      "nativeType": "int",
+      "payload": "-8",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(~(7));\nstatic_assert(SAME<decltype((~(7))),int>);\nstatic_assert(VALUE==-8LL);\n"
+    },
+    {
+      "id": "divide-zero",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "0",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 / 0)",
+      "nativeType": "int",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_DIVIDE_BY_ZERO",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 / 0);\nstatic_assert(SAME<decltype((7 / 0)),int>);\nstatic_assert(VALUE==0LL);\n"
+    },
+    {
+      "id": "remainder-zero",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "0",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 % 0)",
+      "nativeType": "int",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_DIVIDE_BY_ZERO",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(7 % 0);\nstatic_assert(SAME<decltype((7 % 0)),int>);\nstatic_assert(VALUE==0LL);\n"
+    },
+    {
+      "id": "bool-int",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "int",
+        "operand": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "static_cast<int>(true)",
+      "nativeType": "int",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=static_cast<int>(true);\nstatic_assert(SAME<decltype(static_cast<int>(true)),int>);\nstatic_assert(VALUE==1LL);\n"
+    },
+    {
+      "id": "int-bool",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "bool",
+        "operand": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "static_cast<bool>(2)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=static_cast<bool>(2);\nstatic_assert(SAME<decltype(static_cast<bool>(2)),bool>);\nstatic_assert(VALUE==true);\n"
+    },
+    {
+      "id": "calibration",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 + 3)",
+      "nativeType": "int",
+      "payload": "5",
+      "modelDiagnostic": null,
+      "valid": false,
+      "calibration": true,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2 + 3);\nstatic_assert(SAME<decltype((2 + 3)),int>);\nstatic_assert(VALUE==5LL);\nstatic_assert(VALUE!=VALUE);\n"
+    },
+    {
+      "id": "unsigned-wrap",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "4294967295u",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(4294967295u + 1u)",
+      "nativeType": "unsigned int",
+      "payload": "0",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(4294967295u + 1u);\nstatic_assert(SAME<decltype((4294967295u + 1u)),unsigned int>);\nstatic_assert(VALUE==0ULL);\n"
+    },
+    {
+      "id": "unsigned-mixed",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-1 + 1u)",
+      "nativeType": "unsigned int",
+      "payload": "0",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-1 + 1u);\nstatic_assert(SAME<decltype((-1 + 1u)),unsigned int>);\nstatic_assert(VALUE==0ULL);\n"
+    },
+    {
+      "id": "signed-unsigned-compare",
+      "tree": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-1 < 1u)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-1 < 1u);\nstatic_assert(SAME<decltype((-1 < 1u)),bool>);\nstatic_assert(VALUE==false);\n"
+    },
+    {
+      "id": "wide-signed-compare",
+      "tree": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "literal",
+          "token": "1LL",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-1LL < 1u)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-1LL < 1u);\nstatic_assert(SAME<decltype((-1LL < 1u)),bool>);\nstatic_assert(VALUE==true);\n"
+    },
+    {
+      "id": "long-unsigned-rank",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "1L",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(1L + 1u)",
+      "nativeType": "unsigned long",
+      "payload": "2",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(1L + 1u);\nstatic_assert(SAME<decltype((1L + 1u)),unsigned long>);\nstatic_assert(VALUE==2ULL);\n"
+    },
+    {
+      "id": "narrow-promotion",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "convert",
+          "nativeType": "unsigned char",
+          "operand": {
+            "kind": "literal",
+            "token": "255",
+            "options": {
+              "negated": false
+            }
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(static_cast<unsigned char>(255) + 1)",
+      "nativeType": "int",
+      "payload": "256",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(static_cast<unsigned char>(255) + 1);\nstatic_assert(SAME<decltype((static_cast<unsigned char>(255) + 1)),int>);\nstatic_assert(VALUE==256LL);\n"
+    },
+    {
+      "id": "signed-narrow",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "signed char",
+        "operand": {
+          "kind": "literal",
+          "token": "255",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "static_cast<signed char>(255)",
+      "nativeType": "signed char",
+      "payload": "-1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=static_cast<signed char>(255);\nstatic_assert(SAME<decltype(static_cast<signed char>(255)),signed char>);\nstatic_assert(VALUE==-1LL);\n"
+    },
+    {
+      "id": "unsigned-narrow",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "unsigned char",
+        "operand": {
+          "kind": "literal",
+          "token": "257",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "static_cast<unsigned char>(257)",
+      "nativeType": "unsigned char",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=static_cast<unsigned char>(257);\nstatic_assert(SAME<decltype(static_cast<unsigned char>(257)),unsigned char>);\nstatic_assert(VALUE==1ULL);\n"
+    },
+    {
+      "id": "signed-overflow",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "2147483647",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2147483647 + 1)",
+      "nativeType": "int",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_OVERFLOW",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(2147483647 + 1);\nstatic_assert(SAME<decltype((2147483647 + 1)),int>);\nstatic_assert(VALUE==0LL);\n"
+    },
+    {
+      "id": "shift-count",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "32",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(1 << 32)",
+      "nativeType": "int",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_SHIFT_COUNT",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(1 << 32);\nstatic_assert(SAME<decltype((1 << 32)),int>);\nstatic_assert(VALUE==0LL);\n"
+    },
+    {
+      "id": "bool-arithmetic",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(true + true)",
+      "nativeType": "int",
+      "payload": "2",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(true + true);\nstatic_assert(SAME<decltype((true + true)),int>);\nstatic_assert(VALUE==2LL);\n"
+    },
+    {
+      "id": "unsigned-shift",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "4294967295u",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(4294967295u << 1)",
+      "nativeType": "unsigned int",
+      "payload": "4294967294",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(4294967295u << 1);\nstatic_assert(SAME<decltype((4294967295u << 1)),unsigned int>);\nstatic_assert(VALUE==4294967294ULL);\n"
+    },
+    {
+      "id": "negative-right-shift",
+      "tree": {
+        "kind": "binary",
+        "operator": ">>",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 >> 1)",
+      "nativeType": "int",
+      "payload": "-4",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-7 >> 1);\nstatic_assert(SAME<decltype((-7 >> 1)),int>);\nstatic_assert(VALUE==-4LL);\n"
+    },
+    {
+      "id": "division-overflow",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "9223372036854775807LL",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": true
+          }
+        }
+      },
+      "expression": "(-9223372036854775807LL / -1)",
+      "nativeType": "long long",
+      "payload": "9223372036854775807",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(-9223372036854775807LL / -1);\nstatic_assert(SAME<decltype((-9223372036854775807LL / -1)),long long>);\nstatic_assert(VALUE==9223372036854775807LL);\n"
+    },
+    {
+      "id": "source-method-return",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(1 + 2)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\ntemplate<class A,class B> constexpr bool SAME=false;\ntemplate<class A> constexpr bool SAME<A,A> = true;\nconstexpr auto VALUE=(1 + 2);\nstatic_assert(SAME<decltype((1 + 2)),int>);\nstatic_assert(VALUE==3LL);\nconstexpr int mirror() { return 1 + 2; }\nstatic_assert(mirror()==VALUE);\n",
+      "sourceFunction": "mirror"
+    }
+  ],
+  "rust": [
+    {
+      "id": "add",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 + 5)",
+      "nativeType": "i32",
+      "payload": "12",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 + 5);\nconst _:()=assert!(VALUE==12i32);\n"
+    },
+    {
+      "id": "subtract",
+      "tree": {
+        "kind": "binary",
+        "operator": "-",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 - 5)",
+      "nativeType": "i32",
+      "payload": "2",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 - 5);\nconst _:()=assert!(VALUE==2i32);\n"
+    },
+    {
+      "id": "multiply",
+      "tree": {
+        "kind": "binary",
+        "operator": "*",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 * 5)",
+      "nativeType": "i32",
+      "payload": "35",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 * 5);\nconst _:()=assert!(VALUE==35i32);\n"
+    },
+    {
+      "id": "divide",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 / 2)",
+      "nativeType": "i32",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 / 2);\nconst _:()=assert!(VALUE==3i32);\n"
+    },
+    {
+      "id": "remainder",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 % 2)",
+      "nativeType": "i32",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 % 2);\nconst _:()=assert!(VALUE==1i32);\n"
+    },
+    {
+      "id": "and",
+      "tree": {
+        "kind": "binary",
+        "operator": "&",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 & 3)",
+      "nativeType": "i32",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 & 3);\nconst _:()=assert!(VALUE==3i32);\n"
+    },
+    {
+      "id": "or",
+      "tree": {
+        "kind": "binary",
+        "operator": "|",
+        "left": {
+          "kind": "literal",
+          "token": "4",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(4 | 3)",
+      "nativeType": "i32",
+      "payload": "7",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(4 | 3);\nconst _:()=assert!(VALUE==7i32);\n"
+    },
+    {
+      "id": "xor",
+      "tree": {
+        "kind": "binary",
+        "operator": "^",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 ^ 3)",
+      "nativeType": "i32",
+      "payload": "4",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 ^ 3);\nconst _:()=assert!(VALUE==4i32);\n"
+    },
+    {
+      "id": "shift-left",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(3 << 2)",
+      "nativeType": "i32",
+      "payload": "12",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(3 << 2);\nconst _:()=assert!(VALUE==12i32);\n"
+    },
+    {
+      "id": "shift-right",
+      "tree": {
+        "kind": "binary",
+        "operator": ">>",
+        "left": {
+          "kind": "literal",
+          "token": "12",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(12 >> 2)",
+      "nativeType": "i32",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(12 >> 2);\nconst _:()=assert!(VALUE==3i32);\n"
+    },
+    {
+      "id": "negative-division",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 / 2)",
+      "nativeType": "i32",
+      "payload": "-3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(-7 / 2);\nconst _:()=assert!(VALUE==-3i32);\n"
+    },
+    {
+      "id": "negative-remainder",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 % 2)",
+      "nativeType": "i32",
+      "payload": "-1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(-7 % 2);\nconst _:()=assert!(VALUE==-1i32);\n"
+    },
+    {
+      "id": "composed",
+      "tree": {
+        "kind": "binary",
+        "operator": "*",
+        "left": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "7",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "5",
+            "options": {
+              "negated": false
+            }
+          }
+        },
+        "right": {
+          "kind": "binary",
+          "operator": "-",
+          "left": {
+            "kind": "literal",
+            "token": "9",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false
+            }
+          }
+        }
+      },
+      "expression": "((7 + 5) * (9 - 2))",
+      "nativeType": "i32",
+      "payload": "84",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=((7 + 5) * (9 - 2));\nconst _:()=assert!(VALUE==84i32);\n"
+    },
+    {
+      "id": "compare-eq",
+      "tree": {
+        "kind": "binary",
+        "operator": "==",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 == 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(2 == 7);\nconst _:()=assert!(VALUE==false);\n"
+    },
+    {
+      "id": "compare-ne",
+      "tree": {
+        "kind": "binary",
+        "operator": "!=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 != 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(2 != 7);\nconst _:()=assert!(VALUE==true);\n"
+    },
+    {
+      "id": "compare-lt",
+      "tree": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 < 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(2 < 7);\nconst _:()=assert!(VALUE==true);\n"
+    },
+    {
+      "id": "compare-le",
+      "tree": {
+        "kind": "binary",
+        "operator": "<=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 <= 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(2 <= 7);\nconst _:()=assert!(VALUE==true);\n"
+    },
+    {
+      "id": "compare-gt",
+      "tree": {
+        "kind": "binary",
+        "operator": ">",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 > 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(2 > 7);\nconst _:()=assert!(VALUE==false);\n"
+    },
+    {
+      "id": "compare-ge",
+      "tree": {
+        "kind": "binary",
+        "operator": ">=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 >= 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(2 >= 7);\nconst _:()=assert!(VALUE==false);\n"
+    },
+    {
+      "id": "bool-equal",
+      "tree": {
+        "kind": "binary",
+        "operator": "==",
+        "left": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "false",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(true == false)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(true == false);\nconst _:()=assert!(VALUE==false);\n"
+    },
+    {
+      "id": "not-bool",
+      "tree": {
+        "kind": "unary",
+        "operator": "!",
+        "operand": {
+          "kind": "literal",
+          "token": "false",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(!(false))",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(!(false));\nconst _:()=assert!(VALUE==true);\n"
+    },
+    {
+      "id": "negative-composed",
+      "tree": {
+        "kind": "unary",
+        "operator": "-",
+        "operand": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "3",
+            "options": {
+              "negated": false
+            }
+          }
+        }
+      },
+      "expression": "(-((2 + 3)))",
+      "nativeType": "i32",
+      "payload": "-5",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(-((2 + 3)));\nconst _:()=assert!(VALUE==-5i32);\n"
+    },
+    {
+      "id": "bit-not",
+      "tree": {
+        "kind": "unary",
+        "operator": "!",
+        "operand": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(!(7))",
+      "nativeType": "i32",
+      "payload": "-8",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(!(7));\nconst _:()=assert!(VALUE==-8i32);\n"
+    },
+    {
+      "id": "divide-zero",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "0",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 / 0)",
+      "nativeType": "i32",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_DIVIDE_BY_ZERO",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 / 0);\nconst _:()=assert!(VALUE==0i32);\n"
+    },
+    {
+      "id": "remainder-zero",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "0",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 % 0)",
+      "nativeType": "i32",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_DIVIDE_BY_ZERO",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(7 % 0);\nconst _:()=assert!(VALUE==0i32);\n"
+    },
+    {
+      "id": "bool-int",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "i32",
+        "operand": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(true as i32)",
+      "nativeType": "i32",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(true as i32);\nconst _:()=assert!(VALUE==1i32);\n"
+    },
+    {
+      "id": "int-bool-invalid",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "bool",
+        "operand": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 as bool)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": "CONSTANT_INVALID_CAST",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(2 as bool);\nconst _:()=assert!(VALUE==true);\n"
+    },
+    {
+      "id": "calibration",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 + 3)",
+      "nativeType": "i32",
+      "payload": "5",
+      "modelDiagnostic": null,
+      "valid": false,
+      "calibration": true,
+      "source": "// λ🧭 constant proof\nconst VALUE:i32=(2 + 3);\nconst _:()=assert!(VALUE==5i32);\nconst _:()=assert!(VALUE!=VALUE);\n"
+    },
+    {
+      "id": "signed-overflow",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "127i8",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1i8",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(127i8 + 1i8)",
+      "nativeType": "i8",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_OVERFLOW",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i8=(127i8 + 1i8);\nconst _:()=assert!(VALUE==0i8);\n"
+    },
+    {
+      "id": "unsigned-overflow",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "255u8",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u8",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(255u8 + 1u8)",
+      "nativeType": "u8",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_OVERFLOW",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:u8=(255u8 + 1u8);\nconst _:()=assert!(VALUE==0u8);\n"
+    },
+    {
+      "id": "narrow",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "u8",
+        "operand": {
+          "kind": "literal",
+          "token": "257i32",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(257i32 as u8)",
+      "nativeType": "u8",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:u8=(257i32 as u8);\nconst _:()=assert!(VALUE==1u8);\n"
+    },
+    {
+      "id": "signed-narrow",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "i8",
+        "operand": {
+          "kind": "literal",
+          "token": "255u32",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(255u32 as i8)",
+      "nativeType": "i8",
+      "payload": "-1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i8=(255u32 as i8);\nconst _:()=assert!(VALUE==-1i8);\n"
+    },
+    {
+      "id": "mixed-types",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "1u8",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u16",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(1u8 + 1u16)",
+      "nativeType": "u8",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_TYPE_MISMATCH",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:u8=(1u8 + 1u16);\nconst _:()=assert!(VALUE==0u8);\n"
+    },
+    {
+      "id": "shift-count",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "1u8",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "8u32",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(1u8 << 8u32)",
+      "nativeType": "u8",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_SHIFT_COUNT",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:u8=(1u8 << 8u32);\nconst _:()=assert!(VALUE==0u8);\n"
+    },
+    {
+      "id": "shift-truncates",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "255u8",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u32",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(255u8 << 1u32)",
+      "nativeType": "u8",
+      "payload": "254",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:u8=(255u8 << 1u32);\nconst _:()=assert!(VALUE==254u8);\n"
+    },
+    {
+      "id": "signed-shift-truncates",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "127i8",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1u32",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(127i8 << 1u32)",
+      "nativeType": "i8",
+      "payload": "-2",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i8=(127i8 << 1u32);\nconst _:()=assert!(VALUE==-2i8);\n"
+    },
+    {
+      "id": "bool-bitwise",
+      "tree": {
+        "kind": "binary",
+        "operator": "^",
+        "left": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(true ^ true)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=(true ^ true);\nconst _:()=assert!(VALUE==false);\n"
+    },
+    {
+      "id": "unsigned-negative",
+      "tree": {
+        "kind": "unary",
+        "operator": "-",
+        "operand": {
+          "kind": "literal",
+          "token": "1u8",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-(1u8))",
+      "nativeType": "u8",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_UNSIGNED_NEGATION",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:u8=(-(1u8));\nconst _:()=assert!(VALUE==0u8);\n"
+    },
+    {
+      "id": "grouped-minimum",
+      "tree": {
+        "kind": "unary",
+        "operator": "-",
+        "operand": {
+          "kind": "literal",
+          "token": "128i8",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-(128i8))",
+      "nativeType": "i8",
+      "payload": "-128",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i8=(-(128i8));\nconst _:()=assert!(VALUE==-128i8);\n"
+    },
+    {
+      "id": "negate-minimum-overflow",
+      "tree": {
+        "kind": "unary",
+        "operator": "-",
+        "operand": {
+          "kind": "literal",
+          "token": "128i8",
+          "options": {
+            "negated": true
+          }
+        }
+      },
+      "expression": "(-(-128i8))",
+      "nativeType": "i8",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_OVERFLOW",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i8=(-(-128i8));\nconst _:()=assert!(VALUE==0i8);\n"
+    },
+    {
+      "id": "division-minimum-overflow",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "128i8",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1i8",
+          "options": {
+            "negated": true
+          }
+        }
+      },
+      "expression": "(-128i8 / -1i8)",
+      "nativeType": "i8",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_DIVISION_OVERFLOW",
+      "valid": false,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i8=(-128i8 / -1i8);\nconst _:()=assert!(VALUE==0i8);\n"
+    },
+    {
+      "id": "negative-peer-comparison",
+      "tree": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "unary",
+          "operator": "-",
+          "operand": {
+            "kind": "literal",
+            "token": "1i8",
+            "options": {
+              "negated": false
+            }
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false,
+            "expectedType": "i8"
+          }
+        }
+      },
+      "expression": "((-(1i8)) < 2)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=((-(1i8)) < 2);\nconst _:()=assert!(VALUE==true);\n"
+    },
+    {
+      "id": "composed-peer-comparison",
+      "tree": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "1i8",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false,
+              "expectedType": "i8"
+            }
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false,
+            "expectedType": "i8"
+          }
+        }
+      },
+      "expression": "((1i8 + 2) < 3)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:bool=((1i8 + 2) < 3);\nconst _:()=assert!(VALUE==false);\n"
+    },
+    {
+      "id": "source-method-return",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false,
+            "expectedType": "i8"
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false,
+            "expectedType": "i8"
+          }
+        }
+      },
+      "expression": "(1 + 2)",
+      "nativeType": "i8",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "// λ🧭 constant proof\nconst VALUE:i8=(1 + 2);\nconst _:()=assert!(VALUE==3i8);\nconst fn mirror()->i8 { 1 + 2 }\nconst _:()=assert!(mirror()==VALUE);\n",
+      "sourceFunction": "mirror"
+    }
+  ],
+  "gdscript": [
+    {
+      "id": "add",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 + 5)",
+      "nativeType": "int",
+      "payload": "12",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 + 5)\nconst CHECK=1 / int(VALUE==12)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "subtract",
+      "tree": {
+        "kind": "binary",
+        "operator": "-",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 - 5)",
+      "nativeType": "int",
+      "payload": "2",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 - 5)\nconst CHECK=1 / int(VALUE==2)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "multiply",
+      "tree": {
+        "kind": "binary",
+        "operator": "*",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "5",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 * 5)",
+      "nativeType": "int",
+      "payload": "35",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 * 5)\nconst CHECK=1 / int(VALUE==35)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "divide",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 / 2)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 / 2)\nconst CHECK=1 / int(VALUE==3)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "remainder",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 % 2)",
+      "nativeType": "int",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 % 2)\nconst CHECK=1 / int(VALUE==1)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "and",
+      "tree": {
+        "kind": "binary",
+        "operator": "&",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 & 3)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 & 3)\nconst CHECK=1 / int(VALUE==3)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "or",
+      "tree": {
+        "kind": "binary",
+        "operator": "|",
+        "left": {
+          "kind": "literal",
+          "token": "4",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(4 | 3)",
+      "nativeType": "int",
+      "payload": "7",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(4 | 3)\nconst CHECK=1 / int(VALUE==7)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "xor",
+      "tree": {
+        "kind": "binary",
+        "operator": "^",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 ^ 3)",
+      "nativeType": "int",
+      "payload": "4",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 ^ 3)\nconst CHECK=1 / int(VALUE==4)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "shift-left",
+      "tree": {
+        "kind": "binary",
+        "operator": "<<",
+        "left": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(3 << 2)",
+      "nativeType": "int",
+      "payload": "12",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(3 << 2)\nconst CHECK=1 / int(VALUE==12)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "shift-right",
+      "tree": {
+        "kind": "binary",
+        "operator": ">>",
+        "left": {
+          "kind": "literal",
+          "token": "12",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(12 >> 2)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(12 >> 2)\nconst CHECK=1 / int(VALUE==3)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "negative-division",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 / 2)",
+      "nativeType": "int",
+      "payload": "-3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(-7 / 2)\nconst CHECK=1 / int(VALUE==-3)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "negative-remainder",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 % 2)",
+      "nativeType": "int",
+      "payload": "-1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(-7 % 2)\nconst CHECK=1 / int(VALUE==-1)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "composed",
+      "tree": {
+        "kind": "binary",
+        "operator": "*",
+        "left": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "7",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "5",
+            "options": {
+              "negated": false
+            }
+          }
+        },
+        "right": {
+          "kind": "binary",
+          "operator": "-",
+          "left": {
+            "kind": "literal",
+            "token": "9",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false
+            }
+          }
+        }
+      },
+      "expression": "((7 + 5) * (9 - 2))",
+      "nativeType": "int",
+      "payload": "84",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=((7 + 5) * (9 - 2))\nconst CHECK=1 / int(VALUE==84)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "compare-eq",
+      "tree": {
+        "kind": "binary",
+        "operator": "==",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 == 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(2 == 7)\nconst CHECK=1 / int(VALUE==false)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "compare-ne",
+      "tree": {
+        "kind": "binary",
+        "operator": "!=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 != 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(2 != 7)\nconst CHECK=1 / int(VALUE==true)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "compare-lt",
+      "tree": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 < 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(2 < 7)\nconst CHECK=1 / int(VALUE==true)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "compare-le",
+      "tree": {
+        "kind": "binary",
+        "operator": "<=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 <= 7)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(2 <= 7)\nconst CHECK=1 / int(VALUE==true)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "compare-gt",
+      "tree": {
+        "kind": "binary",
+        "operator": ">",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 > 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(2 > 7)\nconst CHECK=1 / int(VALUE==false)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "compare-ge",
+      "tree": {
+        "kind": "binary",
+        "operator": ">=",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 >= 7)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(2 >= 7)\nconst CHECK=1 / int(VALUE==false)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "bool-equal",
+      "tree": {
+        "kind": "binary",
+        "operator": "==",
+        "left": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "false",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(true == false)",
+      "nativeType": "bool",
+      "payload": "false",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(true == false)\nconst CHECK=1 / int(VALUE==false)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "not-bool",
+      "tree": {
+        "kind": "unary",
+        "operator": "!",
+        "operand": {
+          "kind": "literal",
+          "token": "false",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(not (false))",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(not (false))\nconst CHECK=1 / int(VALUE==true)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "negative-composed",
+      "tree": {
+        "kind": "unary",
+        "operator": "-",
+        "operand": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "3",
+            "options": {
+              "negated": false
+            }
+          }
+        }
+      },
+      "expression": "(-((2 + 3)))",
+      "nativeType": "int",
+      "payload": "-5",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(-((2 + 3)))\nconst CHECK=1 / int(VALUE==-5)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "bit-not",
+      "tree": {
+        "kind": "unary",
+        "operator": "~",
+        "operand": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(~(7))",
+      "nativeType": "int",
+      "payload": "-8",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(~(7))\nconst CHECK=1 / int(VALUE==-8)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "divide-zero",
+      "tree": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "0",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 / 0)",
+      "nativeType": "int",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_DIVIDE_BY_ZERO",
+      "valid": false,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 / 0)\nconst CHECK=1 / int(VALUE==0)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "remainder-zero",
+      "tree": {
+        "kind": "binary",
+        "operator": "%",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "0",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(7 % 0)",
+      "nativeType": "int",
+      "payload": "0",
+      "modelDiagnostic": "CONSTANT_DIVIDE_BY_ZERO",
+      "valid": false,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(7 % 0)\nconst CHECK=1 / int(VALUE==0)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "bool-int",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "int",
+        "operand": {
+          "kind": "literal",
+          "token": "true",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "int(true)",
+      "nativeType": "int",
+      "payload": "1",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=int(true)\nconst CHECK=1 / int(VALUE==1)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "int-bool",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "bool",
+        "operand": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "bool(2)",
+      "nativeType": "bool",
+      "payload": "true",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=bool(2)\nconst CHECK=1 / int(VALUE==true)\nconst TYPE_CHECK=1 / int(VALUE is bool)\n"
+    },
+    {
+      "id": "calibration",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "3",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(2 + 3)",
+      "nativeType": "int",
+      "payload": "5",
+      "modelDiagnostic": null,
+      "valid": false,
+      "calibration": true,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(2 + 3)\nconst CHECK=1 / int(VALUE==5)\nconst TYPE_CHECK=1 / int(VALUE is int)\nconst WRONG=1 / int(VALUE!=VALUE)\n"
+    },
+    {
+      "id": "signed-wrap",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "9223372036854775807",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(9223372036854775807 + 1)",
+      "nativeType": "int",
+      "payload": "-9223372036854775808",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(9223372036854775807 + 1)\nconst CHECK=1 / int(VALUE==(-9223372036854775807 - 1))\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "negative-shift",
+      "tree": {
+        "kind": "binary",
+        "operator": ">>",
+        "left": {
+          "kind": "literal",
+          "token": "7",
+          "options": {
+            "negated": true
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-7 >> 1)",
+      "nativeType": "int",
+      "payload": "-4",
+      "modelDiagnostic": "CONSTANT_SHIFT_NEGATIVE_OPERAND",
+      "valid": false,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(-7 >> 1)\nconst CHECK=1 / int(VALUE==-4)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "identity-convert",
+      "tree": {
+        "kind": "convert",
+        "nativeType": "int",
+        "operand": {
+          "kind": "binary",
+          "operator": "+",
+          "left": {
+            "kind": "literal",
+            "token": "2",
+            "options": {
+              "negated": false
+            }
+          },
+          "right": {
+            "kind": "literal",
+            "token": "3",
+            "options": {
+              "negated": false
+            }
+          }
+        }
+      },
+      "expression": "int((2 + 3))",
+      "nativeType": "int",
+      "payload": "5",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=int((2 + 3))\nconst CHECK=1 / int(VALUE==5)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "grouped-hex-negative",
+      "tree": {
+        "kind": "unary",
+        "operator": "-",
+        "operand": {
+          "kind": "literal",
+          "token": "0x8000000000000000",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(-(0x8000000000000000))",
+      "nativeType": "int",
+      "payload": "-9223372036854775807",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(-(0x8000000000000000))\nconst CHECK=1 / int(VALUE==-9223372036854775807)\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "direct-hex-negative",
+      "tree": {
+        "kind": "literal",
+        "token": "0x8000000000000000",
+        "options": {
+          "negated": true
+        }
+      },
+      "expression": "-0x8000000000000000",
+      "nativeType": "int",
+      "payload": "-9223372036854775808",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=-0x8000000000000000\nconst CHECK=1 / int(VALUE==(-9223372036854775807 - 1))\nconst TYPE_CHECK=1 / int(VALUE is int)\n"
+    },
+    {
+      "id": "source-method-return",
+      "tree": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "token": "1",
+          "options": {
+            "negated": false
+          }
+        },
+        "right": {
+          "kind": "literal",
+          "token": "2",
+          "options": {
+            "negated": false
+          }
+        }
+      },
+      "expression": "(1 + 2)",
+      "nativeType": "int",
+      "payload": "3",
+      "modelDiagnostic": null,
+      "valid": true,
+      "calibration": false,
+      "source": "# λ🧭 constant proof\nextends RefCounted\nconst VALUE=(1 + 2)\nconst CHECK=1 / int(VALUE==3)\nconst TYPE_CHECK=1 / int(VALUE is int)\nfunc mirror()->int:\n\treturn 1 + 2\n",
+      "sourceFunction": "mirror"
+    }
+  ]
+}

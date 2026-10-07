@@ -1,0 +1,23 @@
+# Shared native scalar literal contract
+
+`nativeScalarLiteral` supplies immutable exact Boolean/integer facts for Rust, C++ and GDScript. Integer payloads use decimal strings, never JavaScript Number rounding. Facts retain authored tokens, native type/width/signedness, adjacent negative spelling and native warning tags. They are analysis-only and do not grant graph admission. Arbitrary unary/operator expressions, assigned conversions, strings/floats, type inference beyond the supplied Rust integer context and full values/effects remain required.
+
+| Pinned profile | Type/value policy | Independent proof |
+|---|---|---|
+| rustc1.99 edition2021, Windows MSVC pointer64 | Explicit signed/unsigned widths through128 and isize/usize; unsuffixed context or i32 fallback; exact bases/separators, range rejection and directly negated signed minima; unsigned negation/context mismatch reject | Trusted const value assertions, exact suffix/context function type contrasts and uncontextualized fallback size/value assertions |
+| Clang19.1.5 C++17 Windows MSVC LLP64 | Decimal versus nondecimal candidate lists, U/L/LL suffixes, apostrophe separators, exact int/long32/long-long64 distinctions, unsigned negative modular result. Clang accepts a too-wide signed decimal as unsigned-long-long with an extension warning | `static_assert` exact `decltype` and value comparisons, without includes/link/execution |
+| Godot4.5.2 | int64, decimal/binary/hex and underscores; directly signed based overflow saturates with a native diagnostic. The pinned decimal converter can wrap a 19-digit overflow and saturate when its later-digit guard fires; source spelling/leading zeros affect this boundary | Constant value and `is int`/`is bool` assertions encoded as constant zero-division checks in isolated `--check-only` compilation |
+
+References: [Rust literals](https://doc.rust-lang.org/reference/expressions/literal-expr.html), [C++ integer literal type lists](https://eel.is/c++draft/tab:lex.icon.type), [Godot int](https://docs.godotengine.org/en/4.5/classes/class_int.html), [Godot4.5.2 tokenizer](https://github.com/godotengine/godot/blob/4.5.2-stable/modules/gdscript/gdscript_tokenizer.cpp) and [integer converters](https://github.com/godotengine/godot/blob/4.5.2-stable/core/string/ustring.cpp). The exact installed compiler/engine observations govern these profiles; do not replace them with inferred cross-language behavior or generic overflow assumptions.
+
+## Compiler packet and acceptance
+
+`tools/native_scalar_cases.json`, authored by the checked-in fixture writer independently of the evaluator, includes exact UTF-8/LF compiler inputs. `native-scalars` explicitly pins the existing Clang/Rust/Godot binaries and collects all raw commands, diagnostics, hashes and assertions. Three deliberately false native assertions calibrate the proof mechanisms: every compiler must reject its false value assertion. No programs execute. Like other portable native gates, it is excluded from default validation pending provisioning.
+
+October7 evidence passes 89 compiler cases:86 type/value/rejection comparisons and3 false-assertion calibrations, plus3,558 package tests and source-import public-API types. Initial package checks passed but independent native assertions rejected four proposed Godot wide-literal values. Targeted constant comparisons established signed saturation and decimal wrap behavior; the evaluator and fixtures were corrected together, with added signed minima, binary,20-digit and leading-zero cases. The expanded combined affected run passes. Prior initialization/binding/native and production/Pages/browser evidence is retained; mappings/UI/assets are unchanged.
+
+Use `bun tools/validate_batch.ts --only=packages,source-import-types,native-scalars`. A consumer-only repair may use `validate-native-scalars.ts --reuse-native`; count/hash/native-acceptance checks still apply. Compiler-input or profile changes require fresh compiler assertions.
+
+## Remaining work
+
+Connect these literal facts to complete source/graph native expression trees only after type/conversion/operator/initialization/evaluation/ownership contracts agree. Add saved-graph literal mutations and spans, visible declaration/condition mappings, inspectors, exact Code-panel output and persistence/conflict-aware reimport. Grouped negative expressions and native warnings need composed context policies; this contract's GDScript negative option describes directly authored negative literal spelling. Broader separators/extended numeric contexts, floats/strings/collections, project/host contexts, existing JS/Python/C#/Go gaps and authoritative Verse validation remain on the full eight-language objective.

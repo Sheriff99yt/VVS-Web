@@ -1,0 +1,43 @@
+# Shared declaration-group and initialization batch
+
+Continue XL-02 after [typed local admission](native_local_source_admission_contract.md) and [binding identity audit](reverse_import_binding_identity_audit.md). The next ready construct is C++ typed initialized comma declarations. Their source ownership is already retained in native-local-source-cases.json (grouped case), with pinned compiler validity and two ordered declaration identities sharing one authored group span. The current packet implements that concrete graph/IR/inspector/lifecycle gap. Its foundation and coordinated editing/worker/browser acceptance checks passed as recorded below. Wider contexts still reject atomically.
+
+## Readiness matrix
+
+| Language | Ready or retained work | Missing prerequisite / acceptance boundary |
+|---|---|---|
+| C++ | Map existing typed initialized grouped declarations and ordered child initializers; retain declaration identity and readonly/type policies | Visible group owner, child order/ports, saved analysis, native group IR/pack emission, inspector transactions, sealed admission and production/Pages lifecycle |
+| C# | Retain verified grouped integral declarations and definite-assignment mappings; reuse ownership infrastructure where contracts agree | Audit unchanged group/child spans and invalid/recovery behavior when shared IR changes; Boolean/branch and broader contexts remain separate open work |
+| Go | Retain existing typed/untyped scalar local bindings and native evidence | Grouped/package declarations and iota need their own source/native context before admission; do not reuse C++ comma spelling or policies |
+| JavaScript | Retain declaration/reference identities and existing mappings | Inventory authored multi-declarator groups and settle lexical timing/initializer effects before graph admission; do not substitute separate statements for an authored group |
+| Python | Retain existing assignment/local mappings | Multiple-target/destructuring forms require their own evaluation/ownership contract, rather than borrowing a typed comma declaration model |
+| Rust | Retain typed scalar let/shadowing/mutation mappings | Pattern/group-equivalent forms and inferred locals require native binding/type inference and projection ownership prerequisites |
+| GDScript | Retain typed var/const locals and current constant policy | Inventory applicable forms; prior-binding constant evaluation and inferred contexts need independent contracts; do not invent declaration group syntax |
+| Verse/UE6 | Keep the full authorized language/host scope | Authoritative version/host/validator access remains unresolved; continue independently ready work |
+
+## Complete ready packet
+
+1. Reuse existing source group spans and ordered declaration IDs. Extend native contrast fixtures for multiple initialized children, same-group reads, readonly groups, damaged order and unsupported deferred/implicit contexts. Retain original exact compiler inputs when unchanged.
+2. Establish one visible authored group owner with ordered declaration children. Individual variable indexes must point to their actual declaration nodes. The saved reader must reconstruct child order, initialization/read timing and actual exec/data ownership without cached types or source substitution.
+3. Extend shared declaration-group IR explicitly by native language/context. The existing DeclarationGroup printer is C#-only; its lowering consumes csharp_declaration_group. Preserve that contract and source ranges while adding C++ pack-owned punctuation/type/qualifier emission. Do not enable another family by deleting its guard alone.
+4. Preserve whole-group and per-child Code-panel spans, exact authored grouping and existing C# output. Group edits coordinate type/readonly/style fields, children/indexes/ports and changed output edge types, while retaining incompatible wires for diagnostics. Membership/split/merge or deferred declarations stay blocked until their own owner/order contract exists.
+5. Admit only complete reviewed grouped modules through private seals and worker receipts after graph/native fidelity checks. Verify actual group/child invalid edits, recovery, save/reload and both reimport choices in production and Pages. Unsupported source must not return partial graphs.
+6. Run one combined affected package/web/API/native/Code-panel/build/browser packet. Native-valid unsupported contrasts remain distinct from invalid source. Record fresh versus exact retained inputs and affected repair evidence once.
+
+No fixture source is executed. This is the next shared feature packet, not a replacement for native inference, branches/loops/effects, wider values/types, projects/dependencies, existing-adapter audits or Verse. Preserve the full [master plan](code_visual_master_plan.md).
+
+## Implemented bounded packet
+
+C++ typed initialized comma declarations now have one visible native_declaration_group owner and ordered var_define children. Child indexes retain exact declaration identities; group and child source spans remain distinct. The saved reader reconstructs actual branch order, initializer timing and group type/mutability agreement. IR v20 discriminates the C++ and retained C# contracts; C++ pack templates own comma punctuation, qualifier and common authored type.
+
+The group inspector coordinates type and mutability across child nodes, variable indexes, reference ports and affected edge metadata. Editing either child type/mutability routes through its group. Names remain individual. Invalid values/writes stay wired for diagnostics and recovery. Worker and private sealed review admit complete supported groups; public analysis remains explicit opt-in.
+
+The composed acceptance fixture reads an earlier child during initialization and writes the second child after the group. Completed evidence includes native original/generated/renamed/alias/incoming sources and a rejected const-write contrast; JSON invalid-type reload/recovery; production and Pages group/child inspector edits, persistence, unchanged reimport and both conflict resolutions. Explicit runner stages: native-group-browser and native-group-pages-browser. Shared native-local browser workflows exercise C++/Rust/GDScript alongside them. All four production workflows and all four Pages workflows passed in the combined run (one group workflow plus three local workflows per artifact).
+
+Earlier foundation evidence: 4,354 package and 1,311 web tests, public API types, production build, four fresh C++ group compiler inputs plus 53 retained inputs. Lint (99 warnings), existing goldens and canonical disk extraction passed the initial packet; its other failures remain recorded, with affected foundation repairs subsequently passing. The new browser/transaction scope is not covered by that foundation evidence.
+
+## Final packet evidence
+
+C++ typed initialized comma declarations now import as a visible group owner with ordered declaration children, exact binding identities and separate group/child source spans. Saved readers reconstruct actual order and initialization; IR v20 and C++ pack templates preserve authored grouping while retaining the C# contract. Coordinated group and child type/mutability edits update indexes/ports together and retain incompatible wiring for blocking diagnostics and recovery. Sealed worker acceptance, invalid-type save/reload/recovery, individual rename, valid persistence, unchanged reimport and both conflict choices pass in production and Pages. Shared typed-local workflows also pass for C++/Rust/GDScript in both artifacts. Combined 4,355 package tests, 1,312 web tests, public API types, lint (99 existing warnings), production and Pages builds pass. Native source/Code-panel checks pass all63 inputs:6 fresh C++ composed original/generated/renamed/alias/incoming/const-write-rejection checks and57 exact retained inputs. Earlier foundation compiled4 group inputs while retaining53; initial goldens/canonical disk extraction passed and remain retained. No fixture source executes. This closes only the supported C++ group packet; inferred/deferred/default bindings, membership/split/merge, conversions, broader control/effects/types/projects, existing-adapter audits and authoritative Verse access remain open. The full eight-language goal remains active.
+
+Continue [the shared inference/initialization batch](native_inferred_initialization_batch.md). No inferred/default/deferred source is admitted by the group packet. The readiness matrix above records the acceptance requirements met for this C++ packet and the prerequisites still required by other language constructs.

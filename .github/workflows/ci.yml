@@ -44,9 +44,30 @@ jobs:
         working-directory: packages/syntax-registry
         run: bun test
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify reverse-import coverage ledger
+        run: bun packages/source-import/scripts/report-expansion.ts && bun packages/source-import/scripts/report-coverage.ts
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.4'
+
       - name: Source import tests
         working-directory: packages/source-import
         run: bun test
+
+      - name: Native Go reverse-import conformance
+        run: bun packages/source-import/scripts/validate-go-native.ts
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.310'
+
+      - name: Native C# semantic preflight
+        run: bun packages/source-import/scripts/validate-csharp-native.ts
 
       - name: Tree-sitter parse validation (strict)
         working-directory: packages/syntax-packs

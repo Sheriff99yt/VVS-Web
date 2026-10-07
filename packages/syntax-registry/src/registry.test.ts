@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'bun:test';
 import { expandProjectSymbols, inferKindIdFromLabel, list } from './registry';
+import parameterProject from '../../transpiler/test/csharp-parameter-write.fixture.json';
+import type { FunctionSymbol } from '@vvs/graph-types';
+
+test('parameter Set catalog rows bind distinct slots in the current function only', () => {
+  const functions = parameterProject.functions as FunctionSymbol[];
+  const rows = (currentGraphId: string, targetLanguage: 'csharp' | 'python' = 'csharp') => list({ currentGraphId, targetLanguage, functions }).flatMap(category => category.items).filter(item => item.kindId === 'parameter_set');
+  expect(rows(functions[0].id).map(item => item.graphBinding?.parameterId)).toEqual(functions[0].overloads[0].parameters.map(parameter => parameter.id));
+  expect(rows('main-graph')).toEqual([]);
+  expect(rows(functions[0].id, 'python')).toEqual([]);
+});
 
 describe('inferKindIdFromLabel', () => {
   test('resolves declare function and event templates', () => {

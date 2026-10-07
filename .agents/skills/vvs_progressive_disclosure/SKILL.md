@@ -8,6 +8,10 @@ description: >-
   chrome in apps/web.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Show Data When Needed (VVS)
 
 **Principle:** The default view is the **task surface** (graph canvas, primary action). Secondary data appears only when the user asks, when selection demands it, or when a workflow event makes it relevant.

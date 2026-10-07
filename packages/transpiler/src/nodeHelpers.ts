@@ -2,6 +2,7 @@ import type { PinType, VVSNodeData } from '@vvs/graph-types';
 import type { ProjectEventDefinition, SymbolParameter } from '@vvs/graph-types';
 import { normalizeGraphNodeData as normalizeGraphNodeDataCore, resolveGraphNodeKindId } from '@vvs/graph-types';
 import { resolve as resolveKind } from '@vvs/syntax-registry';
+import { NATIVE_EXPRESSION_KINDS, nativeExpressionPins, nativeExpressionOutputType, nativeExpressionSettings } from '@vvs/graph-types';
 
 export { resolveNodeKindId } from '@vvs/syntax-registry';
 
@@ -12,6 +13,7 @@ export function getNodeKindDefinition(kindId: string) {
 export function getVariableName(data: VVSNodeData): string | undefined {
   const fromProps = data.properties?.variableName;
   if (typeof fromProps === 'string' && fromProps.trim()) return fromProps.trim();
+  if (data.kindId === 'var_define' && typeof data.properties?.name === 'string' && data.properties.name.trim()) return data.properties.name.trim();
   if (data.label.startsWith('Get ')) return data.label.slice(4).trim();
   if (data.label.startsWith('Set ')) return data.label.slice(4).trim();
   return undefined;
@@ -41,8 +43,12 @@ export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
     if (inferred) properties.variableName = inferred;
   }
 
+  if (NATIVE_EXPRESSION_KINDS.includes(kindId as typeof NATIVE_EXPRESSION_KINDS[number])) {
+    const settings = nativeExpressionSettings({ ...core, properties });
+    if (!['array', 'object', 'list', 'tuple', 'set', 'dict'].includes(settings.form)) properties.operandCount = nativeExpressionPins(settings).length;
+  }
   const inlineValues = { ...core.inlineValues };
-  const inputs = core.inputs.length > 0 ? core.inputs : def?.inputs ?? core.inputs;
+  const inputs = NATIVE_EXPRESSION_KINDS.includes(kindId as typeof NATIVE_EXPRESSION_KINDS[number]) ? nativeExpressionPins(nativeExpressionSettings({ ...core, properties })) : core.inputs.length > 0 ? core.inputs : def?.inputs ?? core.inputs;
   for (const input of inputs) {
     if (input.type === 'execution') continue;
     if (inlineValues[input.id] === undefined) {
@@ -57,6 +63,7 @@ export function normalizeNodeData(data: VVSNodeData): VVSNodeData {
     category: core.category || def?.category || core.category,
     properties,
     inputs,
+    outputs: NATIVE_EXPRESSION_KINDS.includes(kindId as typeof NATIVE_EXPRESSION_KINDS[number]) ? core.outputs.map(pin => ({ ...pin, type: nativeExpressionOutputType(nativeExpressionSettings({ ...core, properties })) })) : core.outputs,
     inlineValues,
   };
 }

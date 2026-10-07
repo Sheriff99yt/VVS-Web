@@ -2,7 +2,7 @@
 import "fmt"
 type Hello struct {
 	var Name string = "Ada"
-func Greet() void {
+func Greet()  {
 	fmt.Println(("Hello, " + self.Name))
 }
 func (self *Hello) on_start() {

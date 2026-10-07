@@ -1,0 +1,26 @@
+import { expect, test } from 'bun:test';
+import { reviewNativeScalarImportGraph, acceptSourceImportReview, reviewSourceReimport, acceptSourceReimport } from './validation';
+import { configureNativeInventoryRuntime } from '../test/nativeInventoryRuntime';
+import { nativeRuntimeSourceFixtures } from '../test/nativeRuntimeSourceFixtures';
+configureNativeInventoryRuntime();
+for (const language of ['cpp', 'rust', 'gdscript'] as const) test(`sealed runtime source acceptance, persistence and conflict choices ${language}`, async () => {
+  const source = nativeRuntimeSourceFixtures[language], fileName = `runtime.${{ cpp: 'cpp', rust: 'rs', gdscript: 'gd' }[language]}`;
+  const review = await reviewNativeScalarImportGraph(source, language, fileName);
+  expect(review.diagnostics).toEqual([]);
+  const accepted = await acceptSourceImportReview(review, source, fileName, false, 'library');
+  expect(accepted.functions).toHaveLength(3);
+  const current = JSON.parse(JSON.stringify(accepted));
+  const literal = Object.values(current.documents).flatMap(doc => (doc as { nodes: { data: { properties?: Record<string, unknown> } }[] }).nodes).find(node => node.data.properties?.payload === '2')!;
+  literal.data.properties!.payload = '3';
+  const retained = await reviewSourceReimport(current, source, fileName);
+  expect(retained.diagnostics).toEqual([]); expect(retained.conflicts).toEqual([]);
+  expect(acceptSourceReimport(retained, current, source).documents).toEqual(current.documents);
+  const incoming = source.replace('* 2', '* 4');
+  const conflict = await reviewSourceReimport(current, incoming, fileName);
+  expect(conflict.diagnostics).toEqual([]); expect(conflict.conflicts).toHaveLength(1);
+  expect(() => acceptSourceReimport(conflict, current, incoming)).toThrow('REIMPORT_CONFLICT');
+  expect(acceptSourceReimport(conflict, current, incoming, 'keep-graph').documents).toEqual(current.documents);
+  const replacement = acceptSourceReimport(conflict, current, incoming, 'use-source');
+  expect(Object.values(replacement.documents).flatMap(doc => doc.nodes).some(node => node.data.properties?.payload === '4')).toBe(true);
+  await expect(acceptSourceImportReview({ ...review }, source, fileName, false, 'library')).rejects.toThrow('STALE_REVIEW');
+});

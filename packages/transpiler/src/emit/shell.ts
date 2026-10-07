@@ -1,5 +1,9 @@
 import type { FunctionSymbol, PinType, TargetLanguage } from '@vvs/graph-types';
 import {
+  GO_SCALAR_PINS,
+  CSHARP_RETURN_PINS,
+  nativeSignature,
+  nativeSignatureProblem,
   defaultCodegenTarget,
   eventCodegenHandlerName,
   normalizeClassForm,
@@ -15,6 +19,7 @@ import {
 } from '@vvs/syntax-packs';
 import { parameterCodegenName } from '../nodeHelpers';
 import { CodeSink } from '../codeSink';
+import { printNativeScalarFunctionHeader } from '../print/nativeScalarSignature';
 import type { IrEventHandler, IrModule } from '../ir/types';
 import { handlerBodyIndent } from '../lower/graphToIr';
 import { createPrintContext, type PrintContext } from '../print';
@@ -351,6 +356,12 @@ function functionParamList(
   lang: TargetLanguage,
   properties?: Record<string, unknown>
 ): string {
+  if (lang === 'csharp' && properties?.nativeSignatureLanguage === 'csharp') {
+    const data = { kindId: 'function_implement', label: '', category: 'Project', inlineValues: {}, properties, inputs: [], outputs: [] } as import('@vvs/graph-types').VVSNodeData;
+    if (nativeSignatureProblem(data, lang)) throw new Error('NATIVE_CSHARP_SIGNATURE_INVALID');
+    const profile = resolvePrintProfile('csharp');
+    return nativeSignature(data)!.map(parameter => renderTemplate(requireTemplate(profile, 'NativeTypedParameter', 'csharp'), { name: parameter.name, type: parameter.nativeType ?? '' }, profile.layout).text).join(', ');
+  }
   const params = overloadParamNames(func, properties);
   const overloadId = properties?.overloadId;
   const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0];
@@ -375,7 +386,7 @@ function functionParamList(
     if (binding === 'static') return typed;
     return typed ? `&mut self, ${typed}` : '&mut self';
   }
-  if (lang === 'csharp' || lang === 'verse') {
+  if (lang === 'csharp' || lang === 'verse' || lang === 'go') {
     return params
       .map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
       .join(', ');
@@ -397,12 +408,25 @@ export function functionReturnTypeName(
     overload?.returnType ||
     'void';
 
+  if (lang === 'csharp' && properties?.nativeSignatureLanguage === 'csharp') {
+    if (functionModifierProperties(func, properties).isAsync) throw new Error('NATIVE_CSHARP_SIGNATURE_CONTEXT');
+    const native = properties.nativeReturnType;
+    if (native !== 'void' && (typeof native !== 'string' || !Object.hasOwn(CSHARP_RETURN_PINS, native))) throw new Error('NATIVE_CSHARP_RETURN_TYPE');
+    return native as string;
+  }
   const isAsync = Boolean(functionModifierProperties(func, properties).isAsync);
   if (lang === 'csharp' && isAsync) {
     const baseType = raw === 'void' ? '' : typeNameForPin(raw as PinType, 'csharp');
     return baseType ? `Task<${baseType}>` : 'Task';
   }
 
+  if (lang === 'go' && properties?.nativeSignatureLanguage === 'go') {
+    const native = properties.nativeReturnType;
+    if (native === 'void') return '';
+    if (typeof native !== 'string' || !Object.hasOwn(GO_SCALAR_PINS, native)) throw new Error('NATIVE_GO_RETURN_TYPE');
+    return native;
+  }
+  if (lang === 'go') return raw === 'void' ? '' : typeNameForPin(raw as PinType, lang);
   if (raw === 'void') return 'void';
   if (lang === 'cpp' || lang === 'csharp') {
     return typeNameForPin(raw as PinType, lang);
@@ -527,7 +551,7 @@ function constructorParamSlots(
   const overload = func.overloads.find((o) => o.id === overloadId) ?? func.overloads[0];
   const overloadParams = overload?.parameters ?? [];
   const typed =
-    lang === 'cpp' || lang === 'csharp' || lang === 'verse' || lang === 'rust'
+    lang === 'cpp' || lang === 'csharp' || lang === 'verse' || lang === 'go' || lang === 'rust'
       ? params.map((p, i) => typedParamFragment(p, overloadParams[i]?.type, lang))
       : params;
   const paramList = typed.join(', ');
@@ -539,8 +563,22 @@ export function renderFunctionDefHeader(
   lang: TargetLanguage,
   isAsync = false,
   properties?: Record<string, unknown>,
-  className?: string
+  className?: string,
+  nativeParamList?: string
 ): string {
+  if (['cpp', 'rust', 'gdscript'].includes(lang) && properties?.nativeSignatureLanguage === lang) {
+    const context = functionModifierProperties(func, properties);
+    if (isAsync || context.isAsync || context.isVirtual || context.isOverride || context.isAbstract || functionRoleOf(properties) !== 'function' || ['cpp', 'rust'].includes(lang) && func.binding !== 'module') throw new Error('NATIVE_SCALAR_SIGNATURE_CONTEXT');
+    if (!Array.isArray(properties.nativeParameters) || properties.nativeParameters.some(parameter => !parameter || typeof parameter !== 'object' || parameter.defaultPin !== undefined || parameter.defaultExpression !== undefined || parameter.mode !== undefined && parameter.mode !== 'positional')) throw new Error('NATIVE_SCALAR_SIGNATURE_PARAMETERS');
+    const signature = {
+      language: lang as import('@vvs/graph-types').NativeScalarLanguage, name: func.name,
+      parameters: properties.nativeParameters as import('@vvs/graph-types').NativeScalarParameter[],
+      authoredReturnType: properties.nativeAuthoredReturnType as string, nativeReturnType: properties.nativeReturnType as string,
+    };
+    const modifiers = properties.nativeModifiers;
+    if (modifiers !== undefined && (!Array.isArray(modifiers) || modifiers.some(value => typeof value !== 'string'))) throw new Error('NATIVE_SCALAR_SIGNATURE_MODIFIERS');
+    return printNativeScalarFunctionHeader(signature, 'definition', { modifiers: modifiers as string[] | undefined, explicitUnitReturn: properties.nativeExplicitUnitReturn === true }).text;
+  }
   const merged = functionModifierProperties(func, properties);
   const mods = resolveModifierSlots(lang, merged, func.visibility);
   const role = functionRoleOf(merged);
@@ -585,7 +623,7 @@ export function renderFunctionDefHeader(
     prefix: Object.values(mods).join(''),
     returnType: functionReturnTypeName(func, lang, { ...merged, isAsync: wantAsync }),
     name: func.name,
-    paramList: functionParamList(func, lang, properties),
+    paramList: nativeParamList ?? functionParamList(func, lang, properties),
   });
 }
 
@@ -680,8 +718,8 @@ export function renderFunctionOutOfLineClose(lang: TargetLanguage): string {
 }
 
 /** File-owned JS function shell. The visible Define owns the entire declaration. */
-export function renderJavaScriptModuleFunctionHeader(func: FunctionSymbol, properties?: Record<string, unknown>, isAsync = false): string {
-  return renderShell('javascript', 'ModuleFunctionDefOpen', { asyncKw: isAsync ? 'async ' : '', name: func.name, paramList: functionParamList(func, 'javascript', properties) });
+export function renderJavaScriptModuleFunctionHeader(func: FunctionSymbol, properties?: Record<string, unknown>, isAsync = false, nativeParamList?: string): string {
+  return renderShell('javascript', 'ModuleFunctionDefOpen', { exportKw: properties?.isExported === true ? 'export ' : '', asyncKw: isAsync ? 'async ' : '', name: func.name, paramList: nativeParamList ?? functionParamList(func, 'javascript', properties) });
 }
 export function renderJavaScriptModuleFunctionClose(): string {
   return renderShell('javascript', 'ModuleFunctionDefClose', {});

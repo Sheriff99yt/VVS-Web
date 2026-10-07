@@ -10,17 +10,23 @@ export function resolveVariableForNode(
   data: VVSNodeData,
   variables: VariableSymbol[]
 ): VariableSymbol | undefined {
+  if (data.graphBinding?.kind === 'variable_ref') {
+    return typeof data.graphBinding.symbolId === 'string'
+      ? variables.find(variable => variable.id === data.graphBinding!.symbolId) : undefined;
+  }
+  if (data.graphBinding && ['variable_get', 'variable_set'].includes(resolveNodeKindId(data))) return undefined;
   const symbolId =
-    data.graphBinding?.kind === 'variable_ref'
-      ? data.graphBinding.symbolId
+    resolveNodeKindId(data) === 'var_define' && typeof data.properties?.symbolId === 'string'
+        ? data.properties.symbolId
       : undefined;
-  if (symbolId) {
+  if (symbolId !== undefined) {
     return variables.find((v) => v.id === symbolId);
   }
   const name =
     typeof data.properties?.variableName === 'string' ? data.properties.variableName : undefined;
   if (name) {
-    return variables.find((v) => v.name === name);
+    const matches = variables.filter((v) => v.name === name);
+    return matches.length === 1 ? matches[0] : undefined;
   }
   return undefined;
 }
@@ -99,7 +105,7 @@ export function syncVariableNodesForSymbol(
       data.graphBinding?.kind === 'variable_ref' && data.graphBinding.symbolId === variable.id;
     const legacyName =
       typeof data.properties?.variableName === 'string' ? data.properties.variableName : undefined;
-    if (!bound && legacyName !== variable.name) return node;
+    if (data.graphBinding ? !bound : legacyName !== variable.name) return node;
 
     const kindId = resolveNodeKindId(data);
     if (kindId === 'variable_get') {

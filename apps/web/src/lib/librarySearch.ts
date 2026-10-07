@@ -6,16 +6,17 @@
 
 export function tokenizeLibrarySearch(query: string): string[] {
   return query
-    .toLowerCase()
-    .split(/[^a-z0-9.+#-]+/i)
+    .normalize('NFKC').toLowerCase()
+    .replace(/\bc\+\+/g, 'cpp').replace(/\bc#/g, 'csharp').replace(/\bjs\b/g, 'javascript')
+    .split(/[^\p{L}\p{N}.+#-]+/u)
     .map((token) => token.trim())
     .filter((token) => token.length > 0);
 }
 
 export function matchesLibrarySearch(haystack: string, query: string): boolean {
   const tokens = tokenizeLibrarySearch(query);
-  if (tokens.length === 0) return true;
-  const hay = haystack.toLowerCase();
+  if (tokens.length === 0) return !query.trim();
+  const hay = tokenizeLibrarySearch(haystack).join(' ');
   return tokens.every((token) => hay.includes(token));
 }
 
@@ -43,8 +44,7 @@ export function filterEnvironmentsBySearch<T extends LibrarySearchEnvironment>(
   environments: T[],
   query: string
 ): T[] {
-  const tokens = tokenizeLibrarySearch(query);
-  if (tokens.length === 0) return environments;
+  if (!query.trim()) return environments;
   return environments.filter((env) => matchesLibrarySearch(environmentSearchHaystack(env), query));
 }
 
@@ -63,11 +63,13 @@ export function filterGitReposBySearch<T extends LibrarySearchGitRepo>(
   repos: T[],
   query: string
 ): T[] {
-  if (tokenizeLibrarySearch(query).length === 0) return repos;
+  if (!query.trim()) return repos;
   return repos.filter((repo) => matchesLibrarySearch(gitRepoSearchHaystack(repo), query));
 }
 
 export interface LibrarySearchAsset {
+  id?: string;
+  author?: string;
   title: string;
   description: string;
   type: string;
@@ -76,7 +78,7 @@ export interface LibrarySearchAsset {
 }
 
 export function libraryAssetSearchHaystack(asset: LibrarySearchAsset): string {
-  return [asset.title, asset.description, asset.type, asset.environmentCategory ?? '', ...asset.tags].join(
+  return [asset.id ?? '', asset.author ?? '', asset.title, asset.description, asset.type, asset.environmentCategory ?? '', ...asset.tags].join(
     ' '
   );
 }
@@ -85,7 +87,7 @@ export function filterLibraryAssetsBySearch<T extends LibrarySearchAsset>(
   assets: T[],
   query: string
 ): T[] {
-  if (tokenizeLibrarySearch(query).length === 0) return assets;
+  if (!query.trim()) return assets;
   return assets.filter((asset) => matchesLibrarySearch(libraryAssetSearchHaystack(asset), query));
 }
 

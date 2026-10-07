@@ -9,7 +9,7 @@ import type {
 } from '@vvs/graph-types';
 
 /** Structured IR schema version (semver major). */
-export const IR_VERSION = 3;
+export const IR_VERSION = 21;
 
 export type IrStmtKind =
   | 'DeclareLocal'
@@ -21,8 +21,11 @@ export type IrStmtKind =
   | 'WhileLoop'
   | 'Switch'
   | 'Sequence'
+  | 'ScopeBlock'
+  | 'DeclarationGroup'
   | 'Print'
   | 'Return'
+  | 'LanguageDirective'
   | 'Break'
   | 'Continue'
   | 'EventHandler'
@@ -47,10 +50,12 @@ export interface IrBase {
 // ── Expression IR (language-neutral) ────────────────────────────────────────
 
 export type IrExprKind =
+  | 'NativeExpression'
   | 'Literal'
   | 'InstanceRef'
   | 'LocalRef'
   | 'BinaryOp'
+  | 'Comparison'
   | 'ConvertToString'
   | 'ConvertToNumber'
   | 'GetInputTemp'
@@ -88,6 +93,14 @@ export interface IrBinaryOp extends IrExprBase {
   right: IrExpr;
 }
 
+export interface IrComparison extends IrExprBase {
+  kind: 'Comparison';
+  operator: '===' | '!==' | '==' | '!=' | '<' | '<=' | '>' | '>=';
+  mode: 'js-strict' | 'number' | 'string' | 'boolean';
+  left: IrExpr;
+  right: IrExpr;
+}
+
 export interface IrConvertToString extends IrExprBase {
   kind: 'ConvertToString';
   value: IrExpr;
@@ -96,6 +109,7 @@ export interface IrConvertToString extends IrExprBase {
 export interface IrConvertToNumber extends IrExprBase {
   kind: 'ConvertToNumber';
   value: IrExpr;
+  numberMode?: 'number' | 'parseFloat';
 }
 
 export interface IrGetInputTemp extends IrExprBase {
@@ -122,19 +136,23 @@ export interface IrCallExpr extends IrExprBase {
   kind: 'CallExpr';
   calleeName: string;
   args?: IrExpr[];
+  argumentNames?: string[];
   instanceCall: boolean;
   targetClassName?: string;
   crossClass?: boolean;
   inheritedDepth?: number;
   isSuper?: boolean;
+  isSuperConstructor?: boolean;
   parentClassName?: string;
 }
 
 export type IrExpr =
+  | IrNativeExpression
   | IrLiteral
   | IrInstanceRef
   | IrLocalRef
   | IrBinaryOp
+  | IrComparison
   | IrConvertToString
   | IrConvertToNumber
   | IrGetInputTemp
@@ -142,12 +160,19 @@ export type IrExpr =
   | IrLambda
   | IrCallExpr;
 
+export interface IrNativeExpression extends IrExprBase {
+  kind: 'NativeExpression';
+  settings: import('@vvs/graph-types').NativeExpressionSettings;
+  operands: IrExpr[];
+}
+
 // ── Structured statement IR ─────────────────────────────────────────────────
 
 export interface IrCallFunction extends IrBase {
   kind: 'CallFunction';
   calleeName: string;
   args?: IrExpr[];
+  argumentNames?: string[];
   /** When true, emit as instance method call (self/this receiver). */
   instanceCall: boolean;
   /** Owning class module name when calling across class boundaries. */
@@ -157,6 +182,7 @@ export interface IrCallFunction extends IrBase {
   inheritedDepth?: number;
   /** Call the parent implementation (`super.Foo` / `Parent::Foo` / `self.base.Foo`). */
   isSuper?: boolean;
+  isSuperConstructor?: boolean;
   /** Parent class name for languages that qualify Super (`Parent::Foo`, `self.Parent.Foo`). */
   parentClassName?: string;
 }
@@ -171,6 +197,13 @@ export interface IrDeclareLocal extends IrBase {
   name: string;
   variableType: string;
   defaultValue?: unknown;
+  initializer?: IrExpr;
+  declarationKind?: 'let' | 'const' | 'var';
+  nativeLocalStyle?: 'go-short' | 'go-var' | 'go-const' | 'csharp-typed' | 'csharp-var' | 'csharp-const' | 'cpp-scalar' | 'rust-scalar' | 'gdscript-scalar';
+  nativeType?: import('@vvs/graph-types').GoScalarType | import('@vvs/graph-types').CSharpIntegerType | import('@vvs/graph-types').NativeScalarSignatureType | 'untyped' | 'var';
+  nativeAuthoredType?: string;
+  nativeInferenceMode?: import('@vvs/graph-types').NativeScalarInferenceMode;
+  nativeMutable?: boolean;
 }
 
 export type AssignKind = 'variable_set' | 'get_input';
@@ -178,6 +211,7 @@ export type AssignKind = 'variable_set' | 'get_input';
 export interface IrAssignVariable extends IrBase {
   kind: 'AssignVariable';
   assignKind: AssignKind;
+  nativeLocalLanguage?: import('@vvs/graph-types').NativeScalarLanguage;
   targetName: string;
   targetBinding: 'instance' | 'local';
   /** Ancestor hops for Rust composition projection (`self.base.field =`). */
@@ -185,6 +219,8 @@ export interface IrAssignVariable extends IrBase {
   value?: IrExpr;
   inputKind?: 'text' | 'number';
   prompt?: IrExpr;
+  operator?: '=' | '+=' | '-=' | '*=' | '/=' | '++' | '--' | '%=' | '&=' | '|=' | '^=' | '&^=' | '<<=' | '>>=' | '>>>=';
+  prefix?: boolean;
 }
 
 export interface IrIfBranch extends IrBase {
@@ -200,6 +236,8 @@ export interface IrForLoop extends IrBase {
   first: IrExpr;
   last: IrExpr;
   body: IrStatement[];
+  header?: { initializer: IrDeclareLocal; condition: IrExpr; update: IrAssignVariable };
+  range?: { args: IrExpr[]; indexNodeId: string };
 }
 
 export interface IrForEach extends IrBase {
@@ -244,6 +282,20 @@ export interface IrSequence extends IrBase {
   steps: IrStatement[][];
 }
 
+/** One authored lexical block; overflow context never introduces hidden casts. */
+export interface IrScopeBlock extends IrBase {
+  kind: 'ScopeBlock';
+  overflowContext: 'default' | 'checked' | 'unchecked';
+  body: IrStatement[];
+}
+
+export type IrDeclarationGroup = IrBase & {
+  kind: 'DeclarationGroup';
+  isConst: boolean;
+  body: IrDeclareLocal[];
+} & ({ nativeLanguage: 'cpp'; nativeType: import('@vvs/graph-types').NativeScalarSignatureType; nativeAuthoredType: string; nativeInferenceMode?: 'cpp-auto' }
+  | { nativeLanguage?: undefined; nativeType: import('@vvs/graph-types').CSharpIntegerType; nativeAuthoredType?: undefined });
+
 export interface IrDispatchEvent extends IrBase {
   kind: 'DispatchEvent';
   handlerName: string;
@@ -254,6 +306,7 @@ export interface IrDispatchEvent extends IrBase {
   targetClassName?: string;
   /** Dispatch the parent handler (`super.on_Foo` / `Parent::on_Foo`). */
   isSuper?: boolean;
+  isSuperConstructor?: boolean;
   parentClassName?: string;
 }
 
@@ -322,6 +375,7 @@ export interface IrCallNative extends IrBase {
 
 export interface IrReturn extends IrBase {
   kind: 'Return';
+  nativeStyle?: 'rust-tail';
   value?: IrExpr;
   values?: IrExpr[];
 }
@@ -356,6 +410,8 @@ export interface IrYield extends IrBase {
   value?: IrExpr;
 }
 
+export interface IrLanguageDirective extends IrBase { kind: 'LanguageDirective'; value: string }
+
 export type IrStructuredStatement =
   | IrCallFunction
   | IrAssignVariable
@@ -365,8 +421,11 @@ export type IrStructuredStatement =
   | IrWhileLoop
   | IrSwitch
   | IrSequence
+  | IrScopeBlock
+  | IrDeclarationGroup
   | IrPrint
   | IrReturn
+  | IrLanguageDirective
   | IrBreak
   | IrContinue
   | IrDispatchEvent
@@ -403,6 +462,8 @@ export interface IrStartEvent {
 
 /** Canvas-ordered member declaration from define nodes on the class graph. */
 export type IrMemberDecl =
+  | { kind: 'PackageDecl'; sourceGraphNodeId: string; name: string; wordBits?: import('@vvs/graph-types').GoWordBits }
+  | IrLanguageDirective
   | {
       kind: 'ClassDecl';
       sourceGraphNodeId: string;
@@ -418,6 +479,7 @@ export type IrMemberDecl =
     }
   | {
       kind: 'FunctionDecl';
+      nativeParameters?: (import('@vvs/graph-types').NativeParameter & { defaultExpression?: IrExpr })[];
       sourceGraphNodeId: string;
       /** Canvas `function_define` (Declare) — maps to prototype or U66 `(x)` only. */
       declareSourceGraphNodeId?: string;

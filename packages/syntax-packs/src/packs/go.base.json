@@ -26,7 +26,7 @@
       "quasi": "self.{target} = {value}"
     },
     "AssignLocal": {
-      "quasi": "{target} := {value}"
+      "quasi": "{target} = {value}"
     },
     "CallInstance": {
       "quasi": "self.{callee}({args})"
@@ -118,6 +118,21 @@
     "VarDefine": {
       "quasi": "var {name} {type} = {default}"
     },
+    "DeclareGoShort": {
+      "quasi": "{name} := {value}"
+    },
+    "DeclareGoTyped": {
+      "quasi": "var {name} {type} = {value}"
+    },
+    "ForStructuredHeader": {
+      "quasi": "for {initializer}; {condition}; {update} {"
+    },
+    "AssignCompound": {
+      "quasi": "{target} {operator} {value}"
+    },
+    "UpdatePostfix": {
+      "quasi": "{target}{operator}"
+    },
     "DeclareLocal": {
       "quasi": "var {name} {type}"
     },
@@ -186,6 +201,33 @@
     },
     "DispatchEventSuper": {
       "quasi": "self.{parent}.on_{handler}({args})"
+    },
+    "Comparison": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "SourcePackage": {
+      "quasi": "package {name}"
+    },
+    "NativeTypedParameter": {
+      "quasi": "{name} {type}"
+    },
+    "NativeScalar": {
+      "quasi": "{value}"
+    },
+    "NativeOperatorBinary": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "NativeUnary": {
+      "quasi": "({operator}{value})"
+    },
+    "NativeNumericConversion": {
+      "quasi": "{target}({value})"
+    },
+    "DeclareGoConstant": {
+      "quasi": "const {name} = {value}"
+    },
+    "DeclareGoTypedConstant": {
+      "quasi": "const {name} {type} = {value}"
     }
   }
 }

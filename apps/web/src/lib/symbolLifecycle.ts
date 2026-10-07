@@ -10,6 +10,7 @@ import type {
 import type { GraphNode } from '@vvs/graph-types';
 import type { VVSNodeData } from '@/types/graph';
 import {
+  applyParameterSetBinding,
   collectSymbolUsages,
   mapDocuments,
   removeSymbolReferencesFromDocuments,
@@ -181,6 +182,8 @@ export function syncNodeForFunction(node: GraphNode, func: FunctionSymbol, tabId
     overloadId = tabId.split('::')[1];
   }
 
+  if (kindId === 'parameter_set') return { ...node, data: applyParameterSetBinding(node.data, func, overloadId) };
+
   if (kindId === 'function_entry') {
     return {
       ...node,
@@ -228,7 +231,8 @@ function syncNodeForEvent(node: GraphNode, event: ProjectEventDefinition): Graph
 
 export function applyVariableRenameToDocuments(
   documents: Record<string, GraphDocument>,
-  variable: VariableSymbol
+  variable: VariableSymbol,
+  declarationEdit?: { nodeId: string; properties: Record<string, unknown> }
 ): Record<string, GraphDocument> {
   const renamed = fromCoreDocuments(
     mapDocuments(asCoreDocuments(documents), (_tabId, node) => {
@@ -237,7 +241,13 @@ export function applyVariableRenameToDocuments(
       return syncNodeForVariable(node as GraphNode, variable);
     })
   );
-  return syncDefineNodesForSymbol(renamed, 'variable', variable);
+  const synced = syncDefineNodesForSymbol(renamed, 'variable', variable);
+  if (!declarationEdit) return synced;
+  const original = Object.values(documents).flatMap(doc => doc.nodes).find(node => node.id === declarationEdit.nodeId);
+  return Object.fromEntries(Object.entries(synced).map(([id, doc]) => [id, { ...doc, nodes: doc.nodes.map(node =>
+    node.id === declarationEdit.nodeId && resolveNodeKindId(node.data) === 'var_define' && node.data.properties?.symbolId === variable.id
+      ? { ...node, data: { ...node.data, ...(original ? { inputs: original.data.inputs, outputs: original.data.outputs, inlineValues: original.data.inlineValues } : {}), properties: { ...node.data.properties, ...declarationEdit.properties } } }
+      : node) }]));
 }
 
 export function applyFunctionUpdateToDocuments(

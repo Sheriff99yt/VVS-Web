@@ -1,6 +1,9 @@
 {
   "version": 1,
-  "lastUpdated": "2026-08-16",
+  "lastUpdated": "2026-10-07",
+  "latestReverseImportBatch": "Typed/Inferred mode transactions and collapsed inspectors now coordinate C++/Rust/GDScript locals and entire C++ groups, including child selections. Inference derives from actual initializer wiring without the previous declaration type as a hint; unsupported Rust constraints and GDScript inferred constants reject atomically. Typed conversion preserves incompatible body wires for recovery. Combined 4,371 package tests, 1,327 web tests, public API types, lint (99 existing warnings), production and Pages builds pass. Native Code-panel checks pass 98 inputs: 13 fresh and 85 exact retained. Production and Pages local workflows for all three languages and the C++ group workflow pass mode switches, active inferred-mode save/reload, invalid edits/recovery and both reimport choices. The final persistence-only test expansion used focused browser checks, restoring the normal production build and retaining the unchanged Pages export; compiler and unit checks were not repeated. Existing inference 28/local-body 18/initialization 45 and unchanged goldens/extraction evidence remain retained. No fixture programs execute. Automatic deduction reconciliation after initializer/operator/parameter edits, recovery-oriented flow analysis, inferred worker admission, broader language/project semantics and authoritative Verse access remain open. This is a bounded completed packet; the full goal remains active.",
+  "codeVisualMasterPlan": "docs/design/code_visual_master_plan.md",
+  "codeVisualCoverage": "docs/design/code_visual_coverage.json",
   "productDirection": "text-shaped-graphs",
   "canonicalDoc": "docs/visual_to_text_fidelity.md",
   "vocabularyDoc": "docs/design/language_neutral_vocabulary.md",
@@ -60,7 +63,7 @@
     },
     "incomplete-ui.md": {
       "role": "ui-backlog",
-      "refreshAfter": "each UI loop iteration or audit",
+      "refreshAfter": "each completed dependency batch or audit",
       "itemPrefix": "U",
       "openCount": 14
     },
@@ -72,5 +75,20 @@
       "role": "canonical-paths-and-facts",
       "mutable": true
     }
-  }
+  },
+  "nativeValueContract": "docs/design/native_value_contract.md",
+  "nativeExpressionIR": "docs/design/native_expression_ir_rfc.md",
+  "reverseImportDeliverySequence": "docs/design/reverse_import_cross_language_batches.md",
+  "agenticBatchWorkflow": "docs/agentic_batch_workflow.md",
+  "batchedDeliverySkill": ".agents/skills/vvs-batched-delivery/SKILL.md",
+  "reverseImportGoLessons": "docs/design/reverse_import_go_lessons.md",
+  "nativeSyntaxInventoryContract": "docs/design/native_syntax_inventory_contract.md",
+  "nativeLocalBindingContract": "docs/design/native_local_binding_contract.md",
+  "nativeLocalGraphCodePanelContract": "docs/design/native_local_graph_code_panel_contract.md",
+  "nativeLocalTransactionContract": "docs/design/native_local_transaction_contract.md",
+  "nativeLocalSourceAdmissionContract": "docs/design/native_local_source_admission_contract.md",
+  "reverseImportBindingIdentityAudit": "docs/design/reverse_import_binding_identity_audit.md",
+  "nextReverseImportBatch": "docs/design/native_inferred_initialization_batch.md",
+  "nativeDeclarationGroupsBatch": "docs/design/native_declaration_groups_batch.md",
+  "nativeInferredInitializationBatch": "docs/design/native_inferred_initialization_batch.md"
 }

@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "build": "bun run scripts/write-doc-twins.ts && bun run scripts/write-source-parser-assets.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "bun test src/lib",
-    "pages:build": "bun run scripts/write-public-seo.ts && GITHUB_PAGES=true next build"
+    "pages:build": "bun run scripts/write-doc-twins.ts && bun run scripts/write-source-parser-assets.ts && bun run scripts/write-public-seo.ts && GITHUB_PAGES=true next build"
   },
   "dependencies": {
     "@babel/parser": "^7.29.9",

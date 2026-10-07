@@ -1,11 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 import { isModifierEffective } from './modifierEffectiveness';
+import { CSHARP_ASSIGNMENT_OPERATORS } from '@vvs/graph-types';
 import {
   isNodeEffectiveForLanguage,
   nodeEffectiveness,
   nodeIneffectiveTooltip,
   parseNodeTargetLanguages,
 } from './nodeEffectiveness';
+
+test('verified C# mutation nodes are effective without advertising other target support', () => {
+  for (const operator of CSHARP_ASSIGNMENT_OPERATORS) expect(nodeEffectiveness('variable_set', { assignmentOperator: operator }, 'csharp')).toBe('effective');
+  expect(nodeEffectiveness('parameter_set', {}, 'csharp')).toBe('effective');
+  expect(nodeEffectiveness('parameter_set', {}, 'python')).toBe('ineffective');
+  expect(nodeEffectiveness('variable_set', { assignmentOperator: '&^=' }, 'csharp')).toBe('ineffective');
+});
 
 describe('nodeEffectiveness', () => {
   test('empty gate → effective', () => {

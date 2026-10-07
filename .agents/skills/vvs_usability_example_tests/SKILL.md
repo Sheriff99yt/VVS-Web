@@ -6,6 +6,10 @@ description: >-
   Also triggers when verifying codegen — always test what the Code panel shows the user.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Usability example tests (not tutorial demos)
 
 **Canonical:** `docs/design/language_capability_catalog.md` · **Streamline:** `docs/design/fidelity_streamline.md`

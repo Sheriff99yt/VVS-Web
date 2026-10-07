@@ -1,0 +1,738 @@
+{
+  "moduleName": "IntegralSignatures",
+  "extendsType": "",
+  "targetLanguage": "csharp",
+  "variables": [
+    {
+      "kind": "variable",
+      "id": "local-0",
+      "name": "@First",
+      "type": "data_number",
+      "classId": "main-class",
+      "binding": "instance",
+      "visibility": "private",
+      "graphTabId": "identity-int",
+      "flags": {
+        "readonly": true
+      }
+    },
+    {
+      "kind": "variable",
+      "id": "local-1",
+      "name": "Second",
+      "type": "data_number",
+      "classId": "main-class",
+      "binding": "instance",
+      "visibility": "private",
+      "graphTabId": "identity-int",
+      "flags": {
+        "readonly": false
+      }
+    },
+    {
+      "kind": "variable",
+      "id": "local-2",
+      "name": "Third",
+      "type": "data_number",
+      "classId": "main-class",
+      "binding": "instance",
+      "visibility": "private",
+      "graphTabId": "identity-int",
+      "flags": {
+        "readonly": false
+      }
+    }
+  ],
+  "functions": [
+    {
+      "kind": "function",
+      "id": "identity-int",
+      "name": "Evaluate",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [],
+          "returnType": "data_number",
+          "graphTabId": "identity-int"
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "class",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "class_define",
+        "kindVersion": 1,
+        "label": "IntegralSignatures",
+        "category": "Project",
+        "properties": {
+          "symbolId": "main-class",
+          "classId": "main-class",
+          "name": "IntegralSignatures"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "identity-int-declare",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_define",
+        "kindVersion": 1,
+        "label": "Identity_int",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-int",
+          "name": "Identity_int",
+          "graphTabId": "identity-int",
+          "overloadId": "o1"
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-int",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-int"
+      }
+    },
+    {
+      "id": "identity-int-define",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "function_implement",
+        "kindVersion": 1,
+        "label": "Identity_int",
+        "category": "Project",
+        "properties": {
+          "symbolId": "identity-int",
+          "name": "Identity_int",
+          "graphTabId": "identity-int",
+          "overloadId": "o1",
+          "nativeSignatureLanguage": "csharp",
+          "nativeReturnType": "byte",
+          "nativeParameters": []
+        },
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "exec_in",
+            "type": "execution"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "exec_out",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {},
+        "graphBinding": {
+          "kind": "call_function",
+          "symbolId": "identity-int",
+          "overloadId": "o1"
+        },
+        "linkedGraphId": "identity-int"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "identity-int-declare-identity-int-define-exec_out",
+      "source": "identity-int-declare",
+      "target": "identity-int-define",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "class-exec_out-identity-int-declare-exec_in",
+      "source": "class",
+      "target": "identity-int-declare",
+      "sourceHandle": "exec_out",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    }
+  ],
+  "documents": {
+    "identity-int": {
+      "nodes": [
+        {
+          "id": "identity-int-entry",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Identity_int",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-int",
+              "symbolId": "identity-int",
+              "name": "Identity_int",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "identity-int",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "identity-int-return",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "flow_return",
+            "category": "Project",
+            "properties": {
+              "functionId": "identity-int",
+              "symbolId": "identity-int",
+              "overloadId": "o1"
+            },
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "exec_in",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "return_val",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {}
+          }
+        },
+        {
+          "id": "expression-0",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 220,
+            "y": 180
+          },
+          "data": {
+            "label": "overflow",
+            "category": "Native Values",
+            "kindId": "expr_native_operator",
+            "inputs": [
+              {
+                "id": "operand-0",
+                "label": "Operand 1",
+                "type": "data_any",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "nativeLanguage": "csharp",
+              "nativeDomain": "csharp-integer",
+              "nativeForm": "overflow",
+              "payload": "unchecked",
+              "operandCount": 1,
+              "operator": "",
+              "nativeTargetType": ""
+            }
+          }
+        },
+        {
+          "id": "expression-1",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 440,
+            "y": 180
+          },
+          "data": {
+            "label": "conversion",
+            "category": "Native Values",
+            "kindId": "expr_native_operator",
+            "inputs": [
+              {
+                "id": "operand-0",
+                "label": "Operand 1",
+                "type": "data_any",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "nativeLanguage": "csharp",
+              "nativeDomain": "csharp-integer",
+              "nativeForm": "conversion",
+              "payload": "",
+              "operandCount": 1,
+              "operator": "",
+              "nativeTargetType": "byte"
+            }
+          }
+        },
+        {
+          "id": "expression-2",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 660,
+            "y": 180
+          },
+          "data": {
+            "label": "256",
+            "category": "Native Values",
+            "kindId": "expr_native_literal",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "nativeLanguage": "csharp",
+              "nativeDomain": "csharp-integer",
+              "nativeForm": "scalar",
+              "payload": "256",
+              "operandCount": 0,
+              "operator": "",
+              "nativeTargetType": ""
+            }
+          }
+        },
+        {
+          "id": "local-0-define",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 280,
+            "y": 0
+          },
+          "data": {
+            "label": "Declare @First",
+            "category": "Variables",
+            "kindId": "var_define",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "Value",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "symbolId": "local-0",
+              "name": "@First",
+              "type": "data_number",
+              "nativeLocalStyle": "csharp-const",
+              "nativeType": "byte",
+              "isConst": true,
+              "declarationKind": "const",
+              "hasInitializer": true
+            }
+          }
+        },
+        {
+          "id": "local-0-get",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 300,
+            "y": 180
+          },
+          "data": {
+            "label": "Get @First",
+            "category": "Variables",
+            "kindId": "variable_get",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "val",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "local-0"
+            },
+            "properties": {
+              "symbolId": "local-0",
+              "name": "@First",
+              "variableName": "@First"
+            }
+          }
+        },
+        {
+          "id": "local-1-define",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 630,
+            "y": 0
+          },
+          "data": {
+            "label": "Declare Second",
+            "category": "Variables",
+            "kindId": "var_define",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "Value",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "symbolId": "local-1",
+              "name": "Second",
+              "type": "data_number",
+              "nativeLocalStyle": "csharp-var",
+              "nativeType": "var",
+              "isConst": false,
+              "declarationKind": "var",
+              "hasInitializer": true
+            }
+          }
+        },
+        {
+          "id": "local-1-get",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 650,
+            "y": 180
+          },
+          "data": {
+            "label": "Get Second",
+            "category": "Variables",
+            "kindId": "variable_get",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "val",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "local-1"
+            },
+            "properties": {
+              "symbolId": "local-1",
+              "name": "Second",
+              "variableName": "Second"
+            }
+          }
+        },
+        {
+          "id": "local-2-define",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 980,
+            "y": 0
+          },
+          "data": {
+            "label": "Declare Third",
+            "category": "Variables",
+            "kindId": "var_define",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "Value",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "symbolId": "local-2",
+              "name": "Third",
+              "type": "data_number",
+              "nativeLocalStyle": "csharp-typed",
+              "nativeType": "byte",
+              "isConst": false,
+              "declarationKind": "var",
+              "hasInitializer": true
+            }
+          }
+        },
+        {
+          "id": "local-2-get",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1000,
+            "y": 180
+          },
+          "data": {
+            "label": "Get Third",
+            "category": "Variables",
+            "kindId": "variable_get",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "val",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "local-2"
+            },
+            "properties": {
+              "symbolId": "local-2",
+              "name": "Third",
+              "variableName": "Third"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "expression-2-result-expression-1-operand-0",
+          "source": "expression-2",
+          "target": "expression-1",
+          "sourceHandle": "result",
+          "targetHandle": "operand-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "expression-1-result-expression-0-operand-0",
+          "source": "expression-1",
+          "target": "expression-0",
+          "sourceHandle": "result",
+          "targetHandle": "operand-0",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "identity-int-entry-exec_out-local-0-define-exec_in",
+          "source": "identity-int-entry",
+          "sourceHandle": "exec_out",
+          "target": "local-0-define",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "expression-0-result-local-0-define-value",
+          "source": "expression-0",
+          "sourceHandle": "result",
+          "target": "local-0-define",
+          "targetHandle": "value",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "local-0-define-exec_out-local-1-define-exec_in",
+          "source": "local-0-define",
+          "sourceHandle": "exec_out",
+          "target": "local-1-define",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "local-0-get-val-local-1-define-value",
+          "source": "local-0-get",
+          "sourceHandle": "val",
+          "target": "local-1-define",
+          "targetHandle": "value",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "local-1-define-exec_out-local-2-define-exec_in",
+          "source": "local-1-define",
+          "sourceHandle": "exec_out",
+          "target": "local-2-define",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "local-1-get-val-local-2-define-value",
+          "source": "local-1-get",
+          "sourceHandle": "val",
+          "target": "local-2-define",
+          "targetHandle": "value",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "local-2-define-exec_out-identity-int-return-exec_in",
+          "source": "local-2-define",
+          "sourceHandle": "exec_out",
+          "target": "identity-int-return",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "local-2-get-val-identity-int-return-return_val",
+          "source": "local-2-get",
+          "sourceHandle": "val",
+          "target": "identity-int-return",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        }
+      ]
+    }
+  },
+  "projectEvents": [],
+  "classes": [
+    {
+      "kind": "class",
+      "id": "main-class",
+      "name": "IntegralSignatures",
+      "containerId": "main-graph"
+    }
+  ],
+  "activeClassId": "main-class",
+  "tabId": "main-graph"
+}

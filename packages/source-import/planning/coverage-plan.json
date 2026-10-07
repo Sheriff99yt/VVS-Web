@@ -1,0 +1,959 @@
+{
+  "version": 1,
+  "researchDate": "2026-10-04",
+  "scope": "All eight reverse-input targets authorized by the all-complete goal; JSON remains a separate data/output format",
+  "profiles": [
+    {
+      "language": "javascript",
+      "profileId": "javascript-ES2022",
+      "languageVersion": "ES2022",
+      "versionStatus": "existing",
+      "adapterStatus": "implemented-subset",
+      "parserCandidate": "@babel/parser (existing dependency; lockfile owns exact release)",
+      "validatorCandidate": "Acorn AST comparison; tree-sitter strict generated parsing",
+      "researchSources": [
+        "https://babeljs.io/docs/babel-parser",
+        "https://github.com/acornjs/acorn"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence"
+      ],
+      "blockers": [
+        "Broader native semantics and realistic project coverage"
+      ],
+      "localObservation": "Existing package/browser corpus",
+      "verification": "existing-subset-tests",
+      "adapterBatch": "MP-02\u00e2\u20ac\u201cMP-07"
+    },
+    {
+      "language": "python",
+      "profileId": "python-3.11",
+      "languageVersion": "3.11",
+      "versionStatus": "existing",
+      "adapterStatus": "implemented-subset",
+      "parserCandidate": "@lezer/python 1.1.18",
+      "validatorCandidate": "CPython 3.11 ast.parse/compile without executing source",
+      "researchSources": [
+        "https://github.com/lezer-parser/python",
+        "https://docs.python.org/3.11/library/ast.html"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence"
+      ],
+      "blockers": [
+        "Function-wide joins, dynamic values and package context"
+      ],
+      "localObservation": "CPython 3.11 used by the corpus",
+      "verification": "existing-subset-tests",
+      "adapterBatch": "MP-02\u00e2\u20ac\u201cMP-07"
+    },
+    {
+      "language": "csharp",
+      "profileId": "csharp-12",
+      "languageVersion": "12",
+      "versionStatus": "pinned C# 12 integral class subset; worker acceptance and production/Pages workflows verified",
+      "adapterStatus": "implemented-subset",
+      "parserCandidate": "tree-sitter-c-sharp 0.23.5 MIT / web-tree-sitter 0.27.0 / ABI 15; integral class mapping and retained broader source inventory",
+      "validatorCandidate": "Roslyn 4.1400.26.6401 / SDK 9.0.310 / C# 12 / .NET 9.0.12 x64; 164 hash-pinned reference assemblies",
+      "researchSources": [
+        "https://github.com/tree-sitter/tree-sitter-c-sharp",
+        "https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/get-started/syntax-analysis",
+        "https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/get-started/semantic-analysis"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence",
+        "Native fixture/toolchain pins: packages/source-import/test/native-csharp/pins.json; evidence: docs/design/code_visual_csharp_native_evidence.json"
+      ],
+      "blockers": [
+        "Complete visible branch/unreachable mappings and graph assignment merges, Boolean bindings/parameters/calls, loop fixed points, exception/ref-out paths and advanced control scopes, group membership/split-merge/trivia, cross-arity inspector rewiring and unreachable scope ownership; ref/out/in parameter modes, ordered calls/overloads and effectful assignment/update expressions; complete floating/decimal, UTF-16, nullable, enum/native-sized and remaining policies",
+        "Namespace/type/overload, effectful implicit conversions/getters and project-reference graph ownership",
+        "Complete inspector, persistence, Code-panel, conflict-aware reimport and advanced language/project integration"
+      ],
+      "localObservation": "Latest Boolean mapping:2672 native(1834 valid/838 rejected),3353 package+1159 web tests and affected gates pass. IR18 Boolean tokens/comparisons/logical expressions/returns with integral parameters/locals, exact graph spans, native short-circuit assignment, strict numeric consumers, sealed lifecycle/reimport/provenance-free output. Eight original/regenerated compiler pairs and fixed saved graph; twelve-method actual production/Pages operator invalid/recovery/save-reload pass. Repair of numeric-only result-index guard reran affected gates/prerequisites with unchanged evidence retained; broad historical browser-import failure distinct. Cross-language feature-wave delivery now includes all eight languages plus native prerequisites. Boolean bindings/parameters/calls,branches/unreachable,loops/effects/types/projects/full scope remain open. Historical evidence follows: Latest branch-flow analysis prerequisite:2656 native(1818 valid/838 rejected),3343 package+1159 web tests,lint and host type gates pass. 582 predefined Boolean/comparison pairs and31 composed branch cases verify sibling isolation, reachable assignment intersections, returns/dead statements/missing-return paths. Immutable per-statement flow reports; valid analysis cannot bypass graph admission. Visible Boolean/branch/unreachable mappings,inspector,lifecycle/production/Pages evidence remain open,as do Boolean bindings/signatures,loops/control transfers,effectful conditions,exceptions/ref-out and external binding closure. Casing expectation repair reran native/packages only,retaining passing web/lint/type evidence. Historical broad browser-import failure distinct. Historical subset evidence follows: Latest definite-assignment batch:2043 native (1274 valid/769 rejected),2727 package+1159 web tests; affected docs-source/lint/host-type/build/goldens/Code-panel/strict-parse/focused-production/Pages/export gates pass. IR17 retains absent typed-local initializers in single/mixed groups; source/graph declaration and initialization facts allow plain assignment and ancestor propagation through lexical scopes. Six original/regenerated compiler pairs and ten independent probes, fixed saved-graph invalid/recovery tests and actual initializer/style/save-reload browser workflows pass. Conditional merges, loop fixed points, exception/ref-out paths, unreachable regions, group membership/split-merge/trivia and wider scope remain open. Historical broad browser-import failure distinct. Historical subset evidence follows: Latest initialized-group batch:2021 native (1259 valid/762 rejected),2708 package+1159 web tests; affected lint/host-type/build/goldens/Code-panel/strict-parse/focused-production/Pages/export gates pass. Visible shared declaration owner and ordered children preserve comma syntax and exact spans in IR16; native graph checks and atomic group/child inspector type/style/readonly edits, persistence/reimport and invalid/recovery/reload verified. Five compiler pairs and four native rejections cover composed groups. Uninitialized/definite assignment, unreachable regions, membership/split-merge/trivia and wider scope remain open. Historical subset evidence follows: Latest visible scope batch: 2007 native (1249 valid/758 rejected),2700 package+1159 web tests; affected lint/host-type/build/goldens/Code-panel/strict-parse/focused-production/Pages/export gates pass. Ordinary/checked/unchecked blocks use visible scope nodes and IR15, recursive binding/reservation/context/index validation, nested returns/void completion, exact source comparison, sealed persistence/reimport and actual context inspector invalid/recovery/reload. Five composed scope compiler pairs and fixed saved graph add independent provenance-free graph checks. Grouped declarations, definite assignment, unreachable regions and wider scope remain open; no full C# claim. Historical subset evidence follows: Latest scope prerequisite: 1997 native observations (1239 valid/758 rejected), including 15 new source scope/binder comparisons; 2693 package +1159 web tests and host type checks pass. Immutable lexical scope/declaration and resolved read/write reference evidence is implemented; a missing integral-result return diagnostic is fixed. Nested graph/IR/inspector/lifecycle mappings remain open in docs/design/csharp_lexical_scope_contract.md. No build/browser/Code-panel checks were repeated for analysis-only changes. Historical verified straight-line mapping checkpoint follows: Pinned native evidence: 1982 cases (1232 compiler-valid/750 rejected), including 1260 predefined mutation type/operator/constant/update comparison pairs, 458 integral policy pairs and 494 binding pairs. Ordinary class public static integral/void methods map exact native expressions, initialized typed/var/const locals, plain and all eleven predefined integral compound assignments, and standalone prefix/postfix updates. IR14 retains >>>=; mutable reads stay nonconstant and graph-owned readonly/type/flow/pin checks block invalid edits. Seven composed assignment sources pass sealed review/acceptance/reimport and original/regenerated compilation; fixed saved assignment/mutation graphs verify exact output and corrupted operands. The shared eight-method browser fixture passes actual production and Pages import, native signatures/local styles, compound operator and prefix/postfix inspector edits, invalid RHS/recovery, save/reload, graph-only reimport and both conflict choices. A discovered bool/boolean registry mismatch is repaired with regression evidence. 2676 package +1159 web tests, lint/build/host-type/goldens/Code-panel/strict-parse/focused production/Pages/export gates pass; historical full-suite failures remain separate. Grouped/nested/checked locals, ref/out/in parameter modes, definite assignment, cross-arity rewiring, effectful expressions, calls/overloads, wider native types/domains and projects remain required. See docs/current_state.md and docs/design/reverse_import_batch_delivery.md; no full C# or eight-language completion claim. Five original/regenerated by-value parameter-write cases and a fixed saved graph now prove signature-slot binding, mixed local order, native type/readonly mutation rules and removal/provenance guards. Production and Pages verify parameter inspector retarget/save/reload and invalid native signature/recovery; pure lifecycle tests verify rename/deletion and distinct catalog/menu slot identities. C# compound Set nodes are now correctly effective. All language/project completion requirements remain open outside these covered subsets.",
+      "verification": "native-csharp-preflight; integral-source-and-graph-contracts; generated-graph-compilation; saved-graph-mutations; canonical-output; production-and-Pages-analysis-and-inspector-workflows; source-class-planning-materialization-sealed-core-acceptance-and-reimport-native-evidence; production-and-Pages-browser-import-acceptance-and-reimport",
+      "adapterBatch": "MP-08"
+    },
+    {
+      "language": "go",
+      "profileId": "go-1.26",
+      "languageVersion": "1.26",
+      "versionStatus": "pinned-unit-subset",
+      "adapterStatus": "implemented-subset",
+      "parserCandidate": "tree-sitter-go 0.25.0 + web-tree-sitter 0.27.0 WASM (ABI 15; MIT)",
+      "validatorCandidate": "Go 1.26.4 go/parser + go/types + normalized native AST comparison; library unit fixtures only",
+      "researchSources": [
+        "https://github.com/tree-sitter/tree-sitter-go",
+        "https://pkg.go.dev/go/parser",
+        "https://pkg.go.dev/go/types"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence"
+      ],
+      "blockers": [
+        "Native scalar library units only; no full Go language claim",
+        "Imports/package sets, composed untyped shift-count typing, big.Float fallback, complex constants, package/grouped constants/iota and defined numeric types, multi-binding/redeclaration, range iteration, methods/types, tuples, interfaces, cleanup and concurrency remain open",
+        "Exact integer token/default inference and visible 32/64-bit word context are implemented; destination/peer contextual shifts, simple nested counts, large shifts and numeric compound assignments are implemented; exact rational tokens/arithmetic, float32/64 bindings/rounding and explicit numeric conversions are implemented; composed count contexts and full numeric/project contracts remain open",
+        "Local typed/untyped numeric/bool/string constants have graph-owned exact evidence; package/grouped constants/iota, defined types/aliases and native byte strings remain open"
+      ],
+      "localObservation": "Pinned grammar/runtime;124 native scalar/local/loop/integer/shift/rational/float32/conversion/constant units plus4 word-context fixtures;15 reproduced gaps;251 integer+75 rational+271 conversion+144 constant-binding/comparison observations;independent AST/type/compiler, fixed saved graph, Code-panel, inspector and browser/Pages evidence; visible Go expression call ownership and conditional calls verified by native/compiler, fixed-graph, inspector/browser and conflict-aware reimport tests",
+      "verification": "native-go-unit-tests",
+      "adapterBatch": "MP-09"
+    },
+    {
+      "language": "gdscript",
+      "profileId": "gdscript-Godot-4.x",
+      "languageVersion": "Godot 4.5.2",
+      "versionStatus": "pinned ordinary scalar Library subset; sealed acceptance and production/Pages lifecycle verified",
+      "adapterStatus": "implemented-subset",
+      "parserCandidate": "tree-sitter-gdscript6.1.0 reproducible WASM / ABI14 + web-tree-sitter0.27.0; lazy hash-checked syntax inventory",
+      "validatorCandidate": "Pinned Godot 4.5.2 stable, controlled headless check-only fixtures; tools/validate_native_readiness.py",
+      "researchSources": [
+        "https://github.com/PrestonKnopp/tree-sitter-gdscript",
+        "https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence",
+        "Initialization contrast evidence: docs/design/native_initialization_contract.md; tools/native_initialization_cases.json; explicit native-initialization stage",
+        "Native scalar evidence: docs/design/native_scalar_literal_contract.md; tools/native_scalar_cases.json; explicit native-scalars gate with false-assertion calibration",
+        "Native constant evidence: docs/design/native_constant_expression_contract.md; tools/native_constant_cases.json; explicit native-constants gate and source/profile-checked case retries",
+        "Source expression evidence: docs/design/native_source_expression_contract.md; explicit native-source-expressions gate consumes complete matching compiler report",
+        "Verified scalar admission: docs/design/native_scalar_source_admission_contract.md; native-source-graphs21 and production/Pages native3 browser workflows, not complete language coverage"
+      ],
+      "blockers": [
+        "Runtime values/parameter operations, declarations/control/effects, assigned return/conversion context, source comments/operator spelling and coordinated signature-domain editing remain required beyond the verified scalar Library subset",
+        "Resource/engine name resolution and full native value/binding/source ownership contracts",
+        "Resource/project/host context, constructors/classes/signals and wider composed graph/browser fixtures remain required"
+      ],
+      "localObservation": "Latest opt-in inferred graph/IR foundation (no worker/browser admission): Opt-in C++/Rust/GDScript inferred source graphs now retain visible authored inference modes and exact spelling instead of substituted explicit types. Saved function analysis recomputes initializer types without the declaration cache as an inference hint, checks mirrored types/ports, and shares bounded Rust fixed-initializer constraints with source analysis. C++ auto groups preserve one ordered owner and common deduction; IR v21 and language packs preserve auto/unannotated let/:= output. Ten composed disk-backed Code-panel fixtures cover chains, Boolean shadowing, C++ unsigned-char promotion and inferred groups; exact full-file goldens, node spans, normalized reload, individual renames, stale same-domain widths/foreign modes and unsupported Rust unsuffixed edits pass. Combined4,371 package/1,322 web tests, public API types, lint99, production build, existing usability goldens and canonical disk extraction pass. Native source/Code-panel85 checks pass:22 fresh inferred generated/renamed and new C++ original inputs,63 exact retained inputs. Inference28/local-body18/initialization45 are verified exact retained evidence. Initial failures were TypeScript union narrowing, wrong Rust/Godot fixture extensions and a Boolean mutation that left the type unchanged; focused repairs passed affected gates while retaining unchanged checks. No fixture execution. Public previews require inferredLocals:true; worker/sealed reviews remain unchanged and do not admit inference yet. Complete mode/deduction reconciliation, inspectors, sealed lifecycle/production/Pages workflows, forward/default/deferred contexts, broader all-eight-language scope/projects and authoritative Verse access remain open. Full goal stays active. Historical evidence follows: Latest source inference prerequisite (not graph admission): The shared source-analysis prerequisite now distinguishes C++ auto, fixed-type Rust inferred lets and GDScript := from authored scalar types through explicit inferredLocals opt-in. Ordered bindings/references, native result types, authored inference modes, exact spans and unknown runtime values are retained. Mixed C++ auto-group deductions reject; Rust unconstrained numeric locals with later i8/i64 constraints remain unsupported rather than becoming fabricated i32 locals. GDScript initialization now recognizes := as an inference marker, while dynamic = and native defaults retain separate boundaries. Sixteen source fixtures and28 independent pinned compiler inputs pass, including C++ decltype/Rust fixed-type positive and false-type calibrations. Godot evidence covers native validity/applicability, not independent exact inferred-type or runtime-default observations. Combined4,371 package tests and public API types pass. Exact unchanged native evidence is retained:63 saved Code-panel inputs,18 local-body contrasts and45 initialization cases; no fixture execution. The initial failure exposed the GDScript initialization marker, then a diagnostic expectation was corrected to the actual BINARY_DOMAIN code. Affected retries pass. Production/Pages builds,1,312 web tests,lint99 and established group/local browser evidence remain retained; no new inferred graph/UI/worker/browser acceptance is claimed. Visible inferred declaration modes, saved recomputation, IR/packs/inspectors/lifecycle, forward constraints, deferred/default contexts, wider language semantics/projects and Verse access remain required. Full goal stays active. Historical evidence follows: October7 local admission checkpoint: Rust/C++/GDScript ordinary Library modules now admit reviewed typed initialized locals, exact binding reads, ordinary assignments and final explicit/Rust-tail returns through sealed worker preview/review/acceptance. Three composed modules/nine functions pass private seals, single-use receipts, tampered index rejection, canonical persistence and unchanged/conflicting reimport; Rust shadowing and GDScript constants also pass sealed acceptance. Actual production and Pages workflows pass all three languages: local rename, readonly/type invalid-recovery, invalid Boolean type save/reload/recovery, valid save/reload and both reimport conflict choices. The shared declaration inspector lookup now uses symbolId rather than a same-name fallback; seven current adapters have identity regression cases. Native local type edits now coordinate the structured typeRef mirror as well as the domain, declaration and reference ports. Combined 4,353 package tests, 1,307 web tests, public API types, lint (99 existing warnings), production and Pages builds pass. Native source/graph53 inputs pass:3 fresh incoming local modules and50 exact retained cases; the final type-mirror repair retained all53 with zero recompilation. No fixture programs execute. Initial browser failures exposed the missing declaration lookup and remain historical failures. C++ grouped graph declarations, inferred/deferred/default locals, assignment conversions, broader control/effects/types/projects, existing-adapter semantic audit and authoritative Verse access remain open; no full-language or goal-completion claim. Historical profile evidence: Latest October7 checkpoint: Rust/C++/GDScript ordinary scalar Library modules now have sealed worker review/acceptance and verified production/Pages browser import, signature/literal invalid-edit recovery, Code-panel edits, save/reload and both reimport conflict choices. Final focused runner77069 is terminal green:4218 package/1280 web tests, public source-import types, native-source-graphs21, production/Pages builds and native3 browser stages. The native gate verified matching source/expectation/file/command/toolchain evidence and retained all21 unchanged compiler inputs; the initial expanded gate compiled7 new inputs and retained14. Earlier existing JS/Python/Go/C# browser prefix checks passed; historical full browser-import/docs-artifacts failures remain recorded separately from the focused native3 repair. Native signature domain changes still need coordinated symbol/body/port transactions. Runtime operations, declarations/control/effects, comments/operator spelling, wider types/projects and authoritative Verse access remain open. Historical analysis evidence: October 6: 12 syntax +10 binding compiler probes for gdscript, exact UTF-8/LF inputs verified. Frozen local identities and language-specific shadow rules; C++ has direct native target/span matching, Rust/GDScript have contrast evidence. Values/effects and graph admission remain unvalidated. Shared scalar-local initialization now passes 15 compiler contrasts per language (45 total), package3471 and source-import types: live joins, deferred/default/readonly/discarded-read distinctions. Values/types/effects and graph admission remain unvalidated. October7 scalar type/value packet passes89 combined constant cases and3558 packages: exact literal/range/negative facts, native Godot saturation/decimal wrap and Clang unsigned decimal extension; operators/conversions/effects/graph admission remain open. October7 constant operator/conversion packet passes116 combined native cases and3672 packages: native rank/promotion/narrowing/overflow/division/shift distinctions. Dynamic/conditional/effect/source/graph ownership and broader contexts remain required. Source-owned initializer/return expression packet passes121 compiler/source-span cases,package3800 and124 final focused ownership tests: immutable grouping/context, Rust implicit/peer/minimum and C++ signed/unary spans. Named values/dynamic effects/source-graph ownership and admission remain required.",
+      "verification": "native-scalar-library-source-graphs21; sealed-acceptance; production-and-Pages-browser-import-acceptance-and-reimport",
+      "adapterBatch": "MP-10"
+    },
+    {
+      "language": "rust",
+      "profileId": "rust-edition-2021",
+      "languageVersion": "edition-2021",
+      "versionStatus": "pinned ordinary scalar Library subset; sealed acceptance and production/Pages lifecycle verified",
+      "adapterStatus": "implemented-subset",
+      "parserCandidate": "tree-sitter-rust0.24.0 published WASM / ABI14 + web-tree-sitter0.27.0, lazy hash-checked syntax inventory",
+      "validatorCandidate": "Pinned rustc 1.99.0, edition2021, Windows MSVC target; metadata-only curated fixtures; tools/validate_native_readiness.py",
+      "researchSources": [
+        "https://github.com/tree-sitter/tree-sitter-rust",
+        "https://doc.rust-lang.org/cargo/commands/cargo-check.html",
+        "https://doc.rust-lang.org/cargo/reference/build-scripts.html"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence",
+        "Initialization contrast evidence: docs/design/native_initialization_contract.md; tools/native_initialization_cases.json; explicit native-initialization stage",
+        "Native scalar evidence: docs/design/native_scalar_literal_contract.md; tools/native_scalar_cases.json; explicit native-scalars gate with false-assertion calibration",
+        "Native constant evidence: docs/design/native_constant_expression_contract.md; tools/native_constant_cases.json; explicit native-constants gate and source/profile-checked case retries",
+        "Source expression evidence: docs/design/native_source_expression_contract.md; explicit native-source-expressions gate consumes complete matching compiler report",
+        "Verified scalar admission: docs/design/native_scalar_source_admission_contract.md; native-source-graphs21 and production/Pages native3 browser workflows, not complete language coverage"
+      ],
+      "blockers": [
+        "Runtime values/parameter operations, declarations/control/effects, assigned return/conversion context, source comments/operator spelling and coordinated signature-domain editing remain required beyond the verified scalar Library subset",
+        "Ownership/borrow/lifetime/trait and macro source/context contracts remain unmodeled",
+        "Trusted Cargo/build/macro context, wider project dependencies/types/ownership and composed graph/browser fixtures remain required"
+      ],
+      "localObservation": "Latest opt-in inferred graph/IR foundation (no worker/browser admission): Opt-in C++/Rust/GDScript inferred source graphs now retain visible authored inference modes and exact spelling instead of substituted explicit types. Saved function analysis recomputes initializer types without the declaration cache as an inference hint, checks mirrored types/ports, and shares bounded Rust fixed-initializer constraints with source analysis. C++ auto groups preserve one ordered owner and common deduction; IR v21 and language packs preserve auto/unannotated let/:= output. Ten composed disk-backed Code-panel fixtures cover chains, Boolean shadowing, C++ unsigned-char promotion and inferred groups; exact full-file goldens, node spans, normalized reload, individual renames, stale same-domain widths/foreign modes and unsupported Rust unsuffixed edits pass. Combined4,371 package/1,322 web tests, public API types, lint99, production build, existing usability goldens and canonical disk extraction pass. Native source/Code-panel85 checks pass:22 fresh inferred generated/renamed and new C++ original inputs,63 exact retained inputs. Inference28/local-body18/initialization45 are verified exact retained evidence. Initial failures were TypeScript union narrowing, wrong Rust/Godot fixture extensions and a Boolean mutation that left the type unchanged; focused repairs passed affected gates while retaining unchanged checks. No fixture execution. Public previews require inferredLocals:true; worker/sealed reviews remain unchanged and do not admit inference yet. Complete mode/deduction reconciliation, inspectors, sealed lifecycle/production/Pages workflows, forward/default/deferred contexts, broader all-eight-language scope/projects and authoritative Verse access remain open. Full goal stays active. Historical evidence follows: Latest source inference prerequisite (not graph admission): The shared source-analysis prerequisite now distinguishes C++ auto, fixed-type Rust inferred lets and GDScript := from authored scalar types through explicit inferredLocals opt-in. Ordered bindings/references, native result types, authored inference modes, exact spans and unknown runtime values are retained. Mixed C++ auto-group deductions reject; Rust unconstrained numeric locals with later i8/i64 constraints remain unsupported rather than becoming fabricated i32 locals. GDScript initialization now recognizes := as an inference marker, while dynamic = and native defaults retain separate boundaries. Sixteen source fixtures and28 independent pinned compiler inputs pass, including C++ decltype/Rust fixed-type positive and false-type calibrations. Godot evidence covers native validity/applicability, not independent exact inferred-type or runtime-default observations. Combined4,371 package tests and public API types pass. Exact unchanged native evidence is retained:63 saved Code-panel inputs,18 local-body contrasts and45 initialization cases; no fixture execution. The initial failure exposed the GDScript initialization marker, then a diagnostic expectation was corrected to the actual BINARY_DOMAIN code. Affected retries pass. Production/Pages builds,1,312 web tests,lint99 and established group/local browser evidence remain retained; no new inferred graph/UI/worker/browser acceptance is claimed. Visible inferred declaration modes, saved recomputation, IR/packs/inspectors/lifecycle, forward constraints, deferred/default contexts, wider language semantics/projects and Verse access remain required. Full goal stays active. Historical evidence follows: October7 local admission checkpoint: Rust/C++/GDScript ordinary Library modules now admit reviewed typed initialized locals, exact binding reads, ordinary assignments and final explicit/Rust-tail returns through sealed worker preview/review/acceptance. Three composed modules/nine functions pass private seals, single-use receipts, tampered index rejection, canonical persistence and unchanged/conflicting reimport; Rust shadowing and GDScript constants also pass sealed acceptance. Actual production and Pages workflows pass all three languages: local rename, readonly/type invalid-recovery, invalid Boolean type save/reload/recovery, valid save/reload and both reimport conflict choices. The shared declaration inspector lookup now uses symbolId rather than a same-name fallback; seven current adapters have identity regression cases. Native local type edits now coordinate the structured typeRef mirror as well as the domain, declaration and reference ports. Combined 4,353 package tests, 1,307 web tests, public API types, lint (99 existing warnings), production and Pages builds pass. Native source/graph53 inputs pass:3 fresh incoming local modules and50 exact retained cases; the final type-mirror repair retained all53 with zero recompilation. No fixture programs execute. Initial browser failures exposed the missing declaration lookup and remain historical failures. C++ grouped graph declarations, inferred/deferred/default locals, assignment conversions, broader control/effects/types/projects, existing-adapter semantic audit and authoritative Verse access remain open; no full-language or goal-completion claim. Historical profile evidence: Latest October7 checkpoint: Rust/C++/GDScript ordinary scalar Library modules now have sealed worker review/acceptance and verified production/Pages browser import, signature/literal invalid-edit recovery, Code-panel edits, save/reload and both reimport conflict choices. Final focused runner77069 is terminal green:4218 package/1280 web tests, public source-import types, native-source-graphs21, production/Pages builds and native3 browser stages. The native gate verified matching source/expectation/file/command/toolchain evidence and retained all21 unchanged compiler inputs; the initial expanded gate compiled7 new inputs and retained14. Earlier existing JS/Python/Go/C# browser prefix checks passed; historical full browser-import/docs-artifacts failures remain recorded separately from the focused native3 repair. Native signature domain changes still need coordinated symbol/body/port transactions. Runtime operations, declarations/control/effects, comments/operator spelling, wider types/projects and authoritative Verse access remain open. Historical analysis evidence: October 6: 12 syntax +10 binding compiler probes for rust, exact UTF-8/LF inputs verified. Frozen local identities and language-specific shadow rules; C++ has direct native target/span matching, Rust/GDScript have contrast evidence. Values/effects and graph admission remain unvalidated. Shared scalar-local initialization now passes 15 compiler contrasts per language (45 total), package3471 and source-import types: live joins, deferred/default/readonly/discarded-read distinctions. Values/types/effects and graph admission remain unvalidated. October7 scalar type/value packet passes89 combined constant cases and3558 packages: exact literal/range/negative facts, native Godot saturation/decimal wrap and Clang unsigned decimal extension; operators/conversions/effects/graph admission remain open. October7 constant operator/conversion packet passes116 combined native cases and3672 packages: native rank/promotion/narrowing/overflow/division/shift distinctions. Dynamic/conditional/effect/source/graph ownership and broader contexts remain required. Source-owned initializer/return expression packet passes121 compiler/source-span cases,package3800 and124 final focused ownership tests: immutable grouping/context, Rust implicit/peer/minimum and C++ signed/unary spans. Named values/dynamic effects/source-graph ownership and admission remain required.",
+      "verification": "native-scalar-library-source-graphs21; sealed-acceptance; production-and-Pages-browser-import-acceptance-and-reimport",
+      "adapterBatch": "MP-11"
+    },
+    {
+      "language": "cpp",
+      "profileId": "cpp-C++17",
+      "languageVersion": "C++17",
+      "versionStatus": "pinned ordinary scalar Library subset; sealed acceptance and production/Pages lifecycle verified",
+      "adapterStatus": "implemented-subset",
+      "parserCandidate": "tree-sitter-cpp0.23.4 published WASM / ABI14 + web-tree-sitter0.27.0, lazy hash-checked syntax inventory",
+      "validatorCandidate": "Pinned Clang 19.1.5, C++17, Windows MSVC target, no includes; syntax-only JSON AST; tools/validate_native_readiness.py",
+      "researchSources": [
+        "https://github.com/tree-sitter/tree-sitter-cpp",
+        "https://clang.llvm.org/docs/LibTooling.html"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence",
+        "Initialization contrast evidence: docs/design/native_initialization_contract.md; tools/native_initialization_cases.json; explicit native-initialization stage",
+        "Native scalar evidence: docs/design/native_scalar_literal_contract.md; tools/native_scalar_cases.json; explicit native-scalars gate with false-assertion calibration",
+        "Native constant evidence: docs/design/native_constant_expression_contract.md; tools/native_constant_cases.json; explicit native-constants gate and source/profile-checked case retries",
+        "Source expression evidence: docs/design/native_source_expression_contract.md; explicit native-source-expressions gate consumes complete matching compiler report",
+        "Verified scalar admission: docs/design/native_scalar_source_admission_contract.md; native-source-graphs21 and production/Pages native3 browser workflows, not complete language coverage"
+      ],
+      "blockers": [
+        "Runtime values/parameter operations, declarations/control/effects, assigned return/conversion context, source comments/operator spelling and coordinated signature-domain editing remain required beyond the verified scalar Library subset",
+        "Full compilation flags/includes/preprocessor context and native binding identity remain required",
+        "Templates/overloads/lifetimes/value categories, source-vs-expanded macros and wider project/class/browser integration remain open"
+      ],
+      "localObservation": "Latest opt-in inferred graph/IR foundation (no worker/browser admission): Opt-in C++/Rust/GDScript inferred source graphs now retain visible authored inference modes and exact spelling instead of substituted explicit types. Saved function analysis recomputes initializer types without the declaration cache as an inference hint, checks mirrored types/ports, and shares bounded Rust fixed-initializer constraints with source analysis. C++ auto groups preserve one ordered owner and common deduction; IR v21 and language packs preserve auto/unannotated let/:= output. Ten composed disk-backed Code-panel fixtures cover chains, Boolean shadowing, C++ unsigned-char promotion and inferred groups; exact full-file goldens, node spans, normalized reload, individual renames, stale same-domain widths/foreign modes and unsupported Rust unsuffixed edits pass. Combined4,371 package/1,322 web tests, public API types, lint99, production build, existing usability goldens and canonical disk extraction pass. Native source/Code-panel85 checks pass:22 fresh inferred generated/renamed and new C++ original inputs,63 exact retained inputs. Inference28/local-body18/initialization45 are verified exact retained evidence. Initial failures were TypeScript union narrowing, wrong Rust/Godot fixture extensions and a Boolean mutation that left the type unchanged; focused repairs passed affected gates while retaining unchanged checks. No fixture execution. Public previews require inferredLocals:true; worker/sealed reviews remain unchanged and do not admit inference yet. Complete mode/deduction reconciliation, inspectors, sealed lifecycle/production/Pages workflows, forward/default/deferred contexts, broader all-eight-language scope/projects and authoritative Verse access remain open. Full goal stays active. Historical evidence follows: Latest source inference prerequisite (not graph admission): The shared source-analysis prerequisite now distinguishes C++ auto, fixed-type Rust inferred lets and GDScript := from authored scalar types through explicit inferredLocals opt-in. Ordered bindings/references, native result types, authored inference modes, exact spans and unknown runtime values are retained. Mixed C++ auto-group deductions reject; Rust unconstrained numeric locals with later i8/i64 constraints remain unsupported rather than becoming fabricated i32 locals. GDScript initialization now recognizes := as an inference marker, while dynamic = and native defaults retain separate boundaries. Sixteen source fixtures and28 independent pinned compiler inputs pass, including C++ decltype/Rust fixed-type positive and false-type calibrations. Godot evidence covers native validity/applicability, not independent exact inferred-type or runtime-default observations. Combined4,371 package tests and public API types pass. Exact unchanged native evidence is retained:63 saved Code-panel inputs,18 local-body contrasts and45 initialization cases; no fixture execution. The initial failure exposed the GDScript initialization marker, then a diagnostic expectation was corrected to the actual BINARY_DOMAIN code. Affected retries pass. Production/Pages builds,1,312 web tests,lint99 and established group/local browser evidence remain retained; no new inferred graph/UI/worker/browser acceptance is claimed. Visible inferred declaration modes, saved recomputation, IR/packs/inspectors/lifecycle, forward constraints, deferred/default contexts, wider language semantics/projects and Verse access remain required. Full goal stays active. Historical evidence follows: Latest bounded C++ declaration-group packet: C++ typed initialized comma declarations now import as a visible group owner with ordered declaration children, exact binding identities and separate group/child source spans. Saved readers reconstruct actual order and initialization; IR v20 and C++ pack templates preserve authored grouping while retaining the C# contract. Coordinated group and child type/mutability edits update indexes/ports together and retain incompatible wiring for blocking diagnostics and recovery. Sealed worker acceptance, invalid-type save/reload/recovery, individual rename, valid persistence, unchanged reimport and both conflict choices pass in production and Pages. Shared typed-local workflows also pass for C++/Rust/GDScript in both artifacts. Combined 4,355 package tests, 1,312 web tests, public API types, lint (99 existing warnings), production and Pages builds pass. Native source/Code-panel checks pass all63 inputs:6 fresh C++ composed original/generated/renamed/alias/incoming/const-write-rejection checks and57 exact retained inputs. Earlier foundation compiled4 group inputs while retaining53; initial goldens/canonical disk extraction passed and remain retained. No fixture source executes. This closes only the supported C++ group packet; inferred/deferred/default bindings, membership/split/merge, conversions, broader control/effects/types/projects, existing-adapter audits and authoritative Verse access remain open. The full eight-language goal remains active. Historical evidence follows: October7 local admission checkpoint: Rust/C++/GDScript ordinary Library modules now admit reviewed typed initialized locals, exact binding reads, ordinary assignments and final explicit/Rust-tail returns through sealed worker preview/review/acceptance. Three composed modules/nine functions pass private seals, single-use receipts, tampered index rejection, canonical persistence and unchanged/conflicting reimport; Rust shadowing and GDScript constants also pass sealed acceptance. Actual production and Pages workflows pass all three languages: local rename, readonly/type invalid-recovery, invalid Boolean type save/reload/recovery, valid save/reload and both reimport conflict choices. The shared declaration inspector lookup now uses symbolId rather than a same-name fallback; seven current adapters have identity regression cases. Native local type edits now coordinate the structured typeRef mirror as well as the domain, declaration and reference ports. Combined 4,353 package tests, 1,307 web tests, public API types, lint (99 existing warnings), production and Pages builds pass. Native source/graph53 inputs pass:3 fresh incoming local modules and50 exact retained cases; the final type-mirror repair retained all53 with zero recompilation. No fixture programs execute. Initial browser failures exposed the missing declaration lookup and remain historical failures. C++ grouped graph declarations, inferred/deferred/default locals, assignment conversions, broader control/effects/types/projects, existing-adapter semantic audit and authoritative Verse access remain open; no full-language or goal-completion claim. Historical profile evidence: Latest October7 checkpoint: Rust/C++/GDScript ordinary scalar Library modules now have sealed worker review/acceptance and verified production/Pages browser import, signature/literal invalid-edit recovery, Code-panel edits, save/reload and both reimport conflict choices. Final focused runner77069 is terminal green:4218 package/1280 web tests, public source-import types, native-source-graphs21, production/Pages builds and native3 browser stages. The native gate verified matching source/expectation/file/command/toolchain evidence and retained all21 unchanged compiler inputs; the initial expanded gate compiled7 new inputs and retained14. Earlier existing JS/Python/Go/C# browser prefix checks passed; historical full browser-import/docs-artifacts failures remain recorded separately from the focused native3 repair. Native signature domain changes still need coordinated symbol/body/port transactions. Runtime operations, declarations/control/effects, comments/operator spelling, wider types/projects and authoritative Verse access remain open. Historical analysis evidence: October 6: 12 syntax +10 binding compiler probes for cpp, exact UTF-8/LF inputs verified. Frozen local identities and language-specific shadow rules; C++ has direct native target/span matching, Rust/GDScript have contrast evidence. Values/effects and graph admission remain unvalidated. Shared scalar-local initialization now passes 15 compiler contrasts per language (45 total), package3471 and source-import types: live joins, deferred/default/readonly/discarded-read distinctions. Values/types/effects and graph admission remain unvalidated. October7 scalar type/value packet passes89 combined constant cases and3558 packages: exact literal/range/negative facts, native Godot saturation/decimal wrap and Clang unsigned decimal extension; operators/conversions/effects/graph admission remain open. October7 constant operator/conversion packet passes116 combined native cases and3672 packages: native rank/promotion/narrowing/overflow/division/shift distinctions. Dynamic/conditional/effect/source/graph ownership and broader contexts remain required. Source-owned initializer/return expression packet passes121 compiler/source-span cases,package3800 and124 final focused ownership tests: immutable grouping/context, Rust implicit/peer/minimum and C++ signed/unary spans. Named values/dynamic effects/source-graph ownership and admission remain required.",
+      "verification": "native-scalar-library-source-graphs21; sealed-acceptance; production-and-Pages-browser-import-acceptance-and-reimport",
+      "adapterBatch": "MP-12"
+    },
+    {
+      "language": "verse",
+      "profileId": "verse-UEFN-version-pending",
+      "languageVersion": "UEFN-version-pending",
+      "versionStatus": "proposed",
+      "adapterStatus": "researched",
+      "parserCandidate": "No production grammar selected",
+      "validatorCandidate": "No standalone independent validator integrated; evaluate authoritative UEFN toolchain access",
+      "researchSources": [
+        "https://dev.epicgames.com/documentation/en-us/fortnite/verse-language-reference",
+        "https://dev.epicgames.com/documentation/en-us/fortnite/programming-with-verse-in-unreal-editor-for-fortnite"
+      ],
+      "pinRequirements": [
+        "Exact grammar release/commit and license",
+        "Parser runtime/grammar ABI compatibility",
+        "Independent validator version and supported native context",
+        "Browser-worker load/cancel/asset-path smoke evidence",
+        "Go-informed preflight packet: docs/design/reverse_import_go_lessons.md",
+        "Native value/binding/evaluation tables and composed project fixture before acceptance expansion",
+        "Shared source and saved-graph semantics; actual Code-panel, invalid-edit recovery and conflict-aware reimport evidence"
+      ],
+      "blockers": [
+        "Authoritative grammar/version and independent validator access not established",
+        "Native failure/effect/concurrency/host contracts remain unimplemented"
+      ],
+      "localObservation": "October 6: inspected installed UE5.6/UE5.7 plugin directory and Win64 binary names; no callable authoritative Verse validator established. UEFN/host/version access remains an open prerequisite",
+      "verification": "not-integrated",
+      "adapterBatch": "MP-13"
+    }
+  ],
+  "features": [
+    {
+      "id": "scalar-values",
+      "title": "Scalar literals and explicit native conversions",
+      "roadmapId": "u93-resolved-calls",
+      "batch": "MP-02",
+      "grammarConstruct": "Scalar literals and explicit native conversions",
+      "visualNodes": [
+        "flow_return",
+        "convert_to_number",
+        "convert_to_string",
+        "expr_native_literal"
+      ],
+      "irContract": "Literal/Conversion expression with native variant",
+      "bindingRules": "Unshadowed conversion identity; exact numeric/string value",
+      "exampleIds": [
+        "js-explicit-number",
+        "js-explicit-parse-float",
+        "js-explicit-string",
+        "py-explicit-string",
+        "py-explicit-float"
+      ],
+      "prerequisites": [
+        "Negative zero, non-finite/large literals and native escaping domains"
+      ]
+    },
+    {
+      "id": "numeric-domains",
+      "title": "Native arithmetic and numeric domains",
+      "roadmapId": "u93-scoped-locals",
+      "batch": "MP-02",
+      "grammarConstruct": "Native arithmetic and numeric domains",
+      "visualNodes": [
+        "math_add",
+        "math_subtract",
+        "math_multiply",
+        "var_define"
+      ],
+      "irContract": "Native integer/Number arithmetic variants",
+      "bindingRules": "Proven operands; domain-stable initializer and mutation",
+      "exampleIds": [
+        "js-local-arithmetic",
+        "py-local-range",
+        "py-loop-integer-update",
+        "py-branch-initialization"
+      ],
+      "prerequisites": [
+        "BigInt/float/native division, union values and overloaded arithmetic"
+      ]
+    },
+    {
+      "id": "collections",
+      "title": "Collections and object literals",
+      "roadmapId": "u93-scoped-locals",
+      "batch": "MP-02",
+      "grammarConstruct": "Collections and object literals",
+      "visualNodes": [
+        "expr_native_collection"
+      ],
+      "irContract": "Structured collection expressions required",
+      "bindingRules": "Explicit element/key evaluation and native identity",
+      "exampleIds": [
+        "py-branch-initialization"
+      ],
+      "prerequisites": [
+        "List/tuple/map/set/object forms; spread and construction order"
+      ]
+    },
+    {
+      "id": "indexing",
+      "title": "Indexing, slicing and member values",
+      "roadmapId": "u93-scoped-locals",
+      "batch": "MP-02",
+      "grammarConstruct": "Indexing, slicing and member values",
+      "visualNodes": [
+        "expr_native_access"
+      ],
+      "irContract": "Native access expressions required",
+      "bindingRules": "Exact receiver/index evaluation, missing-key/bounds behavior",
+      "exampleIds": [
+        "py-branch-initialization"
+      ],
+      "prerequisites": [
+        "Collections, native property access and assignment targets"
+      ]
+    },
+    {
+      "id": "dynamic-operators",
+      "title": "Dynamic operators and coercion",
+      "roadmapId": "u93-control-flow",
+      "batch": "MP-02",
+      "grammarConstruct": "Dynamic operators and coercion",
+      "visualNodes": [
+        "expr_compare",
+        "expr_native_operator"
+      ],
+      "irContract": "NativeExpression with explicit language/operator, ordered operands and graph-owned call evaluation; preserve native dispatch, coercion and errors.",
+      "bindingRules": "No implicit casts; preserve overload/coercion/error behavior",
+      "exampleIds": [
+        "js-loose-equality",
+        "js-untyped-order",
+        "py-dynamic-comparison",
+        "js-loop"
+      ],
+      "prerequisites": [
+        "Unknown value domains, native type/effect contracts"
+      ]
+    },
+    {
+      "id": "locals",
+      "title": "Local scope, mutation and definite assignment",
+      "roadmapId": "u93-scoped-locals",
+      "batch": "MP-03",
+      "grammarConstruct": "Local scope, mutation and definite assignment",
+      "visualNodes": [
+        "var_define",
+        "variable_get",
+        "variable_set"
+      ],
+      "irContract": "Scoped Declare/Get/Set and dominance",
+      "bindingRules": "Symbol identity, lexical ownership and readonly/TDZ checks",
+      "exampleIds": [
+        "js-nested-shadow",
+        "js-local-identity",
+        "js-distinct-local-scopes",
+        "py-local-assignment",
+        "py-branch-initialization"
+      ],
+      "prerequisites": [
+        "Python branch joins, union types, destructuring and parameter writes"
+      ]
+    },
+    {
+      "id": "callables",
+      "title": "Function signatures, calls and captures",
+      "roadmapId": "u93-resolved-calls",
+      "batch": "MP-03",
+      "grammarConstruct": "Function signatures, calls and captures",
+      "visualNodes": [
+        "function_define",
+        "function_implement",
+        "function_entry",
+        "vvs.project.call_function"
+      ],
+      "irContract": "Native function/call and explicit capture contracts",
+      "bindingRules": "Two-pass identity; graph-owned native default/rest signature; supplied ordered positional/Python keyword bindings, no hidden default arguments",
+      "exampleIds": [
+        "js-function-file",
+        "js-forward-nested-calls",
+        "py-function-file",
+        "py-forward-nested-calls",
+        "js-native-default-call",
+        "js-native-rest-call",
+        "py-native-default-call",
+        "py-native-rest-call",
+        "py-native-named-call"
+      ],
+      "prerequisites": [
+        "Closures/lambdas and callable values; destructuring; Python keyword-only/kwargs and unpacked calls; enclosing-scope default effects"
+      ]
+    },
+    {
+      "id": "branches",
+      "title": "Branches, joins and pattern dispatch",
+      "roadmapId": "u93-control-flow",
+      "batch": "MP-04",
+      "grammarConstruct": "Branches, joins and pattern dispatch",
+      "visualNodes": [
+        "flow_branch",
+        "expr_compare"
+      ],
+      "irContract": "Separate branch continuations and abrupt completion",
+      "bindingRules": "Dominance and native Boolean/comparison variant",
+      "exampleIds": [
+        "js-branch-join",
+        "js-typed-comparisons",
+        "py-branch-join"
+      ],
+      "prerequisites": [
+        "Switch/match/fallthrough, short-circuit control and dynamic truthiness"
+      ]
+    },
+    {
+      "id": "loops",
+      "title": "Native loops and abrupt targets",
+      "roadmapId": "u93-control-flow",
+      "batch": "MP-04",
+      "grammarConstruct": "Native loops and abrupt targets",
+      "visualNodes": [
+        "flow_for",
+        "flow_while",
+        "flow_break",
+        "flow_continue"
+      ],
+      "irContract": "Native headers, nearest targets and explicit repeated effects",
+      "bindingRules": "Loop-local identity and condition/init/update/body ownership",
+      "exampleIds": [
+        "js-nested-continue-break",
+        "js-effectful-loop-condition",
+        "js-for-count",
+        "py-native-range",
+        "py-descending-range"
+      ],
+      "prerequisites": [
+        "Iterator/for-of/do-while, labeled targets and native index/error behavior"
+      ]
+    },
+    {
+      "id": "exceptions",
+      "title": "Exceptions and cleanup",
+      "roadmapId": "u93-control-flow",
+      "batch": "MP-04",
+      "grammarConstruct": "Exceptions and cleanup",
+      "visualNodes": [],
+      "irContract": "Throw/try/catch/finally/defer/context-manager contracts required",
+      "bindingRules": "Preserve cleanup on return, break, suspension and failure",
+      "exampleIds": [],
+      "prerequisites": [
+        "Native exception scopes, error values and cleanup effects"
+      ]
+    },
+    {
+      "id": "async-generators",
+      "title": "Async, generators and concurrency",
+      "roadmapId": "u93-control-flow",
+      "batch": "MP-04",
+      "grammarConstruct": "Async, generators and concurrency",
+      "visualNodes": [],
+      "irContract": "Await/yield/suspension native contracts required",
+      "bindingRules": "Native scheduling/capture/cleanup and effect ownership",
+      "exampleIds": [],
+      "prerequisites": [
+        "Callable scopes, exceptions and target-owned async/concurrency"
+      ]
+    },
+    {
+      "id": "classes",
+      "title": "Classes, fields, constructors and receivers",
+      "roadmapId": "u93-class-semantics",
+      "batch": "MP-05",
+      "grammarConstruct": "Classes, fields, constructors and receivers",
+      "visualNodes": [
+        "class_define",
+        "var_define",
+        "variable_get",
+        "variable_set",
+        "function_implement",
+        "vvs.project.call_function"
+      ],
+      "irContract": "Native class/member order, constructor and parent calls",
+      "bindingRules": "Exact field/receiver/parent symbol; no invented defaults",
+      "exampleIds": [
+        "js-constructor-receiver",
+        "js-interleaved-fields",
+        "js-resolved-parent",
+        "py-class",
+        "py-instance-call"
+      ],
+      "prerequisites": [
+        "Effectful initializers, accessors/private/computed names and external parents"
+      ]
+    },
+    {
+      "id": "native-types",
+      "title": "Native structs, interfaces, traits and generics",
+      "roadmapId": "u93-class-semantics",
+      "batch": "MP-05",
+      "grammarConstruct": "Native structs, interfaces, traits and generics",
+      "visualNodes": [],
+      "irContract": "Language-owned type/member contracts required",
+      "bindingRules": "Explicit overload, generic and ownership identity",
+      "exampleIds": [],
+      "prerequisites": [
+        "Pinned language profiles, type-resolution and storage/lifetime rules"
+      ]
+    },
+    {
+      "id": "modules",
+      "title": "Modules, packages and compilation units",
+      "roadmapId": "u93-module-projects",
+      "batch": "MP-06",
+      "grammarConstruct": "Modules, packages and compilation units",
+      "visualNodes": [
+        "vvs.project.import_module",
+        "function_implement"
+      ],
+      "irContract": "File-owned units and explicit import/export binding",
+      "bindingRules": "Dependency closure, aliases, paths and per-file native context",
+      "exampleIds": [
+        "js-named-export"
+      ],
+      "prerequisites": [
+        "Nested paths, default/namespace/re-exports, Python packages and other adapters"
+      ]
+    },
+    {
+      "id": "external-signatures",
+      "title": "External dependencies and host signatures",
+      "roadmapId": "u93-module-projects",
+      "batch": "MP-06",
+      "grammarConstruct": "External dependencies and host signatures",
+      "visualNodes": [
+        "vvs.project.import_module"
+      ],
+      "irContract": "Explicit signature/context manifests required",
+      "bindingRules": "No guessed host types, callbacks or inherited behavior",
+      "exampleIds": [],
+      "prerequisites": [
+        "Versioned dependency inventory and native resolver contexts"
+      ]
+    },
+    {
+      "id": "comments",
+      "title": "Comments, docstrings and trivia ownership",
+      "roadmapId": "u93-trivia-reimport",
+      "batch": "MP-07",
+      "grammarConstruct": "Comments, docstrings and trivia ownership",
+      "visualNodes": [
+        "vvs_comment_node"
+      ],
+      "irContract": "Owned visible comments and source spans",
+      "bindingRules": "Preserve comment contents and declared placement",
+      "exampleIds": [
+        "js-comment",
+        "js-leading-comments"
+      ],
+      "prerequisites": [
+        "Trailing/expression comments, docstrings and per-construct attachment"
+      ]
+    },
+    {
+      "id": "directives",
+      "title": "Directives and conditional source context",
+      "roadmapId": "u93-trivia-reimport",
+      "batch": "MP-07",
+      "grammarConstruct": "Directives and conditional source context",
+      "visualNodes": [
+        "source_directive"
+      ],
+      "irContract": "Native prologue and directive semantics",
+      "bindingRules": "Strictness/conditional source is not disposable trivia",
+      "exampleIds": [
+        "js-directive",
+        "js-method-directive"
+      ],
+      "prerequisites": [
+        "Other-language directives and conditional compilation context"
+      ]
+    },
+    {
+      "id": "reimport",
+      "title": "Atomic persistence and three-way re-import",
+      "roadmapId": "u93-trivia-reimport",
+      "batch": "MP-07",
+      "grammarConstruct": "Atomic persistence and three-way re-import",
+      "visualNodes": [],
+      "irContract": "Sealed baseline/current/incoming graph transaction",
+      "bindingRules": "Stable identity and no overwritten graph or project metadata",
+      "exampleIds": [],
+      "prerequisites": [
+        "Project settings retention, mixed authored units and per-construct merges"
+      ]
+    },
+    {
+      "id": "advanced-source",
+      "title": "Macros, reflection and generated source",
+      "roadmapId": "u93-language-adapters",
+      "batch": "MP-14",
+      "grammarConstruct": "Macros, reflection and generated source",
+      "visualNodes": [],
+      "irContract": "Native source and expansion/unknown-context obligations required",
+      "bindingRules": "Preserve original ownership; no inferred runtime bindings",
+      "exampleIds": [],
+      "prerequisites": [
+        "Grammar-native inventory, host contexts and independently validated contracts"
+      ]
+    },
+    {
+      "id": "scale",
+      "title": "Large-project performance and recovery",
+      "roadmapId": "u93-module-projects",
+      "batch": "MP-14",
+      "grammarConstruct": "Large-project performance and recovery",
+      "visualNodes": [],
+      "irContract": "Transactional resource-budget contracts",
+      "bindingRules": "Bounded cancellation and collision-safe persistent identities",
+      "exampleIds": [],
+      "prerequisites": [
+        "Measured project-size/latency/memory budgets and failure recovery"
+      ]
+    }
+  ],
+  "gapInventory": [
+    {
+      "exampleId": "js-branch-local-escape",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-nested-tdz",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-field-initializer-effects",
+      "kind": "feature-gap",
+      "featureId": "classes",
+      "readiness": "needs-contract",
+      "resolution": "Effectful initializers, accessors/private/computed names and external parents"
+    },
+    {
+      "exampleId": "js-trailing-comment",
+      "kind": "feature-gap",
+      "featureId": "comments",
+      "readiness": "needs-contract",
+      "resolution": "Trailing/expression comments, docstrings and per-construct attachment"
+    },
+    {
+      "exampleId": "py-range-zero-step",
+      "kind": "safety-guard",
+      "featureId": "loops",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-for-local-escape",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-unreachable",
+      "kind": "feature-gap",
+      "featureId": "exceptions",
+      "readiness": "needs-contract",
+      "resolution": "Native exception scopes, error values and cleanup effects"
+    },
+    {
+      "exampleId": "js-conversion-tdz",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-conversion-outer-shadow",
+      "kind": "feature-gap",
+      "featureId": "callables",
+      "readiness": "needs-contract",
+      "resolution": "Defaults/rest/named args; closures/lambdas and callable values"
+    },
+    {
+      "exampleId": "js-conversion-class-shadow",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "py-conversion-later-binding",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-shadowing",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-before-declaration",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-const-write",
+      "kind": "safety-guard",
+      "featureId": "locals",
+      "readiness": "retain-guard",
+      "resolution": "Keep rejection until explicit native error/scope semantics are modeled; never bypass the invariant"
+    },
+    {
+      "exampleId": "js-local-dynamic-type",
+      "kind": "feature-gap",
+      "featureId": "locals",
+      "readiness": "needs-contract",
+      "resolution": "Python branch joins, union types, destructuring and parameter writes"
+    },
+    {
+      "exampleId": "js-wrong-arity",
+      "kind": "feature-gap",
+      "featureId": "callables",
+      "readiness": "needs-contract",
+      "resolution": "Defaults/rest/named args; closures/lambdas and callable values"
+    },
+    {
+      "exampleId": "js-ambient-call",
+      "kind": "feature-gap",
+      "featureId": "external-signatures",
+      "readiness": "needs-contract",
+      "resolution": "Versioned dependency inventory and native resolver contexts"
+    },
+    {
+      "exampleId": "js-dynamic-condition",
+      "kind": "feature-gap",
+      "featureId": "dynamic-operators",
+      "readiness": "needs-contract",
+      "resolution": "Unknown value domains, native type/effect contracts"
+    },
+    {
+      "exampleId": "js-early-return",
+      "kind": "feature-gap",
+      "featureId": "dynamic-operators",
+      "readiness": "needs-contract",
+      "resolution": "Unknown value domains, native type/effect contracts"
+    },
+    {
+      "exampleId": "js-constructor-inheritance",
+      "kind": "context-dependency",
+      "featureId": "classes",
+      "readiness": "needs-context",
+      "resolution": "Supply and review the required dependency context"
+    },
+    {
+      "exampleId": "js-module",
+      "kind": "context-dependency",
+      "featureId": "modules",
+      "readiness": "needs-context",
+      "resolution": "Supply and review the required dependency context"
+    },
+    {
+      "exampleId": "py-definite-assignment",
+      "kind": "feature-gap",
+      "featureId": "locals",
+      "readiness": "needs-contract",
+      "resolution": "Python branch joins, union types, destructuring and parameter writes"
+    },
+    {
+      "exampleId": "py-import",
+      "kind": "feature-gap",
+      "featureId": "modules",
+      "readiness": "needs-contract",
+      "resolution": "Nested paths, default/namespace/re-exports, Python packages and other adapters"
+    }
+  ],
+  "batches": [
+    {
+      "id": "MP-02",
+      "dependsOn": [],
+      "title": "Native values, collections and dynamic operator contracts",
+      "readiness": "inventory-contract-implemented; visual-mapping-contracts-open",
+      "fixturePlans": [
+        "JS negative zero/BigInt and mixed-value equality",
+        "Python list/dict access with scalar arithmetic",
+        "Object/list initializer with ordered resolved calls"
+      ],
+      "acceptance": "Source/graph/native validator/persistence/Code-panel and mutation evidence collected in one batch",
+      "contractEvidence": "docs/design/native_value_contract.md"
+    },
+    {
+      "id": "MP-03",
+      "dependsOn": [
+        "MP-02"
+      ],
+      "title": "Callable values, captures and definite assignment",
+      "readiness": "needs-contract",
+      "fixturePlans": [
+        "JS closure captures a loop-local binding and mutates an outer local",
+        "Python conditional assignment followed by a read on both branch paths",
+        "Default/rest/named arguments and destructuring"
+      ],
+      "acceptance": "Source/graph/native validator/persistence/Code-panel and mutation evidence collected in one batch"
+    },
+    {
+      "id": "MP-04",
+      "dependsOn": [
+        "MP-03"
+      ],
+      "title": "Control flow, cleanup and suspension",
+      "readiness": "needs-contract",
+      "fixturePlans": [
+        "Iterator loop with continue and finally",
+        "Short-circuit expression with ordered calls",
+        "Generator/async function with explicit cleanup and early completion"
+      ],
+      "acceptance": "Source/graph/native validator/persistence/Code-panel and mutation evidence collected in one batch"
+    },
+    {
+      "id": "MP-05",
+      "dependsOn": [
+        "MP-04"
+      ],
+      "title": "Complete native object/type semantics",
+      "readiness": "needs-contract",
+      "fixturePlans": [
+        "Field initialization calls another method before a constructor body",
+        "Accessor/private/computed fields and explicit visibility",
+        "Python inheritance/decorators; constructor error paths"
+      ],
+      "acceptance": "Source/graph/native validator/persistence/Code-panel and mutation evidence collected in one batch"
+    },
+    {
+      "id": "MP-06",
+      "dependsOn": [
+        "MP-05"
+      ],
+      "title": "Nested projects and external dependency closure",
+      "readiness": "needs-contract",
+      "fixturePlans": [
+        "Three-file project with aliases, cycles and nested folders",
+        "Python package using an independently inventoried stdlib signature",
+        "External parent/member call with pinned signature context"
+      ],
+      "acceptance": "Source/graph/native validator/persistence/Code-panel and mutation evidence collected in one batch"
+    },
+    {
+      "id": "MP-07",
+      "dependsOn": [
+        "MP-06"
+      ],
+      "title": "Trivia and targeted conflict-safe re-import",
+      "readiness": "partly-ready",
+      "fixturePlans": [
+        "Source-only re-import preserves project preferences/workspace metadata",
+        "Comment inside an expression and trailing/docstring attachment",
+        "Change one function while retaining unrelated authored units and graph edits"
+      ],
+      "acceptance": "Source/graph/native validator/persistence/Code-panel and mutation evidence collected in one batch"
+    }
+  ],
+  "sharedParserResearch": {
+    "candidate": "web-tree-sitter WASM",
+    "source": "https://github.com/tree-sitter/tree-sitter/blob/master/lib/binding_web/README.md",
+    "status": "researched-not-integrated",
+    "requirements": [
+      "ABI/hash/version/license pins",
+      "Pages basePath-aware asset loading",
+      "Worker cancellation and memory limits",
+      "No parser ERROR/MISSING recovery nodes accepted"
+    ]
+  },
+  "boundaries": [
+    {
+      "id": "reimport-project-settings",
+      "featureId": "reimport",
+      "severity": "resolved-release-blocker",
+      "status": "implemented-subset",
+      "readiness": "regression-covered",
+      "reproducer": "Import function value returning 1; set autoCompile false and workspaceFiles; re-import source returning 2",
+      "evidence": "packages/source-import/src/reimportContext.test.ts",
+      "finding": "MP-07a retains current project settings and graph metadata, reviews all versions under saved codegen context, rejects incompatible targets/packs/output drift, seals settings against stale acceptance, and verifies persisted outputs. Targeted authored-unit merges remain open.",
+      "acceptance": "Keep project settings/metadata and validate output under the retained context; incompatible contexts block atomically"
+    },
+    {
+      "id": "reimport-mixed-authored-units",
+      "featureId": "reimport",
+      "severity": "coverage-gap",
+      "status": "known-blocked",
+      "readiness": "needs-contract",
+      "reproducer": "Add a manually authored function to an imported file, then change one original function",
+      "evidence": "packages/source-import/src/validation.ts",
+      "finding": "Whole-file replacement blocks additional unowned Define units",
+      "acceptance": "Targeted merge retains authored units and stable bindings"
+    },
+    {
+      "id": "reimport-project-context",
+      "featureId": "reimport",
+      "severity": "resolved-release-blocker",
+      "status": "implemented-subset",
+      "readiness": "regression-covered",
+      "reproducer": "Change syntax-pack pins, environment links or output context before reviewing replacement source",
+      "evidence": "packages/source-import/src/reimportContext.test.ts",
+      "finding": "MP-07a retains current project settings and graph metadata, reviews all versions under saved codegen context, rejects incompatible targets/packs/output drift, seals settings against stale acceptance, and verifies persisted outputs. Targeted authored-unit merges remain open.",
+      "acceptance": "Preview/accept use identical retained context, validate file paths, and preserve library/integration metadata"
+    },
+    {
+      "id": "native-value-mapping",
+      "featureId": "numeric-domains",
+      "severity": "coverage-gap",
+      "status": "inventory-only",
+      "readiness": "needs-visual-ir-contract",
+      "reproducer": "Inventory exact JS/Python scalars and collection/operator probes, then attempt visual import",
+      "evidence": "packages/source-import/src/nativeValues.test.ts",
+      "finding": "MP-02a preserves exact scalar domains through JSON and inventories collection/access/operator syntax. Six independently parsed mixed probes remain rejected; recognition is not acceptance.",
+      "acceptance": "Visible scalar/collection/access/effect mappings, native AST equivalence, Code-panel ownership, persistence and mutation evidence before enabling acceptance"
+    }
+  ]
+}

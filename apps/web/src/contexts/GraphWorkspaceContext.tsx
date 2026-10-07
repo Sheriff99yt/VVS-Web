@@ -8,7 +8,7 @@ export interface GraphWorkspaceApi {
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
   patchAllDocuments: (
     updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-    options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
+    options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string; selectedNodeId?: string }
   ) => string[];
   importGraphDocument: (tab: import('@/contexts/ProjectContext').GraphTab, document: GraphDocument) => void;
   getActiveTabMetadata: () => GraphTabMetadata;
@@ -24,7 +24,7 @@ interface GraphWorkspaceContextValue {
   loadDocuments: (documents: Record<string, GraphDocument>, activeTab: string) => void;
   patchAllDocuments: (
     updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-    options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
+    options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string; selectedNodeId?: string }
   ) => string[] | null;
   importGraphDocument: (tab: import('@/contexts/ProjectContext').GraphTab, document: GraphDocument) => void;
   getActiveTabMetadata: () => GraphTabMetadata | null;
@@ -71,7 +71,7 @@ export function GraphWorkspaceProvider({ children }: { children: ReactNode }) {
   const patchAllDocuments = useCallback(
     (
       updater: (docs: Record<string, GraphDocument>) => Record<string, GraphDocument>,
-      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string }
+      options?: { affectedTabIds?: string[]; preserveHistory?: boolean; viewTabId?: string; selectedNodeId?: string }
     ) => apiRef.current?.patchAllDocuments(updater, options) ?? null,
     []
   );

@@ -1,0 +1,152 @@
+{
+  "cpp": [
+    {
+      "id": "parameter-chain",
+      "source": "int probe(int a) { auto first = a + 1; auto second = first * 2; second = second + a; return second; }\n",
+      "types": [
+        "int",
+        "int"
+      ],
+      "modes": [
+        "cpp-auto",
+        "cpp-auto"
+      ],
+      "assertions": "static_assert(__is_same(decltype(first), int)); static_assert(__is_same(decltype(second), int));"
+    },
+    {
+      "id": "bool",
+      "source": "bool probe(bool a) { const auto first = !a; return first; }\n",
+      "types": [
+        "bool"
+      ],
+      "modes": [
+        "cpp-auto"
+      ],
+      "assertions": "static_assert(__is_same(decltype(first), const bool));"
+    },
+    {
+      "id": "unsigned",
+      "source": "unsigned int probe(unsigned int a) { auto first = a + 1u; return first; }\n",
+      "types": [
+        "unsigned int"
+      ],
+      "modes": [
+        "cpp-auto"
+      ],
+      "assertions": "static_assert(__is_same(decltype(first), unsigned int));"
+    },
+    {
+      "id": "mixed-auto-group",
+      "source": "int probe(int a) { auto first = a, second = true; return first; }\n",
+      "diagnostic": "AUTO_GROUP_TYPE_MISMATCH",
+      "valid": false
+    },
+    {
+      "id": "deferred",
+      "source": "int probe(int a) { int first; first = a; return first; }\n",
+      "diagnostic": "TYPED_INITIALIZER_REQUIRED",
+      "valid": true
+    }
+  ],
+  "rust": [
+    {
+      "id": "parameter-chain",
+      "source": "fn probe(a: i8) -> i8 { let first = a + 1; let mut second = first * 2; second = second + a; second }\n",
+      "types": [
+        "i8",
+        "i8"
+      ],
+      "modes": [
+        "rust-let",
+        "rust-let"
+      ],
+      "assertions": "let _: i8 = first; let _: i8 = second;"
+    },
+    {
+      "id": "bool-shadow",
+      "source": "fn probe(a: bool) -> bool { let first = !a; let first = first && a; first }\n",
+      "types": [
+        "bool",
+        "bool"
+      ],
+      "modes": [
+        "rust-let",
+        "rust-let"
+      ],
+      "assertions": "let _: bool = first;"
+    },
+    {
+      "id": "suffixed",
+      "source": "fn probe(a: i32) -> i32 { let first = 4i32; let second = first + a; second }\n",
+      "types": [
+        "i32",
+        "i32"
+      ],
+      "modes": [
+        "rust-let",
+        "rust-let"
+      ],
+      "assertions": "let _: i32 = first; let _: i32 = second;"
+    },
+    {
+      "id": "forward-narrow",
+      "source": "fn probe(a: i8) -> i8 { let first = 1; let second: i8 = first + a; second }\n",
+      "diagnostic": "INFERENCE_CONSTRAINTS_REQUIRED",
+      "valid": true
+    },
+    {
+      "id": "forward-wide",
+      "source": "fn probe(a: i64) -> i64 { let first = 1; let second: i64 = first + a; second }\n",
+      "diagnostic": "INFERENCE_CONSTRAINTS_REQUIRED",
+      "valid": true
+    },
+    {
+      "id": "deferred",
+      "source": "fn probe(a: i32) -> i32 { let first: i32; first = a; first }\n",
+      "diagnostic": "TYPED_INITIALIZER_REQUIRED",
+      "valid": true
+    }
+  ],
+  "gdscript": [
+    {
+      "id": "parameter-chain",
+      "source": "func probe(a: int) -> int:\n    var first := a + 1\n    var second := first * 2\n    second = second + a\n    return second\n",
+      "types": [
+        "int",
+        "int"
+      ],
+      "modes": [
+        "gdscript-inferred",
+        "gdscript-inferred"
+      ]
+    },
+    {
+      "id": "bool",
+      "source": "func probe(a: bool) -> bool:\n    var first := not a\n    return first\n",
+      "types": [
+        "bool"
+      ],
+      "modes": [
+        "gdscript-inferred"
+      ]
+    },
+    {
+      "id": "dynamic",
+      "source": "func probe(a: int) -> int:\n    var first = a + 1\n    return first\n",
+      "diagnostic": "TYPED_INITIALIZER_REQUIRED",
+      "valid": true
+    },
+    {
+      "id": "default",
+      "source": "func probe(a: int) -> int:\n    var first: int\n    first = a\n    return first\n",
+      "diagnostic": "TYPED_INITIALIZER_REQUIRED",
+      "valid": true
+    },
+    {
+      "id": "invalid-bool-arithmetic",
+      "source": "func probe(a: bool) -> bool:\n    var first := a + true\n    return first\n",
+      "diagnostic": "BINARY_DOMAIN",
+      "valid": false
+    }
+  ]
+}

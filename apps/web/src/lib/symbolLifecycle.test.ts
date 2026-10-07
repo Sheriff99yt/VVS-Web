@@ -97,6 +97,20 @@ function eventDispatchNode(eventId: string, name: string): VVSNode {
 }
 
 describe('applyVariableRenameToDocuments', () => {
+  test('applies native declaration spelling and readonly projection in one immutable document update', () => {
+    const variable = createVariableSymbol('First', { id: 'var-1', type: 'data_number', flags: { readonly: true } });
+    const node = varDefineNode(variable.id, variable.name);
+    node.data.inputs.push({ id: 'value', label: 'Value', type: 'data_number', required: true });
+    node.data.properties = { ...node.data.properties, nativeLocalStyle: 'csharp-const', nativeType: 'byte', isConst: true, declarationKind: 'const' };
+    const documents: Record<string, GraphDocument> = { home: { nodes: [node], edges: [] } };
+    const next = applyVariableRenameToDocuments(documents, { ...variable, flags: { readonly: false } }, {
+      nodeId: node.id, properties: { nativeLocalStyle: 'csharp-var', nativeType: 'var', isConst: false, declarationKind: 'var' },
+    });
+    expect(next.home.nodes[0].data.properties).toMatchObject({ nativeLocalStyle: 'csharp-var', nativeType: 'var', isConst: false, declarationKind: 'var' });
+    expect(next.home.nodes[0].data.inputs).toEqual(node.data.inputs);
+    expect(next.home.nodes[0].data.outputs).toEqual(node.data.outputs);
+    expect(documents.home.nodes[0].data.properties).toMatchObject({ nativeLocalStyle: 'csharp-const', nativeType: 'byte', isConst: true });
+  });
   test('keeps var_define and rebuilds Get pins from the symbol', () => {
     const variable = createVariableSymbol('health', { id: 'var-1', type: 'data_string' });
     const documents: Record<string, GraphDocument> = {

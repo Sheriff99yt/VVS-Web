@@ -3,6 +3,10 @@ name: VVS UI Development
 description: Triggers when building user-facing features, Next.js components, or React Flow UI in apps/web.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # UI-First Strategy
 
 - When building user-facing features, prioritize designing the User Interface (Next.js components) first to establish the visual flow.

@@ -3,6 +3,10 @@ name: VVS SOLID Principles
 description: Applies SOLID design principles to the VVS monorepo (apps/web, server, packages/transpiler). Triggers when refactoring, reviewing architecture, adding modules, splitting responsibilities, or when the user mentions SOLID, separation of concerns, or maintainable design.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # VVS SOLID Principles
 
 Apply SOLID **in VVS terms** — mapped to our monorepo boundaries, naming, and delivery loop. Full examples: [reference.md](reference.md).

@@ -448,6 +448,8 @@ export function GraphPropertiesPanel({
       ) : null}
 
       {showDetails ? (
+        <>
+        {getActiveTabMetadata()?.sourceFileName !== undefined && <label className="block space-y-1"><span className="text-[11px] font-medium text-zinc-400">Source file name</span><input className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs" value={getActiveTabMetadata()?.sourceFileName ?? ''} onChange={event => updateActiveTabMetadata({ sourceFileName: event.target.value })} /><span className="text-[10px] text-zinc-500">This graph emits one reviewed file. Use a unique .js, .mjs or .py name.</span></label>}
         <div>
           <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">
             Graph details
@@ -567,6 +569,7 @@ export function GraphPropertiesPanel({
             </div>
           </div>
         </div>
+        </>
       ) : null}
     </div>
   );

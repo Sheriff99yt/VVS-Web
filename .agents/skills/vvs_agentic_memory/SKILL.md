@@ -3,6 +3,10 @@ name: VVS Agentic Memory
 description: Triggers when reading or updating agent memory, starting a delivery loop, or needing cross-session context without re-exploring the repo.
 ---
 
+## Batch delivery
+
+Apply [the shared batch workflow](../../../docs/agentic_batch_workflow.md): implement related changes together, run this skill’s required gates once per completed batch, and retry affected checks after failure. Preserve the evidence requirements below; do not repeat unchanged builds or suites per edit.
+
 # Agentic Memory
 
 ## Location
@@ -59,10 +63,10 @@ Update **only** if the session produced durable changes:
 
 ## Loop integration
 
-After each UI/API loop iteration:
+At each completed implementation batch boundary (not after every edit):
 
 1. Mark completed rows in `incomplete-ui.md`
-2. Set next slice from `docs/ui_api_delivery_loop.md` backlog
+2. Set the next dependency batch from `docs/ui_api_delivery_loop.md` backlog
 3. Update `docs/current_state.md` if implementation changed
 4. Update `decisions.md` if product direction or fidelity rules changed
 5. Update relevant skill if a new canonical path or anti-pattern emerged (esp. **Code panel verification** in usability/fidelity skills)

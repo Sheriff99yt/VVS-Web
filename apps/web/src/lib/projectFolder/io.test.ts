@@ -197,11 +197,11 @@ describe('projectFolder graph manifest helpers', () => {
       name: '.vvs',
       getDirectoryHandle: async (name: string) => {
         if (name === 'packs') return packsDirHandle;
-        throw new Error('Not found');
+        throw new DOMException('Not found', 'NotFoundError');
       },
       getFileHandle: async (name: string) => {
         if (name === 'project.json') return projectFileHandle;
-        throw new Error('Not found');
+        throw new DOMException('Not found', 'NotFoundError');
       }
     };
 
@@ -209,10 +209,10 @@ describe('projectFolder graph manifest helpers', () => {
       kind: 'directory',
       getDirectoryHandle: async (name: string) => {
         if (name === '.vvs') return vvsDirHandle;
-        throw new Error('Not found');
+        throw new DOMException('Not found', 'NotFoundError');
       },
       getFileHandle: async (name: string) => {
-        throw new Error('Not found');
+        throw new DOMException('Not found', 'NotFoundError');
       }
     } as unknown as FileSystemDirectoryHandle;
 

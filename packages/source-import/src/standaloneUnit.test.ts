@@ -13,7 +13,7 @@ async function review(source: string, policy: 'program' | 'library' = 'library',
   const region = preview.regions.find(r => r.kind === 'candidate');
   return region ? reviewSourceImportGraph(preview, region, 'library.js', entry, policy) : { diagnostics: preview.regions.map(r => r.reason ?? ''), generated: '', snapshot: undefined, nodeCount: 0 };
 }
-for (const source of ['function identity(value) { return value; }', 'function calculate() { return (2 + 3) * 4; }', 'function choose() { if (true) { return 1; } else { return 2; } }', 'function on_start(value) { return value; }']) {
+for (const source of ['function identity(value) { return value; }', 'function f(a = 1) { return a; }', 'function rest(...values) { return values; }', 'function calculate() { return (2 + 3) * 4; }', 'function choose() { if (true) { return 1; } else { return 2; } }', 'function on_start(value) { return value; }']) {
   test(`standalone full-file and persistence round trip: ${source}`, async () => {
     const result = await review(source);
     expect(result.diagnostics).toEqual([]);
@@ -65,7 +65,7 @@ test('original full file, Unicode ranges and excluded-source boundaries persist 
   expect(source.slice(original.start, original.end)).toBe('function identity(value) { return value; }');
   await expect(acceptSourceImportReview(result, source, 'library.js', false, 'program')).rejects.toThrow('STALE_REVIEW');
 });
-for (const source of ['function f(a) { return a + 1; }', 'function f() { return captured; }', 'function f() { return f(); }', 'function f(a, a) { return a; }', 'function f() { "use strict"; return 1; }', 'async function f() { return 1; }', 'function f(a = 1) { return a; }', 'function f() { return this; }', 'function f() { return -0; }', 'function f() { return arguments; }', 'export function f() { return 1; }']) {
+for (const source of ['function f() { return captured; }', 'function f(a, a) { return a; }', 'async function f() { return 1; }', 'function f() { return this; }', 'function f() { return arguments; }', 'export default function f() { return 1; }']) {
   test(`unsupported standalone semantics block acceptance: ${source}`, async () => {
     const result = await review(source); expect(result.snapshot).toBeUndefined(); expect(result.diagnostics.length).toBeGreaterThan(0);
   });
@@ -98,4 +98,19 @@ test('fixed canonical file-owned graph generates an ordinary function and revers
   expect(imported.diagnostics).toEqual([]);
   expect(imported.snapshot!.functions[0]!.name).toBe('identity');
   expect(imported.snapshot!.functions[0]!.overloads[0]!.parameters.map(p => p.label)).toEqual(['value']);
+});
+
+for (const source of [
+  'function defaults(value = [1, 2]) { return value; } function use() { return defaults(); }',
+  'function collect(...values) { return values; } function use() { return collect(1, 2, 3); }',
+  'function collect(...values) { return values; } function use() { return collect(); }',
+]) test(`native supplied arguments persist and match independent syntax: ${source}`, async () => {
+  const result = await review(source);
+  expect(result.diagnostics).toEqual([]);
+  expect(syntax(result.generated)).toBe(syntax(source));
+  const loaded = normalizeProjectSnapshot(JSON.parse(JSON.stringify(result.snapshot)))!;
+  expect(validateImportSnapshot(loaded, source).generated).toBe(result.generated);
+  const call = Object.values(loaded.documents).flatMap(doc => doc.nodes).find(node => node.data.properties?.nativeArgumentCount !== undefined)!;
+  call.data.properties!.nativeArgumentCount = 99;
+  expect(analyzeProject(loaded).diagnostics.some(diagnostic => diagnostic.code === 'NATIVE_CALL_ARITY')).toBe(true);
 });

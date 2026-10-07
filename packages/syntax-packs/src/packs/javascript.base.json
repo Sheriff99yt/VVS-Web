@@ -103,6 +103,9 @@
     "ConvertToNumber": {
       "quasi": "parseFloat({value})"
     },
+    "ConvertToNumberStrict": {
+      "quasi": "Number({value})"
+    },
     "InstanceRef": {
       "quasi": "this.{name}"
     },
@@ -118,6 +121,9 @@
     "DeclareLocal": {
       "quasi": "let {name};"
     },
+    "DeclareLocalInitialized": {
+      "quasi": "{keyword} {name} = {value};"
+    },
     "ClassModuleOpen": {
       "quasi": "{prefix}class {name}{extendsSuffix} {"
     },
@@ -131,7 +137,7 @@
       "quasi": "    }"
     },
     "ModuleFunctionDefOpen": {
-      "quasi": "{asyncKw}function {name}({paramList}) {"
+      "quasi": "{exportKw}{asyncKw}function {name}({paramList}) {"
     },
     "ModuleFunctionDefClose": {
       "quasi": "}"
@@ -189,6 +195,79 @@
     },
     "TryClose": {
       "quasi": "}"
+    },
+    "Comparison": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "AssignCompound": {
+      "quasi": "{target} {operator} {value};"
+    },
+    "UpdatePostfix": {
+      "quasi": "{target}{operator};"
+    },
+    "UpdatePrefix": {
+      "quasi": "{operator}{target};"
+    },
+    "ForStructuredHeader": {
+      "quasi": "for ({initializer}; {condition}; {update}) {"
+    },
+    "LanguageDirective": {
+      "quasi": "{value};"
+    },
+    "CallSuperConstructor": {
+      "quasi": "super({args});"
+    },
+    "NativeScalar": {
+      "quasi": "{value}"
+    },
+    "NativeBinary": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "NativeIndex": {
+      "quasi": "{receiver}[{index}]"
+    },
+    "NativeMember": {
+      "quasi": "({receiver}).{name}"
+    },
+    "NativeArray": {
+      "quasi": "[{items}]"
+    },
+    "NativeObject": {
+      "lego": [
+        {
+          "kind": "static",
+          "name": "{"
+        },
+        {
+          "kind": "slot",
+          "name": "items"
+        },
+        {
+          "kind": "static",
+          "name": "}"
+        }
+      ]
+    },
+    "NativeTuple": {
+      "quasi": "({items})"
+    },
+    "NativeEntry": {
+      "quasi": "{key}: {value}"
+    },
+    "NativeComputedEntry": {
+      "quasi": "[{key}]: {value}"
+    },
+    "NativeSpread": {
+      "quasi": "...{value}"
+    },
+    "NativeDictSpread": {
+      "quasi": "**{value}"
+    },
+    "NativeUnary": {
+      "quasi": "({operator}({value}))"
+    },
+    "NativeOperatorBinary": {
+      "quasi": "(({left}) {operator} ({right}))"
     }
   }
 }

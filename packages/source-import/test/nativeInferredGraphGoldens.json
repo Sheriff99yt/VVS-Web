@@ -1,0 +1,18 @@
+{
+  "cpp": {
+    "parameter-chain": "int probe(int a) {\n        auto first = (a + 1);\n        auto second = (first * 2);\n        second = (second + a);\n        return second;\n    }",
+    "bool": "bool probe(bool a) {\n        const auto first = !a;\n        return first;\n    }",
+    "unsigned": "unsigned int probe(unsigned int a) {\n        auto first = (a + 1u);\n        return first;\n    }",
+    "auto-group": "int probe(int a) {\n        auto first = a, second = (first + 1);\n        second = (second + a);\n        return second;\n    }",
+    "promotion": "int probe(unsigned char a) {\n        auto first = (a + 1);\n        return first;\n    }"
+  },
+  "rust": {
+    "parameter-chain": "fn probe(a: i8) -> i8 {\n        let first = (a + 1);\n        let mut second = (first * 2);\n        second = (second + a);\n        second\n    }",
+    "bool-shadow": "fn probe(a: bool) -> bool {\n        let first = !a;\n        let first = (first && a);\n        first\n    }",
+    "suffixed": "fn probe(a: i32) -> i32 {\n        let first = 4i32;\n        let second = (first + a);\n        second\n    }"
+  },
+  "gdscript": {
+    "parameter-chain": "func probe(a: int) -> int:\n        var first := (a + 1)\n        var second := (first * 2)\n        second = (second + a)\n        return second",
+    "bool": "func probe(a: bool) -> bool:\n        var first := not a\n        return first"
+  }
+}

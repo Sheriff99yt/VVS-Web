@@ -96,6 +96,9 @@
     "DeclareLocal": {
       "quasi": "{name} = None"
     },
+    "DeclareLocalInitialized": {
+      "quasi": "{name} = {value}"
+    },
     "ClassDefine": {
       "quasi": "class {name}:"
     },
@@ -167,6 +170,65 @@
     },
     "TryFinallyHeader": {
       "quasi": "finally:"
-    }
+    },
+    "Comparison": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "ForNativeRangeHeader": {
+      "quasi": "for {index} in range({args}):"
+    },
+    "NativeScalar": {
+      "quasi": "{value}"
+    },
+    "NativeBinary": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "NativeIndex": {
+      "quasi": "{receiver}[{index}]"
+    },
+    "NativeMember": {
+      "quasi": "({receiver}).{name}"
+    },
+    "NativeArray": {
+      "quasi": "[{items}]"
+    },
+    "NativeObject": {
+      "lego": [
+        {
+          "kind": "static",
+          "name": "{"
+        },
+        {
+          "kind": "slot",
+          "name": "items"
+        },
+        {
+          "kind": "static",
+          "name": "}"
+        }
+      ]
+    },
+    "NativeTuple": {
+      "quasi": "({items})"
+    },
+    "NativeEntry": {
+      "quasi": "{key}: {value}"
+    },
+    "NativeComputedEntry": {
+      "quasi": "[{key}]: {value}"
+    },
+    "NativeSpread": {
+      "quasi": "*{value}"
+    },
+    "NativeDictSpread": {
+      "quasi": "**{value}"
+    },
+    "NativeUnary": {
+      "quasi": "({operator}({value}))"
+    },
+    "NativeOperatorBinary": {
+      "quasi": "(({left}) {operator} ({right}))"
+    },
+    "NativeNamedArgument": { "quasi": "{name}={value}" }
   }
 }

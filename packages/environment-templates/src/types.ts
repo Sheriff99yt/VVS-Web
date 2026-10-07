@@ -18,6 +18,13 @@ export interface ApiEventDef {
   id: string;
   name: string;
   parameters: SymbolParameter[];
+  /** Evidence must describe the actual receiver and registration lifetime, not only syntax. */
+  registration?: Partial<Record<TargetLanguage, {
+    receiverType: string; register: string; unregister: string;
+    callbackReceiver: 'event-source' | 'bound-handler' | 'host-defined';
+    duplicates: 'allowed' | 'rejected'; lifetime: string;
+    evidence: { hostVersion: string; fixture: string; state: 'unvalidated' | 'validated' };
+  }>>;
 }
 
 export interface ApiMethodTargetBinding {

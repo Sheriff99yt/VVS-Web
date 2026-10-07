@@ -21,6 +21,22 @@ If a relevant skill exists in `.agents/skills/`, read its `SKILL.md` before star
 
 ---
 
+## Batch delivery (required)
+
+Follow [the shared agentic batch workflow](../docs/agentic_batch_workflow.md) for all project work. This replaces older one-slice-per-session or per-edit validation instructions; their architecture, fidelity and required evidence still apply.
+
+1. Plan related items, dependencies, complete edit scope and acceptance criteria together.
+2. Implement and review the whole dependency batch, including meaningful fixtures and planned docs, before expensive validation.
+3. Run a deduplicated set of affected gates once through the combined runner. Do not repeat standalone tests already covered by a batch stage or build/browser checks after each small edit.
+4. Diagnose failures from logs and saved state, then retry only affected checks and their necessary prerequisites. Broaden only for changed behavior or a concrete unresolved risk.
+5. Record exact fresh/reused/focused evidence and roadmap gaps once per batch. Preserve the full objective and never promote a focused repair into full-suite certification.
+
+Do not overlap validation runners or artifact builds. Rules/skill/prose-only edits need lightweight structure/link/diff checks, not application builds or browser suites.
+
+Reverse-import batches cover all eight languages by shared feature. Plan a feature-by-language readiness/acceptance matrix, implement common fixes once plus every ready native correction, and validate the completed batch together. Examine related failures across languages before a repair; do not finish and fully retest languages one at a time. Keep independent native semantics and explicit unmet prerequisites in the matrix. Follow [the cross-language plan](../docs/design/reverse_import_cross_language_batches.md).
+
+---
+
 ## 1. Strict Monorepo Boundaries
 
 - `packages/transpiler` = Pure TypeScript. NEVER import React, Next.js, or Go types here.
@@ -137,29 +153,17 @@ The Go `server/`, Postgres, and Auth code are **legacy experiments**. Keep them 
 
 ---
 
-## AFTER YOU FINISH — Verification Checklist
+## AFTER EACH IMPLEMENTATION BATCH — Verification Checklist
 
-Before declaring any task complete, run these checks:
+Choose the affected stages once; [batch policy](../docs/agentic_batch_workflow.md) controls timing and retries. Required evidence remains mandatory, but a combined stage replaces equivalent individual commands.
 
-**If you touched `packages/transpiler`:**
-```powershell
-cd packages/transpiler; bun test
-```
+| Affected area | Required batch evidence |
+|---|---|
+| Transpiler | Package tests covering `packages/transpiler` |
+| Go sidecar | `server-build` and `server-tests` |
+| Emit or syntax packs | Disk-loaded usability goldens and canonical Code-panel output (`goldens`, `code-panel`), plus relevant pack/native checks |
+| Multi-class emit/integration | Canonical Code-panel output (`code-panel`) and affected integration workflows |
+| Web behavior | Relevant web tests, lint/build and affected browser workflows |
+| Agent rules/skills/prose only | Structure/frontmatter, local links and diff checks |
 
-**If you touched `server/`:**
-```powershell
-cd server; go build ./...
-cd server; go test ./...
-```
-
-**If you touched transpiler emit or syntax packs:**
-```powershell
-bun apps/web/scripts/validate_test_projects_folder.ts
-```
-
-**If you touched multi-class emit or integration code:**
-```powershell
-bun apps/web/scripts/extract_test_project_outputs.ts
-```
-
-**General rule:** Run command → Read error → Fix code → Run again → Repeat until green. Do NOT ask the user to fix errors for you.
+Prefer `bun tools/validate_batch.ts --only=<affected-stages>`. Run the default full batch when warranted by the change or the full-goal completion audit. After failure, repair the cause and retry affected gates; do not ask the user to fix routine implementation errors. Do not restart an already-green unchanged gate without a reason.

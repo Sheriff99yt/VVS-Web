@@ -19,6 +19,30 @@
     }
   },
   "templates": {
+    "NativeScalar": {
+      "quasi": "{value}"
+    },
+    "NativeOperatorBinary": {
+      "quasi": "({left} {operator} {right})"
+    },
+    "NativeUnary": {
+      "quasi": "({operator}{value})"
+    },
+    "NativeNumericConversion": {
+      "quasi": "(({target}){value})"
+    },
+    "NativeParentheses": {
+      "quasi": "({value})"
+    },
+    "NativeChecked": {
+      "quasi": "checked({value})"
+    },
+    "NativeUnchecked": {
+      "quasi": "unchecked({value})"
+    },
+    "NativeTypedParameter": {
+      "quasi": "{type} {name}"
+    },
     "Print": {
       "quasi": "Console.WriteLine({value});"
     },
@@ -26,7 +50,16 @@
       "quasi": "this.{target} = {value};"
     },
     "AssignLocal": {
-      "quasi": "var {target} = {value};"
+      "quasi": "{target} = {value};"
+    },
+    "AssignCompound": {
+      "quasi": "{target} {operator} {value};"
+    },
+    "UpdatePrefix": {
+      "quasi": "{operator}{target};"
+    },
+    "UpdatePostfix": {
+      "quasi": "{target}{operator};"
     },
     "CallInstance": {
       "quasi": "this.{callee}({args});"
@@ -121,6 +154,12 @@
     "DeclareLocal": {
       "quasi": "{type} {name};"
     },
+    "DeclareCSharpLocal": {
+      "quasi": "{type} {name} = {value};"
+    },
+    "DeclareCSharpConstant": {
+      "quasi": "const {type} {name} = {value};"
+    },
     "ClassDefine": {
       "quasi": "// class {name}"
     },
@@ -204,6 +243,24 @@
     },
     "TryClose": {
       "quasi": "}"
+    },
+    "ScopeOpen": {
+      "quasi": "{context}{"
+    },
+    "ScopeClose": {
+      "quasi": "}"
+    },
+    "DeclareCSharpGroup": {
+      "quasi": "{keyword}{type} {declarators};"
+    },
+    "CSharpDeclarator": {
+      "quasi": "{name} = {value}"
+    },
+    "DeclareCSharpUninitialized": {
+      "quasi": "{type} {name};"
+    },
+    "CSharpDeclaratorUninitialized": {
+      "quasi": "{name}"
     }
   }
 }

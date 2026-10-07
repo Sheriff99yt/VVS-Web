@@ -1,0 +1,41 @@
+import { expect, test } from 'bun:test';
+import { normalizeProjectSnapshot, transactNativeScalarLocal } from '@vvs/graph-types';
+import { reviewNativeScalarImportGraph, acceptSourceImportReview, reviewSourceReimport, acceptSourceReimport } from './validation';
+import { configureNativeInventoryRuntime } from '../test/nativeInventoryRuntime';
+import cases from '../test/native-local-source-cases.json';
+configureNativeInventoryRuntime();
+for (const language of ['cpp', 'rust', 'gdscript'] as const) test(`sealed local bodies, edited bindings and reimport ${language}`, async () => {
+  const source = cases[language][0].source, fileName = `locals.${{ cpp: 'cpp', rust: 'rs', gdscript: 'gd' }[language]}`;
+  const review = await reviewNativeScalarImportGraph(source, language, fileName);
+  expect(review.diagnostics).toEqual([]);
+  const accepted = await acceptSourceImportReview(review, source, fileName, false, 'library');
+  expect(accepted.functions).toHaveLength(3); expect(accepted.variables).toHaveLength(5);
+  const saved = normalizeProjectSnapshot(JSON.parse(JSON.stringify(accepted)))!;
+  const declaration = Object.values(saved.documents).flatMap(doc => doc.nodes).find(node => node.data.kindId === 'var_define' && node.data.properties?.name === 'result')!;
+  const current = { ...saved, ...transactNativeScalarLocal(saved, declaration.id, { name: 'editedResult' }) };
+  const retained = await reviewSourceReimport(current, source, fileName);
+  expect(retained.diagnostics).toEqual([]); expect(retained.conflicts).toEqual([]);
+  expect(acceptSourceReimport(retained, current, source).documents).toEqual(current.documents);
+  const incoming = source.replace('* 2', '* 4'); expect(incoming).not.toBe(source);
+  const conflict = await reviewSourceReimport(current, incoming, fileName);
+  expect(conflict.diagnostics).toEqual([]); expect(conflict.conflicts).toHaveLength(1);
+  expect(() => acceptSourceReimport(conflict, current, incoming)).toThrow('REIMPORT_CONFLICT');
+  const kept = acceptSourceReimport(conflict, current, incoming, 'keep-graph');
+  expect(kept.variables).toEqual(current.variables); expect(kept.documents).toEqual(current.documents);
+  const replacement = acceptSourceReimport(conflict, current, incoming, 'use-source');
+  expect(replacement.variables.some(variable => variable.name === 'editedResult')).toBe(false);
+  expect(Object.values(replacement.documents).flatMap(doc => doc.nodes).some(node => node.data.properties?.payload === '4')).toBe(true);
+  await expect(acceptSourceImportReview({ ...review }, source, fileName, false, 'library')).rejects.toThrow('STALE_REVIEW');
+});
+for (const language of ['rust', 'gdscript'] as const) test(`sealed native local special binding ${language}`, async () => {
+  const source = cases[language][1].source, fileName = `special.${language === 'rust' ? 'rs' : 'gd'}`;
+  const review = await reviewNativeScalarImportGraph(source, language, fileName);
+  expect(review.diagnostics).toEqual([]);
+  const accepted = await acceptSourceImportReview(review, source, fileName, false, 'library');
+  expect(accepted.variables).toHaveLength(2);
+  if (language === 'rust') expect(accepted.variables.map(variable => variable.name)).toEqual(['value', 'value']);
+});
+test('C++ deferred grouped local admission stays atomic until initialization context is mapped', async () => {
+  const review = await reviewNativeScalarImportGraph('int grouped(int a) { int first = a, second; return first; }', 'cpp', 'group.cpp');
+  expect(review.snapshot).toBeUndefined(); expect(review.diagnostics.length).toBeGreaterThan(0);
+});

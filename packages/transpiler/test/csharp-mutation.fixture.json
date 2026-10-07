@@ -1,0 +1,846 @@
+{
+  "version": 3,
+  "savedAt": "",
+  "projectDetails": {
+    "moduleName": "Mutations",
+    "extendsType": "",
+    "description": "Imported from Mutations.cs"
+  },
+  "classes": [
+    {
+      "kind": "class",
+      "id": "main-class",
+      "name": "Mutations",
+      "containerId": "main-graph"
+    }
+  ],
+  "activeClassId": "main-class",
+  "graphContainers": [
+    {
+      "id": "main-graph",
+      "name": "Mutations"
+    }
+  ],
+  "variables": [
+    {
+      "kind": "variable",
+      "id": "csharp-method-0-local-0",
+      "name": "Value",
+      "type": "data_number",
+      "classId": "main-class",
+      "binding": "instance",
+      "visibility": "private",
+      "graphTabId": "csharp-method-0",
+      "flags": {
+        "readonly": false
+      }
+    }
+  ],
+  "events": [],
+  "functions": [
+    {
+      "kind": "function",
+      "id": "csharp-method-0",
+      "name": "Change",
+      "classId": "main-class",
+      "binding": "static",
+      "visibility": "public",
+      "overloads": [
+        {
+          "id": "o1",
+          "parameters": [
+            {
+              "id": "csharp-method-0-parameter-0",
+              "label": "Input",
+              "type": "data_number"
+            },
+            {
+              "id": "csharp-method-0-parameter-1",
+              "label": "Count",
+              "type": "data_number"
+            }
+          ],
+          "returnType": "data_number",
+          "graphTabId": "csharp-method-0"
+        }
+      ]
+    }
+  ],
+  "openTabs": [
+    {
+      "id": "main-graph",
+      "type": "container",
+      "name": "Mutations"
+    },
+    {
+      "id": "csharp-method-0",
+      "type": "function",
+      "name": "Function: Change"
+    }
+  ],
+  "activeGraphTab": "main-graph",
+  "targetLanguage": "csharp",
+  "autoCompile": true,
+  "autoSave": false,
+  "documents": {
+    "main-graph": {
+      "nodes": [
+        {
+          "id": "import-node-1",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "class_define",
+            "kindVersion": 1,
+            "label": "Declare Mutations",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 0,
+                "end": 154,
+                "mappingId": "csharp.class_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "main-class",
+              "classId": "main-class",
+              "name": "Mutations",
+              "extendsType": "",
+              "visibility": "",
+              "sourceImport": {
+                "version": 1,
+                "language": "csharp",
+                "languageVersion": "12",
+                "sourceMode": "module",
+                "environment": "none",
+                "fileName": "Mutations.cs",
+                "source": "class Mutations { public static byte Change(byte Input, int Count) { byte Value = Input; Value += 1; Value >>>= Count; ++Value; Value--; return Value; } }",
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5",
+                "start": 0,
+                "end": 154,
+                "mappingId": "csharp.class_declaration",
+                "mappingVersion": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "import-node-2",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 520,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_define",
+            "kindVersion": 1,
+            "label": "Declare Change",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 18,
+                "end": 152,
+                "mappingId": "csharp.method_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0",
+              "name": "Change",
+              "overloadId": "o1"
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "csharp-method-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "csharp-method-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-3",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 760,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_implement",
+            "kindVersion": 1,
+            "label": "Define Change",
+            "category": "Project",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 18,
+                "end": 152,
+                "mappingId": "csharp.method_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0",
+              "name": "Change",
+              "graphTabId": "csharp-method-0",
+              "isStatic": true,
+              "isExported": false,
+              "role": "function",
+              "nativeSignatureLanguage": "csharp",
+              "nativeReturnType": "byte",
+              "nativeParameters": [
+                {
+                  "id": "csharp-method-0-parameter-0",
+                  "name": "Input",
+                  "mode": "positional",
+                  "nativeType": "byte"
+                },
+                {
+                  "id": "csharp-method-0-parameter-1",
+                  "name": "Count",
+                  "mode": "positional",
+                  "nativeType": "int"
+                }
+              ]
+            },
+            "linkKind": "call_function",
+            "linkedGraphId": "csharp-method-0",
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "csharp-method-0",
+              "overloadId": "o1"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-1-import-node-2",
+          "source": "import-node-1",
+          "target": "import-node-2",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-2-import-node-3",
+          "source": "import-node-2",
+          "target": "import-node-3",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "Mutations",
+        "extendsType": "",
+        "description": "",
+        "targetLanguage": "csharp",
+        "compilationUnit": {
+          "version": 1,
+          "entryPolicy": "library"
+        }
+      }
+    },
+    "csharp-method-0": {
+      "nodes": [
+        {
+          "id": "import-node-4",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "kindId": "function_entry",
+            "kindVersion": 1,
+            "label": "Change",
+            "category": "Events",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "csharp-method-0-parameter-0",
+                "label": "Input",
+                "type": "data_number"
+              },
+              {
+                "id": "csharp-method-0-parameter-1",
+                "label": "Count",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 18,
+                "end": 152,
+                "mappingId": "csharp.method_declaration",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "functionId": "csharp-method-0",
+              "symbolId": "csharp-method-0",
+              "name": "Change",
+              "overloadId": "o1",
+              "nativeSignatureLanguage": "csharp"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "csharp-method-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-5",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 240,
+            "y": 0
+          },
+          "data": {
+            "kindId": "var_define",
+            "kindVersion": 1,
+            "label": "Declare Value",
+            "category": "Variables",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "value",
+                "label": "Initializer",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 69,
+                "end": 88,
+                "mappingId": "csharp.local_declaration_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0-local-0",
+              "name": "Value",
+              "type": "data_number",
+              "hasInitializer": true,
+              "declarationKind": "var",
+              "isConst": false,
+              "nativeLocalStyle": "csharp-typed",
+              "nativeType": "byte"
+            }
+          }
+        },
+        {
+          "id": "import-node-6",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 480,
+            "y": 0
+          },
+          "data": {
+            "kindId": "variable_set",
+            "kindVersion": 1,
+            "label": "Set Value",
+            "category": "Variables",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "val",
+                "label": "New Value",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 89,
+                "end": 100,
+                "mappingId": "csharp.expression_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0-local-0",
+              "name": "Value",
+              "variableName": "Value",
+              "assignmentOperator": "+=",
+              "prefix": false
+            },
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "csharp-method-0-local-0"
+            }
+          }
+        },
+        {
+          "id": "import-node-7",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 720,
+            "y": 160
+          },
+          "data": {
+            "kindId": "expr_native_literal",
+            "kindVersion": 1,
+            "label": "Native Literal",
+            "category": "Native Values",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "result",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 98,
+                "end": 99,
+                "mappingId": "csharp.integer_literal",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "nativeLanguage": "csharp",
+              "nativeForm": "scalar",
+              "nativeDomain": "csharp-integer",
+              "payload": "1",
+              "memberName": "",
+              "operator": "",
+              "operandCount": 0
+            }
+          }
+        },
+        {
+          "id": "import-node-8",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 960,
+            "y": 0
+          },
+          "data": {
+            "kindId": "variable_set",
+            "kindVersion": 1,
+            "label": "Set Value",
+            "category": "Variables",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "val",
+                "label": "New Value",
+                "type": "data_number",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 101,
+                "end": 118,
+                "mappingId": "csharp.expression_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0-local-0",
+              "name": "Value",
+              "variableName": "Value",
+              "assignmentOperator": ">>>=",
+              "prefix": false
+            },
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "csharp-method-0-local-0"
+            }
+          }
+        },
+        {
+          "id": "import-node-9",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1200,
+            "y": 0
+          },
+          "data": {
+            "kindId": "variable_set",
+            "kindVersion": 1,
+            "label": "Set Value",
+            "category": "Variables",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 119,
+                "end": 127,
+                "mappingId": "csharp.expression_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0-local-0",
+              "name": "Value",
+              "variableName": "Value",
+              "assignmentOperator": "++",
+              "prefix": true
+            },
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "csharp-method-0-local-0"
+            }
+          }
+        },
+        {
+          "id": "import-node-10",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1440,
+            "y": 0
+          },
+          "data": {
+            "kindId": "variable_set",
+            "kindVersion": 1,
+            "label": "Set Value",
+            "category": "Variables",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "outputs": [
+              {
+                "id": "exec_out",
+                "label": "",
+                "type": "execution"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 128,
+                "end": 136,
+                "mappingId": "csharp.expression_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0-local-0",
+              "name": "Value",
+              "variableName": "Value",
+              "assignmentOperator": "--",
+              "prefix": false
+            },
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "csharp-method-0-local-0"
+            }
+          }
+        },
+        {
+          "id": "import-node-11",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1680,
+            "y": 0
+          },
+          "data": {
+            "kindId": "flow_return",
+            "kindVersion": 1,
+            "label": "Return",
+            "category": "Flow Control",
+            "inputs": [
+              {
+                "id": "exec_in",
+                "label": "",
+                "type": "execution"
+              },
+              {
+                "id": "return_val",
+                "label": "Return",
+                "type": "data_number"
+              }
+            ],
+            "outputs": [],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 137,
+                "end": 150,
+                "mappingId": "csharp.return_statement",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "functionId": "csharp-method-0",
+              "symbolId": "csharp-method-0",
+              "overloadId": "o1"
+            },
+            "graphBinding": {
+              "kind": "call_function",
+              "symbolId": "csharp-method-0",
+              "overloadId": "o1"
+            }
+          }
+        },
+        {
+          "id": "import-node-12",
+          "type": "vvs_standard_node",
+          "position": {
+            "x": 1920,
+            "y": 160
+          },
+          "data": {
+            "kindId": "variable_get",
+            "kindVersion": 1,
+            "label": "Get Value",
+            "category": "Variables",
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "val",
+                "label": "Value",
+                "type": "data_number"
+              }
+            ],
+            "inlineValues": {},
+            "properties": {
+              "sourceOrigin": {
+                "start": 144,
+                "end": 149,
+                "mappingId": "csharp.identifier",
+                "mappingVersion": 1,
+                "sourceSha256": "fe6f21f54c0dee36c0f1e94af80386316f37a004352b68ac4a6fa01ccb45ced5"
+              },
+              "symbolId": "csharp-method-0-local-0",
+              "name": "Value",
+              "variableName": "Value"
+            },
+            "graphBinding": {
+              "kind": "variable_ref",
+              "symbolId": "csharp-method-0-local-0"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "import-edge-0-import-node-4-import-node-5",
+          "source": "import-node-4",
+          "target": "import-node-5",
+          "sourceHandle": "csharp-method-0-parameter-0",
+          "targetHandle": "value",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-1-import-node-4-import-node-5",
+          "source": "import-node-4",
+          "target": "import-node-5",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-2-import-node-7-import-node-6",
+          "source": "import-node-7",
+          "target": "import-node-6",
+          "sourceHandle": "result",
+          "targetHandle": "val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-3-import-node-5-import-node-6",
+          "source": "import-node-5",
+          "target": "import-node-6",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-4-import-node-4-import-node-8",
+          "source": "import-node-4",
+          "target": "import-node-8",
+          "sourceHandle": "csharp-method-0-parameter-1",
+          "targetHandle": "val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_any"
+          }
+        },
+        {
+          "id": "import-edge-5-import-node-6-import-node-8",
+          "source": "import-node-6",
+          "target": "import-node-8",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-6-import-node-8-import-node-9",
+          "source": "import-node-8",
+          "target": "import-node-9",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-7-import-node-9-import-node-10",
+          "source": "import-node-9",
+          "target": "import-node-10",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        },
+        {
+          "id": "import-edge-8-import-node-12-import-node-11",
+          "source": "import-node-12",
+          "target": "import-node-11",
+          "sourceHandle": "val",
+          "targetHandle": "return_val",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "data_number"
+          }
+        },
+        {
+          "id": "import-edge-9-import-node-10-import-node-11",
+          "source": "import-node-10",
+          "target": "import-node-11",
+          "sourceHandle": "exec_out",
+          "targetHandle": "exec_in",
+          "type": "vvs_standard_edge",
+          "data": {
+            "pinType": "execution"
+          }
+        }
+      ],
+      "metadata": {
+        "moduleName": "Change",
+        "extendsType": "",
+        "description": ""
+      }
+    }
+  },
+  "installedLibrary": []
+}

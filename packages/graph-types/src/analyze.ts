@@ -1,3 +1,5 @@
+import { validateControlFlowSemantics } from './controlFlowValidation';
+import { analyzeNativeScalarFunctionGraph } from './nativeScalarFunctionGraphs';
 import type { AnalysisResult, Diagnostic } from './diagnostic';
 import type {
   GraphDocument,
@@ -148,7 +150,8 @@ function validateSemantics(input: AnalyzeProjectInput): Diagnostic[] {
   const names = new Map<string, string>();
 
   for (const fn of input.functions) {
-    const existing = names.get(fn.name);
+    const nameKey = JSON.stringify([fn.classId ?? MAIN_CLASS_ID, fn.name]);
+    const existing = names.get(nameKey);
     if (existing && existing !== fn.id) {
       messages.push({
         level: 'error',
@@ -158,7 +161,7 @@ function validateSemantics(input: AnalyzeProjectInput): Diagnostic[] {
         code: 'DUPLICATE_FUNCTION_NAME',
       });
     }
-    names.set(fn.name, fn.id);
+    names.set(nameKey, fn.id);
   }
 
   return messages;
@@ -187,10 +190,28 @@ function validateVariableSemantics(input: AnalyzeProjectInput): Diagnostic[] {
     variables.filter((v) => v.flags?.readonly).map((v) => v.name)
   );
   const names = new Map<string, string>();
+  const rustLocalBodies = new Map<string, Set<string>>();
+  const nativeRustShadow = (graphId: string | undefined, firstId: string, secondId: string): boolean => {
+    if (!graphId) return false;
+    if (!rustLocalBodies.has(graphId)) {
+      const ids = new Set<string>();
+      const fn = input.functions.find(fn => fn.overloads.some(overload => (overload.graphTabId ?? fn.id) === graphId));
+      const doc = input.documents[graphId];
+      const definition = fn && Object.values(input.documents).flatMap(doc => doc.nodes).find(node => node.data.kindId === 'function_implement' && node.data.graphBinding?.symbolId === fn.id && node.data.properties?.nativeSignatureLanguage === 'rust');
+      if (definition && doc) {
+        try { for (const local of analyzeNativeScalarFunctionGraph(definition.data, doc, 'rust').locals ?? []) ids.add(local.id); }
+        catch { /* Invalid native bodies keep the ordinary duplicate-name diagnostic. */ }
+      }
+      rustLocalBodies.set(graphId, ids);
+    }
+    return rustLocalBodies.get(graphId)!.has(firstId) && rustLocalBodies.get(graphId)!.has(secondId);
+  };
+
 
   for (const variable of variables) {
-    const existing = names.get(variable.name);
-    if (existing && existing !== variable.id) {
+    const nameKey = JSON.stringify([variable.classId ?? MAIN_CLASS_ID, variable.graphTabId ?? '', variable.scopedNodeId ?? '', variable.name]);
+    const existing = names.get(nameKey);
+    if (existing && existing !== variable.id && !nativeRustShadow(variable.graphTabId, existing, variable.id)) {
       messages.push({
         level: 'error',
         message: `Duplicate variable name "${variable.name}"`,
@@ -199,22 +220,23 @@ function validateVariableSemantics(input: AnalyzeProjectInput): Diagnostic[] {
         code: 'DUPLICATE_VARIABLE_NAME',
       });
     }
-    names.set(variable.name, variable.id);
+    names.set(nameKey, variable.id);
   }
-
-  if (readonlyNames.size === 0) return messages;
 
   for (const [tabId, doc] of Object.entries(input.documents)) {
     for (const node of doc.nodes) {
       if (node.type !== 'vvs_standard_node') continue;
       const kindId = node.data.kindId ?? '';
+      const symbolId = node.data.graphBinding?.kind === 'variable_ref' ? node.data.graphBinding.symbolId : typeof node.data.properties?.symbolId === 'string' ? node.data.properties.symbolId : undefined;
+      const bound = symbolId ? variablesById.get(symbolId) : undefined;
+      if (bound?.graphTabId && bound.graphTabId !== tabId) messages.push({ level: 'error', message: `Local variable "${bound.name}" is referenced outside its owning graph.`, tabId, nodeId: node.id, symbolId: bound.id, source: 'semantic', code: 'LOCAL_SCOPE_MISMATCH' });
       const isSet =
         kindId === 'variable_set' ||
         (node.data.label.startsWith('Set ') && node.data.category === 'Variables');
       if (!isSet) continue;
 
       const varName = resolveVariableNameFromNode(node, variablesById);
-      if (varName && readonlyNames.has(varName)) {
+      if (varName && (bound ? bound.flags?.readonly : readonlyNames.has(varName))) {
         messages.push({
           level: 'error',
           message: `Set node writes to read-only variable "${varName}"`,
@@ -687,7 +709,7 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
 
     if (!doc) continue;
 
-    const classVariables = variables.filter((v) => symbolClassId(v) === cls.id);
+    const classVariables = variables.filter((v) => symbolClassId(v) === cls.id && !v.graphTabId && !v.scopedNodeId);
     const classFunctions = input.functions.filter((f) => symbolClassId(f) === cls.id);
     const classEvents = input.events.filter((e) => symbolClassId(e) === cls.id);
 
@@ -724,6 +746,11 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
 
     for (const func of classFunctions) {
       if (findDefineNodesForSymbol(doc, 'function', func.id).length > 0) continue;
+      // A reviewed native module definition owns both the authored header and body.
+      // It needs no synthetic prototype; missing/invalid bodies remain blocking.
+      if (fileFunctionLibrary && doc.nodes.some(node => node.type === 'vvs_standard_node' &&
+        resolveNodeKindId(node.data) === 'function_implement' && defineNodeSymbolId(node) === func.id &&
+        ['cpp', 'rust', 'gdscript'].includes(String(node.data.properties?.nativeSignatureLanguage)))) continue;
       messages.push({
         level: 'error',
         message: `Function "${func.name}" has no Declare node on class graph "${cls.name}".`,
@@ -761,6 +788,10 @@ function validateDefineNodeSync(input: AnalyzeProjectInput): Diagnostic[] {
     }
   }
 
+  for (const variable of variables.filter(v => v.graphTabId)) {
+    const scopeDoc = input.documents[variable.graphTabId!];
+    if (!scopeDoc || findDefineNodesForSymbol(scopeDoc, 'variable', variable.id).length === 0) messages.push({ level: 'error', message: `Local variable "${variable.name}" has no Declare node on its owning graph.`, tabId: variable.graphTabId, symbolId: variable.id, source: 'semantic', code: 'DEFINE_NODE_MISSING' });
+  }
   return messages;
 }
 
@@ -985,7 +1016,10 @@ function validateCanvasDeclarations(input: AnalyzeProjectInput): Diagnostic[] {
 
     if (!hasSymbols) continue;
 
-    if (!classGraphHasDefineNodes(doc)) {
+    const hasGlobalFunctionDefinitions = cls.isGlobalScope && doc?.nodes.some(node =>
+      node.type === 'vvs_standard_node' && resolveNodeKindId(node.data) === 'function_implement' &&
+      input.functions.some(fn => fn.id === node.data.graphBinding?.symbolId && fn.classId === cls.id && fn.binding === 'module'));
+    if (!classGraphHasDefineNodes(doc) && !hasGlobalFunctionDefinitions) {
       messages.push({
         level: 'error',
         message: `Class "${cls.name}" has symbols but no Declare nodes on its class graph.`,
@@ -1246,6 +1280,7 @@ function validateImplementsTargets(input: AnalyzeProjectInput): Diagnostic[] {
 
 export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
   const diagnostics: Diagnostic[] = [];
+  diagnostics.push(...validateControlFlowSemantics(input));
   const containerTabIds = new Set(
     (input.openTabs ?? []).filter((tab) => tab.type === 'container').map((tab) => tab.id)
   );
@@ -1255,6 +1290,16 @@ export function analyzeProject(input: AnalyzeProjectInput): AnalysisResult {
       continue;
     }
     diagnostics.push(...validateDocument(tabId, doc));
+    for (const node of doc.nodes) {
+      if (input.targetLanguage === 'verse' && node.data.kindId === 'action_get_input') diagnostics.push({
+        level: 'warning', source: 'portability', code: 'INPUT_PLACEHOLDER_UNSUPPORTED', tabId, nodeId: node.id,
+        message: 'Verse Get User Input emits a prompt and typed placeholder only; no real input is read.',
+      });
+      if (node.data.kindId === 'event_bind') diagnostics.push({
+        level: 'warning', source: 'portability', code: 'BIND_HOST_CONTRACT_UNVALIDATED', tabId, nodeId: node.id,
+        message: 'Bind requires a host event receiver, compatible callback, and explicit lifetime/teardown. Printer availability alone does not validate that contract; Dispatch remains a direct call.',
+      });
+    }
   }
 
   diagnostics.push(...validateSemantics(input));

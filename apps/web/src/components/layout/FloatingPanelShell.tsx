@@ -406,6 +406,7 @@ export function FloatingPanelShell({
             <button
               type="button"
               onClick={onClose}
+              aria-label={`Close ${title}`}
               className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80"
             >
               <X size={14} />

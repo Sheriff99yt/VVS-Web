@@ -1,23 +1,58 @@
 import * as vscode from 'vscode';
+import { createHash } from 'node:crypto';
 import { transpileProject } from '@vvs/transpiler';
-import type { SourceRange } from '@vvs/graph-types';
+import { applyWireConnection, edgesWithoutTargetHandle, analyzeProject, type GraphDocument, type SourceRange } from '@vvs/graph-types';
 import { resolve as resolveKind } from '@vvs/syntax-registry';
 import { loadWorkspaceProject, projectUri } from './workspaceProject';
 
 const DOCS = 'https://sheriff99yt.github.io/VVS-Web/docs/nodes/';
 let lastMap: Record<string, SourceRange[]> = {};
 let lastRoot: vscode.Uri | undefined;
-
-function rootFor(uri?: vscode.Uri): vscode.Uri | undefined {
-  return (uri && vscode.workspace.getWorkspaceFolder(uri)?.uri) ?? vscode.workspace.workspaceFolders?.[0]?.uri;
+let lastVersions = new Map<string, number>();
+let lastOutputs = new Map<string, string>();
+let lastInputs = new Map<string, string>();
+async function inputsCurrent(inputs: ReadonlyMap<string, string>): Promise<boolean> {
+  for (const [value, text] of inputs) {
+    const uri = vscode.Uri.parse(value);
+    const open = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === value);
+    if ((open ? open.getText() : new TextDecoder().decode(await vscode.workspace.fs.readFile(uri))) !== text) return false;
+  }
+  return true;
+}
+const generating = new Set<string>();
+const hashText = (text: string) => createHash('sha256').update(text).digest('hex');
+async function readOptional(uri: vscode.Uri): Promise<string | null> {
+  try { return new TextDecoder().decode(await vscode.workspace.fs.readFile(uri)); }
+  catch (error) { if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') return null; throw error; }
 }
 
-async function generate(): Promise<void> {
-  const root = rootFor(vscode.window.activeTextEditor?.document.uri);
+function versionsCurrent(versions: ReadonlyMap<string, number>): boolean {
+  return [...versions].every(([uri, version]) => vscode.workspace.textDocuments.find(doc => doc.uri.toString() === uri)?.version === version);
+}
+
+function rootFor(uri?: vscode.Uri): vscode.Uri | undefined {
+  if (uri) return vscode.workspace.getWorkspaceFolder(uri)?.uri;
+  const folders = vscode.workspace.workspaceFolders;
+  return folders?.length === 1 ? folders[0].uri : undefined;
+}
+
+async function generate(initiatingUri?: vscode.Uri): Promise<void> {
+  const root = rootFor(initiatingUri ?? vscode.window.activeTextEditor?.document.uri);
   if (!root) { vscode.window.showErrorMessage('Open a VVS project folder first.'); return; }
+  if (generating.has(root.toString())) return;
+  generating.add(root.toString());
+  lastMap = {};
   try {
     await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'VVS: Generate source' }, async () => {
-      const snapshot = await loadWorkspaceProject(root);
+      const documents = vscode.workspace.textDocuments.filter(doc => doc.uri.toString().startsWith(root.toString() + '/.vvs/'));
+      const versions = new Map(documents.map(doc => [doc.uri.toString(), doc.version]));
+      const overlay = new Map(documents.map(doc => [doc.uri.toString(), doc.getText()]));
+      const inputs = new Map<string, string>();
+      const snapshot = await loadWorkspaceProject(root, overlay, inputs);
+      if (!versionsCurrent(versions) || !await inputsCurrent(inputs)) throw new Error('Inputs changed during loading. Generate again.');
+      const analysis = analyzeProject(snapshot);
+      const errors = analysis.diagnostics.filter(diagnostic => diagnostic.level === 'error');
+      if (errors.length) throw new Error(errors.map(error => error.message).join('\n'));
       const result = transpileProject({
         projectDetails: snapshot.projectDetails, targetLanguage: snapshot.targetLanguage,
         targetFileExtensions: snapshot.targetFileExtensions, variables: snapshot.variables,
@@ -26,23 +61,54 @@ async function generate(): Promise<void> {
         environmentId: snapshot.environmentId, integration: snapshot.integration,
       });
       if (result.files.length === 0) throw new Error('Generate produced no source files. Check the graph and target language.');
-      const writes = result.files.map((file) => ({ uri: projectUri(root, file.path), content: file.content }));
+      const writes = result.files.map((file) => ({ path: file.path, uri: projectUri(root, file.path), content: file.content.endsWith('\n') ? file.content : file.content + '\n' }));
+      const receiptUri = projectUri(root, '.vvs/generated-files.json');
+      const receiptText = await readOptional(receiptUri);
+      const hashes: Record<string, string> = receiptText ? JSON.parse(receiptText) : {};
+      const previous = new Map<string, string | null>();
       // Verify every target before writing any output.
-      for (const { uri } of writes) {
+      for (const { uri, content, path } of writes) {
         if (uri.path.includes('/.vvs/')) throw new Error('Generate cannot overwrite the .vvs project.');
+        if (vscode.workspace.textDocuments.some(doc => doc.uri.toString() === uri.toString() && doc.isDirty)) throw new Error(`Save or close the dirty output first: ${uri.path}`);
+        const existing = await readOptional(uri);
+        if (existing !== null && existing !== content && hashText(existing) !== hashes[path]) throw new Error(`Generated output was edited externally: ${path}. Preserve or move it before generating.`);
+        previous.set(uri.toString(), existing);
+        hashes[path] = hashText(content);
       }
+      const written: vscode.Uri[] = [];
+      try {
       for (const { uri, content } of writes) {
+        if (!versionsCurrent(versions) || !await inputsCurrent(inputs)) throw new Error('Inputs changed during Generate. Output belongs to the previous revision; Generate again.');
+        if (vscode.workspace.textDocuments.some(doc => doc.uri.toString() === uri.toString() && doc.isDirty)) throw new Error(`Output changed during Generate: ${uri.path}`);
+        if (await readOptional(uri) !== previous.get(uri.toString())) throw new Error(`Output changed during Generate: ${uri.path}`);
         await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
         await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(content));
+        written.push(uri);
+      }
+      await vscode.workspace.fs.writeFile(receiptUri, new TextEncoder().encode(JSON.stringify(hashes)));
+      } catch (error) {
+        for (const uri of written.reverse()) {
+          const before = previous.get(uri.toString());
+          const expected = writes.find(write => write.uri.toString() === uri.toString())!.content;
+          if (await readOptional(uri) !== expected) continue;
+          if (before === null) await vscode.workspace.fs.delete(uri);
+          else await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(before!));
+        }
+        throw error;
       }
       lastMap = result.sourceMap;
       lastRoot = root;
+      lastVersions = versions;
+      lastInputs = inputs;
+      lastOutputs = new Map(writes.map(file => [file.uri.toString(), file.content]));
       const first = writes[0];
       await vscode.window.showTextDocument(first.uri, { preview: false });
       vscode.window.showInformationMessage(`VVS generated ${writes.length} source file${writes.length === 1 ? '' : 's'}.`);
     });
   } catch (error) {
-    vscode.window.showErrorMessage(`VVS Generate: ${error instanceof Error ? error.message : String(error)}`);
+    vscode.window.showErrorMessage(`VVS Generate did not complete; some outputs may have been written. ${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    generating.delete(root.toString());
   }
 }
 
@@ -107,9 +173,10 @@ class GraphEditor implements vscode.CustomTextEditorProvider {
     panel.webview.onDidReceiveMessage(async (message: unknown) => {
       if (!message || typeof message !== 'object') return;
       const data = message as Record<string, unknown>;
+      try {
       if (data.type === 'source') await vscode.commands.executeCommand('vscode.openWith', document.uri, 'default');
-      if (data.type === 'generate') await generate();
-      if (data.type === 'sourceForNode' && typeof data.id === 'string') await vscode.commands.executeCommand('vvs.revealGeneratedNode', data.id);
+      if (data.type === 'generate') await generate(document.uri);
+      if (data.type === 'sourceForNode' && typeof data.id === 'string') await vscode.commands.executeCommand('vvs.revealGeneratedNode', data.id, document.uri);
       if (data.type === 'docs' && typeof data.id === 'string') await vscode.commands.executeCommand('vvs.openNodeDocs', data.id);
       if (data.type === 'add' && typeof data.kindId === 'string' && ['flow_branch', 'action_print', 'math_add'].includes(data.kindId)) {
         const kind = resolveKind(data.kindId);
@@ -124,17 +191,13 @@ class GraphEditor implements vscode.CustomTextEditorProvider {
         await vscode.workspace.applyEdit(edit);
       }
       if (data.type === 'connect' && typeof data.target === 'string' && typeof data.targetHandle === 'string' && typeof data.source === 'string') {
-        const graph = JSON.parse(document.getText()) as { nodes: Array<{ id: string; data: { inputs: Array<{ id: string; type: string }>; outputs: Array<{ id: string; type: string }> } }>; edges: Array<Record<string, unknown>> };
-        const target = graph.nodes.find((node) => node.id === data.target);
-        const input = target?.data.inputs.find((pin) => pin.id === data.targetHandle);
-        if (!input) return;
-        graph.edges = graph.edges.filter((edge) => !(edge.target === data.target && edge.targetHandle === data.targetHandle));
-        if (data.source) {
-          const [sourceId, sourceHandle] = data.source.split('|');
-          const source = graph.nodes.find((node) => node.id === sourceId);
-          const output = source?.data.outputs.find((pin) => pin.id === sourceHandle);
-          if (!output || output.type !== input.type || sourceId === data.target) return;
-          graph.edges.push({ id: `vscode-${crypto.randomUUID()}`, source: sourceId, target: data.target, sourceHandle, targetHandle: data.targetHandle, type: 'vvs_standard_edge', data: { pinType: input.type } });
+        const graph = JSON.parse(document.getText()) as GraphDocument;
+        if (!data.source) graph.edges = edgesWithoutTargetHandle(graph.edges, data.target, data.targetHandle);
+        else {
+          const [source, sourceHandle] = data.source.split('|');
+          const result = applyWireConnection({ source, sourceHandle, target: data.target, targetHandle: data.targetHandle }, graph.nodes, graph.edges, `vscode-${crypto.randomUUID()}`);
+          if ('error' in result) { vscode.window.showWarningMessage(`Connection rejected: ${result.error}`); return; }
+          graph.edges = result.edges;
         }
         const edit = new vscode.WorkspaceEdit();
         edit.replace(document.uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)), JSON.stringify(graph, null, 2) + '\n');
@@ -155,6 +218,7 @@ class GraphEditor implements vscode.CustomTextEditorProvider {
         edit.replace(document.uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)), JSON.stringify(graph, null, 2) + '\n');
         await vscode.workspace.applyEdit(edit);
       }
+      } catch (error) { vscode.window.showWarningMessage(`VVS edit rejected: ${error instanceof Error ? error.message : String(error)}`); }
     });
     update();
   }
@@ -164,24 +228,39 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscode.window.registerCustomEditorProvider('vvs.graph', new GraphEditor(), { webviewOptions: { retainContextWhenHidden: true } }));
   context.subscriptions.push(vscode.commands.registerCommand('vvs.generate', generate));
   context.subscriptions.push(vscode.commands.registerCommand('vvs.openGraph', async () => {
-    const root = rootFor();
-    if (!root) return;
+    if (!vscode.workspace.workspaceFolders?.length) return;
     const matches = await vscode.workspace.findFiles('**/.vvs/graphs/**/*.graph.json', '**/node_modules/**', 100);
     const selected = await vscode.window.showQuickPick(matches.map((uri) => ({ label: vscode.workspace.asRelativePath(uri), uri })));
     if (selected) await vscode.commands.executeCommand('vscode.openWith', selected.uri, 'vvs.graph');
   }));
   context.subscriptions.push(vscode.commands.registerCommand('vvs.openNodeDocs', async (kindId?: string) => {
     const id = kindId ?? await vscode.window.showInputBox({ prompt: 'VVS node kind id' });
-    if (id && /^[a-z0-9_]+$/.test(id)) await vscode.env.openExternal(vscode.Uri.parse(DOCS + id));
+    if (id && /^[a-z0-9_.-]+$/.test(id)) await vscode.env.openExternal(vscode.Uri.parse(DOCS + id));
   }));
-  context.subscriptions.push(vscode.commands.registerCommand('vvs.revealGeneratedNode', async (nodeId: string) => {
+  context.subscriptions.push(vscode.commands.registerCommand('vvs.revealGeneratedNode', async (nodeId: string, initiatingUri?: vscode.Uri) => {
+    const root = rootFor(initiatingUri ?? vscode.window.activeTextEditor?.document.uri);
+    if (!root || root.toString() !== lastRoot?.toString() || !versionsCurrent(lastVersions) || !await inputsCurrent(lastInputs)) { vscode.window.showInformationMessage('Generate this project revision first.'); return; }
     const range = lastMap[nodeId]?.[0];
     if (!range || !lastRoot) { vscode.window.showInformationMessage('Generate this project first to navigate to its source.'); return; }
     const uri = projectUri(lastRoot, range.filePath);
-    const editor = await vscode.window.showTextDocument(uri);
+    const doc = await vscode.workspace.openTextDocument(uri);
+    if (doc.getText() !== lastOutputs.get(uri.toString())) { vscode.window.showInformationMessage('Output changed. Generate again before navigating.'); return; }
+    const editor = await vscode.window.showTextDocument(doc);
     const selection = new vscode.Range(range.startLine - 1, range.startCol - 1, range.endLine - 1, range.endCol - 1);
     editor.selection = new vscode.Selection(selection.start, selection.end);
     editor.revealRange(selection);
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand('vvs.revealFile', async (uri?: vscode.Uri) => {
+    const file = uri ?? vscode.window.activeTextEditor?.document.uri;
+    if (!file || !rootFor(file)) return;
+    await vscode.workspace.fs.stat(file);
+    await vscode.commands.executeCommand('revealInExplorer', file);
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand('vvs.revealFileInOS', async (uri?: vscode.Uri) => {
+    const file = uri ?? vscode.window.activeTextEditor?.document.uri;
+    if (!file || !rootFor(file)) return;
+    await vscode.workspace.fs.stat(file);
+    await vscode.commands.executeCommand(file.scheme === 'file' ? 'revealFileInOS' : 'revealInExplorer', file);
   }));
 }
 

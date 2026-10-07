@@ -1,0 +1,266 @@
+{
+  "name": "native-range",
+  "families": [
+    "python"
+  ],
+  "moduleName": "Demo",
+  "variables": [
+    {
+      "id": "index",
+      "name": "index",
+      "type": "data_number",
+      "graphTabId": "main-graph",
+      "scopedNodeId": "loop"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "event_on_start",
+        "label": "On Start",
+        "category": "Events",
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "",
+            "type": "execution"
+          }
+        ],
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "loop",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "flow_for",
+        "kindVersion": 1,
+        "label": "For Loop",
+        "category": "Flow Control",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "",
+            "type": "execution"
+          },
+          {
+            "id": "first",
+            "label": "First",
+            "type": "data_number"
+          },
+          {
+            "id": "last",
+            "label": "Last",
+            "type": "data_number"
+          },
+          {
+            "id": "condition",
+            "label": "Condition",
+            "type": "data_boolean"
+          },
+          {
+            "id": "step",
+            "label": "Step",
+            "type": "data_number"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "body_exec",
+            "label": "Body",
+            "type": "execution"
+          },
+          {
+            "id": "exec_out",
+            "label": "",
+            "type": "execution"
+          },
+          {
+            "id": "index",
+            "label": "Index",
+            "type": "data_number"
+          },
+          {
+            "id": "init_exec",
+            "label": "Initializer",
+            "type": "execution"
+          },
+          {
+            "id": "update_exec",
+            "label": "Update",
+            "type": "execution"
+          }
+        ],
+        "properties": {
+          "headerMode": "python-range",
+          "rangeArgumentCount": 3
+        },
+        "inlineValues": {
+          "first": 4,
+          "last": 0,
+          "step": -1
+        }
+      }
+    },
+    {
+      "id": "initialize",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "var_define",
+        "kindVersion": 1,
+        "label": "Declare Variable",
+        "category": "Variables",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "",
+            "type": "execution"
+          },
+          {
+            "id": "value",
+            "label": "Initializer",
+            "type": "data_any"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "label": "",
+            "type": "execution"
+          }
+        ],
+        "properties": {
+          "symbolId": "index",
+          "name": "index",
+          "type": "data_number",
+          "declarationKind": "loop-index",
+          "numberDomain": "python-integer"
+        },
+        "inlineValues": {}
+      }
+    },
+    {
+      "id": "body",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "flow_return",
+        "kindVersion": 1,
+        "label": "Return",
+        "category": "Flow Control",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "",
+            "type": "execution"
+          },
+          {
+            "id": "value",
+            "label": "Value",
+            "type": "data_any"
+          }
+        ],
+        "outputs": [],
+        "properties": {},
+        "inlineValues": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "id": "after",
+      "type": "vvs_standard_node",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "kindId": "flow_return",
+        "kindVersion": 1,
+        "label": "Return",
+        "category": "Flow Control",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "label": "",
+            "type": "execution"
+          },
+          {
+            "id": "value",
+            "label": "Value",
+            "type": "data_any"
+          }
+        ],
+        "outputs": [],
+        "properties": {},
+        "inlineValues": {
+          "value": 0
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-exec_out-loop-exec_in",
+      "source": "start",
+      "sourceHandle": "exec_out",
+      "target": "loop",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "loop-init_exec-initialize-exec_in",
+      "source": "loop",
+      "sourceHandle": "init_exec",
+      "target": "initialize",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "loop-body_exec-body-exec_in",
+      "source": "loop",
+      "sourceHandle": "body_exec",
+      "target": "body",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    },
+    {
+      "id": "loop-exec_out-after-exec_in",
+      "source": "loop",
+      "sourceHandle": "exec_out",
+      "target": "after",
+      "targetHandle": "exec_in",
+      "type": "vvs_standard_edge",
+      "data": {
+        "pinType": "execution"
+      }
+    }
+  ]
+}

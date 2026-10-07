@@ -1,0 +1,466 @@
+{
+  "cpp": [
+    {
+      "id": "identity-bool",
+      "source": "// λ🧭 signature probe\nbool sample(bool value) { return value; }\nusing Signature=bool(*)(bool);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "bool",
+          "mutable": true
+        }
+      ],
+      "returnType": "bool"
+    },
+    {
+      "id": "identity-signed-char",
+      "source": "// λ🧭 signature probe\nsigned char sample(signed char value) { return value; }\nusing Signature=signed char(*)(signed char);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "signed char",
+          "mutable": true
+        }
+      ],
+      "returnType": "signed char"
+    },
+    {
+      "id": "identity-unsigned-char",
+      "source": "// λ🧭 signature probe\nunsigned char sample(unsigned char value) { return value; }\nusing Signature=unsigned char(*)(unsigned char);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "unsigned char",
+          "mutable": true
+        }
+      ],
+      "returnType": "unsigned char"
+    },
+    {
+      "id": "identity-short",
+      "source": "// λ🧭 signature probe\nshort sample(short value) { return value; }\nusing Signature=short(*)(short);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "short",
+          "mutable": true
+        }
+      ],
+      "returnType": "short"
+    },
+    {
+      "id": "identity-unsigned-short",
+      "source": "// λ🧭 signature probe\nunsigned short sample(unsigned short value) { return value; }\nusing Signature=unsigned short(*)(unsigned short);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "unsigned short",
+          "mutable": true
+        }
+      ],
+      "returnType": "unsigned short"
+    },
+    {
+      "id": "identity-int",
+      "source": "// λ🧭 signature probe\nint sample(int value) { return value; }\nusing Signature=int(*)(int);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int",
+          "mutable": true
+        }
+      ],
+      "returnType": "int"
+    },
+    {
+      "id": "identity-unsigned-int",
+      "source": "// λ🧭 signature probe\nunsigned int sample(unsigned int value) { return value; }\nusing Signature=unsigned int(*)(unsigned int);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "unsigned int",
+          "mutable": true
+        }
+      ],
+      "returnType": "unsigned int"
+    },
+    {
+      "id": "identity-long",
+      "source": "// λ🧭 signature probe\nlong sample(long value) { return value; }\nusing Signature=long(*)(long);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "long",
+          "mutable": true
+        }
+      ],
+      "returnType": "long"
+    },
+    {
+      "id": "identity-unsigned-long",
+      "source": "// λ🧭 signature probe\nunsigned long sample(unsigned long value) { return value; }\nusing Signature=unsigned long(*)(unsigned long);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "unsigned long",
+          "mutable": true
+        }
+      ],
+      "returnType": "unsigned long"
+    },
+    {
+      "id": "identity-long-long",
+      "source": "// λ🧭 signature probe\nlong long sample(long long value) { return value; }\nusing Signature=long long(*)(long long);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "long long",
+          "mutable": true
+        }
+      ],
+      "returnType": "long long"
+    },
+    {
+      "id": "identity-unsigned-long-long",
+      "source": "// λ🧭 signature probe\nunsigned long long sample(unsigned long long value) { return value; }\nusing Signature=unsigned long long(*)(unsigned long long);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "unsigned long long",
+          "mutable": true
+        }
+      ],
+      "returnType": "unsigned long long"
+    },
+    {
+      "id": "const-parameter",
+      "source": "constexpr int sample(const int value) { return value; }\nusing Signature=int(*)(int);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int",
+          "mutable": false
+        }
+      ],
+      "returnType": "int",
+      "unsupported": false
+    },
+    {
+      "id": "unsigned-alias",
+      "source": "unsigned sample(unsigned value) { return value; }\nusing Signature=unsigned int(*)(unsigned int);\nconstexpr Signature probe=&sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "unsigned int",
+          "mutable": true
+        }
+      ],
+      "returnType": "unsigned int",
+      "unsupported": false
+    },
+    {
+      "id": "void-empty",
+      "source": "void sample(void) {}\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "void",
+      "unsupported": false
+    },
+    {
+      "id": "pointer-unresolved",
+      "source": "int sample(int *value) { return *value; }\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "",
+      "unsupported": true
+    },
+    {
+      "id": "default-unresolved",
+      "source": "int sample(int value=1) { return value; }\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "",
+      "unsupported": true
+    }
+  ],
+  "rust": [
+    {
+      "id": "identity-bool",
+      "source": "// λ🧭 signature probe\nfn sample(value: bool)->bool { value }\nconst _:fn(bool)->bool=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "bool",
+          "mutable": false
+        }
+      ],
+      "returnType": "bool"
+    },
+    {
+      "id": "identity-i8",
+      "source": "// λ🧭 signature probe\nfn sample(value: i8)->i8 { value }\nconst _:fn(i8)->i8=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "i8",
+          "mutable": false
+        }
+      ],
+      "returnType": "i8"
+    },
+    {
+      "id": "identity-u8",
+      "source": "// λ🧭 signature probe\nfn sample(value: u8)->u8 { value }\nconst _:fn(u8)->u8=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "u8",
+          "mutable": false
+        }
+      ],
+      "returnType": "u8"
+    },
+    {
+      "id": "identity-i16",
+      "source": "// λ🧭 signature probe\nfn sample(value: i16)->i16 { value }\nconst _:fn(i16)->i16=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "i16",
+          "mutable": false
+        }
+      ],
+      "returnType": "i16"
+    },
+    {
+      "id": "identity-u16",
+      "source": "// λ🧭 signature probe\nfn sample(value: u16)->u16 { value }\nconst _:fn(u16)->u16=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "u16",
+          "mutable": false
+        }
+      ],
+      "returnType": "u16"
+    },
+    {
+      "id": "identity-i32",
+      "source": "// λ🧭 signature probe\nfn sample(value: i32)->i32 { value }\nconst _:fn(i32)->i32=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "i32",
+          "mutable": false
+        }
+      ],
+      "returnType": "i32"
+    },
+    {
+      "id": "identity-u32",
+      "source": "// λ🧭 signature probe\nfn sample(value: u32)->u32 { value }\nconst _:fn(u32)->u32=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "u32",
+          "mutable": false
+        }
+      ],
+      "returnType": "u32"
+    },
+    {
+      "id": "identity-i64",
+      "source": "// λ🧭 signature probe\nfn sample(value: i64)->i64 { value }\nconst _:fn(i64)->i64=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "i64",
+          "mutable": false
+        }
+      ],
+      "returnType": "i64"
+    },
+    {
+      "id": "identity-u64",
+      "source": "// λ🧭 signature probe\nfn sample(value: u64)->u64 { value }\nconst _:fn(u64)->u64=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "u64",
+          "mutable": false
+        }
+      ],
+      "returnType": "u64"
+    },
+    {
+      "id": "identity-i128",
+      "source": "// λ🧭 signature probe\nfn sample(value: i128)->i128 { value }\nconst _:fn(i128)->i128=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "i128",
+          "mutable": false
+        }
+      ],
+      "returnType": "i128"
+    },
+    {
+      "id": "identity-u128",
+      "source": "// λ🧭 signature probe\nfn sample(value: u128)->u128 { value }\nconst _:fn(u128)->u128=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "u128",
+          "mutable": false
+        }
+      ],
+      "returnType": "u128"
+    },
+    {
+      "id": "identity-isize",
+      "source": "// λ🧭 signature probe\nfn sample(value: isize)->isize { value }\nconst _:fn(isize)->isize=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "isize",
+          "mutable": false
+        }
+      ],
+      "returnType": "isize"
+    },
+    {
+      "id": "identity-usize",
+      "source": "// λ🧭 signature probe\nfn sample(value: usize)->usize { value }\nconst _:fn(usize)->usize=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "usize",
+          "mutable": false
+        }
+      ],
+      "returnType": "usize"
+    },
+    {
+      "id": "mutable-parameter",
+      "source": "pub const fn sample(mut value:i8)->i8 { value=1; value }\nconst _:fn(i8)->i8=sample;\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "i8",
+          "mutable": true
+        }
+      ],
+      "returnType": "i8",
+      "unsupported": false
+    },
+    {
+      "id": "unit-empty",
+      "source": "fn sample() {}\nconst _:fn()->()=sample;\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "()",
+      "unsupported": false
+    },
+    {
+      "id": "borrow-unresolved",
+      "source": "fn sample(value:&i32)->i32 { *value }\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "",
+      "unsupported": true
+    }
+  ],
+  "gdscript": [
+    {
+      "id": "identity-bool",
+      "source": "# λ🧭 signature probe\nfunc sample(value: bool)->bool:\n\treturn value\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "bool",
+          "mutable": true
+        }
+      ],
+      "returnType": "bool"
+    },
+    {
+      "id": "identity-int",
+      "source": "# λ🧭 signature probe\nfunc sample(value: int)->int:\n\treturn value\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int",
+          "mutable": true
+        }
+      ],
+      "returnType": "int"
+    },
+    {
+      "id": "static-parameter",
+      "source": "static func sample(value:int)->int:\n\treturn value\n",
+      "valid": true,
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int",
+          "mutable": true
+        }
+      ],
+      "returnType": "int",
+      "unsupported": false
+    },
+    {
+      "id": "void-empty",
+      "source": "func sample()->void:\n\tpass\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "void",
+      "unsupported": false
+    },
+    {
+      "id": "untyped-unresolved",
+      "source": "func sample(value):\n\treturn value\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "",
+      "unsupported": true
+    },
+    {
+      "id": "default-unresolved",
+      "source": "func sample(value:int=1)->int:\n\treturn value\n",
+      "valid": true,
+      "parameters": [],
+      "returnType": "",
+      "unsupported": true
+    }
+  ]
+}

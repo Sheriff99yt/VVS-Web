@@ -1,3 +1,4 @@
+import { commitFolderFiles, recoverFolderSave } from './transaction';
 import {
   VVS_DIR,
   VVS_PROJECT_FILE,
@@ -15,14 +16,13 @@ import {
   normalizeProjectSnapshot,
   toPersistedSnapshot,
 } from '@vvs/graph-types';
-import { loadEnvironmentManifest } from '@vvs/environment-templates';
+import { loadEnvironmentManifest, filterGeneratedFilesForHostPolicy } from '@vvs/environment-templates';
 import { registerPack, type SyntaxPackManifest } from '@vvs/syntax-packs';
 import {
   appendGitignoreLines,
   ensureDirPath,
   readJsonFile,
   readTextFile,
-  writeJsonFile,
 } from './fsAccess';
 
 const SYMBOLS_DIR = `${VVS_DIR}/symbols`;
@@ -88,6 +88,7 @@ export interface LoadedFolderProject {
 export async function loadProjectFromFolder(
   root: FileSystemDirectoryHandle
 ): Promise<LoadedFolderProject | null> {
+  await recoverFolderSave(root);
   const manifest = await readJsonFile<VvsProjectManifest>(root, VVS_PROJECT_FILE);
   if (!manifest || manifest.format !== 'vvs.project') return null;
 
@@ -204,8 +205,10 @@ export async function loadProjectFromFolder(
 
 export async function saveProjectToFolder(
   root: FileSystemDirectoryHandle,
-  snapshot: ProjectSnapshot
+  snapshot: ProjectSnapshot,
+  generated?: import('@vvs/graph-types').TranspileResult
 ): Promise<void> {
+  await recoverFolderSave(root);
   const persisted = toPersistedSnapshot(snapshot);
   const integration = integrationFromSnapshot(persisted);
   const manifest = buildManifest(persisted);
@@ -217,19 +220,19 @@ export async function saveProjectToFolder(
   await ensureDirPath(root, FUNCTIONS_DIR);
   await ensureDirPath(root, SYMBOLS_DIR);
 
-  await writeJsonFile(root, VVS_PROJECT_FILE, manifest);
-  await writeJsonFile(root, VVS_INTEGRATION_FILE, integration);
+  const files = new Map<string, unknown>();
+  files.set(VVS_INTEGRATION_FILE, integration);
 
   for (const [containerId, relPath] of Object.entries(graphManifest.containers ?? {})) {
     const doc = persisted.documents[containerId];
     if (!doc) continue;
-    await writeJsonFile(root, `${VVS_DIR}/${relPath}`, doc);
+    files.set(`${VVS_DIR}/${relPath}`, doc);
   }
 
   for (const [tabId, relPath] of Object.entries(graphManifest.functions)) {
     const doc = persisted.documents[tabId];
     if (!doc) continue;
-    await writeJsonFile(root, `${VVS_DIR}/${relPath}`, doc);
+    files.set(`${VVS_DIR}/${relPath}`, doc);
   }
 
   for (const tab of persisted.openTabs) {
@@ -238,13 +241,13 @@ export async function saveProjectToFolder(
     const doc = persisted.documents[tab.id];
     if (!doc) continue;
     const rel = classGraphRelativePath(tab.name);
-    await writeJsonFile(root, `${VVS_DIR}/${rel}`, doc);
+    files.set(`${VVS_DIR}/${rel}`, doc);
   }
 
-  await writeJsonFile(root, `${SYMBOLS_DIR}/variables.json`, persisted.variables);
-  await writeJsonFile(root, `${SYMBOLS_DIR}/events.json`, persisted.events ?? []);
-  await writeJsonFile(root, `${SYMBOLS_DIR}/functions.json`, persisted.functions);
-  await writeJsonFile(root, `${SYMBOLS_DIR}/classes.json`, persisted.classes);
+  files.set(`${SYMBOLS_DIR}/variables.json`, persisted.variables);
+  files.set(`${SYMBOLS_DIR}/events.json`, persisted.events ?? []);
+  files.set(`${SYMBOLS_DIR}/functions.json`, persisted.functions);
+  files.set(`${SYMBOLS_DIR}/classes.json`, persisted.classes);
 
   // Save custom/accumulated syntax packs to .vvs/packs folder
   if (typeof window !== 'undefined') {
@@ -256,14 +259,32 @@ export async function saveProjectToFolder(
           const packsDir = `${VVS_DIR}/packs`;
           await ensureDirPath(root, packsDir);
           for (const pack of parsed) {
-            await writeJsonFile(root, `${packsDir}/${pack.id}@${pack.version}.json`, pack);
+            files.set(`${packsDir}/${pack.id}@${pack.version}.json`, pack);
           }
         }
       }
     } catch (err) {
-      console.error('Failed to save custom syntax packs to folder:', err);
+      throw new Error('Could not collect custom packs for save.', { cause: err });
     }
   }
+  files.set(VVS_PROJECT_FILE, manifest);
+  const output = new Map<string, string>();
+  if (generated) {
+    const previous = (await readJsonFile<Record<string, string>>(root, '.vvs/generated-files.json')) ?? {};
+    const hashes: Record<string, string> = { ...previous };
+    const hash = async (text: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), byte => byte.toString(16).padStart(2, '0')).join('');
+    for (const file of filterGeneratedFilesForHostPolicy(generated.files, integration)) {
+      if (file.path.startsWith('.vvs/')) throw new Error('Generated files cannot overwrite the VVS project.');
+      const content = file.content.endsWith('\n') ? file.content : file.content + '\n';
+      const existing = await readTextFile(root, file.path);
+      if (existing !== null && existing !== content && (!previous[file.path] || await hash(existing) !== previous[file.path])) throw new Error(`Generated output was edited externally: ${file.path}. Preserve or move it before generating.`);
+      output.set(file.path, content); hashes[file.path] = await hash(content);
+    }
+    files.set('.vvs/generated-files.json', hashes);
+    // Commit marker is the manifest, after all generated/source metadata files.
+    files.delete(VVS_PROJECT_FILE); files.set(VVS_PROJECT_FILE, manifest);
+  }
+  await commitFolderFiles(root, files, output);
 }
 
 export async function createProjectInFolder(
