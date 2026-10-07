@@ -121,7 +121,7 @@ function GraphFloatingDetailsPanel() {
     updateCSharpDeclarationGroup,
     updateCSharpLocalInitializer,
     renameFunction,
-    updateNativeScalarSignature,
+    updateNativeScalarSignature, updateNativeScalarExpression,
     updateNativeScalarLocal,
     updateNativeScalarGroup,
     renameEvent,
@@ -401,6 +401,13 @@ function GraphFloatingDetailsPanel() {
         renameVariable(applyDefinePropertyToVariable(variable, 'isConst', patch.isConst), { nodeId: selectedNodeId, properties: patch });
         setLocalStyleError(null);
       } catch { setLocalStyleError('Repair this declaration’s initializer or preceding bindings before changing its style.'); }
+      return;
+    }
+    if (['expr_native_literal', 'expr_native_operator'].includes(nodeKindId ?? '')
+      && ['cpp', 'rust', 'gdscript'].includes(String(nodeData.data.properties?.nativeLanguage))
+      && ['payload', 'operator', 'nativeTargetType'].includes(key)) {
+      try { const diagnostics = updateNativeScalarExpression(selectedNodeId, key, value); setLocalStyleError(diagnostics[0] ?? null); }
+      catch (error) { setLocalStyleError(error instanceof Error ? error.message : String(error)); }
       return;
     }
     let patch = normalizeNodeData({

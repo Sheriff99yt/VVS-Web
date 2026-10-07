@@ -22,11 +22,23 @@ export interface NativeConstantGraphAnalysis {
   readonly tree: NativeConstantExpression;
   readonly fact: Readonly<NativeConstantFact>;
   readonly nodeIds: readonly string[];
+  readonly derivedDomains?: Readonly<Record<string, 'native-bool' | 'native-integer'>>;
   readonly graphAdmission: 'blocked';
+}
+
+/** Editing-only deduction of derived domains. Authored tokens/operators and
+ * operand ownership remain strict; generation uses analyzeNativeConstantGraph. */
+export function deriveNativeConstantGraphForEdit(doc: GraphDocument, rootId: string, language: NativeScalarLanguage, visibleReturnType?: string): Readonly<NativeConstantGraphAnalysis> {
+  return readNativeConstantGraph(doc, rootId, language, visibleReturnType, true);
 }
 
 /** Reconstruct from saved nodes/edges. No cached facts, inline operands or parser trees. */
 export function analyzeNativeConstantGraph(doc: GraphDocument, rootId: string, language: NativeScalarLanguage, visibleReturnType?: string): Readonly<NativeConstantGraphAnalysis> {
+  return readNativeConstantGraph(doc, rootId, language, visibleReturnType, false);
+}
+
+function readNativeConstantGraph(doc: GraphDocument, rootId: string, language: NativeScalarLanguage, visibleReturnType: string | undefined, editing: boolean): Readonly<NativeConstantGraphAnalysis> {
+  const derivedDomains: Record<string, 'native-bool' | 'native-integer'> = {};
   const fail = (code: string, nodeId: string): never => { throw new NativeConstantGraphFailure(code, nodeId); };
   if (!['cpp', 'rust', 'gdscript'].includes(language)) fail('PROFILE', rootId);
   const nodes = new Map(doc.nodes.map(node => [node.id, node]));
@@ -85,11 +97,12 @@ export function analyzeNativeConstantGraph(doc: GraphDocument, rootId: string, l
           tree = { kind: 'unary', operator: properties.operator, operand: child, directLiteral: child.kind === 'literal' };
         }
       }
-      if (domain !== undefined && domain !== nativeConstantTreeDomain(tree, language)) return fail('DOMAIN', id);
+      derivedDomains[id] = nativeConstantTreeDomain(tree, language);
+      if (!editing && domain !== undefined && domain !== derivedDomains[id]) return fail('DOMAIN', id);
       return Object.freeze(tree);
     } finally { active.delete(id); }
   };
   const savedTree = build(rootId, 0);
   const tree = language === 'rust' && visibleReturnType !== undefined ? nativeRustConstantContext(savedTree, visibleReturnType) : savedTree;
-  return Object.freeze({ tree, fact: evaluateNativeConstant(tree, language), nodeIds: Object.freeze([...used]), graphAdmission: 'blocked' });
+  return Object.freeze({ tree, fact: evaluateNativeConstant(tree, language), nodeIds: Object.freeze([...used]), ...(editing ? { derivedDomains: Object.freeze(derivedDomains) } : {}), graphAdmission: 'blocked' });
 }

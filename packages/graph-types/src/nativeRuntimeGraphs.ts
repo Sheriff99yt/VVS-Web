@@ -2,7 +2,7 @@ import type { GraphDocument } from './symbols';
 import type { NativeScalarLanguage } from './nativeScalarContracts';
 import type { NativeScalarParameter } from './nativeScalarSignatures';
 import { nativeScalarSignaturePin, canonicalNativeScalarSignatureType } from './nativeScalarSignatures';
-import { analyzeNativeConstantGraph } from './nativeConstantGraphs';
+import { analyzeNativeConstantGraph, deriveNativeConstantGraphForEdit } from './nativeConstantGraphs';
 import { nativeRuntimeOperatorType, type NativeRuntimeTypeFact } from './nativeRuntimeTypes';
 import { nativeScalarLocalBinding, type NativeScalarLocalBinding } from './nativeScalarLocalBindings';
 import { fixedNativeRustInitializer, type NativeInferredExpression } from './nativeInferredExpressions';
@@ -21,14 +21,31 @@ export class NativeRuntimeGraphFailure extends Error {
   constructor(public readonly code: string, public readonly nodeId: string) { super(`NATIVE_RUNTIME_GRAPH_${code}: ${nodeId}`); }
 }
 export interface NativeRuntimeGraphAnalysis extends NativeRuntimeTypeFact {
+  readonly derivedDomains?: Readonly<Record<string, 'native-bool' | 'native-integer'>>;
   readonly nodeIds: readonly string[];
   readonly parameterIds: readonly string[];
   readonly localIds: readonly string[];
   readonly graphAdmission: 'blocked';
 }
 
+/** Editing-only domain deduction. Stored output domains are structurally
+ * checked, then recomputed from authored operations and actual binding types. */
+export function deriveNativeRuntimeGraphForEdit(doc: GraphDocument, rootId: string, language: NativeScalarLanguage, context: NativeRuntimeGraphContext): Readonly<NativeRuntimeGraphAnalysis> {
+  return readNativeRuntimeGraph(doc, rootId, language, context, true);
+}
+
 /** Reconstruct unknown parameter expressions from actual ports/edges; no cached values. */
 export function analyzeNativeRuntimeGraph(doc: GraphDocument, rootId: string, language: NativeScalarLanguage, context: NativeRuntimeGraphContext): Readonly<NativeRuntimeGraphAnalysis> {
+  return readNativeRuntimeGraph(doc, rootId, language, context, false);
+}
+
+function readNativeRuntimeGraph(doc: GraphDocument, rootId: string, language: NativeScalarLanguage, context: NativeRuntimeGraphContext, editing: boolean): Readonly<NativeRuntimeGraphAnalysis> {
+  const derivedDomains: Record<string, 'native-bool' | 'native-integer'> = {};
+  const constant = (id: string, expectedType?: string) => {
+    const analysis = (editing ? deriveNativeConstantGraphForEdit : analyzeNativeConstantGraph)(doc, id, language, expectedType);
+    Object.assign(derivedDomains, analysis.derivedDomains);
+    return analysis;
+  };
   const fail = (code: string, id: string): never => { throw new NativeRuntimeGraphFailure(code, id); };
   if (!['cpp', 'rust', 'gdscript'].includes(language)) fail('PROFILE', rootId);
   if (doc.nodes.length > 4096 || doc.edges.length > 8192) fail('BUDGET', rootId);
@@ -119,7 +136,7 @@ export function analyzeNativeRuntimeGraph(doc: GraphDocument, rootId: string, la
     if (depth > 128 || ++visits > 8192) return fail('BUDGET', id);
     if (id === context.entryId) return parameters.get(handle)!.nativeType;
     if (nodes.get(id)?.data.kindId === 'variable_get') return locals.get(nodes.get(id)!.data.graphBinding!.symbolId)!.nativeType;
-    if (!dynamic.get(id)) return analyzeNativeConstantGraph(doc, id, language, language === 'rust' ? expectedType : undefined).fact.nativeType;
+    if (!dynamic.get(id)) return constant(id, language === 'rust' ? expectedType : undefined).fact.nativeType;
     const p = nodes.get(id)!.data.properties!;
     if (p.nativeLiteralType !== undefined) return fail('HIDDEN_LITERAL_CONTEXT', id);
     const edge = operand(id, 0);
@@ -137,7 +154,8 @@ export function analyzeNativeRuntimeGraph(doc: GraphDocument, rootId: string, la
       const fact = nativeRuntimeOperatorType(language, form, operator, types);
       shortCircuit ||= fact.evaluation === 'short-circuit'; type = fact.nativeType;
     }
-    if (p.nativeDomain !== (type === 'bool' ? 'native-bool' : 'native-integer')) return fail('RESULT_DOMAIN', id);
+    derivedDomains[id] = type === 'bool' ? 'native-bool' : 'native-integer';
+    if (!editing && p.nativeDomain !== derivedDomains[id]) return fail('RESULT_DOMAIN', id);
     return type;
   };
   if (context.inferInitializer && language === 'rust') {
@@ -145,7 +163,7 @@ export function analyzeNativeRuntimeGraph(doc: GraphDocument, rootId: string, la
       if (depth > 128 || ++visits > 16384) return fail('BUDGET', id);
       if (id === context.entryId) return { kind: 'parameter', nativeType: parameters.get(handle)!.nativeType };
       if (nodes.get(id)?.data.kindId === 'variable_get') return { kind: 'local', nativeType: locals.get(nodes.get(id)!.data.graphBinding!.symbolId)!.nativeType };
-      if (!dynamic.get(id)) return analyzeNativeConstantGraph(doc, id, language).tree;
+      if (!dynamic.get(id)) return constant(id).tree;
       const p = nodes.get(id)!.data.properties!;
       const read = (index: number) => { const edge = operand(id, index); return tree(edge.source, edge.sourceHandle!, depth + 1); };
       return p.nativeForm === 'parentheses' ? { kind: 'group', operand: read(0) } : p.nativeForm === 'conversion' ? { kind: 'convert', nativeType: String(p.nativeTargetType), operand: read(0) } : p.nativeForm === 'binary' ? { kind: 'binary', operator: String(p.operator), left: read(0), right: read(1) } : { kind: 'unary', operand: read(0) };
@@ -153,5 +171,5 @@ export function analyzeNativeRuntimeGraph(doc: GraphDocument, rootId: string, la
     if (!fixedNativeRustInitializer(tree(rootId, nodes.get(rootId)?.data.kindId === 'variable_get' ? 'val' : 'result'))) fail('INFERENCE_CONSTRAINTS_REQUIRED', rootId);
   }
   const nativeType = infer(rootId, nodes.get(rootId)?.data.kindId === 'variable_get' ? 'val' : 'result', context.inferInitializer ? undefined : context.returnType);
-  return Object.freeze({ nativeType, domain: nativeType === 'bool' ? 'native-bool' : 'native-integer', evaluation: shortCircuit ? 'short-circuit' : 'ordinary', values: 'unknown', nodeIds: Object.freeze([...used]), parameterIds: Object.freeze([...parameterIds]), localIds: Object.freeze([...localIds]), graphAdmission: 'blocked' });
+  return Object.freeze({ nativeType, domain: nativeType === 'bool' ? 'native-bool' : 'native-integer', evaluation: shortCircuit ? 'short-circuit' : 'ordinary', values: 'unknown', ...(editing ? { derivedDomains: Object.freeze(derivedDomains) } : {}), nodeIds: Object.freeze([...used]), parameterIds: Object.freeze([...parameterIds]), localIds: Object.freeze([...localIds]), graphAdmission: 'blocked' });
 }

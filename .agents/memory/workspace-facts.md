@@ -424,3 +424,8 @@ Typed/Inferred local/group transactions, inspectors and production/Pages active 
 ## Native inference recovery flow
 
 `inspectNativeScalarFunctionFlow` is editing-only structural evidence; generation retains `analyzeNativeScalarFunctionGraph`. Mode transactions independently recheck preceding inferred mirrors and selected initializer deductions. Actual invalid-mode reload/recovery passes production and Pages for C++/Rust; shared GDScript recovery and all-three native local workflows remain verified. See [current state](../../docs/current_state.md). Automatic deduction reconciliation and inferred worker admission remain next.
+
+
+## Native deduction editing boundary
+
+`reconcileNativeScalarInferences` owns function-scoped inferred deduction/mirror/port coordination. `deriveNativeConstantGraphForEdit` and `deriveNativeRuntimeGraphForEdit` derive output domains for editing; strict analyzers remain the generation gate. Native signature and authored expression property inspectors use these transactions. Production/Pages nine-case inferred editing/reload/reimport matrices pass. Central wire/typed-local triggers and inferred source worker admission remain next; see [current state](../../docs/current_state.md).

@@ -1,0 +1,35 @@
+{
+  "cpp": {
+    "chain": "int chain(int a) { auto first = a; auto second = first; return second; }\n",
+    "expression": "bool probe(int a, int b) { auto result = a < b; return result; }\n",
+    "literal": "int literal() { auto result = 1; return result; }\n",
+    "integer": "int",
+    "changed": "long long",
+    "extension": "cpp",
+    "chainTyped": "int chain(int a) { int first = a; int second = first; return second; }\n",
+    "expressionTyped": "bool probe(int a, int b) { bool result = a < b; return result; }\n",
+    "literalTyped": "int literal() { int result = 1; return result; }\n"
+  },
+  "rust": {
+    "chain": "fn chain(a: i32) -> i32 { let first = a; let second = first; second }\n",
+    "expression": "fn probe(a: i32, b: i32) -> bool { let result = a < b; result }\n",
+    "literal": "fn literal() -> i32 { let result = 1i32; result }\n",
+    "integer": "i32",
+    "changed": "i64",
+    "extension": "rs",
+    "chainTyped": "fn chain(a: i32) -> i32 { let first: i32 = a; let second: i32 = first; second }\n",
+    "expressionTyped": "fn probe(a: i32, b: i32) -> bool { let result: bool = a < b; result }\n",
+    "literalTyped": "fn literal() -> i32 { let result: i32 = 1i32; result }\n"
+  },
+  "gdscript": {
+    "chain": "func chain(a: int) -> int:\n    var first := a\n    var second := first\n    return second\n",
+    "expression": "func probe(a: int, b: int) -> bool:\n    var result := a < b\n    return result\n",
+    "literal": "func literal() -> int:\n    var result := 1\n    return result\n",
+    "integer": "int",
+    "changed": "bool",
+    "extension": "gd",
+    "chainTyped": "func chain(a: int) -> int:\n    var first: int = a\n    var second: int = first\n    return second\n",
+    "expressionTyped": "func probe(a: int, b: int) -> bool:\n    var result: bool = a < b\n    return result\n",
+    "literalTyped": "func literal() -> int:\n    var result: int = 1\n    return result\n"
+  }
+}

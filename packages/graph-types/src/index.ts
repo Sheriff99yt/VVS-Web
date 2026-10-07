@@ -62,3 +62,5 @@ export * from './nativeScalarDeclarationGroups';
 export * from './nativeInferredExpressions';
 export * from './nativeScalarDeclarationModes';
 export * from './nativeRustConstantContext';
+
+export * from './nativeInferenceReconciliation';

@@ -42,6 +42,7 @@ const steps: [string, string[]][] = [
   ['native-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-browser.py']],
   ['native-runtime-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-browser.py', '--runtime-only']],
   ['native-group-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-browser.py', '--groups-only']],
+  ['native-inference-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-browser.py', '--inference-only']],
   ['native-local-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-browser.py', '--locals-only']],
   ['csharp-browser', ['python', '-u', 'apps/web/scripts/verify-source-import-csharp.py']],
   ['strict-parse', ['bun', 'run', '--filter', '@vvs/syntax-packs', 'validate:parse', '--strict']],
@@ -50,6 +51,7 @@ const steps: [string, string[]][] = [
   ['native-pages-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-export.py']],
   ['native-runtime-pages-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-export.py', '--runtime-only']],
   ['native-group-pages-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-export.py', '--groups-only']],
+  ['native-inference-pages-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-export.py', '--inference-only']],
   ['native-local-pages-browser', ['python', '-u', 'apps/web/scripts/verify-native-scalar-export.py', '--locals-only']],
 ];
 const selectedNames = process.argv.find(argument => argument.startsWith('--only='))?.slice(7).split(',');
@@ -71,7 +73,7 @@ if (signatureRetry) steps.find(step => step[0] === 'native-signatures')![1].push
 if (selectedNames?.some(name => !steps.some(step => step[0] === name))) throw new Error('Unknown validation stage');
 // Pages overwrites .next with export/base-path configuration. A partial production
 // browser retry must restore the normal artifact before starting Next's server.
-if (selectedNames?.some(name => ['browser-import', 'csharp-browser', 'native-browser', 'native-runtime-browser', 'native-local-browser', 'native-group-browser'].includes(name)) && !selectedNames.includes('build')) {
+if (selectedNames?.some(name => ['browser-import', 'csharp-browser', 'native-browser', 'native-runtime-browser', 'native-local-browser', 'native-group-browser', 'native-inference-browser'].includes(name)) && !selectedNames.includes('build')) {
   const artifact = join(import.meta.dir, '../apps/web/.next/required-server-files.json');
   const config = existsSync(artifact) ? JSON.parse(readFileSync(artifact, 'utf8')).config : undefined;
   if (!config || config.output === 'export' || config.env?.NEXT_PUBLIC_SITE_BASE_PATH) {
@@ -87,6 +89,8 @@ const results = previous.filter(result => !selectedNames?.includes(result.name))
 const prerequisites: Record<string, string[]> = {
   'native-signature-print': ['packages', 'source-import-types'],
   'native-scalar-graphs': ['packages', 'source-import-types'],
+  'native-inference-browser': ['build', 'packages', 'web', 'native-source-graphs'],
+  'native-inference-pages-browser': ['pages-build', 'packages', 'web', 'native-source-graphs'],
   'native-source-graphs': ['packages', 'source-import-types', 'web'],
   'native-runtime-types': ['packages', 'source-import-types'],
   'native-local-inference': ['packages', 'source-import-types'],
@@ -110,7 +114,7 @@ const prerequisites: Record<string, string[]> = {
   'docs-artifacts': ['pages-build'],
 };
 const freshResults = new Map<string, number>();
-for (const [name, command] of steps.filter(step => selectedNames ? selectedNames.includes(step[0]) : !['csharp-browser', 'native-browser', 'native-pages-browser', 'native-runtime-browser', 'native-runtime-pages-browser', 'native-local-browser', 'native-local-pages-browser', 'native-group-browser', 'native-group-pages-browser', 'native-readiness', 'native-bindings', 'native-initialization', 'native-scalars', 'native-constants', 'native-source-expressions', 'native-signatures', 'native-signature-print', 'native-scalar-graphs', 'native-source-graphs', 'native-runtime-types', 'native-local-source', 'native-local-inference', 'native-constant-graphs', 'native-scalar-names', 'native-grammar-build'].includes(step[0]))) {
+for (const [name, command] of steps.filter(step => selectedNames ? selectedNames.includes(step[0]) : !['csharp-browser', 'native-browser', 'native-pages-browser', 'native-runtime-browser', 'native-runtime-pages-browser', 'native-inference-browser', 'native-inference-pages-browser', 'native-local-browser', 'native-local-pages-browser', 'native-group-browser', 'native-group-pages-browser', 'native-readiness', 'native-bindings', 'native-initialization', 'native-scalars', 'native-constants', 'native-source-expressions', 'native-signatures', 'native-signature-print', 'native-scalar-graphs', 'native-source-graphs', 'native-runtime-types', 'native-local-source', 'native-local-inference', 'native-constant-graphs', 'native-scalar-names', 'native-grammar-build'].includes(step[0]))) {
   const failed = (prerequisites[name] ?? []).filter(required => freshResults.has(required) && freshResults.get(required) !== 0);
   if (failed.length) {
     writeFileSync(join(directory, `${name}.log`), `Skipped: failed batch prerequisites ${failed.join(', ')}.\n`);
@@ -124,7 +128,7 @@ for (const [name, command] of steps.filter(step => selectedNames ? selectedNames
   let server: ReturnType<typeof Bun.spawn> | undefined;
   let exitCode = 1;
   try {
-    if (name === 'browser-import' || name === 'csharp-browser' || name === 'native-browser' || name === 'native-runtime-browser' || name === 'native-local-browser' || name === 'native-group-browser') {
+    if (name === 'browser-import' || name === 'csharp-browser' || name === 'native-browser' || name === 'native-runtime-browser' || name === 'native-local-browser' || name === 'native-group-browser' || name === 'native-inference-browser') {
       writeFileSync(join(directory, 'browser-server.log'), '');
       server = Bun.spawn(['node', 'node_modules/next/dist/bin/next', 'start', '-p', '3137'], { cwd: join(import.meta.dir, '../apps/web'), stdout: Bun.file(join(directory, 'browser-server.log')), stderr: Bun.file(join(directory, 'browser-server.log')) });
       let ready = false;
