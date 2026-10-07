@@ -67,6 +67,27 @@ def verify_native_local_imports(browser, base_url):
         blocked = page.get_by_role('alert').filter(has_text='Code generation blocked')
         expect(blocked).to_be_visible(timeout=30000)
         expect(page.get_by_role('button', name='Copy code', exact=True)).to_be_disabled()
+        if language in ['cpp', 'rust']:
+            # An unrelated readonly assignment must not prevent an independently
+            # valid initializer from entering inferred mode. Generation stays
+            # blocked through the mode change and actual persisted reload.
+            mode.select_option('inferred')
+            expect(mode).to_have_value('inferred')
+            expect(blocked).to_be_visible()
+            expect(page.get_by_label('Native local type', exact=True)).not_to_be_visible()
+            page.keyboard.press('Control+s')
+            page.wait_for_function("args => Object.values(JSON.parse(localStorage.getItem('vvs_project_' + args[0])).documents).some(d => d.nodes.some(n => n.id === args[1] && n.data.properties?.nativeInferenceMode && n.data.properties?.nativeMutable === false))", arg=[project_id, declaration['id']])
+            page.reload(wait_until='networkidle')
+            expect(blocked).to_be_visible(timeout=30000)
+            page.get_by_role('button', name='View', exact=True).click()
+            page.get_by_role('button', name='Zoom to fit all', exact=True).click()
+            page.locator('.react-flow__node[data-id="' + declaration['id'] + '"]').click()
+            page.locator('summary').filter(has_text='Native local declaration').click()
+            expect(mode).to_have_value('inferred')
+            mutable.check()
+            expect(blocked).not_to_be_visible(timeout=30000)
+            expect(code).to_contain_text('editedResult', timeout=30000)
+            mode.select_option('typed')
         mutable.check()
         expect(blocked).not_to_be_visible(timeout=30000)
         native_type = page.get_by_label('Native local type', exact=True)
@@ -114,5 +135,5 @@ def verify_native_local_imports(browser, base_url):
         page.reload(wait_until='networkidle')
         expect(code).to_contain_text('first * 4', timeout=30000)
         assert not errors, errors
-        print(language + ': local worker import, mode switch/inferred save-reload and rename/readonly/type recovery (including invalid reload), save/reload and both reimport choices passed', flush=True)
+        print(language + ': local worker import, mode switch/inferred save-reload and rename/readonly/type recovery (including invalid mode reload), save/reload and both reimport choices passed', flush=True)
         context.close()

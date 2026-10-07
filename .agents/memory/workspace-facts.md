@@ -419,3 +419,8 @@ C# source graph planner: csharpPlan.ts returns typed ordinary-class static integ
 ## Latest authored native mode checkpoint
 
 Typed/Inferred local/group transactions, inspectors and production/Pages active inferred-mode persistence are verified. See [canonical implementation evidence](../../docs/current_state.md) and [remaining reconciliation/admission dependencies](../../docs/design/native_inferred_initialization_batch.md). The full eight-language goal remains active.
+
+
+## Native inference recovery flow
+
+`inspectNativeScalarFunctionFlow` is editing-only structural evidence; generation retains `analyzeNativeScalarFunctionGraph`. Mode transactions independently recheck preceding inferred mirrors and selected initializer deductions. Actual invalid-mode reload/recovery passes production and Pages for C++/Rust; shared GDScript recovery and all-three native local workflows remain verified. See [current state](../../docs/current_state.md). Automatic deduction reconciliation and inferred worker admission remain next.

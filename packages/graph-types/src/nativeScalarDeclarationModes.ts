@@ -2,7 +2,7 @@ import type { GraphDocument, FunctionSymbol, VariableSymbol } from './symbols';
 import type { NativeScalarLanguage } from './nativeScalarContracts';
 import { nativeScalarLocalBinding, nativeScalarInferenceSpelling, type NativeScalarInferenceMode, type NativeScalarLocalBinding } from './nativeScalarLocalBindings';
 import { nativeScalarDeclarationGroup } from './nativeScalarDeclarationGroups';
-import { analyzeNativeScalarFunctionGraph, type NativeScalarGraphParameter } from './nativeScalarFunctionGraphs';
+import { inspectNativeScalarFunctionFlow, type NativeScalarGraphParameter } from './nativeScalarFunctionGraphs';
 import { analyzeNativeRuntimeGraph, type NativeRuntimeGraphContext } from './nativeRuntimeGraphs';
 import { analyzeNativeConstantGraph } from './nativeConstantGraphs';
 import { fixedNativeRustInitializer } from './nativeInferredExpressions';
@@ -74,15 +74,20 @@ export function transactNativeScalarDeclarationMode<TDocument extends GraphDocum
   if (edit.declarationMode === 'inferred' && bindings.some(binding => !binding.inferenceMode)) {
     if (language === 'gdscript' && bindings.some(binding => !binding.mutable)) return fail('INFERRED_CONSTANT_CONTEXT');
     const definition = Object.values(input.documents).flatMap(doc => doc.nodes).find(node => node.data.kindId === 'function_implement' && node.data.graphBinding?.symbolId === ownerId)!;
-    const analysis = analyzeNativeScalarFunctionGraph(definition.data, input.documents[tabId], language);
-    for (const binding of bindings) {
-      const at = analysis.locals?.findIndex(local => local.id === binding.id) ?? -1;
-      if (at < 0) return fail('FLOW');
-      const visible = new Map<string, NativeScalarLocalBinding>();
-      for (const local of analysis.locals!.slice(0, at)) visible.set(local.name, local);
-      const derived = deriveNativeScalarLocalInitializer(input.documents[tabId], binding.declarationId, language, { entryId: analysis.entryId, symbolId: ownerId,
-        parameters: definition.data.properties!.nativeParameters as NativeScalarGraphParameter[], returnType: binding.nativeType, locals: [...visible.values()] });
-      if (derived !== binding.nativeType) return fail('INFERENCE_TYPE_CONSTRAINTS_REQUIRED');
+    const analysis = inspectNativeScalarFunctionFlow(definition.data, input.documents[tabId], language);
+    const selected = new Set(bindings.map(binding => binding.id));
+    const last = Math.max(...bindings.map(binding => analysis.locals?.findIndex(local => local.id === binding.id) ?? -1));
+    if (last < 0 || bindings.some(binding => !analysis.locals?.some(local => local.id === binding.id))) return fail('FLOW');
+    const visible = new Map<string, NativeScalarLocalBinding>();
+    for (const binding of analysis.locals!.slice(0, last + 1)) {
+      // A preceding inferred mirror must be independently checked before it
+      // can supply the native type of a later initializer's actual local read.
+      if (selected.has(binding.id) || binding.inferenceMode) {
+        const derived = deriveNativeScalarLocalInitializer(input.documents[tabId], binding.declarationId, language, { entryId: analysis.entryId, symbolId: ownerId,
+          parameters: definition.data.properties!.nativeParameters as NativeScalarGraphParameter[], returnType: binding.nativeType, locals: [...visible.values()] });
+        if (derived !== binding.nativeType) return fail('INFERENCE_TYPE_CONSTRAINTS_REQUIRED');
+      }
+      visible.set(binding.name, binding);
     }
   }
   for (const binding of bindings) {

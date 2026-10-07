@@ -13,8 +13,18 @@ export interface NativeLocalBodyAnalysis {
   readonly valueType?: string;
 }
 
+/** Editing inspects ownership without certifying body semantics. Strict generation
+ * always uses analyzeNativeLocalFunctionBody below. */
+export function inspectNativeLocalFunctionFlow(doc: GraphDocument, language: NativeScalarLanguage, context: NativeRuntimeGraphContext, signature: NativeScalarFunctionSignature): Readonly<NativeLocalBodyAnalysis> {
+  return readNativeLocalFunctionBody(doc, language, context, signature, true);
+}
+
 /** Called after definition/header/entry ownership checks; every local expression sees its actual flow position. */
 export function analyzeNativeLocalFunctionBody(doc: GraphDocument, language: NativeScalarLanguage, context: NativeRuntimeGraphContext, signature: NativeScalarFunctionSignature): Readonly<NativeLocalBodyAnalysis> {
+  return readNativeLocalFunctionBody(doc, language, context, signature, false);
+}
+
+function readNativeLocalFunctionBody(doc: GraphDocument, language: NativeScalarLanguage, context: NativeRuntimeGraphContext, signature: NativeScalarFunctionSignature, editing: boolean): Readonly<NativeLocalBodyAnalysis> {
   const fail = (code: string, id: string): never => { throw new NativeScalarLocalFailure(code, id); };
   const nodes = new Map(doc.nodes.map(node => [node.id, node]));
   const execution = doc.edges.filter(edge => edge.data?.pinType === 'execution');
@@ -28,12 +38,51 @@ export function analyzeNativeLocalFunctionBody(doc: GraphDocument, language: Nat
     try { return doc.edges.filter(edge => edge.target === id && edge.data?.pinType !== 'execution').some(edge => dynamic(edge.source, active)); }
     finally { active.delete(id); }
   };
+  // Only an editor may retain invalid expression semantics. It still proves
+  // every operand's actual role, source port, scope and ownership; no index or
+  // stored expression body substitutes for the saved graph.
+  let visits = 0;
+  const inspectValue = (id: string, handle: string, active = new Set<string>()) => {
+    if (++visits > 8192 || active.size > 128 || active.has(id)) return fail('EXPRESSION_CYCLE', id);
+    const node = nodes.get(id);
+    if (!node) return fail('VALUE_OWNER', id);
+    const data = node.data, p = data.properties ?? {};
+    if (id === context.entryId) {
+      const parameter = context.parameters.find(parameter => parameter.id === handle);
+      if (!parameter || visible.has(parameter.name)) return fail('PARAMETER_VALUE', id);
+      return;
+    }
+    if (Object.keys(data.inlineValues ?? {}).length) return fail('INLINE_VALUE', id);
+    if (data.kindId === 'variable_get') {
+      const binding = [...visible.values()].find(binding => binding.id === data.graphBinding?.symbolId);
+      if (!binding || data.graphBinding?.kind !== 'variable_ref' || p.symbolId !== binding.id || p.variableName !== binding.name
+        || handle !== 'val' || data.inputs.length || data.outputs.length !== 1
+        || data.outputs[0].id !== 'val' || data.outputs[0].type !== nativeScalarSignaturePin(binding.nativeType, language)) return fail('REFERENCE_OWNER', id);
+      used.add(id); return;
+    }
+    if (!['expr_native_literal', 'expr_native_operator'].includes(String(data.kindId)) || handle !== 'result'
+      || data.graphBinding || p.nativeLanguage !== language || data.outputs.length !== 1 || data.outputs[0].id !== 'result'
+      || data.inputs.some(port => port.type === 'execution')
+      || new Set(data.inputs.map(port => port.id)).size !== data.inputs.length) return fail('EXPRESSION_OWNER', id);
+    const incoming = doc.edges.filter(edge => edge.target === id);
+    if (incoming.length !== data.inputs.length) return fail('VALUE_WIRING', id);
+    active.add(id);
+    try {
+      for (const port of data.inputs) {
+        const edges = incoming.filter(edge => edge.targetHandle === port.id);
+        if (edges.length !== 1 || edges[0].data?.pinType === 'execution') return fail('VALUE_WIRING', id);
+        inspectValue(edges[0].source, edges[0].sourceHandle ?? '', active);
+      }
+    } finally { active.delete(id); }
+    used.add(id);
+  };
   const expression = (statementId: string, handle: string, type: string, inferred = false): string => {
     const values = doc.edges.filter(edge => edge.target === statementId && edge.targetHandle === handle);
     if (values.length !== 1) return fail('VALUE_WIRING', statementId);
     const edge = values[0], source = nodes.get(edge.source);
     const pin = source?.data.outputs.find(port => port.id === edge.sourceHandle);
-    if (!pin || edge.data?.pinType !== pin.type || pin.type !== nativeScalarSignaturePin(type, language)) return fail('VALUE_PORT', statementId);
+    if (!pin || edge.data?.pinType !== pin.type || !editing && pin.type !== nativeScalarSignaturePin(type, language)) return fail('VALUE_PORT', statementId);
+    if (editing) { inspectValue(edge.source, edge.sourceHandle ?? ''); return type; }
     if (edge.source === context.entryId) {
       const parameter = context.parameters.find(parameter => parameter.id === edge.sourceHandle);
       if (!parameter || parameter.nativeType !== type || visible.has(parameter.name)) return fail('PARAMETER_VALUE', statementId);
@@ -81,7 +130,7 @@ export function analyzeNativeLocalFunctionBody(doc: GraphDocument, language: Nat
       registerDeclaration(node);
     } else if (data.kindId === 'variable_set') {
       const binding = [...visible.values()].find(binding => binding.id === data.graphBinding?.symbolId);
-      if (!binding || !binding.mutable || data.graphBinding?.kind !== 'variable_ref' || p.symbolId !== binding.id || p.variableName !== binding.name || p.assignmentOperator !== '=') return fail('ASSIGNMENT_OWNER', node.id);
+      if (!binding || !editing && !binding.mutable || data.graphBinding?.kind !== 'variable_ref' || p.symbolId !== binding.id || p.variableName !== binding.name || p.assignmentOperator !== '=') return fail('ASSIGNMENT_OWNER', node.id);
       if (JSON.stringify(data.inputs.map(port => [port.id, port.type])) !== JSON.stringify([['exec_in', 'execution'], ['val', nativeScalarSignaturePin(binding.nativeType, language)]])
         || JSON.stringify(data.outputs.map(port => [port.id, port.type])) !== JSON.stringify([['exec_out', 'execution']]) || valueEdges.length !== 1 || valueEdges[0].targetHandle !== 'val') return fail('ASSIGNMENT_PORTS', node.id);
       expression(node.id, 'val', binding.nativeType);
@@ -90,7 +139,7 @@ export function analyzeNativeLocalFunctionBody(doc: GraphDocument, language: Nat
       const expected = [['exec_in', 'execution'], ...(!unit ? [['val', nativeScalarSignaturePin(signature.nativeReturnType, language)]] : [])];
       if (JSON.stringify(data.inputs.map(port => [port.id, port.type])) !== JSON.stringify(expected) || data.outputs.length || data.graphBinding
         || valueEdges.length !== (unit ? 0 : 1) || execution.some(edge => edge.source === node.id)) return fail('RETURN_PORTS', node.id);
-      if (!unit) valueType = expression(node.id, 'val', signature.nativeReturnType);
+      if (!unit) { const actual = expression(node.id, 'val', signature.nativeReturnType); if (!editing) valueType = actual; }
       returned = true;
     } else return fail('STATEMENT_KIND', node.id);
     if (!used.has(node.id)) { used.add(node.id); statements.push(node.id); }

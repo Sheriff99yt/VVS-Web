@@ -4,7 +4,7 @@ import type { NativeScalarLanguage } from './nativeScalarContracts';
 import { nativeScalarFunctionSignatureProblem, nativeScalarSignaturePin, type NativeScalarFunctionSignature, type NativeScalarParameter } from './nativeScalarSignatures';
 import { analyzeNativeConstantGraph } from './nativeConstantGraphs';
 import { analyzeNativeRuntimeGraph } from './nativeRuntimeGraphs';
-import { analyzeNativeLocalFunctionBody } from './nativeLocalFunctionGraphs';
+import { analyzeNativeLocalFunctionBody, inspectNativeLocalFunctionFlow } from './nativeLocalFunctionGraphs';
 import type { NativeScalarLocalBinding } from './nativeScalarLocalBindings';
 
 export class NativeScalarFunctionGraphFailure extends Error {
@@ -21,8 +21,18 @@ export interface NativeScalarFunctionGraphAnalysis {
   readonly locals?: readonly Readonly<NativeScalarLocalBinding>[];
 }
 
+/** Editing-only flow/ownership inspection. It provides no semantic admission;
+ * generation must call analyzeNativeScalarFunctionGraph. */
+export function inspectNativeScalarFunctionFlow(definition: VVSNodeData, doc: GraphDocument, language: NativeScalarLanguage): Readonly<NativeScalarFunctionGraphAnalysis> {
+  return readNativeScalarFunctionGraph(definition, doc, language, true);
+}
+
 /** Definition-owned headers plus bounded identity/constant/empty body ownership. */
 export function analyzeNativeScalarFunctionGraph(definition: VVSNodeData, doc: GraphDocument, language: NativeScalarLanguage): Readonly<NativeScalarFunctionGraphAnalysis> {
+  return readNativeScalarFunctionGraph(definition, doc, language, false);
+}
+
+function readNativeScalarFunctionGraph(definition: VVSNodeData, doc: GraphDocument, language: NativeScalarLanguage, editing: boolean): Readonly<NativeScalarFunctionGraphAnalysis> {
   const fail = (code: string): never => { throw new NativeScalarFunctionGraphFailure(code); };
   const properties = definition.properties ?? {};
   const symbolId = definition.graphBinding?.symbolId;
@@ -48,7 +58,7 @@ export function analyzeNativeScalarFunctionGraph(definition: VVSNodeData, doc: G
   const ret = returns[0];
   if (ret?.data.properties?.nativeReturnStyle !== undefined && !['explicit', 'rust-tail'].includes(String(ret.data.properties.nativeReturnStyle)) || ret?.data.properties?.nativeReturnStyle === 'rust-tail' && (language !== 'rust' || unit)) fail('RETURN_STYLE');
   if (doc.nodes.some(node => node.data.kindId === 'var_define' && node.data.properties?.nativeLocalLanguage !== undefined)) {
-    const body = analyzeNativeLocalFunctionBody(doc, language, { entryId: entry.id, symbolId: symbolId!, parameters, returnType: signature.nativeReturnType }, signature);
+    const body = (editing ? inspectNativeLocalFunctionFlow : analyzeNativeLocalFunctionBody)(doc, language, { entryId: entry.id, symbolId: symbolId!, parameters, returnType: signature.nativeReturnType }, signature);
     return Object.freeze({ signature: Object.freeze({ ...signature, parameters: Object.freeze(parameters.map(parameter => Object.freeze({ ...parameter }))) }), entryId: entry.id, ...(ret ? { returnId: ret.id } : {}), ...body, graphAdmission: 'blocked' });
   }
   const execution = doc.edges.filter(edge => edge.data?.pinType === 'execution');
